@@ -18,30 +18,30 @@ $error = '';
 $success = '';
 
 if ($_POST) {
-    // Validar CSRF
-    if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
-        $error = '❌ Token de seguridad inválido';
-    } else {
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-
-        if (empty($email) || empty($password)) {
-            $error = '❌ Email y contraseña son requeridos';
+        // Validar CSRF
+        if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
+            $error = 'Token de seguridad inválido';
         } else {
-            $user = Auth::loginUser($email, $password);
-            if ($user) {
-                $_SESSION['user_login_time'] = time();
-                $success = '✅ Login exitoso, redirigiendo...';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "index.php";
-                    }, 1500);
-                </script>';
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if (empty($email) || empty($password)) {
+                $error = 'Email y contraseña son requeridos';
             } else {
-                $error = '❌ Email o contraseña incorrectos';
+                $user = Auth::loginUser($email, $password);
+                if ($user) {
+                    $_SESSION['user_login_time'] = time();
+                    $success = 'Login exitoso, redirigiendo...';
+                    echo '<script>
+                        setTimeout(function() {
+                            window.location.href = "index.php";
+                        }, 1500);
+                    </script>';
+                } else {
+                    $error = 'Email o contraseña incorrectos';
+                }
             }
         }
-    }
 }
 ?>
 <!DOCTYPE html>
@@ -53,77 +53,115 @@ if ($_POST) {
     <link rel="stylesheet" href="../publico/css/login.css">
 </head>
 <body>
-    <div class="login-container">
-        <!-- HEADER -->
-        <div class="login-header">
-            <div class="login-icon">📋</div>
-            <h1><?php echo APP_NAME; ?></h1>
-            <p>Portal de Clientes</p>
+    <div class="support-center-wrapper">
+        <!-- HEADER SUPERIOR -->
+        <div class="support-header">
+            <div class="support-header-left">
+                <img src="../publico/img/vigitec-logo.png" alt="VIGITEC PANAMA" class="vigitec-logo">
+            </div>
+            <div class="support-header-right">
+                <span class="guest-user">Usuario Invitado</span>
+                <span class="header-separator">|</span>
+                <a href="#" class="header-login-link">Inicia Sesión</a>
+            </div>
         </div>
 
-        <!-- TABS -->
-        <div class="login-tabs">
-            <button class="login-tab active">👤 Cliente</button>
-            <button class="login-tab" onclick="window.location.href='../agente/login.php'">🛠️ Agente</button>
+        <!-- NAVEGACIÓN -->
+        <div class="support-nav">
+            <button class="nav-item active">Inicio Centro de Soporte</button>
+            <button class="nav-item">Abrir un nuevo Ticket</button>
+            <button class="nav-item">Ver Estado de un Ticket</button>
         </div>
 
-        <!-- FORMULARIO -->
-        <form method="post" class="login-form">
-            <!-- Alertas -->
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert alert-success"><?php echo $success; ?></div>
-            <?php endif; ?>
-
-            <!-- Email -->
-            <div class="form-group">
-                <label for="email">📧 Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="tu@email.com"
-                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
-                    required
-                >
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="support-content">
+            <div class="welcome-section">
+                <h2 class="welcome-title">Iniciar sesión en <?php echo APP_NAME; ?></h2>
+                <p class="welcome-text">Para servirle mejor, recomendamos a nuestros clientes registrarse para una cuenta.</p>
             </div>
 
-            <!-- Contraseña -->
-            <div class="form-group">
-                <label for="password">🔐 Contraseña</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="••••••••"
-                    required
-                >
+            <!-- PANEL DE LOGIN -->
+            <div class="login-panel">
+                <!-- COLUMNA IZQUIERDA - FORMULARIO -->
+                <div class="login-panel-left">
+                    <form method="post" class="login-form">
+                        <!-- Alertas -->
+                        <?php if ($error): ?>
+                            <div class="alert alert-danger"><?php echo $error; ?></div>
+                        <?php endif; ?>
+
+                        <?php if ($success): ?>
+                            <div class="alert alert-success"><?php echo $success; ?></div>
+                        <?php endif; ?>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email">Correo electrónico o nombre de usuario</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="Correo electrónico o nombre de usuario"
+                                value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                                required
+                            >
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Contraseña"
+                                required
+                            >
+                        </div>
+
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
+                        <!-- Botón Login -->
+                        <button type="submit" class="btn-login">Inicia Sesión</button>
+                    </form>
+                </div>
+
+                <!-- COLUMNA DERECHA - ENLACES E ICONO -->
+                <div class="login-panel-right">
+                    <div class="login-links">
+                        <p class="register-text">
+                            ¿Aún no está registrado? 
+                            <a href="registrar.php" class="register-link">Cree una cuenta</a>
+                        </p>
+                        <p class="agent-text">
+                            Soy un agente — 
+                            <a href="../agente/login.php" class="agent-link">Acceda aquí</a>
+                        </p>
+                    </div>
+                    <div class="lock-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
-            <!-- Recordar -->
-            <div class="form-remember">
-                <input type="checkbox" id="remember" name="remember">
-                <label for="remember">Recuérdame en este dispositivo</label>
+            <!-- INFORMACIÓN ADICIONAL -->
+            <div class="info-section">
+                <p class="info-text">
+                    Si es la primera vez que se pone en contacto con nosotros o perdió el número de Ticket, 
+                    por favor <a href="#" class="info-link">abra un nuevo Ticket</a>.
+                </p>
             </div>
-
-            <!-- Olvidé contraseña -->
-            <div class="form-forgot">
-                <a href="recuperar.php">¿Olvidaste tu contraseña?</a>
-            </div>
-
-            <!-- CSRF Token -->
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-
-            <!-- Botón Login -->
-            <button type="submit" class="btn-login">Iniciar Sesión</button>
-        </form>
+        </div>
 
         <!-- FOOTER -->
-        <div class="login-footer">
-            ¿No tienes cuenta? <a href="registrar.php">Registrate aquí</a>
+        <div class="support-footer">
+            <p class="copyright">
+                Derechos de autor © <?php echo date('Y'); ?> Vigitec Panama - <?php echo APP_NAME; ?> - Todos los derechos reservados.
+            </p>
         </div>
     </div>
 

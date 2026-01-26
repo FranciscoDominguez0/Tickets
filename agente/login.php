@@ -18,30 +18,30 @@ $error = '';
 $success = '';
 
 if ($_POST) {
-    // Validar CSRF
-    if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
-        $error = '❌ Token de seguridad inválido';
-    } else {
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
-
-        if (empty($username) || empty($password)) {
-            $error = '❌ Usuario y contraseña son requeridos';
+        // Validar CSRF
+        if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
+            $error = 'Token de seguridad inválido';
         } else {
-            $staff = Auth::loginStaff($username, $password);
-            if ($staff) {
-                $_SESSION['user_login_time'] = time();
-                $success = '✅ Login exitoso, redirigiendo...';
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "index.php";
-                    }, 1500);
-                </script>';
+            $username = trim($_POST['username'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if (empty($username) || empty($password)) {
+                $error = 'Usuario y contraseña son requeridos';
             } else {
-                $error = '❌ Usuario o contraseña incorrectos';
+                $staff = Auth::loginStaff($username, $password);
+                if ($staff) {
+                    $_SESSION['user_login_time'] = time();
+                    $success = 'Login exitoso, redirigiendo...';
+                    echo '<script>
+                        setTimeout(function() {
+                            window.location.href = "index.php";
+                        }, 1500);
+                    </script>';
+                } else {
+                    $error = 'Usuario o contraseña incorrectos';
+                }
             }
         }
-    }
 }
 ?>
 <!DOCTYPE html>
@@ -56,15 +56,15 @@ if ($_POST) {
     <div class="login-container">
         <!-- HEADER -->
         <div class="login-header">
-            <div class="login-icon">🛠️</div>
+            <div class="login-icon"></div>
             <h1><?php echo APP_NAME; ?></h1>
             <p>Panel de Agentes</p>
         </div>
 
         <!-- TABS -->
         <div class="login-tabs">
-            <button class="login-tab" onclick="window.location.href='../cliente/login.php'">👤 Cliente</button>
-            <button class="login-tab active">🛠️ Agente</button>
+            <button class="login-tab" onclick="window.location.href='../cliente/login.php'">Cliente</button>
+            <button class="login-tab active">Agente</button>
         </div>
 
         <!-- FORMULARIO -->
@@ -80,7 +80,7 @@ if ($_POST) {
 
             <!-- Usuario -->
             <div class="form-group">
-                <label for="username">👤 Usuario</label>
+                <label for="username">Usuario</label>
                 <input 
                     type="text" 
                     id="username" 
@@ -89,12 +89,12 @@ if ($_POST) {
                     value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
                     required
                 >
-                <small style="color: #999; margin-top: 5px; display: block;">Usa: <strong>admin</strong> (usuario de prueba)</small>
+                <small>Usa: <strong>admin</strong> (usuario de prueba)</small>
             </div>
 
             <!-- Contraseña -->
             <div class="form-group">
-                <label for="password">🔐 Contraseña</label>
+                <label for="password">Contraseña</label>
                 <input 
                     type="password" 
                     id="password" 
@@ -102,7 +102,7 @@ if ($_POST) {
                     placeholder="••••••••"
                     required
                 >
-                <small style="color: #999; margin-top: 5px; display: block;">Usa: <strong>admin123</strong> (contraseña de prueba)</small>
+                <small>Usa: <strong>admin123</strong> (contraseña de prueba)</small>
             </div>
 
             <!-- Recordar -->

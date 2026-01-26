@@ -1,5 +1,5 @@
 /* ============================================================================
-   LOGIN STYLES
+   LOGIN STYLES - Modern Support Center Design
    ============================================================================ */
 
 * {
@@ -9,198 +9,294 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    height: 100vh;
+    padding: 0;
+    margin: 0;
+    color: #1e293b;
+    overflow: hidden;
 }
 
 /* ============================================================================
    CONTENEDOR PRINCIPAL
    ============================================================================ */
 
-.login-container {
-    width: 100%;
-    max-width: 420px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ============================================================================
-   HEADER DEL LOGIN
-   ============================================================================ */
-
-.login-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 40px 30px;
-    text-align: center;
-}
-
-.login-header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    margin-bottom: 10px;
-}
-
-.login-header p {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: 20px;
-}
-
-.login-icon {
-    font-size: 48px;
-    margin-bottom: 15px;
-}
-
-/* ============================================================================
-   TABS (CLIENTE / AGENTE)
-   ============================================================================ */
-
-.login-tabs {
+.support-center-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #ffffff;
+    height: 100vh;
     display: flex;
-    border-bottom: 1px solid #e0e0e0;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
-.login-tab {
+/* ============================================================================
+   HEADER SUPERIOR
+   ============================================================================ */
+
+.support-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: white;
+    padding: 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.support-header-left {
     flex: 1;
-    padding: 15px;
-    text-align: center;
-    background: #f8f9fa;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #666;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-}
-
-.login-tab:hover {
-    background: #f0f0f0;
-}
-
-.login-tab.active {
-    background: white;
-    color: #667eea;
-    border-bottom-color: #667eea;
-}
-
-/* ============================================================================
-   CONTENIDO DEL FORMULARIO
-   ============================================================================ */
-
-.login-form {
-    padding: 40px 30px;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #333;
-    font-weight: 500;
-    font-size: 14px;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-/* ============================================================================
-   CHECKBOX Y LINKS
-   ============================================================================ */
-
-.form-remember {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+}
+
+.vigitec-logo {
+    height: 40px;
+    width: auto;
+    max-width: 350px;
+    object-fit: contain;
+    display: block;
+}
+
+.support-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.5px;
+}
+
+.support-subtitle {
+    font-size: 16px;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+.support-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 14px;
 }
 
-.form-remember input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
-    cursor: pointer;
+.guest-user {
+    color: rgba(255, 255, 255, 0.9);
 }
 
-.form-remember label {
-    margin: 0;
-    cursor: pointer;
-    color: #666;
+.header-separator {
+    color: rgba(255, 255, 255, 0.5);
 }
 
-.form-forgot {
-    text-align: right;
-    margin-bottom: 20px;
-}
-
-.form-forgot a {
-    color: #667eea;
+.header-login-link {
+    color: white;
     text-decoration: none;
-    font-size: 13px;
-    transition: color 0.3s ease;
+    font-weight: 600;
+    transition: opacity 0.2s;
 }
 
-.form-forgot a:hover {
-    color: #764ba2;
+.header-login-link:hover {
+    opacity: 0.8;
     text-decoration: underline;
 }
 
 /* ============================================================================
-   BOTÓN DE SUBMIT
+   NAVEGACIÓN
+   ============================================================================ */
+
+.support-nav {
+    background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 30px;
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.nav-item {
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.3s ease;
+    position: relative;
+    font-family: inherit;
+}
+
+.nav-item:hover {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.05);
+}
+
+.nav-item.active {
+    color: #1e3a5f;
+    background: #ffffff;
+    border-bottom-color: #2563eb;
+}
+
+/* ============================================================================
+   CONTENIDO PRINCIPAL
+   ============================================================================ */
+
+.support-content {
+    padding: 20px 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.welcome-section {
+    margin-bottom: 16px;
+}
+
+.welcome-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 4px;
+}
+
+.welcome-text {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* ============================================================================
+   PANEL DE LOGIN (DOS COLUMNAS)
+   ============================================================================ */
+
+.login-panel {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.login-panel-left {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-panel-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 24px;
+    border-left: 1px solid #e2e8f0;
+    position: relative;
+}
+
+/* ============================================================================
+   FORMULARIO
+   ============================================================================ */
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.2px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    background: #ffffff;
+    color: #1e293b;
+}
+
+.form-group input::placeholder {
+    color: #94a3b8;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    background: #ffffff;
+}
+
+.form-group input:hover:not(:focus) {
+    border-color: #cbd5e1;
+}
+
+/* ============================================================================
+   BOTÓN DE LOGIN
    ============================================================================ */
 
 .btn-login {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
     color: white;
     border: none;
-    border-radius: 5px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.3px;
+    box-shadow: 
+        0 4px 12px rgba(37, 99, 235, 0.3),
+        0 2px 4px rgba(37, 99, 235, 0.2);
+    position: relative;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-login:hover::before {
+    left: 100%;
 }
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 
+        0 8px 20px rgba(37, 99, 235, 0.4),
+        0 4px 8px rgba(37, 99, 235, 0.3);
 }
 
 .btn-login:active {
@@ -210,6 +306,84 @@ body {
 .btn-login:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+}
+
+.btn-login.loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn-login.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   COLUMNA DERECHA - ENLACES
+   ============================================================================ */
+
+.login-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.register-text,
+.agent-text {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.register-link,
+.agent-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.register-link:hover,
+.agent-link:hover {
+    color: #1e40af;
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   ICONO DE CANDADO
+   ============================================================================ */
+
+.lock-icon {
+    width: 80px;
+    height: 80px;
+    color: #fbbf24;
+    opacity: 0.8;
+    margin-top: 10px;
+}
+
+.lock-icon svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 /* ============================================================================
@@ -217,120 +391,198 @@ body {
    ============================================================================ */
 
 .alert {
-    padding: 12px 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+    padding: 14px 18px;
+    border-radius: 8px;
     font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .alert-danger {
-    background: #fee;
-    color: #c33;
-    border: 1px solid #fcc;
+    background: #fef2f2;
+    color: #dc2626;
+    border-left-color: #dc2626;
 }
 
 .alert-success {
-    background: #efe;
-    color: #3c3;
-    border: 1px solid #cfc;
-}
-
-.alert-info {
-    background: #eef;
-    color: #33c;
-    border: 1px solid #ccf;
+    background: #f0fdf4;
+    color: #16a34a;
+    border-left-color: #16a34a;
 }
 
 /* ============================================================================
-   FOOTER DEL LOGIN
+   INFORMACIÓN ADICIONAL
    ============================================================================ */
 
-.login-footer {
-    padding: 20px 30px;
-    background: #f8f9fa;
-    text-align: center;
-    border-top: 1px solid #e0e0e0;
-    font-size: 13px;
-    color: #666;
+.info-section {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #2563eb;
+    flex-shrink: 0;
 }
 
-.login-footer a {
-    color: #667eea;
+.info-text {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.info-link {
+    color: #2563eb;
     text-decoration: none;
-    transition: color 0.3s ease;
+    font-weight: 600;
 }
 
-.login-footer a:hover {
-    color: #764ba2;
+.info-link:hover {
+    color: #1e40af;
     text-decoration: underline;
+}
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+
+.support-footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 12px 30px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.copyright {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
 }
 
 /* ============================================================================
    RESPONSIVE
    ============================================================================ */
 
-@media (max-width: 600px) {
-    .login-container {
-        border-radius: 0;
-        max-width: 100%;
-        height: 100vh;
+@media (max-width: 968px) {
+    .login-panel {
+        grid-template-columns: 1fr;
+        gap: 32px;
     }
 
-    .login-header {
-        padding: 30px 20px;
+    .login-panel-right {
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 32px;
+        align-items: flex-start;
     }
 
-    .login-form {
-        padding: 30px 20px;
+    .lock-icon {
+        width: 80px;
+        height: 80px;
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .support-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 24px;
     }
 
-    .login-header h1 {
+    .vigitec-logo {
+        height: 40px;
+        max-width: 300px;
+    }
+
+    .support-title {
         font-size: 24px;
     }
 
-    .login-icon {
-        font-size: 40px;
+    .support-nav {
+        padding: 0 24px;
+        flex-wrap: wrap;
+    }
+
+    .nav-item {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
+    .support-content {
+        padding: 24px;
+    }
+
+    .login-panel {
+        padding: 24px;
+    }
+
+    .welcome-title {
+        font-size: 24px;
     }
 }
 
-/* ============================================================================
-   ANIMACIONES
-   ============================================================================ */
+@media (max-width: 480px) {
+    .support-center-wrapper {
+        box-shadow: none;
+    }
 
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
+    .support-header {
+        padding: 16px 20px;
+    }
 
-.shake {
-    animation: shake 0.5s;
-}
+    .vigitec-logo {
+        height: 35px;
+        max-width: 250px;
+    }
 
-/* ============================================================================
-   LOADING STATE
-   ============================================================================ */
+    .support-title {
+        font-size: 20px;
+    }
 
-.btn-login.loading {
-    position: relative;
-    color: transparent;
-}
+    .support-subtitle {
+        font-size: 14px;
+    }
 
-.btn-login.loading::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin-left: -8px;
-    margin-top: -8px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 0.6s linear infinite;
-}
+    .support-nav {
+        padding: 0 16px;
+    }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+    .nav-item {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .support-content {
+        padding: 20px 16px;
+    }
+
+    .login-panel {
+        padding: 20px;
+    }
+
+    .welcome-title {
+        font-size: 20px;
+    }
+
+    .lock-icon {
+        width: 60px;
+        height: 60px;
+    }
 }

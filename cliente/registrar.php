@@ -18,7 +18,7 @@ $success = '';
 
 if ($_POST) {
     if (!validateCSRF()) {
-        $error = '❌ Token de seguridad inválido';
+        $error = 'Token de seguridad inválido';
     } else {
         $firstname = trim($_POST['firstname'] ?? '');
         $lastname = trim($_POST['lastname'] ?? '');
@@ -30,13 +30,13 @@ if ($_POST) {
 
         // Validaciones
         if (!$firstname || !$lastname || !$email || !$password) {
-            $error = '❌ Nombre, apellido, email y contraseña son requeridos';
+            $error = 'Nombre, apellido, email y contraseña son requeridos';
         } elseif (!isValidEmail($email)) {
-            $error = '❌ Email no válido';
+            $error = 'Email no válido';
         } elseif (strlen($password) < 6) {
-            $error = '❌ Contraseña debe tener al menos 6 caracteres';
+            $error = 'Contraseña debe tener al menos 6 caracteres';
         } elseif ($password !== $password_confirm) {
-            $error = '❌ Las contraseñas no coinciden';
+            $error = 'Las contraseñas no coinciden';
         } else {
             // Verificar si email existe
             $stmt = $mysqli->prepare('SELECT id FROM users WHERE email = ?');
@@ -45,7 +45,7 @@ if ($_POST) {
             $result = $stmt->get_result();
 
             if ($result->num_rows > 0) {
-                $error = '❌ Este email ya está registrado';
+                $error = 'Este email ya está registrado';
             } else {
                 // Hash de contraseña
                 $password_hash = password_hash($password, PASSWORD_BCRYPT);
@@ -58,14 +58,14 @@ if ($_POST) {
                 $stmt->bind_param('ssssss', $firstname, $lastname, $email, $password_hash, $company, $phone);
 
                 if ($stmt->execute()) {
-                    $success = '✅ Registro exitoso! Redirigiendo al login...';
+                    $success = 'Registro exitoso! Redirigiendo al login...';
                     echo '<script>
                         setTimeout(function() {
                             window.location.href = "login.php";
                         }, 2000);
                     </script>';
                 } else {
-                    $error = '❌ Error al registrarse: ' . $mysqli->error;
+                    $error = 'Error al registrarse: ' . $mysqli->error;
                 }
             }
         }
@@ -84,7 +84,7 @@ if ($_POST) {
     <div class="login-container">
         <!-- HEADER -->
         <div class="login-header">
-            <div class="login-icon">📝</div>
+            <div class="login-icon"></div>
             <h1>Registro de Cliente</h1>
             <p><?php echo APP_NAME; ?></p>
         </div>
@@ -102,7 +102,7 @@ if ($_POST) {
 
             <!-- Nombre -->
             <div class="form-group">
-                <label for="firstname">👤 Nombre</label>
+                <label for="firstname">Nombre</label>
                 <input 
                     type="text" 
                     id="firstname" 
@@ -115,7 +115,7 @@ if ($_POST) {
 
             <!-- Apellido -->
             <div class="form-group">
-                <label for="lastname">👤 Apellido</label>
+                <label for="lastname">Apellido</label>
                 <input 
                     type="text" 
                     id="lastname" 
@@ -128,7 +128,7 @@ if ($_POST) {
 
             <!-- Email -->
             <div class="form-group">
-                <label for="email">📧 Email</label>
+                <label for="email">Email</label>
                 <input 
                     type="email" 
                     id="email" 
@@ -141,7 +141,7 @@ if ($_POST) {
 
             <!-- Empresa (opcional) -->
             <div class="form-group">
-                <label for="company">🏢 Empresa (opcional)</label>
+                <label for="company">Empresa (opcional)</label>
                 <input 
                     type="text" 
                     id="company" 
@@ -153,7 +153,7 @@ if ($_POST) {
 
             <!-- Teléfono (opcional) -->
             <div class="form-group">
-                <label for="phone">📞 Teléfono (opcional)</label>
+                <label for="phone">Teléfono (opcional)</label>
                 <input 
                     type="tel" 
                     id="phone" 
@@ -165,7 +165,7 @@ if ($_POST) {
 
             <!-- Contraseña -->
             <div class="form-group">
-                <label for="password">🔐 Contraseña</label>
+                <label for="password">Contraseña</label>
                 <input 
                     type="password" 
                     id="password" 
@@ -173,12 +173,12 @@ if ($_POST) {
                     placeholder="••••••••"
                     required
                 >
-                <small style="color: #999; margin-top: 5px; display: block;">Mínimo 6 caracteres</small>
+                <small>Mínimo 6 caracteres</small>
             </div>
 
             <!-- Confirmar Contraseña -->
             <div class="form-group">
-                <label for="password_confirm">🔐 Confirmar Contraseña</label>
+                <label for="password_confirm">Confirmar Contraseña</label>
                 <input 
                     type="password" 
                     id="password_confirm" 

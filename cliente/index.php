@@ -388,6 +388,10 @@ $stats = [
             <div class="nav-user">
                 <span>
                     Usuario: <strong><?php echo html($user['name']); ?></strong>
+                </span>
+                <a href="logout.php" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
             </div>
         </div>
     </nav>
