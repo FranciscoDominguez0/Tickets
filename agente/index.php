@@ -221,7 +221,7 @@ $stats['total_tickets'] = $result->fetch_assoc()['count'];
                     <div class="card-icon">📂</div>
                     <h5>Mis Tickets</h5>
                     <p>Visualiza los tickets asignados a ti y gestiona su estado.</p>
-                    <a href="mis-tickets.php" class="btn-action">Ver Tickets</a>
+                    <a href="tickets.php" class="btn-action">Ver Mis Tickets</a>
                 </div>
             </div>
 

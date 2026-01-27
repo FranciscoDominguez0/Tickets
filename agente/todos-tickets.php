@@ -10,18 +10,85 @@ require_once '../includes/Auth.php';
 
 requireLogin('agente');
 
-// Obtener todos los tickets
-$stmt = $mysqli->prepare(
-    'SELECT t.*, u.firstname, u.lastname, u.email, 
-            IFNULL(CONCAT(s.firstname, " ", s.lastname), "Sin asignar") as staff_name,
-            ts.name as status_name, p.name as priority_name
-     FROM tickets t
-     JOIN users u ON t.user_id = u.id
-     LEFT JOIN staff s ON t.staff_id = s.id
-     JOIN ticket_status ts ON t.status_id = ts.id
-     JOIN priorities p ON t.priority_id = p.id
-     ORDER BY t.created DESC'
-);
+$staffId = $_SESSION['staff_id'];
+
+// Filtro actual
+$filter = $_GET['filter'] ?? 'open';
+
+// Contadores rápidos para las "pills" del dashboard
+$counts = [
+    'open'          => 0,
+    'assigned_me'   => 0,
+    'assigned_others' => 0,
+    'unassigned'    => 0,
+];
+
+$sqlCounts = "
+    SELECT
+        SUM(status_id = 1)                                      AS open,
+        SUM(status_id = 1 AND staff_id = ?)                     AS assigned_me,
+        SUM(status_id = 1 AND staff_id IS NOT NULL AND staff_id <> ?) AS assigned_others,
+        SUM(staff_id IS NULL OR staff_id = 0)                   AS unassigned
+    FROM tickets
+";
+$stmt = $mysqli->prepare($sqlCounts);
+$stmt->bind_param('ii', $staffId, $staffId);
+$stmt->execute();
+$row = $stmt->get_result()->fetch_assoc();
+if ($row) {
+    $counts['open']           = (int)$row['open'];
+    $counts['assigned_me']    = (int)$row['assigned_me'];
+    $counts['assigned_others']= (int)$row['assigned_others'];
+    $counts['unassigned']     = (int)$row['unassigned'];
+}
+
+// Construir query principal según el filtro
+$baseSql = "
+    SELECT t.*, u.firstname, u.lastname, u.email, 
+           IFNULL(CONCAT(s.firstname, ' ', s.lastname), 'Sin asignar') as staff_name,
+           ts.name as status_name, p.name as priority_name
+    FROM tickets t
+    JOIN users u       ON t.user_id = u.id
+    LEFT JOIN staff s  ON t.staff_id = s.id
+    JOIN ticket_status ts ON t.status_id = ts.id
+    JOIN priorities p  ON t.priority_id = p.id
+    WHERE 1 = 1
+";
+
+$where = '';
+$types = '';
+$params = [];
+
+switch ($filter) {
+    case 'assigned_me':
+        $where .= " AND t.status_id = 1 AND t.staff_id = ?";
+        $types .= 'i';
+        $params[] = $staffId;
+        break;
+    case 'assigned_others':
+        $where .= " AND t.status_id = 1 AND t.staff_id IS NOT NULL AND t.staff_id <> ?";
+        $types .= 'i';
+        $params[] = $staffId;
+        break;
+    case 'unassigned':
+        $where .= " AND (t.staff_id IS NULL OR t.staff_id = 0)";
+        break;
+    case 'all':
+        // sin filtros adicionales
+        break;
+    case 'open':
+    default:
+        $where .= " AND t.status_id = 1";
+        break;
+}
+
+$order = " ORDER BY t.created DESC";
+
+$sql = $baseSql . $where . $order;
+$stmt = $mysqli->prepare($sql);
+if ($types !== '') {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -30,7 +97,7 @@ $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todos los Tickets - <?php echo APP_NAME; ?></title>
+    <title>Tickets - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <style>
         body {
@@ -75,8 +142,27 @@ $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     </nav>
 
     <div class="container-fluid mt-4">
-        <h2>Todos los Tickets</h2>
-        <p class="text-muted">Total: <strong><?php echo count($tickets); ?></strong> tickets</p>
+        <h2>Tickets</h2>
+        <p class="text-muted mb-3">Total: <strong><?php echo count($tickets); ?></strong> tickets</p>
+
+        <!-- Filtros tipo dashboard -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a href="?filter=open" class="btn btn-sm <?php echo $filter === 'open' ? 'btn-primary' : 'btn-outline-primary'; ?>">
+                Open tickets <span class="badge bg-light text-primary ms-1"><?php echo $counts['open']; ?></span>
+            </a>
+            <a href="?filter=assigned_me" class="btn btn-sm <?php echo $filter === 'assigned_me' ? 'btn-success' : 'btn-outline-success'; ?>">
+                Assigned to me <span class="badge bg-light text-success ms-1"><?php echo $counts['assigned_me']; ?></span>
+            </a>
+            <a href="?filter=assigned_others" class="btn btn-sm <?php echo $filter === 'assigned_others' ? 'btn-warning' : 'btn-outline-warning'; ?>">
+                Assigned to others <span class="badge bg-light text-warning ms-1"><?php echo $counts['assigned_others']; ?></span>
+            </a>
+            <a href="?filter=unassigned" class="btn btn-sm <?php echo $filter === 'unassigned' ? 'btn-secondary' : 'btn-outline-secondary'; ?>">
+                Unassigned <span class="badge bg-light text-secondary ms-1"><?php echo $counts['unassigned']; ?></span>
+            </a>
+            <a href="?filter=all" class="btn btn-sm <?php echo $filter === 'all' ? 'btn-dark' : 'btn-outline-dark'; ?>">
+                All
+            </a>
+        </div>
 
         <div class="table-container">
             <?php if (empty($tickets)): ?>
