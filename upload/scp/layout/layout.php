@@ -92,6 +92,50 @@
             transform: translateX(1px);
         }
 
+        .sidebar-toggle {
+            width: 100%;
+            background: none;
+            border: none;
+            text-align: left;
+            padding: 0;
+        }
+
+        .sidebar-subnav {
+            list-style: none;
+            margin: 6px 0 10px 0;
+            padding-left: 32px;
+            border-left: 2px solid rgba(37, 99, 235, 0.6);
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .18s ease-out, opacity .15s ease-out;
+            opacity: 0;
+        }
+
+        .sidebar-subnav.open {
+            max-height: 400px;
+            opacity: 1;
+        }
+
+        .sidebar-subnav .sidebar-link {
+            padding: 7px 8px;
+            font-size: 0.84rem;
+            color: #9ca3af;
+        }
+
+        .sidebar-subnav .sidebar-link.active {
+            color: #e5e7eb;
+        }
+
+        .sidebar-toggle .arrow {
+            margin-left: auto;
+            display: inline-flex;
+            transition: transform .15s ease-out;
+        }
+
+        .sidebar-toggle.expanded .arrow {
+            transform: rotate(90deg);
+        }
+
         .sidebar-link.active {
             background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
             color: #f9fafb;
@@ -238,15 +282,57 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Principal</div>
                 <ul class="sidebar-nav">
-                    <li>
-                        <a href="dashboard.php" class="sidebar-link <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
+                    <li class="sidebar-group">
+                        <button type="button"
+                                class="sidebar-link sidebar-toggle <?php echo in_array($currentRoute, ['dashboard','directory','profile']) ? 'active expanded' : ''; ?>"
+                                data-subnav="panel-subnav">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M4 12L11 5L18 12V19H4V12Z" stroke="#e5e7eb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Panel de control
-                        </a>
+                            <span class="arrow">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 5L12 10L7 15" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <ul id="panel-subnav" class="sidebar-subnav <?php echo in_array($currentRoute, ['dashboard','directory','profile']) ? 'open' : ''; ?>">
+                            <li>
+                                <a href="dashboard.php" class="sidebar-link <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="4" y="4" width="16" height="16" rx="3" stroke="#64748b" stroke-width="1.5"/>
+                                            <path d="M9 12L11 14L15 10" stroke="#22c55e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    Resumen
+                                </a>
+                            </li>
+                            <li>
+                                <a href="directory.php" class="sidebar-link <?php echo $currentRoute === 'directory' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M5 5H14L19 10V19H5V5Z" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 13H15" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    Directorio del agente
+                                </a>
+                            </li>
+                            <li>
+                                <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="12" cy="8" r="3" stroke="#64748b" stroke-width="1.5"/>
+                                            <path d="M6 19C6.6 16.5 8.8 15 12 15C15.2 15 17.4 16.5 18 19" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    Mi perfil
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
                         <a href="tickets.php" class="sidebar-link <?php echo $currentRoute === 'tickets' ? 'active' : ''; ?>">
@@ -301,17 +387,6 @@
                 <div class="sidebar-section-title">Configuración</div>
                 <ul class="sidebar-nav">
                     <li>
-                        <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
-                            <span class="icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="8" r="3" stroke="#9ca3af" stroke-width="1.6"/>
-                                    <path d="M5 20C5.6 16.5 8.3 15 12 15C15.7 15 18.4 16.5 19 20" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
-                                </svg>
-                            </span>
-                            Mi perfil
-                        </a>
-                    </li>
-                    <li>
                         <a href="orgs.php" class="sidebar-link <?php echo $currentRoute === 'orgs' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -350,6 +425,22 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle del submenú de Panel de control
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggles = document.querySelectorAll('.sidebar-toggle');
+            toggles.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var targetId = btn.getAttribute('data-subnav');
+                    if (!targetId) return;
+                    var subnav = document.getElementById(targetId);
+                    if (!subnav) return;
+                    var isOpen = subnav.classList.toggle('open');
+                    btn.classList.toggle('expanded', isOpen);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 
