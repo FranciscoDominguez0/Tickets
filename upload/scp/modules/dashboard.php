@@ -57,21 +57,6 @@ while ($cursor <= $endDate) {
 }
 ?>
 
-<!-- Subopciones internas del Panel de control -->
-<div class="mb-3" style="background:#ffffff;border-radius:8px;border:1px solid #e5e7eb;padding:8px 16px;">
-    <nav class="nav nav-pills small">
-        <a class="nav-link active" aria-current="page" href="dashboard.php">
-            Panel de control
-        </a>
-        <a class="nav-link" href="directory.php">
-            Directorio del agente
-        </a>
-        <a class="nav-link" href="profile.php">
-            Mi perfil
-        </a>
-    </nav>
-</div>
-
 <!-- Tarjeta principal de resumen -->
 <div class="welcome-card">
     <h1>Panel de control</h1>

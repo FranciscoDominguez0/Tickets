@@ -97,33 +97,54 @@
             background: none;
             border: none;
             text-align: left;
-            padding: 0;
+            padding: 12px 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .sidebar-toggle:not(.active):hover {
+            background: #0b1120;
+        }
+
+        .sidebar-toggle.active {
+            padding: 12px 12px;
         }
 
         .sidebar-subnav {
             list-style: none;
-            margin: 6px 0 10px 0;
-            padding-left: 32px;
-            border-left: 2px solid rgba(37, 99, 235, 0.6);
+            margin: 4px 0 8px 0;
+            padding-left: 36px;
+            border-left: 2px solid rgba(37, 99, 235, 0.5);
             max-height: 0;
             overflow: hidden;
-            transition: max-height .18s ease-out, opacity .15s ease-out;
+            transition: max-height .2s ease-out, opacity .2s ease-out, margin .2s ease-out;
             opacity: 0;
         }
 
         .sidebar-subnav.open {
-            max-height: 400px;
+            max-height: 200px;
             opacity: 1;
+            margin: 8px 0 12px 0;
         }
 
         .sidebar-subnav .sidebar-link {
-            padding: 7px 8px;
-            font-size: 0.84rem;
+            padding: 8px 10px;
+            font-size: 0.85rem;
             color: #9ca3af;
+            margin-bottom: 2px;
+        }
+
+        .sidebar-subnav .sidebar-link:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: #e5e7eb;
+            transform: translateX(2px);
         }
 
         .sidebar-subnav .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(29, 78, 216, 0.2), rgba(14, 165, 233, 0.2));
             color: #e5e7eb;
+            border-left: 2px solid #1d4ed8;
+            padding-left: 8px;
         }
 
         .sidebar-toggle .arrow {
@@ -283,28 +304,31 @@
                 <div class="sidebar-section-title">Principal</div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
+                        <?php 
+                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory','profile']);
+                        ?>
                         <button type="button"
-                                class="sidebar-link sidebar-toggle <?php echo in_array($currentRoute, ['dashboard','directory','profile']) ? 'active expanded' : ''; ?>"
+                                class="sidebar-link sidebar-toggle <?php echo $isPanelRoute ? 'active' : ''; ?> <?php echo $isPanelRoute ? 'expanded' : ''; ?>"
                                 data-subnav="panel-subnav">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M4 12L11 5L18 12V19H4V12Z" stroke="#e5e7eb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M4 12L11 5L18 12V19H4V12Z" stroke="<?php echo $isPanelRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Panel de control
                             <span class="arrow">
                                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7 5L12 10L7 15" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $isPanelRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                         </button>
-                        <ul id="panel-subnav" class="sidebar-subnav <?php echo in_array($currentRoute, ['dashboard','directory','profile']) ? 'open' : ''; ?>">
+                        <ul id="panel-subnav" class="sidebar-subnav <?php echo $isPanelRoute ? 'open' : ''; ?>">
                             <li>
                                 <a href="dashboard.php" class="sidebar-link <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
                                     <span class="icon">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <rect x="4" y="4" width="16" height="16" rx="3" stroke="#64748b" stroke-width="1.5"/>
-                                            <path d="M9 12L11 14L15 10" stroke="#22c55e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4" y="4" width="16" height="16" rx="3" stroke="<?php echo $currentRoute === 'dashboard' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M9 12L11 14L15 10" stroke="<?php echo $currentRoute === 'dashboard' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </span>
                                     Resumen
@@ -314,8 +338,8 @@
                                 <a href="directory.php" class="sidebar-link <?php echo $currentRoute === 'directory' ? 'active' : ''; ?>">
                                     <span class="icon">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M5 5H14L19 10V19H5V5Z" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            <path d="M9 13H15" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                                            <path d="M5 5H14L19 10V19H5V5Z" stroke="<?php echo $currentRoute === 'directory' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 13H15" stroke="<?php echo $currentRoute === 'directory' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
                                         </svg>
                                     </span>
                                     Directorio del agente
@@ -325,8 +349,8 @@
                                 <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
                                     <span class="icon">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="12" cy="8" r="3" stroke="#64748b" stroke-width="1.5"/>
-                                            <path d="M6 19C6.6 16.5 8.8 15 12 15C15.2 15 17.4 16.5 18 19" stroke="#64748b" stroke-width="1.5" stroke-linecap="round"/>
+                                            <circle cx="12" cy="8" r="3" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M6 19C6.6 16.5 8.8 15 12 15C15.2 15 17.4 16.5 18 19" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
                                         </svg>
                                     </span>
                                     Mi perfil
@@ -338,9 +362,9 @@
                         <a href="tickets.php" class="sidebar-link <?php echo $currentRoute === 'tickets' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="#9ca3af" stroke-width="1.6"/>
-                                    <path d="M8 9H16" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M8 13H13" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
+                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M8 9H16" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M8 13H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Solicitudes
@@ -350,9 +374,9 @@
                         <a href="users.php" class="sidebar-link <?php echo $currentRoute === 'users' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="9" cy="8" r="3" stroke="#9ca3af" stroke-width="1.6"/>
-                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
-                                    <circle cx="17" cy="8" r="2.5" stroke="#9ca3af" stroke-width="1.4"/>
+                                    <circle cx="9" cy="8" r="3" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <circle cx="17" cy="8" r="2.5" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.6"/>
                                 </svg>
                             </span>
                             Usuarios
@@ -362,8 +386,8 @@
                         <a href="tasks.php" class="sidebar-link <?php echo $currentRoute === 'tasks' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="5" width="16" height="14" rx="2" stroke="#9ca3af" stroke-width="1.6"/>
-                                    <path d="M4 9H20" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
+                                    <rect x="4" y="5" width="16" height="14" rx="2" stroke="<?php echo $currentRoute === 'tasks' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M4 9H20" stroke="<?php echo $currentRoute === 'tasks' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Tareas
@@ -373,8 +397,8 @@
                         <a href="canned.php" class="sidebar-link <?php echo $currentRoute === 'canned' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M5 4H14L19 9V20H5V4Z" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M9 12H15" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
+                                    <path d="M5 4H14L19 9V20H5V4Z" stroke="<?php echo $currentRoute === 'canned' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 12H15" stroke="<?php echo $currentRoute === 'canned' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Base de conocimientos
@@ -390,8 +414,8 @@
                         <a href="orgs.php" class="sidebar-link <?php echo $currentRoute === 'orgs' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="8" width="16" height="10" rx="2" stroke="#9ca3af" stroke-width="1.6"/>
-                                    <path d="M9 8V6C9 4.89543 9.89543 4 11 4H13C14.1046 4 15 4.89543 15 6V8" stroke="#9ca3af" stroke-width="1.6" stroke-linecap="round"/>
+                                    <rect x="4" y="8" width="16" height="10" rx="2" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M9 8V6C9 4.89543 9.89543 4 11 4H13C14.1046 4 15 4.89543 15 6V8" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Organizaciones
