@@ -2,7 +2,7 @@
 /**
  * CONEXIÓN A BASE DE DATOS
  * Clase para gestionar la conexión a MySQL
- * Puerto: 33065
+ * Puerto: 3309
  * Usuario: root
  * Contraseña: 12345678
  */

@@ -3,18 +3,18 @@
  * PÁGINA DE INICIO - REDIRECCIONA A LOGIN
  */
 
-// Si el usuario ya está logueado, redirige al dashboard correspondiente
-session_start();
+require_once 'config.php';
 
+// Si el usuario ya está logueado, redirige al dashboard correspondiente
 if (isset($_SESSION['user_type'])) {
     if ($_SESSION['user_type'] === 'cliente') {
-        header('Location: /cliente/index.php');
+        header('Location: upload/tickets.php');
     } elseif ($_SESSION['user_type'] === 'agente') {
-        header('Location: /agente/index.php');
+        header('Location: upload/scp/index.php');
     }
     exit;
 }
 
 // Si no está logueado, redirige al login de cliente
-header('Location: /cliente/login.php');
+header('Location: upload/login.php');
 exit;

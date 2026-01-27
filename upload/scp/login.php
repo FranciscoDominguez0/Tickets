@@ -6,11 +6,11 @@
  * SQL: SELECT id, username, email, firstname, lastname, password FROM staff WHERE username = ? AND is_active = 1
  */
 
-require_once '../config.php';
+require_once '../../config.php';
 
 // Si ya está logueado, redirigir
 if (isset($_SESSION['staff_id'])) {
-    header('Location: ../upload/scp/');
+    header('Location: index.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ if ($_POST) {
                 $staff = Auth::loginStaff($username, $password);
                 if ($staff) {
                     $_SESSION['user_login_time'] = time();
-                    header('Location: ../upload/scp/');
+                    header('Location: index.php');
                     exit;
                 } else {
                     $error = 'Usuario o contraseña incorrectos';
@@ -46,7 +46,7 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Agente - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="../publico/css/agent-login.css">
+    <link rel="stylesheet" href="../../publico/css/agent-login.css">
 </head>
 <body class="agent-login">
     <!-- CONTENEDOR PRINCIPAL -->

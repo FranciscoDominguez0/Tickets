@@ -10,7 +10,7 @@ require_once '../config.php';
 
 // Si ya está logueado, redirigir
 if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+    header('Location: tickets.php');
     exit;
 }
 
@@ -31,12 +31,8 @@ if ($_POST) {
                 $user = Auth::loginUser($email, $password);
                 if ($user) {
                     $_SESSION['user_login_time'] = time();
-                    $success = 'Login exitoso, redirigiendo...';
-                    echo '<script>
-                        setTimeout(function() {
-                            window.location.href = "index.php";
-                        }, 1500);
-                    </script>';
+                    header('Location: tickets.php');
+                    exit;
                 } else {
                     $error = 'Email o contraseña incorrectos';
                 }
@@ -134,7 +130,7 @@ if ($_POST) {
                         </p>
                         <p class="agent-text">
                             Soy un agente — 
-                            <a href="../agente/login.php" class="agent-link">Acceda aquí</a>
+                            <a href="scp/login.php" class="agent-link">Acceda aquí</a>
                         </p>
                     </div>
                     <div class="lock-icon">
@@ -150,7 +146,7 @@ if ($_POST) {
             <div class="info-section">
                 <p class="info-text">
                     Si es la primera vez que se pone en contacto con nosotros o perdió el número de Ticket, 
-                    por favor <a href="#" class="info-link">abra un nuevo Ticket</a>.
+                    por favor <a href="open.php" class="info-link">abra un nuevo Ticket</a>.
                 </p>
             </div>
         </div>

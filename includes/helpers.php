@@ -6,11 +6,23 @@
 // Proteger página (requiere login)
 function requireLogin($type = 'user') {
     if ($type === 'cliente' && !isset($_SESSION['user_id'])) {
-        header('Location: login.php');
+        // Detectar si estamos en upload/ o en otro lugar
+        $currentPath = $_SERVER['PHP_SELF'];
+        if (strpos($currentPath, '/upload/') !== false) {
+            header('Location: login.php');
+        } else {
+            header('Location: upload/login.php');
+        }
         exit;
     }
     if ($type === 'agente' && !isset($_SESSION['staff_id'])) {
-        header('Location: /sistema-tickets/agente/login.php');
+        // Detectar si estamos en upload/scp/ o en otro lugar
+        $currentPath = $_SERVER['PHP_SELF'];
+        if (strpos($currentPath, '/upload/scp/') !== false) {
+            header('Location: login.php');
+        } else {
+            header('Location: ../upload/scp/login.php');
+        }
         exit;
     }
 }

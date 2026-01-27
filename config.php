@@ -3,11 +3,22 @@
  * CONFIGURACIÓN DEL SISTEMA DE TICKETS
  */
 
+// Verificar que la extensión mysqli esté habilitada
+if (!extension_loaded('mysqli')) {
+    die('❌ Error: La extensión mysqli de PHP no está habilitada.<br><br>' .
+        'Para habilitarla en Windows:<br>' .
+        '1. Abre el archivo php.ini<br>' .
+        '2. Busca la línea: ;extension=mysqli<br>' .
+        '3. Quita el punto y coma (;) al inicio: extension=mysqli<br>' .
+        '4. Guarda el archivo y reinicia tu servidor web (Apache/Nginx)<br><br>' .
+        'Ubicación común del php.ini: ' . php_ini_loaded_file());
+}
+
 // ============================================================================
 // BASE DE DATOS
 // ============================================================================
 define('DB_HOST', 'localhost');
-define('DB_PORT', '33065');
+define('DB_PORT', '3309');
 define('DB_USER', 'root');
 define('DB_PASS', '12345678');
 define('DB_NAME', 'tickets_db');
