@@ -1,0 +1,541 @@
+/* ============================================================================
+   AGENT LOGIN STYLES - Glassmorphism Design
+   ============================================================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body.agent-login {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: #1a1a2e;
+    background-image: url('../img/agent-background.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    color: #1e293b;
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.agent-login::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ============================================================================
+   NAVEGACIÓN SUPERIOR
+   ============================================================================ */
+
+.agent-nav {
+    position: relative;
+    z-index: 10;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.agent-nav-links {
+    display: flex;
+    gap: 30px;
+    list-style: none;
+}
+
+.agent-nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: opacity 0.3s;
+}
+
+.agent-nav-links a:hover {
+    opacity: 0.8;
+}
+
+.agent-nav-login-btn {
+    background: rgba(59, 130, 246, 0.8);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.agent-nav-login-btn:hover {
+    background: rgba(59, 130, 246, 1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* ============================================================================
+   CONTENEDOR PRINCIPAL
+   ============================================================================ */
+
+.agent-login-container {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    animation: fadeIn 0.8s ease-out;
+    background: transparent;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ============================================================================
+   PANEL DE LOGIN (GLASSMORPHISM)
+   ============================================================================ */
+
+.agent-login-panel {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px) saturate(120%);
+    -webkit-backdrop-filter: blur(15px) saturate(120%);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    padding: 50px 40px;
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.agent-login-panel:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 25px 70px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.agent-login-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.03) 100%);
+    border-radius: 28px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+}
+
+.agent-login-panel > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================================================
+   TÍTULO
+   ============================================================================ */
+
+.agent-login-title {
+    text-align: center;
+    font-size: 38px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.95);
+    margin-bottom: 40px;
+    letter-spacing: -1.5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    position: relative;
+}
+
+.agent-login-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+    border-radius: 2px;
+}
+
+/* ============================================================================
+   FORMULARIO
+   ============================================================================ */
+
+.agent-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.agent-form-group {
+    position: relative;
+}
+
+.agent-form-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+}
+
+.agent-form-group input {
+    width: 100%;
+    padding: 12px 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px 4px 0 0;
+    font-size: 16px;
+    color: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    backdrop-filter: blur(3px);
+    font-weight: 500;
+}
+
+.agent-form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.agent-form-group input:focus {
+    outline: none;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+    border-bottom-width: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.agent-form-group input:focus + .agent-input-icon {
+    opacity: 1;
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.1);
+}
+
+.agent-input-icon {
+    position: absolute;
+    right: 0;
+    top: 38px;
+    width: 22px;
+    height: 22px;
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.agent-form-group small {
+    display: block;
+    margin-top: 8px;
+    color: rgba(30, 41, 59, 0.6);
+    font-size: 12px;
+}
+
+/* ============================================================================
+   FORGOT PASSWORD
+   ============================================================================ */
+
+.agent-forgot-password {
+    text-align: right;
+    margin-top: -20px;
+}
+
+.agent-forgot-password a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.agent-forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   REMEMBER ME
+   ============================================================================ */
+
+.agent-remember {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: -10px;
+}
+
+.agent-remember input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #2563eb;
+}
+
+.agent-remember label {
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* ============================================================================
+   BOTÓN DE LOGIN
+   ============================================================================ */
+
+.agent-btn-login {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, color 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 
+        0 6px 20px rgba(59, 130, 246, 0.4),
+        0 2px 8px rgba(59, 130, 246, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.5px;
+    background-image: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%);
+}
+
+.agent-btn-login::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.agent-btn-login:hover:not(.loading)::before {
+    left: 100%;
+}
+
+.agent-btn-login:hover:not(.loading) {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 10px 30px rgba(59, 130, 246, 0.5),
+        0 4px 12px rgba(59, 130, 246, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.agent-btn-login:active {
+    transform: translateY(0);
+}
+
+.agent-btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.agent-btn-login.loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+    background-image: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%) !important;
+    transform: none !important;
+    box-shadow: 
+        0 6px 20px rgba(59, 130, 246, 0.4),
+        0 2px 8px rgba(59, 130, 246, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.agent-btn-login.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    opacity: 0;
+    animation: fadeInSpin 0.3s ease forwards, spin 0.8s linear infinite 0.3s;
+}
+
+@keyframes fadeInSpin {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   REGISTER LINK
+   ============================================================================ */
+
+.agent-register-link {
+    text-align: center;
+    margin-top: 30px;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.agent-register-link a {
+    color: #1e293b;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.agent-register-link a:hover {
+    text-decoration: underline;
+}
+
+/* ============================================================================
+   ALERTAS
+   ============================================================================ */
+
+.agent-alert {
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease-out;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.agent-alert-danger {
+    color: #dc2626;
+    border-left-color: #dc2626;
+}
+
+.agent-alert-success {
+    color: #16a34a;
+    border-left-color: #16a34a;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .agent-nav {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .agent-nav-links {
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .agent-login-panel {
+        padding: 40px 30px;
+        max-width: 100%;
+    }
+
+    .agent-login-title {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .agent-nav-links {
+        gap: 15px;
+        font-size: 12px;
+    }
+
+    .agent-nav-login-btn {
+        padding: 8px 20px;
+        font-size: 12px;
+    }
+
+    .agent-login-panel {
+        padding: 30px 20px;
+    }
+
+    .agent-login-title {
+        font-size: 24px;
+        margin-bottom: 30px;
+    }
+
+    .agent-login-form {
+        gap: 25px;
+    }
+}
