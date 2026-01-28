@@ -107,18 +107,6 @@ if ($_POST) {
         </div>
     </div>
 
-    <script>
-        // Prevenir submit duplicado
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const btn = this.querySelector('.agent-btn-login');
-            if (btn.disabled) {
-                e.preventDefault();
-                return false;
-            }
-            btn.disabled = true;
-            btn.classList.add('loading');
-            btn.textContent = 'Verificando...';
-        });
-    </script>
+    <script src="js/login.js"></script>
 </body>
 </html>
