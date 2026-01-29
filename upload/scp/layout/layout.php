@@ -107,17 +107,52 @@
                             Solicitudes
                         </a>
                     </li>
-                    <li>
-                        <a href="users.php" class="sidebar-link <?php echo $currentRoute === 'users' ? 'active' : ''; ?>">
+                    <li class="sidebar-group">
+                        <?php
+                        $isUsersRoute = in_array($currentRoute, ['users', 'orgs']);
+                        ?>
+                        <button type="button"
+                                class="sidebar-link sidebar-toggle <?php echo $isUsersRoute ? 'active' : ''; ?> <?php echo $isUsersRoute ? 'expanded' : ''; ?>"
+                                data-subnav="users-subnav">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="9" cy="8" r="3" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                    <circle cx="17" cy="8" r="2.5" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.6"/>
+                                    <circle cx="9" cy="8" r="3" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <circle cx="17" cy="8" r="2.5" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.6"/>
                                 </svg>
                             </span>
                             Usuarios
-                        </a>
+                            <span class="arrow">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <ul id="users-subnav" class="sidebar-subnav <?php echo $isUsersRoute ? 'open' : ''; ?>">
+                            <li>
+                                <a href="users.php" class="sidebar-link <?php echo $currentRoute === 'users' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="9" cy="8" r="2.5" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
+                                            <circle cx="17" cy="8" r="2" stroke="<?php echo $currentRoute === 'users' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                        </svg>
+                                    </span>
+                                    Directorio usuarios
+                                </a>
+                            </li>
+                            <li>
+                                <a href="orgs.php" class="sidebar-link <?php echo $currentRoute === 'orgs' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="4" y="8" width="16" height="10" rx="2" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M9 8V6C9 4.89543 9.89543 4 11 4H13C14.1046 4 15 4.89543 15 6V8" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    Organizaciones
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li>
                         <a href="tasks.php" class="sidebar-link <?php echo $currentRoute === 'tasks' ? 'active' : ''; ?>">
@@ -147,17 +182,6 @@
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Configuración</div>
                 <ul class="sidebar-nav">
-                    <li>
-                        <a href="orgs.php" class="sidebar-link <?php echo $currentRoute === 'orgs' ? 'active' : ''; ?>">
-                            <span class="icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="8" width="16" height="10" rx="2" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                    <path d="M9 8V6C9 4.89543 9.89543 4 11 4H13C14.1046 4 15 4.89543 15 6V8" stroke="<?php echo $currentRoute === 'orgs' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                </svg>
-                            </span>
-                            Organizaciones
-                        </a>
-                    </li>
                     <li>
                         <a href="logout.php" class="sidebar-link">
                             <span class="icon">
