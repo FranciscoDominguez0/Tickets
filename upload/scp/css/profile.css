@@ -1,0 +1,191 @@
+/**
+ * Estilos del módulo Mi perfil
+ * Diseño profesional, tarjetas y pestañas
+ */
+
+.profile-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.profile-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 1.5rem;
+}
+
+.profile-form .alert {
+    margin-bottom: 1.25rem;
+}
+
+/* Tabs */
+.profile-tabs {
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+    gap: 0.25rem;
+}
+
+.profile-tabs .nav-link {
+    font-weight: 600;
+    color: #64748b;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: -2px;
+    background: transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.profile-tabs .nav-link:hover {
+    color: #1d4ed8;
+}
+
+.profile-tabs .nav-link.active {
+    color: #1d4ed8;
+    border-bottom-color: #1d4ed8;
+    background: transparent;
+}
+
+.profile-tab-content {
+    padding: 0;
+}
+
+/* Tarjeta de contenido */
+.profile-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.profile-avatar-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35);
+}
+
+.profile-avatar-inner {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.profile-fields {
+    flex: 1;
+    min-width: 280px;
+}
+
+.profile-hr {
+    margin: 1.5rem 0;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+}
+
+.profile-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 1rem;
+}
+
+.profile-card .form-label {
+    font-weight: 500;
+    color: #475569;
+}
+
+.profile-card .form-control:not(.bg-light):focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.profile-card .form-select:not(:disabled):focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+/* Botón cambiar contraseña */
+#btn-change-password {
+    font-weight: 500;
+}
+
+/* Acciones del formulario */
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.profile-actions .btn-primary {
+    font-weight: 600;
+}
+
+/* Modal cambiar contraseña */
+#modalChangePassword .modal-content {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+#modalChangePassword .modal-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+}
+
+#modalChangePassword .modal-title {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+#modalChangePassword .modal-body {
+    padding: 1.25rem;
+}
+
+#modalChangePassword .modal-footer {
+    border-top: 1px solid #e2e8f0;
+    padding: 1rem 1.25rem;
+}
+
+#modalChangePassword .form-control:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .profile-avatar-section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .profile-fields {
+        width: 100%;
+    }
+
+    .profile-actions {
+        flex-direction: column;
+    }
+
+    .profile-actions .btn {
+        width: 100%;
+    }
+}
