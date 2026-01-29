@@ -9,7 +9,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/scp.css">
+    <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
+    <link rel="stylesheet" href="css/profile.css">
+    <?php endif; ?>
 </head>
 <body>
     <!-- NAVBAR -->
@@ -183,6 +187,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
+    <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
+    <script src="js/profile.js"></script>
+    <?php endif; ?>
 </body>
 </html>
 
