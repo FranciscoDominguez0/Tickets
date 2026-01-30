@@ -452,7 +452,7 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
     <div class="ticket-view-tab-content" id="thread">
         <?php
         $msg = $_GET['msg'] ?? '';
-        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
+        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
         if ($msg && isset($msgText[$msg])): ?>
             <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>

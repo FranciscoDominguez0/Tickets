@@ -43,6 +43,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
 $add_errors = $add_errors ?? [];
 
+// Eliminar usuario (POST con confirmación desde modal)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'delete' && isset($_POST['id']) && is_numeric($_POST['id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $del_id = (int) $_POST['id'];
+        $stmt = $mysqli->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->bind_param('i', $del_id);
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            header('Location: users.php?msg=user_deleted');
+            exit;
+        }
+    }
+}
+
 // Vista de un usuario concreto (users.php?id=X)
 $viewUser = null;
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
@@ -348,6 +361,12 @@ $statusBadges = [
     <?php if (isset($_GET['added']) && $_GET['added'] === '1'): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             Usuario añadido correctamente. El usuario puede iniciar sesión de inmediato (no requiere confirmación por correo).
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'user_deleted'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Usuario eliminado correctamente.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>

@@ -1,10 +1,75 @@
 <?php
 // Módulo: Solicitudes (tickets)
-// Vista detallada por id (tickets.php?id=X) con hilo y respuesta; lista si no hay id.
+// a=open: abrir nuevo ticket (uid= preselecciona usuario). id=X: vista detallada.
 
 $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
+
+// Abrir nuevo ticket (tickets.php?a=open&uid=X)
+if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
+    $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
+    $open_errors = [];
+    $preSelectedUser = null;
+    if ($open_uid > 0) {
+        $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE id = ?");
+        $stmt->bind_param('i', $open_uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $preSelectedUser = $res ? $res->fetch_assoc() : null;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'open') {
+        if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
+            $open_errors[] = 'Token de seguridad inválido.';
+        } else {
+            $user_id = isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
+            $subject = trim($_POST['subject'] ?? '');
+            $body = trim($_POST['body'] ?? '');
+            $dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 1;
+            $priority_id = isset($_POST['priority_id']) && is_numeric($_POST['priority_id']) ? (int) $_POST['priority_id'] : 2;
+            $staff_id = isset($_POST['staff_id']) && is_numeric($_POST['staff_id']) ? (int) $_POST['staff_id'] : null;
+            if ($staff_id === 0) $staff_id = null;
+            if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
+            if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
+            if (empty($open_errors)) {
+                $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
+                $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                if ($stmt->execute()) {
+                    $new_tid = (int) $mysqli->insert_id;
+                    $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($new_tid, NOW())");
+                    $thread_id = (int) $mysqli->insert_id;
+                    if ($body !== '') {
+                        $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
+                        $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
+                        $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
+                        $stmtE->execute();
+                    }
+                    header('Location: tickets.php?id=' . $new_tid . '&msg=created');
+                    exit;
+                }
+                $open_errors[] = 'Error al crear el ticket.';
+            }
+        }
+    }
+
+    $open_departments = [];
+    $r = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+    if ($r) while ($row = $r->fetch_assoc()) $open_departments[] = $row;
+    $open_priorities = [];
+    $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
+    if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
+    $open_staff = [];
+    $r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+    if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
+    $open_users = [];
+    $r = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
+    if ($r) while ($row = $r->fetch_assoc()) $open_users[] = $row;
+
+    require __DIR__ . '/ticket-open.inc.php';
+    return;
+}
 
 // Vista de un ticket concreto (tickets.php?id=X)
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {

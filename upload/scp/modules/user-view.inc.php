@@ -144,7 +144,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
         </h1>
         <div class="user-view-actions">
             <a href="#" class="btn btn-register"><i class="bi bi-person-check"></i> Registrarse</a>
-            <a href="users.php?do=delete&id=<?php echo $uid; ?>" class="btn btn-danger" onclick="return confirm('¿Eliminar este usuario?');"><i class="bi bi-trash"></i> Eliminar usuario</a>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser"><i class="bi bi-trash"></i> Eliminar usuario</button>
             <div class="dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -204,7 +204,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 <div class="empty-state">
                     <div class="icon"><i class="bi bi-inbox"></i></div>
                     <p class="mb-0">Usuario no tiene ningún Ticket</p>
-                    <a href="open.php?user_id=<?php echo $uid; ?>" class="btn btn-primary btn-create"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
+                    <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-create"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
                 </div>
             <?php else: ?>
                 <table class="user-view-tickets-table">
@@ -228,7 +228,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                     </tbody>
                 </table>
                 <p class="mt-3 mb-0">
-                    <a href="open.php?user_id=<?php echo $uid; ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
+                    <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
                 </p>
             <?php endif; ?>
         </div>
@@ -237,6 +237,31 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
             <div class="empty-state">
                 <div class="icon"><i class="bi bi-pin-angle"></i></div>
                 <p class="mb-0">No hay notas para este usuario</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: confirmar eliminar usuario -->
+    <div class="modal fade" id="modalDeleteUser" tabindex="-1" aria-labelledby="modalDeleteUserLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="modalDeleteUserLabel"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">¿Está seguro de que desea eliminar a <strong><?php echo html($viewUserName); ?></strong> (<?php echo html($viewUser['email']); ?>)?</p>
+                    <p class="text-muted small mt-2 mb-0">Se eliminarán también todos sus tickets y datos asociados. Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="post" action="users.php" class="d-inline">
+                        <input type="hidden" name="do" value="delete">
+                        <input type="hidden" name="id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Eliminar</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
