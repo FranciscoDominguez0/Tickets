@@ -559,9 +559,7 @@ $statusBadges = [
             </div>
         </div>
     </div>
-</div>
-
-<script>
+</div><script>
 (function() {
     var selectAll = document.getElementById('selectAll');
     var rowCbs = document.querySelectorAll('.user-row-cb');
