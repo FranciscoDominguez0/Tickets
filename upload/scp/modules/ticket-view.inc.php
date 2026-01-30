@@ -209,25 +209,185 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                     <?php
                     $st = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY order_by, id");
                     while ($row = $st->fetch_assoc()): ?>
-                        <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?>" href="#"><?php echo html($row['name']); ?></a></li>
+                        <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=status&status_id=<?php echo (int)$row['id']; ?>"><?php echo html($row['name']); ?></a></li>
                     <?php endwhile; ?>
                 </ul>
             </div>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Asignar"><i class="bi bi-person"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#">— Sin asignar —</a></li>
+                    <li><a class="dropdown-item <?php echo empty($t['staff_id']) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=0">— Sin asignar —</a></li>
                     <?php
                     $st = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
                     while ($row = $st->fetch_assoc()): ?>
-                        <li><a class="dropdown-item" href="#"><?php echo html(trim($row['firstname'] . ' ' . $row['lastname'])); ?></a></li>
+                        <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)($t['staff_id'] ?? 0) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=<?php echo (int)$row['id']; ?>"><?php echo html(trim($row['firstname'] . ' ' . $row['lastname'])); ?></a></li>
                     <?php endwhile; ?>
                 </ul>
             </div>
-            <button class="btn-icon" title="Imprimir"><i class="bi bi-printer"></i></button>
-            <button class="btn-icon" title="Más"><i class="bi bi-gear"></i></button>
+            <button class="btn-icon" title="Imprimir" onclick="window.print();"><i class="bi bi-printer"></i></button>
+            <div class="dropdown d-inline-block">
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalOwner"><i class="bi bi-person-badge me-2"></i>Cambiar Propietario</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalMerge"><i class="bi bi-link-45deg me-2"></i>Unir Tiquetes</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalLinked"><i class="bi bi-link me-2"></i>Tickets vinculados</a></li>
+                    <li><a class="dropdown-item" href="tickets.php?id=<?php echo $tid; ?>&action=mark_answered"><i class="bi bi-check-circle me-2"></i>Marcar como contestados</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-share me-2"></i>Administrar referidos</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-text me-2"></i>Gestionar formularios</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalCollaborators"><i class="bi bi-people me-2"></i>Gestionar Colaboradores</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#modalBlockEmail"><i class="bi bi-envelope-x me-2"></i>Bloquear Email &lt;<?php echo html($t['user_email']); ?>&gt;</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#modalDelete"><i class="bi bi-trash me-2"></i>Borrar Ticket</a></li>
+                </ul>
+            </div>
         </div>
     </header>
+
+    <!-- Modales: Propietario, Unir, Vinculados, Colaboradores, Bloquear, Borrar -->
+    <div class="modal fade" id="modalOwner" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="owner">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Cambiar Propietario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">Nuevo propietario (usuario)</label>
+                        <select name="user_id" class="form-select" required>
+                            <?php
+                            $users = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
+                            while ($u = $users->fetch_assoc()): ?>
+                                <option value="<?php echo (int)$u['id']; ?>" <?php echo (int)$u['id'] === (int)$t['user_id'] ? 'selected' : ''; ?>><?php echo html(trim($u['firstname'].' '.$u['lastname']).' ('.$u['email'].')'); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Cambiar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalMerge" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="merge">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Unir Tiquetes</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Este ticket se unirá al ticket destino (todas las entradas se copiarán y este ticket se cerrará).</p>
+                        <label class="form-label">Ticket destino (ID o número)</label>
+                        <input type="text" name="target_ticket_id" class="form-control" placeholder="Ej: 5 o TKT-20250126-0001" required>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Unir y cerrar este ticket</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalLinked" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Tickets vinculados</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <?php $linked = $t['linked_tickets'] ?? []; ?>
+                    <?php if (empty($linked)): ?>
+                        <p class="text-muted mb-3">No hay tickets vinculados.</p>
+                    <?php else: ?>
+                        <ul class="list-group mb-3">
+                            <?php foreach ($linked as $lt): ?>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <a href="tickets.php?id=<?php echo (int)$lt['id']; ?>">#<?php echo html($lt['ticket_number']); ?> — <?php echo html($lt['subject']); ?></a>
+                                    <a href="tickets.php?id=<?php echo $tid; ?>&action=unlink&linked_id=<?php echo (int)$lt['id']; ?>" class="btn btn-sm btn-outline-danger">Quitar</a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                    <form method="post" action="tickets.php?id=<?php echo $tid; ?>" class="mt-2">
+                        <input type="hidden" name="action" value="link">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <div class="input-group">
+                            <input type="number" name="linked_ticket_id" class="form-control" placeholder="ID del ticket a vincular" min="1" required>
+                            <button type="submit" class="btn btn-primary">Vincular</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalCollaborators" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Gestionar Colaboradores</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <?php $collabs = $t['collaborators'] ?? []; ?>
+                    <?php if (!empty($collabs)): ?>
+                        <ul class="list-group mb-3">
+                            <?php foreach ($collabs as $c): ?>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <?php echo html(trim($c['firstname'].' '.$c['lastname']).' ('.$c['email'].')'); ?>
+                                    <a href="tickets.php?id=<?php echo $tid; ?>&action=collab_remove&user_id=<?php echo (int)$c['user_id']; ?>" class="btn btn-sm btn-outline-danger">Quitar</a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+                    <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                        <input type="hidden" name="action" value="collab_add">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <div class="input-group">
+                            <select name="user_id" class="form-select" required>
+                                <option value="">— Añadir usuario —</option>
+                                <?php
+                                $users = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
+                                while ($u = $users->fetch_assoc()):
+                                    if ((int)$u['id'] === (int)$t['user_id']) continue;
+                                    $inCollab = false;
+                                    foreach ($collabs as $c) { if ((int)$c['user_id'] === (int)$u['id']) { $inCollab = true; break; } }
+                                    if ($inCollab) continue;
+                                ?>
+                                    <option value="<?php echo (int)$u['id']; ?>"><?php echo html(trim($u['firstname'].' '.$u['lastname']).' ('.$u['email'].')'); ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                            <button type="submit" class="btn btn-primary">Añadir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalBlockEmail" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="block_email">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Bloquear Email</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <p>¿Bloquear el email <strong><?php echo html($t['user_email']); ?></strong>? El usuario no podrá iniciar sesión ni crear tickets.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Bloquear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalDelete" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="confirm" value="1">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Borrar Ticket</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <p class="text-danger">¿Eliminar este ticket y todo su historial? Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Borrar Ticket</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Resumen del ticket -->
     <div class="ticket-view-overview">
@@ -290,8 +450,11 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
     </ul>
 
     <div class="ticket-view-tab-content" id="thread">
-        <?php if (isset($_GET['msg']) && $_GET['msg'] === 'reply_sent'): ?>
-            <div class="alert alert-success alert-dismissible fade show">Respuesta publicada correctamente.
+        <?php
+        $msg = $_GET['msg'] ?? '';
+        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
+        if ($msg && isset($msgText[$msg])): ?>
+            <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
