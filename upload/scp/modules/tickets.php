@@ -1,10 +1,75 @@
 <?php
 // Módulo: Solicitudes (tickets)
-// Vista detallada por id (tickets.php?id=X) con hilo y respuesta; lista si no hay id.
+// a=open: abrir nuevo ticket (uid= preselecciona usuario). id=X: vista detallada.
 
 $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
+
+// Abrir nuevo ticket (tickets.php?a=open&uid=X)
+if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
+    $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
+    $open_errors = [];
+    $preSelectedUser = null;
+    if ($open_uid > 0) {
+        $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE id = ?");
+        $stmt->bind_param('i', $open_uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $preSelectedUser = $res ? $res->fetch_assoc() : null;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'open') {
+        if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
+            $open_errors[] = 'Token de seguridad inválido.';
+        } else {
+            $user_id = isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
+            $subject = trim($_POST['subject'] ?? '');
+            $body = trim($_POST['body'] ?? '');
+            $dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 1;
+            $priority_id = isset($_POST['priority_id']) && is_numeric($_POST['priority_id']) ? (int) $_POST['priority_id'] : 2;
+            $staff_id = isset($_POST['staff_id']) && is_numeric($_POST['staff_id']) ? (int) $_POST['staff_id'] : null;
+            if ($staff_id === 0) $staff_id = null;
+            if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
+            if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
+            if (empty($open_errors)) {
+                $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
+                $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                if ($stmt->execute()) {
+                    $new_tid = (int) $mysqli->insert_id;
+                    $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($new_tid, NOW())");
+                    $thread_id = (int) $mysqli->insert_id;
+                    if ($body !== '') {
+                        $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
+                        $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
+                        $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
+                        $stmtE->execute();
+                    }
+                    header('Location: tickets.php?id=' . $new_tid . '&msg=created');
+                    exit;
+                }
+                $open_errors[] = 'Error al crear el ticket.';
+            }
+        }
+    }
+
+    $open_departments = [];
+    $r = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+    if ($r) while ($row = $r->fetch_assoc()) $open_departments[] = $row;
+    $open_priorities = [];
+    $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
+    if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
+    $open_staff = [];
+    $r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+    if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
+    $open_users = [];
+    $r = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
+    if ($r) while ($row = $r->fetch_assoc()) $open_users[] = $row;
+
+    require __DIR__ . '/ticket-open.inc.php';
+    return;
+}
 
 // Vista de un ticket concreto (tickets.php?id=X)
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
@@ -40,6 +105,141 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $threadRow = ['id' => $mysqli->insert_id];
         }
         $thread_id = (int) $threadRow['id'];
+
+        // Acciones rápidas: estado, asignar, eliminar, etc.
+        $action = $_GET['action'] ?? $_POST['action'] ?? null;
+        $csrfOk = true;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add'], true)) {
+            $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
+        }
+        if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
+            $ok = false;
+            $msg = '';
+            if ($action === 'status' && isset($_GET['status_id']) && is_numeric($_GET['status_id'])) {
+                $sid = (int) $_GET['status_id'];
+                $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
+                $stmt->bind_param('ii', $sid, $tid);
+                $ok = $stmt->execute();
+                $msg = 'updated';
+            } elseif ($action === 'assign') {
+                $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
+                if ($staff_id !== null) {
+                    $val = $staff_id === 0 ? null : $staff_id;
+                    $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ?");
+                    $stmt->bind_param('ii', $val, $tid);
+                    $ok = $stmt->execute();
+                    $msg = 'assigned';
+                }
+            } elseif ($action === 'mark_answered') {
+                $stmt = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%resuelto%' OR LOWER(name) LIKE '%contestado%' LIMIT 1");
+                $resolved_id = 4;
+                if ($stmt && $row = $stmt->fetch_assoc()) $resolved_id = (int) $row['id'];
+                $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
+                $stmt->bind_param('ii', $resolved_id, $tid);
+                $ok = $stmt->execute();
+                $msg = 'marked';
+            } elseif ($action === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+                $uid = (int) $_POST['user_id'];
+                $stmt = $mysqli->prepare("UPDATE tickets SET user_id = ?, updated = NOW() WHERE id = ?");
+                $stmt->bind_param('ii', $uid, $tid);
+                $ok = $stmt->execute();
+                $msg = 'owner';
+            } elseif ($action === 'block_email' && ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['confirm']) && $_GET['confirm'] === '1')) {
+                $email = $ticketView['user_email'] ?? '';
+                if ($email) {
+                    $stmt = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE id = ?");
+                    $stmt->bind_param('i', $ticketView['user_id']);
+                    $ok = $stmt->execute();
+                    $msg = 'blocked';
+                }
+            } elseif ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && $_POST['confirm'] === '1') {
+                $stmt = $mysqli->prepare("DELETE FROM tickets WHERE id = ?");
+                $stmt->bind_param('i', $tid);
+                $ok = $stmt->execute();
+                if ($ok) {
+                    header('Location: users.php?id=' . (int)$ticketView['user_id'] . '&msg=ticket_deleted');
+                    exit;
+                }
+            } elseif ($action === 'merge' && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim($_POST['target_ticket_id'] ?? ''))) {
+                $target_input = trim($_POST['target_ticket_id']);
+                $target_id = is_numeric($target_input) ? (int) $target_input : 0;
+                if ($target_id === 0) {
+                    $stmt = $mysqli->prepare("SELECT id FROM tickets WHERE ticket_number = ?");
+                    $stmt->bind_param('s', $target_input);
+                    $stmt->execute();
+                    $r = $stmt->get_result()->fetch_assoc();
+                    if ($r) $target_id = (int) $r['id'];
+                }
+                if ($target_id > 0 && $target_id !== $tid) {
+                    $stmt = $mysqli->prepare("SELECT id FROM threads WHERE ticket_id = ?");
+                    $stmt->bind_param('i', $target_id);
+                    $stmt->execute();
+                    $targetThread = $stmt->get_result()->fetch_assoc();
+                    if ($targetThread) {
+                        $stmt = $mysqli->prepare("SELECT id, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ? ORDER BY created ASC");
+                        $stmt->bind_param('i', $thread_id);
+                        $stmt->execute();
+                        $entries = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                        $ins = $mysqli->prepare("INSERT INTO thread_entries (thread_id, user_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, ?, ?)");
+                        foreach ($entries as $e) {
+                            $ins->bind_param('iiisis', $targetThread['id'], $e['user_id'], $e['staff_id'], $e['body'], $e['is_internal'], $e['created']);
+                            $ins->execute();
+                        }
+                        $closed = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%cerrado%' LIMIT 1");
+                        $closed_id = 5;
+                        if ($closed && $r = $closed->fetch_assoc()) $closed_id = (int)$r['id'];
+                        $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?")->bind_param('ii', $closed_id, $tid)->execute();
+                        $ok = true;
+                        $msg = 'merged';
+                        header('Location: tickets.php?id=' . $target_id . '&msg=merged');
+                        exit;
+                    }
+                }
+            } elseif ($action === 'link' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['linked_ticket_id']) && is_numeric($_POST['linked_ticket_id'])) {
+                $linked_id = (int) $_POST['linked_ticket_id'];
+                if ($linked_id !== $tid && $linked_id > 0) {
+                    $tbl = 'ticket_links';
+                    $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_links'");
+                    if ($exists && $exists->num_rows > 0) {
+                        $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_links (ticket_id, linked_ticket_id) VALUES (?, ?), (?, ?)");
+                        $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
+                        $ok = $stmt->execute();
+                        $msg = 'linked';
+                    }
+                }
+            } elseif ($action === 'unlink' && isset($_GET['linked_id']) && is_numeric($_GET['linked_id'])) {
+                $linked_id = (int) $_GET['linked_id'];
+                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_links'");
+                if ($exists && $exists->num_rows > 0) {
+                    $stmt = $mysqli->prepare("DELETE FROM ticket_links WHERE (ticket_id = ? AND linked_ticket_id = ?) OR (ticket_id = ? AND linked_ticket_id = ?)");
+                    $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
+                    $ok = $stmt->execute();
+                    $msg = 'unlinked';
+                }
+            } elseif ($action === 'collab_add' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+                $uid = (int) $_POST['user_id'];
+                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
+                if ($exists && $exists->num_rows > 0) {
+                    $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_collaborators (ticket_id, user_id) VALUES (?, ?)");
+                    $stmt->bind_param('ii', $tid, $uid);
+                    $ok = $stmt->execute();
+                    $msg = 'collab_added';
+                }
+            } elseif ($action === 'collab_remove' && isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
+                $uid = (int) $_GET['user_id'];
+                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
+                if ($exists && $exists->num_rows > 0) {
+                    $stmt = $mysqli->prepare("DELETE FROM ticket_collaborators WHERE ticket_id = ? AND user_id = ?");
+                    $stmt->bind_param('ii', $tid, $uid);
+                    $ok = $stmt->execute();
+                    $msg = 'collab_removed';
+                }
+            }
+            if ($ok && $msg && !in_array($action, ['delete', 'merge'], true)) {
+                header('Location: tickets.php?id=' . $tid . '&msg=' . $msg);
+                exit;
+            }
+        }
 
         // Procesar respuesta o nota interna (POST)
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
@@ -144,6 +344,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $ticketView['staff_name'] = ($ticketView['staff_first'] || $ticketView['staff_last'])
             ? trim($ticketView['staff_first'] . ' ' . $ticketView['staff_last'])
             : '— Sin asignar —';
+
+        // Tickets vinculados y colaboradores (si existen tablas)
+        $ticketView['linked_tickets'] = [];
+        $ticketView['collaborators'] = [];
+        $resLinks = @$mysqli->query("SHOW TABLES LIKE 'ticket_links'");
+        if ($resLinks && $resLinks->num_rows > 0) {
+            $stmt = $mysqli->prepare("SELECT tl.linked_ticket_id AS id, t.ticket_number, t.subject FROM ticket_links tl JOIN tickets t ON t.id = tl.linked_ticket_id WHERE tl.ticket_id = ?");
+            $stmt->bind_param('i', $tid);
+            $stmt->execute();
+            $ticketView['linked_tickets'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        }
+        $resCollab = @$mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
+        if ($resCollab && $resCollab->num_rows > 0) {
+            $stmt = $mysqli->prepare("SELECT tc.user_id, u.firstname, u.lastname, u.email FROM ticket_collaborators tc JOIN users u ON u.id = tc.user_id WHERE tc.ticket_id = ?");
+            $stmt->bind_param('i', $tid);
+            $stmt->execute();
+            $ticketView['collaborators'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        }
 
         require __DIR__ . '/ticket-view.inc.php';
         return;
