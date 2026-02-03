@@ -376,14 +376,14 @@ if (!empty($_GET['org'])) {
 }
 
 // ---------- Listado de organizaciones ----------
-// Mostrar: 1) de tabla organizations  2) de users.company que no estén en organizations (compatibilidad)
+// Mostrar solo de tabla organizations
 $search = trim($_GET['q'] ?? '');
 $pageNum = max(1, (int)($_GET['p'] ?? 1));
 $perPage = 20;
 
 $like = $search !== '' ? '%' . $search . '%' : '';
 
-// 1) Organizaciones de la tabla organizations
+// Organizaciones de la tabla organizations
 $sql1 = "
     SELECT o.*,
            COUNT(DISTINCT u.id) AS user_count,
@@ -410,42 +410,7 @@ if (!empty($params1)) {
     $stmt->bind_param($types1, ...$params1);
 }
 $stmt->execute();
-$orgsFromTable = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// 2) Organizaciones que solo existen en users.company (no están en la tabla)
-$sql2 = "
-    SELECT u.company AS name,
-           COUNT(DISTINCT u.id) AS user_count,
-           COUNT(DISTINCT t.id) AS ticket_count,
-           SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
-           MIN(u.created) AS since
-    FROM users u
-    LEFT JOIN tickets t ON t.user_id = u.id
-    LEFT JOIN ticket_status ts ON ts.id = t.status_id
-    WHERE u.company IS NOT NULL AND TRIM(u.company) <> ''
-      AND u.company NOT IN (SELECT name FROM organizations)
-";
-$params2 = [];
-$types2 = '';
-if ($search !== '') {
-    $sql2 .= " AND u.company LIKE ?";
-    $params2[] = $like;
-    $types2 .= 's';
-}
-$sql2 .= " GROUP BY u.company ORDER BY u.company ASC";
-
-$stmt = $mysqli->prepare($sql2);
-if (!empty($params2)) {
-    $stmt->bind_param($types2, ...$params2);
-}
-$stmt->execute();
-$orgsFromUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// Unir y ordenar por nombre (evitar duplicados por si acaso)
-$allOrgs = array_merge($orgsFromTable, $orgsFromUsers);
-usort($allOrgs, function ($a, $b) {
-    return strcasecmp($a['name'] ?? '', $b['name'] ?? '');
-});
+$allOrgs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 $totalRows = count($allOrgs);
 $totalPages = $totalRows ? (int)ceil($totalRows / $perPage) : 1;
