@@ -36,7 +36,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title text-warning"><?php echo $stats['pending'] ?? 0; ?></h5>
+                <h5 class="card-title text-secondary"><?php echo $stats['pending'] ?? 0; ?></h5>
                 <p class="card-text">Pendientes</p>
             </div>
         </div>
@@ -74,7 +74,7 @@
             <div class="col-md-6">
                 <div class="btn-group" role="group">
                     <a href="tasks.php" class="btn btn-outline-primary <?php echo !$status_filter ? 'active' : ''; ?>">Todas</a>
-                    <a href="tasks.php?status=pending" class="btn btn-outline-warning <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pendientes</a>
+                    <a href="tasks.php?status=pending" class="btn btn-outline-secondary <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pendientes</a>
                     <a href="tasks.php?status=in_progress" class="btn btn-outline-primary <?php echo $status_filter === 'in_progress' ? 'active' : ''; ?>">En Progreso</a>
                     <a href="tasks.php?status=completed" class="btn btn-outline-success <?php echo $status_filter === 'completed' ? 'active' : ''; ?>">Completadas</a>
                 </div>
@@ -138,7 +138,7 @@
                                         'cancelled' => 'Cancelada'
                                     ];
                                     $status_colors = [
-                                        'pending' => 'warning',
+                                        'pending' => 'secondary',
                                         'in_progress' => 'primary',
                                         'completed' => 'success',
                                         'cancelled' => 'secondary'
@@ -159,7 +159,7 @@
                                     $priority_colors = [
                                         'low' => 'secondary',
                                         'normal' => 'primary',
-                                        'high' => 'warning',
+                                        'high' => 'info',
                                         'urgent' => 'danger'
                                     ];
                                     ?>

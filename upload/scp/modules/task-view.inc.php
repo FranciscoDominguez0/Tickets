@@ -19,8 +19,15 @@ $priority_labels = [
 $priority_colors = [
     'low' => 'secondary',
     'normal' => 'primary',
-    'high' => 'warning',
+    'high' => 'info',
     'urgent' => 'danger'
+];
+
+$status_colors = [
+    'pending' => 'secondary',
+    'in_progress' => 'primary',
+    'completed' => 'success',
+    'cancelled' => 'secondary'
 ];
 ?>
 
@@ -74,10 +81,7 @@ $priority_colors = [
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Estado:</strong></div>
                     <div class="col-sm-9">
-                        <span class="badge bg-<?php
-                            echo $taskView['status'] === 'completed' ? 'success' :
-                                 ($taskView['status'] === 'in_progress' ? 'warning' : 'secondary');
-                        ?> fs-6">
+                        <span class="badge bg-<?php echo $status_colors[$taskView['status']]; ?> fs-6">
                             <?php echo $status_labels[$taskView['status']]; ?>
                         </span>
                     </div>
@@ -157,7 +161,7 @@ $priority_colors = [
                     <button type="button" class="btn btn-outline-success" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'completed')">
                         <i class="bi bi-check-circle"></i> Marcar como Completada
                     </button>
-                    <button type="button" class="btn btn-outline-warning" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'in_progress')">
+                    <button type="button" class="btn btn-outline-primary" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'in_progress')">
                         <i class="bi bi-play-circle"></i> Marcar En Progreso
                     </button>
                     <button type="button" class="btn btn-outline-secondary" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'pending')">
