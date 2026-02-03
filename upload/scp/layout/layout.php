@@ -20,6 +20,9 @@
     <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
     <link rel="stylesheet" href="css/tickets.css">
     <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
+    <link rel="stylesheet" href="css/orgs.css">
+    <?php endif; ?>
 </head>
 <body>
     <!-- NAVBAR -->
@@ -233,6 +236,9 @@
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
     <script src="js/tickets.js"></script>
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
+    <script src="js/orgs.js"></script>
     <?php endif; ?>
 </body>
 </html>
