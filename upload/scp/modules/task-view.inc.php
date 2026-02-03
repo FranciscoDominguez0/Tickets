@@ -181,7 +181,6 @@ $status_colors = [
                 </div>
             </div>
         </div>
-    </div>
 </div>
 
 <!-- Modal para editar tarea -->
@@ -195,7 +194,8 @@ $status_colors = [
             <form method="POST">
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                    <input type="hidden" name="do" value="edit">
+                    <input type="hidden" name="do" value="update">
+                    <input type="hidden" name="task_id" value="<?php echo $taskView['id']; ?>">
 
                     <div class="row">
                         <div class="col-md-8">
@@ -208,6 +208,16 @@ $status_colors = [
                             <div class="mb-3">
                                 <label for="edit_description" class="form-label">Descripción</label>
                                 <textarea class="form-control" id="edit_description" name="description" rows="4"><?php echo html($taskView['description']); ?></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_status" class="form-label">Estado</label>
+                                <select class="form-select" id="edit_status" name="status">
+                                    <option value="pending" <?php echo $taskView['status'] === 'pending' ? 'selected' : ''; ?>>Pendiente</option>
+                                    <option value="in_progress" <?php echo $taskView['status'] === 'in_progress' ? 'selected' : ''; ?>>En Progreso</option>
+                                    <option value="completed" <?php echo $taskView['status'] === 'completed' ? 'selected' : ''; ?>>Completada</option>
+                                    <option value="cancelled" <?php echo $taskView['status'] === 'cancelled' ? 'selected' : ''; ?>>Cancelada</option>
+                                </select>
                             </div>
                         </div>
 
@@ -340,6 +350,17 @@ function deleteTask(taskId) {
 document.getElementById('edit_description')?.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
+});
+
+// Auto-ocultar alertas de éxito después de 4 segundos
+document.addEventListener('DOMContentLoaded', function() {
+    const successAlerts = document.querySelectorAll('.alert-success');
+    successAlerts.forEach(function(alert) {
+        setTimeout(function() {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 4000); // 4 segundos
+    });
 });
 </script>
 

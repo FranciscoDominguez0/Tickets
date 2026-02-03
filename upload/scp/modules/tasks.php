@@ -72,20 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                         $stmt->bind_param('si', $new_status, $task['id']);
                         if ($stmt->execute()) {
                             $success = 'Estado de la tarea actualizado.';
-                            // Recargar tarea
-                            $stmt = $mysqli->prepare(
-                                "SELECT t.*, 
-                                 CONCAT(s1.firstname, ' ', s1.lastname) AS assigned_name,
-                                 CONCAT(s2.firstname, ' ', s2.lastname) AS created_name
-                                 FROM tasks t
-                                 LEFT JOIN staff s1 ON t.assigned_to = s1.id
-                                 LEFT JOIN staff s2 ON t.created_by = s2.id
-                                 WHERE t.id = ?"
-                            );
-                            $stmt->bind_param('i', $task['id']);
-                            $stmt->execute();
-                            $result = $stmt->get_result();
-                            $task = $result->fetch_assoc();
+                            // Redirigir para limpiar POST
+                            header('Location: ' . $_SERVER['REQUEST_URI']);
+                            exit;
                         } else {
                             $errors[] = 'Error al actualizar el estado.';
                         }
@@ -93,15 +82,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 }
                 break;
                 
-            case 'delete':
-                if ($task) {
-                    $stmt = $mysqli->prepare("DELETE FROM tasks WHERE id = ?");
-                    $stmt->bind_param('i', $task['id']);
+            case 'update':
+                // Actualizar tarea
+                if (!$task) {
+                    $errors[] = 'Tarea no encontrada.';
+                    break;
+                }
+                $title = trim($_POST['title'] ?? '');
+                $description = trim($_POST['description'] ?? '');
+                $status = $_POST['status'] ?? $task['status'];
+                $assigned_to = isset($_POST['assigned_to']) && is_numeric($_POST['assigned_to']) ? (int) $_POST['assigned_to'] : null;
+                $priority = $_POST['priority'] ?? $task['priority'];
+                $due_date = trim($_POST['due_date'] ?? '');
+                
+                if (empty($title)) {
+                    $errors[] = 'El título es obligatorio.';
+                }
+                
+                if (empty($errors)) {
+                    $due_date_sql = $due_date ? date('Y-m-d H:i:s', strtotime($due_date)) : null;
+                    $stmt = $mysqli->prepare(
+                        "UPDATE tasks SET title = ?, description = ?, status = ?, assigned_to = ?, priority = ?, due_date = ?, updated = NOW() WHERE id = ?"
+                    );
+                    $stmt->bind_param('ssssssi', $title, $description, $status, $assigned_to, $priority, $due_date_sql, $task['id']);
                     if ($stmt->execute()) {
-                        header('Location: tasks.php?msg=deleted');
+                        $success = 'Tarea actualizada exitosamente.';
+                        // Redirigir para limpiar POST y mostrar cambios
+                        header('Location: ' . $_SERVER['REQUEST_URI']);
                         exit;
                     } else {
-                        $errors[] = 'Error al eliminar la tarea.';
+                        $errors[] = 'Error al actualizar la tarea.';
                     }
                 }
                 break;
