@@ -45,7 +45,14 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 </div>
                 <div class="user-view-detail">
                     <label>Organización</label>
-                    <div class="value"><a href="#">Agregar organización</a></div>
+                    <div class="value">
+                        <?php if (!empty($viewUser['company'])): ?>
+                            <span><?php echo html($viewUser['company']); ?></span>
+                            <a href="#" class="ms-2 text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal"><i class="bi bi-x-circle"></i> Remover</a>
+                        <?php else: ?>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="user-view-detail">
                     <label>Estado</label>
@@ -136,4 +143,86 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
             </div>
         </div>
     </div>
+
+    <!-- Modal: asignar organización -->
+    <div class="modal fade" id="assignOrgModal" tabindex="-1" aria-labelledby="assignOrgModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="assignOrgModalLabel"><i class="bi bi-building me-2"></i>Asignar organización</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="orgSearch" class="form-label">Buscar organización</label>
+                            <input type="text" class="form-control" id="orgSearch" name="org_name" placeholder="Escribe el nombre de la organización..." autocomplete="off">
+                            <div id="orgSuggestions" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <input type="hidden" name="do" value="assign_org">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check me-1"></i> Asignar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: confirmar remover organización -->
+    <div class="modal fade" id="removeOrgModal" tabindex="-1" aria-labelledby="removeOrgModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="removeOrgModalLabel"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Remover organización</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">¿Está seguro de que desea remover la organización <strong><?php echo html($viewUser['company']); ?></strong> de este usuario?</p>
+                    <p class="text-muted small mt-2 mb-0">El usuario quedará sin organización asignada.</p>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline">
+                        <input type="hidden" name="do" value="remove_org">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <button type="submit" class="btn btn-warning"><i class="bi bi-x-circle me-1"></i> Remover</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para buscar organizaciones
+        document.getElementById('orgSearch').addEventListener('input', function() {
+            const query = this.value.trim();
+            const suggestions = document.getElementById('orgSuggestions');
+            if (query.length < 2) {
+                suggestions.innerHTML = '';
+                return;
+            }
+            fetch('users.php?ajax=search_orgs&q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    suggestions.innerHTML = '';
+                    data.forEach(org => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.textContent = org.name;
+                        item.onclick = function() {
+                            document.getElementById('orgSearch').value = org.name;
+                            suggestions.innerHTML = '';
+                            return false;
+                        };
+                        suggestions.appendChild(item);
+                    });
+                });
+        });
+    </script>
 </div>

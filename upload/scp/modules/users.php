@@ -56,6 +56,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+// Asignar organización a usuario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'assign_org' && isset($_POST['user_id']) && isset($_POST['org_name'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int) $_POST['user_id'];
+        $org_name = trim($_POST['org_name']);
+        // Verificar que la organización existe
+        $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? LIMIT 1");
+        $stmt->bind_param('s', $org_name);
+        $stmt->execute();
+        if ($stmt->get_result()->fetch_assoc()) {
+            $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ?");
+            $stmt->bind_param('si', $org_name, $user_id);
+            if ($stmt->execute()) {
+                header('Location: users.php?id=' . $user_id . '&msg=org_assigned');
+                exit;
+            }
+        }
+    }
+}
+
+// Remover organización de usuario
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'remove_org' && isset($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int) $_POST['user_id'];
+        $stmt = $mysqli->prepare("UPDATE users SET company = NULL WHERE id = ?");
+        $stmt->bind_param('i', $user_id);
+        if ($stmt->execute()) {
+            header('Location: users.php?id=' . $user_id . '&msg=org_removed');
+            exit;
+        }
+    }
+}
+
+// AJAX: buscar organizaciones
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
+    $query = trim($_GET['q']);
+    $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE name LIKE ? ORDER BY name LIMIT 10");
+    $like = '%' . $query . '%';
+    $stmt->bind_param('s', $like);
+    $stmt->execute();
+    $results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    header('Content-Type: application/json');
+    echo json_encode($results);
+    exit;
+}
+
 // Vista de un usuario concreto (users.php?id=X)
 $viewUser = null;
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
@@ -189,6 +235,18 @@ $statusBadges = [
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'user_deleted'): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             Usuario eliminado correctamente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_assigned'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Organización asignada correctamente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_removed'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Organización removida correctamente.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
