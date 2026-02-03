@@ -368,26 +368,252 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     }
 }
 
-// Sin id o ticket no encontrado: listado simple o mensaje
+// Sin id o ticket no encontrado: listado creativo de solicitudes
+?>
+<?php
+$filters = [
+    'open' => ['label' => 'Abiertos', 'where' => 't.closed IS NULL'],
+    'closed' => ['label' => 'Cerrados', 'where' => 't.closed IS NOT NULL'],
+    'mine' => ['label' => 'Asignados a mí', 'where' => 't.staff_id = ?'],
+    'unassigned' => ['label' => 'Sin asignar', 'where' => 't.staff_id IS NULL'],
+    'all' => ['label' => 'Todos', 'where' => '1=1'],
+];
+$filterKey = $_GET['filter'] ?? 'open';
+if (!isset($filters[$filterKey])) $filterKey = 'open';
+$query = trim($_GET['q'] ?? '');
+
+// Contadores rápidos
+$countOpen = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NULL")->fetch_assoc()['c'] ?? 0);
+$countClosed = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NOT NULL")->fetch_assoc()['c'] ?? 0);
+$countUnassigned = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE staff_id IS NULL AND closed IS NULL")->fetch_assoc()['c'] ?? 0);
+$countMine = 0;
+if (!empty($_SESSION['staff_id'])) {
+    $sid = (int) $_SESSION['staff_id'];
+    $countMine = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE staff_id = $sid AND closed IS NULL")->fetch_assoc()['c'] ?? 0);
+}
+
+// Query listado
+$whereClauses = [];
+$types = '';
+$params = [];
+if ($filterKey === 'mine') {
+    $whereClauses[] = 't.staff_id = ?';
+    $types .= 'i';
+    $params[] = (int) ($_SESSION['staff_id'] ?? 0);
+} elseif ($filterKey !== 'all') {
+    $whereClauses[] = $filters[$filterKey]['where'];
+}
+if ($query !== '') {
+    $like = '%' . $query . '%';
+    $whereClauses[] = '(t.ticket_number LIKE ? OR t.subject LIKE ? OR u.email LIKE ? OR CONCAT(u.firstname, " ", u.lastname) LIKE ?)';
+    $types .= 'ssss';
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+    $params[] = $like;
+}
+$whereSql = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+$sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed,
+               ts.name AS status_name, ts.color AS status_color,
+               p.name AS priority_name, p.color AS priority_color,
+               u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
+               s.firstname AS staff_first, s.lastname AS staff_last
+        FROM tickets t
+        JOIN users u ON t.user_id = u.id
+        LEFT JOIN staff s ON t.staff_id = s.id
+        JOIN ticket_status ts ON t.status_id = ts.id
+        JOIN priorities p ON t.priority_id = p.id
+        $whereSql
+        ORDER BY t.updated DESC
+        LIMIT 200";
+
+$tickets = [];
+if ($types !== '') {
+    $stmt = $mysqli->prepare($sql);
+    $bind = [$types];
+    foreach ($params as $k => $v) { $bind[] = &$params[$k]; }
+    call_user_func_array([$stmt, 'bind_param'], $bind);
+    $stmt->execute();
+    $res = $stmt->get_result();
+} else {
+    $res = $mysqli->query($sql);
+}
+if ($res) {
+    while ($row = $res->fetch_assoc()) $tickets[] = $row;
+}
 ?>
 <style>
-.tickets-list-placeholder { max-width: 900px; margin: 0 auto; padding: 24px; }
-.tickets-list-placeholder .card { border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid #f1f5f9; }
-.tickets-list-placeholder .page-title { font-size: 1.75rem; font-weight: 700; color: #0f172a; margin-bottom: 20px; border-left: 4px solid #2563eb; padding-left: 16px; }
-.tickets-list-placeholder .btn-back { color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.tickets-list-placeholder .btn-back:hover { text-decoration: underline; }
+.tickets-shell { max-width: 1200px; margin: 0 auto; }
+.tickets-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+    color: #fff;
+    padding: 24px 28px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+}
+.tickets-hero h1 { font-size: 1.6rem; margin: 0; font-weight: 700; }
+.tickets-hero p { margin: 4px 0 0; color: #cbd5f5; }
+.tickets-hero .btn-new {
+    background: linear-gradient(135deg, #38bdf8, #2563eb);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.tickets-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.tickets-metrics .metric-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+.metric-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+.metric-card .value { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-top: 6px; }
+.tickets-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 16px; }
+.tickets-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.tickets-filters a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    color: #475569;
+    font-weight: 600;
+    background: #fff;
+}
+.tickets-filters a.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.tickets-search { min-width: 280px; }
+.tickets-search input { border-radius: 10px; }
+.tickets-table-wrap {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+}
+.tickets-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+.ticket-row:hover { background: #f8fafc; }
+.ticket-number { font-weight: 700; color: #0f172a; }
+.ticket-subject { font-weight: 600; color: #1e293b; }
+.ticket-meta { font-size: 0.85rem; color: #64748b; }
+.badge-status { padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
+.badge-priority { padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; }
+.empty-state { padding: 48px 20px; text-align: center; color: #64748b; }
 </style>
-<div class="tickets-list-placeholder">
+
+<div class="tickets-shell">
     <?php if (isset($_GET['id']) && !$ticketView): ?>
-        <a href="tickets.php" class="btn-back"><i class="bi bi-arrow-left"></i> Volver a solicitudes</a>
         <div class="alert alert-warning">Ticket no encontrado.</div>
-    <?php else: ?>
-        <h1 class="page-title">Solicitudes</h1>
-        <div class="card p-4">
-            <p class="text-muted mb-0">
-                <i class="bi bi-ticket-perforated" style="font-size: 2rem; opacity: 0.5;"></i><br>
-                Para ver un ticket, ábrelo desde <a href="users.php">Usuarios</a> (perfil del usuario → pestaña Tickets) o desde el panel.
-            </p>
-        </div>
     <?php endif; ?>
+
+    <div class="tickets-hero">
+        <div>
+            <h1>Solicitudes</h1>
+            <p>Vista operativa inspirada en osTicket con un enfoque más moderno.</p>
+        </div>
+        <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo Ticket</a>
+    </div>
+
+    <div class="tickets-metrics">
+        <div class="metric-card"><div class="label">Abiertos</div><div class="value"><?php echo $countOpen; ?></div></div>
+        <div class="metric-card"><div class="label">Cerrados</div><div class="value"><?php echo $countClosed; ?></div></div>
+        <div class="metric-card"><div class="label">Sin asignar</div><div class="value"><?php echo $countUnassigned; ?></div></div>
+        <div class="metric-card"><div class="label">Asignados a mí</div><div class="value"><?php echo $countMine; ?></div></div>
+    </div>
+
+    <div class="tickets-toolbar">
+        <div class="tickets-filters">
+            <a href="tickets.php?filter=open" class="<?php echo $filterKey === 'open' ? 'active' : ''; ?>">Abiertos</a>
+            <a href="tickets.php?filter=unassigned" class="<?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>">Sin asignar</a>
+            <a href="tickets.php?filter=mine" class="<?php echo $filterKey === 'mine' ? 'active' : ''; ?>">Asignados a mí</a>
+            <a href="tickets.php?filter=closed" class="<?php echo $filterKey === 'closed' ? 'active' : ''; ?>">Cerrados</a>
+            <a href="tickets.php?filter=all" class="<?php echo $filterKey === 'all' ? 'active' : ''; ?>">Todos</a>
+        </div>
+        <form class="tickets-search" method="get">
+            <input type="hidden" name="filter" value="<?php echo html($filterKey); ?>">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Buscar por ticket, asunto o usuario" value="<?php echo html($query); ?>">
+            </div>
+        </form>
+    </div>
+
+    <div class="tickets-table-wrap">
+        <table class="table table-hover tickets-table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Ticket</th>
+                    <th>Asunto</th>
+                    <th>Cliente</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th>Asignado</th>
+                    <th>Actualizado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($tickets)): ?>
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.6;"></i>
+                                <div class="mt-2">No hay tickets para esta vista.</div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($tickets as $t): ?>
+                        <?php
+                        $clientName = trim($t['user_first'] . ' ' . $t['user_last']) ?: $t['user_email'];
+                        $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
+                        $statusColor = $t['status_color'] ?: '#2563eb';
+                        $priorityColor = $t['priority_color'] ?: '#94a3b8';
+                        ?>
+                        <tr class="ticket-row">
+                            <td>
+                                <div class="ticket-number"><?php echo html($t['ticket_number']); ?></div>
+                                <div class="ticket-meta">Creado: <?php echo formatDate($t['created']); ?></div>
+                            </td>
+                            <td>
+                                <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
+                                <div class="ticket-meta"><?php echo $t['closed'] ? 'Cerrado' : 'Activo'; ?></div>
+                            </td>
+                            <td>
+                                <div class="ticket-meta"><?php echo html($clientName); ?></div>
+                                <div class="ticket-meta"><?php echo html($t['user_email']); ?></div>
+                            </td>
+                            <td>
+                                <span class="badge-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">
+                                    <?php echo html($t['priority_name']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
+                                    <?php echo html($t['status_name']); ?>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="ticket-meta"><?php echo $staffName ?: '— Sin asignar —'; ?></div>
+                            </td>
+                            <td>
+                                <div class="ticket-meta"><?php echo formatDate($t['updated'] ?: $t['created']); ?></div>
+                            </td>
+                            <td>
+                                <a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>

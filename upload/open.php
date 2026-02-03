@@ -51,8 +51,70 @@ if ($_POST) {
                 );
                 $stmt3->bind_param('iis', $thread_id, $_SESSION['user_id'], $body);
                 $stmt3->execute();
-                
+
+                // Notificar por correo a los agentes del departamento (o a todos si no hay del depto)
+                $agents = [];
+                $stmtAg = $mysqli->prepare('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND dept_id = ? AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
+                $stmtAg->bind_param('i', $dept_id);
+                $stmtAg->execute();
+                $resAg = $stmtAg->get_result();
+                while ($row = $resAg->fetch_assoc()) {
+                    $agents[] = $row;
+                }
+                if (empty($agents)) {
+                    $resAll = $mysqli->query('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
+                    if ($resAll) {
+                        while ($row = $resAll->fetch_assoc()) {
+                            $agents[] = $row;
+                        }
+                    }
+                }
+                $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
+                $clientEmail = $user['email'] ?? '';
+                $deptName = 'Soporte';
+                $stmtDept = $mysqli->prepare('SELECT name FROM departments WHERE id = ?');
+                $stmtDept->bind_param('i', $dept_id);
+                $stmtDept->execute();
+                if ($r = $stmtDept->get_result()->fetch_assoc()) {
+                    $deptName = $r['name'];
+                }
+                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int) $ticket_id;
+                $bodyHtml = '
+                    <div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #2c3e50;">Nuevo ticket creado</h2>
+                        <p>Se ha abierto un nuevo ticket en el sistema.</p>
+                        <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+                            <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Número:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($ticket_number) . '</td></tr>
+                            <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($subject) . '</td></tr>
+                            <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Cliente:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($clientName) . ' &lt;' . htmlspecialchars($clientEmail) . '&gt;</td></tr>
+                            <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Departamento:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($deptName) . '</td></tr>
+                            <tr><td style="padding: 8px 0;"><strong>Mensaje:</strong></td><td style="padding: 8px 0;"></td></tr>
+                        </table>
+                        <div style="background: #f5f5f5; padding: 12px; border-radius: 6px; margin: 12px 0;">' . nl2br(htmlspecialchars($body)) . '</div>
+                        <p><a href="' . htmlspecialchars($viewUrl) . '" style="display: inline-block; background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ver ticket</a></p>
+                        <p style="color: #7f8c8d; font-size: 12px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>
+                    </div>';
+                $emailSubject = '[Nuevo ticket] ' . $ticket_number . ' - ' . $subject;
+                $mailSent = 0;
+                $mailError = '';
+                foreach ($agents as $agent) {
+                    $agentEmail = trim($agent['email'] ?? '');
+                    if ($agentEmail !== '') {
+                        if (Mailer::send($agentEmail, $emailSubject, $bodyHtml)) {
+                            $mailSent++;
+                        } else {
+                            $mailError = Mailer::$lastError;
+                        }
+                    }
+                }
                 $success = 'Ticket creado exitosamente! Número: ' . $ticket_number;
+                if ($mailSent > 0) {
+                    $success .= ' Se envió notificación por correo a ' . $mailSent . ' agente(s).';
+                } elseif (!empty($agents) && $mailError !== '') {
+                    $success .= ' <strong>No se pudo enviar el correo:</strong> ' . htmlspecialchars($mailError);
+                } elseif (empty($agents)) {
+                    $success .= ' (No hay agentes con email en el departamento para notificar.)';
+                }
                 echo '<script>
                     setTimeout(function() {
                         window.location.href = "tickets.php";

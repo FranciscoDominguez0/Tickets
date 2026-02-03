@@ -33,6 +33,19 @@ define('APP_URL', 'http://localhost/sistema-tickets');
 define('TIMEZONE', 'America/Mexico_City');
 
 // ============================================================================
+// CORREO (notificaciones a agentes)
+// ============================================================================
+// Remitente de las notificaciones (Gmail suele exigir que coincida con SMTP_USER)
+define('MAIL_FROM', 'dominguezf225@gmail.com');
+define('MAIL_FROM_NAME', APP_NAME);
+// SMTP Gmail (contraseña de aplicación, sin espacios)
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 465);
+define('SMTP_USER', 'dominguezf225@gmail.com');
+define('SMTP_PASS', 'uzlewbhpmzgzsbad');
+define('SMTP_SECURE', 'ssl');
+
+// ============================================================================
 // SEGURIDAD
 // ============================================================================
 define('SECRET_KEY', 'cambia-esto-en-produccion-con-algo-largo-y-aleatorio-2025');
