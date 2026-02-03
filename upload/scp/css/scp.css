@@ -7,11 +7,17 @@
 body {
     background: #f5f7fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 64px;
 }
 
 .navbar {
     background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0ea5e9 100%);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1001;
 }
 
 .navbar-brand {
@@ -29,6 +35,12 @@ body {
     background: #020617;
     color: #e5e7eb;
     padding: 24px 16px;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+    z-index: 1000;
 }
 
 .sidebar-logo {
@@ -159,6 +171,7 @@ body {
 .main-shell {
     flex: 1;
     padding: 24px 24px 40px;
+    margin-left: 240px;
 }
 
 .container-main {
