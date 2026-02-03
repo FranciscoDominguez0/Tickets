@@ -459,7 +459,6 @@ if ($res) {
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
 }
 .tickets-hero h1 { font-size: 1.6rem; margin: 0; font-weight: 700; }
-.tickets-hero p { margin: 4px 0 0; color: #cbd5f5; }
 .tickets-hero .btn-new {
     background: linear-gradient(135deg, #38bdf8, #2563eb);
     color: #fff;
@@ -476,7 +475,7 @@ if ($res) {
     border: 1px solid #e2e8f0;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
 }
-.metric-card .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+.metric-card .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
 .metric-card .value { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-top: 6px; }
 .tickets-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 16px; }
 .tickets-filters { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -503,7 +502,7 @@ if ($res) {
 .ticket-row:hover { background: #f8fafc; }
 .ticket-number { font-weight: 700; color: #0f172a; }
 .ticket-subject { font-weight: 600; color: #1e293b; }
-.ticket-meta { font-size: 0.85rem; color: #64748b; }
+.ticket-meta { font-size: 0.82rem; color: #94a3b8; }
 .badge-status { padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
 .badge-priority { padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; }
 .empty-state { padding: 48px 20px; text-align: center; color: #64748b; }
@@ -517,7 +516,6 @@ if ($res) {
     <div class="tickets-hero">
         <div>
             <h1>Solicitudes</h1>
-            <p>Vista operativa inspirada en osTicket con un enfoque más moderno.</p>
         </div>
         <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo Ticket</a>
     </div>
@@ -526,7 +524,7 @@ if ($res) {
         <div class="metric-card"><div class="label">Abiertos</div><div class="value"><?php echo $countOpen; ?></div></div>
         <div class="metric-card"><div class="label">Cerrados</div><div class="value"><?php echo $countClosed; ?></div></div>
         <div class="metric-card"><div class="label">Sin asignar</div><div class="value"><?php echo $countUnassigned; ?></div></div>
-        <div class="metric-card"><div class="label">Asignados a mí</div><div class="value"><?php echo $countMine; ?></div></div>
+        <div class="metric-card"><div class="label">Míos</div><div class="value"><?php echo $countMine; ?></div></div>
     </div>
 
     <div class="tickets-toolbar">
@@ -541,7 +539,7 @@ if ($res) {
             <input type="hidden" name="filter" value="<?php echo html($filterKey); ?>">
             <div class="input-group">
                 <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                <input type="text" name="q" class="form-control" placeholder="Buscar por ticket, asunto o usuario" value="<?php echo html($query); ?>">
+                <input type="text" name="q" class="form-control" placeholder="Buscar" value="<?php echo html($query); ?>">
             </div>
         </form>
     </div>
@@ -581,15 +579,13 @@ if ($res) {
                         <tr class="ticket-row">
                             <td>
                                 <div class="ticket-number"><?php echo html($t['ticket_number']); ?></div>
-                                <div class="ticket-meta">Creado: <?php echo formatDate($t['created']); ?></div>
+                                <div class="ticket-meta"><?php echo formatDate($t['created']); ?></div>
                             </td>
                             <td>
                                 <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
-                                <div class="ticket-meta"><?php echo $t['closed'] ? 'Cerrado' : 'Activo'; ?></div>
                             </td>
                             <td>
                                 <div class="ticket-meta"><?php echo html($clientName); ?></div>
-                                <div class="ticket-meta"><?php echo html($t['user_email']); ?></div>
                             </td>
                             <td>
                                 <span class="badge-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">

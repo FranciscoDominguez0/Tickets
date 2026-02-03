@@ -8,6 +8,11 @@
 
 require_once '../config.php';
 
+// Generar CSRF token si no existe
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Si ya está logueado, redirigir
 if (isset($_SESSION['staff_id'])) {
     header('Location: ../upload/scp/');
