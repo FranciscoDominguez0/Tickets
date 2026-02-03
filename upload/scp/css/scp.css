@@ -31,7 +31,9 @@ body {
 }
 
 .sidebar {
-    width: 240px;
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
     background: #020617;
     color: #e5e7eb;
     padding: 24px 16px;
@@ -39,8 +41,9 @@ body {
     top: 64px;
     left: 0;
     height: calc(100vh - 64px);
-    overflow-y: auto;
+    overflow-y: scroll;
     z-index: 1000;
+    box-sizing: border-box;
 }
 
 .sidebar-logo {
@@ -112,19 +115,20 @@ body {
 
 .sidebar-subnav {
     list-style: none;
-    margin: 4px 0 8px 0;
+    margin: 8px 0 12px 0;
     padding-left: 36px;
     border-left: 2px solid rgba(37, 99, 235, 0.5);
-    max-height: 0;
+    visibility: hidden;
+    height: 0;
     overflow: hidden;
-    transition: max-height .2s ease-out, opacity .2s ease-out, margin .2s ease-out;
+    transition: height 0.2s ease-out, opacity 0.2s ease-out;
     opacity: 0;
 }
 
 .sidebar-subnav.open {
-    max-height: 200px;
+    visibility: visible;
+    height: auto;
     opacity: 1;
-    margin: 8px 0 12px 0;
 }
 
 .sidebar-subnav .sidebar-link {
@@ -171,7 +175,7 @@ body {
 .main-shell {
     flex: 1;
     padding: 24px 24px 40px;
-    margin-left: 240px;
+    margin-left: 280px;
 }
 
 .container-main {
