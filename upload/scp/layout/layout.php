@@ -14,6 +14,12 @@
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
     <link rel="stylesheet" href="css/profile.css">
     <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
+    <link rel="stylesheet" href="css/users.css">
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
+    <link rel="stylesheet" href="css/tickets.css">
+    <?php endif; ?>
 </head>
 <body>
     <!-- NAVBAR -->
@@ -214,6 +220,19 @@
     <script src="js/scp.js"></script>
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
     <script src="js/profile.js"></script>
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
+    <script>
+      var USER_ACTIVE_TAB = '<?php echo isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets'; ?>';
+    </script>
+    <script src="js/users.js"></script>
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+    <script src="js/tickets.js"></script>
     <?php endif; ?>
 </body>
 </html>

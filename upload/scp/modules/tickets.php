@@ -35,7 +35,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             if (empty($open_errors)) {
                 $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT);
                 $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
-                $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (priority_id), s (subject)
+                $stmt->bind_param('siiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
                     $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($new_tid, NOW())");
@@ -63,9 +64,23 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $open_staff = [];
     $r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
     if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
-    $open_users = [];
-    $r = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
-    if ($r) while ($row = $r->fetch_assoc()) $open_users[] = $row;
+
+    // Búsqueda de usuario (como osTicket): no listar todos por defecto
+    $open_user_query = trim($_GET['uq'] ?? '');
+    $open_user_results = [];
+    if ($open_user_query !== '') {
+        $term = '%' . $open_user_query . '%';
+        $stmt = $mysqli->prepare(
+            "SELECT id, firstname, lastname, email, phone
+             FROM users
+             WHERE firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR phone LIKE ?
+             ORDER BY firstname, lastname
+             LIMIT 25"
+        );
+        $stmt->bind_param('ssss', $term, $term, $term, $term);
+        $stmt->execute();
+        $open_user_results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
 
     require __DIR__ . '/ticket-open.inc.php';
     return;

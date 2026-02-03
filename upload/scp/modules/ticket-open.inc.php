@@ -3,28 +3,12 @@
 // Usuario preseleccionado cuando se viene desde users.php?id=X
 $preUser = $preSelectedUser ?? null;
 $selected_uid = $preUser ? (int)$preUser['id'] : (isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int)$_POST['user_id'] : 0);
-$open_users = $open_users ?? [];
 $open_departments = $open_departments ?? [];
 $open_priorities = $open_priorities ?? [];
 $open_staff = $open_staff ?? [];
+$open_user_query = $open_user_query ?? '';
+$open_user_results = $open_user_results ?? [];
 ?>
-<style>
-.ticket-open-wrap { max-width: 900px; margin: 0 auto; }
-.ticket-open-wrap h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 24px; border-left: 4px solid #2563eb; padding-left: 16px; }
-.ticket-open-section { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; padding: 24px; margin-bottom: 24px; }
-.ticket-open-section .section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
-.ticket-open-section .form-label { font-weight: 600; color: #334155; }
-.ticket-open-section .form-label .required { color: #dc2626; }
-.ticket-open-user-display { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.ticket-open-user-display .user-text { font-size: 1rem; color: #0f172a; }
-.ticket-open-user-display .btn-change { font-size: 0.85rem; padding: 6px 12px; border-radius: 8px; }
-.ticket-open-section select.form-select, .ticket-open-section input.form-control { border-radius: 10px; }
-.ticket-open-wrap .btn-submit { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 600; }
-.ticket-open-wrap .btn-submit:hover { color: #fff; opacity: 0.95; }
-.ticket-open-wrap .btn-back { color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.ticket-open-wrap .btn-back:hover { text-decoration: underline; }
-#open_user_select { max-width: 400px; display: none; }
-</style>
 
 <div class="ticket-open-wrap">
     <a href="users.php<?php echo $selected_uid ? '?id=' . $selected_uid : ''; ?>" class="btn-back"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -40,6 +24,7 @@ $open_staff = $open_staff ?? [];
     <form method="post" action="tickets.php?a=open<?php echo $open_uid ? '&uid=' . $open_uid : ''; ?>" id="form-open-ticket">
         <input type="hidden" name="do" value="open">
         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+        <input type="hidden" name="user_id" value="<?php echo $selected_uid ? (int)$selected_uid : ''; ?>">
 
         <!-- Usuarios y colaboradores -->
         <div class="ticket-open-section">
@@ -49,25 +34,14 @@ $open_staff = $open_staff ?? [];
                 <div class="ticket-open-user-display">
                     <span class="user-text" id="open_user_display">
                         <?php
-                        if ($selected_uid && $open_users) {
-                            foreach ($open_users as $u) {
-                                if ((int)$u['id'] === $selected_uid) {
-                                    echo html(trim($u['firstname'] . ' ' . $u['lastname']) . ' <' . $u['email'] . '>');
-                                    break;
-                                }
-                            }
+                        if ($preUser) {
+                            echo html(trim($preUser['firstname'] . ' ' . $preUser['lastname']) . ' <' . $preUser['email'] . '>');
                         }
                         if (!$selected_uid) echo '<span class="text-muted">Seleccione un usuario</span>';
                         ?>
                     </span>
-                    <button type="button" class="btn btn-outline-secondary btn-change" id="btn_change_user">Cambiar</button>
+                    <button type="button" class="btn btn-outline-secondary btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch">Cambiar</button>
                 </div>
-                <select name="user_id" id="open_user_select" class="form-select mt-2" required>
-                    <option value="">— Seleccione el usuario —</option>
-                    <?php foreach ($open_users as $u): ?>
-                        <option value="<?php echo (int)$u['id']; ?>" <?php echo (int)$u['id'] === $selected_uid ? 'selected' : ''; ?>><?php echo html(trim($u['firstname'] . ' ' . $u['lastname']) . ' (' . $u['email'] . ')'); ?></option>
-                    <?php endforeach; ?>
-                </select>
             </div>
             <div class="mb-0">
                 <label class="form-label">Aviso de Ticket:</label>
@@ -137,41 +111,49 @@ $open_staff = $open_staff ?? [];
     </form>
 </div>
 
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var display = document.getElementById('open_user_display');
-    var select = document.getElementById('open_user_select');
-    var btnChange = document.getElementById('btn_change_user');
-    if (btnChange && select) {
-        btnChange.addEventListener('click', function() {
-            if (select.style.display === 'none') {
-                select.style.display = 'block';
-                display.style.display = 'none';
-                btnChange.textContent = 'Ocultar';
-            } else {
-                select.style.display = 'none';
-                display.style.display = 'inline';
-                var opt = select.options[select.selectedIndex];
-                display.innerHTML = opt.value ? opt.text : '<span class="text-muted">Seleccione un usuario</span>';
-                btnChange.textContent = 'Cambiar';
-            }
-        });
-        select.addEventListener('change', function() {
-            var opt = select.options[select.selectedIndex];
-            if (opt.value) {
-                var m = opt.text.match(/^(.+)\s+\(([^)]+)\)$/);
-                display.innerHTML = m ? (m[1] + ' &lt;' + m[2] + '&gt;') : opt.text;
-            } else {
-                display.innerHTML = '<span class="text-muted">Seleccione un usuario</span>';
-            }
-        });
-    }
-    if (typeof jQuery !== 'undefined' && jQuery().summernote) {
-        jQuery('#open_body').summernote({ height: 200, lang: 'es-ES', placeholder: 'Respuesta inicial para el ticket', toolbar: [ ['style', ['bold', 'italic', 'underline']], ['para', ['ul', 'ol']], ['insert', ['link']] ] });
-    }
-});
-</script>
+<!-- Modal: Buscar usuario (sin listar todos) -->
+<div class="modal fade" id="modalUserSearch" tabindex="-1" aria-labelledby="modalUserSearchLabel" aria-hidden="true" data-open-default="<?php echo $open_user_query !== '' ? '1' : '0'; ?>">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalUserSearchLabel">Buscar o seleccionar un usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info py-2 mb-3">Buscar usuarios por email, teléfono o nombre.</div>
+
+        <form method="get" action="tickets.php" class="mb-3">
+          <input type="hidden" name="a" value="open">
+          <div class="input-group">
+            <input type="text" class="form-control" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>">
+            <button class="btn btn-primary" type="submit">Buscar</button>
+          </div>
+        </form>
+
+        <?php if ($open_user_query !== '' && empty($open_user_results)): ?>
+          <div class="text-muted">No se encontraron usuarios con ese criterio.</div>
+        <?php endif; ?>
+
+        <?php if (!empty($open_user_results)): ?>
+          <div class="list-group">
+            <?php foreach ($open_user_results as $u): ?>
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong><?php echo html(trim($u['firstname'] . ' ' . $u['lastname'])); ?></strong>
+                  &lt;<?php echo html($u['email']); ?>&gt;
+                  <?php if (!empty($u['phone'])): ?>
+                    <span class="text-muted ms-2"><?php echo html($u['phone']); ?></span>
+                  <?php endif; ?>
+                </div>
+                <a class="btn btn-sm btn-outline-primary" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
