@@ -22,6 +22,7 @@
             <span class="navbar-brand"><?php echo APP_NAME; ?> - Agente</span>
             <div class="d-flex align-items-center gap-3">
                 <span style="color: white;">Agente: <strong><?php echo html($staff['name']); ?></strong></span>
+                <a href="settings.php" class="btn btn-outline-light btn-sm">Panel Administrador</a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
             </div>
         </div>
