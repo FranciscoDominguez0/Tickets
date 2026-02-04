@@ -6,6 +6,12 @@ $task = null;
 $errors = [];
 $success = false;
 
+// Si viene acción POST desde la vista detalle, se envía task_id.
+// Cargamos la tarea para que las acciones funcionen incluso si la URL no trae ?id=
+if (!$task && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['task_id']) && is_numeric($_POST['task_id'])) {
+    $_GET['id'] = (int) $_POST['task_id'];
+}
+
 // Cargar tarea específica si id está presente
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $task_id = (int) $_GET['id'];
@@ -66,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
             case 'update_status':
                 if ($task && isset($_POST['status'])) {
                     $new_status = $_POST['status'];
-                    $valid_statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
+                    $valid_statuses = ['pending', 'in_progress', 'completed'];
                     if (in_array($new_status, $valid_statuses)) {
                         $stmt = $mysqli->prepare("UPDATE tasks SET status = ?, updated = NOW() WHERE id = ?");
                         $stmt->bind_param('si', $new_status, $task['id']);
@@ -114,6 +120,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                         $errors[] = 'Error al actualizar la tarea.';
                     }
                 }
+                break;
+
+            case 'delete':
+                // Eliminar tarea
+                if (!$task) {
+                    $errors[] = 'Tarea no encontrada.';
+                    break;
+                }
+
+                $stmt = $mysqli->prepare("DELETE FROM tasks WHERE id = ?");
+                $stmt->bind_param('i', $task['id']);
+                if ($stmt->execute()) {
+                    header('Location: tasks.php?msg=deleted');
+                    exit;
+                }
+
+                $errors[] = 'Error al eliminar la tarea.';
                 break;
         }
     }

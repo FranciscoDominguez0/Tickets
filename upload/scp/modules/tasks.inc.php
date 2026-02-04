@@ -2,6 +2,58 @@
 // tasks.inc.php - Lista de tareas
 ?>
 
+<style>
+.page-header {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    color: #fff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+}
+.page-header h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
+.page-header p { margin: 6px 0 0 0; opacity: 0.92; }
+
+.card { border: 1px solid rgba(2, 6, 23, 0.08); border-radius: 10px; }
+.card-header { background: #f8fafc; border-bottom: 1px solid rgba(2, 6, 23, 0.06); font-weight: 700; }
+.table thead th { background: #f8fafc; color: #475569; font-size: 0.85rem; }
+.table-hover tbody tr:hover { background: #f8fafc; }
+
+/* Chips suaves (estilo osTicket) */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1;
+}
+.chip-status { background: rgba(37, 99, 235, 0.10); color: #1d4ed8; }
+.chip-priority { background: rgba(15, 23, 42, 0.06); color: #0f172a; }
+.chip-danger { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+
+/* Acento de fila por estado */
+.task-row { transition: transform .06s ease, box-shadow .12s ease; }
+.task-row:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(2, 6, 23, 0.06); }
+.task-row.status-pending { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.75); }
+.task-row.status-in_progress { box-shadow: inset 4px 0 0 rgba(37, 99, 235, 0.85); }
+.task-row.status-completed { box-shadow: inset 4px 0 0 rgba(22, 163, 74, 0.85); }
+.task-row.status-cancelled { box-shadow: inset 4px 0 0 rgba(148, 163, 184, 0.85); }
+
+/* Prioridad: pequeño indicador */
+.prio-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 6px; }
+.prio-low { background: #94a3b8; }
+.prio-normal { background: #2563eb; }
+.prio-high { background: #0ea5e9; }
+.prio-urgent { background: #ef4444; }
+
+.btn-primary { background: #2563eb; border-color: #2563eb; }
+.btn-outline-primary { color: #2563eb; border-color: rgba(37, 99, 235, 0.35); }
+.btn-outline-primary:hover { background: #2563eb; border-color: #2563eb; }
+</style>
+
 <div class="page-header">
     <h1><i class="bi bi-check2-square"></i> Tareas</h1>
     <p>Gestiona las tareas asignadas y pendientes</p>
@@ -122,7 +174,12 @@
                     </thead>
                     <tbody>
                         <?php foreach ($tasks as $t): ?>
-                            <tr>
+                            <?php
+                            $rowStatus = $t['status'] ?? 'pending';
+                            $rowPriority = $t['priority'] ?? 'normal';
+                            $rowClass = 'task-row status-' . $rowStatus;
+                            ?>
+                            <tr class="<?php echo html($rowClass); ?>">
                                 <td><?php echo $t['id']; ?></td>
                                 <td>
                                     <a href="tasks.php?id=<?php echo $t['id']; ?>" class="text-decoration-none">
@@ -144,7 +201,8 @@
                                         'cancelled' => 'secondary'
                                     ];
                                     ?>
-                                    <span class="badge bg-<?php echo $status_colors[$t['status']]; ?>">
+                                    <span class="chip chip-status">
+                                        <i class="bi bi-activity"></i>
                                         <?php echo $status_labels[$t['status']]; ?>
                                     </span>
                                 </td>
@@ -163,7 +221,8 @@
                                         'urgent' => 'danger'
                                     ];
                                     ?>
-                                    <span class="badge bg-<?php echo $priority_colors[$t['priority']]; ?>">
+                                    <span class="chip chip-priority">
+                                        <span class="prio-dot prio-<?php echo html($rowPriority); ?>"></span>
                                         <?php echo $priority_labels[$t['priority']]; ?>
                                     </span>
                                 </td>
@@ -179,7 +238,7 @@
                                             <?php echo date('d/m/Y H:i', $due_date); ?>
                                         </span>
                                         <?php if ($is_overdue): ?>
-                                            <i class="bi bi-exclamation-triangle text-danger" title="Vencida"></i>
+                                            <span class="chip chip-danger ms-2"><i class="bi bi-exclamation-triangle"></i> Vencida</span>
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <span class="text-muted">Sin límite</span>
