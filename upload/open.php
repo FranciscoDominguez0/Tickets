@@ -107,7 +107,7 @@ if ($_POST) {
                     }
                 }
 
-                // Notificar por correo a los agentes del departamento (o a todos si no hay del depto)
+                // Notificar por correo solo a los agentes del departamento
                 $agents = [];
                 $stmtAg = $mysqli->prepare('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND dept_id = ? AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
                 $stmtAg->bind_param('i', $dept_id);
@@ -115,14 +115,6 @@ if ($_POST) {
                 $resAg = $stmtAg->get_result();
                 while ($row = $resAg->fetch_assoc()) {
                     $agents[] = $row;
-                }
-                if (empty($agents)) {
-                    $resAll = $mysqli->query('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
-                    if ($resAll) {
-                        while ($row = $resAll->fetch_assoc()) {
-                            $agents[] = $row;
-                        }
-                    }
                 }
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
                 $clientEmail = $user['email'] ?? '';
