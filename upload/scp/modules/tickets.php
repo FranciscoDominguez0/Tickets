@@ -90,6 +90,21 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $tid = (int) $_GET['id'];
 
+    // Firma del staff (si existe columna signature)
+    $staff_signature = '';
+    $staff_has_signature = false;
+    $current_staff_id = (int) ($_SESSION['staff_id'] ?? 0);
+    if ($current_staff_id > 0) {
+        $stmtSig = $mysqli->prepare('SELECT * FROM staff WHERE id = ? LIMIT 1');
+        $stmtSig->bind_param('i', $current_staff_id);
+        $stmtSig->execute();
+        $staffRow = $stmtSig->get_result()->fetch_assoc();
+        if ($staffRow && array_key_exists('signature', $staffRow)) {
+            $staff_signature = trim((string)($staffRow['signature'] ?? ''));
+            $staff_has_signature = $staff_signature !== '';
+        }
+    }
+
     // Cargar ticket con usuario, estado, prioridad, departamento, asignado
     $stmt = $mysqli->prepare(
         "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
@@ -264,10 +279,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $body = trim($_POST['body'] ?? '');
                 $is_internal = isset($_POST['do']) && $_POST['do'] === 'internal';
                 $new_status_id = isset($_POST['status_id']) && is_numeric($_POST['status_id']) ? (int) $_POST['status_id'] : (int) $ticketView['status_id'];
+                $signature_mode = trim($_POST['signature'] ?? 'none');
                 if ($body === '') {
                     $reply_errors[] = 'El mensaje no puede estar vacío.';
                 } else {
                     $staff_id = (int) ($_SESSION['staff_id'] ?? 0);
+
                     $stmt = $mysqli->prepare(
                         "INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, NOW())"
                     );
@@ -314,6 +331,39 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 }
                             }
                         }
+
+                        // Notificación por correo al cliente (solo respuestas públicas)
+                        if (!$is_internal) {
+                            $to = trim((string)($ticketView['user_email'] ?? ''));
+                            if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                                $subj = '[Respuesta] ' . $ticketNo . ' - ' . (string)($ticketView['subject'] ?? 'Ticket');
+
+                                $sigText = '';
+                                if ($signature_mode === 'staff' && $staff_has_signature) {
+                                    $sigText = $staff_signature;
+                                }
+
+                                $isHtml = strpos($body, '<') !== false;
+                                $msgHtml = $isHtml
+                                    ? strip_tags($body, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span><div>')
+                                    : nl2br(html($body));
+                                $sigHtml = $sigText !== '' ? '<br><br>' . nl2br(html($sigText)) : '';
+
+                                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/tickets.php?id=' . (int) $tid;
+                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Actualización de su ticket</h2>'
+                                    . '<p style="color:#64748b; margin: 0 0 12px;">Ticket: <strong>' . html($ticketNo) . '</strong></p>'
+                                    . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px;">' . $msgHtml . $sigHtml . '</div>'
+                                    . '<p style="margin: 14px 0 0;"><a href="' . html($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . html(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                    . '</div>';
+
+                                $bodyText = strip_tags($body) . ($sigText !== '' ? "\n\n" . $sigText : '');
+                                Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                            }
+                        }
+
                         $reply_success = true;
                         header('Location: tickets.php?id=' . $tid . '&msg=reply_sent');
                         exit;

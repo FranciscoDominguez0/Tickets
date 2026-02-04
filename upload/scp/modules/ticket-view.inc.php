@@ -330,7 +330,10 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
             <div class="reply-options">
                 <div class="opt-group">
                     <label>Firma:</label>
-                    <label class="me-3"><input type="radio" name="signature" value="none" class="form-radio" checked> Ninguno</label>
+                    <label class="me-3"><input type="radio" name="signature" value="none" class="form-radio" <?php echo empty($staff_has_signature) ? 'checked' : ''; ?>> Ninguno</label>
+                    <?php if (!empty($staff_has_signature)): ?>
+                        <label class="me-3"><input type="radio" name="signature" value="staff" class="form-radio" checked> Mi firma</label>
+                    <?php endif; ?>
                     <label><input type="radio" name="signature" value="dept" class="form-radio"> Firma del Departamento (<?php echo html($t['dept_name'] ?? 'Soporte'); ?>)</label>
                 </div>
                 <div class="opt-group">
@@ -365,8 +368,54 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+<style>
+.note-editor .note-editable {
+    position: relative;
+}
+.note-editor.signature-preview-on .note-editable {
+    padding-bottom: 160px;
+}
+.note-editor.signature-preview-on .note-editable::after {
+    content: attr(data-signature);
+    white-space: pre-line;
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1.4;
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 12px;
+    pointer-events: none;
+    opacity: 0.95;
+}
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    var staffHasSignature = <?php echo !empty($staff_has_signature) ? 'true' : 'false'; ?>;
+    var staffSignatureText = <?php echo json_encode((string)($staff_signature ?? '')); ?>;
+
+    function setSignaturePreview(enabled) {
+        var editor = document.querySelector('.note-editor');
+        var editable = document.querySelector('.note-editor .note-editable');
+        if (!editor || !editable) return;
+        if (enabled && staffHasSignature) {
+            editor.classList.add('signature-preview-on');
+            editable.setAttribute('data-signature', staffSignatureText);
+            var lines = (staffSignatureText || '').split(/\r?\n/).length;
+            var pad = 70 + (lines * 18);
+            if (pad < 160) pad = 160;
+            if (pad > 360) pad = 360;
+            editable.style.paddingBottom = pad + 'px';
+        } else {
+            editor.classList.remove('signature-preview-on');
+            editable.removeAttribute('data-signature');
+            editable.style.paddingBottom = '';
+        }
+    }
+
     if (typeof jQuery !== 'undefined' && jQuery().summernote) {
         jQuery('#reply_body').summernote({
             height: 260,
@@ -385,7 +434,24 @@ document.addEventListener('DOMContentLoaded', function() {
             fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Helvetica', 'Impact', 'Tahoma', 'Times New Roman', 'Verdana'],
             fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '24', '36']
         });
+
+        // Aplicar previsualización inicial según radio seleccionado
+        setTimeout(function () {
+            var checked = document.querySelector('input[name="signature"]:checked');
+            setSignaturePreview(checked && checked.value === 'staff');
+        }, 0);
     }
+
+    // Toggle de previsualización al cambiar la opción de firma
+    var sigRadios = document.querySelectorAll('input[name="signature"]');
+    if (sigRadios && sigRadios.length) {
+        sigRadios.forEach(function (r) {
+            r.addEventListener('change', function () {
+                setSignaturePreview(this.value === 'staff');
+            });
+        });
+    }
+
     var zone = document.getElementById('attach-zone');
     var input = document.getElementById('attachments');
     var list = document.getElementById('attach-list');
