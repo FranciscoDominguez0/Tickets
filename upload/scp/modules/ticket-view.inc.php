@@ -290,21 +290,39 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                 $author = $isStaff
                     ? (trim($e['staff_first'] . ' ' . $e['staff_last']) ?: 'Agente')
                     : (trim($e['user_first'] . ' ' . $e['user_last']) ?: 'Usuario');
-                $cssClass = $isInternal ? 'internal' : ($isStaff ? 'staff' : '');
+                $cssClass = $isInternal ? 'internal' : ($isStaff ? 'staff' : 'user');
+                $initials = '';
+                $parts = preg_split('/\s+/', trim($author));
+                $sub1 = function ($str) {
+                    if ($str === null) return '';
+                    $str = (string) $str;
+                    if ($str === '') return '';
+                    return function_exists('mb_substr') ? mb_substr($str, 0, 1) : substr($str, 0, 1);
+                };
+                if (!empty($parts[0])) $initials .= $sub1($parts[0]);
+                if (!empty($parts[1])) $initials .= $sub1($parts[1]);
+                $initials = strtoupper($initials ?: 'U');
                 ?>
                 <div class="ticket-view-entry <?php echo $cssClass; ?>">
-                    <div class="entry-meta">
-                        <span class="author"><?php echo html($author); ?></span>
-                        <span><?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?></span>
+                    <div class="entry-row">
+                        <div class="entry-avatar" aria-hidden="true">
+                            <span class="entry-avatar-inner"><?php echo html($initials); ?></span>
+                        </div>
+                        <div class="entry-content">
+                            <div class="entry-meta">
+                                <span class="author"><?php echo html($author); ?></span>
+                                <span><?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?></span>
+                            </div>
+                            <div class="entry-body"><?php
+                                $b = $e['body'];
+                                if (strpos($b, '<') !== false) {
+                                    echo strip_tags($b, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span>');
+                                } else {
+                                    echo nl2br(html($b));
+                                }
+                            ?></div>
+                        </div>
                     </div>
-                    <div class="entry-body"><?php
-                        $b = $e['body'];
-                        if (strpos($b, '<') !== false) {
-                            echo strip_tags($b, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span>');
-                        } else {
-                            echo nl2br(html($b));
-                        }
-                    ?></div>
                     <div class="entry-footer">
                         Creado por <?php echo html($author); ?> <?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?>
                         <?php if ($isInternal): ?> <span class="badge bg-warning text-dark">Nota interna</span><?php endif; ?>
