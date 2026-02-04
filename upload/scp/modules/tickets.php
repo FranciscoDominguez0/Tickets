@@ -233,10 +233,42 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
                 if ($staff_id !== null) {
                     $val = $staff_id === 0 ? null : $staff_id;
+                    $previousStaffId = $ticketView['staff_id'] ?? null;
                     $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ?");
                     $stmt->bind_param('ii', $val, $tid);
                     $ok = $stmt->execute();
                     $msg = 'assigned';
+
+                    // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
+                    if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
+                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        $stmtS->bind_param('i', $val);
+                        if ($stmtS->execute()) {
+                            $srow = $stmtS->get_result()->fetch_assoc();
+                            $to = trim((string)($srow['email'] ?? ''));
+                            if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                                $subj = '[Asignación] ' . $ticketNo . ' - ' . (string)($ticketView['subject'] ?? 'Ticket');
+                                $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
+                                if ($staffName === '') $staffName = 'Agente';
+                                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int) $tid;
+                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                    . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                    . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars($ticketNo) . '</td></tr>'
+                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)($ticketView['subject'] ?? '')) . '</td></tr>'
+                                    . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars((string)($ticketView['dept_name'] ?? '')) . '</td></tr>'
+                                    . '</table>'
+                                    . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                    . '</div>';
+
+                                $bodyText = 'Se te asignó un ticket: ' . $ticketNo . "\n" . 'Asunto: ' . (string)($ticketView['subject'] ?? '') . "\n" . 'Ver: ' . $viewUrl;
+                                Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                            }
+                        }
+                    }
                 }
             } elseif ($action === 'mark_answered') {
                 $stmt = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%resuelto%' OR LOWER(name) LIKE '%contestado%' LIMIT 1");

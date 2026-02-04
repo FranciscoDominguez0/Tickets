@@ -7,6 +7,13 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
 ?>
 
 <div class="ticket-view-wrap">
+    <div id="assign-loading" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 2000;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 220px; text-align:center;">
+            <div class="spinner-border text-primary" role="status" style="width:2.25rem; height:2.25rem;"></div>
+            <div style="margin-top:10px; font-weight:800; color:#0f172a;">Asignando…</div>
+            <div style="margin-top:4px; color:#64748b; font-size:0.9rem;">Enviando notificación</div>
+        </div>
+    </div>
     <header class="ticket-view-header">
         <h1 class="ticket-view-title">
             <a href="tickets.php?id=<?php echo $tid; ?>" title="Recargar">
@@ -419,6 +426,10 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
 .note-editor .note-editable {
     position: relative;
 }
+.ticket-view-actions .dropdown-item.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
 .note-editor.signature-preview-on .note-editable {
     padding-bottom: 160px;
 }
@@ -443,6 +454,20 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
 document.addEventListener('DOMContentLoaded', function() {
     var staffHasSignature = <?php echo !empty($staff_has_signature) ? 'true' : 'false'; ?>;
     var staffSignatureText = <?php echo json_encode((string)($staff_signature ?? '')); ?>;
+
+    var assignOverlay = document.getElementById('assign-loading');
+    function showAssignOverlay() {
+        if (assignOverlay) assignOverlay.style.display = 'block';
+    }
+    var assignLinks = document.querySelectorAll('.ticket-view-actions a[href*="action=assign"]');
+    if (assignLinks && assignLinks.length) {
+        assignLinks.forEach(function (a) {
+            a.addEventListener('click', function () {
+                try { this.classList.add('is-loading'); } catch (e) {}
+                showAssignOverlay();
+            });
+        });
+    }
 
     function setSignaturePreview(enabled) {
         var editor = document.querySelector('.note-editor');

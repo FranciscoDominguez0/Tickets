@@ -38,6 +38,7 @@ define('TIMEZONE', 'America/Mexico_City');
 // Remitente de las notificaciones (Gmail suele exigir que coincida con SMTP_USER)
 define('MAIL_FROM', 'dominguezf225@gmail.com');
 define('MAIL_FROM_NAME', APP_NAME);
+define('ADMIN_NOTIFY_EMAIL', 'cuenta9fran@gmail.com');
 // SMTP Gmail (contraseña de aplicación, sin espacios)
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 465);

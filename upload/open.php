@@ -107,15 +107,8 @@ if ($_POST) {
                     }
                 }
 
-                // Notificar por correo solo a los agentes del departamento
-                $agents = [];
-                $stmtAg = $mysqli->prepare('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND dept_id = ? AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
-                $stmtAg->bind_param('i', $dept_id);
-                $stmtAg->execute();
-                $resAg = $stmtAg->get_result();
-                while ($row = $resAg->fetch_assoc()) {
-                    $agents[] = $row;
-                }
+                // Notificar por correo solo al admin
+                $adminEmail = defined('ADMIN_NOTIFY_EMAIL') ? trim((string) ADMIN_NOTIFY_EMAIL) : '';
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
                 $clientEmail = $user['email'] ?? '';
                 $deptName = 'Soporte';
@@ -144,23 +137,18 @@ if ($_POST) {
                 $emailSubject = '[Nuevo ticket] ' . $ticket_number . ' - ' . $subject;
                 $mailSent = 0;
                 $mailError = '';
-                foreach ($agents as $agent) {
-                    $agentEmail = trim($agent['email'] ?? '');
-                    if ($agentEmail !== '') {
-                        if (Mailer::send($agentEmail, $emailSubject, $bodyHtml)) {
-                            $mailSent++;
-                        } else {
-                            $mailError = Mailer::$lastError;
-                        }
+                if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                    if (Mailer::send($adminEmail, $emailSubject, $bodyHtml)) {
+                        $mailSent = 1;
+                    } else {
+                        $mailError = Mailer::$lastError;
                     }
                 }
                 $success = 'Ticket creado exitosamente! Número: ' . $ticket_number;
                 if ($mailSent > 0) {
-                    $success .= ' Se envió notificación por correo a ' . $mailSent . ' agente(s).';
-                } elseif (!empty($agents) && $mailError !== '') {
+                    $success .= ' Se envió notificación por correo.';
+                } elseif ($mailError !== '') {
                     $success .= ' <strong>No se pudo enviar el correo:</strong> ' . htmlspecialchars($mailError);
-                } elseif (empty($agents)) {
-                    $success .= ' (No hay agentes con email en el departamento para notificar.)';
                 }
                 echo '<script>
                     setTimeout(function() {
