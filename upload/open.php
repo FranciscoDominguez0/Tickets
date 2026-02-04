@@ -58,7 +58,17 @@ if ($_POST) {
                 if (!is_dir($uploadDir)) {
                     @mkdir($uploadDir, 0755, true);
                 }
-                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                $allowedExt = [
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'png' => 'image/png',
+                    'gif' => 'image/gif',
+                    'webp' => 'image/webp',
+                    'pdf' => 'application/pdf',
+                    'doc' => 'application/msword',
+                    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'txt' => 'text/plain',
+                ];
                 $maxSize = 10 * 1024 * 1024; // 10 MB
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $files = $_FILES['attachments'];
@@ -74,9 +84,17 @@ if ($_POST) {
                         $size = (int) ($files['size'][$i] ?? 0);
                         if ($orig === '' || $size <= 0) continue;
                         if ($size > $maxSize) continue;
-                        if (!in_array($mime, $allowedTypes, true)) continue;
+                        $ext = strtolower((string) (pathinfo($orig, PATHINFO_EXTENSION) ?: ''));
+                        if ($ext === '' || !isset($allowedExt[$ext])) continue;
+                        if (function_exists('finfo_open') && !empty($files['tmp_name'][$i])) {
+                            $fi = @finfo_open(FILEINFO_MIME_TYPE);
+                            if ($fi) {
+                                $detected = @finfo_file($fi, $files['tmp_name'][$i]);
+                                @finfo_close($fi);
+                                if (is_string($detected) && $detected !== '') $mime = $detected;
+                            }
+                        }
 
-                        $ext = pathinfo($orig, PATHINFO_EXTENSION) ?: 'bin';
                         $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
                         $path = $uploadDir . '/' . $safeName;
                         if (move_uploaded_file($files['tmp_name'][$i], $path)) {

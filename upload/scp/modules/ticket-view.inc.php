@@ -321,6 +321,21 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                                     echo nl2br(html($b));
                                 }
                             ?></div>
+
+                            <?php $eid = (int) ($e['id'] ?? 0); ?>
+                            <?php if (!empty($attachmentsByEntry[$eid])): ?>
+                                <div class="att-list">
+                                    <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
+                                        <div class="att-item">
+                                            <div>
+                                                <i class="bi bi-paperclip"></i>
+                                                <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>"><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
+                                            </div>
+                                            <div class="size"><?php echo isset($a['size']) ? number_format((int)$a['size'] / 1024, 0) . ' KB' : ''; ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="entry-footer">

@@ -136,6 +136,48 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         }
         $thread_id = (int) $threadRow['id'];
 
+        // Descarga de adjuntos
+        if (isset($_GET['download']) && is_numeric($_GET['download'])) {
+            $aid = (int) $_GET['download'];
+            $stmtA = $mysqli->prepare(
+                "SELECT a.id, a.original_filename, a.mimetype, a.path\n"
+                . "FROM attachments a\n"
+                . "JOIN thread_entries te ON te.id = a.thread_entry_id\n"
+                . "WHERE a.id = ? AND te.thread_id = ?\n"
+                . "LIMIT 1"
+            );
+            $stmtA->bind_param('ii', $aid, $thread_id);
+            $stmtA->execute();
+            $att = $stmtA->get_result()->fetch_assoc();
+            if (!$att) {
+                http_response_code(404);
+                exit('Archivo no encontrado');
+            }
+            $rel = (string) ($att['path'] ?? '');
+            $baseUpload = dirname(__DIR__, 2); // upload/scp
+            $baseRoot = dirname(__DIR__, 3);   // upload
+            $full = $baseRoot . '/' . ltrim($rel, '/');
+            if (($rel === '' || !is_file($full)) && $rel !== '') {
+                $legacy = $baseUpload . '/' . ltrim($rel, '/');
+                if (is_file($legacy)) {
+                    $full = $legacy;
+                }
+            }
+            if ($rel === '' || !is_file($full)) {
+                http_response_code(404);
+                exit('Archivo no encontrado');
+            }
+
+            $filename = (string) ($att['original_filename'] ?? 'archivo');
+            $mime = (string) ($att['mimetype'] ?? 'application/octet-stream');
+            header('Content-Type: ' . $mime);
+            header('Content-Length: ' . (string) filesize($full));
+            header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+            header('X-Content-Type-Options: nosniff');
+            readfile($full);
+            exit;
+        }
+
         // Info de cierre (para mostrar debajo del hilo)
         $ticket_closed_info = null;
         if (!empty($ticketView['closed'])) {
@@ -335,11 +377,21 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             $mysqli->query("UPDATE tickets SET staff_id = $staff_id WHERE id = $tid");
                         }
                         // Adjuntos: guardar archivos y registrar en BD
-                        $uploadDir = dirname(__DIR__, 2) . '/uploads/attachments';
+                        $uploadDir = dirname(__DIR__, 3) . '/uploads/attachments';
                         if (!is_dir($uploadDir)) {
                             @mkdir($uploadDir, 0755, true);
                         }
-                        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                        $allowedExt = [
+                            'jpg' => 'image/jpeg',
+                            'jpeg' => 'image/jpeg',
+                            'png' => 'image/png',
+                            'gif' => 'image/gif',
+                            'webp' => 'image/webp',
+                            'pdf' => 'application/pdf',
+                            'doc' => 'application/msword',
+                            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'txt' => 'text/plain',
+                        ];
                         $maxSize = 10 * 1024 * 1024; // 10 MB
                         if (!empty($_FILES['attachments']['name'][0])) {
                             $files = $_FILES['attachments'];
@@ -352,10 +404,18 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 if ($err !== UPLOAD_ERR_OK) continue;
                                 $size = (int) ($files['size'][$i] ?? 0);
                                 if ($size > $maxSize) continue;
-                                $mime = $files['type'][$i] ?? '';
-                                if (!in_array($mime, $allowedTypes)) continue;
-                                $orig = $files['name'][$i] ?? 'file';
-                                $ext = pathinfo($orig, PATHINFO_EXTENSION) ?: 'bin';
+                                $mime = (string) ($files['type'][$i] ?? '');
+                                $orig = (string) ($files['name'][$i] ?? 'file');
+                                $ext = strtolower((string) (pathinfo($orig, PATHINFO_EXTENSION) ?: ''));
+                                if ($ext === '' || !isset($allowedExt[$ext])) continue;
+                                if (function_exists('finfo_open') && !empty($files['tmp_name'][$i])) {
+                                    $fi = @finfo_open(FILEINFO_MIME_TYPE);
+                                    if ($fi) {
+                                        $detected = @finfo_file($fi, $files['tmp_name'][$i]);
+                                        @finfo_close($fi);
+                                        if (is_string($detected) && $detected !== '') $mime = $detected;
+                                    }
+                                }
                                 $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
                                 $path = $uploadDir . '/' . $safeName;
                                 if (move_uploaded_file($files['tmp_name'][$i], $path)) {
@@ -428,6 +488,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $stmt->bind_param('i', $thread_id);
         $stmt->execute();
         $ticketView['thread_entries'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+        // Adjuntos por entrada
+        $attachmentsByEntry = [];
+        if (!empty($ticketView['thread_entries'])) {
+            $entryIds = array_map(static fn($e) => (int) $e['id'], $ticketView['thread_entries']);
+            $placeholders = implode(',', array_fill(0, count($entryIds), '?'));
+            $typesA = str_repeat('i', count($entryIds));
+            $sqlA = "SELECT id, thread_entry_id, original_filename, mimetype, size FROM attachments WHERE thread_entry_id IN ($placeholders) ORDER BY id";
+            $stmtAtt = $mysqli->prepare($sqlA);
+            $stmtAtt->bind_param($typesA, ...$entryIds);
+            $stmtAtt->execute();
+            $resAtt = $stmtAtt->get_result();
+            while ($a = $resAtt->fetch_assoc()) {
+                $eid = (int) $a['thread_entry_id'];
+                if (!isset($attachmentsByEntry[$eid])) $attachmentsByEntry[$eid] = [];
+                $attachmentsByEntry[$eid][] = $a;
+            }
+        }
 
         // Último mensaje y última respuesta (agente)
         $lastMsg = null;
