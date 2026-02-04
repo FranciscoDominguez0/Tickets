@@ -34,6 +34,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
             if (empty($open_errors)) {
                 $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT);
+                error_log('[tickets] INSERT tickets via scp/modules/tickets.php open uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' user_id=' . (string)$user_id . ' dept_id=' . (string)$dept_id);
                 $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
                 // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (priority_id), s (subject)
                 $stmt->bind_param('siiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
@@ -388,6 +389,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             } else {
                 $body = trim($_POST['body'] ?? '');
                 $is_internal = isset($_POST['do']) && $_POST['do'] === 'internal';
+                error_log('[tickets] reply POST scp/modules/tickets.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' tid=' . (string)$tid . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' internal=' . ($is_internal ? '1' : '0'));
                 $new_status_id = isset($_POST['status_id']) && is_numeric($_POST['status_id']) ? (int) $_POST['status_id'] : (int) $ticketView['status_id'];
                 $signature_mode = trim($_POST['signature'] ?? 'none');
                 if ($body === '') {

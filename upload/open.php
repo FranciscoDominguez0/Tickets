@@ -30,6 +30,7 @@ if ($_POST) {
             $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
             // Insertar ticket
+            error_log('[tickets] INSERT tickets via upload/open.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' user_id=' . (string)($_SESSION['user_id'] ?? '') . ' dept_id=' . (string)$dept_id);
             $stmt = $mysqli->prepare(
                 'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, priority_id, subject, created)
                  VALUES (?, ?, ?, 1, ?, ?, NOW())'
