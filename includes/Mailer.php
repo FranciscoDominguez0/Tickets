@@ -89,6 +89,17 @@ class Mailer {
         $user = defined('SMTP_USER') ? SMTP_USER : '';
         $pass = defined('SMTP_PASS') ? SMTP_PASS : '';
 
+        // Diagnóstico rápido: OpenSSL / transportes disponibles
+        $transports = function_exists('stream_get_transports') ? (array) stream_get_transports() : [];
+        if (in_array($secure, ['ssl', 'tls'], true) && !extension_loaded('openssl')) {
+            self::$lastError = 'SMTP requiere la extensión OpenSSL habilitada en PHP (php_openssl). En XAMPP descomenta extension=openssl en php.ini y reinicia Apache.';
+            return false;
+        }
+        if ($secure === 'ssl' && !in_array('ssl', $transports, true)) {
+            self::$lastError = 'PHP no tiene habilitado el transporte ssl. Habilita OpenSSL en php.ini (extension=openssl) y reinicia Apache.';
+            return false;
+        }
+
         $prefix = ($secure === 'ssl') ? 'ssl://' : '';
         $errno = 0;
         $errstr = '';
