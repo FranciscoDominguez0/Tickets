@@ -128,12 +128,8 @@
      */
     const deleteForm = document.getElementById('deleteOrgForm');
     if (deleteForm) {
-        deleteForm.addEventListener('submit', function(e) {
-            const orgName = document.getElementById('delete_org_name')?.value || document.getElementById('delete_org_display')?.textContent || 'esta organización';
-            if (!confirm('¿Estás seguro de eliminar la organización "' + orgName + '"?\n\nEsta acción no se puede deshacer.')) {
-                e.preventDefault();
-            }
-        });
+        // La confirmación se realiza con el modal Bootstrap.
+        // No agregar confirm() aquí para evitar doble confirmación.
     }
 
 })();

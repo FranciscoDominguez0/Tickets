@@ -365,7 +365,7 @@ if (!empty($_GET['org'])) {
                     </div>
                     <div class="modal-footer org-modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-danger" onclick="if(confirm('¿Confirmas que deseas eliminar permanentemente esta organización?')) document.getElementById('deleteOrgForm').submit();"><i class="bi bi-trash"></i> Eliminar</button>
+                        <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Eliminar</button>
                     </div>
                 </form>
             </div>
