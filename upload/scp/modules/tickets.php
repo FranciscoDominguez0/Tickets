@@ -457,70 +457,262 @@ if ($types !== '') {
 if ($res) {
     while ($row = $res->fetch_assoc()) $tickets[] = $row;
 }
+
+// Acciones masivas (listado)
+$bulk_errors = [];
+$bulk_success = '';
+
+// Flash messages (PRG)
+if (isset($_SESSION['bulk_flash_errors']) || isset($_SESSION['bulk_flash_success'])) {
+    if (!empty($_SESSION['bulk_flash_errors']) && is_array($_SESSION['bulk_flash_errors'])) {
+        $bulk_errors = $_SESSION['bulk_flash_errors'];
+    }
+    if (!empty($_SESSION['bulk_flash_success']) && is_string($_SESSION['bulk_flash_success'])) {
+        $bulk_success = $_SESSION['bulk_flash_success'];
+    }
+    unset($_SESSION['bulk_flash_errors'], $_SESSION['bulk_flash_success']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESSION['staff_id'])) {
+    $postErrors = [];
+    $postSuccess = '';
+    if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
+        $postErrors[] = 'Token de seguridad inválido.';
+    } else {
+        $ids = $_POST['ticket_ids'] ?? [];
+        if (!is_array($ids)) $ids = [];
+        $ticketIds = [];
+        foreach ($ids as $id) {
+            if (is_numeric($id)) $ticketIds[] = (int) $id;
+        }
+        $ticketIds = array_values(array_unique(array_filter($ticketIds, fn($v) => $v > 0)));
+
+        if (empty($ticketIds)) {
+            $postErrors[] = 'Seleccione al menos un ticket.';
+        } else {
+            $placeholders = implode(',', array_fill(0, count($ticketIds), '?'));
+            $typesIds = str_repeat('i', count($ticketIds));
+
+            if ($_POST['do'] === 'bulk_assign') {
+                $staffId = isset($_POST['bulk_staff_id']) && is_numeric($_POST['bulk_staff_id']) ? (int) $_POST['bulk_staff_id'] : 0;
+                if ($staffId === 0) {
+                    $sqlUp = "UPDATE tickets SET staff_id = NULL, updated = NOW() WHERE id IN ($placeholders)";
+                    $stmt = $mysqli->prepare($sqlUp);
+                    $params = [&$typesIds];
+                    foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                    call_user_func_array([$stmt, 'bind_param'], $params);
+                } else {
+                    $sqlUp = "UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id IN ($placeholders)";
+                    $stmt = $mysqli->prepare($sqlUp);
+                    $types = 'i' . $typesIds;
+                    $params = [&$types, &$staffId];
+                    foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                    call_user_func_array([$stmt, 'bind_param'], $params);
+                }
+                if ($stmt->execute()) {
+                    $postSuccess = 'Asignación actualizada.';
+                } else {
+                    $postErrors[] = 'Error al asignar tickets.';
+                }
+            } elseif ($_POST['do'] === 'bulk_status') {
+                $statusId = isset($_POST['bulk_status_id']) && is_numeric($_POST['bulk_status_id']) ? (int) $_POST['bulk_status_id'] : 0;
+                if ($statusId <= 0) {
+                    $postErrors[] = 'Seleccione un estado válido.';
+                } else {
+                    $sqlUp = "UPDATE tickets SET status_id = ?, updated = NOW() WHERE id IN ($placeholders)";
+                    $stmt = $mysqli->prepare($sqlUp);
+                    $types = 'i' . $typesIds;
+                    $params = [&$types, &$statusId];
+                    foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                    call_user_func_array([$stmt, 'bind_param'], $params);
+                    if ($stmt->execute()) {
+                        $postSuccess = 'Estado actualizado.';
+                    } else {
+                        $postErrors[] = 'Error al cambiar el estado.';
+                    }
+                }
+            } elseif ($_POST['do'] === 'bulk_delete') {
+                if (!isset($_POST['confirm']) || $_POST['confirm'] !== '1') {
+                    $postErrors[] = 'Confirmación requerida.';
+                } else {
+                    $mysqli->begin_transaction();
+                    try {
+                        // Eliminar entradas/hilos si existen
+                        $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
+                        $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
+                        $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
+                        $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
+                        if ($threadsOk && $entriesOk) {
+                            $sqlDelEntries = "DELETE te FROM thread_entries te JOIN threads th ON th.id = te.thread_id WHERE th.ticket_id IN ($placeholders)";
+                            $stmt = $mysqli->prepare($sqlDelEntries);
+                            $params = [&$typesIds];
+                            foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                            call_user_func_array([$stmt, 'bind_param'], $params);
+                            $stmt->execute();
+
+                            $sqlDelThreads = "DELETE FROM threads WHERE ticket_id IN ($placeholders)";
+                            $stmt = $mysqli->prepare($sqlDelThreads);
+                            $params = [&$typesIds];
+                            foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                            call_user_func_array([$stmt, 'bind_param'], $params);
+                            $stmt->execute();
+                        }
+
+                        $sqlDelTickets = "DELETE FROM tickets WHERE id IN ($placeholders)";
+                        $stmt = $mysqli->prepare($sqlDelTickets);
+                        $params = [&$typesIds];
+                        foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                        call_user_func_array([$stmt, 'bind_param'], $params);
+                        if ($stmt->execute()) {
+                            $mysqli->commit();
+                            $postSuccess = 'Tickets eliminados.';
+                        } else {
+                            throw new Exception('No se pudo eliminar.');
+                        }
+                    } catch (Throwable $e) {
+                        $mysqli->rollback();
+                        $postErrors[] = 'Error al eliminar tickets.';
+                    }
+                }
+            }
+        }
+    }
+
+    // PRG: guardar flash y redirigir para evitar reenviar formulario al refrescar
+    if (!empty($postErrors)) {
+        $_SESSION['bulk_flash_errors'] = $postErrors;
+    }
+    if (!empty($postSuccess)) {
+        $_SESSION['bulk_flash_success'] = $postSuccess;
+    }
+    $redirFilter = isset($_POST['current_filter']) ? (string) $_POST['current_filter'] : (string) ($filterKey ?? 'open');
+    $redirQ = isset($_POST['current_q']) ? trim((string) $_POST['current_q']) : '';
+    $redirParams = ['filter' => $redirFilter];
+    if ($redirQ !== '') $redirParams['q'] = $redirQ;
+    header('Location: tickets.php?' . http_build_query($redirParams));
+    exit;
+}
+
+// Datos para toolbars
+$staffOptions = [];
+$r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+if ($r) while ($row = $r->fetch_assoc()) $staffOptions[] = $row;
+$statusOptions = [];
+$r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
+if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
 ?>
 <style>
 .tickets-shell { max-width: 1200px; margin: 0 auto; }
-.tickets-hero {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f172a 100%);
+.tickets-header {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
     color: #fff;
-    padding: 24px 28px;
-    border-radius: 18px;
-    margin-bottom: 24px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
 }
-.tickets-hero h1 { font-size: 1.6rem; margin: 0; font-weight: 700; }
-.tickets-hero .btn-new {
-    background: linear-gradient(135deg, #38bdf8, #2563eb);
+.tickets-header h1 { margin: 0; font-size: 1.4rem; font-weight: 800; }
+.tickets-header .sub { margin-top: 6px; opacity: 0.9; font-size: 0.95rem; }
+.tickets-header .btn-new {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.30);
     color: #fff;
-    padding: 10px 18px;
+    padding: 8px 12px;
     border-radius: 10px;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
 }
-.tickets-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
-.tickets-metrics .metric-card {
+.tickets-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.tickets-panel {
     background: #fff;
-    border-radius: 14px;
-    padding: 16px 18px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+    border: 1px solid rgba(2, 6, 23, 0.08);
+    border-radius: 12px;
+    padding: 12px 12px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    margin-bottom: 14px;
 }
-.metric-card .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; }
-.metric-card .value { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin-top: 6px; }
-.tickets-toolbar { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-bottom: 16px; }
-.tickets-filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.tickets-filters a {
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid #e2e8f0;
-    text-decoration: none;
-    color: #475569;
-    font-weight: 600;
+.tickets-panel .tickets-toolbar { margin-bottom: 0; }
+.tickets-panel + .tickets-panel { margin-top: -4px; }
+.filter-dd .btn {
+    border-radius: 10px;
+    border: 1px solid rgba(2, 6, 23, 0.10);
     background: #fff;
+    font-weight: 800;
+    color: #0f172a;
 }
-.tickets-filters a.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+.filter-dd .btn:hover { background: #f8fafc; }
+.filter-dd .dropdown-item { font-weight: 700; }
+.filter-dd .dropdown-item.active,
+.filter-dd .dropdown-item:active { background: #2563eb; }
 .tickets-search { min-width: 280px; }
 .tickets-search input { border-radius: 10px; }
 .tickets-table-wrap {
     background: #fff;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    border: 1px solid rgba(2, 6, 23, 0.08);
     box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
     overflow: hidden;
 }
 .tickets-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
+.tickets-table td { padding-top: 16px; padding-bottom: 16px; vertical-align: top; }
 .ticket-row:hover { background: #f8fafc; }
-.ticket-number { font-weight: 700; color: #0f172a; }
+.ticket-title { font-weight: 800; color: #0f172a; }
 .ticket-subject { font-weight: 600; color: #1e293b; }
 .ticket-meta { font-size: 0.82rem; color: #94a3b8; }
-.badge-status { padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 0.8rem; }
-.badge-priority { padding: 6px 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; }
-.empty-state { padding: 48px 20px; text-align: center; color: #64748b; }
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1;
+}
+.chip-status { border-radius: 999px; }
+.chip-priority { border-radius: 10px; }
+.empty-state { padding: 40px 18px; text-align: center; color: #64748b; }
+.tickets-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.tickets-actions .form-select,
+.tickets-actions .btn { border-radius: 10px; }
+.tickets-actions .form-select { max-width: 230px; }
+.tickets-actions .form-select { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+.tickets-actions .btn { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+.tickets-actions .btn-icon {
+    width: 40px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.tickets-actions .dropdown-toggle-split { width: 34px; }
+.tickets-actions .btn-action {
+    background: #fff;
+    border: 1px solid rgba(2, 6, 23, 0.10);
+    font-weight: 800;
+}
+.tickets-actions .btn-action:hover { background: #f8fafc; }
+.tickets-actions .btn-danger-soft {
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #b91c1c;
+    font-weight: 900;
+}
+.tickets-actions .btn-danger-soft:hover { background: rgba(239, 68, 68, 0.14); color: #991b1b; }
+.check-cell { width: 34px; }
 </style>
 
 <div class="tickets-shell">
@@ -528,55 +720,131 @@ if ($res) {
         <div class="alert alert-warning">Ticket no encontrado.</div>
     <?php endif; ?>
 
-    <div class="tickets-hero">
-        <div>
-            <h1>Solicitudes</h1>
+    <?php if (!empty($bulk_errors)): ?>
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                <?php foreach ($bulk_errors as $e): ?>
+                    <li><?php echo html($e); ?></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
-        <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo Ticket</a>
-    </div>
-
-    <div class="tickets-metrics">
-        <div class="metric-card"><div class="label">Abiertos</div><div class="value"><?php echo $countOpen; ?></div></div>
-        <div class="metric-card"><div class="label">Cerrados</div><div class="value"><?php echo $countClosed; ?></div></div>
-        <div class="metric-card"><div class="label">Sin asignar</div><div class="value"><?php echo $countUnassigned; ?></div></div>
-        <div class="metric-card"><div class="label">Míos</div><div class="value"><?php echo $countMine; ?></div></div>
-    </div>
-
-    <div class="tickets-toolbar">
-        <div class="tickets-filters">
-            <a href="tickets.php?filter=open" class="<?php echo $filterKey === 'open' ? 'active' : ''; ?>">Abiertos</a>
-            <a href="tickets.php?filter=unassigned" class="<?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>">Sin asignar</a>
-            <a href="tickets.php?filter=mine" class="<?php echo $filterKey === 'mine' ? 'active' : ''; ?>">Asignados a mí</a>
-            <a href="tickets.php?filter=closed" class="<?php echo $filterKey === 'closed' ? 'active' : ''; ?>">Cerrados</a>
-            <a href="tickets.php?filter=all" class="<?php echo $filterKey === 'all' ? 'active' : ''; ?>">Todos</a>
+    <?php endif; ?>
+    <?php if ($bulk_success): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <?php echo html($bulk_success); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <form class="tickets-search" method="get">
-            <input type="hidden" name="filter" value="<?php echo html($filterKey); ?>">
-            <div class="input-group">
-                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                <input type="text" name="q" class="form-control" placeholder="Buscar" value="<?php echo html($query); ?>">
+    <?php endif; ?>
+
+    <div class="tickets-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1>Tickets</h1>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong></div>
             </div>
-        </form>
+            <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
+        </div>
     </div>
+
+    <form method="post" id="bulkForm">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+        <input type="hidden" name="do" id="bulk_do" value="">
+        <input type="hidden" name="confirm" id="bulk_confirm" value="0">
+        <input type="hidden" name="current_filter" value="<?php echo html($filterKey); ?>">
+        <input type="hidden" name="current_q" value="<?php echo html($query); ?>">
+        <input type="hidden" name="bulk_staff_id" id="bulk_staff_id" value="">
+        <input type="hidden" name="bulk_status_id" id="bulk_status_id" value="">
+        <input type="hidden" id="bulk_staff_label" value="">
+        <input type="hidden" id="bulk_status_label" value="">
+
+        <div class="tickets-panel">
+            <div class="tickets-toolbar">
+                <div class="tickets-actions">
+                <button type="button" class="btn btn-action btn-sm" onclick="toggleAllTickets(true)">Seleccionar</button>
+                <button type="button" class="btn btn-action btn-sm" onclick="toggleAllTickets(false)">Ninguno</button>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-action btn-sm btn-icon" title="Asignar">
+                        <i class="bi bi-person"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="bulkAssignPick(0, '— Sin asignar —'); return false;">— Sin asignar —</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <?php foreach ($staffOptions as $s): ?>
+                            <?php $sn = trim($s['firstname'] . ' ' . $s['lastname']); ?>
+                            <li><a class="dropdown-item" href="#" onclick="bulkAssignPick(<?php echo (int) $s['id']; ?>, <?php echo json_encode($sn); ?>); return false;"><?php echo html($sn); ?></a></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-action btn-sm btn-icon" title="Cambiar estado">
+                        <i class="bi bi-flag"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <?php foreach ($statusOptions as $st): ?>
+                            <li><a class="dropdown-item" href="#" onclick="bulkStatusPick(<?php echo (int) $st['id']; ?>, <?php echo json_encode($st['name']); ?>); return false;"><?php echo html($st['name']); ?></a></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+
+                <button type="button" class="btn btn-danger-soft btn-sm" onclick="confirmBulk('bulk_delete')"><i class="bi bi-trash"></i> Eliminar</button>
+                </div>
+
+                <div class="text-muted" style="font-size: 0.85rem; font-weight: 700;">
+                    Máx 200 resultados
+                </div>
+            </div>
+        </div>
+
+        <div class="tickets-panel">
+            <div class="tickets-toolbar">
+                <div class="dropdown filter-dd">
+                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-funnel"></i>
+                        <?php echo html($filters[$filterKey]['label']); ?>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Abiertos</a></li>
+                        <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Sin asignar</a></li>
+                        <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Asignados a mí</a></li>
+                        <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Cerrados</a></li>
+                        <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Todos</a></li>
+                    </ul>
+                </div>
+                <div class="tickets-search">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="ticketSearchInput" class="form-control" placeholder="Buscar" value="<?php echo html($query); ?>">
+                        <button type="button" class="btn btn-action btn-sm" onclick="applyTicketSearch()">Buscar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <div class="tickets-table-wrap">
         <table class="table table-hover tickets-table mb-0">
             <thead class="table-light">
                 <tr>
+                    <th class="check-cell"><input type="checkbox" class="form-check-input" id="check_all" onclick="toggleAllTickets(this.checked)"></th>
                     <th>Ticket</th>
-                    <th>Asunto</th>
-                    <th>Cliente</th>
-                    <th>Prioridad</th>
                     <th>Estado</th>
-                    <th>Asignado</th>
-                    <th>Actualizado</th>
+                    <th>Prioridad</th>
+                    <th class="d-none d-lg-table-cell">Cliente</th>
+                    <th class="d-none d-md-table-cell">Actualizado</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($tickets)): ?>
                     <tr>
-                        <td colspan="8">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.6;"></i>
                                 <div class="mt-2">No hay tickets para esta vista.</div>
@@ -592,30 +860,28 @@ if ($res) {
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
                         ?>
                         <tr class="ticket-row">
+                            <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>"></td>
                             <td>
-                                <div class="ticket-number"><?php echo html($t['ticket_number']); ?></div>
-                                <div class="ticket-meta"><?php echo formatDate($t['created']); ?></div>
-                            </td>
-                            <td>
+                                <div class="ticket-title"><?php echo html($t['ticket_number']); ?></div>
                                 <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
+                                <div class="ticket-meta">Asignado: <?php echo $staffName ?: '— Sin asignar —'; ?></div>
                             </td>
                             <td>
-                                <div class="ticket-meta"><?php echo html($clientName); ?></div>
-                            </td>
-                            <td>
-                                <span class="badge-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">
-                                    <?php echo html($t['priority_name']); ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
+                                <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
                                     <?php echo html($t['status_name']); ?>
                                 </span>
                             </td>
                             <td>
-                                <div class="ticket-meta"><?php echo $staffName ?: '— Sin asignar —'; ?></div>
+                                <span class="chip chip-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">
+                                    <?php echo html($t['priority_name']); ?>
+                                </span>
                             </td>
-                            <td>
+                            <td class="d-none d-lg-table-cell">
+                                <div class="ticket-meta" style="color:#475569; font-weight:600;">
+                                    <?php echo html($clientName); ?>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell">
                                 <div class="ticket-meta"><?php echo formatDate($t['updated'] ?: $t['created']); ?></div>
                             </td>
                             <td>
@@ -627,4 +893,119 @@ if ($res) {
             </tbody>
         </table>
     </div>
+    </form>
 </div>
+
+<!-- Modal confirmación acción masiva -->
+<div class="modal fade" id="bulkConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar acción</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="bulkConfirmText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="bulkConfirmBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyTicketSearch() {
+    const q = (document.getElementById('ticketSearchInput')?.value || '').trim();
+    const filter = <?php echo json_encode($filterKey); ?>;
+    const params = new URLSearchParams();
+    params.set('filter', filter);
+    if (q !== '') params.set('q', q);
+    window.location.href = 'tickets.php?' + params.toString();
+}
+
+document.getElementById('ticketSearchInput')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyTicketSearch();
+    }
+});
+
+function selectedTicketCount() {
+    return document.querySelectorAll('.ticket-check:checked').length;
+}
+
+function toggleAllTickets(state) {
+    const checks = document.querySelectorAll('.ticket-check');
+    checks.forEach(c => { c.checked = !!state; });
+    const all = document.getElementById('check_all');
+    if (all) all.checked = !!state;
+}
+
+function confirmBulk(action) {
+    const count = selectedTicketCount();
+    if (!count) {
+        alert('Selecciona al menos un ticket.');
+        return;
+    }
+
+    let text = '';
+    if (action === 'bulk_assign') {
+        const val = (document.getElementById('bulk_staff_id')?.value || '').toString();
+        const label = (document.getElementById('bulk_staff_label')?.value || '').toString();
+        if (val === '' || label === '') {
+            alert('Selecciona un agente para asignar.');
+            return;
+        }
+        text = `¿Asignar ${count} ticket(s) a "${label}"?`;
+    } else if (action === 'bulk_status') {
+        const val = (document.getElementById('bulk_status_id')?.value || '').toString();
+        const label = (document.getElementById('bulk_status_label')?.value || '').toString();
+        if (val === '' || label === '') {
+            alert('Selecciona un estado.');
+            return;
+        }
+        text = `¿Cambiar el estado de ${count} ticket(s) a "${label}"?`;
+    } else if (action === 'bulk_delete') {
+        text = `¿Eliminar ${count} ticket(s)? Esta acción no se puede deshacer.`;
+    }
+
+    document.getElementById('bulkConfirmText').textContent = text;
+    const modalEl = document.getElementById('bulkConfirmModal');
+    const btn = document.getElementById('bulkConfirmBtn');
+    if (!modalEl || !btn) return;
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-primary');
+    btn.textContent = 'Confirmar';
+    if (action === 'bulk_delete') {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-danger');
+        btn.textContent = 'Eliminar';
+    }
+
+    btn.onclick = function() {
+        document.getElementById('bulk_do').value = action;
+        document.getElementById('bulk_confirm').value = action === 'bulk_delete' ? '1' : '0';
+        document.getElementById('bulkForm').submit();
+    };
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function bulkAssignPick(staffId, label) {
+    const valEl = document.getElementById('bulk_staff_id');
+    const labelEl = document.getElementById('bulk_staff_label');
+    if (valEl) valEl.value = String(staffId);
+    if (labelEl) labelEl.value = String(label);
+    confirmBulk('bulk_assign');
+}
+
+function bulkStatusPick(statusId, label) {
+    const valEl = document.getElementById('bulk_status_id');
+    const labelEl = document.getElementById('bulk_status_label');
+    if (valEl) valEl.value = String(statusId);
+    if (labelEl) labelEl.value = String(label);
+    confirmBulk('bulk_status');
+}
+</script>
