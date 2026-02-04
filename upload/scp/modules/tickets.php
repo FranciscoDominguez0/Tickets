@@ -136,6 +136,42 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         }
         $thread_id = (int) $threadRow['id'];
 
+        // Info de cierre (para mostrar debajo del hilo)
+        $ticket_closed_info = null;
+        if (!empty($ticketView['closed'])) {
+            $closed_by = '';
+            $closed_at = $ticketView['closed'];
+            // Tomar el último staff que escribió en el hilo antes (o cerca) del cierre
+            $stmtCb = $mysqli->prepare(
+                "SELECT te.staff_id, s.firstname, s.lastname\n"
+                . "FROM thread_entries te\n"
+                . "JOIN staff s ON s.id = te.staff_id\n"
+                . "WHERE te.thread_id = ? AND te.staff_id IS NOT NULL AND te.created <= ?\n"
+                . "ORDER BY te.created DESC\n"
+                . "LIMIT 1"
+            );
+            if ($stmtCb) {
+                $stmtCb->bind_param('is', $thread_id, $closed_at);
+                if ($stmtCb->execute()) {
+                    $r = $stmtCb->get_result()->fetch_assoc();
+                    if ($r) {
+                        $closed_by = trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? ''));
+                    }
+                }
+            }
+            if ($closed_by === '') {
+                $closed_by = trim((string)($ticketView['staff_first'] ?? '') . ' ' . (string)($ticketView['staff_last'] ?? ''));
+            }
+            if ($closed_by === '') {
+                $closed_by = 'Agente';
+            }
+            $ticket_closed_info = [
+                'by' => $closed_by,
+                'at' => $closed_at,
+                'status' => (string)($ticketView['status_name'] ?? 'Cerrado'),
+            ];
+        }
+
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;

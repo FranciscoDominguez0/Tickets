@@ -51,6 +51,43 @@ if ($_POST) {
                 );
                 $stmt3->bind_param('iis', $thread_id, $_SESSION['user_id'], $body);
                 $stmt3->execute();
+                $entry_id = (int) $mysqli->insert_id;
+
+                // Adjuntos: guardar archivos y registrar en BD
+                $uploadDir = __DIR__ . '/uploads/attachments';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0755, true);
+                }
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+                $maxSize = 10 * 1024 * 1024; // 10 MB
+                if (!empty($_FILES['attachments']['name'][0])) {
+                    $files = $_FILES['attachments'];
+                    $n = is_array($files['name']) ? count($files['name']) : 1;
+                    if ($n === 1 && !is_array($files['name'])) {
+                        $files = ['name' => [$files['name']], 'type' => [$files['type']], 'tmp_name' => [$files['tmp_name']], 'error' => [$files['error']], 'size' => [$files['size']]];
+                        $n = 1;
+                    }
+                    for ($i = 0; $i < $n; $i++) {
+                        if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+                        $orig = (string) ($files['name'][$i] ?? '');
+                        $mime = (string) ($files['type'][$i] ?? '');
+                        $size = (int) ($files['size'][$i] ?? 0);
+                        if ($orig === '' || $size <= 0) continue;
+                        if ($size > $maxSize) continue;
+                        if (!in_array($mime, $allowedTypes, true)) continue;
+
+                        $ext = pathinfo($orig, PATHINFO_EXTENSION) ?: 'bin';
+                        $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
+                        $path = $uploadDir . '/' . $safeName;
+                        if (move_uploaded_file($files['tmp_name'][$i], $path)) {
+                            $relPath = 'uploads/attachments/' . $safeName;
+                            $hash = @hash_file('sha256', $path) ?: '';
+                            $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                            $stmtA->bind_param('isssiss', $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                            $stmtA->execute();
+                        }
+                    }
+                }
 
                 // Notificar por correo a los agentes del departamento (o a todos si no hay del depto)
                 $agents = [];
@@ -147,22 +184,71 @@ while ($row = $stmt->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Ticket - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
-            background: #f5f7fa;
+            background: #f1f5f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .container-main {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 40px auto;
             padding: 0 20px;
         }
-        .form-card {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .page-header {
+            background: linear-gradient(135deg, #0f172a, #1d4ed8);
+            padding: 26px 28px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+            color: #fff;
         }
+        .page-header .sub { color: rgba(255,255,255,0.85); }
+
+        .form-card {
+            background: #fff;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .section-title h4 { margin: 0; font-weight: 800; color: #0f172a; }
+        .help { color: #64748b; font-size: 0.95rem; }
+
+        .attach-zone {
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            margin-bottom: 14px;
+        }
+        .attach-zone:hover { border-color: #94a3b8; }
+        .attach-zone input[type="file"] { display: none; }
+        .attach-text { color: #64748b; font-size: 0.95rem; }
+        .attach-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .attach-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: #0f172a;
+        }
+        .attach-item .name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .attach-item .size { color: #64748b; font-size: 0.85rem; flex: 0 0 auto; }
     </style>
 </head>
 <body>
@@ -177,8 +263,23 @@ while ($row = $stmt->fetch_assoc()) {
     </nav>
 
     <div class="container-main">
+        <div class="page-header">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h2 class="mb-1">Abrir un nuevo Ticket</h2>
+                    <div class="sub">Completa el formulario para crear una nueva solicitud.</div>
+                </div>
+                <div>
+                    <a href="tickets.php" class="btn btn-light btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+                </div>
+            </div>
+        </div>
+
         <div class="form-card">
-            <h2 class="mb-4">Crear Nuevo Ticket</h2>
+            <div class="section-title">
+                <h4><i class="bi bi-chat-left-text"></i> Ticket Details</h4>
+                <div class="help">Correo: <strong><?php echo html($user['email']); ?></strong></div>
+            </div>
 
             <?php if ($error): ?>
                 <div class="alert alert-danger"><?php echo $error; ?></div>
@@ -188,7 +289,7 @@ while ($row = $stmt->fetch_assoc()) {
                 <div class="alert alert-success"><?php echo $success; ?></div>
             <?php endif; ?>
 
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
                     <input type="text" class="form-control" id="subject" name="subject" required>
@@ -217,6 +318,12 @@ while ($row = $stmt->fetch_assoc()) {
                     <textarea class="form-control" id="body" name="body" rows="8" required></textarea>
                 </div>
 
+                <div class="attach-zone" id="attach-zone" onclick="document.getElementById('attachments').click();">
+                    <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
+                    <div class="attach-text"><i class="bi bi-paperclip"></i> Agregar archivos aquí o <a href="#" onclick="document.getElementById('attachments').click(); return false;">elegirlos</a></div>
+                    <div class="attach-list" id="attach-list"></div>
+                </div>
+
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                 <button type="submit" class="btn btn-primary">Crear Ticket</button>
@@ -224,5 +331,42 @@ while ($row = $stmt->fetch_assoc()) {
             </form>
         </div>
     </div>
+
+    <script>
+        (function () {
+            var input = document.getElementById('attachments');
+            var list = document.getElementById('attach-list');
+            if (!input || !list) return;
+
+            function humanSize(bytes) {
+                if (!bytes) return '0 B';
+                var units = ['B', 'KB', 'MB', 'GB'];
+                var i = Math.floor(Math.log(bytes) / Math.log(1024));
+                i = Math.min(i, units.length - 1);
+                return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+            }
+
+            function updateList() {
+                list.innerHTML = '';
+                if (!input.files || input.files.length === 0) return;
+                for (var i = 0; i < input.files.length; i++) {
+                    var f = input.files[i];
+                    var row = document.createElement('div');
+                    row.className = 'attach-item';
+                    var name = document.createElement('div');
+                    name.className = 'name';
+                    name.textContent = f.name;
+                    var size = document.createElement('div');
+                    size.className = 'size';
+                    size.textContent = humanSize(f.size);
+                    row.appendChild(name);
+                    row.appendChild(size);
+                    list.appendChild(row);
+                }
+            }
+
+            input.addEventListener('change', updateList);
+        })();
+    </script>
 </body>
 </html>

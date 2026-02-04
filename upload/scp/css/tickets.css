@@ -219,6 +219,52 @@
     padding-left: 0;
     padding-right: 56px;
 }
+
+.ticket-closed-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    color: #0f172a;
+    margin-top: 18px;
+}
+
+.ticket-closed-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #c7d2fe;
+    color: #1e3a8a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.ticket-closed-text {
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.ticket-closed-text strong {
+    color: #0f172a;
+}
+
+.ticket-closed-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: #e5e7eb;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 6px;
+    vertical-align: middle;
+}
 .ticket-view-reply {
     background: #fff;
     border-radius: 16px;

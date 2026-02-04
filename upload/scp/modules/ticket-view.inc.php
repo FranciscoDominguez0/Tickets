@@ -330,6 +330,20 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
+
+        <?php if (!empty($ticket_closed_info)): ?>
+            <div class="ticket-closed-banner">
+                <div class="ticket-closed-icon"><i class="bi bi-hand-thumbs-up"></i></div>
+                <div class="ticket-closed-text">
+                    Cerrado por
+                    <span class="ticket-closed-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                    <strong><?php echo html($ticket_closed_info['by'] ?? 'Agente'); ?></strong>
+                    con el estado de
+                    <strong><?php echo html($ticket_closed_info['status'] ?? 'Cerrado'); ?></strong>
+                    <?php echo !empty($ticket_closed_info['at']) ? date('d/m/y H:i', strtotime($ticket_closed_info['at'])) : ''; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Responder -->
