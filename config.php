@@ -39,6 +39,7 @@ define('TIMEZONE', 'America/Mexico_City');
 define('MAIL_FROM', 'dominguezf225@gmail.com');
 define('MAIL_FROM_NAME', APP_NAME);
 define('ADMIN_NOTIFY_EMAIL', 'cuenta9fran@gmail.com');
+define('SEND_CLIENT_UPDATE_EMAIL', false);
 // SMTP Gmail (contraseña de aplicación, sin espacios)
 define('SMTP_HOST', 'smtp.gmail.com');
 define('SMTP_PORT', 465);

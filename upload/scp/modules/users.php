@@ -89,6 +89,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+// Cambiar estado de usuario (activo/inactivo/baneado)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'update_status' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int) $_POST['user_id'];
+        $new_status = $_POST['status'] ?? '';
+        if (!in_array($new_status, ['active', 'inactive', 'banned'], true)) {
+            $new_status = 'inactive';
+        }
+        $stmt = $mysqli->prepare("UPDATE users SET status = ?, updated = NOW() WHERE id = ?");
+        $stmt->bind_param('si', $new_status, $user_id);
+        if ($stmt->execute()) {
+            header('Location: users.php?id=' . $user_id . '&msg=status_updated');
+            exit;
+        }
+    }
+}
+
 // AJAX: buscar organizaciones
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
     $query = trim($_GET['q']);

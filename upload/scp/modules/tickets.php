@@ -463,7 +463,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
 
                         // Notificación por correo al cliente (solo respuestas públicas)
-                        if (!$is_internal) {
+                        if (!$is_internal && (!defined('SEND_CLIENT_UPDATE_EMAIL') || SEND_CLIENT_UPDATE_EMAIL)) {
                             $to = trim((string)($ticketView['user_email'] ?? ''));
                             if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
                                 $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));

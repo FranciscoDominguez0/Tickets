@@ -26,12 +26,48 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
         </div>
     </header>
 
+    <!-- Modal: cambiar estado del usuario -->
+    <div class="modal fade" id="modalUserStatus" tabindex="-1" aria-labelledby="modalUserStatusLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="modalUserStatusLabel"><i class="bi bi-person-gear me-2"></i>Cambiar estado de usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>">
+                    <div class="modal-body">
+                        <input type="hidden" name="do" value="update_status">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <div class="mb-2 text-muted small">Selecciona el estado del usuario. "Bloqueado" impide iniciar sesión y operar en el sistema.</div>
+                        <label class="form-label">Estado</label>
+                        <select name="status" class="form-select">
+                            <option value="active" <?php echo $statusKey === 'active' ? 'selected' : ''; ?>>Activo</option>
+                            <option value="inactive" <?php echo $statusKey === 'inactive' ? 'selected' : ''; ?>>Inactivo</option>
+                            <option value="banned" <?php echo $statusKey === 'banned' ? 'selected' : ''; ?>>Bloqueado</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="user-view-card">
         <div class="user-view-profile">
             <div class="user-view-avatar">
                 <i class="bi bi-person-fill"></i>
             </div>
             <div class="user-view-details">
+                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'status_updated'): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
+                        Estado de usuario actualizado correctamente.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                <?php endif; ?>
                 <div class="user-view-detail">
                     <label>Nombre</label>
                     <div class="value">
@@ -58,6 +94,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                     <label>Estado</label>
                     <div class="value">
                         <span class="user-view-status-badge <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
+                        <a href="#" class="ms-2" data-bs-toggle="modal" data-bs-target="#modalUserStatus"><i class="bi bi-pencil-square"></i> Cambiar</a>
                     </div>
                 </div>
                 <div class="user-view-detail">
