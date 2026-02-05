@@ -2,6 +2,12 @@
 // task-create.inc.php - Formulario para crear nueva tarea
 ?>
 
+<?php
+$agentsByDeptB64 = base64_encode((string)($agentsJson ?: '{}'));
+?>
+
+<div id="tasks-data" hidden data-agents-by-dept-b64="<?php echo html($agentsByDeptB64); ?>" data-current-assigned=""></div>
+
 <div class="page-header">
     <h1>Crear Nueva Tarea</h1>
     <p>Asigna una nueva tarea a un agente</p>
@@ -92,68 +98,3 @@
         </form>
     </div>
 </div>
-
-<script>
-// Auto-resize textarea
-document.getElementById('description').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-});
-
-(function() {
-    var agentsByDept = <?php echo $agentsJson ?: '{}'; ?>;
-    var deptSel = document.getElementById('dept_id');
-    var agentSel = document.getElementById('assigned_to');
-    var hint = document.getElementById('no-agents-hint');
-    if (!deptSel || !agentSel) return;
-
-    function setHint(show) {
-        if (!hint) return;
-        hint.style.display = show ? 'block' : 'none';
-    }
-
-    function fillAgents(deptId) {
-        while (agentSel.options.length > 0) agentSel.remove(0);
-        agentSel.add(new Option('Sin asignar', ''));
-
-        var list = agentsByDept[String(deptId)] || [];
-        if (!deptId) {
-            agentSel.disabled = true;
-            var selHint = document.getElementById('select-dept-hint');
-            if (selHint) selHint.style.display = 'block';
-            setHint(false);
-            return;
-        }
-        var selHint2 = document.getElementById('select-dept-hint');
-        if (selHint2) selHint2.style.display = 'none';
-        if (!list.length) {
-            agentSel.disabled = true;
-            setHint(true);
-            return;
-        }
-
-        list.forEach(function(a) {
-            agentSel.add(new Option(a.name, String(a.id)));
-        });
-        agentSel.disabled = false;
-        setHint(false);
-    }
-
-    agentSel.disabled = true;
-    fillAgents(deptSel.value);
-    deptSel.addEventListener('change', function() {
-        fillAgents(this.value);
-    });
-})();
-
-// Auto-ocultar alertas de éxito después de 4 segundos
-document.addEventListener('DOMContentLoaded', function() {
-    const successAlerts = document.querySelectorAll('.alert-success');
-    successAlerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 4000); // 4 segundos
-    });
-});
-</script>

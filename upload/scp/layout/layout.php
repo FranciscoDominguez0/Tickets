@@ -12,19 +12,22 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
-    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/profile.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/profile.css'); ?>">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
-    <link rel="stylesheet" href="css/users.css">
+    <link rel="stylesheet" href="css/users.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/users.css'); ?>">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
-    <link rel="stylesheet" href="css/tickets.css">
+    <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
-    <link rel="stylesheet" href="css/orgs.css">
+    <link rel="stylesheet" href="css/orgs.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/orgs.css'); ?>">
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
+    <link rel="stylesheet" href="css/tasks.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tasks.css'); ?>">
     <?php endif; ?>
 </head>
-<body>
+<body<?php if (isset($currentRoute) && $currentRoute === 'users'): ?> data-user-active-tab="<?php echo isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets'; ?>"<?php endif; ?>>
     <!-- NAVBAR -->
     <nav class="navbar navbar-dark">
         <div class="container-fluid">
@@ -226,10 +229,11 @@
     <script src="js/profile.js"></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
-    <script>
-      var USER_ACTIVE_TAB = '<?php echo isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets'; ?>';
-    </script>
     <script src="js/users.js"></script>
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/dashboard.js"></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -237,6 +241,9 @@
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
     <script src="js/tickets.js"></script>
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
+    <script src="js/tasks.js"></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
     <script src="js/orgs.js"></script>

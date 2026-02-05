@@ -233,33 +233,4 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
             </div>
         </div>
     </div>
-
-    <script>
-        // Función para buscar organizaciones
-        document.getElementById('orgSearch').addEventListener('input', function() {
-            const query = this.value.trim();
-            const suggestions = document.getElementById('orgSuggestions');
-            if (query.length < 2) {
-                suggestions.innerHTML = '';
-                return;
-            }
-            fetch('users.php?ajax=search_orgs&q=' + encodeURIComponent(query))
-                .then(response => response.json())
-                .then(data => {
-                    suggestions.innerHTML = '';
-                    data.forEach(org => {
-                        const item = document.createElement('a');
-                        item.href = '#';
-                        item.className = 'list-group-item list-group-item-action';
-                        item.textContent = org.name;
-                        item.onclick = function() {
-                            document.getElementById('orgSearch').value = org.name;
-                            suggestions.innerHTML = '';
-                            return false;
-                        };
-                        suggestions.appendChild(item);
-                    });
-                });
-        });
-    </script>
 </div>

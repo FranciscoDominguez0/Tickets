@@ -799,119 +799,6 @@ $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
 if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
 ?>
-<style>
-.tickets-shell { max-width: 1200px; margin: 0 auto; }
-.tickets-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
-    color: #fff;
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 16px;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
-}
-.tickets-header h1 { margin: 0; font-size: 1.4rem; font-weight: 800; }
-.tickets-header .sub { margin-top: 6px; opacity: 0.9; font-size: 0.95rem; }
-.tickets-header .btn-new {
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.30);
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 700;
-}
-.tickets-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-.tickets-panel {
-    background: #fff;
-    border: 1px solid rgba(2, 6, 23, 0.08);
-    border-radius: 12px;
-    padding: 12px 12px;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
-    margin-bottom: 14px;
-}
-.tickets-panel .tickets-toolbar { margin-bottom: 0; }
-.tickets-panel + .tickets-panel { margin-top: -4px; }
-.filter-dd .btn {
-    border-radius: 10px;
-    border: 1px solid rgba(2, 6, 23, 0.10);
-    background: #fff;
-    font-weight: 800;
-    color: #0f172a;
-}
-.filter-dd .btn:hover { background: #f8fafc; }
-.filter-dd .dropdown-item { font-weight: 700; }
-.filter-dd .dropdown-item.active,
-.filter-dd .dropdown-item:active { background: #2563eb; }
-.tickets-search { min-width: 280px; }
-.tickets-search input { border-radius: 10px; }
-.tickets-table-wrap {
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid rgba(2, 6, 23, 0.08);
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-    overflow: hidden;
-}
-.tickets-table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; }
-.tickets-table td { padding-top: 16px; padding-bottom: 16px; vertical-align: top; }
-.ticket-row:hover { background: #f8fafc; }
-.ticket-title { font-weight: 800; color: #0f172a; }
-.ticket-subject { font-weight: 600; color: #1e293b; }
-.ticket-meta { font-size: 0.82rem; color: #94a3b8; }
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 0.82rem;
-    line-height: 1;
-}
-.chip-status { border-radius: 999px; }
-.chip-priority { border-radius: 10px; }
-.empty-state { padding: 40px 18px; text-align: center; color: #64748b; }
-.tickets-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-}
-.tickets-actions .form-select,
-.tickets-actions .btn { border-radius: 10px; }
-.tickets-actions .form-select { max-width: 230px; }
-.tickets-actions .form-select { padding-top: 0.35rem; padding-bottom: 0.35rem; }
-.tickets-actions .btn { padding-top: 0.35rem; padding-bottom: 0.35rem; }
-.tickets-actions .btn-icon {
-    width: 40px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-.tickets-actions .dropdown-toggle-split { width: 34px; }
-.tickets-actions .btn-action {
-    background: #fff;
-    border: 1px solid rgba(2, 6, 23, 0.10);
-    font-weight: 800;
-}
-.tickets-actions .btn-action:hover { background: #f8fafc; }
-.tickets-actions .btn-danger-soft {
-    background: rgba(239, 68, 68, 0.10);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    color: #b91c1c;
-    font-weight: 900;
-}
-.tickets-actions .btn-danger-soft:hover { background: rgba(239, 68, 68, 0.14); color: #991b1b; }
-.check-cell { width: 34px; }
-</style>
 
 <div class="tickets-shell">
     <?php if (isset($_GET['id']) && !$ticketView): ?>
@@ -955,11 +842,11 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
         <input type="hidden" id="bulk_staff_label" value="">
         <input type="hidden" id="bulk_status_label" value="">
 
-        <div class="tickets-panel">
+        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-actions">
-                <button type="button" class="btn btn-action btn-sm" onclick="toggleAllTickets(true)">Seleccionar</button>
-                <button type="button" class="btn btn-action btn-sm" onclick="toggleAllTickets(false)">Ninguno</button>
+                <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-all">Seleccionar</button>
+                <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-none">Ninguno</button>
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-action btn-sm btn-icon" title="Asignar">
@@ -969,11 +856,11 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="bulkAssignPick(0, '— Sin asignar —'); return false;">— Sin asignar —</a></li>
+                        <li><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="0" data-staff-label="— Sin asignar —">— Sin asignar —</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <?php foreach ($staffOptions as $s): ?>
                             <?php $sn = trim($s['firstname'] . ' ' . $s['lastname']); ?>
-                            <li><a class="dropdown-item" href="#" onclick="bulkAssignPick(<?php echo (int) $s['id']; ?>, <?php echo json_encode($sn); ?>); return false;"><?php echo html($sn); ?></a></li>
+                            <li><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="<?php echo (int) $s['id']; ?>" data-staff-label="<?php echo html($sn); ?>"><?php echo html($sn); ?></a></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
@@ -987,12 +874,12 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
                     </button>
                     <ul class="dropdown-menu">
                         <?php foreach ($statusOptions as $st): ?>
-                            <li><a class="dropdown-item" href="#" onclick="bulkStatusPick(<?php echo (int) $st['id']; ?>, <?php echo json_encode($st['name']); ?>); return false;"><?php echo html($st['name']); ?></a></li>
+                            <li><a class="dropdown-item" href="#" data-action="tickets-bulk-status" data-status-id="<?php echo (int) $st['id']; ?>" data-status-label="<?php echo html($st['name']); ?>"><?php echo html($st['name']); ?></a></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-danger-soft btn-sm" onclick="confirmBulk('bulk_delete')"><i class="bi bi-trash"></i> Eliminar</button>
+                <button type="button" class="btn btn-danger-soft btn-sm" data-action="tickets-bulk-delete"><i class="bi bi-trash"></i> Eliminar</button>
                 </div>
 
                 <div class="text-muted" style="font-size: 0.85rem; font-weight: 700;">
@@ -1020,7 +907,7 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="ticketSearchInput" class="form-control" placeholder="Buscar" value="<?php echo html($query); ?>">
-                        <button type="button" class="btn btn-action btn-sm" onclick="applyTicketSearch()">Buscar</button>
+                        <button type="button" class="btn btn-action btn-sm" data-action="tickets-search">Buscar</button>
                     </div>
                 </div>
             </div>
@@ -1030,7 +917,7 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
         <table class="table table-hover tickets-table mb-0">
             <thead class="table-light">
                 <tr>
-                    <th class="check-cell"><input type="checkbox" class="form-check-input" id="check_all" onclick="toggleAllTickets(this.checked)"></th>
+                    <th class="check-cell"><input type="checkbox" class="form-check-input" id="check_all"></th>
                     <th>Ticket</th>
                     <th>Estado</th>
                     <th>Prioridad</th>
@@ -1113,97 +1000,3 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
     </div>
 </div>
 
-<script>
-function applyTicketSearch() {
-    const q = (document.getElementById('ticketSearchInput')?.value || '').trim();
-    const filter = <?php echo json_encode($filterKey); ?>;
-    const params = new URLSearchParams();
-    params.set('filter', filter);
-    if (q !== '') params.set('q', q);
-    window.location.href = 'tickets.php?' + params.toString();
-}
-
-document.getElementById('ticketSearchInput')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        applyTicketSearch();
-    }
-});
-
-function selectedTicketCount() {
-    return document.querySelectorAll('.ticket-check:checked').length;
-}
-
-function toggleAllTickets(state) {
-    const checks = document.querySelectorAll('.ticket-check');
-    checks.forEach(c => { c.checked = !!state; });
-    const all = document.getElementById('check_all');
-    if (all) all.checked = !!state;
-}
-
-function confirmBulk(action) {
-    const count = selectedTicketCount();
-    if (!count) {
-        alert('Selecciona al menos un ticket.');
-        return;
-    }
-
-    let text = '';
-    if (action === 'bulk_assign') {
-        const val = (document.getElementById('bulk_staff_id')?.value || '').toString();
-        const label = (document.getElementById('bulk_staff_label')?.value || '').toString();
-        if (val === '' || label === '') {
-            alert('Selecciona un agente para asignar.');
-            return;
-        }
-        text = `¿Asignar ${count} ticket(s) a "${label}"?`;
-    } else if (action === 'bulk_status') {
-        const val = (document.getElementById('bulk_status_id')?.value || '').toString();
-        const label = (document.getElementById('bulk_status_label')?.value || '').toString();
-        if (val === '' || label === '') {
-            alert('Selecciona un estado.');
-            return;
-        }
-        text = `¿Cambiar el estado de ${count} ticket(s) a "${label}"?`;
-    } else if (action === 'bulk_delete') {
-        text = `¿Eliminar ${count} ticket(s)? Esta acción no se puede deshacer.`;
-    }
-
-    document.getElementById('bulkConfirmText').textContent = text;
-    const modalEl = document.getElementById('bulkConfirmModal');
-    const btn = document.getElementById('bulkConfirmBtn');
-    if (!modalEl || !btn) return;
-    btn.classList.remove('btn-danger');
-    btn.classList.add('btn-primary');
-    btn.textContent = 'Confirmar';
-    if (action === 'bulk_delete') {
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-danger');
-        btn.textContent = 'Eliminar';
-    }
-
-    btn.onclick = function() {
-        document.getElementById('bulk_do').value = action;
-        document.getElementById('bulk_confirm').value = action === 'bulk_delete' ? '1' : '0';
-        document.getElementById('bulkForm').submit();
-    };
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-}
-
-function bulkAssignPick(staffId, label) {
-    const valEl = document.getElementById('bulk_staff_id');
-    const labelEl = document.getElementById('bulk_staff_label');
-    if (valEl) valEl.value = String(staffId);
-    if (labelEl) labelEl.value = String(label);
-    confirmBulk('bulk_assign');
-}
-
-function bulkStatusPick(statusId, label) {
-    const valEl = document.getElementById('bulk_status_id');
-    const labelEl = document.getElementById('bulk_status_label');
-    if (valEl) valEl.value = String(statusId);
-    if (labelEl) labelEl.value = String(label);
-    confirmBulk('bulk_status');
-}
-</script>

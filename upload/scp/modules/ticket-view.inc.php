@@ -45,7 +45,7 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                     <?php endwhile; ?>
                 </ul>
             </div>
-            <button class="btn-icon" title="Imprimir" onclick="window.print();"><i class="bi bi-printer"></i></button>
+            <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -376,9 +376,9 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                 <label class="form-label fw-bold">Respuesta</label>
                 <textarea name="body" id="reply_body" class="form-control" placeholder="Empezar escribiendo su respuesta aquí. Usa respuestas predefinidas del menú desplegable de arriba si lo desea."></textarea>
             </div>
-            <div class="attach-zone" id="attach-zone" onclick="document.getElementById('attachments').click();">
+            <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
                 <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
-                <div class="attach-text">Agregar archivos aquí o <a href="#" onclick="document.getElementById('attachments').click(); return false;">elegirlos</a></div>
+                <div class="attach-text">Agregar archivos aquí o <a href="#" data-action="attachments-browse">elegirlos</a></div>
                 <div class="attach-list" id="attach-list"></div>
             </div>
             <div class="reply-options">

@@ -475,20 +475,4 @@ $statusBadges = [
             </div>
         </div>
     </div>
-</div><script>
-(function() {
-    var selectAll = document.getElementById('selectAll');
-    var rowCbs = document.querySelectorAll('.user-row-cb');
-    if (selectAll) {
-        selectAll.addEventListener('change', function() {
-            rowCbs.forEach(function(cb) { cb.checked = selectAll.checked; });
-        });
-    }
-    document.querySelectorAll('.select-links a[data-select="all"]').forEach(function(a) {
-        a.addEventListener('click', function(e) { e.preventDefault(); rowCbs.forEach(function(cb) { cb.checked = true; }); if (selectAll) selectAll.checked = true; });
-    });
-    document.querySelectorAll('.select-links a[data-select="none"]').forEach(function(a) {
-        a.addEventListener('click', function(e) { e.preventDefault(); rowCbs.forEach(function(cb) { cb.checked = false; }); if (selectAll) selectAll.checked = false; });
-    });
-})();
-</script>
+</div>

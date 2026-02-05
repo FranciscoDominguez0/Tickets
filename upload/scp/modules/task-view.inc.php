@@ -31,65 +31,14 @@ $status_colors = [
 ];
 ?>
 
-<style>
-.page-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
-    color: #fff;
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
-}
-.page-header h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
-.page-header p { margin: 6px 0 0 0; opacity: 0.92; }
-.page-header .meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 800;
-    font-size: 0.82rem;
-    line-height: 1;
-    background: rgba(255,255,255,0.14);
-    border: 1px solid rgba(255,255,255,0.22);
-}
-.chip-danger { background: rgba(239, 68, 68, 0.22); border-color: rgba(239, 68, 68, 0.35); }
-.card { border: 1px solid rgba(2, 6, 23, 0.08); border-radius: 10px; }
-.card-header { background: #f8fafc; border-bottom: 1px solid rgba(2, 6, 23, 0.06); font-weight: 700; }
-.task-side .btn { font-weight: 700; }
-.detail-accent {
-    position: relative;
-}
-.detail-accent:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
-    background: #2563eb;
-}
-.detail-accent.status-pending:before { background: #64748b; }
-.detail-accent.status-in_progress:before { background: #2563eb; }
-.detail-accent.status-completed:before { background: #16a34a; }
-.detail-accent.status-cancelled:before { background: #94a3b8; }
-
-.task-center {
-    max-width: 980px;
-    margin: 0 auto;
-}
-.details-grid strong { color: #0f172a; }
-.details-grid .col-sm-3 { color: #475569; }
-</style>
-
 <?php
 $due_ts = $taskView['due_date'] ? strtotime($taskView['due_date']) : null;
 $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'completed' && $taskView['status'] !== 'cancelled';
+$agentsByDeptB64 = base64_encode((string)($agentsJson ?: '{}'));
+$currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to'] : 0;
 ?>
+
+<div id="tasks-data" hidden data-agents-by-dept-b64="<?php echo html($agentsByDeptB64); ?>" data-current-assigned="<?php echo (int)$currentAssigned; ?>"></div>
 
 <div class="page-header">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
@@ -105,11 +54,11 @@ $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'com
                     <i class="bi bi-list"></i> Más
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'pending')">Marcar Pendiente</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'in_progress')">Marcar En Progreso</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="changeStatus(<?php echo $taskView['id']; ?>, 'completed')">Marcar Completada</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="pending" data-status-label="Pendiente">Marcar Pendiente</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="in_progress" data-status-label="En Progreso">Marcar En Progreso</a></li>
+                    <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="completed" data-status-label="Completada">Marcar Completada</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask(<?php echo $taskView['id']; ?>)">Eliminar</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" data-action="task-delete">Eliminar</a></li>
                 </ul>
             </div>
         </div>
@@ -363,123 +312,3 @@ $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'com
         </div>
     </div>
 </div>
-
-<script>
-function changeStatus(taskId, status) {
-    const labelMap = {
-        pending: 'Pendiente',
-        in_progress: 'En Progreso',
-        completed: 'Completada'
-    };
-    const statusValueEl = document.getElementById('confirm_status_value');
-    const statusLabelEl = document.getElementById('confirm_status_label');
-    if (statusValueEl) statusValueEl.value = status;
-    if (statusLabelEl) statusLabelEl.textContent = labelMap[status] || status;
-
-    const modalEl = document.getElementById('statusConfirmModal');
-    if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-}
-
-function deleteTask(taskId) {
-    const modalEl = document.getElementById('deleteModal');
-    if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-}
-
-// Auto-resize textarea
-document.getElementById('edit_description')?.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-});
-
-// Auto-ocultar alertas de éxito después de 4 segundos
-document.addEventListener('DOMContentLoaded', function() {
-    const successAlerts = document.querySelectorAll('.alert-success');
-    successAlerts.forEach(function(alert) {
-        setTimeout(function() {
-            const bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close();
-        }, 4000); // 4 segundos
-    });
-
-    (function() {
-        var agentsByDept = <?php echo $agentsJson ?: '{}'; ?>;
-        var deptSel = document.getElementById('edit_dept_id');
-        var agentSel = document.getElementById('edit_assigned_to');
-        var hint = document.getElementById('edit-no-agents-hint');
-        var selHint = document.getElementById('edit-select-dept-hint');
-        if (!deptSel || !agentSel) return;
-
-        var currentAssigned = '<?php echo isset($taskView['assigned_to']) ? (int)$taskView['assigned_to'] : 0; ?>';
-
-        function setHint(show) {
-            if (!hint) return;
-            hint.style.display = show ? 'block' : 'none';
-        }
-
-        function fillAgents(deptId) {
-            while (agentSel.options.length > 0) agentSel.remove(0);
-            agentSel.add(new Option('Sin asignar', ''));
-
-            var list = agentsByDept[String(deptId)] || [];
-            if (!deptId) {
-                agentSel.disabled = true;
-                if (selHint) selHint.style.display = 'block';
-                setHint(false);
-                return;
-            }
-            if (selHint) selHint.style.display = 'none';
-            if (!list.length) {
-                agentSel.disabled = true;
-                setHint(true);
-                return;
-            }
-
-            list.forEach(function(a) {
-                agentSel.add(new Option(a.name, String(a.id)));
-            });
-            agentSel.disabled = false;
-            setHint(false);
-            if (currentAssigned && String(currentAssigned) !== '0') {
-                agentSel.value = String(currentAssigned);
-            }
-        }
-
-        fillAgents(deptSel.value);
-        deptSel.addEventListener('change', function() {
-            currentAssigned = '';
-            fillAgents(this.value);
-        });
-    })();
-});
-</script>
-
-<style>
-.task-description {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-}
-
-.card-header .btn-group .btn {
-    border-radius: 0.375rem !important;
-}
-
-.card-header .btn-group .btn:not(:last-child) {
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
-
-.card-header .btn-group .btn:not(:first-child) {
-    border-top-left-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-}
-</style>

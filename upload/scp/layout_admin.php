@@ -97,5 +97,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
+    <?php if (isset($currentRoute) && $currentRoute === 'logs'): ?>
+    <script src="js/logs.js"></script>
+    <?php endif; ?>
 </body>
 </html>

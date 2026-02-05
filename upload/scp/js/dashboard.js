@@ -1,6 +1,33 @@
 // Gráfica de actividad de tickets con múltiples líneas (created, closed, deleted)
 (function () {
     console.log('dashboard.js cargado');
+
+    // Leer datos desde JSON embebido (evita JS inline en PHP)
+    (function initDashboardData() {
+        var el = document.getElementById('dashboard-data');
+        if (!el) return;
+        try {
+            var raw = (el.textContent || el.innerText || '').toString().trim();
+            if (!raw) return;
+            var obj = JSON.parse(raw);
+            if (obj && typeof obj === 'object') {
+                window.dashboardData = obj;
+            }
+        } catch (e) {
+            console.warn('No se pudo parsear dashboard-data', e);
+        }
+    })();
+
+    // Export placeholder
+    document.addEventListener('click', function (e) {
+        var t = e.target;
+        if (!t) return;
+        var btn = t.closest ? t.closest('[data-action="dashboard-export"]') : null;
+        if (!btn) return;
+        e.preventDefault();
+        var type = (btn.getAttribute('data-export-type') || '').toString();
+        alert('Función de exportación en desarrollo');
+    });
     
     // Esperar a que el DOM esté completamente cargado
     function initChart() {
