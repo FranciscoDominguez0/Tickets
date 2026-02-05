@@ -98,4 +98,23 @@ function generateTicketNumber() {
     return strtoupper(substr(md5(uniqid()), 0, 3)) . '-' . date('Ymd') . '-' . 
            str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 }
+
+function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $action = trim((string)$action);
+    if ($action === '') return false;
+
+    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+    $details = $details !== null ? (string)$details : null;
+    $object_type = $object_type !== null ? (string)$object_type : null;
+    $object_id = ($object_id !== null && is_numeric($object_id)) ? (int)$object_id : null;
+    $user_type = $user_type !== null ? (string)$user_type : null;
+    $user_id = ($user_id !== null && is_numeric($user_id)) ? (int)$user_id : null;
+
+    $stmt = $mysqli->prepare('INSERT INTO logs (action, object_type, object_id, user_type, user_id, details, ip_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
+    if (!$stmt) return false;
+    $stmt->bind_param('ssissss', $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
+    return $stmt->execute();
+}
 ?>

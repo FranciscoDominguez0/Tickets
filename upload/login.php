@@ -7,6 +7,7 @@
  */
 
 require_once '../config.php';
+require_once '../includes/helpers.php';
 
 // Generar CSRF token si no existe
 if (!isset($_SESSION['csrf_token'])) {
@@ -76,6 +77,7 @@ if ($_POST) {
         if ($isLocked) {
             $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
             $_SESSION['flash_email'] = $prefillEmail;
+            addLog('Cuenta bloqueada: intento de inicio de sesión (usuario)', 'email=' . $prefillEmail, 'user', null, 'user', null);
             header('Location: login.php');
             exit;
         } else {
@@ -99,6 +101,7 @@ if ($_POST) {
                     exit;
                 } else {
                     $_SESSION['login_failed_attempts'] = (int)($_SESSION['login_failed_attempts'] ?? 0) + 1;
+                    addLog('Intento fallido de inicio de sesión (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', null, 'user', null);
                     if ((int)$_SESSION['login_failed_attempts'] >= 3) {
                         $isLocked = true;
                         if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -107,6 +110,15 @@ if ($_POST) {
                                 $stmtLock->bind_param('s', $email);
                                 $stmtLock->execute();
                             }
+                            $stmtUid = $mysqli->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+                            $uid = null;
+                            if ($stmtUid) {
+                                $stmtUid->bind_param('s', $email);
+                                $stmtUid->execute();
+                                $urow = $stmtUid->get_result()->fetch_assoc();
+                                $uid = $urow ? (int)$urow['id'] : null;
+                            }
+                            addLog('Excesivos intentos de identificación (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', $uid, 'user', $uid);
                         }
                         $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
                         $_SESSION['flash_email'] = $prefillEmail;
