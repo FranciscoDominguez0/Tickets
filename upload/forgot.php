@@ -83,6 +83,21 @@ if ($_POST) {
 </head>
 <body>
     <div class="support-center-wrapper">
+        <div class="support-header">
+            <div class="support-header-left">
+                <img src="../publico/img/vigitec-logo.png" alt="VIGITEC PANAMA" class="vigitec-logo">
+            </div>
+            <div class="support-header-right">
+                <span class="guest-user">Usuario Invitado</span>
+                <span class="header-separator">|</span>
+                <a href="login.php" class="header-login-link">Inicia Sesión</a>
+            </div>
+        </div>
+
+        <div class="support-nav">
+            <button class="nav-item active">Inicio Centro de Soporte</button>
+        </div>
+
         <div class="support-content">
             <div class="welcome-section">
                 <h2 class="welcome-title">Recuperar contraseña</h2>
@@ -107,14 +122,15 @@ if ($_POST) {
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                         <button type="submit" class="btn-login">Enviar enlace</button>
-
-                        <div style="margin-top:12px;">
-                            <a href="login.php" class="register-link">Volver al inicio de sesión</a>
-                        </div>
                     </form>
                 </div>
 
                 <div class="login-panel-right">
+                    <div class="login-links">
+                        <p class="register-text">
+                            Recupera el acceso a tu cuenta mediante el enlace enviado a tu correo.
+                        </p>
+                    </div>
                     <div class="lock-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -123,6 +139,12 @@ if ($_POST) {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="support-footer">
+            <p class="copyright">
+                Derechos de autor © <?php echo date('Y'); ?> Vigitec Panama - <?php echo APP_NAME; ?> - Todos los derechos reservados.
+            </p>
         </div>
     </div>
 </body>
