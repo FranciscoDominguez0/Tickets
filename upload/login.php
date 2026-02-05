@@ -148,7 +148,9 @@ if ($_POST) {
 $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
 $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
-$bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . '); background-size:cover; background-position:center; background-repeat:no-repeat;') : '';
+$bodyStyle = $loginBg !== ''
+    ? ('background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
+    : '';
 ?>
 <body style="<?php echo $bodyStyle; ?>">
     <div class="support-center-wrapper">
