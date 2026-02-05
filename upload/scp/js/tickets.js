@@ -5,6 +5,17 @@ document.addEventListener('DOMContentLoaded', function() {
     var panel = document.querySelector('.tickets-panel[data-filter-key]');
     if (!panel) return;
 
+    function showInfoModal(msg) {
+      var textEl = document.getElementById('bulkInfoText');
+      var modalEl = document.getElementById('bulkInfoModal');
+      if (textEl) textEl.textContent = (msg || '').toString();
+      if (!modalEl) return;
+      if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      }
+    }
+
     function getFilterKey() {
       return (panel.getAttribute('data-filter-key') || '').toString();
     }
@@ -35,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function confirmBulk(action) {
       var count = selectedTicketCount();
       if (!count) {
-        alert('Selecciona al menos un ticket.');
+        showInfoModal('Selecciona al menos un ticket.');
         return;
       }
 
@@ -44,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var val = (document.getElementById('bulk_staff_id') && document.getElementById('bulk_staff_id').value ? document.getElementById('bulk_staff_id').value : '').toString();
         var label = (document.getElementById('bulk_staff_label') && document.getElementById('bulk_staff_label').value ? document.getElementById('bulk_staff_label').value : '').toString();
         if (val === '' || label === '') {
-          alert('Selecciona un agente para asignar.');
+          showInfoModal('Selecciona un agente para asignar.');
           return;
         }
         text = '¿Asignar ' + count + ' ticket(s) a "' + label + '"?';
@@ -52,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var val2 = (document.getElementById('bulk_status_id') && document.getElementById('bulk_status_id').value ? document.getElementById('bulk_status_id').value : '').toString();
         var label2 = (document.getElementById('bulk_status_label') && document.getElementById('bulk_status_label').value ? document.getElementById('bulk_status_label').value : '').toString();
         if (val2 === '' || label2 === '') {
-          alert('Selecciona un estado.');
+          showInfoModal('Selecciona un estado.');
           return;
         }
         text = '¿Cambiar el estado de ' + count + ' ticket(s) a "' + label2 + '"?';

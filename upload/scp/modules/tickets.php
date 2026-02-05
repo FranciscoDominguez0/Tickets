@@ -821,6 +821,8 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
         </div>
     <?php endif; ?>
 
+    <div id="bulkClientAlert" class="alert alert-warning d-none" role="alert"></div>
+
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
@@ -995,6 +997,24 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="bulkConfirmBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal informativo (evita popup del navegador con "localhost") -->
+<div class="modal fade" id="bulkInfoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-circle text-warning me-2"></i>Atención</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="bulkInfoText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
             </div>
         </div>
     </div>
