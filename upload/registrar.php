@@ -6,6 +6,12 @@
 
 require_once '../config.php';
 require_once '../includes/helpers.php';
+require_once '../includes/Auth.php';
+
+if ((string)getAppSetting('system.helpdesk_status', 'online') === 'offline') {
+    header('Location: login.php?msg=offline');
+    exit;
+}
 
 // Si ya está logueado, redirigir
 if (isset($_SESSION['user_id'])) {

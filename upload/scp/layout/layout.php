@@ -10,7 +10,7 @@
     <title>Panel Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="css/scp.css">
+    <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
     <link rel="stylesheet" href="css/profile.css">
     <?php endif; ?>
@@ -42,9 +42,9 @@
         <!-- SIDEBAR LATERAL -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <span class="icon">
+                <span class="icon sidebar-brand-logo">
                     <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
-                    <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" style="height:34px; width:auto; display:block;" />
+                    <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
                 </span>
             </div>
 

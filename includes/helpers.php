@@ -5,6 +5,18 @@
 
 // Proteger página (requiere login)
 function requireLogin($type = 'user') {
+    if ($type === 'cliente') {
+        $status = (string)getAppSetting('system.helpdesk_status', 'online');
+        if ($status === 'offline') {
+            $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+            if (strpos($currentPath, '/upload/') !== false) {
+                header('Location: login.php?msg=offline');
+            } else {
+                header('Location: upload/login.php?msg=offline');
+            }
+            exit;
+        }
+    }
     if ($type === 'cliente' && !isset($_SESSION['user_id'])) {
         // Detectar si estamos en upload/ o en otro lugar
         $currentPath = $_SERVER['PHP_SELF'];

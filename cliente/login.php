@@ -14,6 +14,12 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+$helpdeskStatus = (string)getAppSetting('system.helpdesk_status', 'online');
+$offlineNotice = '';
+if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline') {
+    $offlineNotice = 'El sistema se encuentra en mantenimiento. Disculpe las molestias. Por favor intente nuevamente más tarde.';
+}
+
 // Si ya está logueado, redirigir
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
@@ -24,8 +30,9 @@ $error = '';
 $success = '';
 
 if ($_POST) {
-        // Validar CSRF
-        if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
+        if ($helpdeskStatus === 'offline') {
+            $error = 'El sistema está fuera de línea. Intente más tarde.';
+        } elseif (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
             $error = 'Token de seguridad inválido';
         } else {
             $email = trim($_POST['email'] ?? '');
@@ -98,6 +105,9 @@ $bodyStyle = $loginBg !== ''
                 <div class="login-panel-left">
                     <form method="post" class="login-form">
                         <!-- Alertas -->
+                        <?php if ($offlineNotice): ?>
+                            <div class="alert alert-warning"><?php echo html($offlineNotice); ?></div>
+                        <?php endif; ?>
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo $error; ?></div>
                         <?php endif; ?>

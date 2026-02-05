@@ -30,10 +30,10 @@
         <!-- SIDEBAR ADMINISTRACIÓN -->
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <span class="icon">
+                <div class="sidebar-brand-logo">
                     <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
-                    <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" style="height:34px; width:auto; display:block;" />
-                </span>
+                    <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
+                </div>
             </div>
 
             <div class="sidebar-section">
@@ -48,7 +48,7 @@
                         </button>
                         <ul id="settings-subnav" class="sidebar-subnav <?php echo $isSettingsRoute ? 'open' : ''; ?>">
                             <li>
-                                <a href="settings.php?t=pages" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'pages') ? 'active' : ''; ?>">Empresa</a>
+                                <a href="settings.php?t=pages" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'pages') ? 'active' : ''; ?>">Perfil de la empresa</a>
                             </li>
                             <li>
                                 <a href="settings.php?t=system" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'system') ? 'active' : ''; ?>">Sistema</a>

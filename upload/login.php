@@ -14,6 +14,12 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+$helpdeskStatus = (string)getAppSetting('system.helpdesk_status', 'online');
+$offlineNotice = '';
+if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline') {
+    $offlineNotice = 'El sistema se encuentra en mantenimiento. Disculpe las molestias. Por favor intente nuevamente más tarde.';
+}
+
 // Si ya está logueado, redirigir
 if (isset($_SESSION['user_id'])) {
     header('Location: tickets.php');
@@ -56,9 +62,16 @@ if ($isLocked && $error === '') {
 }
 
 if ($_POST) {
-        $email = trim($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $prefillEmail = $email;
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $prefillEmail = $email;
+
+    if ($helpdeskStatus === 'offline') {
+        $_SESSION['flash_error'] = 'El sistema está fuera de línea. Intente más tarde.';
+        $_SESSION['flash_email'] = $prefillEmail;
+        header('Location: login.php?msg=offline');
+        exit;
+    }
 
         // Recalcular bloqueo según el email enviado
         $isLocked = false;
@@ -78,12 +91,6 @@ if ($_POST) {
             $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
             $_SESSION['flash_email'] = $prefillEmail;
             addLog('Cuenta bloqueada: intento de inicio de sesión (usuario)', 'email=' . $prefillEmail, 'user', null, 'user', null);
-            header('Location: login.php');
-            exit;
-        } else {
-        // Validar CSRF
-        if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
-            $_SESSION['flash_error'] = 'Token de seguridad inválido';
             header('Location: login.php');
             exit;
         } else {
@@ -132,7 +139,6 @@ if ($_POST) {
                     }
                 }
             }
-        }
         }
 }
 ?>
@@ -184,6 +190,9 @@ $bodyStyle = $loginBg !== ''
                 <div class="login-panel-left">
                     <form method="post" class="login-form">
                         <!-- Alertas -->
+                        <?php if ($offlineNotice): ?>
+                            <div class="alert alert-warning"><?php echo html($offlineNotice); ?></div>
+                        <?php endif; ?>
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo $error; ?></div>
                         <?php endif; ?>
