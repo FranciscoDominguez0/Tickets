@@ -7,6 +7,7 @@
  */
 
 require_once '../../config.php';
+require_once '../../includes/helpers.php';
 
 // Generar CSRF token si no existe
 if (!isset($_SESSION['csrf_token'])) {
@@ -53,7 +54,11 @@ if ($_POST) {
     <title>Login Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
 </head>
-<body class="agent-login">
+<?php
+$loginBg = (string)getBrandAssetUrl('login.background', '');
+$bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');') : '';
+?>
+<body class="agent-login" style="<?php echo $bodyStyle; ?>">
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="agent-login-container">
         <!-- PANEL DE LOGIN (GLASSMORPHISM) -->

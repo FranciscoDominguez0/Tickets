@@ -99,6 +99,65 @@ function generateTicketNumber() {
            str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 }
 
+function ensureAppSettingsTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS app_settings (\n"
+        . "  `key` VARCHAR(191) NOT NULL,\n"
+        . "  `value` LONGTEXT NULL,\n"
+        . "  `updated` DATETIME NULL,\n"
+        . "  PRIMARY KEY (`key`)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    return (bool)$mysqli->query($sql);
+}
+
+function getAppSetting($key, $default = null) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return $default;
+    if (!ensureAppSettingsTable()) return $default;
+    $key = (string)$key;
+    $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `key` = ? LIMIT 1');
+    if (!$stmt) return $default;
+    $stmt->bind_param('s', $key);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row ? ($row['value'] ?? $default) : $default;
+}
+
+function setAppSetting($key, $value) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    if (!ensureAppSettingsTable()) return false;
+    $key = (string)$key;
+    $value = $value !== null ? (string)$value : null;
+    $stmt = $mysqli->prepare('INSERT INTO app_settings (`key`, `value`, `updated`) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
+    if (!$stmt) return false;
+    $stmt->bind_param('ss', $key, $value);
+    return $stmt->execute();
+}
+
+function toAppAbsoluteUrl($path) {
+    $path = (string)$path;
+    if ($path === '') return '';
+    if (preg_match('~^https?://~i', $path)) return $path;
+    if ($path[0] === '/') return rtrim((string)APP_URL, '/') . $path;
+
+    $p = $path;
+    while (strpos($p, '../') === 0) {
+        $p = substr($p, 3);
+    }
+    $p = ltrim($p, '/');
+    return rtrim((string)APP_URL, '/') . '/' . $p;
+}
+
+function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
+    $val = (string)getAppSetting($settingKey, '');
+    if ($val !== '') {
+        return toAppAbsoluteUrl($val);
+    }
+    return toAppAbsoluteUrl($fallbackRelativePath);
+}
+
 function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null) {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;

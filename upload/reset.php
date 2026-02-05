@@ -1,5 +1,6 @@
 <?php
 require_once '../config.php';
+require_once '../includes/helpers.php';
 
 // Generar CSRF token si no existe
 if (!isset($_SESSION['csrf_token'])) {
@@ -88,11 +89,16 @@ if ($_POST && $error === '') {
     <title>Restablecer contraseña - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../publico/css/login.css">
 </head>
-<body>
+<?php
+$brandLogo = (string)getBrandAssetUrl('company.logo', 'publico/img/vigitec-logo.png');
+$loginBg = (string)getBrandAssetUrl('login.background', '');
+$bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . '); background-size:cover; background-position:center; background-repeat:no-repeat;') : '';
+?>
+<body style="<?php echo $bodyStyle; ?>">
     <div class="support-center-wrapper">
         <div class="support-header">
             <div class="support-header-left">
-                <img src="../publico/img/vigitec-logo.png" alt="VIGITEC PANAMA" class="vigitec-logo">
+                <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
             <div class="support-header-right">
                 <span class="guest-user">Usuario Invitado</span>
