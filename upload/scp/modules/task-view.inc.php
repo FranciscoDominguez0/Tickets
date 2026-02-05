@@ -266,9 +266,9 @@ $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'com
                                 <label for="edit_assigned_to" class="form-label">Asignar a</label>
                                 <select class="form-select" id="edit_assigned_to" name="assigned_to">
                                     <option value="">Sin asignar</option>
-                                    <?php foreach ($staff_list as $staff): ?>
-                                        <option value="<?php echo $staff['id']; ?>" <?php echo $taskView['assigned_to'] == $staff['id'] ? 'selected' : ''; ?>>
-                                            <?php echo html($staff['name']); ?>
+                                    <?php foreach ($staff_list as $staffOpt): ?>
+                                        <option value="<?php echo $staffOpt['id']; ?>" <?php echo $taskView['assigned_to'] == $staffOpt['id'] ? 'selected' : ''; ?>>
+                                            <?php echo html($staffOpt['name']); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
