@@ -222,7 +222,7 @@ ob_start();
                         <?php foreach ($rows as $r): ?>
                             <?php
                             $txt = (string)($r['details'] ?? '');
-                            $title = $txt !== '' ? $txt : (string)($r['action'] ?? '');
+                            $title = (string)($r['action'] ?? '');
                             $lower = strtolower((string)($r['action'] ?? '') . ' ' . $txt);
                             if (strpos($lower, 'error') !== false) $lvl = 'Error';
                             elseif (strpos($lower, 'warn') !== false) $lvl = 'Warning';
@@ -243,7 +243,7 @@ ob_start();
                             <tr>
                                 <td class="text-center"><input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>"></td>
                                 <td>
-                                    <a href="#" class="log-pop" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="right" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="text-decoration:none; display:block;">
+                                    <a href="#" class="log-pop" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="text-decoration:none; display:block;">
                                         <div class="text-truncate" style="max-width: 720px;" title="<?php echo html($title); ?>">
                                             <?php echo html($title); ?>
                                         </div>
@@ -287,26 +287,70 @@ window.addEventListener('load', function () {
         });
     }
 
-    if (!window.bootstrap || !window.bootstrap.Popover) return;
-
     function b64decode(v) {
-        try { return atob(v || ''); } catch (e) { return ''; }
+        try {
+            var s = atob(v || '');
+            try { return decodeURIComponent(escape(s)); } catch (e2) { return s; }
+        } catch (e) {
+            return '';
+        }
     }
-    var els = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    els.forEach(function (el) {
-        var t = b64decode(el.getAttribute('data-pop-title'));
-        var c = b64decode(el.getAttribute('data-pop-body'));
-        var inst = new bootstrap.Popover(el, {
-            container: 'body',
-            title: t,
-            content: c,
-            template: '<div class="popover" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body" style="white-space:pre-wrap;"></div></div>'
-        });
 
+    var tip = document.createElement('div');
+    tip.id = 'log-tip';
+    tip.style.position = 'fixed';
+    tip.style.zIndex = '2000';
+    tip.style.maxWidth = '520px';
+    tip.style.background = '#fff';
+    tip.style.border = '1px solid rgba(148,163,184,0.7)';
+    tip.style.borderRadius = '10px';
+    tip.style.boxShadow = '0 14px 34px rgba(15,23,42,0.18)';
+    tip.style.padding = '10px 12px';
+    tip.style.display = 'none';
+    tip.style.pointerEvents = 'none';
+    tip.innerHTML = '<div id="log-tip-title" style="font-weight:900; color:#0f172a; margin-bottom:6px;"></div>'
+        + '<div id="log-tip-body" style="white-space:pre-wrap; color:#334155; font-size:0.92rem; line-height:1.35;"></div>';
+    document.body.appendChild(tip);
+
+    function showTip(el) {
+        var t = b64decode(el.getAttribute('data-pop-title'));
+        var b = b64decode(el.getAttribute('data-pop-body'));
+        var tEl = document.getElementById('log-tip-title');
+        var bEl = document.getElementById('log-tip-body');
+        if (tEl) tEl.textContent = t || 'Registro';
+        if (bEl) bEl.textContent = b || '';
+        tip.style.display = 'block';
+    }
+    function hideTip() {
+        tip.style.display = 'none';
+    }
+    function placeTipNear(el) {
+        if (tip.style.display === 'none') return;
+        var pad = 12;
+        var r = el.getBoundingClientRect();
+        var rect = tip.getBoundingClientRect();
+        var x = r.right + pad;
+        var y = r.top;
+        if (x + rect.width > window.innerWidth - 10) x = Math.max(10, r.left - rect.width - pad);
+        if (y + rect.height > window.innerHeight - 10) y = Math.max(10, window.innerHeight - rect.height - 10);
+        tip.style.left = x + 'px';
+        tip.style.top = y + 'px';
+    }
+
+    document.querySelectorAll('a.log-pop').forEach(function (el) {
         el.addEventListener('click', function (e) { e.preventDefault(); });
-        el.addEventListener('mouseenter', function () { try { inst.show(); } catch (e) {} });
-        el.addEventListener('mouseleave', function () { try { inst.hide(); } catch (e) {} });
+        el.addEventListener('mouseenter', function () { showTip(el); placeTipNear(el); });
+        el.addEventListener('mouseleave', function () { hideTip(); });
+        el.addEventListener('focus', function () { showTip(el); placeTipNear(el); });
+        el.addEventListener('blur', function () { hideTip(); });
     });
+
+    window.addEventListener('scroll', function () {
+        var active = document.activeElement;
+        if (active && active.classList && active.classList.contains('log-pop') && tip.style.display !== 'none') {
+            placeTipNear(active);
+        }
+    }, {passive:true});
 });
 </script>
 
