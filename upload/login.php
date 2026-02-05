@@ -224,6 +224,10 @@ if ($_POST) {
 
                             <!-- Botón Login -->
                             <button type="submit" class="btn-login">Inicia Sesión</button>
+
+                            <div style="margin-top:12px;">
+                                <a href="forgot.php" class="register-link">Recuperar contraseña</a>
+                            </div>
                         <?php endif; ?>
                     </form>
                 </div>
