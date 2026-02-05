@@ -42,15 +42,24 @@
 
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="assigned_to" class="form-label">Asignar a</label>
-                        <select class="form-select" id="assigned_to" name="assigned_to">
-                            <option value="">Sin asignar</option>
-                            <?php foreach ($staff_list as $staffOpt): ?>
-                                <option value="<?php echo $staffOpt['id']; ?>" <?php echo (isset($_POST['assigned_to']) && $_POST['assigned_to'] == $staffOpt['id']) ? 'selected' : ''; ?>>
-                                    <?php echo html($staffOpt['name']); ?>
+                        <label for="dept_id" class="form-label">Departamento <span class="text-danger">*</span></label>
+                        <select class="form-select" id="dept_id" name="dept_id" required>
+                            <option value="">Seleccione...</option>
+                            <?php foreach ($departments as $d): ?>
+                                <option value="<?php echo (int) $d['id']; ?>" <?php echo (isset($_POST['dept_id']) && (int)$_POST['dept_id'] === (int)$d['id']) ? 'selected' : ''; ?>>
+                                    <?php echo html($d['name']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="assigned_to" class="form-label">Asignar a</label>
+                        <select class="form-select" id="assigned_to" name="assigned_to" disabled>
+                            <option value="">Sin asignar</option>
+                        </select>
+                        <div id="select-dept-hint" class="form-text" style="display:none; color:#64748b;">Debe seleccionar un departamento primero.</div>
+                        <div id="no-agents-hint" class="form-text" style="display:none; color:#b91c1c;">No hay agentes disponibles para este departamento.</div>
                     </div>
 
                     <div class="mb-3">
@@ -90,6 +99,52 @@ document.getElementById('description').addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
 });
+
+(function() {
+    var agentsByDept = <?php echo $agentsJson ?: '{}'; ?>;
+    var deptSel = document.getElementById('dept_id');
+    var agentSel = document.getElementById('assigned_to');
+    var hint = document.getElementById('no-agents-hint');
+    if (!deptSel || !agentSel) return;
+
+    function setHint(show) {
+        if (!hint) return;
+        hint.style.display = show ? 'block' : 'none';
+    }
+
+    function fillAgents(deptId) {
+        while (agentSel.options.length > 0) agentSel.remove(0);
+        agentSel.add(new Option('Sin asignar', ''));
+
+        var list = agentsByDept[String(deptId)] || [];
+        if (!deptId) {
+            agentSel.disabled = true;
+            var selHint = document.getElementById('select-dept-hint');
+            if (selHint) selHint.style.display = 'block';
+            setHint(false);
+            return;
+        }
+        var selHint2 = document.getElementById('select-dept-hint');
+        if (selHint2) selHint2.style.display = 'none';
+        if (!list.length) {
+            agentSel.disabled = true;
+            setHint(true);
+            return;
+        }
+
+        list.forEach(function(a) {
+            agentSel.add(new Option(a.name, String(a.id)));
+        });
+        agentSel.disabled = false;
+        setHint(false);
+    }
+
+    agentSel.disabled = true;
+    fillAgents(deptSel.value);
+    deptSel.addEventListener('change', function() {
+        fillAgents(this.value);
+    });
+})();
 
 // Auto-ocultar alertas de éxito después de 4 segundos
 document.addEventListener('DOMContentLoaded', function() {

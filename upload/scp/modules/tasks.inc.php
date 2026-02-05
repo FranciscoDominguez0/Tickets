@@ -164,6 +164,9 @@
                         <tr>
                             <th>ID</th>
                             <th>Título</th>
+                            <?php if (!empty($tasksHasDept)): ?>
+                                <th>Departamento</th>
+                            <?php endif; ?>
                             <th>Estado</th>
                             <th>Prioridad</th>
                             <th>Asignado a</th>
@@ -186,6 +189,9 @@
                                         <?php echo html($t['title']); ?>
                                     </a>
                                 </td>
+                                <?php if (!empty($tasksHasDept)): ?>
+                                    <td><?php echo html($t['dept_name'] ?? ''); ?></td>
+                                <?php endif; ?>
                                 <td>
                                     <?php
                                     $status_labels = [

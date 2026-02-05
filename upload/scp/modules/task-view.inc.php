@@ -263,6 +263,18 @@ $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'com
 
                         <div class="col-md-4">
                             <div class="mb-3">
+                                <label for="edit_dept_id" class="form-label">Departamento <span class="text-danger">*</span></label>
+                                <select class="form-select" id="edit_dept_id" name="dept_id" required>
+                                    <option value="">Seleccione...</option>
+                                    <?php foreach ($departments as $d): ?>
+                                        <option value="<?php echo (int) $d['id']; ?>" <?php echo isset($taskView['dept_id']) && (int)$taskView['dept_id'] === (int)$d['id'] ? 'selected' : ''; ?>>
+                                            <?php echo html($d['name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="edit_assigned_to" class="form-label">Asignar a</label>
                                 <select class="form-select" id="edit_assigned_to" name="assigned_to">
                                     <option value="">Sin asignar</option>
@@ -272,6 +284,8 @@ $is_overdue_header = $due_ts && $due_ts < time() && $taskView['status'] !== 'com
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <div id="edit-select-dept-hint" class="form-text" style="display:none; color:#64748b;">Debe seleccionar un departamento primero.</div>
+                                <div id="edit-no-agents-hint" class="form-text" style="display:none; color:#b91c1c;">No hay agentes disponibles para este departamento.</div>
                             </div>
 
                             <div class="mb-3">
@@ -392,6 +406,56 @@ document.addEventListener('DOMContentLoaded', function() {
             bsAlert.close();
         }, 4000); // 4 segundos
     });
+
+    (function() {
+        var agentsByDept = <?php echo $agentsJson ?: '{}'; ?>;
+        var deptSel = document.getElementById('edit_dept_id');
+        var agentSel = document.getElementById('edit_assigned_to');
+        var hint = document.getElementById('edit-no-agents-hint');
+        var selHint = document.getElementById('edit-select-dept-hint');
+        if (!deptSel || !agentSel) return;
+
+        var currentAssigned = '<?php echo isset($taskView['assigned_to']) ? (int)$taskView['assigned_to'] : 0; ?>';
+
+        function setHint(show) {
+            if (!hint) return;
+            hint.style.display = show ? 'block' : 'none';
+        }
+
+        function fillAgents(deptId) {
+            while (agentSel.options.length > 0) agentSel.remove(0);
+            agentSel.add(new Option('Sin asignar', ''));
+
+            var list = agentsByDept[String(deptId)] || [];
+            if (!deptId) {
+                agentSel.disabled = true;
+                if (selHint) selHint.style.display = 'block';
+                setHint(false);
+                return;
+            }
+            if (selHint) selHint.style.display = 'none';
+            if (!list.length) {
+                agentSel.disabled = true;
+                setHint(true);
+                return;
+            }
+
+            list.forEach(function(a) {
+                agentSel.add(new Option(a.name, String(a.id)));
+            });
+            agentSel.disabled = false;
+            setHint(false);
+            if (currentAssigned && String(currentAssigned) !== '0') {
+                agentSel.value = String(currentAssigned);
+            }
+        }
+
+        fillAgents(deptSel.value);
+        deptSel.addEventListener('change', function() {
+            currentAssigned = '';
+            fillAgents(this.value);
+        });
+    })();
 });
 </script>
 
