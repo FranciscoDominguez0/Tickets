@@ -95,22 +95,33 @@ body {
     transform: translateX(1px);
 }
 
-.sidebar-toggle {
+.sidebar .sidebar-toggle {
     width: 100%;
     background: none;
     border: none;
     text-align: left;
-    padding: 12px 12px;
+    padding: 10px 12px;
     cursor: pointer;
     font-weight: 500;
+    border-radius: 8px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.sidebar-toggle:not(.active):hover {
+.sidebar .sidebar-toggle i {
+    color: inherit;
+}
+
+.sidebar .sidebar-toggle:not(.active):hover {
     background: #0b1120;
+    color: #e5e7eb;
 }
 
-.sidebar-toggle.active {
-    padding: 12px 12px;
+.sidebar .sidebar-toggle.active {
+    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+    color: #f9fafb;
 }
 
 .sidebar-subnav {
