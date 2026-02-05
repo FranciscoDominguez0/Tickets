@@ -55,7 +55,8 @@ if ($_POST) {
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
 </head>
 <?php
-$loginBg = (string)getBrandAssetUrl('login.background', '');
+$bgMode = (string)getAppSetting('login.background_mode', 'default');
+$loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');') : '';
 ?>
 <body class="agent-login" style="<?php echo $bodyStyle; ?>">

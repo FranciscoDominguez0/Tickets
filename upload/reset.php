@@ -90,8 +90,9 @@ if ($_POST && $error === '') {
     <link rel="stylesheet" href="../publico/css/login.css">
 </head>
 <?php
-$brandLogo = (string)getBrandAssetUrl('company.logo', 'publico/img/vigitec-logo.png');
-$loginBg = (string)getBrandAssetUrl('login.background', '');
+$brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+$bgMode = (string)getAppSetting('login.background_mode', 'default');
+$loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . '); background-size:cover; background-position:center; background-repeat:no-repeat;') : '';
 ?>
 <body style="<?php echo $bodyStyle; ?>">

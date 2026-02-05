@@ -158,6 +158,20 @@ function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
     return toAppAbsoluteUrl($fallbackRelativePath);
 }
 
+function getCompanyLogoUrl($fallbackRelativePath = 'publico/img/vigitec-logo.png') {
+    $mode = (string)getAppSetting('company.logo_mode', '');
+    $logo = (string)getAppSetting('company.logo', '');
+
+    if ($mode === '') {
+        $mode = $logo !== '' ? 'custom' : 'default';
+    }
+
+    if ($mode === 'custom' && $logo !== '') {
+        return toAppAbsoluteUrl($logo);
+    }
+    return toAppAbsoluteUrl($fallbackRelativePath);
+}
+
 function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null) {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;

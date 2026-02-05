@@ -31,7 +31,7 @@
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <span class="icon">
-                    <?php $brandLogo = (string)getBrandAssetUrl('company.logo', 'publico/img/vigitec-logo.png'); ?>
+                    <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
                     <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" style="height:34px; width:auto; display:block;" />
                 </span>
             </div>
