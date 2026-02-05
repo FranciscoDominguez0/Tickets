@@ -693,6 +693,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
             if ($_POST['do'] === 'bulk_assign') {
                 $staffId = isset($_POST['bulk_staff_id']) && is_numeric($_POST['bulk_staff_id']) ? (int) $_POST['bulk_staff_id'] : 0;
+
+                // Capturar datos previos para notificación (solo cuando se asigna a un agente)
+                $ticketsBefore = [];
+                if ($staffId !== 0) {
+                    $sqlSel = "SELECT t.id, t.ticket_number, t.subject, t.staff_id, d.name AS dept_name\n"
+                        . "FROM tickets t\n"
+                        . "LEFT JOIN departments d ON d.id = t.dept_id\n"
+                        . "WHERE t.id IN ($placeholders)";
+                    $stmtSel = $mysqli->prepare($sqlSel);
+                    if ($stmtSel) {
+                        $paramsSel = [&$typesIds];
+                        foreach ($ticketIds as $k => $v) {
+                            $paramsSel[] = &$ticketIds[$k];
+                        }
+                        call_user_func_array([$stmtSel, 'bind_param'], $paramsSel);
+                        if ($stmtSel->execute()) {
+                            $resSel = $stmtSel->get_result();
+                            while ($row = $resSel->fetch_assoc()) {
+                                $ticketsBefore[(int)$row['id']] = $row;
+                            }
+                        }
+                    }
+                }
+
                 if ($staffId === 0) {
                     $sqlUp = "UPDATE tickets SET staff_id = NULL, updated = NOW() WHERE id IN ($placeholders)";
                     $stmt = $mysqli->prepare($sqlUp);
@@ -708,6 +732,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                     call_user_func_array([$stmt, 'bind_param'], $params);
                 }
                 if ($stmt->execute()) {
+                    // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
+                    if ($staffId !== 0 && !empty($ticketsBefore)) {
+                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtS) {
+                            $stmtS->bind_param('i', $staffId);
+                            if ($stmtS->execute()) {
+                                $srow = $stmtS->get_result()->fetch_assoc();
+                                $to = trim((string)($srow['email'] ?? ''));
+                                if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                    $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
+                                    if ($staffName === '') $staffName = 'Agente';
+
+                                    foreach ($ticketsBefore as $tid0 => $trow) {
+                                        $previousStaffId = $trow['staff_id'] ?? null;
+                                        if ((string)$previousStaffId === (string)$staffId) {
+                                            continue;
+                                        }
+
+                                        $ticketNo = (string)($trow['ticket_number'] ?? ('#' . (int)$tid0));
+                                        $subj = '[Asignación] ' . $ticketNo . ' - ' . (string)($trow['subject'] ?? 'Ticket');
+                                        $deptName = (string)($trow['dept_name'] ?? 'Soporte');
+                                        $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int)$tid0;
+
+                                        $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                            . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                            . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                            . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars($ticketNo) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)($trow['subject'] ?? '')) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars($deptName) . '</td></tr>'
+                                            . '</table>'
+                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                            . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                            . '</div>';
+
+                                        $bodyText = 'Se te asignó un ticket: ' . $ticketNo . "\n" . 'Asunto: ' . (string)($trow['subject'] ?? '') . "\n" . 'Ver: ' . $viewUrl;
+                                        Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     $postSuccess = 'Asignación actualizada.';
                 } else {
                     $postErrors[] = 'Error al asignar tickets.';
@@ -822,6 +889,14 @@ if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
     <?php endif; ?>
 
     <div id="bulkClientAlert" class="alert alert-warning d-none" role="alert"></div>
+
+    <div id="bulkLoadingOverlay" class="d-none" style="position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 3000;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 260px; text-align:center;">
+            <div class="spinner-border text-primary" role="status" style="width:2.25rem; height:2.25rem;"></div>
+            <div id="bulkLoadingText" style="margin-top:10px; font-weight:800; color:#0f172a;">Procesando…</div>
+            <div style="margin-top:4px; color:#64748b; font-size:0.9rem;">Por favor espera</div>
+        </div>
+    </div>
 
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">

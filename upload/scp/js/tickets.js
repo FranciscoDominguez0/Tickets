@@ -87,6 +87,15 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       btn.onclick = function () {
+        var overlay = document.getElementById('bulkLoadingOverlay');
+        var overlayText = document.getElementById('bulkLoadingText');
+        if (overlay && overlayText) {
+          if (action === 'bulk_assign') overlayText.textContent = 'Asignando tickets…';
+          else if (action === 'bulk_status') overlayText.textContent = 'Cambiando estado…';
+          else if (action === 'bulk_delete') overlayText.textContent = 'Eliminando tickets…';
+          else overlayText.textContent = 'Procesando…';
+          overlay.classList.remove('d-none');
+        }
         var doEl = document.getElementById('bulk_do');
         var confirmEl = document.getElementById('bulk_confirm');
         var form = document.getElementById('bulkForm');
