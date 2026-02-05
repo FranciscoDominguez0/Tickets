@@ -11,4 +11,11 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.classList.toggle('expanded', isOpen);
         });
     });
+
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
 });
