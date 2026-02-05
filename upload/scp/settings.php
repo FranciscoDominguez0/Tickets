@@ -214,9 +214,20 @@ if ($target === 'pages') {
 
     ob_start();
 ?>
-<div class="page-header">
-    <h1>Perfil de la empresa</h1>
-    <p>Administrar información y branding</p>
+<div class="settings-hero">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+            <span class="settings-hero-icon"><i class="bi bi-building"></i></span>
+            <div>
+                <h1>Perfil de la empresa</h1>
+                <p>Administrar información y branding</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge <?php echo $company_logo_mode === 'custom' ? 'bg-primary' : 'bg-secondary'; ?>">Logo: <?php echo $company_logo_mode === 'custom' ? 'Personalizado' : 'Default'; ?></span>
+            <span class="badge <?php echo $login_bg_mode === 'custom' ? 'bg-info text-dark' : 'bg-secondary'; ?>">Fondo login: <?php echo $login_bg_mode === 'custom' ? 'Personalizado' : 'Default'; ?></span>
+        </div>
+    </div>
 </div>
 
 <?php if ($error): ?>
@@ -243,8 +254,8 @@ if ($target === 'pages') {
     <input type="hidden" name="active_tab" id="active_tab" value="<?php echo html($activeTab); ?>">
 
     <div class="tab-pane fade <?php echo $activeTab === 'basic' ? 'show active' : ''; ?>" id="tab-basic">
-        <div class="card">
-            <div class="card-header"><strong>Información de la empresa</strong></div>
+        <div class="card settings-card">
+            <div class="card-header"><strong><i class="bi bi-building"></i>Información de la empresa</strong></div>
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label">Nombre de la empresa <span class="text-danger">*</span></label>
@@ -267,8 +278,8 @@ if ($target === 'pages') {
     </div>
 
     <div class="tab-pane fade <?php echo $activeTab === 'logos' ? 'show active' : ''; ?>" id="tab-logos">
-        <div class="card">
-            <div class="card-header"><strong>Logos</strong></div>
+        <div class="card settings-card">
+            <div class="card-header"><strong><i class="bi bi-image"></i>Logos</strong></div>
             <div class="card-body">
                 <div class="mb-3">
                     <div class="fw-semibold mb-2">Logo de sistema por defecto</div>
@@ -305,8 +316,8 @@ if ($target === 'pages') {
     </div>
 
     <div class="tab-pane fade <?php echo $activeTab === 'login' ? 'show active' : ''; ?>" id="tab-login">
-        <div class="card">
-            <div class="card-header"><strong>Fondo del login</strong></div>
+        <div class="card settings-card">
+            <div class="card-header"><strong><i class="bi bi-card-image"></i>Fondo del login</strong></div>
             <div class="card-body">
                 <div class="mb-3">
                     <div class="fw-semibold mb-2">Fondo por defecto del sistema</div>
@@ -493,44 +504,6 @@ $content = ob_get_clean();
 
     ob_start();
 ?>
-<div class="page-header">
-    <h1>Configuración general</h1>
-    <p>Ajustes esenciales del helpdesk y del sistema</p>
-</div>
-
-<?php if ($error): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <?php echo html($error); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
-<?php if ($msg): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <?php echo html($msg); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-<?php endif; ?>
-
-<form method="post" class="row g-3">
-    <?php csrfField(); ?>
-
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <strong>Helpdesk</strong>
-                <span class="badge <?php echo $helpdesk_status === 'online' ? 'bg-success' : 'bg-secondary'; ?>">
-                    <?php echo $helpdesk_status === 'online' ? 'En línea' : 'Fuera de línea'; ?>
-                </span>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label">Estado de Helpdesk
-                        <i class="bi bi-question-circle ms-1 text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Si está Fuera de línea, se bloquea el acceso de clientes (login/registro/recuperación). Agentes y administradores aún pueden entrar."></i>
-                    </label>
-                    <div class="d-flex gap-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="helpdesk_status" id="helpdesk-online" value="online" <?php echo $helpdesk_status === 'online' ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="helpdesk-online">En línea</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="helpdesk_status" id="helpdesk-offline" value="offline" <?php echo $helpdesk_status === 'offline' ? 'checked' : ''; ?>>
@@ -582,8 +555,8 @@ $content = ob_get_clean();
     </div>
 
     <div class="col-12 col-xl-6">
-        <div class="card h-100">
-            <div class="card-header"><strong>Rendimiento y registros</strong></div>
+        <div class="card settings-card h-100">
+            <div class="card-header"><strong><i class="bi bi-speedometer2"></i>Rendimiento y registros</strong></div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
@@ -633,8 +606,8 @@ $content = ob_get_clean();
     </div>
 
     <div class="col-12 col-xl-6">
-        <div class="card h-100">
-            <div class="card-header"><strong>Experiencia y seguridad</strong></div>
+        <div class="card settings-card h-100">
+            <div class="card-header"><strong><i class="bi bi-shield-check"></i>Experiencia y seguridad</strong></div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12">
@@ -697,8 +670,8 @@ $content = ob_get_clean();
     </div>
 
     <div class="col-12">
-        <div class="card">
-            <div class="card-header"><strong>Adjuntos</strong></div>
+        <div class="card settings-card">
+            <div class="card-header"><strong><i class="bi bi-paperclip"></i>Adjuntos</strong></div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-12 col-lg-4">
