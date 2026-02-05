@@ -228,13 +228,26 @@ ob_start();
                             elseif (strpos($lower, 'warn') !== false) $lvl = 'Warning';
                             else $lvl = 'Info';
                             $lvlClass = ($lvl === 'Error') ? 'text-danger fw-bold' : (($lvl === 'Warning') ? 'text-warning fw-bold' : 'text-muted');
+
+                            $popoverTitle = (string)($r['action'] ?? 'Registro');
+                            $popoverBody =
+                                "Detalles: " . ($txt !== '' ? $txt : '-') . "\n\n"
+                                . "Fecha: " . formatDate($r['created']) . "\n"
+                                . "IP: " . ($r['ip_address'] ?: '-') . "\n"
+                                . "Usuario: " . (($r['user_type'] ?: '-') . ($r['user_id'] ? (' #' . (int)$r['user_id']) : '')) . "\n"
+                                . "Objeto: " . (($r['object_type'] ?: '-') . ($r['object_id'] ? (' #' . (int)$r['object_id']) : ''));
+
+                            $popTitleB64 = base64_encode($popoverTitle);
+                            $popBodyB64 = base64_encode($popoverBody);
                             ?>
                             <tr>
                                 <td class="text-center"><input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>"></td>
                                 <td>
-                                    <div class="text-truncate" style="max-width: 720px;" title="<?php echo html($title); ?>">
-                                        <?php echo html($title); ?>
-                                    </div>
+                                    <a href="#" class="log-pop" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="right" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="text-decoration:none; display:block;">
+                                        <div class="text-truncate" style="max-width: 720px;" title="<?php echo html($title); ?>">
+                                            <?php echo html($title); ?>
+                                        </div>
+                                    </a>
                                 </td>
                                 <td class="<?php echo $lvlClass; ?>"><?php echo html($lvl); ?></td>
                                 <td style="white-space:nowrap;"><?php echo html(formatDate($r['created'])); ?></td>
@@ -264,18 +277,40 @@ ob_start();
 </div>
 
 <script>
-(function () {
+window.addEventListener('load', function () {
     var all = document.getElementById('checkAll');
-    if (!all) return;
-    all.addEventListener('change', function () {
-        document.querySelectorAll('.row-check').forEach(function (cb) {
-            cb.checked = all.checked;
+    if (all) {
+        all.addEventListener('change', function () {
+            document.querySelectorAll('.row-check').forEach(function (cb) {
+                cb.checked = all.checked;
+            });
         });
+    }
+
+    if (!window.bootstrap || !window.bootstrap.Popover) return;
+
+    function b64decode(v) {
+        try { return atob(v || ''); } catch (e) { return ''; }
+    }
+    var els = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    els.forEach(function (el) {
+        var t = b64decode(el.getAttribute('data-pop-title'));
+        var c = b64decode(el.getAttribute('data-pop-body'));
+        var inst = new bootstrap.Popover(el, {
+            container: 'body',
+            title: t,
+            content: c,
+            template: '<div class="popover" role="tooltip"><div class="popover-arrow"></div><h3 class="popover-header"></h3><div class="popover-body" style="white-space:pre-wrap;"></div></div>'
+        });
+
+        el.addEventListener('click', function (e) { e.preventDefault(); });
+        el.addEventListener('mouseenter', function () { try { inst.show(); } catch (e) {} });
+        el.addEventListener('mouseleave', function () { try { inst.hide(); } catch (e) {} });
     });
-})();
+});
 </script>
+
 <?php
 $content = ob_get_clean();
 
 require_once 'layout_admin.php';
-?>
