@@ -21,16 +21,27 @@ if ($_POST) {
         $subject = trim($_POST['subject'] ?? '');
         $body = trim($_POST['body'] ?? '');
         $topic_id = intval($_POST['topic_id'] ?? 0);
-        $dept_id = intval($_POST['dept_id'] ?? 1);
-        
-        // Si se seleccionó un tema y tiene dept_id, usar ese departamento
-        if (isset($hasTopics) && $hasTopics && $topic_id > 0) {
-            foreach ($topics as $topic) {
-                if ($topic['id'] == $topic_id && $topic['dept_id']) {
-                    $dept_id = $topic['dept_id'];
-                    break;
+        $dept_id = intval($_POST['dept_id'] ?? 0);
+
+        // Si se seleccionó un tema, tomar el dept_id directamente desde la BD
+        // (en el formulario el selector de departamento puede estar oculto)
+        if ($topic_id > 0) {
+            $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE id = ? LIMIT 1');
+            if ($stmtTopicDept) {
+                $stmtTopicDept->bind_param('i', $topic_id);
+                if ($stmtTopicDept->execute()) {
+                    $tr = $stmtTopicDept->get_result()->fetch_assoc();
+                    $deptFromTopic = (int) ($tr['dept_id'] ?? 0);
+                    if ($deptFromTopic > 0) {
+                        $dept_id = $deptFromTopic;
+                    }
                 }
             }
+        }
+
+        // Fallback final
+        if ($dept_id <= 0) {
+            $dept_id = 1;
         }
 
         if (empty($subject) || empty($body)) {
