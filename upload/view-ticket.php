@@ -451,7 +451,7 @@ function humanSize($bytes) {
                 <?php endif; ?>
 
                 <?php if (!empty($t['closed'])): ?>
-                    <div class="alert alert-warning mb-0">Este ticket está cerrado.</div>
+                    <div class="alert alert-warning mb-3">Este ticket está cerrado y no admite nuevas respuestas.</div>
                 <?php else: ?>
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">

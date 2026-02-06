@@ -226,7 +226,26 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $msg = '';
             if ($action === 'status' && isset($_GET['status_id']) && is_numeric($_GET['status_id'])) {
                 $sid = (int) $_GET['status_id'];
-                $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
+                
+                // Verificar si es un estado de cerrado
+                $isClosingStatus = false;
+                $stmtSt = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');
+                if ($stmtSt) {
+                    $stmtSt->bind_param('i', $sid);
+                    if ($stmtSt->execute()) {
+                        $stRow = $stmtSt->get_result()->fetch_assoc();
+                        $stName = strtolower(trim((string)($stRow['name'] ?? '')));
+                        if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                            $isClosingStatus = true;
+                        }
+                    }
+                }
+                
+                if ($isClosingStatus) {
+                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
+                } else {
+                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ?");
+                }
                 $stmt->bind_param('ii', $sid, $tid);
                 $ok = $stmt->execute();
                 $msg = 'updated';
@@ -404,7 +423,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     if ($stmt->execute()) {
                         $entry_id = (int) $mysqli->insert_id;
                         // Actualizar estado del ticket
-                        $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
+                        $isClosingStatus = false;
+                        $stmtSt = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');
+                        if ($stmtSt) {
+                            $stmtSt->bind_param('i', $new_status_id);
+                            if ($stmtSt->execute()) {
+                                $stRow = $stmtSt->get_result()->fetch_assoc();
+                                $stName = strtolower(trim((string)($stRow['name'] ?? '')));
+                                if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                                    $isClosingStatus = true;
+                                }
+                            }
+                        }
+
+                        if ($isClosingStatus) {
+                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
+                        } else {
+                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ?");
+                        }
                         $stmtU->bind_param('ii', $new_status_id, $tid);
                         $stmtU->execute();
                         if (!$is_internal && $ticketView['staff_id'] === null) {
@@ -784,7 +820,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 if ($statusId <= 0) {
                     $postErrors[] = 'Seleccione un estado válido.';
                 } else {
-                    $sqlUp = "UPDATE tickets SET status_id = ?, updated = NOW() WHERE id IN ($placeholders)";
+                    $isClosingStatus = false;
+                    $stmtSt = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');
+                    if ($stmtSt) {
+                        $stmtSt->bind_param('i', $statusId);
+                        if ($stmtSt->execute()) {
+                            $stRow = $stmtSt->get_result()->fetch_assoc();
+                            $stName = strtolower(trim((string)($stRow['name'] ?? '')));
+                            if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                                $isClosingStatus = true;
+                            }
+                        }
+                    }
+
+                    if ($isClosingStatus) {
+                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id IN ($placeholders)";
+                    } else {
+                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id IN ($placeholders)";
+                    }
                     $stmt = $mysqli->prepare($sqlUp);
                     $types = 'i' . $typesIds;
                     $params = [&$types, &$statusId];
