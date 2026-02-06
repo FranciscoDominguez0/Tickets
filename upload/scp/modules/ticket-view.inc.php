@@ -39,8 +39,32 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item <?php echo empty($t['staff_id']) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=0">— Sin asignar —</a></li>
                     <?php
-                    $st = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
-                    while ($row = $st->fetch_assoc()): ?>
+                    $tdept = (int) ($t['dept_id'] ?? 0);
+                    $gd = isset($generalDeptId) ? (int) $generalDeptId : 0;
+
+                    // Regla: General NO es comodín. Solo listar agentes del mismo dept_id.
+                    // Ticket General => solo agentes General.
+                    // Ticket de otro dept => solo agentes de ese dept.
+                    if ($tdept > 0) {
+                        if ($gd > 0) {
+                            $st = $mysqli->query(
+                                "SELECT id, firstname, lastname FROM staff "
+                                . "WHERE is_active = 1 "
+                                . "AND COALESCE(NULLIF(dept_id, 0), $gd) = $tdept "
+                                . "ORDER BY firstname, lastname"
+                            );
+                        } else {
+                            $st = $mysqli->query(
+                                "SELECT id, firstname, lastname FROM staff "
+                                . "WHERE is_active = 1 AND dept_id = $tdept "
+                                . "ORDER BY firstname, lastname"
+                            );
+                        }
+                    } else {
+                        $st = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+                    }
+
+                    while ($st && $row = $st->fetch_assoc()): ?>
                         <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)($t['staff_id'] ?? 0) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=<?php echo (int)$row['id']; ?>"><?php echo html(trim($row['firstname'] . ' ' . $row['lastname'])); ?></a></li>
                     <?php endwhile; ?>
                 </ul>

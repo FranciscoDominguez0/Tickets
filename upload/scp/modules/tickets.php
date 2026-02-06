@@ -6,6 +6,13 @@ $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
 
+// Departamento "General" (fallback). Si no existe, se usará 0 y se omite la excepción.
+$generalDeptId = 0;
+$rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
+if ($rgd && ($row = $rgd->fetch_assoc())) {
+    $generalDeptId = (int) ($row['id'] ?? 0);
+}
+
 // Abrir nuevo ticket (tickets.php?a=open&uid=X)
 if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
     $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
@@ -254,10 +261,34 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 if ($staff_id !== null) {
                     $val = $staff_id === 0 ? null : $staff_id;
                     $previousStaffId = $ticketView['staff_id'] ?? null;
-                    $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ?");
-                    $stmt->bind_param('ii', $val, $tid);
-                    $ok = $stmt->execute();
-                    $msg = 'assigned';
+
+                    // Validar que el agente pertenezca al mismo departamento del ticket (o sea General)
+                    $allowed = true;
+                    if ($val !== null) {
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtSd) {
+                            $stmtSd->bind_param('ii', $generalDeptId, $val);
+                            if ($stmtSd->execute()) {
+                                $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                $tdept = (int) ($ticketView['dept_id'] ?? 0);
+
+                                if ($tdept > 0) {
+                                    // Regla: solo se puede asignar a agentes del mismo departamento
+                                    $allowed = ($sdept === $tdept);
+                                }
+                            }
+                        }
+                    }
+
+                    if ($allowed) {
+                        $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ?");
+                        $stmt->bind_param('ii', $val, $tid);
+                        $ok = $stmt->execute();
+                        $msg = 'assigned';
+                    } else {
+                        $ok = false;
+                        $msg = 'assigned';
+                    }
 
                     // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
                     if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
@@ -729,14 +760,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
             if ($_POST['do'] === 'bulk_assign') {
                 $staffId = isset($_POST['bulk_staff_id']) && is_numeric($_POST['bulk_staff_id']) ? (int) $_POST['bulk_staff_id'] : 0;
+                $inAllowed = [];
+
+                // Validación: el agente debe ser del mismo dept que el ticket o General (si existe)
+                $staffDept = 0;
+                if ($staffId !== 0) {
+                    $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                    if ($stmtSd) {
+                        $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                        if ($stmtSd->execute()) {
+                            $staffDept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                        }
+                    }
+                }
 
                 // Capturar datos previos para notificación (solo cuando se asigna a un agente)
                 $ticketsBefore = [];
                 if ($staffId !== 0) {
-                    $sqlSel = "SELECT t.id, t.ticket_number, t.subject, t.staff_id, d.name AS dept_name\n"
-                        . "FROM tickets t\n"
-                        . "LEFT JOIN departments d ON d.id = t.dept_id\n"
-                        . "WHERE t.id IN ($placeholders)";
+                    $sqlSel = "SELECT t.id, t.ticket_number, t.subject, t.staff_id, t.dept_id, d.name AS dept_name FROM tickets t JOIN departments d ON d.id = t.dept_id WHERE t.id IN ($placeholders)";
                     $stmtSel = $mysqli->prepare($sqlSel);
                     if ($stmtSel) {
                         $paramsSel = [&$typesIds];
@@ -759,15 +800,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                     $params = [&$typesIds];
                     foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                     call_user_func_array([$stmt, 'bind_param'], $params);
+                    $okBulk = $stmt->execute();
                 } else {
-                    $sqlUp = "UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id IN ($placeholders)";
-                    $stmt = $mysqli->prepare($sqlUp);
-                    $types = 'i' . $typesIds;
-                    $params = [&$types, &$staffId];
-                    foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
-                    call_user_func_array([$stmt, 'bind_param'], $params);
+                    // Solo actualizar tickets del mismo departamento
+                    foreach ($ticketsBefore as $tid0 => $trow) {
+                        $tdeptId = (int) ($trow['dept_id'] ?? 0);
+
+                        if ($tdeptId > 0) {
+                            if ($staffDept === $tdeptId) {
+                                $inAllowed[] = (int) $tid0;
+                            }
+                        } else {
+                            // Si el ticket no tiene dept_id válido, permitir (fallback)
+                            $inAllowed[] = (int) $tid0;
+                        }
+                    }
+
+                    if (empty($inAllowed)) {
+                        $okBulk = false;
+                    } else {
+                        $placeAllowed = implode(',', array_fill(0, count($inAllowed), '?'));
+                        $typesAllowed = str_repeat('i', count($inAllowed));
+
+                        $sqlUp = "UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id IN ($placeAllowed)";
+                        $stmt = $mysqli->prepare($sqlUp);
+                        $types = 'i' . $typesAllowed;
+                        $params = [&$types, &$staffId];
+                        foreach ($inAllowed as $k => $v) { $params[] = &$inAllowed[$k]; }
+                        call_user_func_array([$stmt, 'bind_param'], $params);
+                        $okBulk = $stmt->execute();
+                    }
                 }
-                if ($stmt->execute()) {
+
+                if (!empty($inAllowed) && count($inAllowed) !== count($ticketIds) && $staffId !== 0) {
+                    $postErrors[] = 'Algunos tickets no se asignaron porque el agente no pertenece al departamento.';
+                }
+
+                if ($okBulk) {
                     // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
                     if ($staffId !== 0 && !empty($ticketsBefore)) {
                         $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
@@ -913,11 +982,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
 // Datos para toolbars
 $staffOptions = [];
-$r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname";
+$r = $mysqli->query($staffSql);
 if ($r) while ($row = $r->fetch_assoc()) $staffOptions[] = $row;
 $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
 if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
+
+// Si estamos viendo un ticket en particular, filtrar agentes por dept del ticket (o General)
+if (!empty($ticketView)) {
+    $tdept = (int) ($ticketView['dept_id'] ?? 0);
+    if ($tdept > 0) {
+        $staffOptions = array_values(array_filter($staffOptions, function ($s) use ($tdept, $generalDeptId) {
+            $sd = (int) ($s['dept_id'] ?? 0);
+            if ($sd === $tdept) return true;
+            return false;
+        }));
+    }
+}
 ?>
 
 <div class="tickets-shell">
