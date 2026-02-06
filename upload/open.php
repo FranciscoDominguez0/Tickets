@@ -20,8 +20,18 @@ if ($_POST) {
     } else {
         $subject = trim($_POST['subject'] ?? '');
         $body = trim($_POST['body'] ?? '');
-        $priority_id = intval($_POST['priority_id'] ?? 2);
+        $topic_id = intval($_POST['topic_id'] ?? 0);
         $dept_id = intval($_POST['dept_id'] ?? 1);
+        
+        // Si se seleccionó un tema y tiene dept_id, usar ese departamento
+        if (isset($hasTopics) && $hasTopics && $topic_id > 0) {
+            foreach ($topics as $topic) {
+                if ($topic['id'] == $topic_id && $topic['dept_id']) {
+                    $dept_id = $topic['dept_id'];
+                    break;
+                }
+            }
+        }
 
         if (empty($subject) || empty($body)) {
             $error = 'Asunto y descripción son requeridos';
@@ -29,13 +39,30 @@ if ($_POST) {
             // Generar número de ticket
             $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
+            // Verificar si existe la estructura de temas
+            $hasTopicCol = false;
+            $hasTopicsTable = false;
+            $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+            if ($c && $c->num_rows > 0) $hasTopicCol = true;
+            $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+            if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+            
             // Insertar ticket
-            error_log('[tickets] INSERT tickets via upload/open.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' user_id=' . (string)($_SESSION['user_id'] ?? '') . ' dept_id=' . (string)$dept_id);
-            $stmt = $mysqli->prepare(
-                'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, priority_id, subject, created)
-                 VALUES (?, ?, ?, 1, ?, ?, NOW())'
-            );
-            $stmt->bind_param('siiis', $ticket_number, $_SESSION['user_id'], $dept_id, $priority_id, $subject);
+            error_log('[tickets] INSERT tickets via upload/open.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' user_id=' . (string)($_SESSION['user_id'] ?? '') . ' dept_id=' . (string)$dept_id . ' topic_id=' . (string)$topic_id);
+            
+            if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
+                $stmt = $mysqli->prepare(
+                    'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, subject, created)
+                     VALUES (?, ?, ?, ?, 1, ?, NOW())'
+                );
+                $stmt->bind_param('siiis', $ticket_number, $_SESSION['user_id'], $dept_id, $topic_id, $subject);
+            } else {
+                $stmt = $mysqli->prepare(
+                    'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, subject, created)
+                     VALUES (?, ?, ?, 1, ?, NOW())'
+                );
+                $stmt->bind_param('siis', $ticket_number, $_SESSION['user_id'], $dept_id, $subject);
+            }
             
             if ($stmt->execute()) {
                 $ticket_id = $mysqli->insert_id;
@@ -146,11 +173,6 @@ if ($_POST) {
                     }
                 }
                 $success = 'Ticket creado exitosamente! Número: ' . $ticket_number;
-                if ($mailSent > 0) {
-                    $success .= ' Se envió notificación por correo.';
-                } elseif ($mailError !== '') {
-                    $success .= ' <strong>No se pudo enviar el correo:</strong> ' . htmlspecialchars($mailError);
-                }
                 echo '<script>
                     setTimeout(function() {
                         window.location.href = "tickets.php";
@@ -163,17 +185,26 @@ if ($_POST) {
     }
 }
 
-// Obtener departamentos y prioridades
+// Obtener departamentos y temas
 $departments = [];
 $stmt = $mysqli->query('SELECT id, name FROM departments WHERE is_active = 1');
 while ($row = $stmt->fetch_assoc()) {
     $departments[] = $row;
 }
 
-$priorities = [];
-$stmt = $mysqli->query('SELECT id, name, level FROM priorities ORDER BY level ASC');
-while ($row = $stmt->fetch_assoc()) {
-    $priorities[] = $row;
+// Verificar si hay temas disponibles
+$topics = [];
+$hasTopics = false;
+$checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+if ($checkTopics && $checkTopics->num_rows > 0) {
+    $checkCol = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+    if ($checkCol && $checkCol->num_rows > 0) {
+        $hasTopics = true;
+        $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id FROM help_topics ht WHERE ht.is_active = 1 ORDER BY ht.name');
+        while ($row = $stmt->fetch_assoc()) {
+            $topics[] = $row;
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -294,6 +325,17 @@ while ($row = $stmt->fetch_assoc()) {
                     <input type="text" class="form-control" id="subject" name="subject" required>
                 </div>
 
+                <?php if ($hasTopics): ?>
+                <div class="mb-3">
+                    <label for="topic_id" class="form-label">Tema</label>
+                    <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()">
+                        <option value="">Seleccionar tema...</option>
+                        <?php foreach ($topics as $topic): ?>
+                            <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>"><?php echo html($topic['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php else: ?>
                 <div class="mb-3">
                     <label for="dept_id" class="form-label">Departamento</label>
                     <select class="form-select" id="dept_id" name="dept_id" required>
@@ -302,15 +344,7 @@ while ($row = $stmt->fetch_assoc()) {
                         <?php endforeach; ?>
                     </select>
                 </div>
-
-                <div class="mb-3">
-                    <label for="priority_id" class="form-label">Prioridad</label>
-                    <select class="form-select" id="priority_id" name="priority_id" required>
-                        <?php foreach ($priorities as $priority): ?>
-                            <option value="<?php echo $priority['id']; ?>"><?php echo html($priority['name']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <?php endif; ?>
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
@@ -332,6 +366,23 @@ while ($row = $stmt->fetch_assoc()) {
     </div>
 
     <script>
+        function updateDepartmentFromTopic() {
+            var topicSelect = document.getElementById('topic_id');
+            var deptSelect = document.getElementById('dept_id');
+            if (!topicSelect || !deptSelect) return;
+            
+            var selectedOption = topicSelect.options[topicSelect.selectedIndex];
+            if (selectedOption && selectedOption.getAttribute('data-dept')) {
+                var deptId = selectedOption.getAttribute('data-dept');
+                for (var i = 0; i < deptSelect.options.length; i++) {
+                    if (deptSelect.options[i].value == deptId) {
+                        deptSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+        
         (function () {
             var input = document.getElementById('attachments');
             var list = document.getElementById('attach-list');

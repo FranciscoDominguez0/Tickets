@@ -214,6 +214,102 @@ $deptStats = [];
 while ($row = $statsResult->fetch_assoc()) {
     $deptStats[] = $row;
 }
+
+$topicStats = [];
+$topicStatsAvailable = false;
+$agentStats = [];
+
+$topicsTable = null;
+$topicsKeyColumn = null;
+$topicsNameColumn = null;
+$topicsIdColumn = null;
+
+$t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+if ($t && $t->num_rows > 0) {
+    $topicsTable = 'help_topics';
+    $topicsIdColumn = 'id';
+    $topicsNameColumn = 'name';
+}
+if (!$topicsTable) {
+    $t = $mysqli->query("SHOW TABLES LIKE 'helptopics'");
+    if ($t && $t->num_rows > 0) {
+        $topicsTable = 'helptopics';
+        $topicsIdColumn = 'id';
+        $topicsNameColumn = 'name';
+    }
+}
+if ($topicsTable) {
+    $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+    if ($c && $c->num_rows > 0) {
+        $topicsKeyColumn = 'topic_id';
+    }
+    if (!$topicsKeyColumn) {
+        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'help_topic_id'");
+        if ($c && $c->num_rows > 0) {
+            $topicsKeyColumn = 'help_topic_id';
+        }
+    }
+    if (!$topicsKeyColumn) {
+        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'helptopic_id'");
+        if ($c && $c->num_rows > 0) {
+            $topicsKeyColumn = 'helptopic_id';
+        }
+    }
+}
+
+if ($topicsTable && $topicsKeyColumn) {
+    $topicStatsAvailable = true;
+    $sqlTopics = "SELECT 
+      ht.$topicsNameColumn AS tema,
+      COUNT(t.id) AS total_tickets,
+      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+      SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
+      SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+      0 AS reabierto,
+      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+      AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
+      AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+    FROM $topicsTable ht
+    LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.created BETWEEN ? AND ?
+    GROUP BY ht.$topicsIdColumn, ht.$topicsNameColumn
+    HAVING total_tickets > 0
+    ORDER BY ht.$topicsNameColumn";
+    $stmt = $mysqli->prepare($sqlTopics);
+    $stmt->bind_param('ss', $start, $end);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $topicStats[] = $row;
+    }
+}
+
+$sqlAgents = "SELECT
+  s.id,
+  CONCAT(TRIM(s.firstname), ' ', TRIM(s.lastname)) AS agente,
+  COUNT(t.id) AS total_tickets,
+  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+  SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
+  SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+  0 AS reabierto,
+  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+  AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
+  AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+FROM staff s
+LEFT JOIN tickets t ON t.staff_id = s.id AND t.created BETWEEN ? AND ?
+WHERE s.is_active = 1
+GROUP BY s.id, s.firstname, s.lastname
+HAVING total_tickets > 0
+ORDER BY s.firstname, s.lastname";
+
+$stmt = $mysqli->prepare($sqlAgents);
+$stmt->bind_param('ss', $start, $end);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $agentStats[] = $row;
+}
 ?>
 
 <!-- Formulario de selección de período -->
@@ -337,15 +433,101 @@ while ($row = $statsResult->fetch_assoc()) {
 
     <!-- Tab Temas -->
     <div class="tab-pane fade" id="topics" role="tabpanel">
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> La funcionalidad de Temas estará disponible próximamente.
-        </div>
+        <?php if (!$topicStatsAvailable): ?>
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> No se encontró una estructura de Temas en la base de datos (tabla/columna). Si deseas esta pestaña, hay que agregar una tabla de temas (ej. help_topics) y una columna en tickets (ej. topic_id).
+            </div>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="30%" class="text-start">Tema</th>
+                            <th>Abierto</th>
+                            <th>Asignado</th>
+                            <th>Atrasado</th>
+                            <th>Cerrado</th>
+                            <th>Reabierto</th>
+                            <th>Borrado</th>
+                            <th>Tiempo de Servicio</th>
+                            <th>Tiempo de Respuesta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($topicStats)): ?>
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No hay datos para el período seleccionado</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($topicStats as $stat): ?>
+                                <tr>
+                                    <th class="text-start"><?php echo html($stat['tema']); ?></th>
+                                    <td><?php echo (int)$stat['abierto']; ?></td>
+                                    <td><?php echo (int)$stat['asignado']; ?></td>
+                                    <td><?php echo (int)$stat['atrasado']; ?></td>
+                                    <td><?php echo (int)$stat['cerrado']; ?></td>
+                                    <td><?php echo (int)$stat['reabierto']; ?></td>
+                                    <td><?php echo (int)$stat['borrado']; ?></td>
+                                    <td><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></td>
+                                    <td><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-link p-0" data-action="dashboard-export" data-export-type="topics">
+                    <i class="bi bi-download"></i> Exportar
+                </button>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Tab Agente -->
     <div class="tab-pane fade" id="agent" role="tabpanel">
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> La funcionalidad de Agente estará disponible próximamente.
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th width="30%" class="text-start">Agente</th>
+                        <th>Abierto</th>
+                        <th>Asignado</th>
+                        <th>Atrasado</th>
+                        <th>Cerrado</th>
+                        <th>Reabierto</th>
+                        <th>Borrado</th>
+                        <th>Tiempo de Servicio</th>
+                        <th>Tiempo de Respuesta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($agentStats)): ?>
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">No hay datos para el período seleccionado</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($agentStats as $stat): ?>
+                            <tr>
+                                <th class="text-start"><?php echo html($stat['agente']); ?></th>
+                                <td><?php echo (int)$stat['abierto']; ?></td>
+                                <td><?php echo (int)$stat['asignado']; ?></td>
+                                <td><?php echo (int)$stat['atrasado']; ?></td>
+                                <td><?php echo (int)$stat['cerrado']; ?></td>
+                                <td><?php echo (int)$stat['reabierto']; ?></td>
+                                <td><?php echo (int)$stat['borrado']; ?></td>
+                                <td><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></td>
+                                <td><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-3">
+            <button type="button" class="btn btn-link p-0" data-action="dashboard-export" data-export-type="agent">
+                <i class="bi bi-download"></i> Exportar
+            </button>
         </div>
     </div>
 </div>

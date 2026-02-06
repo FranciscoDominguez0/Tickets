@@ -119,71 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                     }
                 }
 
-                // Notificar por correo a agentes (asignado -> depto -> todos)
-                $agents = [];
-                $assignedId = (int) ($t['staff_id'] ?? 0);
-                if ($assignedId > 0) {
-                    $stmtAg = $mysqli->prepare('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND id = ? AND TRIM(COALESCE(email, "")) != "" LIMIT 1');
-                    $stmtAg->bind_param('i', $assignedId);
-                    $stmtAg->execute();
-                    if ($r = $stmtAg->get_result()->fetch_assoc()) {
-                        $agents[] = $r;
-                    }
-                }
-                if (empty($agents)) {
-                    $deptName = (string) ($t['dept_name'] ?? 'Soporte');
-                    $stmtDeptId = $mysqli->prepare('SELECT dept_id FROM tickets WHERE id = ?');
-                    $stmtDeptId->bind_param('i', $tid);
-                    $stmtDeptId->execute();
-                    $deptRow = $stmtDeptId->get_result()->fetch_assoc();
-                    $dept_id = (int) ($deptRow['dept_id'] ?? 0);
-                    if ($dept_id > 0) {
-                        $stmtAg = $mysqli->prepare('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND dept_id = ? AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
-                        $stmtAg->bind_param('i', $dept_id);
-                        $stmtAg->execute();
-                        $resAg = $stmtAg->get_result();
-                        while ($row = $resAg->fetch_assoc()) {
-                            $agents[] = $row;
-                        }
-                    }
-                }
-                if (empty($agents)) {
-                    $resAll = $mysqli->query('SELECT id, email, firstname, lastname FROM staff WHERE is_active = 1 AND TRIM(COALESCE(email, "")) != "" ORDER BY id');
-                    if ($resAll) {
-                        while ($row = $resAll->fetch_assoc()) {
-                            $agents[] = $row;
-                        }
-                    }
-                }
-
-                if (!empty($agents)) {
-                    $ticketNo = (string) ($t['ticket_number'] ?? ('#' . $tid));
-                    $subject = '[Respuesta del usuario] ' . $ticketNo . ' - ' . (string) ($t['subject'] ?? 'Ticket');
-                    $clientName = trim((string)($user['name'] ?? 'Cliente'));
-                    $clientEmail = (string)($user['email'] ?? '');
-                    $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int) $tid;
-                    $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
-                        . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Nueva respuesta del usuario</h2>'
-                        . '<p style="color:#64748b; margin: 0 0 12px;">Ticket: <strong>' . html($ticketNo) . '</strong></p>'
-                        . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
-                        . '<tr><td style="padding:6px 0; border-bottom:1px solid #eee;"><strong>Cliente:</strong></td><td style="padding:6px 0; border-bottom:1px solid #eee;">' . html($clientName) . ' &lt;' . html($clientEmail) . '&gt;</td></tr>'
-                        . '<tr><td style="padding:6px 0; border-bottom:1px solid #eee;"><strong>Departamento:</strong></td><td style="padding:6px 0; border-bottom:1px solid #eee;">' . html((string)($t['dept_name'] ?? '')) . '</td></tr>'
-                        . '<tr><td style="padding:6px 0;"><strong>Mensaje:</strong></td><td style="padding:6px 0;"></td></tr>'
-                        . '</table>'
-                        . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px;">' . nl2br(html($body)) . '</div>'
-                        . '<p style="margin: 14px 0 0;"><a href="' . html($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
-                        . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . html(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
-                        . '</div>';
-                    $bodyText = "Nueva respuesta del usuario\nTicket: $ticketNo\nCliente: $clientName <$clientEmail>\n\n$body\n\nVer: $viewUrl";
-
-                    $sent = [];
-                    foreach ($agents as $ag) {
-                        $to = trim((string)($ag['email'] ?? ''));
-                        if ($to === '' || isset($sent[$to])) continue;
-                        $sent[$to] = true;
-                        Mailer::send($to, $subject, $bodyHtml, $bodyText);
-                    }
-                }
+                // No enviar notificaciones por correo cuando el usuario responde
+                // El sistema ya registra la respuesta sin necesidad de enviar correos
 
                 header('Location: view-ticket.php?id=' . (int) $tid);
                 exit;
