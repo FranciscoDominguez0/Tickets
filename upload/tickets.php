@@ -73,6 +73,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         body {
             background: #f1f5f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 56px;
         }
         .container-main {
             max-width: 1200px;
@@ -141,7 +142,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-dark bg-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
         <div class="container-fluid">
             <span class="navbar-brand"><?php echo APP_NAME; ?></span>
             <div>

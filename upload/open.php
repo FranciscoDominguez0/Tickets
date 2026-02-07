@@ -22,6 +22,8 @@ if ($_POST) {
         $body = trim($_POST['body'] ?? '');
         $topic_id = intval($_POST['topic_id'] ?? 0);
         $dept_id = intval($_POST['dept_id'] ?? 0);
+        $hasFiles = !empty($_FILES['attachments']['name'][0]);
+        $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
         // Si se seleccionó un tema, tomar el dept_id directamente desde la BD
         // (en el formulario el selector de departamento puede estar oculto)
@@ -46,6 +48,8 @@ if ($_POST) {
 
         if (empty($subject) || empty($body)) {
             $error = 'Asunto y descripción son requeridos';
+        } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
+            $error = 'Debes escribir una descripción para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
         } elseif (stripos($body, 'data:image/') !== false) {
             $error = 'Las imágenes pegadas dentro del texto no están soportadas. Adjunta la imagen usando la opción de archivos.';
         } elseif (strlen($body) > 500000) {
@@ -235,6 +239,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         body {
             background: #f1f5f9;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 56px;
         }
         .container-main {
             max-width: 1000px;
@@ -298,7 +303,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark">
+    <nav class="navbar navbar-dark bg-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
         <div class="container-fluid">
             <span class="navbar-brand"><?php echo APP_NAME; ?></span>
             <div>
@@ -433,6 +438,65 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
             input.addEventListener('change', updateList);
         })();
+
+        (function () {
+            var overlay = document.getElementById('creativePop');
+            var msgEl = document.getElementById('creativePopMsg');
+            var titleEl = document.getElementById('creativePopTitle');
+            window.__showCreativePop = function (msg, title) {
+                if (!overlay || !msgEl) return;
+                msgEl.textContent = msg || '';
+                if (titleEl) titleEl.textContent = title || 'Atención';
+                overlay.style.display = 'flex';
+                overlay.setAttribute('aria-hidden', 'false');
+            };
+            window.__hideCreativePop = function () {
+                if (!overlay) return;
+                overlay.style.display = 'none';
+                overlay.setAttribute('aria-hidden', 'true');
+            };
+            overlay && overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) window.__hideCreativePop();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') window.__hideCreativePop();
+            });
+
+            var form = document.querySelector('form[enctype="multipart/form-data"]');
+            if (!form) return;
+            var fileInput = document.getElementById('attachments');
+            var editor = document.getElementById('body');
+
+            var getPlainTextFromHtml = function (html) {
+                var tmp = document.createElement('div');
+                tmp.innerHTML = html || '';
+                return (tmp.textContent || tmp.innerText || '').replace(/\u00A0/g, ' ').trim();
+            };
+
+            form.addEventListener('submit', function (ev) {
+                try {
+                    var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+                    if (!hasFiles) return;
+
+                    var html = '';
+                    try {
+                        if (typeof jQuery !== 'undefined' && jQuery(editor).summernote) {
+                            html = jQuery(editor).summernote('code') || '';
+                            if (jQuery(editor).summernote('isEmpty')) html = '';
+                        }
+                    } catch (e) {}
+                    if (!html) html = (editor && editor.value) ? editor.value : '';
+
+                    var plain = getPlainTextFromHtml(html);
+                    var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
+                    if (!hasMedia && plain === '') {
+                        ev.preventDefault();
+                        window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
+                        return false;
+                    }
+                } catch (e2) {}
+            }, true);
+        })();
     </script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -452,7 +516,54 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     ['view', ['codeview']]
                 ]
             });
+
+            // Popup preventivo: adjuntos sin descripción
+            var form = document.querySelector('form[enctype="multipart/form-data"]');
+            var fileInput = document.getElementById('attachments');
+            form && form.addEventListener('submit', function (ev) {
+                try {
+                    var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
+                    if (!hasFiles) return;
+                    var isEmpty = false;
+                    try { isEmpty = jQuery('#body').summernote('isEmpty'); } catch (e) {}
+                    if (isEmpty) {
+                        ev.preventDefault();
+                        window.__showCreativePop && window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
+                        return false;
+                    }
+                } catch (e2) {}
+            });
         });
     </script>
+
+    <style>
+        .creative-pop-overlay{position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding:18px; z-index:2000;}
+        .creative-pop{max-width:520px; width:100%; background:linear-gradient(180deg,#ffffff,#f8fafc); border:1px solid #e2e8f0; border-radius:18px; box-shadow:0 24px 80px rgba(0,0,0,.25); overflow:hidden;}
+        .creative-pop-head{display:flex; align-items:center; gap:12px; padding:16px 18px; background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#fff;}
+        .creative-pop-icon{width:38px; height:38px; border-radius:12px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+        .creative-pop-title{font-weight:900; margin:0; font-size:14px; letter-spacing:.02em;}
+        .creative-pop-body{padding:16px 18px; color:#0f172a; font-weight:600; line-height:1.35;}
+        .creative-pop-actions{display:flex; gap:10px; justify-content:flex-end; padding:0 18px 16px;}
+        .creative-pop-btn{border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer;}
+        .creative-pop-btn.primary{background:#2563eb; color:#fff;}
+        .creative-pop-btn.ghost{background:#e2e8f0; color:#0f172a;}
+    </style>
+    <div class="creative-pop-overlay" id="creativePop" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="creative-pop">
+            <div class="creative-pop-head">
+                <div class="creative-pop-icon"><i class="bi bi-info-circle"></i></div>
+                <div>
+                    <div class="creative-pop-title" id="creativePopTitle">Atención</div>
+                    <div style="opacity:.9; font-weight:700; font-size:12px;">Antes de enviar</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Cerrar" onclick="window.__hideCreativePop && window.__hideCreativePop()"></button>
+            </div>
+            <div class="creative-pop-body" id="creativePopMsg"></div>
+            <div class="creative-pop-actions">
+                <button type="button" class="creative-pop-btn ghost" onclick="window.__hideCreativePop && window.__hideCreativePop()">Entendido</button>
+                <button type="button" class="creative-pop-btn primary" onclick="window.__hideCreativePop && window.__hideCreativePop()">Escribir</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
