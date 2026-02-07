@@ -165,8 +165,8 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                                 </div>
                             </div>
                             <div class="mb-0">
-                                <label class="form-label">Organización</label>
-                                <input type="text" name="company" class="form-control" value="<?php echo html((string)($viewUser['company'] ?? '')); ?>">
+                                <label class="form-label">Teléfono</label>
+                                <input type="text" name="phone" class="form-control" value="<?php echo html((string)($viewUser['phone'] ?? '')); ?>">
                             </div>
                         </div>
                         <div class="modal-footer border-top">

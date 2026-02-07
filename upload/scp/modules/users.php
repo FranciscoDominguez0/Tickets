@@ -2,6 +2,12 @@
 // Módulo: Directorio de usuarios (end users / clientes)
 // Lista con búsqueda, ordenación, selección y paginación
 
+$usersHasPhone = false;
+$chkPhone = $mysqli->query("SHOW COLUMNS FROM users LIKE 'phone'");
+if ($chkPhone && $chkPhone->num_rows > 0) {
+    $usersHasPhone = true;
+}
+
 // Añadir usuario (registro directo, sin confirmación por correo)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {
     $add_errors = [];
@@ -112,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $email = trim($_POST['email'] ?? '');
         $firstname = trim($_POST['firstname'] ?? '');
         $lastname = trim($_POST['lastname'] ?? '');
-        $company = trim($_POST['company'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
 
         $edit_errors = [];
         if ($email === '') {
@@ -136,13 +142,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
 
         if (empty($edit_errors)) {
-            $companyVal = $company !== '' ? $company : null;
-            $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, company = ?, updated = NOW() WHERE id = ?');
-            if ($stmtU) {
-                $stmtU->bind_param('ssssi', $email, $firstname, $lastname, $companyVal, $user_id);
-                if ($stmtU->execute()) {
-                    header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
-                    exit;
+            if ($usersHasPhone) {
+                $phoneVal = $phone !== '' ? $phone : null;
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, phone = ?, updated = NOW() WHERE id = ?');
+                if ($stmtU) {
+                    $stmtU->bind_param('ssssi', $email, $firstname, $lastname, $phoneVal, $user_id);
+                    if ($stmtU->execute()) {
+                        header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
+                        exit;
+                    }
+                }
+            } else {
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, updated = NOW() WHERE id = ?');
+                if ($stmtU) {
+                    $stmtU->bind_param('sssi', $email, $firstname, $lastname, $user_id);
+                    if ($stmtU->execute()) {
+                        header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
+                        exit;
+                    }
                 }
             }
             $edit_errors[] = 'Error al actualizar el usuario.';
@@ -168,7 +185,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])
 $viewUser = null;
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $uid = (int) $_GET['id'];
-    $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, company, status, created, updated FROM users WHERE id = ?");
+    if ($usersHasPhone) {
+        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ?");
+    } else {
+        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, company, status, created, updated FROM users WHERE id = ?");
+    }
     $stmt->bind_param('i', $uid);
     $stmt->execute();
     $res = $stmt->get_result();
