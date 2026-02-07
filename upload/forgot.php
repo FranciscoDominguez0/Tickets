@@ -63,14 +63,47 @@ if ($_POST) {
                     $name = trim(($u['firstname'] ?? '') . ' ' . ($u['lastname'] ?? ''));
                     if ($name === '') $name = $u['email'];
 
-                    $subject = 'Recuperar contraseña - ' . APP_NAME;
-                    $bodyHtml = '<p>Hola ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ',</p>'
-                        . '<p>Recibimos una solicitud para restablecer tu contraseña.</p>'
-                        . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">Restablecer contraseña</a></p>'
-                        . '<p>Este enlace vence en 1 hora.</p>'
-                        . '<p>Si no solicitaste este cambio, puedes ignorar este correo.</p>';
+                    $subject = 'Restablecer contraseña - ' . APP_NAME;
+                    $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                    $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
 
-                    Mailer::send($u['email'], $subject, $bodyHtml);
+                    $bodyHtml = ''
+                        . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">
+                            <div style="max-width:640px; margin:0 auto;">
+                                <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">
+                                    <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>
+                                    <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>
+                                </div>
+                                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">
+                                    <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>
+                                    <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>
+                                    <p style="margin:14px 0 12px 0;">
+                                        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>
+                                    </p>
+                                    <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">
+                                        Este enlace vence en <strong>1 hora</strong> por seguridad.
+                                    </div>
+                                    <div style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">
+                                        Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña no se modificará.
+                                    </div>
+                                    <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">
+                                    <div style="color:#94a3b8; font-size:11px; line-height:1.5;">
+                                        Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                                        <span style="word-break:break-all;">' . $safeUrl . '</span>
+                                    </div>
+                                </div>
+                                <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:10px;">
+                                    © ' . date('Y') . ' ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '
+                                </div>
+                            </div>
+                        </div>';
+
+                    $bodyText = "Hola $name,\n\n" .
+                        "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n" .
+                        "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
+                        "Si no solicitaste este cambio, puedes ignorar este correo.";
+
+                    Mailer::send($u['email'], $subject, $bodyHtml, $bodyText);
                 }
             }
 
