@@ -324,7 +324,7 @@ ob_start();
                                                     <?php endif; ?>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
-                                                        <a class="dropdown-item text-danger" href="#" onclick="massAction('delete', [<?php echo $topic['id']; ?>])">
+                                                        <a class="dropdown-item text-danger js-delete-topic" href="javascript:void(0)" data-id="<?php echo $topic['id']; ?>" data-name="<?php echo htmlspecialchars($topic['name']); ?>">
                                                             <i class="bi bi-trash"></i> Eliminar
                                                         </a>
                                                     </li>
@@ -349,8 +349,7 @@ ob_start();
                                     <button type="submit" name="a" value="disable" class="btn btn-warning btn-sm">
                                         <i class="bi bi-pause-circle"></i> Deshabilitar
                                     </button>
-                                    <button type="submit" name="a" value="delete" class="btn btn-danger btn-sm" 
-                                            onclick="return confirm('¿Está seguro de eliminar los temas seleccionados? Esta acción no se puede deshacer.')">
+                                    <button type="button" id="openDeleteTopicsModalBtn" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteTopicsModal">
                                         <i class="bi bi-trash"></i> Eliminar
                                     </button>
                                 </div>
@@ -534,6 +533,28 @@ ob_start();
 
 <script>window.HELP_TOPICS_AUTO_OPEN_EDIT_MODAL = true;</script>
 <?php endif; ?>
+
+<div class="modal fade" id="deleteTopicsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTopicsModalTitle">
+                    <i class="bi bi-exclamation-triangle text-danger"></i> Confirmar eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="deleteTopicsModalBody">
+                <p class="mb-0">¿Está seguro de que desea eliminar los temas seleccionados?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteTopicsBtn">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="js/helptopics_page.js?v=<?php echo (int)@filemtime(__DIR__ . '/js/helptopics_page.js'); ?>"></script>
 

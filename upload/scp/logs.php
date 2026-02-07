@@ -187,7 +187,7 @@ ob_start();
 <div class="card settings-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong><i class="bi bi-list-ul"></i> Registros</strong>
-        <button type="submit" form="massDeleteForm" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar las entradas seleccionadas?');">
+        <button type="button" id="openDeleteLogsModalBtn" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteLogsModal">
             <i class="bi bi-trash"></i> Eliminar seleccionados
         </button>
     </div>
@@ -294,6 +294,64 @@ ob_start();
         </nav>
     </div>
 </div>
+
+<div class="modal fade" id="deleteLogsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteLogsModalTitle">
+                    <i class="bi bi-exclamation-triangle text-danger"></i> Confirmar eliminación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="deleteLogsModalBody">
+                <p class="mb-0">¿Está seguro de que desea eliminar los registros seleccionados?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteLogsBtn">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    function getSelectedCount(){
+        return document.querySelectorAll('.row-check:checked').length;
+    }
+    var openBtn = document.getElementById('openDeleteLogsModalBtn');
+    var modalEl = document.getElementById('deleteLogsModal');
+    var bodyEl = document.getElementById('deleteLogsModalBody');
+    var confirmBtn = document.getElementById('confirmDeleteLogsBtn');
+    if (!openBtn || !modalEl) return;
+
+    openBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        var n = getSelectedCount();
+        if (bodyEl) {
+            if (n <= 0) {
+                bodyEl.innerHTML = '<div class="alert alert-warning mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Debe seleccionar al menos un log.</div>';
+            } else {
+                bodyEl.innerHTML = '<p class="mb-0">¿Está seguro de que desea eliminar <strong>' + n + '</strong> log(s) seleccionado(s)? Esta acción no se puede deshacer.</p>';
+            }
+        }
+        if (confirmBtn) confirmBtn.style.display = n > 0 ? '' : 'none';
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            try {
+                if (typeof window.bootstrap.Modal.getOrCreateInstance === 'function') {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                } else {
+                    new window.bootstrap.Modal(modalEl).show();
+                }
+            } catch (err) {}
+        }
+    });
+})();
+</script>
 
 <?php
 $content = ob_get_clean();
