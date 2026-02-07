@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'ID de tema inválido';
             } else {
                 global $mysqli;
-                $sql = "UPDATE help_topics SET name = ?, description = ?, dept_id = ?, is_active = ?, updated = NOW() WHERE id = ?";
+                $sql = "UPDATE help_topics SET name = ?, description = ?, dept_id = ?, is_active = ? WHERE id = ?";
                 $stmt = $mysqli->prepare($sql);
                 $stmt->bind_param('ssiii', $name, $description, $deptId, $isActive, $topicId);
                 if ($stmt->execute()) {
@@ -234,15 +234,13 @@ ob_start();
 <!-- Sección principal -->
 <div class="row">
     <!-- Lista de temas -->
-    <div class="<?php echo $editingTopic ? 'col-lg-8' : 'col-12'; ?>">
+    <div class="col-12">
         <div class="card settings-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-list-ul"></i> Lista de Temas de Ayuda</strong>
-                <?php if (!$editingTopic): ?>
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#topicModal">
                     <i class="bi bi-plus-circle"></i> Nuevo Tema
                 </button>
-                <?php endif; ?>
             </div>
             <div class="card-body p-0">
                 <?php if (count($topics) > 0): ?>
@@ -381,66 +379,7 @@ ob_start();
         </div>
     </div>
     
-    <!-- Formulario de edición -->
-    <?php if ($editingTopic): ?>
-    <div class="col-lg-4">
-        <div class="card settings-card">
-            <div class="card-header">
-                <strong><i class="bi bi-pencil"></i> Editar Tema de Ayuda</strong>
-            </div>
-            <div class="card-body">
-                <form method="post" action="helptopics.php">
-                    <input type="hidden" name="do" value="update">
-                    <input type="hidden" name="topic_id" value="<?php echo $editingTopic['id']; ?>">
-                    <?php csrfField(); ?>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Nombre del Tema <span class="text-danger">*</span></label>
-                        <input type="text" name="topic" class="form-control" required
-                               value="<?php echo html($editingTopic['name']); ?>">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="description" class="form-control" rows="3"><?php echo html($editingTopic['description']); ?></textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Departamento</label>
-                        <select name="dept_id" class="form-select">
-                            <option value="">Seleccionar departamento</option>
-                            <?php foreach ($departments as $dept): ?>
-                            <option value="<?php echo $dept['id']; ?>" 
-                                    <?php echo ($editingTopic['dept_id'] == $dept['id']) ? 'selected' : ''; ?>>
-                                <?php echo html($dept['name']); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="isactive" id="isactive" 
-                                   <?php echo $editingTopic['is_active'] ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="isactive">
-                                Tema Activo
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle"></i> Actualizar Tema
-                        </button>
-                        <a href="helptopics.php" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Cancelar
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php endif; ?>
+    <!-- Reemplazado: el formulario de edición inline ahora es un modal que se abre si ?id=... -->
 </div>
 
 <!-- Modal para crear nuevo tema -->
@@ -522,6 +461,96 @@ ob_start();
         </div>
     </div>
 </div>
+
+<?php if ($editingTopic): ?>
+<!-- Modal para editar tema (se abre si ?id=...) -->
+<div class="modal fade" id="editTopicModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="helptopics.php">
+                <input type="hidden" name="do" value="update">
+                <input type="hidden" name="id" value="<?php echo (int)$editingTopic['id']; ?>">
+                <?php csrfField(); ?>
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil"></i> Editar Tema de Ayuda
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del Tema <span class="text-danger">*</span></label>
+                                <input type="text" name="topic" class="form-control" required
+                                       value="<?php echo html($editingTopic['name']); ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Departamento</label>
+                                <select name="dept_id" class="form-select">
+                                    <option value="">Seleccionar departamento</option>
+                                    <?php foreach ($departments as $dept): ?>
+                                    <option value="<?php echo $dept['id']; ?>" <?php echo ($editingTopic['dept_id'] == $dept['id']) ? 'selected' : ''; ?>>
+                                        <?php echo html($dept['name']); ?>
+                                    </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="description" class="form-control" rows="3"><?php echo html($editingTopic['description']); ?></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" name="isactive" id="editIsactive" <?php echo $editingTopic['is_active'] ? 'checked' : ''; ?> >
+                                    <label class="form-check-label" for="editIsactive">Tema Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Actualizar Tema
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function showEditModalWhenReady(){
+    function tryShow(){
+        if (window.bootstrap && typeof window.bootstrap.Modal === 'function'){
+            var modalEl = document.getElementById('editTopicModal');
+            if (modalEl){
+                var m = new bootstrap.Modal(modalEl);
+                m.show();
+                return;
+            }
+        }
+        if (!window._editModalRetries) window._editModalRetries = 0;
+        if (window._editModalRetries++ < 50) {
+            setTimeout(tryShow, 100);
+        }
+    }
+    tryShow();
+})();
+</script>
+<?php endif; ?>
 
 <!-- JavaScript -->
 <script>
