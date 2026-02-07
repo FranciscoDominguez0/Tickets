@@ -187,7 +187,12 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('[data-action="print"]').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.preventDefault();
-      window.print();
+      try {
+        var params = new URLSearchParams(window.location.search || '');
+        var tid = (params.get('id') || '').toString();
+        if (!tid) return;
+        window.open('print_ticket.php?id=' + encodeURIComponent(tid), '_blank');
+      } catch (err) {}
     });
   });
 

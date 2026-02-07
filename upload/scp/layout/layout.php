@@ -61,7 +61,7 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
                 <span style="color: white;">Agente: <strong><?php echo html($staff['name']); ?></strong></span>
 
                 <div class="dropdown">
-                    <button class="btn btn-outline-light btn-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                    <button class="btn btn-outline-light btn-sm position-relative scp-notif-btn <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                         <i class="bi bi-bell"></i>
                         <?php if ($notifCount > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -69,18 +69,38 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
                             </span>
                         <?php endif; ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 360px;">
-                        <li class="dropdown-header">Notificaciones</li>
+                    <ul class="dropdown-menu dropdown-menu-end scp-notif-menu">
+                        <li>
+                            <div class="scp-notif-head">
+                                <div class="scp-notif-title">Notificaciones</div>
+                                <div class="scp-notif-sub"><?php echo $notifCount > 0 ? ((int)$notifCount . ' nueva(s)') : 'Sin nuevas'; ?></div>
+                            </div>
+                        </li>
                         <?php if (empty($notifItems)): ?>
-                            <li><span class="dropdown-item-text text-muted">No tienes notificaciones nuevas.</span></li>
+                            <li><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
                         <?php else: ?>
                             <?php foreach ($notifItems as $n): ?>
+                                <?php
+                                $t = (string)($n['type'] ?? 'general');
+                                $icon = 'bi-info-circle';
+                                $accent = 'general';
+                                if ($t === 'ticket_assigned') {
+                                    $icon = 'bi-ticket-perforated';
+                                    $accent = 'ticket';
+                                } elseif ($t === 'task_assigned') {
+                                    $icon = 'bi-check2-square';
+                                    $accent = 'task';
+                                }
+                                ?>
                                 <li>
-                                    <a class="dropdown-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
-                                        <div class="fw-semibold" style="white-space: normal;">
-                                            <?php echo html((string)($n['message'] ?? 'Notificación')); ?>
+                                    <a class="dropdown-item scp-notif-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
+                                        <div class="scp-notif-icon <?php echo html($accent); ?>">
+                                            <i class="bi <?php echo html($icon); ?>"></i>
                                         </div>
-                                        <div class="small text-muted"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
+                                        <div class="scp-notif-body">
+                                            <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'Notificación')); ?></div>
+                                            <div class="scp-notif-time"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
+                                        </div>
                                     </a>
                                 </li>
                             <?php endforeach; ?>

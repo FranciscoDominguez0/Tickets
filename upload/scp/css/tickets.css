@@ -105,6 +105,69 @@
     margin-bottom: 24px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.06);
 }
+
+.ticket-print-header {
+    display: none;
+}
+
+.ticket-print-header .tph-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ticket-print-header .tph-logo {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.ticket-print-header .tph-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+}
+
+.ticket-print-header .tph-company {
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.ticket-print-header .tph-website {
+    font-size: 0.86rem;
+    color: #475569;
+}
+
+.ticket-print-header .tph-right {
+    text-align: right;
+}
+
+.ticket-print-header .tph-ticket {
+    font-weight: 900;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.ticket-print-header .tph-subject {
+    font-weight: 700;
+    color: #334155;
+    margin-top: 2px;
+}
+
+.ticket-print-header .tph-meta {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-top: 2px;
+}
 .ticket-view-entry {
     margin-bottom: 16px;
 }
@@ -526,3 +589,61 @@
 .tickets-actions .btn-danger-soft:hover { background: rgba(239, 68, 68, 0.14); color: #991b1b; }
 .check-cell { width: 34px; }
 
+@media print {
+    body.print-thread-only {
+        padding-top: 0 !important;
+        background: #fff !important;
+    }
+
+    body.print-thread-only .navbar,
+    body.print-thread-only .sidebar,
+    body.print-thread-only .ticket-view-header,
+    body.print-thread-only .ticket-view-overview,
+    body.print-thread-only .ticket-view-tabs,
+    body.print-thread-only .ticket-view-reply,
+    body.print-thread-only .tickets-shell,
+    body.print-thread-only .tickets-header {
+        display: none !important;
+    }
+
+    body.print-thread-only .layout {
+        display: block !important;
+        min-height: auto !important;
+    }
+
+    body.print-thread-only .content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.print-thread-only .ticket-view-wrap {
+        max-width: none !important;
+        margin: 0 !important;
+    }
+
+    body.print-thread-only [data-print-area="thread"] {
+        display: block !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    body.print-thread-only .ticket-print-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 0 12px !important;
+        margin: 0 0 14px !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+    }
+
+    body.print-thread-only .ticket-view-entry {
+        page-break-inside: avoid;
+    }
+
+    body.print-thread-only .ticket-view-entry .entry-content {
+        box-shadow: none !important;
+    }
+}

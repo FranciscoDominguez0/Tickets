@@ -391,7 +391,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $closed = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%cerrado%' LIMIT 1");
                         $closed_id = 5;
                         if ($closed && $r = $closed->fetch_assoc()) $closed_id = (int)$r['id'];
-                        $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?")->bind_param('ii', $closed_id, $tid)->execute();
+                        $stmtUp = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
+                        if ($stmtUp) {
+                            $stmtUp->bind_param('ii', $closed_id, $tid);
+                            $stmtUp->execute();
+                        }
                         $ok = true;
                         $msg = 'merged';
                         header('Location: tickets.php?id=' . $target_id . '&msg=merged');

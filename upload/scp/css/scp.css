@@ -25,6 +25,114 @@ body {
     font-size: 1.4rem;
 }
 
+.scp-notif-btn {
+    border-radius: 999px;
+    padding: 0.28rem 0.55rem;
+    backdrop-filter: blur(6px);
+}
+
+.scp-notif-btn i {
+    font-size: 1.05rem;
+}
+
+.scp-notif-btn.has-new {
+    animation: scpNotifGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes scpNotifGlow {
+    0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+    50% { box-shadow: 0 0 0 6px rgba(255,255,255,0.18); }
+}
+
+.scp-notif-menu {
+    min-width: 380px;
+    padding: 0;
+    border: 1px solid rgba(2, 6, 23, 0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 60px rgba(2, 6, 23, 0.18);
+}
+
+.scp-notif-head {
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(37,99,235,0.10), rgba(14,165,233,0.10));
+    border-bottom: 1px solid rgba(2, 6, 23, 0.06);
+}
+
+.scp-notif-title {
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.scp-notif-sub {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.scp-notif-empty {
+    padding: 16px 14px;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.scp-notif-item {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    white-space: normal;
+}
+
+.scp-notif-item:hover {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.scp-notif-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    border: 1px solid rgba(2, 6, 23, 0.06);
+}
+
+.scp-notif-icon i {
+    font-size: 1.05rem;
+}
+
+.scp-notif-icon.ticket {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.scp-notif-icon.task {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.scp-notif-icon.general {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+}
+
+.scp-notif-body {
+    min-width: 0;
+}
+
+.scp-notif-msg {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.94rem;
+    line-height: 1.25;
+}
+
+.scp-notif-time {
+    margin-top: 3px;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
 .layout {
     display: flex;
     min-height: calc(100vh - 64px);

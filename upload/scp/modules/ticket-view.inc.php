@@ -4,6 +4,12 @@ if (!isset($ticketView) || !is_array($ticketView)) return;
 $tid = (int) $t['id'];
 $entries = $t['thread_entries'] ?? [];
 $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_internal'] ?? 0) === 0; }));
+
+$printCompanyName = trim((string)getAppSetting('company.name', ''));
+if ($printCompanyName === '') $printCompanyName = (string)APP_NAME;
+$printCompanyWebsite = trim((string)getAppSetting('company.website', ''));
+if ($printCompanyWebsite === '') $printCompanyWebsite = (string)APP_URL;
+$printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 ?>
 
 <div class="ticket-view-wrap">
@@ -294,7 +300,28 @@ $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_
         <li><a class="tab" href="#tasks"><i class="bi bi-check2-square"></i> Tareas</a></li>
     </ul>
 
-    <div class="ticket-view-tab-content" id="thread">
+    <div class="ticket-view-tab-content" id="thread" data-print-area="thread">
+        <div class="ticket-print-header">
+            <div class="tph-left">
+                <?php if ($printLogoUrl !== ''): ?>
+                    <div class="tph-logo"><img src="<?php echo html($printLogoUrl); ?>" alt="<?php echo html($printCompanyName); ?>"></div>
+                <?php endif; ?>
+                <div class="tph-brand">
+                    <div class="tph-company"><?php echo html($printCompanyName); ?></div>
+                    <div class="tph-website"><?php echo html($printCompanyWebsite); ?></div>
+                </div>
+            </div>
+            <div class="tph-right">
+                <div class="tph-ticket">Ticket <?php echo html($t['ticket_number']); ?></div>
+                <div class="tph-subject"><?php echo html((string)($t['subject'] ?? '')); ?></div>
+                <div class="tph-meta">
+                    <?php echo html((string)($t['user_name'] ?? '')); ?> · <?php echo html((string)($t['user_email'] ?? '')); ?>
+                </div>
+                <div class="tph-meta">
+                    Impreso: <?php echo date('d/m/Y H:i'); ?>
+                </div>
+            </div>
+        </div>
         <?php
         $msg = $_GET['msg'] ?? '';
         $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
