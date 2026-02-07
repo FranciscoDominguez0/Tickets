@@ -627,11 +627,100 @@ function humanSize($bytes) {
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+
+<div class="modal fade" id="videoInsertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Insertar video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <label for="videoInsertUrl" class="form-label">URL (YouTube o Vimeo)</label>
+                <input type="url" class="form-control" id="videoInsertUrl" placeholder="https://www.youtube.com/watch?v=...">
+                <div class="form-text">Pega un enlace de YouTube/Vimeo y se insertará en tu respuesta.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="videoInsertConfirm">Insertar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof jQuery === 'undefined' || !jQuery().summernote) return;
+
+        var videoModalEl = document.getElementById('videoInsertModal');
+        var videoUrlEl = document.getElementById('videoInsertUrl');
+        var videoConfirmEl = document.getElementById('videoInsertConfirm');
+        var videoModal = null;
+        var onVideoSubmit = null;
+        if (videoModalEl && window.bootstrap && bootstrap.Modal) {
+            videoModal = new bootstrap.Modal(videoModalEl);
+        }
+
+        function openVideoModal(cb) {
+            onVideoSubmit = cb;
+            if (!videoModal || !videoUrlEl) return;
+            videoUrlEl.value = '';
+            videoModal.show();
+            setTimeout(function () { try { videoUrlEl.focus(); } catch (e) {} }, 100);
+        }
+
+        if (videoConfirmEl) {
+            videoConfirmEl.addEventListener('click', function () {
+                if (!onVideoSubmit || !videoUrlEl) return;
+                var v = (videoUrlEl.value || '').trim();
+                if (v === '') return;
+                try { videoModal && videoModal.hide(); } catch (e) {}
+                try { onVideoSubmit(v); } catch (e2) {}
+            });
+        }
+        if (videoUrlEl) {
+            videoUrlEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    videoConfirmEl && videoConfirmEl.click();
+                }
+            });
+        }
+
+        function toEmbedUrl(url) {
+            url = (url || '').trim();
+            if (!url) return '';
+            if (url.indexOf('//') === 0) url = 'https:' + url;
+            if (/^https?:\/\/(www\.)?(youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)/i.test(url)) return url;
+            if (/^https?:\/\/(www\.)?player\.vimeo\.com\/video\//i.test(url)) return url;
+            var m = url.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+            if (m && m[1]) return 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0';
+            var v = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+            if (v && v[1]) return 'https://player.vimeo.com/video/' + v[1];
+            return '';
+        }
+
+        var myVideoBtn = function (context) {
+            var ui = jQuery.summernote.ui;
+            return ui.button({
+                contents: '<i class="note-icon-video"></i>',
+                tooltip: 'Insertar video (YouTube/Vimeo)',
+                click: function () {
+                    openVideoModal(function (url) {
+                        var embed = toEmbedUrl(url);
+                        if (!embed) {
+                            window.__showCreativePop && window.__showCreativePop('Formato de enlace no soportado. Usa un enlace de YouTube o Vimeo.', 'Video no soportado');
+                            return;
+                        }
+                        var html = '<iframe src="' + embed.replace(/"/g, '') + '" width="560" height="315" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+                        context.invoke('editor.pasteHTML', html);
+                    });
+                }
+            }).render();
+        };
+
         jQuery('#reply_body').summernote({
             height: 200,
             lang: 'es-ES',
@@ -639,9 +728,12 @@ function humanSize($bytes) {
             toolbar: [
                 ['style', ['bold', 'italic', 'underline']],
                 ['para', ['ul', 'ol']],
-                ['insert', ['link', 'picture', 'video']],
+                ['insert', ['link', 'picture', 'myVideo']],
                 ['view', ['codeview']]
             ],
+            buttons: {
+                myVideo: myVideoBtn
+            },
             callbacks: {
                 onImageUpload: function (files) {
                     if (!files || !files.length) return;
