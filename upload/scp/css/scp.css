@@ -7,7 +7,7 @@
 body {
     background: #f5f7fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding-top: 64px;
+    padding-top: 56px;
 }
 
 .navbar {
@@ -135,7 +135,7 @@ body {
 
 .layout {
     display: flex;
-    min-height: calc(100vh - 64px);
+    min-height: calc(100vh - 56px);
 }
 
 .sidebar {
@@ -146,9 +146,9 @@ body {
     color: #e5e7eb;
     padding: 24px 16px;
     position: fixed;
-    top: 64px;
+    top: 56px;
     left: 0;
-    height: calc(100vh - 64px);
+    height: calc(100vh - 56px);
     overflow-y: scroll;
     z-index: 1000;
     box-sizing: border-box;
