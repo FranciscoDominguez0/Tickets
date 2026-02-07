@@ -105,6 +105,76 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                         $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
                         $stmtE->execute();
                     }
+
+                    // Notificación + correo al agente asignado (si se creó con asignación)
+                    if ($staff_id !== null && (int)$staff_id > 0) {
+                        $val = (int) $staff_id;
+                        addLog('ticket_assigned', 'Asignación inicial en creación de ticket', 'ticket', $new_tid, 'staff', $val);
+
+                        // Notificación en BD
+                        $message = 'Se te asignó el ticket ' . (string)$ticket_number . ': ' . (string)$subject;
+                        $type = 'ticket_assigned';
+                        $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                        if ($stmtN) {
+                            $stmtN->bind_param('issi', $val, $message, $type, $new_tid);
+                            $stmtN->execute();
+                        } else {
+                            addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
+                        }
+
+                        // Email
+                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtS) {
+                            $stmtS->bind_param('i', $val);
+                            if ($stmtS->execute()) {
+                                $srow = $stmtS->get_result()->fetch_assoc();
+                                $to = trim((string)($srow['email'] ?? ''));
+                                if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                    $subj = '[Asignación] ' . (string)$ticket_number . ' - ' . (string)$subject;
+                                    $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
+                                    if ($staffName === '') $staffName = 'Agente';
+
+                                    $deptName = '';
+                                    if ($dept_id > 0) {
+                                        $stmtD = $mysqli->prepare('SELECT name FROM departments WHERE id = ? LIMIT 1');
+                                        if ($stmtD) {
+                                            $stmtD->bind_param('i', $dept_id);
+                                            if ($stmtD->execute()) {
+                                                $deptName = (string)($stmtD->get_result()->fetch_assoc()['name'] ?? '');
+                                            }
+                                        }
+                                    }
+
+                                    $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int) $new_tid;
+                                    $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                        . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                        . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                        . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticket_number) . '</td></tr>'
+                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$subject) . '</td></tr>'
+                                        . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars($deptName) . '</td></tr>'
+                                        . '</table>'
+                                        . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                        . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                        . '</div>';
+
+                                    $bodyText = 'Se te asignó un ticket: ' . (string)$ticket_number . "\n" . 'Asunto: ' . (string)$subject . "\n" . 'Ver: ' . $viewUrl;
+                                    $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                    if (!$mailOk) {
+                                        $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                        addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                    }
+                                } else {
+                                    addLog('ticket_assign_email_missing', 'Agente sin email válido', 'ticket', $new_tid, 'staff', $val);
+                                }
+                            } else {
+                                addLog('ticket_assign_email_lookup_failed', 'No se pudo ejecutar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
+                            }
+                        } else {
+                            addLog('ticket_assign_email_lookup_failed', 'No se pudo preparar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
+                        }
+                    }
+
                     header('Location: tickets.php?id=' . $new_tid . '&msg=created');
                     exit;
                 }
