@@ -166,6 +166,9 @@ if ($_POST) {
                     $deptName = $r['name'];
                 }
                 $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int) $ticket_id;
+
+                $bodyEmailText = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags((string)$body), ENT_QUOTES, 'UTF-8')));
+
                 $bodyHtml = '
                     <div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto;">
                         <h2 style="color: #2c3e50;">Nuevo ticket creado</h2>
@@ -177,7 +180,7 @@ if ($_POST) {
                             <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Departamento:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($deptName) . '</td></tr>
                             <tr><td style="padding: 8px 0;"><strong>Mensaje:</strong></td><td style="padding: 8px 0;"></td></tr>
                         </table>
-                        <div style="background: #f5f5f5; padding: 12px; border-radius: 6px; margin: 12px 0;">' . nl2br(htmlspecialchars($body)) . '</div>
+                        <div style="background: #f5f5f5; padding: 12px; border-radius: 6px; margin: 12px 0;">' . nl2br(htmlspecialchars($bodyEmailText)) . '</div>
                         <p><a href="' . htmlspecialchars($viewUrl) . '" style="display: inline-block; background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Ver ticket</a></p>
                         <p style="color: #7f8c8d; font-size: 12px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>
                     </div>';
