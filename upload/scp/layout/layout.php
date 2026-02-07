@@ -108,7 +108,7 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
                     </ul>
                 </div>
 
-                <a href="settings.php" class="btn btn-outline-light btn-sm">Panel Administrador</a>
+                <a href="settings.php?t=pages" class="btn btn-outline-light btn-sm">Panel Administrador</a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
             </div>
         </div>

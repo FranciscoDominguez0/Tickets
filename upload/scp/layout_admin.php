@@ -48,22 +48,40 @@
                         </button>
                         <ul id="settings-subnav" class="sidebar-subnav <?php echo $isSettingsRoute ? 'open' : ''; ?>">
                             <li>
-                                <a href="settings.php?t=pages" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'pages') ? 'active' : ''; ?>">Perfil de la empresa</a>
+                                <a href="settings.php?t=pages" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'pages') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-building"></i></span>
+                                    Perfil de la empresa
+                                </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=system" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'system') ? 'active' : ''; ?>">Sistema</a>
+                                <a href="settings.php?t=system" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'system') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-sliders"></i></span>
+                                    Sistema
+                                </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=tickets" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'tickets') ? 'active' : ''; ?>">Solicitudes</a>
+                                <a href="settings.php?t=tickets" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'tickets') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-ticket-perforated"></i></span>
+                                    Solicitudes
+                                </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=tasks#settings" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'tasks') ? 'active' : ''; ?>">Tareas</a>
+                                <a href="settings.php?t=tasks#settings" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'tasks') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-check2-square"></i></span>
+                                    Tareas
+                                </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=agents" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'agents') ? 'active' : ''; ?>">Agentes</a>
+                                <a href="settings.php?t=agents" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'agents') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-person-badge"></i></span>
+                                    Agentes
+                                </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=users" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'users') ? 'active' : ''; ?>">Usuarios, osTicket</a>
+                                <a href="settings.php?t=users" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'users') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-people"></i></span>
+                                    Usuarios, osTicket
+                                </a>
                             </li>
                         </ul>
                         <a href="logs.php" class="sidebar-link <?php echo ($currentRoute === 'logs') ? 'active' : ''; ?>">
