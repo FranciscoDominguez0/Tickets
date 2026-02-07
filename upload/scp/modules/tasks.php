@@ -7,6 +7,11 @@ $errors = [];
 $success = false;
 $tasksHasDept = false;
 
+if (isset($_SESSION['task_success_flash']) && is_string($_SESSION['task_success_flash']) && $_SESSION['task_success_flash'] !== '') {
+    $success = (string)$_SESSION['task_success_flash'];
+    unset($_SESSION['task_success_flash']);
+}
+
 $chk = $mysqli->query("SHOW COLUMNS FROM tasks LIKE 'dept_id'");
 if ($chk && $chk->num_rows > 0) {
     $tasksHasDept = true;
@@ -191,6 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
 
                         $success = 'Tarea creada exitosamente.';
                         if (!$mailProblem) {
+                            $_SESSION['task_success_flash'] = (string)$success;
                             header('Location: tasks.php?id=' . $taskId);
                             exit;
                         }
@@ -208,7 +214,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                         $stmt = $mysqli->prepare("UPDATE tasks SET status = ?, updated = NOW() WHERE id = ?");
                         $stmt->bind_param('si', $new_status, $task['id']);
                         if ($stmt->execute()) {
-                            $success = 'Estado de la tarea actualizado.';
+                            $_SESSION['task_success_flash'] = 'Estado de la tarea actualizado.';
                             // Redirigir para limpiar POST
                             header('Location: ' . $_SERVER['REQUEST_URI']);
                             exit;
@@ -336,6 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                         $success = 'Tarea actualizada exitosamente.';
                         // Redirigir para limpiar POST y mostrar cambios
                         if (!$mailProblem) {
+                            $_SESSION['task_success_flash'] = (string)$success;
                             header('Location: ' . $_SERVER['REQUEST_URI']);
                             exit;
                         }

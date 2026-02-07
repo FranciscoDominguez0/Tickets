@@ -83,10 +83,66 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
 <?php endif; ?>
 
 <?php if ($success): ?>
-    <div class="alert alert-success alert-dismissible fade show">
-        <?php echo html($success); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="modal fade" id="taskSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-check-circle text-success me-2"></i>Éxito</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <?php echo html($success); ?>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+    (function(){
+        var el = document.getElementById('taskSuccessModal');
+        if (!el) return;
+
+        function tryShow(){
+            if (!window.bootstrap || !window.bootstrap.Modal) return false;
+            try {
+                var instance;
+                if (typeof window.bootstrap.Modal.getOrCreateInstance === 'function') {
+                    instance = window.bootstrap.Modal.getOrCreateInstance(el);
+                } else {
+                    instance = new window.bootstrap.Modal(el);
+                }
+
+                instance.show();
+
+                // Auto-cerrar luego de 2.5s (solo mensaje)
+                setTimeout(function(){
+                    try { instance.hide(); } catch (e) {}
+                }, 2500);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function startRetries(){
+            if (tryShow()) return;
+            var retries = 0;
+            var timer = setInterval(function(){
+                retries++;
+                if (tryShow() || retries > 80) {
+                    clearInterval(timer);
+                }
+            }, 100);
+        }
+
+        // Bootstrap se carga al final del layout; asegurar intento luego de load
+        if (document.readyState === 'complete') {
+            startRetries();
+        } else {
+            window.addEventListener('load', startRetries);
+        }
+    })();
+    </script>
 <?php endif; ?>
 
 <div class="task-center">
