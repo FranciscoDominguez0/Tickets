@@ -118,17 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         break;
                         
-                    case 'archive':
-                        $sql = "UPDATE help_topics SET is_active = 0, is_archived = 1 WHERE id IN ($placeholders)";
-                        $stmt = $mysqli->prepare($sql);
-                        $stmt->bind_param($types, ...$ids);
-                        if ($stmt->execute()) {
-                            $msg = count($ids) . ' temas archivados exitosamente';
-                        } else {
-                            $error = 'Error al archivar temas';
-                        }
-                        break;
-                        
                     case 'delete':
                         // Verificar que no se eliminen todos los temas activos
                         $activeCount = 0;
@@ -333,11 +322,6 @@ ob_start();
                                                         </a>
                                                     </li>
                                                     <?php endif; ?>
-                                                    <li>
-                                                        <a class="dropdown-item" href="#" onclick="massAction('archive', [<?php echo $topic['id']; ?>])">
-                                                            <i class="bi bi-archive text-info"></i> Archivar
-                                                        </a>
-                                                    </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item text-danger" href="#" onclick="massAction('delete', [<?php echo $topic['id']; ?>])">
@@ -364,9 +348,6 @@ ob_start();
                                     </button>
                                     <button type="submit" name="a" value="disable" class="btn btn-warning btn-sm">
                                         <i class="bi bi-pause-circle"></i> Deshabilitar
-                                    </button>
-                                    <button type="submit" name="a" value="archive" class="btn btn-info btn-sm">
-                                        <i class="bi bi-archive"></i> Archivar
                                     </button>
                                     <button type="submit" name="a" value="delete" class="btn btn-danger btn-sm" 
                                             onclick="return confirm('¿Está seguro de eliminar los temas seleccionados? Esta acción no se puede deshacer.')">
@@ -551,71 +532,10 @@ ob_start();
     </div>
 </div>
 
-<script>
-(function showEditModalWhenReady(){
-    function tryShow(){
-        if (window.bootstrap && typeof window.bootstrap.Modal === 'function'){
-            var modalEl = document.getElementById('editTopicModal');
-            if (modalEl){
-                var m = new bootstrap.Modal(modalEl);
-                m.show();
-                try {
-                    history.replaceState(null, '', window.location.pathname);
-                } catch (e) {}
-                return;
-            }
-        }
-        if (!window._editModalRetries) window._editModalRetries = 0;
-        if (window._editModalRetries++ < 50) {
-            setTimeout(tryShow, 100);
-        }
-    }
-    tryShow();
-})();
-</script>
+<script>window.HELP_TOPICS_AUTO_OPEN_EDIT_MODAL = true;</script>
 <?php endif; ?>
 
-<!-- JavaScript -->
-<script>
-$(document).ready(function() {
-    // Seleccionar/deseleccionar todos
-    $('#selectAll').change(function() {
-        $('.topic-checkbox').prop('checked', $(this).prop('checked'));
-        updateSelectedCount();
-    });
-    
-    // Actualizar contador de seleccionados
-    $('.topic-checkbox').change(function() {
-        updateSelectedCount();
-    });
-    
-    function updateSelectedCount() {
-        var count = $('.topic-checkbox:checked').length;
-        $('#selectedCount').text(count);
-    }
-    
-    // Acciones masivas individuales
-    window.massAction = function(action, ids) {
-        if (action === 'delete' && !confirm('¿Está seguro de eliminar este tema? Esta acción no se puede deshacer.')) {
-            return false;
-        }
-        
-        var form = $('<form>', {
-            method: 'post',
-            action: 'helptopics.php'
-        });
-        
-        form.append($('<input>', {type: 'hidden', name: 'do', value: 'mass_process'}));
-        form.append($('<input>', {type: 'hidden', name: 'a', value: action}));
-        
-        $.each(ids, function(index, id) {
-            form.append($('<input>', {type: 'hidden', name: 'ids[]', value: id}));
-        });
-        
-        form.appendTo('body').submit();
-    };
-});
-</script>
+<script src="js/helptopics_page.js?v=<?php echo (int)@filemtime(__DIR__ . '/js/helptopics_page.js'); ?>"></script>
 
 <?php
 $content = ob_get_clean();

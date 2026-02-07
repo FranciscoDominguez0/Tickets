@@ -150,52 +150,71 @@ $mkUrl = function ($overrides = []) {
 
 ob_start();
 ?>
-<div class="page-header">
-    <h1>Registros del Sistema</h1>
-    <p>Auditoría de acciones y eventos</p>
+<div class="settings-hero">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+            <span class="settings-hero-icon"><i class="bi bi-graph-up"></i></span>
+            <div>
+                <h1>Registros del Sistema</h1>
+                <p>Auditoría de acciones y eventos</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-info"><?php echo (int)$total; ?> Total</span>
+        </div>
+    </div>
 </div>
 
 <?php if (!empty($errors['err'])): ?>
-    <div class="alert alert-danger"><?php echo html($errors['err']); ?></div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($errors['err']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
 <?php if ($warn): ?>
-    <div class="alert alert-warning"><?php echo html($warn); ?></div>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($warn); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
 <?php if ($msg): ?>
-    <div class="alert alert-success"><?php echo html($msg); ?></div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i><?php echo html($msg); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
 
-<div class="card">
+<div class="card settings-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-list-ul"></i> Registros</strong>
+        <button type="submit" form="massDeleteForm" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar las entradas seleccionadas?');">
+            <i class="bi bi-trash"></i> Eliminar seleccionados
+        </button>
+    </div>
     <div class="card-body">
-        <div class="d-flex align-items-end justify-content-between flex-wrap gap-2">
-            <form method="get" action="logs.php" class="d-flex align-items-end flex-wrap gap-2">
-                <div>
-                    <label class="form-label mb-1">Entre:</label>
-                    <input type="date" name="from" value="<?php echo html($date_from); ?>" class="form-control form-control-sm">
-                </div>
-                <div>
-                    <label class="form-label mb-1">&nbsp;</label>
-                    <input type="date" name="to" value="<?php echo html($date_to); ?>" class="form-control form-control-sm">
-                </div>
-                <div>
-                    <label class="form-label mb-1">Nivel de registro:</label>
-                    <select name="level" class="form-select form-select-sm" style="min-width: 170px;">
-                        <option value="">Todos</option>
-                        <option value="Error" <?php echo ($level === 'Error') ? 'selected' : ''; ?>>Error</option>
-                        <option value="Warning" <?php echo ($level === 'Warning') ? 'selected' : ''; ?>>Warning</option>
-                        <option value="Info" <?php echo ($level === 'Info') ? 'selected' : ''; ?>>Info</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn btn-primary btn-sm">¡Vamos!</button>
-                    <a href="logs.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
-                </div>
-            </form>
-
-            <button type="submit" form="massDeleteForm" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar las entradas seleccionadas?');">
-                <i class="bi bi-trash"></i> Eliminar las entradas seleccionadas
-            </button>
-        </div>
+        <form method="get" action="logs.php" class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+                <label class="form-label mb-1">Entre:</label>
+                <input type="date" name="from" value="<?php echo html($date_from); ?>" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label mb-1">Hasta:</label>
+                <input type="date" name="to" value="<?php echo html($date_to); ?>" class="form-control form-control-sm">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label mb-1">Nivel de registro:</label>
+                <select name="level" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    <option value="Error" <?php echo ($level === 'Error') ? 'selected' : ''; ?>>Error</option>
+                    <option value="Warning" <?php echo ($level === 'Warning') ? 'selected' : ''; ?>>Warning</option>
+                    <option value="Info" <?php echo ($level === 'Info') ? 'selected' : ''; ?>>Info</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">Filtrar</button>
+                <a href="logs.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+            </div>
+        </form>
     </div>
 
     <div class="table-responsive">
