@@ -2,6 +2,31 @@
 // Layout principal del panel de agente
 // Header + sidebar fijos, contenido dinámico en $content
 ?>
+<?php
+$notifCount = 0;
+$notifItems = [];
+if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
+    $sid = (int) $_SESSION['staff_id'];
+    $stmtN = $mysqli->prepare('SELECT COUNT(*) c FROM notifications WHERE staff_id = ? AND is_read = 0');
+    if ($stmtN) {
+        $stmtN->bind_param('i', $sid);
+        if ($stmtN->execute()) {
+            $notifCount = (int) (($stmtN->get_result()->fetch_assoc()['c'] ?? 0));
+        }
+    }
+
+    $stmtL = $mysqli->prepare('SELECT id, message, type, related_id, created_at FROM notifications WHERE staff_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 8');
+    if ($stmtL) {
+        $stmtL->bind_param('i', $sid);
+        if ($stmtL->execute()) {
+            $res = $stmtL->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $notifItems[] = $row;
+            }
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -34,6 +59,35 @@
             <span class="navbar-brand"><?php echo APP_NAME; ?> - Agente</span>
             <div class="d-flex align-items-center gap-3">
                 <span style="color: white;">Agente: <strong><?php echo html($staff['name']); ?></strong></span>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                        <i class="bi bi-bell"></i>
+                        <?php if ($notifCount > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <?php echo (int) $notifCount; ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 360px;">
+                        <li class="dropdown-header">Notificaciones</li>
+                        <?php if (empty($notifItems)): ?>
+                            <li><span class="dropdown-item-text text-muted">No tienes notificaciones nuevas.</span></li>
+                        <?php else: ?>
+                            <?php foreach ($notifItems as $n): ?>
+                                <li>
+                                    <a class="dropdown-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
+                                        <div class="fw-semibold" style="white-space: normal;">
+                                            <?php echo html((string)($n['message'] ?? 'Notificación')); ?>
+                                        </div>
+                                        <div class="small text-muted"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+
                 <a href="settings.php" class="btn btn-outline-light btn-sm">Panel Administrador</a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
             </div>

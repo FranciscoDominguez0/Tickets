@@ -290,6 +290,18 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $msg = 'assigned';
                     }
 
+                    // Notificación en BD (solo si se asignó a alguien y cambió)
+                    if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
+                        $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                        $message = 'Se te asignó el ticket ' . $ticketNo . ': ' . (string)($ticketView['subject'] ?? '');
+                        $type = 'ticket_assigned';
+                        $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                        if ($stmtN) {
+                            $stmtN->bind_param('issi', $val, $message, $type, $tid);
+                            $stmtN->execute();
+                        }
+                    }
+
                     // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
                     if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
                         $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
@@ -876,6 +888,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                                         Mailer::send($to, $subj, $bodyHtml, $bodyText);
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    // Notificaciones en BD (solo tickets que realmente cambiaron de agente)
+                    if ($staffId !== 0 && !empty($ticketsBefore)) {
+                        $type = 'ticket_assigned';
+                        $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                        if ($stmtN) {
+                            foreach ($ticketsBefore as $tid0 => $trow) {
+                                $previousStaffId = $trow['staff_id'] ?? null;
+                                if ((string)$previousStaffId === (string)$staffId) {
+                                    continue;
+                                }
+                                if (!empty($inAllowed) && !in_array((int)$tid0, $inAllowed, true)) {
+                                    continue;
+                                }
+                                $ticketNo = (string)($trow['ticket_number'] ?? ('#' . (int)$tid0));
+                                $message = 'Se te asignó el ticket ' . $ticketNo . ': ' . (string)($trow['subject'] ?? '');
+                                $relId = (int) $tid0;
+                                $stmtN->bind_param('issi', $staffId, $message, $type, $relId);
+                                $stmtN->execute();
                             }
                         }
                     }
