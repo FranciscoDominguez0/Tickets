@@ -41,12 +41,13 @@
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
                         <?php $settingsTab = (string)($_GET['t'] ?? ''); $isSettingsRoute = ($currentRoute === 'settings'); ?>
-                        <button type="button" class="sidebar-toggle <?php echo $isSettingsRoute ? 'active expanded' : ''; ?>" data-subnav="settings-subnav" aria-controls="settings-subnav" aria-expanded="<?php echo $isSettingsRoute ? 'true' : 'false'; ?>">
+                        <?php $expandSettings = ($isSettingsRoute && empty($collapseSettingsMenu)); ?>
+                        <button type="button" class="sidebar-toggle <?php echo $expandSettings ? 'active expanded' : ''; ?>" data-subnav="settings-subnav" aria-controls="settings-subnav" aria-expanded="<?php echo $expandSettings ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-gear"></i></span>
                             Configuración
                             <span class="arrow"><i class="bi bi-chevron-right"></i></span>
                         </button>
-                        <ul id="settings-subnav" class="sidebar-subnav <?php echo $isSettingsRoute ? 'open' : ''; ?>">
+                        <ul id="settings-subnav" class="sidebar-subnav <?php echo $expandSettings ? 'open' : ''; ?>">
                             <li>
                                 <a href="settings.php?t=pages" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'pages') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-building"></i></span>

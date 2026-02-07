@@ -12,6 +12,12 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'settings';
 
+$collapseSettingsMenu = false;
+if (!isset($_SESSION['admin_settings_menu_seen'])) {
+    $_SESSION['admin_settings_menu_seen'] = 1;
+    $collapseSettingsMenu = true;
+}
+
 $allowedTargets = ['pages','system','tickets','tasks','agents','users'];
 $target = (string)($_GET['t'] ?? 'pages');
 if (!in_array($target, $allowedTargets, true)) {
