@@ -26,6 +26,13 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
         }
     }
 }
+
+// Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
+$collapseSidebarMenu = false;
+if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
+    $_SESSION['agent_sidebar_menu_seen'] = 1;
+    $collapseSidebarMenu = true;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -131,23 +138,24 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
                     <li class="sidebar-group">
                         <?php 
                         $isPanelRoute = in_array($currentRoute, ['dashboard','directory','profile']);
+                        $expandPanel = ($isPanelRoute && empty($collapseSidebarMenu));
                         ?>
                         <button type="button"
-                                class="sidebar-link sidebar-toggle <?php echo $isPanelRoute ? 'active' : ''; ?> <?php echo $isPanelRoute ? 'expanded' : ''; ?>"
-                                data-subnav="panel-subnav">
+                                class="sidebar-link sidebar-toggle <?php echo $expandPanel ? 'active expanded' : ''; ?>"
+                                data-subnav="panel-subnav" aria-controls="panel-subnav" aria-expanded="<?php echo $expandPanel ? 'true' : 'false'; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M4 12L11 5L18 12V19H4V12Z" stroke="<?php echo $isPanelRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M4 12L11 5L18 12V19H4V12Z" stroke="<?php echo $expandPanel ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Panel de control
                             <span class="arrow">
                                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $isPanelRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandPanel ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                         </button>
-                        <ul id="panel-subnav" class="sidebar-subnav <?php echo $isPanelRoute ? 'open' : ''; ?>">
+                        <ul id="panel-subnav" class="sidebar-subnav <?php echo $expandPanel ? 'open' : ''; ?>">
                             <li>
                                 <a href="dashboard.php" class="sidebar-link <?php echo $currentRoute === 'dashboard' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -198,25 +206,26 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
                     <li class="sidebar-group">
                         <?php
                         $isUsersRoute = in_array($currentRoute, ['users', 'orgs']);
+                        $expandUsers = ($isUsersRoute && empty($collapseSidebarMenu));
                         ?>
                         <button type="button"
-                                class="sidebar-link sidebar-toggle <?php echo $isUsersRoute ? 'active' : ''; ?> <?php echo $isUsersRoute ? 'expanded' : ''; ?>"
-                                data-subnav="users-subnav">
+                                class="sidebar-link sidebar-toggle <?php echo $expandUsers ? 'active expanded' : ''; ?>"
+                                data-subnav="users-subnav" aria-controls="users-subnav" aria-expanded="<?php echo $expandUsers ? 'true' : 'false'; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="9" cy="8" r="3" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                    <circle cx="17" cy="8" r="2.5" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.6"/>
+                                    <circle cx="9" cy="8" r="3" stroke="<?php echo $expandUsers ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M4 19C4.6 16 6.5 14.5 9 14.5C11.5 14.5 13.4 16 14 19" stroke="<?php echo $expandUsers ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <circle cx="17" cy="8" r="2.5" stroke="<?php echo $expandUsers ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.6"/>
                                 </svg>
                             </span>
                             Usuarios
                             <span class="arrow">
                                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $isUsersRoute ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandUsers ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                         </button>
-                        <ul id="users-subnav" class="sidebar-subnav <?php echo $isUsersRoute ? 'open' : ''; ?>">
+                        <ul id="users-subnav" class="sidebar-subnav <?php echo $expandUsers ? 'open' : ''; ?>">
                             <li>
                                 <a href="users.php" class="sidebar-link <?php echo $currentRoute === 'users' ? 'active' : ''; ?>">
                                     <span class="icon">
