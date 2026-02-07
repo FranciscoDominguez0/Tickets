@@ -372,9 +372,9 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     <textarea class="form-control" id="body" name="body" rows="8" required></textarea>
                 </div>
 
-                <div class="attach-zone" id="attach-zone" onclick="document.getElementById('attachments').click();">
+                <div class="attach-zone" id="attach-zone">
                     <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
-                    <div class="attach-text"><i class="bi bi-paperclip"></i> Agregar archivos aquí o <a href="#" onclick="document.getElementById('attachments').click(); return false;">elegirlos</a></div>
+                    <div class="attach-text"><i class="bi bi-paperclip"></i> Agregar archivos aquí o <a href="#" id="attach-choose-link">elegirlos</a></div>
                     <div class="attach-list" id="attach-list"></div>
                 </div>
 
@@ -405,9 +405,26 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         }
         
         (function () {
+            var zone = document.getElementById('attach-zone');
             var input = document.getElementById('attachments');
             var list = document.getElementById('attach-list');
-            if (!input || !list) return;
+            var chooseLink = document.getElementById('attach-choose-link');
+            if (!zone || !input || !list) return;
+
+            var openPicker = function () {
+                try { input.click(); } catch (e) {}
+            };
+
+            zone.addEventListener('click', function (e) {
+                // Evitar que el click en botones internos (Quitar) dispare el picker
+                if (e.target && (e.target.closest && e.target.closest('button[data-remove-index]'))) return;
+                openPicker();
+            });
+            chooseLink && chooseLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openPicker();
+            });
 
             function humanSize(bytes) {
                 if (!bytes) return '0 B';
@@ -417,6 +434,21 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
             }
 
+            function removeAt(index) {
+                try {
+                    var dt = new DataTransfer();
+                    for (var i = 0; i < input.files.length; i++) {
+                        if (i === index) continue;
+                        dt.items.add(input.files[i]);
+                    }
+                    input.files = dt.files;
+                } catch (e) {
+                    // Fallback: si el navegador no permite manipular FileList
+                    input.value = '';
+                }
+                updateList();
+            }
+
             function updateList() {
                 list.innerHTML = '';
                 if (!input.files || input.files.length === 0) return;
@@ -424,14 +456,36 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     var f = input.files[i];
                     var row = document.createElement('div');
                     row.className = 'attach-item';
-                    var name = document.createElement('div');
-                    name.className = 'name';
-                    name.textContent = f.name;
+
+                    var left = document.createElement('div');
+                    left.className = 'name';
+                    left.textContent = f.name;
+
+                    var right = document.createElement('div');
+                    right.style.display = 'flex';
+                    right.style.alignItems = 'center';
+                    right.style.gap = '8px';
+
                     var size = document.createElement('div');
                     size.className = 'size';
                     size.textContent = humanSize(f.size);
-                    row.appendChild(name);
-                    row.appendChild(size);
+
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-sm btn-outline-danger';
+                    btn.textContent = 'Quitar';
+                    btn.setAttribute('data-remove-index', String(i));
+                    btn.addEventListener('click', function (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        var idx = parseInt(this.getAttribute('data-remove-index'), 10);
+                        if (!isNaN(idx)) removeAt(idx);
+                    });
+
+                    right.appendChild(size);
+                    right.appendChild(btn);
+                    row.appendChild(left);
+                    row.appendChild(right);
                     list.appendChild(row);
                 }
             }
