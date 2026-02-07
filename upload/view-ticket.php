@@ -320,10 +320,10 @@ function humanSize($bytes) {
         .ticket-view-entry .entry-body p { margin: 0 0 0.5em; }
         .ticket-view-entry .entry-body p:last-child { margin-bottom: 0; }
         .ticket-view-entry .entry-body img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-        .ticket-view-entry .entry-body iframe { max-width: 420px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+        .ticket-view-entry .entry-body iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
         .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-        .note-editor .note-editable iframe { max-width: 420px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+        .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
         .entry-footer {
             font-size: 0.78rem;
