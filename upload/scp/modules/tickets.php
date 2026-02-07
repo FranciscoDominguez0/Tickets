@@ -33,18 +33,68 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             $user_id = isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
             $subject = trim($_POST['subject'] ?? '');
             $body = trim($_POST['body'] ?? '');
-            $dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 1;
+            $dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 0;
             $priority_id = isset($_POST['priority_id']) && is_numeric($_POST['priority_id']) ? (int) $_POST['priority_id'] : 2;
             $staff_id = isset($_POST['staff_id']) && is_numeric($_POST['staff_id']) ? (int) $_POST['staff_id'] : null;
             if ($staff_id === 0) $staff_id = null;
+            $topic_id = isset($_POST['topic_id']) && is_numeric($_POST['topic_id']) ? (int) $_POST['topic_id'] : 0;
+
+            // Si se seleccionó un tema, el departamento se toma del tema (si es válido)
+            if ($topic_id > 0) {
+                $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE id = ? AND is_active = 1 LIMIT 1');
+                if ($stmtTopicDept) {
+                    $stmtTopicDept->bind_param('i', $topic_id);
+                    if ($stmtTopicDept->execute()) {
+                        $tr = $stmtTopicDept->get_result()->fetch_assoc();
+                        $deptFromTopic = (int) ($tr['dept_id'] ?? 0);
+                        if ($deptFromTopic > 0) {
+                            $dept_id = $deptFromTopic;
+                        }
+                    }
+                }
+            }
+
             if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
+            if ($dept_id <= 0) $open_errors[] = 'Seleccione un departamento.';
+
+            // Validar asignación inicial por departamento (regla exacta)
+            if ($dept_id > 0 && $staff_id !== null) {
+                $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                if ($stmtSd) {
+                    $stmtSd->bind_param('ii', $generalDeptId, $staff_id);
+                    if ($stmtSd->execute()) {
+                        $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                        if ($sdept !== $dept_id) {
+                            $open_errors[] = 'El agente seleccionado no pertenece al departamento del ticket.';
+                        }
+                    } else {
+                        $open_errors[] = 'No se pudo validar el agente seleccionado.';
+                    }
+                } else {
+                    $open_errors[] = 'No se pudo validar el agente seleccionado.';
+                }
+            }
+
             if (empty($open_errors)) {
                 $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT);
                 error_log('[tickets] INSERT tickets via scp/modules/tickets.php open uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' user_id=' . (string)$user_id . ' dept_id=' . (string)$dept_id);
-                $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
-                // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (priority_id), s (subject)
-                $stmt->bind_param('siiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                $hasTopicCol = false;
+                $hasTopicsTable = false;
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+                if ($c && $c->num_rows > 0) $hasTopicCol = true;
+                $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+                if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+
+                if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, 1, ?, ?, NOW())");
+                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (priority_id), s (subject)
+                    $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $priority_id, $subject);
+                } else {
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
+                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (priority_id), s (subject)
+                    $stmt->bind_param('siiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
                     $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($new_tid, NOW())");
@@ -70,8 +120,22 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
     if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
     $open_staff = [];
-    $r = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+    $r = $mysqli->query("SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
     if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
+
+    // Temas (opcional)
+    $open_hasTopics = false;
+    $open_topics = [];
+    $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+    if ($checkTopics && $checkTopics->num_rows > 0) {
+        $open_hasTopics = true;
+        $stmt = $mysqli->query('SELECT id, name, dept_id FROM help_topics WHERE is_active = 1 ORDER BY name');
+        if ($stmt) {
+            while ($row = $stmt->fetch_assoc()) {
+                $open_topics[] = $row;
+            }
+        }
+    }
 
     // Búsqueda de usuario (como osTicket): no listar todos por defecto
     $open_user_query = trim($_GET['uq'] ?? '');
@@ -225,7 +289,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -341,6 +405,54 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $stmt->bind_param('ii', $resolved_id, $tid);
                 $ok = $stmt->execute();
                 $msg = 'marked';
+            } elseif ($action === 'transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                $newDeptId = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 0;
+                if ($newDeptId > 0) {
+                    // Validar departamento destino
+                    $deptOk = false;
+                    $stmtD = $mysqli->prepare('SELECT id FROM departments WHERE id = ? AND is_active = 1 LIMIT 1');
+                    if ($stmtD) {
+                        $stmtD->bind_param('i', $newDeptId);
+                        if ($stmtD->execute()) {
+                            $deptOk = (bool) $stmtD->get_result()->fetch_assoc();
+                        }
+                    }
+
+                    if ($deptOk) {
+                        // Si el ticket está asignado, validar que el agente siga siendo válido para el nuevo dept
+                        $currentStaffId = isset($ticketView['staff_id']) && is_numeric($ticketView['staff_id']) ? (int) $ticketView['staff_id'] : 0;
+                        $unassign = false;
+                        if ($currentStaffId > 0) {
+                            $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            if ($stmtSd) {
+                                $stmtSd->bind_param('ii', $generalDeptId, $currentStaffId);
+                                if ($stmtSd->execute()) {
+                                    $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                    $unassign = ($sdept !== $newDeptId);
+                                } else {
+                                    $unassign = true;
+                                }
+                            } else {
+                                $unassign = true;
+                            }
+                        }
+
+                        if ($unassign) {
+                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, staff_id = NULL, updated = NOW() WHERE id = ?');
+                            if ($stmtUp) {
+                                $stmtUp->bind_param('ii', $newDeptId, $tid);
+                                $ok = $stmtUp->execute();
+                            }
+                        } else {
+                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, updated = NOW() WHERE id = ?');
+                            if ($stmtUp) {
+                                $stmtUp->bind_param('ii', $newDeptId, $tid);
+                                $ok = $stmtUp->execute();
+                            }
+                        }
+                        $msg = 'transferred';
+                    }
+                }
             } elseif ($action === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
                 $uid = (int) $_POST['user_id'];
                 $stmt = $mysqli->prepare("UPDATE tickets SET user_id = ?, updated = NOW() WHERE id = ?");

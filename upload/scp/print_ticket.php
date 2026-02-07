@@ -118,6 +118,8 @@ if ($staffName === '') $staffName = '— Sin asignar —';
         .who{font-weight:900;}
         .when{color:var(--muted); font-weight:700; font-size: 12px; white-space:nowrap;}
         .body{white-space:pre-wrap; word-break:break-word; line-height:1.35;}
+        .body img{max-width:100%; height:auto; display:block;}
+        .body iframe{max-width:100%; width:100%;}
         .tag{display:inline-flex; align-items:center; gap:6px; font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#92400e; margin-left:10px;}
 
         .footer{margin-top: 10px; color: var(--muted); font-weight:700; font-size: 12px; text-align:center;}
@@ -183,12 +185,7 @@ if ($staffName === '') $staffName = '— Sin asignar —';
                         <div class="when"><?php echo !empty($e['created']) ? html(date('d/m/Y H:i', strtotime((string)$e['created']))) : ''; ?></div>
                     </div>
                     <div class="body"><?php
-                        $b = (string)($e['body'] ?? '');
-                        if (strpos($b, '<') !== false) {
-                            echo strip_tags($b, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span>');
-                        } else {
-                            echo nl2br(html($b));
-                        }
+                        echo sanitizeRichText((string)($e['body'] ?? ''));
                     ?></div>
                 </div>
             <?php endforeach; ?>

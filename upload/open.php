@@ -46,6 +46,10 @@ if ($_POST) {
 
         if (empty($subject) || empty($body)) {
             $error = 'Asunto y descripción son requeridos';
+        } elseif (stripos($body, 'data:image/') !== false) {
+            $error = 'Las imágenes pegadas dentro del texto no están soportadas. Adjunta la imagen usando la opción de archivos.';
+        } elseif (strlen($body) > 500000) {
+            $error = 'La descripción es demasiado grande. Por favor adjunta archivos en vez de pegarlos dentro del texto.';
         } else {
             // Generar número de ticket
             $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
@@ -226,6 +230,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     <title>Crear Ticket - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
     <style>
         body {
             background: #f1f5f9;
@@ -428,6 +433,26 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
             input.addEventListener('change', updateList);
         })();
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof jQuery === 'undefined' || !jQuery().summernote) return;
+            jQuery('#body').summernote({
+                height: 220,
+                lang: 'es-ES',
+                placeholder: 'Describe tu solicitud…',
+                toolbar: [
+                    ['style', ['bold', 'italic', 'underline']],
+                    ['para', ['ul', 'ol']],
+                    ['insert', ['link'] ],
+                    ['view', ['codeview']]
+                ]
+            });
+        });
     </script>
 </body>
 </html>

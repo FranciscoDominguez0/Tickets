@@ -75,6 +75,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                     <?php endwhile; ?>
                 </ul>
             </div>
+            <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
@@ -95,7 +96,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
         </div>
     </header>
 
-    <!-- Modales: Propietario, Unir, Vinculados, Colaboradores, Bloquear, Borrar -->
+    <!-- Modales: Propietario, Transferir, Unir, Vinculados, Colaboradores, Bloquear, Borrar -->
     <div class="modal fade" id="modalOwner" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -114,6 +115,31 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                         </select>
                     </div>
                     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Cambiar</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTransfer" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="transfer">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Transferir Ticket</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-2">Mueve este ticket a otro departamento. Si el agente asignado no pertenece al nuevo departamento, el ticket quedará sin asignar.</p>
+                        <label class="form-label">Nuevo departamento</label>
+                        <select name="dept_id" class="form-select" required>
+                            <?php
+                            $depts = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+                            while ($depts && $d = $depts->fetch_assoc()):
+                            ?>
+                                <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === (int)($t['dept_id'] ?? 0) ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Transferir</button></div>
                 </form>
             </div>
         </div>
@@ -324,12 +350,47 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
         </div>
         <?php
         $msg = $_GET['msg'] ?? '';
-        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
+        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
         if ($msg && isset($msgText[$msg])): ?>
             <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
+
+        <script>
+          (function () {
+            try {
+              var url = new URL(window.location.href);
+              if (url.searchParams.has('msg')) {
+                url.searchParams.delete('msg');
+                window.history.replaceState({}, document.title, url.pathname + (url.search ? url.search : '') + url.hash);
+              }
+            } catch (e) {}
+
+            var cleanupModals = function () {
+              try {
+                document.querySelectorAll('.modal.show').forEach(function (el) {
+                  if (window.bootstrap && window.bootstrap.Modal) {
+                    var inst = window.bootstrap.Modal.getInstance(el);
+                    if (inst) inst.hide();
+                  }
+                  el.classList.remove('show');
+                  el.style.display = 'none';
+                  el.setAttribute('aria-hidden', 'true');
+                });
+                document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+              } catch (e2) {}
+            };
+
+            window.addEventListener('pageshow', function (ev) {
+              if (ev && ev.persisted) {
+                cleanupModals();
+              }
+            });
+          })();
+        </script>
 
         <?php if (!empty($reply_errors)): ?>
             <div class="alert alert-danger alert-dismissible fade show">
@@ -372,12 +433,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                                 <span><?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?></span>
                             </div>
                             <div class="entry-body"><?php
-                                $b = $e['body'];
-                                if (strpos($b, '<') !== false) {
-                                    echo strip_tags($b, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span>');
-                                } else {
-                                    echo nl2br(html($b));
-                                }
+                                echo sanitizeRichText((string)($e['body'] ?? ''));
                             ?></div>
 
                             <?php $eid = (int) ($e['id'] ?? 0); ?>
@@ -500,6 +556,9 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
     pointer-events: none;
     opacity: 0.95;
 }
+
+.ticket-view-entry .entry-body img { max-width: 100%; height: auto; display: block; }
+.ticket-view-entry .entry-body iframe { max-width: 100%; width: 100%; }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

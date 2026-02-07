@@ -58,6 +58,174 @@ function html($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
+function sanitizeRichText($inputHtml) {
+    $inputHtml = (string)$inputHtml;
+    if ($inputHtml === '') return '';
+    if (stripos($inputHtml, '<') === false) return nl2br(html($inputHtml));
+
+    // Allowed tags and attributes
+    $allowed = [
+        'p' => [],
+        'br' => [],
+        'strong' => [],
+        'em' => [],
+        'b' => [],
+        'i' => [],
+        'u' => [],
+        's' => [],
+        'ul' => [],
+        'ol' => [],
+        'li' => [],
+        'span' => [],
+        'div' => [],
+        'blockquote' => [],
+        'pre' => [],
+        'code' => [],
+        'a' => ['href', 'title', 'target', 'rel'],
+        'img' => ['src', 'alt', 'title', 'width', 'height'],
+        'iframe' => ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'referrerpolicy'],
+    ];
+
+    $stripDisallowed = function ($html) use ($allowed) {
+        $allowedTags = '';
+        foreach (array_keys($allowed) as $t) $allowedTags .= '<' . $t . '>';
+        return strip_tags($html, $allowedTags);
+    };
+
+    $htmlIn = $stripDisallowed($inputHtml);
+
+    if (!class_exists('DOMDocument')) {
+        return $htmlIn;
+    }
+
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="utf-8" ?>' . $htmlIn, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+
+    $normalizeProtocolRelative = function ($url) {
+        $url = trim((string)$url);
+        if (strpos($url, '//') === 0) {
+            return 'https:' . $url;
+        }
+        return $url;
+    };
+
+    $isSafeUrl = function ($url) use ($normalizeProtocolRelative) {
+        $url = trim((string)$url);
+        if ($url === '') return false;
+        if (strpos($url, '#') === 0) return true;
+        if (preg_match('~^mailto:~i', $url)) return true;
+        $url = $normalizeProtocolRelative($url);
+        if (preg_match('~^https?://~i', $url)) return true;
+        return false;
+    };
+
+    $isSafeImgSrc = function ($url) use ($normalizeProtocolRelative) {
+        $url = trim((string)$url);
+        if ($url === '') return false;
+        $url = $normalizeProtocolRelative($url);
+        if (preg_match('~^https?://~i', $url)) return true;
+        if (preg_match('~^data:image/(png|jpe?g|gif|webp);base64,~i', $url)) return true;
+        return false;
+    };
+
+    $isSafeIframeSrc = function ($url) use ($normalizeProtocolRelative) {
+        $url = trim((string)$url);
+        if ($url === '') return false;
+        $url = $normalizeProtocolRelative($url);
+        if (!preg_match('~^https?://~i', $url)) return false;
+        return (bool)preg_match('~^https?://(www\.)?(youtube\.com/embed/|youtube-nocookie\.com/embed/|player\.vimeo\.com/video/)~i', $url);
+    };
+
+    $walker = function ($node) use (&$walker, $allowed, $isSafeUrl, $isSafeImgSrc, $isSafeIframeSrc) {
+        if (!$node || !$node->childNodes) return;
+        // Iterate backwards because we may remove nodes
+        for ($i = $node->childNodes->length - 1; $i >= 0; $i--) {
+            $child = $node->childNodes->item($i);
+            if (!$child) continue;
+
+            if ($child->nodeType === XML_ELEMENT_NODE) {
+                $tag = strtolower($child->nodeName);
+                if (!array_key_exists($tag, $allowed)) {
+                    // Remove disallowed element but keep its text content
+                    $text = $child->textContent;
+                    $node->replaceChild($node->ownerDocument->createTextNode($text), $child);
+                    continue;
+                }
+
+                // Remove all event handlers and disallowed attributes
+                $allowedAttrs = $allowed[$tag];
+                if ($child->hasAttributes()) {
+                    $toRemove = [];
+                    foreach ($child->attributes as $attr) {
+                        $name = strtolower($attr->name);
+                        if (strpos($name, 'on') === 0) {
+                            $toRemove[] = $attr->name;
+                            continue;
+                        }
+                        if ($name === 'style' || $name === 'srcdoc') {
+                            $toRemove[] = $attr->name;
+                            continue;
+                        }
+                        if (!in_array($name, $allowedAttrs, true)) {
+                            $toRemove[] = $attr->name;
+                            continue;
+                        }
+                    }
+                    foreach ($toRemove as $rm) $child->removeAttribute($rm);
+                }
+
+                // Tag-specific attribute sanitization
+                if ($tag === 'a') {
+                    $href = $child->getAttribute('href');
+                    if ($href !== '' && !$isSafeUrl($href)) {
+                        $child->removeAttribute('href');
+                    } elseif ($href !== '' && strpos(trim($href), '//') === 0) {
+                        $child->setAttribute('href', 'https:' . trim($href));
+                    }
+                    $target = strtolower($child->getAttribute('target'));
+                    if ($target === '_blank') {
+                        $child->setAttribute('rel', 'noopener noreferrer');
+                    } else {
+                        $child->removeAttribute('target');
+                        $child->removeAttribute('rel');
+                    }
+                } elseif ($tag === 'img') {
+                    $src = $child->getAttribute('src');
+                    if ($src !== '' && strpos(trim($src), '//') === 0) {
+                        $src = 'https:' . trim($src);
+                        $child->setAttribute('src', $src);
+                    }
+                    if ($src === '' || !$isSafeImgSrc($src)) {
+                        $node->removeChild($child);
+                        continue;
+                    }
+                } elseif ($tag === 'iframe') {
+                    $src = $child->getAttribute('src');
+                    if ($src !== '' && strpos(trim($src), '//') === 0) {
+                        $src = 'https:' . trim($src);
+                        $child->setAttribute('src', $src);
+                    }
+                    if ($src === '' || !$isSafeIframeSrc($src)) {
+                        $node->removeChild($child);
+                        continue;
+                    }
+                }
+
+                $walker($child);
+            } elseif ($child->nodeType === XML_COMMENT_NODE) {
+                $node->removeChild($child);
+            }
+        }
+    };
+
+    $walker($doc);
+    $out = $doc->saveHTML();
+    $out = preg_replace('~^<\?xml[^>]*>~i', '', (string)$out);
+    return (string)$out;
+}
+
 // Formatear fecha
 function formatDate($date) {
     if (!$date) return '-';

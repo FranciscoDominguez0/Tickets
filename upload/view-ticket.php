@@ -56,6 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $body = trim($_POST['body'] ?? '');
         if ($body === '') {
             $reply_error = 'El mensaje no puede estar vacío.';
+        } elseif (stripos($body, 'data:image/') !== false) {
+            $reply_error = 'Las imágenes pegadas dentro del texto no están soportadas. Adjunta la imagen usando la opción de archivos.';
+        } elseif (strlen($body) > 500000) {
+            $reply_error = 'El mensaje es demasiado grande. Por favor adjunta archivos en vez de pegarlos dentro del texto.';
         } elseif ($thread_id <= 0) {
             $reply_error = 'No se encontró el hilo del ticket.';
         } else {
@@ -231,6 +235,7 @@ function humanSize($bytes) {
     <title><?php echo html($t['ticket_number']); ?> - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
     <style>
         body { background: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .container-main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
@@ -300,6 +305,8 @@ function humanSize($bytes) {
         .ticket-view-entry .entry-body { color: #0f172a; white-space: pre-wrap; word-break: break-word; }
         .ticket-view-entry .entry-body p { margin: 0 0 0.5em; }
         .ticket-view-entry .entry-body p:last-child { margin-bottom: 0; }
+        .ticket-view-entry .entry-body img { max-width: 100%; height: auto; display: block; }
+        .ticket-view-entry .entry-body iframe { max-width: 100%; width: 100%; }
 
         .entry-footer {
             font-size: 0.78rem;
@@ -414,12 +421,7 @@ function humanSize($bytes) {
                                         <span><?php echo !empty($e['created']) ? date('d/m/Y H:i', strtotime($e['created'])) : ''; ?></span>
                                     </div>
                                     <div class="entry-body"><?php
-                                        $b = (string) ($e['body'] ?? '');
-                                        if (strpos($b, '<') !== false) {
-                                            echo strip_tags($b, '<p><br><strong><em><b><i><u><s><ul><ol><li><a><span>');
-                                        } else {
-                                            echo nl2br(html($b));
-                                        }
+                                        echo sanitizeRichText((string)($e['body'] ?? ''));
                                     ?></div>
 
                                     <?php if (!empty($attachmentsByEntry[$eid])): ?>
@@ -458,7 +460,7 @@ function humanSize($bytes) {
                         <input type="hidden" name="do" value="reply">
 
                         <div class="mb-3">
-                            <textarea name="body" class="form-control" rows="6" placeholder="Para ayudarle mejor, sea específico y detallado" required></textarea>
+                            <textarea name="body" id="reply_body" class="form-control" rows="6" placeholder="Para ayudarle mejor, sea específico y detallado" required></textarea>
                         </div>
 
                         <div class="attach-zone" id="attach-zone" onclick="document.getElementById('attachments').click();">
@@ -510,6 +512,48 @@ function humanSize($bytes) {
 
         input.addEventListener('change', updateList);
     })();
+</script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof jQuery === 'undefined' || !jQuery().summernote) return;
+        jQuery('#reply_body').summernote({
+            height: 200,
+            lang: 'es-ES',
+            placeholder: 'Para ayudarle mejor, sea específico y detallado',
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline']],
+                ['para', ['ul', 'ol']],
+                ['insert', ['link', 'picture', 'video']],
+                ['view', ['codeview']]
+            ],
+            callbacks: {
+                onImageUpload: function (files) {
+                    if (!files || !files.length) return;
+                    var data = new FormData();
+                    data.append('file', files[0]);
+                    data.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
+                    fetch('editor_image_upload.php', {
+                        method: 'POST',
+                        body: data,
+                        credentials: 'same-origin'
+                    })
+                    .then(function (r) { return r.json(); })
+                    .then(function (json) {
+                        if (!json || !json.ok || !json.url) throw new Error((json && json.error) ? json.error : 'Upload failed');
+                        jQuery('#reply_body').summernote('insertImage', json.url);
+                    })
+                    .catch(function (err) {
+                        alert('No se pudo subir la imagen. Usa Adjuntar archivos o intenta con otra imagen.');
+                        try { console.error(err); } catch (e) {}
+                    });
+                }
+            }
+        });
+    });
 </script>
 </body>
 </html>

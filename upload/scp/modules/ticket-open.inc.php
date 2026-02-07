@@ -3,11 +3,16 @@
 // Usuario preseleccionado cuando se viene desde users.php?id=X
 $preUser = $preSelectedUser ?? null;
 $selected_uid = $preUser ? (int)$preUser['id'] : (isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int)$_POST['user_id'] : 0);
+$selected_dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 0;
+$selected_staff_id = isset($_POST['staff_id']) && is_numeric($_POST['staff_id']) ? (int) $_POST['staff_id'] : 0;
+$selected_topic_id = isset($_POST['topic_id']) && is_numeric($_POST['topic_id']) ? (int) $_POST['topic_id'] : 0;
 $open_departments = $open_departments ?? [];
 $open_priorities = $open_priorities ?? [];
 $open_staff = $open_staff ?? [];
 $open_user_query = $open_user_query ?? '';
 $open_user_results = $open_user_results ?? [];
+$open_hasTopics = $open_hasTopics ?? false;
+$open_topics = $open_topics ?? [];
 ?>
 
 <div class="ticket-open-wrap">
@@ -65,10 +70,22 @@ $open_user_results = $open_user_results ?? [];
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Departamento: <span class="required">*</span></label>
-                    <select name="dept_id" class="form-select" required>
+                    <select name="dept_id" class="form-select" id="open_dept_id" required>
+                        <option value="" <?php echo $selected_dept_id <= 0 ? 'selected' : ''; ?>>— Seleccionar departamento —</option>
                         <?php foreach ($open_departments as $d): ?>
-                            <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === 1 ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
+                            <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === $selected_dept_id ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
                         <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tema:</label>
+                    <select name="topic_id" class="form-select" id="open_topic_id">
+                        <option value="0" <?php echo $selected_topic_id === 0 ? 'selected' : ''; ?>>— General —</option>
+                        <?php if ($open_hasTopics && !empty($open_topics)): ?>
+                            <?php foreach ($open_topics as $tp): ?>
+                                <option value="<?php echo (int)$tp['id']; ?>" data-dept-id="<?php echo (int)($tp['dept_id'] ?? 0); ?>" <?php echo (int)$tp['id'] === $selected_topic_id ? 'selected' : ''; ?>><?php echo html($tp['name']); ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -81,10 +98,10 @@ $open_user_results = $open_user_results ?? [];
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Asignar a:</label>
-                    <select name="staff_id" class="form-select">
+                    <select name="staff_id" class="form-select" id="open_staff_id" <?php echo $selected_dept_id > 0 ? '' : 'disabled'; ?>>
                         <option value="0">— Sin asignar —</option>
                         <?php foreach ($open_staff as $s): ?>
-                            <option value="<?php echo (int)$s['id']; ?>"><?php echo html(trim($s['firstname'] . ' ' . $s['lastname'])); ?></option>
+                            <option value="<?php echo (int)$s['id']; ?>" data-dept-id="<?php echo (int)($s['dept_id'] ?? 0); ?>" <?php echo (int)$s['id'] === $selected_staff_id ? 'selected' : ''; ?>><?php echo html(trim($s['firstname'] . ' ' . $s['lastname'])); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -110,6 +127,52 @@ $open_user_results = $open_user_results ?? [];
         </div>
     </form>
 </div>
+
+<script>
+  (function () {
+    var deptSel = document.getElementById('open_dept_id');
+    var staffSel = document.getElementById('open_staff_id');
+    var topicSel = document.getElementById('open_topic_id');
+    if (!deptSel || !staffSel) return;
+
+    var applyStaffFilter = function () {
+      var deptId = (deptSel.value || '').toString();
+      var hasDept = deptId !== '' && !isNaN(parseInt(deptId, 10));
+      staffSel.disabled = !hasDept;
+
+      var opts = staffSel.querySelectorAll('option');
+      opts.forEach(function (opt) {
+        if (!opt || opt.value === '0') return;
+        var sdept = (opt.getAttribute('data-dept-id') || '').toString();
+        opt.hidden = !hasDept || sdept !== deptId;
+      });
+
+      if (!hasDept) {
+        staffSel.value = '0';
+        return;
+      }
+
+      var selected = staffSel.options[staffSel.selectedIndex];
+      if (selected && selected.hidden) staffSel.value = '0';
+    };
+
+    deptSel.addEventListener('change', applyStaffFilter);
+
+    if (topicSel) {
+      topicSel.addEventListener('change', function () {
+        var opt = topicSel.options[topicSel.selectedIndex];
+        if (!opt) return;
+        var tdept = (opt.getAttribute('data-dept-id') || '').toString();
+        if (tdept !== '' && tdept !== '0') {
+          deptSel.value = tdept;
+          applyStaffFilter();
+        }
+      });
+    }
+
+    applyStaffFilter();
+  })();
+</script>
 
 <!-- Modal: Buscar usuario (sin listar todos) -->
 <div class="modal fade" id="modalUserSearch" tabindex="-1" aria-labelledby="modalUserSearchLabel" aria-hidden="true" data-open-default="<?php echo $open_user_query !== '' ? '1' : '0'; ?>">
