@@ -19,9 +19,18 @@ if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
     $collapseSidebarMenu = true;
 }
 
-// Variables para mensajes
+// Variables para mensajes (usar mensajes flash en sesión para PRG)
 $msg = '';
 $error = '';
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!empty($_SESSION['flash_msg'])) {
+    $msg = $_SESSION['flash_msg'];
+    unset($_SESSION['flash_msg']);
+}
+if (!empty($_SESSION['flash_error'])) {
+    $error = $_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
+}
 
 // Procesamiento de acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -157,6 +166,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
+    }
+    // Al terminar el POST, guardar mensaje en sesión y redirigir (PRG)
+    if (!headers_sent()) {
+        if (!empty($msg)) {
+            $_SESSION['flash_msg'] = $msg;
+        }
+        if (!empty($error)) {
+            $_SESSION['flash_error'] = $error;
+        }
+        header('Location: helptopics.php');
+        exit;
     }
 }
 
@@ -539,6 +559,9 @@ ob_start();
             if (modalEl){
                 var m = new bootstrap.Modal(modalEl);
                 m.show();
+                try {
+                    history.replaceState(null, '', window.location.pathname);
+                } catch (e) {}
                 return;
             }
         }
