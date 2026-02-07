@@ -121,12 +121,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                         "INSERT INTO tasks (title, description, assigned_to, created_by, dept_id, priority, due_date, created) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
                     );
-                    $stmt->bind_param('ssiisss', $title, $description, $assigned_to, $_SESSION['staff_id'], $dept_id, $priority, $due_date_sql);
+                    $createdBy = (int)($_SESSION['staff_id'] ?? 0);
+                    $stmt->bind_param('ssiiiss', $title, $description, $assigned_to, $createdBy, $dept_id, $priority, $due_date_sql);
                     if ($stmt->execute()) {
+                        $taskId = (int)$mysqli->insert_id;
+
+                        $mailProblem = false;
+
+                        // Notificación en BD + correo (solo si se creó asignada a alguien)
+                        $newAssignedTo = $assigned_to ? (int)$assigned_to : null;
+                        if ($newAssignedTo !== null) {
+                            addLog('task_assigned', 'Asignación de tarea a agente', 'task', $taskId, 'staff', $newAssignedTo);
+
+                            $message = 'Se te ha asignado una nueva tarea: ' . (string)$title;
+                            $type = 'task_assigned';
+                            $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                            if ($stmtN) {
+                                $stmtN->bind_param('issi', $newAssignedTo, $message, $type, $taskId);
+                                $stmtN->execute();
+                            } else {
+                                addLog('task_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'task', $taskId, 'staff', $newAssignedTo);
+                            }
+
+                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            if ($stmtS) {
+                                $stmtS->bind_param('i', $newAssignedTo);
+                                if ($stmtS->execute()) {
+                                    $srow = $stmtS->get_result()->fetch_assoc();
+                                    $to = trim((string)($srow['email'] ?? ''));
+                                    if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                        $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
+                                        if ($staffName === '') $staffName = 'Agente';
+
+                                        $subj = '[Asignación] Tarea #' . $taskId . ' - ' . ((string)$title !== '' ? (string)$title : 'Tarea');
+                                        $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tasks.php?id=' . $taskId;
+
+                                        $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                            . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó una tarea</h2>'
+                                            . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó la siguiente tarea:</p>'
+                                            . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>ID:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars((string)$taskId) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Título:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$title) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars((string)($departments[$dept_id]['name'] ?? '')) . '</td></tr>'
+                                            . '</table>'
+                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
+                                            . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                            . '</div>';
+
+                                        $bodyText = 'Se te asignó una tarea: #' . $taskId . "\n" . 'Título: ' . (string)$title . "\n" . 'Ver: ' . $viewUrl;
+                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                        if (!$mailOk) {
+                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                            addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
+                                            $errors[] = 'No se pudo enviar el correo al agente asignado. ' . $err;
+                                            $mailProblem = true;
+                                        }
+                                    } else {
+                                        addLog('task_assign_email_missing', 'Agente sin email válido', 'task', $taskId, 'staff', $newAssignedTo);
+                                        $errors[] = 'El agente asignado no tiene un email válido para enviar notificación.';
+                                        $mailProblem = true;
+                                    }
+                                } else {
+                                    addLog('task_assign_email_lookup_failed', 'No se pudo ejecutar SELECT staff(email)', 'task', $taskId, 'staff', $newAssignedTo);
+                                }
+                            } else {
+                                addLog('task_assign_email_lookup_failed', 'No se pudo preparar SELECT staff(email)', 'task', $taskId, 'staff', $newAssignedTo);
+                            }
+                        }
+
                         $success = 'Tarea creada exitosamente.';
-                        // Redirigir a la vista de la tarea
-                        header('Location: tasks.php?id=' . $mysqli->insert_id);
-                        exit;
+                        if (!$mailProblem) {
+                            header('Location: tasks.php?id=' . $taskId);
+                            exit;
+                        }
                     } else {
                         $errors[] = 'Error al crear la tarea.';
                     }
@@ -158,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                     $errors[] = 'Tarea no encontrada.';
                     break;
                 }
+                $previousAssignedTo = isset($task['assigned_to']) && $task['assigned_to'] !== '' ? (int)$task['assigned_to'] : null;
                 $title = trim($_POST['title'] ?? '');
                 $description = trim($_POST['description'] ?? '');
                 $status = $_POST['status'] ?? $task['status'];
@@ -195,12 +263,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                     $stmt = $mysqli->prepare(
                         "UPDATE tasks SET title = ?, description = ?, status = ?, assigned_to = ?, dept_id = ?, priority = ?, due_date = ?, updated = NOW() WHERE id = ?"
                     );
-                    $stmt->bind_param('ssssiissi', $title, $description, $status, $assigned_to, $dept_id, $priority, $due_date_sql, $task['id']);
+                    $stmt->bind_param('sssiissi', $title, $description, $status, $assigned_to, $dept_id, $priority, $due_date_sql, $task['id']);
                     if ($stmt->execute()) {
+                        $mailProblem = false;
+
+                        // Notificación en BD + correo (solo si se asignó a alguien y cambió)
+                        $newAssignedTo = $assigned_to ? (int)$assigned_to : null;
+                        if ($newAssignedTo !== null && (string)$previousAssignedTo !== (string)$newAssignedTo) {
+                            $taskId = (int)$task['id'];
+                            $taskTitle = (string)$title;
+
+                            addLog('task_assigned', 'Asignación de tarea a agente', 'task', $taskId, 'staff', $newAssignedTo);
+
+                            // Notificación
+                            $message = 'Se te ha asignado una nueva tarea: ' . $taskTitle;
+                            $type = 'task_assigned';
+                            $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                            if ($stmtN) {
+                                $stmtN->bind_param('issi', $newAssignedTo, $message, $type, $taskId);
+                                $stmtN->execute();
+                            } else {
+                                addLog('task_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'task', $taskId, 'staff', $newAssignedTo);
+                            }
+
+                            // Email
+                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            if ($stmtS) {
+                                $stmtS->bind_param('i', $newAssignedTo);
+                                if ($stmtS->execute()) {
+                                    $srow = $stmtS->get_result()->fetch_assoc();
+                                    $to = trim((string)($srow['email'] ?? ''));
+                                    if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                        $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
+                                        if ($staffName === '') $staffName = 'Agente';
+
+                                        $subj = '[Asignación] Tarea #' . $taskId . ' - ' . ($taskTitle !== '' ? $taskTitle : 'Tarea');
+                                        $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tasks.php?id=' . $taskId;
+
+                                        $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                            . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó una tarea</h2>'
+                                            . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó la siguiente tarea:</p>'
+                                            . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>ID:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars((string)$taskId) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Título:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars($taskTitle) . '</td></tr>'
+                                            . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars((string)($task['dept_name'] ?? '')) . '</td></tr>'
+                                            . '</table>'
+                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
+                                            . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                            . '</div>';
+
+                                        $bodyText = 'Se te asignó una tarea: #' . $taskId . "\n" . 'Título: ' . $taskTitle . "\n" . 'Ver: ' . $viewUrl;
+                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                        if (!$mailOk) {
+                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                            addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
+                                            $errors[] = 'No se pudo enviar el correo al agente asignado. ' . $err;
+                                            $mailProblem = true;
+                                        }
+                                    } else {
+                                        addLog('task_assign_email_missing', 'Agente sin email válido', 'task', $taskId, 'staff', $newAssignedTo);
+                                        $errors[] = 'El agente asignado no tiene un email válido para enviar notificación.';
+                                        $mailProblem = true;
+                                    }
+                                } else {
+                                    addLog('task_assign_email_lookup_failed', 'No se pudo ejecutar SELECT staff(email)', 'task', $taskId, 'staff', $newAssignedTo);
+                                }
+                            } else {
+                                addLog('task_assign_email_lookup_failed', 'No se pudo preparar SELECT staff(email)', 'task', $taskId, 'staff', $newAssignedTo);
+                            }
+                        }
+
                         $success = 'Tarea actualizada exitosamente.';
                         // Redirigir para limpiar POST y mostrar cambios
-                        header('Location: ' . $_SERVER['REQUEST_URI']);
-                        exit;
+                        if (!$mailProblem) {
+                            header('Location: ' . $_SERVER['REQUEST_URI']);
+                            exit;
+                        }
                     } else {
                         $errors[] = 'Error al actualizar la tarea.';
                     }
