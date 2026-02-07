@@ -20,7 +20,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="#"><i class="bi bi-envelope"></i> Enviar restablecer contraseña</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-pencil"></i> Editar perfil</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalEditUser"><i class="bi bi-pencil"></i> Editar perfil</a></li>
                 </ul>
             </div>
         </div>
@@ -67,12 +67,36 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                         Estado de usuario actualizado correctamente.
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                     </div>
+                    <script>
+                    (function(){
+                        try {
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('msg');
+                            history.replaceState(null, '', url.toString());
+                        } catch (e) {}
+                    })();
+                    </script>
+                <?php endif; ?>
+                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'profile_updated'): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
+                        Perfil de usuario actualizado correctamente.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                    <script>
+                    (function(){
+                        try {
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('msg');
+                            history.replaceState(null, '', url.toString());
+                        } catch (e) {}
+                    })();
+                    </script>
                 <?php endif; ?>
                 <div class="user-view-detail">
                     <label>Nombre</label>
                     <div class="value">
                         <a href="#"><?php echo html($viewUserName); ?></a>
-                        <i class="bi bi-pencil edit-icon" title="Editar nombre"></i>
+                        <a href="javascript:void(0)" class="edit-icon" data-bs-toggle="modal" data-bs-target="#modalEditUser" title="Editar perfil"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
                 <div class="user-view-detail">
@@ -107,6 +131,86 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 </div>
             </div>
         </div>
+
+        <!-- Modal: editar perfil de usuario -->
+        <div class="modal fade" id="modalEditUser" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar perfil</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form method="post" action="users.php?id=<?php echo $uid; ?>">
+                        <div class="modal-body">
+                            <input type="hidden" name="do" value="update_profile">
+                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" required value="<?php echo html($viewUser['email']); ?>">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre</label>
+                                        <input type="text" name="firstname" class="form-control" required value="<?php echo html($viewUser['firstname']); ?>">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Apellido</label>
+                                        <input type="text" name="lastname" class="form-control" required value="<?php echo html($viewUser['lastname']); ?>">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label">Organización</label>
+                                <input type="text" name="company" class="form-control" value="<?php echo html((string)($viewUser['company'] ?? '')); ?>">
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        (function(){
+            function forceCloseEditModal(){
+                var el = document.getElementById('modalEditUser');
+                if (el && window.bootstrap && window.bootstrap.Modal) {
+                    try {
+                        if (typeof window.bootstrap.Modal.getInstance === 'function') {
+                            var inst = window.bootstrap.Modal.getInstance(el);
+                            if (inst) inst.hide();
+                        }
+                    } catch (e) {}
+                }
+
+                try {
+                    document.body.classList.remove('modal-open');
+                    document.body.style.removeProperty('padding-right');
+                    document.querySelectorAll('.modal-backdrop').forEach(function(b){ b.remove(); });
+                } catch (e) {}
+
+                if (el) {
+                    el.classList.remove('show');
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
+                }
+            }
+
+            window.addEventListener('pageshow', function(ev){
+                if (ev && ev.persisted) {
+                    forceCloseEditModal();
+                }
+            });
+        })();
+        </script>
 
 <?php $activeTab = $_GET['t'] ?? 'tickets'; ?>
         <ul class="user-view-tabs" role="tablist">

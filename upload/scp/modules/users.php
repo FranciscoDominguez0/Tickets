@@ -106,6 +106,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'update_profile' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int) $_POST['user_id'];
+        $email = trim($_POST['email'] ?? '');
+        $firstname = trim($_POST['firstname'] ?? '');
+        $lastname = trim($_POST['lastname'] ?? '');
+        $company = trim($_POST['company'] ?? '');
+
+        $edit_errors = [];
+        if ($email === '') {
+            $edit_errors[] = 'El email es obligatorio.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $edit_errors[] = 'Email no válido.';
+        }
+        if ($firstname === '') $edit_errors[] = 'El nombre es obligatorio.';
+        if ($lastname === '') $edit_errors[] = 'El apellido es obligatorio.';
+
+        if (empty($edit_errors)) {
+            $stmtE = $mysqli->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
+            if ($stmtE) {
+                $stmtE->bind_param('si', $email, $user_id);
+                if ($stmtE->execute()) {
+                    if ($stmtE->get_result()->fetch_assoc()) {
+                        $edit_errors[] = 'Ya existe un usuario con ese email.';
+                    }
+                }
+            }
+        }
+
+        if (empty($edit_errors)) {
+            $companyVal = $company !== '' ? $company : null;
+            $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, company = ?, updated = NOW() WHERE id = ?');
+            if ($stmtU) {
+                $stmtU->bind_param('ssssi', $email, $firstname, $lastname, $companyVal, $user_id);
+                if ($stmtU->execute()) {
+                    header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
+                    exit;
+                }
+            }
+            $edit_errors[] = 'Error al actualizar el usuario.';
+        }
+        $add_errors = array_merge($add_errors ?? [], $edit_errors);
+    }
+}
+
 // AJAX: buscar organizaciones
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
     $query = trim($_GET['q']);
