@@ -295,6 +295,10 @@ if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
         </main>
     </div>
 
+    <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
+        Derechos de autor © 2026 Vigitec Panama - Sistema de Tickets - Todos los derechos reservados.
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>

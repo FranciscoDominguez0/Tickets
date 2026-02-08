@@ -11,26 +11,496 @@ if (!isset($_SESSION['staff_id'])) {
 requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'emails';
+$emailTab = 'emails';
 
-$content = '
-<div class="page-header">
-    <h1>Correos Electrónicos</h1>
-    <p>Configuración de plantillas de correo y notificaciones</p>
+$collapseSettingsMenu = false;
+if (!isset($_SESSION['admin_sidebar_menu_seen'])) {
+    $_SESSION['admin_sidebar_menu_seen'] = 1;
+    $collapseSettingsMenu = true;
+}
+
+$ensureEmailAccountsTable = function () use ($mysqli) {
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS email_accounts (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  email VARCHAR(255) NOT NULL,\n"
+        . "  name VARCHAR(255) NULL,\n"
+        . "  priority VARCHAR(32) NULL,\n"
+        . "  dept_id INT NULL,\n"
+        . "  is_default TINYINT(1) NOT NULL DEFAULT 0,\n"
+        . "  smtp_host VARCHAR(255) NULL,\n"
+        . "  smtp_port INT NULL,\n"
+        . "  smtp_secure VARCHAR(10) NULL,\n"
+        . "  smtp_user VARCHAR(255) NULL,\n"
+        . "  smtp_pass VARCHAR(255) NULL,\n"
+        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_email (email),\n"
+        . "  KEY idx_default (is_default),\n"
+        . "  KEY idx_dept (dept_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool)$mysqli->query($sql);
+};
+
+$ensureEmailAccountsTable();
+
+// Sembrar la cuenta actual (config.php) si no existe ninguna
+if (isset($mysqli) && $mysqli) {
+    $resSeed = $mysqli->query('SELECT COUNT(*) c FROM email_accounts');
+    $countSeed = 0;
+    if ($resSeed) {
+        $rowSeed = $resSeed->fetch_assoc();
+        $countSeed = (int)($rowSeed['c'] ?? 0);
+    }
+    if ($countSeed === 0) {
+        $seedEmail = defined('MAIL_FROM') ? (string)MAIL_FROM : (defined('SMTP_USER') ? (string)SMTP_USER : '');
+        $seedName = defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '';
+        $seedHost = defined('SMTP_HOST') ? (string)SMTP_HOST : '';
+        $seedPort = defined('SMTP_PORT') ? (int)SMTP_PORT : null;
+        $seedSecure = defined('SMTP_SECURE') ? (string)SMTP_SECURE : '';
+        $seedUser = defined('SMTP_USER') ? (string)SMTP_USER : '';
+        $seedPass = defined('SMTP_PASS') ? (string)SMTP_PASS : '';
+
+        if ($seedEmail !== '' && filter_var($seedEmail, FILTER_VALIDATE_EMAIL)) {
+            $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+            if ($stmtSeed) {
+                $prioritySeed = 'Normal';
+                $portSeed = $seedPort;
+                $stmtSeed->bind_param('ssssisss', $seedEmail, $seedName, $prioritySeed, $seedHost, $portSeed, $seedSecure, $seedUser, $seedPass);
+                $stmtSeed->execute();
+            }
+        }
+    }
+}
+
+$msg = '';
+$error = '';
+if (!empty($_SESSION['flash_msg'])) {
+    $msg = (string)$_SESSION['flash_msg'];
+    unset($_SESSION['flash_msg']);
+}
+if (!empty($_SESSION['flash_error'])) {
+    $error = (string)$_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
+}
+
+$loadDepartments = function () use ($mysqli) {
+    $departments = [];
+    if (!isset($mysqli) || !$mysqli) return $departments;
+    $res = $mysqli->query('SELECT id, name FROM departments ORDER BY name');
+    if ($res) {
+        while ($r = $res->fetch_assoc()) {
+            $departments[] = $r;
+        }
+    }
+    return $departments;
+};
+
+$departments = $loadDepartments();
+
+$fetchEmailAccounts = function () use ($mysqli) {
+    $items = [];
+    if (!isset($mysqli) || !$mysqli) return $items;
+    $sql = "SELECT ea.*, d.name AS dept_name\n"
+         . "FROM email_accounts ea\n"
+         . "LEFT JOIN departments d ON d.id = ea.dept_id\n"
+         . "ORDER BY ea.is_default DESC, ea.id ASC";
+    $res = $mysqli->query($sql);
+    if ($res) {
+        while ($r = $res->fetch_assoc()) {
+            $items[] = $r;
+        }
+    }
+    return $items;
+};
+
+$getEmailAccount = function ($id) use ($mysqli) {
+    if (!isset($mysqli) || !$mysqli) return null;
+    $id = (int)$id;
+    if ($id <= 0) return null;
+    $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE id = ?');
+    if (!$stmt) return null;
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    return $res ? $res->fetch_assoc() : null;
+};
+
+$setDefaultEmail = function ($id) use ($mysqli) {
+    if (!isset($mysqli) || !$mysqli) return false;
+    $id = (int)$id;
+    if ($id <= 0) return false;
+    $mysqli->query('UPDATE email_accounts SET is_default = 0');
+    $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ?');
+    if (!$stmt) return false;
+    $stmt->bind_param('i', $id);
+    return $stmt->execute();
+};
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRF()) {
+        $_SESSION['flash_error'] = 'Token CSRF inválido.';
+        header('Location: emails.php');
+        exit;
+    }
+
+    $do = (string)($_POST['do'] ?? '');
+    if ($do === 'create') {
+        $email = trim((string)($_POST['email'] ?? ''));
+        $name = trim((string)($_POST['name'] ?? ''));
+        $priority = trim((string)($_POST['priority'] ?? 'Normal'));
+        $dept_id = isset($_POST['dept_id']) && $_POST['dept_id'] !== '' ? (int)$_POST['dept_id'] : null;
+        $is_default = isset($_POST['is_default']) ? 1 : 0;
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['flash_error'] = 'Correo electrónico inválido.';
+        } else {
+            if ($is_default) {
+                $mysqli->query('UPDATE email_accounts SET is_default = 0');
+            }
+            $stmt = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, created, updated) VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
+            if ($stmt) {
+                $dept_id_param = $dept_id;
+                $stmt->bind_param('sssii', $email, $name, $priority, $dept_id_param, $is_default);
+                if ($stmt->execute()) {
+                    $_SESSION['flash_msg'] = 'Email agregado correctamente.';
+                } else {
+                    $_SESSION['flash_error'] = 'No se pudo agregar el email.';
+                }
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo agregar el email.';
+            }
+        }
+        header('Location: emails.php');
+        exit;
+    }
+
+    if ($do === 'update') {
+        $id = (int)($_POST['id'] ?? 0);
+        $email = trim((string)($_POST['email'] ?? ''));
+        $name = trim((string)($_POST['name'] ?? ''));
+        $priority = trim((string)($_POST['priority'] ?? 'Normal'));
+        $dept_id = isset($_POST['dept_id']) && $_POST['dept_id'] !== '' ? (int)$_POST['dept_id'] : null;
+
+        $smtp_host = trim((string)($_POST['smtp_host'] ?? ''));
+        $smtp_port = isset($_POST['smtp_port']) && $_POST['smtp_port'] !== '' ? (int)$_POST['smtp_port'] : null;
+        $smtp_secure = trim((string)($_POST['smtp_secure'] ?? ''));
+        $smtp_user = trim((string)($_POST['smtp_user'] ?? ''));
+        $smtp_pass = (string)($_POST['smtp_pass'] ?? '');
+        $keep_pass = isset($_POST['keep_pass']) ? 1 : 0;
+
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'ID inválido.';
+            header('Location: emails.php');
+            exit;
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['flash_error'] = 'Correo electrónico inválido.';
+            header('Location: emails.php?id=' . $id . '#account');
+            exit;
+        }
+
+        if ($keep_pass && $smtp_pass === '') {
+            $stmtP = $mysqli->prepare('SELECT smtp_pass FROM email_accounts WHERE id = ?');
+            if ($stmtP) {
+                $stmtP->bind_param('i', $id);
+                $stmtP->execute();
+                $row = $stmtP->get_result()->fetch_assoc();
+                $smtp_pass = (string)($row['smtp_pass'] ?? '');
+            }
+        }
+
+        $stmt = $mysqli->prepare('UPDATE email_accounts SET email = ?, name = ?, priority = ?, dept_id = ?, smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_pass = ? WHERE id = ?');
+        if ($stmt) {
+            $dept_id_param = $dept_id;
+            $smtp_port_param = $smtp_port;
+            $stmt->bind_param('sssisisssi', $email, $name, $priority, $dept_id_param, $smtp_host, $smtp_port_param, $smtp_secure, $smtp_user, $smtp_pass, $id);
+            if ($stmt->execute()) {
+                $_SESSION['flash_msg'] = 'Email actualizado correctamente.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo actualizar el email.';
+            }
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo actualizar el email.';
+        }
+        header('Location: emails.php?id=' . $id . '#account');
+        exit;
+    }
+
+    if ($do === 'mass_process') {
+        $ids = $_POST['ids'] ?? [];
+        $action = (string)($_POST['a'] ?? '');
+
+        if (empty($ids) || !is_array($ids)) {
+            $_SESSION['flash_error'] = 'Debes seleccionar al menos un email.';
+            header('Location: emails.php');
+            exit;
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($v) => $v > 0)));
+        if (empty($ids)) {
+            $_SESSION['flash_error'] = 'Debes seleccionar al menos un email.';
+            header('Location: emails.php');
+            exit;
+        }
+
+        if ($action === 'delete') {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $types = str_repeat('i', count($ids));
+
+            $stmtDflt = $mysqli->prepare("SELECT COUNT(*) c FROM email_accounts WHERE is_default = 1 AND id IN ($placeholders)");
+            if ($stmtDflt) {
+                $stmtDflt->bind_param($types, ...$ids);
+                $stmtDflt->execute();
+                $row = $stmtDflt->get_result()->fetch_assoc();
+                if ((int)($row['c'] ?? 0) > 0) {
+                    $_SESSION['flash_error'] = 'No puedes eliminar el email por defecto.';
+                    header('Location: emails.php');
+                    exit;
+                }
+            }
+
+            $stmt = $mysqli->prepare("DELETE FROM email_accounts WHERE id IN ($placeholders)");
+            if ($stmt) {
+                $stmt->bind_param($types, ...$ids);
+                if ($stmt->execute()) {
+                    $_SESSION['flash_msg'] = 'Emails eliminados correctamente.';
+                } else {
+                    $_SESSION['flash_error'] = 'No se pudieron eliminar los emails.';
+                }
+            } else {
+                $_SESSION['flash_error'] = 'No se pudieron eliminar los emails.';
+            }
+            header('Location: emails.php');
+            exit;
+        }
+
+        if ($action === 'set_default') {
+            $id = (int)($ids[0] ?? 0);
+            if ($id > 0 && $setDefaultEmail($id)) {
+                $_SESSION['flash_msg'] = 'Email por defecto actualizado.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo cambiar el email por defecto.';
+            }
+            header('Location: emails.php');
+            exit;
+        }
+
+        $_SESSION['flash_error'] = 'Acción no reconocida.';
+        header('Location: emails.php');
+        exit;
+    }
+}
+
+$emails = $fetchEmailAccounts();
+
+ob_start();
+?>
+
+<div class="settings-hero">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+            <span class="settings-hero-icon"><i class="bi bi-envelope"></i></span>
+            <div>
+                <h1>Direcciones de correo electrónico</h1>
+                <p>Gestiona cuentas de envío (SMTP) y selecciona el email por defecto</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addEmailModal">
+                <i class="bi bi-plus-circle"></i> Añadir nuevo Email
+            </button>
+        </div>
+    </div>
 </div>
 
+<?php if ($error): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($error); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if ($msg): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i><?php echo html($msg); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
 <div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Plantillas de Correo</h5>
+    <div class="col-12">
+        <div class="card settings-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="bi bi-inbox"></i> Correos</strong>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="setDefaultBtn">
+                        <i class="bi bi-star"></i> Poner por defecto
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="deleteEmailsBtn">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <p>Aquí se configurarán las plantillas de correo electrónico.</p>
+            <div class="card-body p-0">
+                <form method="post" action="emails.php" id="emailsMassForm">
+                    <input type="hidden" name="do" value="mass_process">
+                    <?php csrfField(); ?>
+                    <input type="hidden" name="a" value="" id="massActionInput">
+
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="30"><input type="checkbox" id="selectAllEmails" class="form-check-input"></th>
+                                    <th>Correo electrónico</th>
+                                    <th>Prioridad</th>
+                                    <th>Departamento</th>
+                                    <th>Creado</th>
+                                    <th>Última actualización</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($emails)): ?>
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">No hay correos configurados.</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php foreach ($emails as $e): ?>
+                                        <tr>
+                                            <td><input type="checkbox" name="ids[]" value="<?php echo (int)$e['id']; ?>" class="form-check-input email-checkbox"></td>
+                                            <td>
+                                                <a href="email.php?id=<?php echo (int)$e['id']; ?>" class="fw-semibold text-decoration-none">
+                                                    <?php echo html((string)$e['name'] ?: (string)$e['email']); ?>
+                                                    &lt;<?php echo html((string)$e['email']); ?>&gt;
+                                                </a>
+                                                <?php if ((int)$e['is_default'] === 1): ?>
+                                                    <span class="badge bg-success ms-2">Por defecto</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo html((string)($e['priority'] ?: 'Normal')); ?></td>
+                                            <td><?php echo html((string)($e['dept_name'] ?: '')); ?></td>
+                                            <td><?php echo html(formatDate($e['created'] ?? null)); ?></td>
+                                            <td><?php echo html(formatDate($e['updated'] ?? null)); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
-';
 
+<div class="modal fade" id="addEmailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="emails.php">
+                <input type="hidden" name="do" value="create">
+                <?php csrfField(); ?>
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Añadir nuevo Email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre (opcional)</label>
+                                <input type="text" name="name" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Prioridad</label>
+                                <select class="form-select" name="priority">
+                                    <option value="Normal" selected>Normal</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Baja">Baja</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Departamento</label>
+                                <select class="form-select" name="dept_id">
+                                    <option value="">Seleccionar</option>
+                                    <?php foreach ($departments as $d): ?>
+                                        <option value="<?php echo (int)$d['id']; ?>"><?php echo html((string)$d['name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_default" id="new_is_default">
+                        <label class="form-check-label" for="new_is_default">Establecer como por defecto</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    function getCheckedIds(){
+        var boxes = document.querySelectorAll('.email-checkbox:checked');
+        var ids = [];
+        boxes.forEach(function(b){ ids.push(b.value); });
+        return ids;
+    }
+
+    var selectAll = document.getElementById('selectAllEmails');
+    if (selectAll) {
+        selectAll.addEventListener('change', function(){
+            var boxes = document.querySelectorAll('.email-checkbox');
+            boxes.forEach(function(b){ b.checked = selectAll.checked; });
+        });
+    }
+
+    var setDefaultBtn = document.getElementById('setDefaultBtn');
+    if (setDefaultBtn) {
+        setDefaultBtn.addEventListener('click', function(){
+            var ids = getCheckedIds();
+            if (ids.length < 1) return;
+            var form = document.getElementById('emailsMassForm');
+            var act = document.getElementById('massActionInput');
+            act.value = 'set_default';
+            form.submit();
+        });
+    }
+
+    var deleteBtn = document.getElementById('deleteEmailsBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(){
+            var ids = getCheckedIds();
+            if (ids.length < 1) return;
+            if (!confirm('¿Deseas eliminar los emails seleccionados?')) return;
+            var form = document.getElementById('emailsMassForm');
+            var act = document.getElementById('massActionInput');
+            act.value = 'delete';
+            form.submit();
+        });
+    }
+})();
+</script>
+
+<?php
+$content = ob_get_clean();
 require_once 'layout_admin.php';
 ?>

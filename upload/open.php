@@ -718,5 +718,10 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             </div>
         </div>
     </div>
+    <footer style="text-align: center; padding: 20px 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; margin-top: 40px; color: #6c757d; font-size: 12px;">
+        <p style="margin: 0;">
+            Derechos de autor &copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?> - Sistema de Tickets - Todos los derechos reservados.
+        </p>
+    </footer>
 </body>
 </html>

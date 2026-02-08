@@ -93,15 +93,48 @@
                             <span class="icon"><i class="bi bi-list-check"></i></span>
                             Administrar
                         </a>
-                        <a href="emails.php" class="sidebar-link <?php echo ($currentRoute === 'emails') ? 'active' : ''; ?>">
+                        <?php
+                        $emailTab = isset($emailTab) ? (string)$emailTab : '';
+                        $isEmailRoute = ($currentRoute === 'emails');
+                        $expandEmail = ($isEmailRoute && empty($collapseSettingsMenu));
+                        ?>
+                        <button type="button" class="sidebar-toggle <?php echo $expandEmail ? 'active expanded' : ''; ?>" data-subnav="emails-subnav" aria-controls="emails-subnav" aria-expanded="<?php echo $expandEmail ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-envelope"></i></span>
                             Correos Electrónicos
-                        </a>
+                            <span class="arrow"><i class="bi bi-chevron-right"></i></span>
+                        </button>
+                        <ul id="emails-subnav" class="sidebar-subnav <?php echo $expandEmail ? 'open' : ''; ?>">
+                            <li>
+                                <a href="emails.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'emails') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-inbox"></i></span>
+                                    Correos
+                                </a>
+                            </li>
+                            <li>
+                                <a href="emailsettings.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'settings') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-gear"></i></span>
+                                    Configuración
+                                </a>
+                            </li>
+                            <li>
+                                <a href="banlist.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'banlist') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-slash-circle"></i></span>
+                                    Lista de prohibidos
+                                </a>
+                            </li>
+                            <li>
+                                <a href="emailtest.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'test') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-activity"></i></span>
+                                    Diagnóstico
+                                </a>
+                            </li>
+                        </ul>
                         <a href="staff.php" class="sidebar-link <?php echo ($currentRoute === 'staff') ? 'active' : ''; ?>">
                             <span class="icon"><i class="bi bi-people"></i></span>
                             Agentes
                         </a>
                     </li>
+
                 </ul>
             </div>
         </aside>

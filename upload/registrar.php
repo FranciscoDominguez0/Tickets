@@ -216,7 +216,7 @@ $bodyStyle = $loginBg !== ''
         <!-- FOOTER -->
         <div class="support-footer">
             <p class="copyright">
-                Derechos de autor © <?php echo date('Y'); ?> Vigitec Panama - <?php echo APP_NAME; ?> - Todos los derechos reservados.
+                Derechos de autor &copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?> - <?php echo APP_NAME; ?> - Todos los derechos reservados.
             </p>
         </div>
     </div>

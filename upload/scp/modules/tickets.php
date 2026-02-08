@@ -535,15 +535,44 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $stmt = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE id = ?");
                     $stmt->bind_param('i', $ticketView['user_id']);
                     $ok = $stmt->execute();
+
+                    if ($ok) {
+                        $mysqli->query("CREATE TABLE IF NOT EXISTS banlist (\n"
+                            . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+                            . "  email VARCHAR(255) NULL,\n"
+                            . "  domain VARCHAR(255) NULL,\n"
+                            . "  notes TEXT NULL,\n"
+                            . "  is_active TINYINT(1) NOT NULL DEFAULT 1,\n"
+                            . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+                            . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+                            . "  KEY idx_email (email),\n"
+                            . "  KEY idx_domain (domain),\n"
+                            . "  KEY idx_active (is_active)\n"
+                            . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+                        $emailNorm = strtolower(trim((string)$email));
+                        if ($emailNorm !== '' && filter_var($emailNorm, FILTER_VALIDATE_EMAIL)) {
+                            $existsB = false;
+                            $stmtB = $mysqli->prepare('SELECT id FROM banlist WHERE is_active = 1 AND email = ? LIMIT 1');
+                            if ($stmtB) {
+                                $stmtB->bind_param('s', $emailNorm);
+                                if ($stmtB->execute()) {
+                                    $existsB = (bool)$stmtB->get_result()->fetch_assoc();
+                                }
+                            }
+
+                            if (!$existsB) {
+                                $note = 'Bloqueado desde ticket #' . (string)$tid;
+                                $stmtI = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 1, NOW(), NOW())');
+                                if ($stmtI) {
+                                    $stmtI->bind_param('ss', $emailNorm, $note);
+                                    $stmtI->execute();
+                                }
+                            }
+                        }
+                    }
+
                     $msg = 'blocked';
-                }
-            } elseif ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && $_POST['confirm'] === '1') {
-                $stmt = $mysqli->prepare("DELETE FROM tickets WHERE id = ?");
-                $stmt->bind_param('i', $tid);
-                $ok = $stmt->execute();
-                if ($ok) {
-                    header('Location: users.php?id=' . (int)$ticketView['user_id'] . '&msg=ticket_deleted');
-                    exit;
                 }
             } elseif ($action === 'merge' && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim($_POST['target_ticket_id'] ?? ''))) {
                 $target_input = trim($_POST['target_ticket_id']);

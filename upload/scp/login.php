@@ -119,5 +119,11 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
     </div>
 
     <script src="js/login.js"></script>
+    
+    <footer style="text-align: center; padding: 0; margin-top: -10px; color: white; font-size: 12px;">
+        <p style="margin: 0;">
+            Copyright © <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?>
+        </p>
+    </footer>
 </body>
 </html>
