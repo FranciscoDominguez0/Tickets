@@ -472,6 +472,24 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
     exit;
 }
 
+// Cambiar organización (bulk): validar selección (sin depender de JS)
+if (isset($_GET['a']) && $_GET['a'] === 'bulk_org') {
+    $ids = [];
+    if (isset($_GET['ids']) && is_array($_GET['ids'])) {
+        foreach ($_GET['ids'] as $v) {
+            $v = trim((string)$v);
+            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+        }
+    }
+    $ids = array_values(array_unique($ids));
+    if (empty($ids)) {
+        header('Location: users.php?msg=org_bulk_no_selection');
+        exit;
+    }
+    header('Location: users.php');
+    exit;
+}
+
 // Export CSV seleccionados (users.php?a=export_selected&ids=1,2,3)
 if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
     $ids = [];
@@ -717,6 +735,12 @@ $statusBadges = [
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_no_selection'): ?>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            Debes seleccionar al menos un usuario para cambiar la organización.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
     <!-- Búsqueda -->
     <div class="search-card">
@@ -752,7 +776,7 @@ $statusBadges = [
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><button type="submit" form="usersListForm" name="a" value="export_selected" class="dropdown-item">Exportar seleccionados</button></li>
-                    <li><a class="dropdown-item" href="#">Cambiar organización</a></li>
+                    <li><button type="submit" form="usersListForm" name="a" value="bulk_org" class="dropdown-item">Cambiar organización</button></li>
                 </ul>
             </div>
         </div>
