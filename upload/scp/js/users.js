@@ -28,6 +28,17 @@
   var btn = document.getElementById('exportSelectedUsers');
   if (!btn) return;
 
+  function showNeedSelect() {
+    try {
+      var el = document.getElementById('exportNeedSelectModal');
+      if (el && window.bootstrap && window.bootstrap.Modal) {
+        window.bootstrap.Modal.getOrCreateInstance(el).show();
+        return;
+      }
+    } catch (e) {}
+    alert('Debe seleccionar al menos un usuario para exportar.');
+  }
+
   btn.addEventListener('click', function(e) {
     e.preventDefault();
     var ids = [];
@@ -36,7 +47,7 @@
       if (/^\d+$/.test(v)) ids.push(v);
     });
     if (!ids.length) {
-      alert('Seleccione al menos un usuario para exportar.');
+      showNeedSelect();
       return;
     }
 

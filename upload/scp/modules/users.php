@@ -474,17 +474,23 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
 
 // Export CSV seleccionados (users.php?a=export_selected&ids=1,2,3)
 if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
-    $idsRaw = (string)($_GET['ids'] ?? '');
-    $ids = array_values(array_filter(array_map(function ($v) {
-        $v = trim((string)$v);
-        return ctype_digit($v) ? (int)$v : null;
-    }, explode(',', $idsRaw)), function ($v) {
-        return is_int($v) && $v > 0;
-    }));
+    $ids = [];
+    if (isset($_GET['ids']) && is_array($_GET['ids'])) {
+        foreach ($_GET['ids'] as $v) {
+            $v = trim((string)$v);
+            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+        }
+    } else {
+        $idsRaw = (string)($_GET['ids'] ?? '');
+        foreach (explode(',', $idsRaw) as $v) {
+            $v = trim((string)$v);
+            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+        }
+    }
 
     $ids = array_values(array_unique($ids));
     if (empty($ids)) {
-        header('Location: users.php');
+        header('Location: users.php?msg=export_no_selection');
         exit;
     }
     // límite de seguridad
@@ -705,6 +711,12 @@ $statusBadges = [
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'export_no_selection'): ?>
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            Debes seleccionar al menos un usuario para exportar.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
     <!-- Búsqueda -->
     <div class="search-card">
@@ -739,9 +751,26 @@ $statusBadges = [
                     <i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="javascript:void(0)" id="exportSelectedUsers">Exportar seleccionados</a></li>
+                    <li><button type="submit" form="usersListForm" name="a" value="export_selected" class="dropdown-item">Exportar seleccionados</button></li>
                     <li><a class="dropdown-item" href="#">Cambiar organización</a></li>
                 </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exportNeedSelectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Atención</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    Debes seleccionar al menos un usuario para exportar.
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+                </div>
             </div>
         </div>
     </div>
@@ -756,6 +785,14 @@ $statusBadges = [
         </div>
     <?php else: ?>
         <div class="table-card">
+            <form id="usersListForm" method="get" action="users.php">
+                <?php if ($search !== ''): ?>
+                    <input type="hidden" name="q" value="<?php echo html($search); ?>">
+                <?php endif; ?>
+                <?php if ($currentSort !== 'name' || $currentOrder !== 'ASC'): ?>
+                    <input type="hidden" name="sort" value="<?php echo html($currentSort); ?>">
+                    <input type="hidden" name="order" value="<?php echo html($currentOrder); ?>">
+                <?php endif; ?>
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
@@ -830,6 +867,8 @@ $statusBadges = [
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            </form>
 
             <!-- Pie de tabla: selección, paginación, mostrando -->
             <div class="table-footer-bar">
