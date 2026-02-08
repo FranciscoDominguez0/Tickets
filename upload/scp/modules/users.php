@@ -8,6 +8,168 @@ if ($chkPhone && $chkPhone->num_rows > 0) {
     $usersHasPhone = true;
 }
 
+$importFlash = null;
+if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_flash'])) {
+    $importFlash = $_SESSION['users_import_flash'];
+    unset($_SESSION['users_import_flash']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'import_users') {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $imported = 0;
+        $skipped = 0;
+        $failed = 0;
+
+        $makePassword = function () {
+            try {
+                return bin2hex(random_bytes(6));
+            } catch (Throwable $e) {
+                return (string)mt_rand(100000, 999999) . (string)mt_rand(100000, 999999);
+            }
+        };
+
+        $parseName = function ($nameStr) {
+            $nameStr = trim((string)$nameStr);
+            if ($nameStr === '') return ['', ''];
+            $parts = preg_split('/\s+/', $nameStr);
+            $firstname = (string)array_shift($parts);
+            $lastname = trim(implode(' ', $parts));
+            return [$firstname, $lastname];
+        };
+
+        $createUser = function ($email, $name, $phone) use ($mysqli, $usersHasPhone, $makePassword, $parseName, &$imported, &$skipped, &$failed) {
+            $email = trim((string)$email);
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $failed++;
+                return;
+            }
+
+            [$firstname, $lastname] = $parseName($name);
+            if ($firstname === '') {
+                $prefix = explode('@', $email)[0] ?? '';
+                $firstname = $prefix !== '' ? $prefix : 'Usuario';
+            }
+            if ($lastname === '') {
+                $lastname = '';
+            }
+
+            $stmtC = $mysqli->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+            if (!$stmtC) {
+                $failed++;
+                return;
+            }
+            $stmtC->bind_param('s', $email);
+            $stmtC->execute();
+            if ($stmtC->get_result()->fetch_assoc()) {
+                $skipped++;
+                return;
+            }
+
+            $passwordPlain = $makePassword();
+            $hash = password_hash($passwordPlain, PASSWORD_BCRYPT);
+            $status = 'active';
+
+            if ($usersHasPhone) {
+                $phoneVal = trim((string)$phone);
+                $phoneVal = $phoneVal !== '' ? $phoneVal : null;
+                $stmtI = $mysqli->prepare('INSERT INTO users (email, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?)');
+                if (!$stmtI) {
+                    $failed++;
+                    return;
+                }
+                $stmtI->bind_param('ssssss', $email, $hash, $firstname, $lastname, $phoneVal, $status);
+            } else {
+                $stmtI = $mysqli->prepare('INSERT INTO users (email, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?)');
+                if (!$stmtI) {
+                    $failed++;
+                    return;
+                }
+                $stmtI->bind_param('sssss', $email, $hash, $firstname, $lastname, $status);
+            }
+
+            if ($stmtI->execute()) {
+                $imported++;
+            } else {
+                $failed++;
+            }
+        };
+
+        $hasFile = isset($_FILES['import_file']) && is_array($_FILES['import_file']) && (int)($_FILES['import_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
+        $pasted = trim((string)($_POST['pasted'] ?? ''));
+
+        if ($hasFile) {
+            $tmp = (string)($_FILES['import_file']['tmp_name'] ?? '');
+            if ($tmp && is_readable($tmp)) {
+                $fh = fopen($tmp, 'r');
+                if ($fh) {
+                    $header = fgetcsv($fh);
+                    $map = [];
+                    if (is_array($header)) {
+                        foreach ($header as $idx => $h) {
+                            $key = strtolower(trim((string)$h));
+                            $map[$key] = (int)$idx;
+                        }
+                    }
+
+                    while (($row = fgetcsv($fh)) !== false) {
+                        if (!is_array($row)) continue;
+                        $email = '';
+                        $name = '';
+                        $phone = '';
+
+                        if (isset($map['email'])) $email = (string)($row[$map['email']] ?? '');
+                        if (isset($map['name'])) $name = (string)($row[$map['name']] ?? '');
+                        if (isset($map['phone'])) $phone = (string)($row[$map['phone']] ?? '');
+
+                        // fallback por posición si no hay header esperado
+                        if ($email === '' && isset($row[0])) $email = (string)$row[0];
+                        if ($name === '' && isset($row[1])) $name = (string)$row[1];
+
+                        $createUser($email, $name, $phone);
+                    }
+                    fclose($fh);
+                }
+            }
+        } elseif ($pasted !== '') {
+            $lines = preg_split('/\r\n|\r|\n/', $pasted);
+            foreach ($lines as $line) {
+                $line = trim((string)$line);
+                if ($line === '') continue;
+                // Formato: "Nombre Apellido, email" o "email, Nombre"
+                $parts = array_map('trim', explode(',', $line));
+                if (count($parts) >= 2) {
+                    $a = (string)$parts[0];
+                    $b = (string)$parts[1];
+                    if (filter_var($b, FILTER_VALIDATE_EMAIL)) {
+                        $createUser($b, $a, '');
+                    } elseif (filter_var($a, FILTER_VALIDATE_EMAIL)) {
+                        $createUser($a, $b, '');
+                    } else {
+                        $failed++;
+                    }
+                } else {
+                    // si viene solo email
+                    if (filter_var($line, FILTER_VALIDATE_EMAIL)) {
+                        $createUser($line, '', '');
+                    } else {
+                        $failed++;
+                    }
+                }
+            }
+        } else {
+            $failed++;
+        }
+
+        $_SESSION['users_import_flash'] = [
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'failed' => $failed,
+        ];
+        header('Location: users.php?msg=import_done');
+        exit;
+    }
+}
+
 // Añadir usuario (registro directo, sin confirmación por correo)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {
     $add_errors = [];
@@ -218,6 +380,199 @@ if (!in_array($sort, $validSorts)) $sort = 'name';
 $validOrders = ['ASC', 'DESC'];
 if (!in_array($order, $validOrders)) $order = 'ASC';
 
+// Export CSV (users.php?a=export)
+if (isset($_GET['a']) && $_GET['a'] === 'export') {
+    $sortColumnsExport = [
+        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
+        'status'  => 'u.status',
+        'created' => 'u.created',
+        'updated' => 'u.updated'
+    ];
+    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
+
+    $exportSql = "
+        SELECT
+            u.id,
+            u.email,
+            u.firstname,
+            u.lastname,";
+
+    if ($usersHasPhone) {
+        $exportSql .= "\n            u.phone,";
+    }
+
+    $exportSql .= "
+            u.company,
+            u.status,
+            u.created,
+            u.updated,
+            COUNT(t.id) AS ticket_count
+        FROM users u
+        LEFT JOIN tickets t ON t.user_id = u.id
+        WHERE 1=1
+    ";
+
+    $exportParams = [];
+    $exportTypes = '';
+    if ($search !== '') {
+        $term = '%' . $search . '%';
+        $exportSql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
+        $exportParams = [$term, $term, $term, $term];
+        $exportTypes = 'ssss';
+    }
+
+    $exportSql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
+    if ($usersHasPhone) {
+        $exportSql .= ", u.phone";
+    }
+    $exportSql .= " ORDER BY $orderByExport $order";
+
+    $stmtX = $mysqli->prepare($exportSql);
+    if (!empty($exportParams)) {
+        $stmtX->bind_param($exportTypes, ...$exportParams);
+    }
+    $stmtX->execute();
+    $resX = $stmtX->get_result();
+
+    $ts = date('Ymd');
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="users-' . $ts . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    // UTF-8 BOM para Excel
+    fprintf($out, "\xEF\xBB\xBF");
+
+    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
+    if ($usersHasPhone) {
+        $headers[] = 'Telefono';
+    }
+    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
+    fputcsv($out, $headers);
+
+    while ($row = $resX->fetch_assoc()) {
+        $line = [
+            (int)($row['id'] ?? 0),
+            (string)($row['email'] ?? ''),
+            (string)($row['firstname'] ?? ''),
+            (string)($row['lastname'] ?? '')
+        ];
+        if ($usersHasPhone) {
+            $line[] = (string)($row['phone'] ?? '');
+        }
+        $line[] = (string)($row['company'] ?? '');
+        $line[] = (string)($row['status'] ?? '');
+        $line[] = (string)($row['created'] ?? '');
+        $line[] = (string)($row['updated'] ?? '');
+        $line[] = (int)($row['ticket_count'] ?? 0);
+        fputcsv($out, $line);
+    }
+    fclose($out);
+    exit;
+}
+
+// Export CSV seleccionados (users.php?a=export_selected&ids=1,2,3)
+if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
+    $idsRaw = (string)($_GET['ids'] ?? '');
+    $ids = array_values(array_filter(array_map(function ($v) {
+        $v = trim((string)$v);
+        return ctype_digit($v) ? (int)$v : null;
+    }, explode(',', $idsRaw)), function ($v) {
+        return is_int($v) && $v > 0;
+    }));
+
+    $ids = array_values(array_unique($ids));
+    if (empty($ids)) {
+        header('Location: users.php');
+        exit;
+    }
+    // límite de seguridad
+    if (count($ids) > 5000) {
+        $ids = array_slice($ids, 0, 5000);
+    }
+
+    $sortColumnsExport = [
+        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
+        'status'  => 'u.status',
+        'created' => 'u.created',
+        'updated' => 'u.updated'
+    ];
+    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $exportSql = "
+        SELECT
+            u.id,
+            u.email,
+            u.firstname,
+            u.lastname,";
+    if ($usersHasPhone) {
+        $exportSql .= "\n            u.phone,";
+    }
+    $exportSql .= "
+            u.company,
+            u.status,
+            u.created,
+            u.updated,
+            COUNT(t.id) AS ticket_count
+        FROM users u
+        LEFT JOIN tickets t ON t.user_id = u.id
+        WHERE u.id IN ($placeholders)
+        GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
+    if ($usersHasPhone) {
+        $exportSql .= ", u.phone";
+    }
+    $exportSql .= " ORDER BY $orderByExport $order";
+
+    $stmtX = $mysqli->prepare($exportSql);
+    if ($stmtX) {
+        $types = str_repeat('i', count($ids));
+        $stmtX->bind_param($types, ...$ids);
+        $stmtX->execute();
+        $resX = $stmtX->get_result();
+    } else {
+        header('Location: users.php');
+        exit;
+    }
+
+    $ts = date('Ymd');
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="users-selected-' . $ts . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    fprintf($out, "\xEF\xBB\xBF");
+
+    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
+    if ($usersHasPhone) {
+        $headers[] = 'Telefono';
+    }
+    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
+    fputcsv($out, $headers);
+
+    while ($row = $resX->fetch_assoc()) {
+        $line = [
+            (int)($row['id'] ?? 0),
+            (string)($row['email'] ?? ''),
+            (string)($row['firstname'] ?? ''),
+            (string)($row['lastname'] ?? '')
+        ];
+        if ($usersHasPhone) {
+            $line[] = (string)($row['phone'] ?? '');
+        }
+        $line[] = (string)($row['company'] ?? '');
+        $line[] = (string)($row['status'] ?? '');
+        $line[] = (string)($row['created'] ?? '');
+        $line[] = (string)($row['updated'] ?? '');
+        $line[] = (int)($row['ticket_count'] ?? 0);
+        fputcsv($out, $line);
+    }
+    fclose($out);
+    exit;
+}
+
 // Contar total (con filtro de búsqueda)
 $countSql = "SELECT COUNT(*) AS total FROM users WHERE 1=1";
 $countParams = [];
@@ -309,6 +664,23 @@ $statusBadges = [
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+    <?php if ($importFlash && isset($_GET['msg']) && $_GET['msg'] === 'import_done'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Importación completada. Importados: <?php echo (int)($importFlash['imported'] ?? 0); ?>.
+            Omitidos: <?php echo (int)($importFlash['skipped'] ?? 0); ?>.
+            Errores: <?php echo (int)($importFlash['failed'] ?? 0); ?>.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <script>
+        (function(){
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('msg');
+                history.replaceState(null, '', url.toString());
+            } catch (e) {}
+        })();
+        </script>
+    <?php endif; ?>
     <?php if (isset($_GET['added']) && $_GET['added'] === '1'): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             Usuario añadido correctamente. El usuario puede iniciar sesión de inmediato (no requiere confirmación por correo).
@@ -361,13 +733,13 @@ $statusBadges = [
         <h1 class="page-title">Directorio de usuarios</h1>
         <div class="header-actions">
             <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#modalAddUser"><i class="bi bi-plus-lg"></i> Añadir usuario</button>
-            <a href="#" class="btn btn-import"><i class="bi bi-upload"></i> Importar</a>
+            <a href="javascript:void(0)" class="btn btn-import" data-bs-toggle="modal" data-bs-target="#modalImportUsers"><i class="bi bi-upload"></i> Importar</a>
             <div class="dropdown">
                 <button class="btn btn-more dropdown-toggle" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#">Exportar seleccionados</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0)" id="exportSelectedUsers">Exportar seleccionados</a></li>
                     <li><a class="dropdown-item" href="#">Cambiar organización</a></li>
                 </ul>
             </div>
@@ -536,6 +908,49 @@ $statusBadges = [
                     <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Añadir usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Importar usuarios -->
+    <div class="modal fade" id="modalImportUsers" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Importar usuarios</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php" enctype="multipart/form-data" onsubmit="return confirm('¿Desea importar los usuarios?');">
+                    <input type="hidden" name="do" value="import_users">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-body">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" type="button" data-bs-toggle="tab" data-bs-target="#importPaste" role="tab">Copiar pegar</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#importCsv" role="tab">Subir</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content pt-3">
+                            <div class="tab-pane fade show active" id="importPaste" role="tabpanel">
+                                <h6 class="mb-2">Nombre y Email</h6>
+                                <div class="text-muted small mb-2">Ingrese un nombre y dirección de email por línea.</div>
+                                <textarea class="form-control" name="pasted" rows="6" placeholder="Ej., John Doe, john.doe@ejemplo.com"></textarea>
+                            </div>
+                            <div class="tab-pane fade" id="importCsv" role="tabpanel">
+                                <h6 class="mb-2">Importar archivo CSV</h6>
+                                <div class="text-muted small mb-2">Columnas soportadas: Email, Name<?php echo $usersHasPhone ? ', Phone' : ''; ?>.</div>
+                                <input type="file" class="form-control" name="import_file" accept=".csv,text/csv">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="reset" class="btn btn-outline-secondary">Restablecer</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Importar usuarios</button>
                     </div>
                 </form>
             </div>

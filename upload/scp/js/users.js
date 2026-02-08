@@ -24,6 +24,38 @@
 })();
 
 (function() {
+  // Exportar seleccionados
+  var btn = document.getElementById('exportSelectedUsers');
+  if (!btn) return;
+
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    var ids = [];
+    document.querySelectorAll('.user-row-cb:checked').forEach(function(cb) {
+      var v = (cb && cb.value ? cb.value : '').toString().trim();
+      if (/^\d+$/.test(v)) ids.push(v);
+    });
+    if (!ids.length) {
+      alert('Seleccione al menos un usuario para exportar.');
+      return;
+    }
+
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('a', 'export_selected');
+      url.searchParams.set('ids', ids.join(','));
+      // Evitar paginación en export
+      url.searchParams.delete('p');
+      window.location.href = url.toString();
+    } catch (err) {
+      var qs = (window.location.search || '').replace(/^\?/, '');
+      var prefix = qs ? ('?' + qs + '&') : '?';
+      window.location.href = 'users.php' + prefix + 'a=export_selected&ids=' + encodeURIComponent(ids.join(','));
+    }
+  });
+})();
+
+(function() {
   // Pestañas en la vista de usuario
   var tab = null;
   if (document.body && document.body.dataset && document.body.dataset.userActiveTab) {
