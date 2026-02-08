@@ -137,7 +137,7 @@ if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
                         <?php 
-                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory','profile']);
+                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory']);
                         $expandPanel = ($isPanelRoute && empty($collapseSidebarMenu));
                         ?>
                         <button type="button"
@@ -176,17 +176,6 @@ if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
                                         </svg>
                                     </span>
                                     Directorio del agente
-                                </a>
-                            </li>
-                            <li>
-                                <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
-                                    <span class="icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="12" cy="8" r="3" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
-                                            <path d="M6 19C6.6 16.5 8.8 15 12 15C15.2 15 17.4 16.5 18 19" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
-                                        </svg>
-                                    </span>
-                                    Mi perfil
                                 </a>
                             </li>
                         </ul>
@@ -263,14 +252,14 @@ if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
                         </a>
                     </li>
                     <li>
-                        <a href="canned.php" class="sidebar-link <?php echo $currentRoute === 'canned' ? 'active' : ''; ?>">
+                        <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M5 4H14L19 9V20H5V4Z" stroke="<?php echo $currentRoute === 'canned' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M9 12H15" stroke="<?php echo $currentRoute === 'canned' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <circle cx="12" cy="8" r="3" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M6 19C6.6 16.5 8.8 15 12 15C15.2 15 17.4 16.5 18 19" stroke="<?php echo $currentRoute === 'profile' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
-                            Base de conocimientos
+                            Mi perfil
                         </a>
                     </li>
                 </ul>
