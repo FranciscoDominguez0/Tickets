@@ -486,8 +486,67 @@ if (isset($_GET['a']) && $_GET['a'] === 'bulk_org') {
         header('Location: users.php?msg=org_bulk_no_selection');
         exit;
     }
-    header('Location: users.php');
+    $_SESSION['bulk_org_ids'] = $ids;
+    header('Location: users.php?msg=bulk_org_pick');
     exit;
+}
+
+// Asignar organización masivo (lista de usuarios)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'bulk_assign_org') {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $org_name = trim((string)($_POST['org_name'] ?? ''));
+        $ids = [];
+
+        if (isset($_POST['ids']) && is_array($_POST['ids'])) {
+            foreach ($_POST['ids'] as $v) {
+                $v = trim((string)$v);
+                if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+            }
+        } elseif (isset($_SESSION['bulk_org_ids']) && is_array($_SESSION['bulk_org_ids'])) {
+            foreach ($_SESSION['bulk_org_ids'] as $v) {
+                $v = (int)$v;
+                if ($v > 0) $ids[] = $v;
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        if ($org_name === '' || empty($ids)) {
+            header('Location: users.php?msg=org_bulk_error');
+            exit;
+        }
+
+        $stmtO = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? LIMIT 1");
+        if (!$stmtO) {
+            header('Location: users.php?msg=org_bulk_error');
+            exit;
+        }
+        $stmtO->bind_param('s', $org_name);
+        $stmtO->execute();
+        if (!$stmtO->get_result()->fetch_assoc()) {
+            header('Location: users.php?msg=org_bulk_error');
+            exit;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sqlU = "UPDATE users SET company = ?, updated = NOW() WHERE id IN ($placeholders)";
+        $stmtU = $mysqli->prepare($sqlU);
+        if (!$stmtU) {
+            header('Location: users.php?msg=org_bulk_error');
+            exit;
+        }
+        $types = 's' . str_repeat('i', count($ids));
+        $params = array_merge([$org_name], $ids);
+        $stmtU->bind_param($types, ...$params);
+        if ($stmtU->execute()) {
+            $affected = (int)$stmtU->affected_rows;
+            unset($_SESSION['bulk_org_ids']);
+            header('Location: users.php?msg=org_bulk_assigned&count=' . $affected);
+            exit;
+        }
+
+        header('Location: users.php?msg=org_bulk_error');
+        exit;
+    }
 }
 
 // Export CSV seleccionados (users.php?a=export_selected&ids=1,2,3)
@@ -741,6 +800,40 @@ $statusBadges = [
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_assigned'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            Organización asignada correctamente.
+            <?php if (isset($_GET['count']) && is_numeric($_GET['count'])): ?>
+                Se actualizaron <?php echo (int)$_GET['count']; ?> usuarios.
+            <?php endif; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <script>
+        (function(){
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('msg');
+                url.searchParams.delete('count');
+                history.replaceState(null, '', url.toString());
+            } catch (e) {}
+        })();
+        </script>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_error'): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            No se pudo cambiar la organización.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <script>
+        (function(){
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('msg');
+                history.replaceState(null, '', url.toString());
+            } catch (e) {}
+        })();
+        </script>
+    <?php endif; ?>
 
     <!-- Búsqueda -->
     <div class="search-card">
@@ -781,6 +874,106 @@ $statusBadges = [
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="bulkOrgModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-building me-2"></i>Asignar organización</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="bulkOrgSearch" class="form-label">Buscar organización</label>
+                            <input type="text" class="form-control" id="bulkOrgSearch" name="org_name" placeholder="Escribe el nombre de la organización..." autocomplete="off">
+                            <div id="bulkOrgSuggestions" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                        <input type="hidden" name="do" value="bulk_assign_org">
+                        <?php if (isset($_SESSION['bulk_org_ids']) && is_array($_SESSION['bulk_org_ids'])): ?>
+                            <?php foreach ($_SESSION['bulk_org_ids'] as $sid): ?>
+                                <input type="hidden" name="ids[]" value="<?php echo (int)$sid; ?>">
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check me-1"></i> Asignar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'bulk_org_pick'): ?>
+        <script>
+        (function(){
+            function openModal(){
+                try {
+                    var el = document.getElementById('bulkOrgModal');
+                    if (el && window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(el).show();
+                    }
+                } catch (e) {}
+            }
+
+            function wireAutocomplete(){
+                try {
+                    var input = document.getElementById('bulkOrgSearch');
+                    var suggestions = document.getElementById('bulkOrgSuggestions');
+                    if (!input || !suggestions) return;
+                    var lastController = null;
+                    input.addEventListener('input', function(){
+                        var query = (input.value || '').toString().trim();
+                        if (query.length < 2) {
+                            suggestions.innerHTML = '';
+                            return;
+                        }
+                        if (lastController && typeof lastController.abort === 'function') lastController.abort();
+                        lastController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+                        var url = 'users.php?ajax=search_orgs&q=' + encodeURIComponent(query);
+                        fetch(url, lastController ? { signal: lastController.signal } : undefined)
+                          .then(function(r){ return r.json(); })
+                          .then(function(data){
+                              suggestions.innerHTML = '';
+                              if (!Array.isArray(data)) return;
+                              data.forEach(function(org){
+                                  var item = document.createElement('a');
+                                  item.href = '#';
+                                  item.className = 'list-group-item list-group-item-action';
+                                  item.textContent = (org && org.name ? org.name : '').toString();
+                                  item.addEventListener('click', function(ev){
+                                      ev.preventDefault();
+                                      input.value = item.textContent;
+                                      suggestions.innerHTML = '';
+                                  });
+                                  suggestions.appendChild(item);
+                              });
+                          })
+                          .catch(function(){});
+                    });
+                } catch (e) {}
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function(){
+                    openModal();
+                    wireAutocomplete();
+                });
+            } else {
+                openModal();
+                wireAutocomplete();
+            }
+
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('msg');
+                history.replaceState(null, '', url.toString());
+            } catch (e) {}
+        })();
+        </script>
+    <?php endif; ?>
 
     <div class="modal fade" id="exportNeedSelectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
