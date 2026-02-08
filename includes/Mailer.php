@@ -26,32 +26,115 @@ class Mailer {
             return false;
         }
 
-        $from = defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost';
-        $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema';
+        $opts = [
+            'from' => defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost',
+            'fromName' => defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema',
+            'smtp' => [
+                'host' => defined('SMTP_HOST') ? SMTP_HOST : '',
+                'port' => defined('SMTP_PORT') ? (int)SMTP_PORT : 587,
+                'secure' => defined('SMTP_SECURE') ? strtolower((string)SMTP_SECURE) : 'tls',
+                'user' => defined('SMTP_USER') ? SMTP_USER : '',
+                'pass' => defined('SMTP_PASS') ? SMTP_PASS : '',
+            ],
+        ];
+        return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $opts);
+    }
 
-        $subject = self::encodeHeader($subject);
-        $boundary = '----=_Part_' . md5(uniqid());
+    public static function sendWithOptions($to, $subjectRaw, $bodyHtml, $bodyText = null, array $options = []) {
+        self::$lastError = '';
+        $to = trim((string)$to);
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            self::$lastError = 'Email destinatario inválido';
+            return false;
+        }
 
-        $headers = [
+        $from = trim((string)($options['from'] ?? (defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost')));
+        if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+            $from = 'noreply@localhost';
+        }
+        $fromName = (string)($options['fromName'] ?? (defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema'));
+
+        $attachments = $options['attachments'] ?? [];
+        if (!is_array($attachments)) $attachments = [];
+
+        $subject = self::encodeHeader((string)$subjectRaw);
+        $headerLines = [
             'MIME-Version: 1.0',
-            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
             'From: ' . self::formatAddress($from, $fromName),
             'Reply-To: ' . $from,
             'X-Mailer: PHP/' . PHP_VERSION,
             'Date: ' . gmdate('r'),
         ];
-        $headerStr = implode("\r\n", $headers);
 
-        $message = "--$boundary\r\n";
-        $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-        $message .= base64_encode($bodyText !== null ? $bodyText : strip_tags($bodyHtml)) . "\r\n";
-        $message .= "--$boundary\r\n";
-        $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-        $message .= base64_encode($bodyHtml) . "\r\n";
-        $message .= "--$boundary--";
+        $bodyTextFinal = $bodyText !== null ? (string)$bodyText : strip_tags((string)$bodyHtml);
+        $bodyHtmlFinal = (string)$bodyHtml;
 
-        if (defined('SMTP_HOST') && SMTP_HOST !== '') {
-            return self::sendSMTP($to, $subject, $message, $headerStr, $from, $fromName);
+        if (!empty($attachments)) {
+            $mixed = '----=_Mixed_' . md5(uniqid('', true));
+            $alt = '----=_Alt_' . md5(uniqid('', true));
+            $headerLines[] = 'Content-Type: multipart/mixed; boundary="' . $mixed . '"';
+            $headerStr = implode("\r\n", $headerLines);
+
+            $message = "--$mixed\r\n";
+            $message .= "Content-Type: multipart/alternative; boundary=\"$alt\"\r\n\r\n";
+
+            $message .= "--$alt\r\n";
+            $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+            $message .= base64_encode($bodyTextFinal) . "\r\n";
+
+            $message .= "--$alt\r\n";
+            $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+            $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+
+            $message .= "--$alt--\r\n";
+
+            foreach ($attachments as $att) {
+                if (!is_array($att)) continue;
+                $filename = (string)($att['filename'] ?? 'archivo');
+                $contentType = (string)($att['contentType'] ?? 'application/octet-stream');
+                $content = $att['content'] ?? '';
+
+                if ($content === '' || !is_string($content)) continue;
+                $filenameEnc = self::encodeHeader($filename);
+
+                $message .= "--$mixed\r\n";
+                $message .= 'Content-Type: ' . $contentType . '; name="' . addslashes($filename) . "\"\r\n";
+                $message .= "Content-Transfer-Encoding: base64\r\n";
+                $message .= 'Content-Disposition: attachment; filename="' . addslashes($filename) . "\"\r\n\r\n";
+                $message .= chunk_split(base64_encode($content)) . "\r\n";
+            }
+
+            $message .= "--$mixed--";
+        } else {
+            $alt = '----=_Alt_' . md5(uniqid('', true));
+            $headerLines[] = 'Content-Type: multipart/alternative; boundary="' . $alt . '"';
+            $headerStr = implode("\r\n", $headerLines);
+
+            $message = "--$alt\r\n";
+            $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+            $message .= base64_encode($bodyTextFinal) . "\r\n";
+            $message .= "--$alt\r\n";
+            $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+            $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+            $message .= "--$alt--";
+        }
+
+        $smtp = $options['smtp'] ?? null;
+        $smtpHost = '';
+        $smtpPort = 587;
+        $smtpSecure = 'tls';
+        $smtpUser = '';
+        $smtpPass = '';
+        if (is_array($smtp)) {
+            $smtpHost = (string)($smtp['host'] ?? '');
+            $smtpPort = isset($smtp['port']) ? (int)$smtp['port'] : 587;
+            $smtpSecure = strtolower((string)($smtp['secure'] ?? 'tls'));
+            $smtpUser = (string)($smtp['user'] ?? '');
+            $smtpPass = (string)($smtp['pass'] ?? '');
+        }
+
+        if ($smtpHost !== '') {
+            return self::sendSMTPConfig($to, $subject, $message, $headerStr, $from, $smtpHost, $smtpPort, $smtpSecure, $smtpUser, $smtpPass);
         }
 
         return self::sendMail($to, $subject, $message, $headerStr);
@@ -82,12 +165,12 @@ class Mailer {
     /**
      * Envío vía SMTP (cuando SMTP_HOST está definido).
      */
-    protected static function sendSMTP($to, $subject, $body, $headerStr, $from, $fromName) {
-        $host = SMTP_HOST;
-        $port = defined('SMTP_PORT') ? (int) SMTP_PORT : 587;
-        $secure = defined('SMTP_SECURE') ? strtolower(SMTP_SECURE) : 'tls';
-        $user = defined('SMTP_USER') ? SMTP_USER : '';
-        $pass = defined('SMTP_PASS') ? SMTP_PASS : '';
+    protected static function sendSMTPConfig($to, $subject, $body, $headerStr, $from, $host, $port, $secure, $user, $pass) {
+        $host = (string)$host;
+        $port = (int)$port;
+        $secure = strtolower((string)$secure);
+        $user = (string)$user;
+        $pass = (string)$pass;
 
         // Diagnóstico rápido: OpenSSL / transportes disponibles
         $transports = function_exists('stream_get_transports') ? (array) stream_get_transports() : [];

@@ -20,7 +20,7 @@ if (!isset($_SESSION['admin_sidebar_menu_seen'])) {
     $collapseSettingsMenu = true;
 }
 
-// Asegurar tabla cuentas (para diagnóstico visual)
+// Asegurar tabla de cuentas
 if (isset($mysqli) && $mysqli) {
     $mysqli->query("CREATE TABLE IF NOT EXISTS email_accounts (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
@@ -45,24 +45,111 @@ if (isset($mysqli) && $mysqli) {
 $msg = '';
 $error = '';
 
+$accounts = [];
 $defaultAccount = null;
 if (isset($mysqli) && $mysqli) {
-    $res = $mysqli->query('SELECT * FROM email_accounts WHERE is_default = 1 LIMIT 1');
-    if ($res) $defaultAccount = $res->fetch_assoc();
+    $res = $mysqli->query('SELECT * FROM email_accounts ORDER BY is_default DESC, id ASC');
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $accounts[] = $row;
+            if ((int)($row['is_default'] ?? 0) === 1 && !$defaultAccount) {
+                $defaultAccount = $row;
+            }
+        }
+    }
 }
+
+$selectedFromId = isset($_POST['from_id']) && is_numeric($_POST['from_id']) ? (int)$_POST['from_id'] : 0;
+$toVal = (string)($_POST['to'] ?? '');
+$subjectVal = (string)($_POST['subject'] ?? 'osTicket test email');
+$bodyVal = (string)($_POST['body'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $error = 'Token CSRF inválido.';
     } else {
         $to = trim((string)($_POST['to'] ?? ''));
+        $subject = trim((string)($_POST['subject'] ?? 'osTicket test email'));
+        $bodyHtml = (string)($_POST['body'] ?? '');
+
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             $error = 'Email destino inválido.';
         } else {
-            $subject = 'Prueba de correo - ' . (defined('APP_NAME') ? APP_NAME : 'Sistema');
-            $htmlBody = '<p>Este es un correo de prueba enviado desde el módulo de diagnóstico.</p>'
-                . '<p><strong>Fecha:</strong> ' . html(date('Y-m-d H:i:s')) . '</p>';
-            $ok = Mailer::send($to, $subject, $htmlBody);
+            $fromAccount = null;
+            if ($selectedFromId > 0) {
+                foreach ($accounts as $a) {
+                    if ((int)($a['id'] ?? 0) === $selectedFromId) {
+                        $fromAccount = $a;
+                        break;
+                    }
+                }
+            }
+            if (!$fromAccount && $defaultAccount) {
+                $fromAccount = $defaultAccount;
+            }
+
+            $fromEmail = $fromAccount ? (string)($fromAccount['email'] ?? '') : (defined('MAIL_FROM') ? (string)MAIL_FROM : 'noreply@localhost');
+            $fromName = $fromAccount ? (string)($fromAccount['name'] ?? '') : (defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : 'Sistema');
+            if ($fromName === '') {
+                $fromName = defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : 'Sistema';
+            }
+
+            $smtpHost = $fromAccount ? (string)($fromAccount['smtp_host'] ?? '') : (defined('SMTP_HOST') ? (string)SMTP_HOST : '');
+            $smtpPort = $fromAccount && ($fromAccount['smtp_port'] ?? '') !== '' ? (int)$fromAccount['smtp_port'] : (defined('SMTP_PORT') ? (int)SMTP_PORT : 587);
+            $smtpSecure = $fromAccount ? (string)($fromAccount['smtp_secure'] ?? '') : (defined('SMTP_SECURE') ? (string)SMTP_SECURE : 'tls');
+            $smtpUser = $fromAccount ? (string)($fromAccount['smtp_user'] ?? '') : (defined('SMTP_USER') ? (string)SMTP_USER : '');
+            $smtpPass = $fromAccount ? (string)($fromAccount['smtp_pass'] ?? '') : (defined('SMTP_PASS') ? (string)SMTP_PASS : '');
+
+            $attachments = [];
+            if (isset($_FILES['attachments']) && is_array($_FILES['attachments'])) {
+                $files = $_FILES['attachments'];
+                $n = is_array($files['name'] ?? null) ? count($files['name']) : 0;
+                $maxSize = 25 * 1024 * 1024;
+                for ($i = 0; $i < $n; $i++) {
+                    $err = $files['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+                    if ($err !== UPLOAD_ERR_OK) continue;
+                    $tmp = (string)($files['tmp_name'][$i] ?? '');
+                    if ($tmp === '' || !is_readable($tmp)) continue;
+                    $size = (int)($files['size'][$i] ?? 0);
+                    if ($size <= 0 || $size > $maxSize) continue;
+                    $orig = (string)($files['name'][$i] ?? 'archivo');
+                    $mime = (string)($files['type'][$i] ?? 'application/octet-stream');
+                    if (function_exists('finfo_open')) {
+                        $fi = @finfo_open(FILEINFO_MIME_TYPE);
+                        if ($fi) {
+                            $det = @finfo_file($fi, $tmp);
+                            @finfo_close($fi);
+                            if (is_string($det) && $det !== '') $mime = $det;
+                        }
+                    }
+                    $content = @file_get_contents($tmp);
+                    if (!is_string($content) || $content === '') continue;
+                    $attachments[] = [
+                        'filename' => $orig,
+                        'contentType' => $mime,
+                        'content' => $content,
+                    ];
+                }
+            }
+
+            if ($bodyHtml === '') {
+                $bodyHtml = '<p>Mensaje de prueba</p>';
+            }
+
+            $opts = [
+                'from' => $fromEmail,
+                'fromName' => $fromName,
+                'smtp' => [
+                    'host' => $smtpHost,
+                    'port' => $smtpPort,
+                    'secure' => $smtpSecure,
+                    'user' => $smtpUser,
+                    'pass' => $smtpPass,
+                ],
+                'attachments' => $attachments,
+            ];
+
+            $ok = Mailer::sendWithOptions($to, $subject, $bodyHtml, strip_tags($bodyHtml), $opts);
             if ($ok) {
                 $msg = 'Correo de prueba enviado correctamente.';
             } else {
@@ -102,56 +189,90 @@ ob_start();
 <?php endif; ?>
 
 <div class="row">
-    <div class="col-12 col-lg-7">
+    <div class="col-12">
         <div class="card settings-card">
             <div class="card-header">
-                <strong><i class="bi bi-send"></i> Enviar correo de prueba</strong>
+                <strong><i class="bi bi-send"></i> Comprobar el correo electrónico saliente</strong>
             </div>
             <div class="card-body">
-                <form method="post" action="emailtest.php">
+                <form method="post" action="emailtest.php" enctype="multipart/form-data">
                     <?php csrfField(); ?>
+                    <div class="alert alert-info py-2">Utilice el siguiente formulario para comprobar que su configuración de <strong>Correo electrónico saliente</strong> esté establecida correctamente.</div>
+
                     <div class="mb-3">
-                        <label class="form-label">Enviar a</label>
-                        <input type="email" name="to" class="form-control" required placeholder="destino@correo.com">
+                        <label class="form-label">De:</label>
+                        <select class="form-select" name="from_id">
+                            <option value="0">— Seleccione correo electrónico del emisor —</option>
+                            <?php foreach ($accounts as $a): ?>
+                                <?php
+                                $aid = (int)($a['id'] ?? 0);
+                                $label = trim((string)($a['name'] ?? ''));
+                                if ($label === '') $label = (string)($a['email'] ?? '');
+                                $label .= ' <' . (string)($a['email'] ?? '') . '>';
+                                if ((int)($a['is_default'] ?? 0) === 1) $label .= ' (Por defecto)';
+                                ?>
+                                <option value="<?php echo $aid; ?>" <?php echo $selectedFromId === $aid ? 'selected' : ''; ?>><?php echo html($label); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="text-muted small mt-1">Si no seleccionas ninguno, se usará el correo por defecto.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-envelope"></i> Enviar</button>
+
+                    <div class="mb-3">
+                        <label class="form-label">Para:</label>
+                        <input type="email" name="to" class="form-control" required value="<?php echo html($toVal); ?>" placeholder="destino@correo.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Asunto:</label>
+                        <input type="text" name="subject" class="form-control" value="<?php echo html($subjectVal); ?>" placeholder="osTicket test email">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje:</label>
+                        <textarea name="body" id="emailtest_body" class="form-control" rows="10"><?php echo html($bodyVal); ?></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="file" name="attachments[]" class="form-control" multiple>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-envelope"></i> Enviar mensaje</button>
+                        <a href="emailtest.php" class="btn btn-outline-secondary">Restablecer</a>
+                        <a href="emails.php" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
                 </form>
-                <div class="text-muted small mt-3">
-                    Si falla, revisa el error mostrado y la configuración SMTP de tu cuenta por defecto.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12 col-lg-5">
-        <div class="card settings-card">
-            <div class="card-header">
-                <strong><i class="bi bi-info-circle"></i> Datos actuales</strong>
-            </div>
-            <div class="card-body">
-                <div class="mb-2"><strong>MAIL_FROM:</strong> <?php echo html(defined('MAIL_FROM') ? (string)MAIL_FROM : ''); ?></div>
-                <div class="mb-2"><strong>MAIL_FROM_NAME:</strong> <?php echo html(defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : ''); ?></div>
-                <div class="mb-2"><strong>SMTP_HOST:</strong> <?php echo html(defined('SMTP_HOST') ? (string)SMTP_HOST : ''); ?></div>
-                <div class="mb-2"><strong>SMTP_PORT:</strong> <?php echo html(defined('SMTP_PORT') ? (string)SMTP_PORT : ''); ?></div>
-                <div class="mb-2"><strong>SMTP_SECURE:</strong> <?php echo html(defined('SMTP_SECURE') ? (string)SMTP_SECURE : ''); ?></div>
-                <div class="mb-2"><strong>SMTP_USER:</strong> <?php echo html(defined('SMTP_USER') ? (string)SMTP_USER : ''); ?></div>
-
-                <hr>
-
-                <div class="fw-semibold mb-2">Cuenta por defecto (BD)</div>
-                <?php if (!$defaultAccount): ?>
-                    <div class="text-muted">No hay cuenta por defecto en la base de datos.</div>
-                <?php else: ?>
-                    <div class="mb-2"><strong>Email:</strong> <?php echo html((string)$defaultAccount['email']); ?></div>
-                    <div class="mb-2"><strong>SMTP Host:</strong> <?php echo html((string)($defaultAccount['smtp_host'] ?? '')); ?></div>
-                    <div class="mb-2"><strong>Puerto:</strong> <?php echo html((string)($defaultAccount['smtp_port'] ?? '')); ?></div>
-                    <div class="mb-2"><strong>Seguridad:</strong> <?php echo html((string)($defaultAccount['smtp_secure'] ?? '')); ?></div>
-                    <div class="mb-2"><strong>Usuario:</strong> <?php echo html((string)($defaultAccount['smtp_user'] ?? '')); ?></div>
-                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+<script>
+  (function(){
+    if (typeof window.jQuery === 'undefined') return;
+    try {
+      jQuery(function(){
+        var el = jQuery('#emailtest_body');
+        if (!el.length) return;
+        el.summernote({
+          height: 260,
+          lang: 'es-ES',
+          toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['codeview']]
+          ]
+        });
+      });
+    } catch (e) {}
+  })();
+</script>
 
 <?php
 $content = ob_get_clean();
