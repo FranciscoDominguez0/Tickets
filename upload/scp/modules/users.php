@@ -938,11 +938,33 @@ $statusBadges = [
                             <div class="tab-pane fade show active" id="importPaste" role="tabpanel">
                                 <h6 class="mb-2">Nombre y Email</h6>
                                 <div class="text-muted small mb-2">Ingrese un nombre y dirección de email por línea.</div>
-                                <textarea class="form-control" name="pasted" rows="6" placeholder="Ej., John Doe, john.doe@ejemplo.com"></textarea>
+                                <textarea class="form-control" name="pasted" rows="6" placeholder="Ej., Francisco Dominguez, fran03@gmail.com"></textarea>
                             </div>
                             <div class="tab-pane fade" id="importCsv" role="tabpanel">
                                 <h6 class="mb-2">Importar archivo CSV</h6>
                                 <div class="text-muted small mb-2">Columnas soportadas: Email, Name<?php echo $usersHasPhone ? ', Phone' : ''; ?>.</div>
+                                <div class="table-responsive mb-3" style="max-width: 560px; font-size: 13px; line-height: 1.05;">
+                                    <table class="table table-sm table-bordered mb-0" style="word-break: break-word; overflow-wrap: anywhere; white-space: nowrap;">
+                                        <thead>
+                                            <tr>
+                                                <th style="padding: 2px 6px;">Email</th>
+                                                <th style="padding: 2px 6px;">Name</th>
+                                                <?php if ($usersHasPhone): ?>
+                                                    <th style="padding: 2px 6px;">Phone</th>
+                                                <?php endif; ?>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding: 2px 6px;">fran03@gmail.com</td>
+                                                <td style="padding: 2px 6px;">Francisco Dominguez</td>
+                                                <?php if ($usersHasPhone): ?>
+                                                    <td style="padding: 2px 6px;">6621-8585</td>
+                                                <?php endif; ?>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <input type="file" class="form-control" name="import_file" accept=".csv,text/csv">
                             </div>
                         </div>
