@@ -170,13 +170,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // Si existen temas de ayuda asociados a este departamento, bloquear con mensaje claro.
+            $hasTopics = false;
+            $rt = @$mysqli->query("SHOW TABLES LIKE 'help_topics'");
+            if ($rt && $rt->num_rows > 0) $hasTopics = true;
+            if ($hasTopics) {
+                $stmtCntH = $mysqli->prepare("SELECT COUNT(*) c FROM help_topics WHERE dept_id IN ($placeholders)");
+                if ($stmtCntH) {
+                    $stmtCntH->bind_param($types, ...$ids);
+                    $stmtCntH->execute();
+                    $row = $stmtCntH->get_result()->fetch_assoc();
+                    if ((int)($row['c'] ?? 0) > 0) {
+                        $_SESSION['flash_error'] = 'No se puede eliminar este departamento porque tiene temas (help topics) asociados. Reasigna esos temas a otro departamento antes de eliminar.';
+                        header('Location: departments.php');
+                        exit;
+                    }
+                }
+            }
+
             $stmt = $mysqli->prepare("DELETE FROM departments WHERE id IN ($placeholders)");
             if ($stmt) {
                 $stmt->bind_param($types, ...$ids);
-                if ($stmt->execute()) {
-                    $_SESSION['flash_msg'] = 'Departamentos eliminados correctamente.';
-                } else {
-                    $_SESSION['flash_error'] = 'No se pudieron eliminar los departamentos.';
+                try {
+                    if ($stmt->execute()) {
+                        $_SESSION['flash_msg'] = 'Departamentos eliminados correctamente.';
+                    } else {
+                        $_SESSION['flash_error'] = 'No se pudieron eliminar los departamentos.';
+                    }
+                } catch (mysqli_sql_exception $e) {
+                    // 1451: Cannot delete or update a parent row (FK)
+                    if ((int)$e->getCode() === 1451) {
+                        $_SESSION['flash_error'] = 'No se puede eliminar el departamento porque está siendo usado por otros registros (por ejemplo: temas, correos, etc.). Reasigna o elimina esas referencias antes de eliminar.';
+                    } else {
+                        $_SESSION['flash_error'] = 'No se pudieron eliminar los departamentos.';
+                    }
                 }
             } else {
                 $_SESSION['flash_error'] = 'No se pudieron eliminar los departamentos.';

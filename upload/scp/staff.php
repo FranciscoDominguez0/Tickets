@@ -50,23 +50,6 @@ $ensureRolesTable = function () use ($mysqli) {
 
 $ensureRolesTable();
 
-if (isset($mysqli) && $mysqli) {
-    $mysqli->query("INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES ('admin', 1, NOW(), NOW()), ('supervisor', 1, NOW(), NOW()), ('agent', 1, NOW(), NOW())");
-    $resSeed = $mysqli->query("SELECT DISTINCT role FROM staff WHERE role IS NOT NULL AND TRIM(role) <> ''");
-    if ($resSeed) {
-        $stmtIns = $mysqli->prepare('INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES (?, 1, NOW(), NOW())');
-        if ($stmtIns) {
-            while ($r = $resSeed->fetch_assoc()) {
-                $name = trim((string)($r['role'] ?? ''));
-                if ($name === '') continue;
-                $stmtIns->bind_param('s', $name);
-                $stmtIns->execute();
-            }
-            $stmtIns->close();
-        }
-    }
-}
-
 $enabledRoles = [];
 if (isset($mysqli) && $mysqli) {
     $resRoles = $mysqli->query('SELECT name FROM roles WHERE is_enabled = 1 ORDER BY name');
@@ -160,6 +143,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // Si existen tareas asignadas a este agente, bloquear con mensaje claro.
+        $hasTasks = false;
+        $rt = @$mysqli->query("SHOW TABLES LIKE 'tasks'");
+        if ($rt && $rt->num_rows > 0) $hasTasks = true;
+        if ($hasTasks) {
+            $stmtCntT = $mysqli->prepare('SELECT COUNT(*) c FROM tasks WHERE assigned_to = ?');
+            if ($stmtCntT) {
+                $stmtCntT->bind_param('i', $id);
+                $stmtCntT->execute();
+                $cntRow = $stmtCntT->get_result()->fetch_assoc();
+                if ((int)($cntRow['c'] ?? 0) > 0) {
+                    $_SESSION['flash_error'] = 'No se puede eliminar este agente porque tiene tareas asignadas. Reasigna o elimina esas tareas antes de eliminar el agente.';
+                    header('Location: staff.php');
+                    exit;
+                }
+            }
+        }
+
         $stmtDel = $mysqli->prepare('DELETE FROM staff WHERE id = ?');
         if (!$stmtDel) {
             $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
@@ -167,10 +168,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         $stmtDel->bind_param('i', $id);
-        if ($stmtDel->execute()) {
-            $_SESSION['flash_msg'] = 'Agente eliminado correctamente.';
-        } else {
-            $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
+        try {
+            if ($stmtDel->execute()) {
+                $_SESSION['flash_msg'] = 'Agente eliminado correctamente.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
+            }
+        } catch (mysqli_sql_exception $e) {
+            // 1451: Cannot delete or update a parent row (FK)
+            if ((int)$e->getCode() === 1451) {
+                $_SESSION['flash_error'] = 'No se puede eliminar el agente porque está siendo usado por otros registros (por ejemplo: tareas asignadas). Reasigna o elimina esas referencias antes de eliminar.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
+            }
         }
         header('Location: staff.php');
         exit;

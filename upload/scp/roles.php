@@ -39,18 +39,11 @@ $ensureRolesTable = function () use ($mysqli) {
 $ensureRolesTable();
 
 if (isset($mysqli) && $mysqli) {
-    $resSeed = $mysqli->query("SELECT DISTINCT role FROM staff WHERE role IS NOT NULL AND TRIM(role) <> ''");
-    if ($resSeed) {
-        $stmtIns = $mysqli->prepare('INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES (?, 1, NOW(), NOW())');
-        if ($stmtIns) {
-            while ($r = $resSeed->fetch_assoc()) {
-                $name = trim((string)($r['role'] ?? ''));
-                if ($name === '') continue;
-                $stmtIns->bind_param('s', $name);
-                $stmtIns->execute();
-            }
-            $stmtIns->close();
-        }
+    $rolesCount = 0;
+    $rc = $mysqli->query('SELECT COUNT(*) c FROM roles');
+    if ($rc) $rolesCount = (int)($rc->fetch_assoc()['c'] ?? 0);
+    if ($rolesCount === 0) {
+        $mysqli->query("INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES ('admin', 1, NOW(), NOW()), ('supervisor', 1, NOW(), NOW()), ('agent', 1, NOW(), NOW())");
     }
 }
 
