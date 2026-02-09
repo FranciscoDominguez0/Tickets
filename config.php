@@ -34,15 +34,24 @@ $__appUrl = 'http://localhost/sistema-tickets';
 if (!empty($_SERVER['HTTP_HOST'])) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = (string)$_SERVER['HTTP_HOST'];
-    $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '');
-    $scriptName = str_replace('\\', '/', $scriptName);
 
-    $root = '/sistema-tickets';
-    $pos = stripos($scriptName, $root);
-    if ($pos !== false) {
-        $__appUrl = $scheme . '://' . $host . substr($scriptName, 0, $pos + strlen($root));
+    $docRoot = (string)($_SERVER['DOCUMENT_ROOT'] ?? '');
+    $docRootReal = $docRoot !== '' ? realpath($docRoot) : false;
+    $projectReal = realpath(__DIR__);
+
+    if ($docRootReal && $projectReal) {
+        $docRootReal = str_replace('\\', '/', $docRootReal);
+        $projectReal = str_replace('\\', '/', $projectReal);
+
+        if (stripos($projectReal, $docRootReal) === 0) {
+            $rel = substr($projectReal, strlen($docRootReal));
+            $rel = '/' . ltrim((string)$rel, '/');
+            $__appUrl = $scheme . '://' . $host . rtrim($rel, '/');
+        } else {
+            $__appUrl = $scheme . '://' . $host;
+        }
     } else {
-        $__appUrl = $scheme . '://' . $host . $root;
+        $__appUrl = $scheme . '://' . $host;
     }
 }
 
