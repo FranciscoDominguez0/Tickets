@@ -461,8 +461,29 @@ ob_start();
     </div>
 </div>
 
+<div class="modal fade" id="deleteEmailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Eliminar emails</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Deseas eliminar los emails seleccionados?
+                <div class="text-muted small mt-2">
+                    Seleccionados: <strong><span id="deleteEmailsCount">0</span></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteEmailsBtn"><i class="bi bi-trash"></i> Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-(function(){
+window.addEventListener('DOMContentLoaded', function(){
     function getCheckedIds(){
         var boxes = document.querySelectorAll('.email-checkbox:checked');
         var ids = [];
@@ -495,14 +516,26 @@ ob_start();
         deleteBtn.addEventListener('click', function(){
             var ids = getCheckedIds();
             if (ids.length < 1) return;
-            if (!confirm('¿Deseas eliminar los emails seleccionados?')) return;
+            var countEl = document.getElementById('deleteEmailsCount');
+            if (countEl) countEl.textContent = String(ids.length);
+            var modalEl = document.getElementById('deleteEmailsModal');
+            if (!modalEl || typeof bootstrap === 'undefined') return;
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+    }
+
+    var confirmDeleteBtn = document.getElementById('confirmDeleteEmailsBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function(){
+            var ids = getCheckedIds();
+            if (ids.length < 1) return;
             var form = document.getElementById('emailsMassForm');
             var act = document.getElementById('massActionInput');
             act.value = 'delete';
             form.submit();
         });
     }
-})();
+});
 </script>
 
 <?php
