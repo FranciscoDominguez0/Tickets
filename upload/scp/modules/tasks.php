@@ -88,6 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
     } else {
         switch ($_POST['do']) {
             case 'create':
+                if (!roleHasPermission('task.create')) {
+                    $errors[] = 'No tienes permisos para crear tareas.';
+                    break;
+                }
                 // Crear nueva tarea
                 $title = trim($_POST['title'] ?? '');
                 $description = trim($_POST['description'] ?? '');
@@ -207,6 +211,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 break;
                 
             case 'update_status':
+                if (!roleHasPermission('task.close')) {
+                    $errors[] = 'No tienes permisos para cambiar el estado de tareas.';
+                    break;
+                }
                 if ($task && isset($_POST['status'])) {
                     $new_status = $_POST['status'];
                     $valid_statuses = ['pending', 'in_progress', 'completed'];
@@ -226,6 +234,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 break;
                 
             case 'update':
+                if (!roleHasPermission('task.edit')) {
+                    $errors[] = 'No tienes permisos para editar tareas.';
+                    break;
+                }
                 // Actualizar tarea
                 if (!$task) {
                     $errors[] = 'Tarea no encontrada.';
@@ -353,6 +365,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 break;
 
             case 'delete':
+                if (!roleHasPermission('task.delete')) {
+                    $errors[] = 'No tienes permisos para eliminar tareas.';
+                    break;
+                }
                 // Eliminar tarea
                 if (!$task) {
                     $errors[] = 'Tarea no encontrada.';

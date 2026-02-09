@@ -183,6 +183,22 @@ if (!isset($collapseSettingsMenu)) {
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-shell">
             <div class="container-main">
+                <?php if (!empty($_SESSION['flash_error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html((string)$_SESSION['flash_error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['flash_error']); ?>
+                <?php endif; ?>
+
+                <?php if (!empty($_SESSION['flash_msg'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i><?php echo html((string)$_SESSION['flash_msg']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['flash_msg']); ?>
+                <?php endif; ?>
+
                 <?php echo $content; ?>
             </div>
         </main>

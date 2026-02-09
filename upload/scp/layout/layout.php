@@ -295,12 +295,27 @@ if (!isset($_SESSION[$menuKey])) {
         <!-- ZONA PRINCIPAL (contenido dinámico) -->
         <main class="main-shell">
             <div class="container-main">
+                <?php if (!empty($_SESSION['flash_error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html((string)$_SESSION['flash_error']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['flash_error']); ?>
+                <?php endif; ?>
+                <?php if (!empty($_SESSION['flash_msg'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle me-2"></i><?php echo html((string)$_SESSION['flash_msg']); ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    <?php unset($_SESSION['flash_msg']); ?>
+                <?php endif; ?>
                 <?php echo $content; ?>
             </div>
         </main>
     </div>
 
     <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
+        Derechos de autor 2026 Vigitec Panama - Sistema de Tickets - Todos los derechos reservados.
         Derechos de autor © 2026 Vigitec Panama - Sistema de Tickets - Todos los derechos reservados.
     </div>
 

@@ -35,6 +35,61 @@ if ($currentStaffId > 0) {
     }
 }
 
+$ensureRolesTable = function () use ($mysqli) {
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS roles (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  name VARCHAR(100) NOT NULL,\n"
+        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
+        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_roles_name (name)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool)$mysqli->query($sql);
+};
+
+$ensureRolesTable();
+
+if (isset($mysqli) && $mysqli) {
+    $mysqli->query("INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES ('admin', 1, NOW(), NOW()), ('supervisor', 1, NOW(), NOW()), ('agent', 1, NOW(), NOW())");
+    $resSeed = $mysqli->query("SELECT DISTINCT role FROM staff WHERE role IS NOT NULL AND TRIM(role) <> ''");
+    if ($resSeed) {
+        $stmtIns = $mysqli->prepare('INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES (?, 1, NOW(), NOW())');
+        if ($stmtIns) {
+            while ($r = $resSeed->fetch_assoc()) {
+                $name = trim((string)($r['role'] ?? ''));
+                if ($name === '') continue;
+                $stmtIns->bind_param('s', $name);
+                $stmtIns->execute();
+            }
+            $stmtIns->close();
+        }
+    }
+}
+
+$enabledRoles = [];
+if (isset($mysqli) && $mysqli) {
+    $resRoles = $mysqli->query('SELECT name FROM roles WHERE is_enabled = 1 ORDER BY name');
+    if ($resRoles) {
+        while ($r = $resRoles->fetch_assoc()) {
+            $name = trim((string)($r['name'] ?? ''));
+            if ($name !== '') $enabledRoles[] = $name;
+        }
+    }
+}
+
+$isValidEnabledRole = function (string $role) use ($mysqli) {
+    $role = trim($role);
+    if ($role === '') return false;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $stmt = $mysqli->prepare('SELECT is_enabled FROM roles WHERE name = ? LIMIT 1');
+    if (!$stmt) return false;
+    $stmt->bind_param('s', $role);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row && (int)($row['is_enabled'] ?? 0) === 1;
+};
+
 function ensureStaffPasswordResetsTableExists($mysqli) {
     if (!$mysqli) return false;
     $sql = "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
@@ -102,8 +157,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: staff.php');
             exit;
         }
-        if (!in_array($role, ['admin', 'supervisor', 'agent'], true)) {
-            $_SESSION['flash_error'] = 'Rol inválido.';
+        if (!$isValidEnabledRole($role)) {
+            $_SESSION['flash_error'] = 'Rol inválido o deshabilitado.';
             header('Location: staff.php');
             exit;
         }
@@ -219,8 +274,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: staff.php');
             exit;
         }
-        if (!in_array($role, ['admin', 'supervisor', 'agent'], true)) {
-            $_SESSION['flash_error'] = 'Rol inválido.';
+        if (!$isValidEnabledRole($role)) {
+            $_SESSION['flash_error'] = 'Rol inválido o deshabilitado.';
             header('Location: staff.php');
             exit;
         }
@@ -613,9 +668,9 @@ ob_start();
                         <div class="col-12 col-md-6">
                             <label class="form-label">Rol</label>
                             <select name="role" class="form-select" required>
-                                <option value="agent">Agente</option>
-                                <option value="supervisor">Supervisor</option>
-                                <option value="admin">Admin</option>
+                                <?php foreach ($enabledRoles as $r): ?>
+                                    <option value="<?php echo html($r); ?>"><?php echo html($r); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12">
@@ -683,9 +738,9 @@ ob_start();
                         <div class="col-12 col-md-6">
                             <label class="form-label">Rol</label>
                             <select name="role" id="edit_role" class="form-select" required>
-                                <option value="agent">Agente</option>
-                                <option value="supervisor">Supervisor</option>
-                                <option value="admin">Admin</option>
+                                <?php foreach ($enabledRoles as $r): ?>
+                                    <option value="<?php echo html($r); ?>"><?php echo html($r); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-12">

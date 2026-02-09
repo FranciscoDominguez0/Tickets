@@ -27,21 +27,44 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
             </a>
             Ticket #<?php echo html($t['ticket_number']); ?>
         </h1>
+        <?php
+        $canTicketEdit = roleHasPermission('ticket.edit');
+        $canTicketClose = roleHasPermission('ticket.close');
+        $canTicketAssign = roleHasPermission('ticket.assign');
+        $canTicketTransfer = roleHasPermission('ticket.transfer');
+        $canTicketMerge = roleHasPermission('ticket.merge');
+        $canTicketLink = roleHasPermission('ticket.link');
+        $canTicketMark = roleHasPermission('ticket.markanswered');
+        $canTicketDelete = roleHasPermission('ticket.delete');
+        $canTicketPost = roleHasPermission('ticket.post');
+        $canTicketReply = roleHasPermission('ticket.reply');
+        ?>
+
         <div class="ticket-view-actions">
             <a href="users.php?id=<?php echo (int)$t['user_id']; ?>" class="btn-icon" title="Volver al usuario"><i class="bi bi-arrow-left"></i></a>
             <a href="users.php?id=<?php echo (int)$t['user_id']; ?>" class="btn-icon" title="Guardar"><i class="bi bi-save"></i></a>
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Estado"><i class="bi bi-flag"></i></button>
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>><i class="bi bi-flag"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <?php
                     $st = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY order_by, id");
                     while ($row = $st->fetch_assoc()): ?>
-                        <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=status&status_id=<?php echo (int)$row['id']; ?>"><?php echo html($row['name']); ?></a></li>
+                        <?php
+                        $stName = strtolower(trim((string)($row['name'] ?? '')));
+                        $isClosing = ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved')));
+                        $allowed = $isClosing ? $canTicketClose : $canTicketEdit;
+                        ?>
+                        <li>
+                            <a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?>"
+                               <?php echo $allowed ? ('href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"') : 'href="#" tabindex="-1" aria-disabled="true"'; ?>>
+                                <?php echo html($row['name']); ?>
+                            </a>
+                        </li>
                     <?php endwhile; ?>
                 </ul>
             </div>
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Asignar"><i class="bi bi-person"></i></button>
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo $canTicketAssign ? 'Asignar' : 'Sin permiso'; ?>" <?php echo $canTicketAssign ? '' : 'disabled'; ?>><i class="bi bi-person"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item <?php echo empty($t['staff_id']) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=0">— Sin asignar —</a></li>
                     <?php
@@ -75,22 +98,24 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                     <?php endwhile; ?>
                 </ul>
             </div>
-            <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
+            <?php if ($canTicketTransfer): ?>
+                <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
+            <?php endif; ?>
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalOwner"><i class="bi bi-person-badge me-2"></i>Cambiar Propietario</a></li>
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalMerge"><i class="bi bi-link-45deg me-2"></i>Unir Tiquetes</a></li>
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalLinked"><i class="bi bi-link me-2"></i>Tickets vinculados</a></li>
-                    <li><a class="dropdown-item" href="tickets.php?id=<?php echo $tid; ?>&action=mark_answered"><i class="bi bi-check-circle me-2"></i>Marcar como contestados</a></li>
+                    <li><a class="dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalOwner"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-person-badge me-2"></i>Cambiar Propietario</a></li>
+                    <li><a class="dropdown-item <?php echo $canTicketMerge ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketMerge ? 'data-bs-toggle="modal" data-bs-target="#modalMerge"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-link-45deg me-2"></i>Unir Tiquetes</a></li>
+                    <li><a class="dropdown-item <?php echo $canTicketLink ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketLink ? 'data-bs-toggle="modal" data-bs-target="#modalLinked"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-link me-2"></i>Tickets vinculados</a></li>
+                    <li><a class="dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" <?php echo $canTicketMark ? '' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-check-circle me-2"></i>Marcar como contestados</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-share me-2"></i>Administrar referidos</a></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-file-text me-2"></i>Gestionar formularios</a></li>
-                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalCollaborators"><i class="bi bi-people me-2"></i>Gestionar Colaboradores</a></li>
+                    <li><a class="dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-people me-2"></i>Gestionar Colaboradores</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#modalBlockEmail"><i class="bi bi-envelope-x me-2"></i>Bloquear Email &lt;<?php echo html($t['user_email']); ?>&gt;</a></li>
-                    <li><a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#modalDelete"><i class="bi bi-trash me-2"></i>Borrar Ticket</a></li>
+                    <li><a class="dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-envelope-x me-2"></i>Bloquear Email &lt;<?php echo html($t['user_email']); ?>&gt;</a></li>
+                    <li><a class="dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-trash me-2"></i>Borrar Ticket</a></li>
                 </ul>
             </div>
         </div>

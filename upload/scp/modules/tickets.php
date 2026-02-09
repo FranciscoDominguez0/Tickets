@@ -18,6 +18,10 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
     $open_errors = [];
     $preSelectedUser = null;
+
+    if (!roleHasPermission('ticket.create')) {
+        $open_errors[] = 'No tienes permisos para crear tickets.';
+    }
     if ($open_uid > 0) {
         $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE id = ?");
         $stmt->bind_param('i', $open_uid);
@@ -27,6 +31,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'open') {
+        if (!roleHasPermission('ticket.create')) {
+            $open_errors[] = 'No tienes permisos para crear tickets.';
+        }
         if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
             $open_errors[] = 'Token de seguridad inválido.';
         } else {
@@ -383,14 +390,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 }
                 
                 if ($isClosingStatus) {
+                    requireRolePermission('ticket.close', 'tickets.php?id=' . $tid);
                     $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
                 } else {
+                    requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                     $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ?");
                 }
                 $stmt->bind_param('ii', $sid, $tid);
                 $ok = $stmt->execute();
                 $msg = 'updated';
             } elseif ($action === 'assign') {
+                requireRolePermission('ticket.assign', 'tickets.php?id=' . $tid);
                 $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
                 if ($staff_id !== null) {
                     $val = $staff_id === 0 ? null : $staff_id;
@@ -468,6 +478,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
             } elseif ($action === 'mark_answered') {
+                requireRolePermission('ticket.markanswered', 'tickets.php?id=' . $tid);
                 $stmt = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%resuelto%' OR LOWER(name) LIKE '%contestado%' LIMIT 1");
                 $resolved_id = 4;
                 if ($stmt && $row = $stmt->fetch_assoc()) $resolved_id = (int) $row['id'];
@@ -476,6 +487,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $ok = $stmt->execute();
                 $msg = 'marked';
             } elseif ($action === 'transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                requireRolePermission('ticket.transfer', 'tickets.php?id=' . $tid);
                 $newDeptId = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 0;
                 if ($newDeptId > 0) {
                     // Validar departamento destino
@@ -524,12 +536,14 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
             } elseif ($action === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_POST['user_id'];
                 $stmt = $mysqli->prepare("UPDATE tickets SET user_id = ?, updated = NOW() WHERE id = ?");
                 $stmt->bind_param('ii', $uid, $tid);
                 $ok = $stmt->execute();
                 $msg = 'owner';
             } elseif ($action === 'block_email' && ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['confirm']) && $_GET['confirm'] === '1')) {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $email = $ticketView['user_email'] ?? '';
                 if ($email) {
                     $stmt = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE id = ?");
@@ -575,6 +589,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $msg = 'blocked';
                 }
             } elseif ($action === 'merge' && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim($_POST['target_ticket_id'] ?? ''))) {
+                requireRolePermission('ticket.merge', 'tickets.php?id=' . $tid);
                 $target_input = trim($_POST['target_ticket_id']);
                 $target_id = is_numeric($target_input) ? (int) $target_input : 0;
                 if ($target_id === 0) {
@@ -614,6 +629,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
             } elseif ($action === 'link' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['linked_ticket_id']) && is_numeric($_POST['linked_ticket_id'])) {
+                requireRolePermission('ticket.link', 'tickets.php?id=' . $tid);
                 $linked_id = (int) $_POST['linked_ticket_id'];
                 if ($linked_id !== $tid && $linked_id > 0) {
                     $tbl = 'ticket_links';
@@ -626,6 +642,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
             } elseif ($action === 'unlink' && isset($_GET['linked_id']) && is_numeric($_GET['linked_id'])) {
+                requireRolePermission('ticket.link', 'tickets.php?id=' . $tid);
                 $linked_id = (int) $_GET['linked_id'];
                 $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_links'");
                 if ($exists && $exists->num_rows > 0) {
@@ -635,6 +652,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $msg = 'unlinked';
                 }
             } elseif ($action === 'collab_add' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_POST['user_id'];
                 $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
                 if ($exists && $exists->num_rows > 0) {
@@ -644,6 +662,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $msg = 'collab_added';
                 }
             } elseif ($action === 'collab_remove' && isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_GET['user_id'];
                 $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
                 if ($exists && $exists->num_rows > 0) {
@@ -666,6 +685,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             } else {
                 $body = trim($_POST['body'] ?? '');
                 $is_internal = isset($_POST['do']) && $_POST['do'] === 'internal';
+                if ($is_internal) {
+                    requireRolePermission('ticket.post', 'tickets.php?id=' . $tid);
+                } else {
+                    requireRolePermission('ticket.reply', 'tickets.php?id=' . $tid);
+                }
                 error_log('[tickets] reply POST scp/modules/tickets.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' tid=' . (string)$tid . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' internal=' . ($is_internal ? '1' : '0'));
                 $new_status_id = isset($_POST['status_id']) && is_numeric($_POST['status_id']) ? (int) $_POST['status_id'] : (int) $ticketView['status_id'];
                 $signature_mode = trim($_POST['signature'] ?? 'none');
@@ -971,6 +995,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
     if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
         $postErrors[] = 'Token de seguridad inválido.';
     } else {
+        if ($_POST['do'] === 'bulk_assign') {
+            requireRolePermission('ticket.assign', 'tickets.php');
+        } elseif ($_POST['do'] === 'bulk_status') {
+            // bulk status puede implicar cerrar o solo editar; lo validamos más abajo.
+            requireRolePermission('ticket.edit', 'tickets.php');
+        } elseif ($_POST['do'] === 'bulk_delete') {
+            requireRolePermission('ticket.delete', 'tickets.php');
+        }
+
         $ids = $_POST['ticket_ids'] ?? [];
         if (!is_array($ids)) $ids = [];
         $ticketIds = [];
@@ -1152,8 +1185,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                     }
 
                     if ($isClosingStatus) {
+                        requireRolePermission('ticket.close', 'tickets.php');
                         $sqlUp = "UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id IN ($placeholders)";
                     } else {
+                        requireRolePermission('ticket.edit', 'tickets.php');
                         $sqlUp = "UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id IN ($placeholders)";
                     }
                     $stmt = $mysqli->prepare($sqlUp);
@@ -1288,7 +1323,9 @@ if (!empty($ticketView)) {
                 <h1>Tickets</h1>
                 <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong></div>
             </div>
-            <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
+            <?php if (roleHasPermission('ticket.create')): ?>
+                <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1303,6 +1340,13 @@ if (!empty($ticketView)) {
         <input type="hidden" id="bulk_staff_label" value="">
         <input type="hidden" id="bulk_status_label" value="">
 
+        <?php
+        $canBulkAssign = roleHasPermission('ticket.assign');
+        $canBulkEdit = roleHasPermission('ticket.edit');
+        $canBulkClose = roleHasPermission('ticket.close');
+        $canBulkDelete = roleHasPermission('ticket.delete');
+        $bulkStatusLocked = !$canBulkEdit && !$canBulkClose;
+        ?>
         <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-actions">
@@ -1310,10 +1354,10 @@ if (!empty($ticketView)) {
                 <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-none">Ninguno</button>
 
                 <div class="btn-group">
-                    <button type="button" class="btn btn-action btn-sm btn-icon" title="Asignar">
+                    <button type="button" class="btn btn-action btn-sm btn-icon" title="<?php echo $canBulkAssign ? 'Asignar' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? '' : 'disabled'; ?>>
                         <i class="bi bi-person"></i>
                     </button>
-                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" <?php echo $canBulkAssign ? '' : 'disabled'; ?>>
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
@@ -1327,10 +1371,10 @@ if (!empty($ticketView)) {
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn btn-action btn-sm btn-icon" title="Cambiar estado">
+                    <button type="button" class="btn btn-action btn-sm btn-icon" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar/cerrar' : 'Cambiar estado'; ?>" <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>>
                         <i class="bi bi-flag"></i>
                     </button>
-                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>>
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
@@ -1340,7 +1384,7 @@ if (!empty($ticketView)) {
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-danger-soft btn-sm" data-action="tickets-bulk-delete"><i class="bi bi-trash"></i> Eliminar</button>
+                <button type="button" class="btn btn-danger-soft btn-sm" data-action="tickets-bulk-delete" title="<?php echo $canBulkDelete ? 'Eliminar' : 'Sin permiso para eliminar'; ?>" <?php echo $canBulkDelete ? '' : 'disabled'; ?>><i class="bi bi-trash"></i> Eliminar</button>
                 </div>
 
                 <div class="text-muted" style="font-size: 0.85rem; font-weight: 700;">

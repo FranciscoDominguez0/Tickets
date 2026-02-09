@@ -370,4 +370,100 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     $stmt->bind_param('ssissss', $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
     return $stmt->execute();
 }
+
+function ensureRolePermissionsTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS role_permissions (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  role_name VARCHAR(100) NOT NULL,\n"
+        . "  perm_key VARCHAR(120) NOT NULL,\n"
+        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
+        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_role_perm (role_name, perm_key),\n"
+        . "  KEY idx_role (role_name),\n"
+        . "  KEY idx_perm (perm_key)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool)$mysqli->query($sql);
+}
+
+function getCurrentStaffRoleName() {
+    global $mysqli;
+    static $cached = null;
+    if ($cached !== null) return $cached;
+    $sid = (int)($_SESSION['staff_id'] ?? 0);
+    if ($sid <= 0) {
+        $cached = '';
+        return $cached;
+    }
+    if (!isset($mysqli) || !$mysqli) {
+        $cached = '';
+        return $cached;
+    }
+    $stmt = $mysqli->prepare('SELECT role FROM staff WHERE id = ? LIMIT 1');
+    if (!$stmt) {
+        $cached = '';
+        return $cached;
+    }
+    $stmt->bind_param('i', $sid);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $cached = trim((string)($row['role'] ?? ''));
+    return $cached;
+}
+
+function roleHasPermission($permKey) {
+    global $mysqli;
+    $permKey = trim((string)$permKey);
+    if ($permKey === '') return false;
+
+    $role = getCurrentStaffRoleName();
+    if ($role === 'admin') return true;
+    if ($role === '') return false;
+
+    if (!isset($mysqli) || !$mysqli) return false;
+    ensureRolePermissionsTable();
+
+    $stmt = $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
+    if (!$stmt) return false;
+    $stmt->bind_param('ss', $role, $permKey);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return (bool)$row;
+}
+
+function roleHasAnyPermissionPrefix($prefix) {
+    global $mysqli;
+    $prefix = (string)$prefix;
+    if ($prefix === '') return false;
+    $role = getCurrentStaffRoleName();
+    if ($role === 'admin') return true;
+    if ($role === '') return false;
+    if (!isset($mysqli) || !$mysqli) return false;
+    ensureRolePermissionsTable();
+
+    $like = $prefix . '%';
+    $stmt = $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1');
+    if (!$stmt) return false;
+    $stmt->bind_param('ss', $role, $like);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return (bool)$row;
+}
+
+function requireRolePermission($permKey, $redirectUrl = null) {
+    $ok = roleHasPermission($permKey);
+    if ($ok) return true;
+
+    $_SESSION['flash_error'] = 'No tienes permiso para hacer esta acción.';
+    addLog('permission_denied', (string)$permKey, null, null, 'staff', (int)($_SESSION['staff_id'] ?? 0));
+
+    if ($redirectUrl) {
+        header('Location: ' . $redirectUrl);
+        exit;
+    }
+    http_response_code(403);
+    exit('No autorizado');
+}
 ?>
