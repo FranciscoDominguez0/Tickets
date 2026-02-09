@@ -394,6 +394,8 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 
             var cleanupModals = function () {
               try {
+                var overlay = document.getElementById('assign-loading');
+                if (overlay) overlay.style.display = 'none';
                 document.querySelectorAll('.modal.show').forEach(function (el) {
                   if (window.bootstrap && window.bootstrap.Modal) {
                     var inst = window.bootstrap.Modal.getInstance(el);
@@ -412,6 +414,9 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
             window.addEventListener('pageshow', function (ev) {
               if (ev && ev.persisted) {
                 cleanupModals();
+                try {
+                  window.location.replace('tickets.php');
+                } catch (e3) {}
               }
             });
           })();

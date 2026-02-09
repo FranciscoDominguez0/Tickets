@@ -671,6 +671,76 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $ok = $stmt->execute();
                     $msg = 'collab_removed';
                 }
+            } elseif ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                // Borrar ticket (desde modal)
+                requireRolePermission('ticket.delete', 'tickets.php?id=' . $tid);
+                $confirm = (string)($_POST['confirm'] ?? '');
+                if ($confirm !== '1') {
+                    $_SESSION['flash_error'] = 'Confirmación inválida.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+
+                $deleted = false;
+                try {
+                    if (method_exists($mysqli, 'begin_transaction')) {
+                        $mysqli->begin_transaction();
+                    }
+
+                    // Si existen tablas de threads/entries, borrarlas explícitamente para instalaciones sin FKs
+                    $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
+                    $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
+                    $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
+                    $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
+
+                    if ($threadsOk && $entriesOk) {
+                        $stmtDelEntries = $mysqli->prepare(
+                            'DELETE te FROM thread_entries te JOIN threads th ON th.id = te.thread_id WHERE th.ticket_id = ?'
+                        );
+                        if ($stmtDelEntries) {
+                            $stmtDelEntries->bind_param('i', $tid);
+                            $stmtDelEntries->execute();
+                        }
+                    }
+
+                    if ($threadsOk) {
+                        $stmtDelThreads = $mysqli->prepare('DELETE FROM threads WHERE ticket_id = ?');
+                        if ($stmtDelThreads) {
+                            $stmtDelThreads->bind_param('i', $tid);
+                            $stmtDelThreads->execute();
+                        }
+                    }
+
+                    $stmtDelTicket = $mysqli->prepare('DELETE FROM tickets WHERE id = ?');
+                    if (!$stmtDelTicket) {
+                        throw new Exception('No se pudo preparar la eliminación.');
+                    }
+                    $stmtDelTicket->bind_param('i', $tid);
+                    $deleted = (bool)$stmtDelTicket->execute();
+
+                    if (!$deleted) {
+                        throw new Exception('No se pudo eliminar el ticket.');
+                    }
+
+                    if (method_exists($mysqli, 'commit')) {
+                        $mysqli->commit();
+                    }
+                } catch (Throwable $e) {
+                    if (method_exists($mysqli, 'rollback')) {
+                        $mysqli->rollback();
+                    }
+                    $deleted = false;
+                }
+
+                if ($deleted) {
+                    $_SESSION['flash_msg'] = 'Ticket eliminado correctamente.';
+                    header('Location: tickets.php');
+                    exit;
+                }
+
+                $_SESSION['flash_error'] = 'No se pudo eliminar el ticket.';
+                header('Location: tickets.php?id=' . $tid);
+                exit;
             }
             if ($ok && $msg && !in_array($action, ['delete', 'merge'], true)) {
                 header('Location: tickets.php?id=' . $tid . '&msg=' . $msg);

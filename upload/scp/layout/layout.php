@@ -315,12 +315,33 @@ if (!isset($_SESSION[$menuKey])) {
     </div>
 
     <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
-        Derechos de autor 2026 Vigitec Panama - Sistema de Tickets - Todos los derechos reservados.
-        Derechos de autor © 2026 Vigitec Panama - Sistema de Tickets - Todos los derechos reservados.
+        &copy; VigitecPanama
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function(){
+            var alerts = document.querySelectorAll('.alert.alert-dismissible.fade.show:not(.d-none)');
+            if (!alerts || !alerts.length) return;
+            alerts.forEach(function(el){
+                var isPermanent = el.hasAttribute('data-alert-static') || el.getAttribute('data-static') === '1';
+                var id = (el.getAttribute('id') || '');
+                if (id && /ClientError$/i.test(id)) return;
+                if (isPermanent) return;
+                window.setTimeout(function(){
+                    try {
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                            bootstrap.Alert.getOrCreateInstance(el).close();
+                        } else {
+                            el.classList.remove('show');
+                            window.setTimeout(function(){ if (el && el.parentNode) el.parentNode.removeChild(el); }, 250);
+                        }
+                    } catch (e) {}
+                }, 3500);
+            });
+        });
+    </script>
     <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
     <script src="js/profile.js"></script>
     <?php endif; ?>
