@@ -136,6 +136,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bodyHtml = '<p>Mensaje de prueba</p>';
             }
 
+            // Convertir imágenes embebidas (data:image;base64) a adjuntos inline (cid)
+            $bodyHtml = preg_replace_callback(
+                '/<img([^>]+)src="data:image\/([^;]+);base64,([^"]+)"([^>]*)>/i',
+                function ($matches) use (&$attachments) {
+                    $tagAttrs = $matches[1];
+                    $ext = strtolower((string)$matches[2]);
+                    $base64 = $matches[3];
+                    $rest = $matches[4];
+
+                    $data = base64_decode($base64);
+                    if ($data === false || $data === '') {
+                        return $matches[0];
+                    }
+
+                    $cid = 'img' . uniqid() . '@emailtest';
+                    $filename = 'image_' . uniqid() . '.' . $ext;
+                    $attachments[] = [
+                        'filename' => $filename,
+                        'contentType' => 'image/' . $ext,
+                        'content' => $data,
+                        'cid' => $cid,
+                    ];
+
+                    return '<img' . $tagAttrs . 'src="cid:' . $cid . '"' . $rest . '>';
+                },
+                $bodyHtml
+            );
+
             $opts = [
                 'from' => $fromEmail,
                 'fromName' => $fromName,
@@ -152,6 +180,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ok = Mailer::sendWithOptions($to, $subject, $bodyHtml, strip_tags($bodyHtml), $opts);
             if ($ok) {
                 $msg = 'Correo de prueba enviado correctamente.';
+                $selectedFromId = 0;
+                $toVal = '';
+                $subjectVal = 'osTicket test email';
+                $bodyVal = '';
             } else {
                 $error = 'Falló el envío: ' . (Mailer::$lastError ?: 'Error desconocido');
             }
@@ -194,14 +226,15 @@ ob_start();
             <div class="card-header">
                 <strong><i class="bi bi-send"></i> Comprobar el correo electrónico saliente</strong>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="padding: 12px;">
+                <div style="max-width: 920px; margin: 0 auto;">
                 <form method="post" action="emailtest.php" enctype="multipart/form-data">
                     <?php csrfField(); ?>
-                    <div class="alert alert-info py-2">Utilice el siguiente formulario para comprobar que su configuración de <strong>Correo electrónico saliente</strong> esté establecida correctamente.</div>
+                    <div class="alert alert-info py-2 mb-2">Utilice el siguiente formulario para comprobar que su configuración de <strong>Correo electrónico saliente</strong> esté establecida correctamente.</div>
 
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label">De:</label>
-                        <select class="form-select" name="from_id">
+                        <select class="form-select form-select-sm" name="from_id">
                             <option value="0">— Seleccione correo electrónico del emisor —</option>
                             <?php foreach ($accounts as $a): ?>
                                 <?php
@@ -217,31 +250,32 @@ ob_start();
                         <div class="text-muted small mt-1">Si no seleccionas ninguno, se usará el correo por defecto.</div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label">Para:</label>
-                        <input type="email" name="to" class="form-control" required value="<?php echo html($toVal); ?>" placeholder="destino@correo.com">
+                        <input type="email" name="to" class="form-control form-control-sm" required value="<?php echo html($toVal); ?>" placeholder="destino@correo.com">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label">Asunto:</label>
-                        <input type="text" name="subject" class="form-control" value="<?php echo html($subjectVal); ?>" placeholder="osTicket test email">
+                        <input type="text" name="subject" class="form-control form-control-sm" value="<?php echo html($subjectVal); ?>" placeholder="osTicket test email">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label">Mensaje:</label>
                         <textarea name="body" id="emailtest_body" class="form-control" rows="10"><?php echo html($bodyVal); ?></textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <input type="file" name="attachments[]" class="form-control" multiple>
+                    <div class="mb-2">
+                        <input type="file" name="attachments[]" class="form-control form-control-sm" multiple>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-envelope"></i> Enviar mensaje</button>
-                        <a href="emailtest.php" class="btn btn-outline-secondary">Restablecer</a>
-                        <a href="emails.php" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-envelope"></i> Enviar mensaje</button>
+                        <a href="emailtest.php" class="btn btn-outline-secondary btn-sm">Restablecer</a>
+                        <a href="emails.php" class="btn btn-outline-secondary btn-sm">Cancelar</a>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>
@@ -259,7 +293,7 @@ ob_start();
         var el = jQuery('#emailtest_body');
         if (!el.length) return;
         el.summernote({
-          height: 260,
+          height: 180,
           lang: 'es-ES',
           toolbar: [
             ['style', ['style']],
