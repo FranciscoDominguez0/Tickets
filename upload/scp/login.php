@@ -23,6 +23,21 @@ if (isset($_SESSION['staff_id'])) {
 $error = '';
 $success = '';
 
+if (!empty($_SESSION['flash_error'])) {
+    $error = (string)$_SESSION['flash_error'];
+    unset($_SESSION['flash_error']);
+}
+if (!empty($_SESSION['flash_success'])) {
+    $success = (string)$_SESSION['flash_success'];
+    unset($_SESSION['flash_success']);
+}
+
+$prefillUser = '';
+if (!empty($_SESSION['flash_username'])) {
+    $prefillUser = (string)$_SESSION['flash_username'];
+    unset($_SESSION['flash_username']);
+}
+
 if ($_POST) {
         // Validar CSRF
         if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
@@ -84,7 +99,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                         id="username" 
                         name="username" 
                         placeholder="Usuario"
-                        value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
+                        value="<?php echo htmlspecialchars($_POST['username'] ?? ($prefillUser ?: '')); ?>"
                         required
                     >
                     <svg class="agent-input-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
