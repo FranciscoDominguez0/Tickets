@@ -535,6 +535,24 @@
 .filter-dd .dropdown-item.active,
 .filter-dd .dropdown-item:active { background: #2563eb; }
 
+.tickets-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tickets-filters .form-select {
+    border-radius: 10px;
+    border: 1px solid rgba(2, 6, 23, 0.10);
+    background: #fff;
+    font-weight: 800;
+    color: #0f172a;
+    min-width: 260px;
+}
+.tickets-filters .form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.45);
+}
+
 .tickets-search { min-width: 280px; }
 .tickets-search input { border-radius: 10px; }
 

@@ -37,9 +37,12 @@ document.addEventListener('DOMContentLoaded', function() {
       var input = document.getElementById('ticketSearchInput');
       var q = (input && input.value ? input.value : '').toString().trim();
       var filter = getFilterKey();
+      var topicSel = document.getElementById('ticketTopicSelect');
+      var topicId = (topicSel && topicSel.value ? topicSel.value : '').toString().trim();
       var params = new URLSearchParams();
       if (filter !== '') params.set('filter', filter);
       if (q !== '') params.set('q', q);
+      if (topicId !== '' && topicId !== '0') params.set('topic_id', topicId);
       window.location.href = 'tickets.php?' + params.toString();
     }
 
@@ -125,6 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
           e.preventDefault();
           applyTicketSearch();
         }
+      });
+    }
+
+    var topicSelect = document.getElementById('ticketTopicSelect');
+    if (topicSelect) {
+      topicSelect.addEventListener('change', function () {
+        applyTicketSearch();
       });
     }
 

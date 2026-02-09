@@ -1090,6 +1090,43 @@ $filterKey = $_GET['filter'] ?? 'open';
 if (!isset($filters[$filterKey])) $filterKey = 'open';
 $query = trim($_GET['q'] ?? '');
 
+// Filtro por tema (help topic) - opcional según esquema
+$topicFilterAvailable = false;
+$topicOptions = [];
+$selectedTopicId = isset($_GET['topic_id']) && is_numeric($_GET['topic_id']) ? (int)$_GET['topic_id'] : 0;
+$selectedTopicName = '';
+$countSelectedTopic = 0;
+
+$hasTopicsTable = false;
+$hasTopicCol = false;
+$t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+$c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+if ($c && $c->num_rows > 0) $hasTopicCol = true;
+
+if ($hasTopicsTable && $hasTopicCol) {
+    $topicFilterAvailable = true;
+    $r = $mysqli->query('SELECT id, name FROM help_topics WHERE is_active = 1 ORDER BY name');
+    if ($r) {
+        while ($row = $r->fetch_assoc()) {
+            $topicOptions[] = $row;
+            if ($selectedTopicId > 0 && (int)($row['id'] ?? 0) === $selectedTopicId) {
+                $selectedTopicName = (string)($row['name'] ?? '');
+            }
+        }
+    }
+}
+
+if ($topicFilterAvailable && $selectedTopicId > 0) {
+    $stmtTc = $mysqli->prepare('SELECT COUNT(*) AS c FROM tickets WHERE topic_id = ?');
+    if ($stmtTc) {
+        $stmtTc->bind_param('i', $selectedTopicId);
+        if ($stmtTc->execute()) {
+            $countSelectedTopic = (int)($stmtTc->get_result()->fetch_assoc()['c'] ?? 0);
+        }
+    }
+}
+
 // Contadores rápidos
 $countOpen = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NULL")->fetch_assoc()['c'] ?? 0);
 $countClosed = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NOT NULL")->fetch_assoc()['c'] ?? 0);
@@ -1111,6 +1148,11 @@ if ($filterKey === 'mine') {
 } elseif ($filterKey !== 'all') {
     $whereClauses[] = $filters[$filterKey]['where'];
 }
+if ($topicFilterAvailable && $selectedTopicId > 0) {
+    $whereClauses[] = 't.topic_id = ?';
+    $types .= 'i';
+    $params[] = $selectedTopicId;
+}
 if ($query !== '') {
     $like = '%' . $query . '%';
     $whereClauses[] = '(t.ticket_number LIKE ? OR t.subject LIKE ? OR u.email LIKE ? OR CONCAT(u.firstname, " ", u.lastname) LIKE ?)';
@@ -1121,6 +1163,30 @@ if ($query !== '') {
     $params[] = $like;
 }
 $whereSql = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
+
+// Conteo del tema seleccionado dentro de la vista actual (sin LIMIT)
+if ($topicFilterAvailable && $selectedTopicId > 0) {
+    $sqlCnt = "SELECT COUNT(*) AS c\n"
+        . "FROM tickets t\n"
+        . "JOIN users u ON t.user_id = u.id\n"
+        . "$whereSql";
+    if ($types !== '') {
+        $stmtCnt = $mysqli->prepare($sqlCnt);
+        if ($stmtCnt) {
+            $bindCnt = [$types];
+            foreach ($params as $k => $v) { $bindCnt[] = &$params[$k]; }
+            call_user_func_array([$stmtCnt, 'bind_param'], $bindCnt);
+            if ($stmtCnt->execute()) {
+                $countSelectedTopic = (int)($stmtCnt->get_result()->fetch_assoc()['c'] ?? 0);
+            }
+        }
+    } else {
+        $rc = $mysqli->query($sqlCnt);
+        if ($rc) {
+            $countSelectedTopic = (int)($rc->fetch_assoc()['c'] ?? 0);
+        }
+    }
+}
 
 $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed,
                ts.name AS status_name, ts.color AS status_color,
@@ -1435,8 +1501,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
     }
     $redirFilter = isset($_POST['current_filter']) ? (string) $_POST['current_filter'] : (string) ($filterKey ?? 'open');
     $redirQ = isset($_POST['current_q']) ? trim((string) $_POST['current_q']) : '';
+    $redirTopicId = isset($_POST['current_topic_id']) && is_numeric($_POST['current_topic_id']) ? (int) $_POST['current_topic_id'] : $selectedTopicId;
     $redirParams = ['filter' => $redirFilter];
     if ($redirQ !== '') $redirParams['q'] = $redirQ;
+    if ($redirTopicId > 0) $redirParams['topic_id'] = $redirTopicId;
     header('Location: tickets.php?' . http_build_query($redirParams));
     exit;
 }
@@ -1498,7 +1566,7 @@ if (!empty($ticketView)) {
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Tickets</h1>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong></div>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
                 <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
@@ -1512,6 +1580,7 @@ if (!empty($ticketView)) {
         <input type="hidden" name="confirm" id="bulk_confirm" value="0">
         <input type="hidden" name="current_filter" value="<?php echo html($filterKey); ?>">
         <input type="hidden" name="current_q" value="<?php echo html($query); ?>">
+        <input type="hidden" name="current_topic_id" value="<?php echo (int)$selectedTopicId; ?>">
         <input type="hidden" name="bulk_staff_id" id="bulk_staff_id" value="">
         <input type="hidden" name="bulk_status_id" id="bulk_status_id" value="">
         <input type="hidden" id="bulk_staff_label" value="">
@@ -1572,18 +1641,31 @@ if (!empty($ticketView)) {
 
         <div class="tickets-panel">
             <div class="tickets-toolbar">
-                <div class="dropdown filter-dd">
-                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-funnel"></i>
-                        <?php echo html($filters[$filterKey]['label']); ?>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Abiertos</a></li>
-                        <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Sin asignar</a></li>
-                        <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Asignados a mí</a></li>
-                        <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Cerrados</a></li>
-                        <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>">Todos</a></li>
-                    </ul>
+                <div class="tickets-filters">
+                    <div class="dropdown filter-dd">
+                        <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-funnel"></i>
+                            <?php echo html($filters[$filterKey]['label']); ?>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
+                        </ul>
+                    </div>
+
+                    <?php if ($topicFilterAvailable): ?>
+                        <select class="form-select form-select-sm" id="ticketTopicSelect" aria-label="Filtrar por tema">
+                            <option value="0">Todos los temas</option>
+                            <?php foreach ($topicOptions as $tp): ?>
+                                <?php $tpId = (int)($tp['id'] ?? 0); ?>
+                                <option value="<?php echo $tpId; ?>" <?php echo $tpId === (int)$selectedTopicId ? 'selected' : ''; ?>><?php echo html((string)($tp['name'] ?? '')); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                 </div>
                 <div class="tickets-search">
                     <div class="input-group">
