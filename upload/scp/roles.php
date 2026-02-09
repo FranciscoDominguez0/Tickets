@@ -236,7 +236,7 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="rolesClientError" aria-live="polite">
+<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="rolesClientError" aria-live="polite" data-alert-static="1">
     <i class="bi bi-exclamation-triangle me-2"></i><span id="rolesClientErrorText"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
@@ -354,15 +354,35 @@ window.addEventListener('DOMContentLoaded', function(){
         return ids;
     }
 
-    function requireAtLeastOneRoleSelected(ids) {
+    function requireAtLeastOneRoleSelected(ids, message) {
         if (ids.length < 1) {
             var box = document.getElementById('rolesClientError');
-            var txt = document.getElementById('rolesClientErrorText');
-            if (txt) txt.textContent = 'Debe seleccionar al menos un rol';
-            if (box) {
-                box.classList.remove('d-none');
-                box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (!box) {
+                var wrapper = document.createElement('div');
+                wrapper.innerHTML = ''
+                    + '<div class="alert alert-danger alert-dismissible fade show" role="alert" id="rolesClientError" aria-live="polite" data-alert-static="1">'
+                    + '  <i class="bi bi-exclamation-triangle me-2"></i><span id="rolesClientErrorText"></span>'
+                    + '  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                    + '</div>';
+                var newEl = wrapper.firstElementChild;
+                var hero = document.querySelector('.settings-hero');
+                if (hero && hero.parentNode) {
+                    hero.parentNode.insertBefore(newEl, hero.nextSibling);
+                } else {
+                    document.body.insertBefore(newEl, document.body.firstChild);
+                }
+                box = newEl;
             }
+            var txt = document.getElementById('rolesClientErrorText');
+            if (txt) txt.textContent = message || 'Debe seleccionar al menos un rol';
+            box.classList.remove('d-none');
+            box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            try {
+                if (box._autoHideTimer) window.clearTimeout(box._autoHideTimer);
+                box._autoHideTimer = window.setTimeout(function(){
+                    if (box) box.classList.add('d-none');
+                }, 3500);
+            } catch (e) {}
             return false;
         }
         return true;
@@ -380,8 +400,12 @@ window.addEventListener('DOMContentLoaded', function(){
     actionButtons.forEach(function(btn){
         btn.addEventListener('click', function(){
             var ids = getCheckedIds();
-            if (!requireAtLeastOneRoleSelected(ids)) return;
             var action = btn.getAttribute('data-role-action') || '';
+            if (action === 'delete') {
+                if (!requireAtLeastOneRoleSelected(ids, 'Debe seleccionar un rol para eliminar')) return;
+            } else {
+                if (!requireAtLeastOneRoleSelected(ids)) return;
+            }
             var form = document.getElementById('rolesMassForm');
             var act = document.getElementById('rolesMassAction');
             if (!form || !act) return;

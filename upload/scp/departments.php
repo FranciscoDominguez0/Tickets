@@ -264,7 +264,7 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="deptsClientError" aria-live="polite">
+<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">
     <i class="bi bi-exclamation-triangle me-2"></i><span id="deptsClientErrorText"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
@@ -447,6 +447,28 @@ ob_start();
     </div>
 </div>
 
+<div class="modal fade" id="deleteDeptsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Eliminar departamentos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Deseas eliminar los departamentos seleccionados?
+                <div class="text-muted small mt-2">
+                    Seleccionados: <strong><span id="deleteDeptsCount">0</span></strong>
+                </div>
+                <div class="text-muted small mt-2">Solo se eliminarán departamentos sin agentes ni tickets asignados.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteDeptsBtn"><i class="bi bi-trash"></i> Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.addEventListener('DOMContentLoaded', function(){
     function getCheckedIds(){
@@ -459,12 +481,32 @@ window.addEventListener('DOMContentLoaded', function(){
     function requireAtLeastOneDeptSelected(ids) {
         if (ids.length < 1) {
             var box = document.getElementById('deptsClientError');
+            if (!box) {
+                var wrapper = document.createElement('div');
+                wrapper.innerHTML = ''
+                    + '<div class="alert alert-danger alert-dismissible fade show" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">'
+                    + '  <i class="bi bi-exclamation-triangle me-2"></i><span id="deptsClientErrorText"></span>'
+                    + '  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                    + '</div>';
+                var newEl = wrapper.firstElementChild;
+                var hero = document.querySelector('.settings-hero');
+                if (hero && hero.parentNode) {
+                    hero.parentNode.insertBefore(newEl, hero.nextSibling);
+                } else {
+                    document.body.insertBefore(newEl, document.body.firstChild);
+                }
+                box = newEl;
+            }
             var txt = document.getElementById('deptsClientErrorText');
             if (txt) txt.textContent = 'Debe seleccionar al menos un departamento';
-            if (box) {
-                box.classList.remove('d-none');
-                box.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            box.classList.remove('d-none');
+            box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            try {
+                if (box._autoHideTimer) window.clearTimeout(box._autoHideTimer);
+                box._autoHideTimer = window.setTimeout(function(){
+                    if (box) box.classList.add('d-none');
+                }, 3500);
+            } catch (e) {}
             return false;
         }
         return true;
@@ -482,9 +524,17 @@ window.addEventListener('DOMContentLoaded', function(){
     actionButtons.forEach(function(btn){
         btn.addEventListener('click', function(){
             var ids = getCheckedIds();
-            if (!requireAtLeastOneDeptSelected(ids)) return;
             var action = btn.getAttribute('data-dept-action') || '';
-            if (action === 'delete' && !confirm('¿Deseas eliminar los departamentos seleccionados?')) return;
+            if (action === 'delete') {
+                if (!requireAtLeastOneDeptSelected(ids)) return;
+                var countEl = document.getElementById('deleteDeptsCount');
+                if (countEl) countEl.textContent = String(ids.length);
+                var modalEl = document.getElementById('deleteDeptsModal');
+                if (!modalEl || typeof bootstrap === 'undefined') return;
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                return;
+            }
+            if (!requireAtLeastOneDeptSelected(ids)) return;
             var form = document.getElementById('deptsMassForm');
             var act = document.getElementById('deptsMassAction');
             if (!form || !act) return;
@@ -492,6 +542,19 @@ window.addEventListener('DOMContentLoaded', function(){
             form.submit();
         });
     });
+
+    var confirmDeleteBtn = document.getElementById('confirmDeleteDeptsBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function(){
+            var ids = getCheckedIds();
+            if (!requireAtLeastOneDeptSelected(ids)) return;
+            var form = document.getElementById('deptsMassForm');
+            var act = document.getElementById('deptsMassAction');
+            if (!form || !act) return;
+            act.value = 'delete';
+            form.submit();
+        });
+    }
 
     var editBtns = document.querySelectorAll('.dept-edit-btn');
     editBtns.forEach(function(btn){

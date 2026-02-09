@@ -132,6 +132,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = (string)($_POST['do'] ?? '');
 
+    if ($action === 'delete') {
+        $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
+        if ($id <= 0) {
+            $_SESSION['flash_error'] = 'Agente inválido.';
+            header('Location: staff.php');
+            exit;
+        }
+        if ($id === $currentStaffId) {
+            $_SESSION['flash_error'] = 'No puedes eliminar tu propio usuario.';
+            header('Location: staff.php');
+            exit;
+        }
+
+        $stmtChk = $mysqli->prepare('SELECT id FROM staff WHERE id = ? LIMIT 1');
+        if (!$stmtChk) {
+            $_SESSION['flash_error'] = 'No se pudo procesar la solicitud.';
+            header('Location: staff.php');
+            exit;
+        }
+        $stmtChk->bind_param('i', $id);
+        $stmtChk->execute();
+        $row = $stmtChk->get_result()->fetch_assoc();
+        if (!$row) {
+            $_SESSION['flash_error'] = 'Agente no encontrado.';
+            header('Location: staff.php');
+            exit;
+        }
+
+        $stmtDel = $mysqli->prepare('DELETE FROM staff WHERE id = ?');
+        if (!$stmtDel) {
+            $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
+            header('Location: staff.php');
+            exit;
+        }
+        $stmtDel->bind_param('i', $id);
+        if ($stmtDel->execute()) {
+            $_SESSION['flash_msg'] = 'Agente eliminado correctamente.';
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
+        }
+        header('Location: staff.php');
+        exit;
+    }
+
     if ($action === 'create') {
         $firstname = trim((string)($_POST['firstname'] ?? ''));
         $lastname = trim((string)($_POST['lastname'] ?? ''));
@@ -614,6 +658,13 @@ ob_start();
                                         <i class="bi bi-pencil"></i>
                                     </button>
 
+                                    <button type="button" class="btn btn-sm btn-outline-danger agent-delete-btn"
+                                        data-id="<?php echo (int)$a['id']; ?>"
+                                        data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-bs-toggle="modal" data-bs-target="#agentDeleteModal">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
                                     <form method="post" action="staff.php" class="d-inline">
                                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                                         <input type="hidden" name="do" value="send_reset">
@@ -769,6 +820,30 @@ ob_start();
     </div>
 </div>
 
+<div class="modal fade" id="agentDeleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="staff.php">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Eliminar Agente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                    <input type="hidden" name="do" value="delete">
+                    <input type="hidden" name="id" id="delete_id" value="">
+                    ¿Deseas eliminar el agente seleccionado?
+                    <div class="text-muted small mt-2">Agente: <strong><span id="delete_agent_name">—</span></strong></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
         var btns = document.querySelectorAll('.agent-edit-btn');
@@ -786,6 +861,19 @@ ob_start();
                 document.getElementById('editIsActive').checked = (this.getAttribute('data-is-active') || '0') === '1';
             });
         });
+
+        var delBtns = document.querySelectorAll('.agent-delete-btn');
+        if (!delBtns || !delBtns.length) return;
+        delBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = this.getAttribute('data-id') || '';
+                var name = this.getAttribute('data-name') || '';
+                var idEl = document.getElementById('delete_id');
+                var nameEl = document.getElementById('delete_agent_name');
+                if (idEl) idEl.value = id;
+                if (nameEl) nameEl.textContent = name || '—';
+            });
+        });
     })();
 </script>
 <?php endif; ?>
@@ -794,4 +882,3 @@ ob_start();
 $content = ob_get_clean();
 
 require_once 'layout_admin.php';
-?>

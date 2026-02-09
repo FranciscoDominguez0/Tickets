@@ -283,6 +283,11 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="banClientError" aria-live="polite" data-alert-static="1">
+    <i class="bi bi-exclamation-triangle me-2"></i><span id="banClientErrorText"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
 <div class="row">
     <div class="col-12">
         <div class="card settings-card">
@@ -382,6 +387,27 @@ ob_start();
     </div>
 </div>
 
+<div class="modal fade" id="deleteBanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Eliminar elementos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                ¿Deseas eliminar los elementos seleccionados?
+                <div class="text-muted small mt-2">
+                    Seleccionados: <strong><span id="deleteBanCount">0</span></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBanBtn"><i class="bi bi-trash"></i> Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (function(){
     function getChecked(){
@@ -397,10 +423,52 @@ ob_start();
         });
     }
 
+    function showClientError(message) {
+        var box = document.getElementById('banClientError');
+        if (!box) {
+            var wrapper = document.createElement('div');
+            wrapper.innerHTML = ''
+                + '<div class="alert alert-danger alert-dismissible fade show" role="alert" id="banClientError" aria-live="polite" data-alert-static="1">'
+                + '  <i class="bi bi-exclamation-triangle me-2"></i><span id="banClientErrorText"></span>'
+                + '  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
+                + '</div>';
+            var newEl = wrapper.firstElementChild;
+            var hero = document.querySelector('.settings-hero');
+            if (hero && hero.parentNode) {
+                hero.parentNode.insertBefore(newEl, hero.nextSibling);
+            } else {
+                document.body.insertBefore(newEl, document.body.firstChild);
+            }
+            box = newEl;
+        }
+        var txt = document.getElementById('banClientErrorText');
+        if (txt) txt.textContent = message || 'Debe seleccionar al menos un elemento';
+        box.classList.remove('d-none');
+        box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        try {
+            if (box._autoHideTimer) window.clearTimeout(box._autoHideTimer);
+            box._autoHideTimer = window.setTimeout(function(){
+                if (box) box.classList.add('d-none');
+            }, 3500);
+        } catch (e) {}
+    }
+
     function submitAction(action){
         var ids = getChecked();
-        if (ids.length < 1) return;
-        if (action === 'delete' && !confirm('¿Deseas eliminar los elementos seleccionados?')) return;
+        if (ids.length < 1) {
+            showClientError(action === 'delete' ? 'Debe seleccionar un elemento para eliminar' : 'Debe seleccionar al menos un elemento');
+            return;
+        }
+
+        if (action === 'delete') {
+            var countEl = document.getElementById('deleteBanCount');
+            if (countEl) countEl.textContent = String(ids.length);
+            var modalEl = document.getElementById('deleteBanModal');
+            if (!modalEl || typeof bootstrap === 'undefined') return;
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            return;
+        }
+
         document.getElementById('banActionInput').value = action;
         document.getElementById('banMassForm').submit();
     }
@@ -411,6 +479,19 @@ ob_start();
     if (btnDisable) btnDisable.addEventListener('click', function(){ submitAction('disable'); });
     var btnDelete = document.getElementById('deleteBanBtn');
     if (btnDelete) btnDelete.addEventListener('click', function(){ submitAction('delete'); });
+
+    var confirmDeleteBtn = document.getElementById('confirmDeleteBanBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function(){
+            var ids = getChecked();
+            if (ids.length < 1) {
+                showClientError('Debe seleccionar un elemento para eliminar');
+                return;
+            }
+            document.getElementById('banActionInput').value = 'delete';
+            document.getElementById('banMassForm').submit();
+        });
+    }
 })();
 </script>
 
