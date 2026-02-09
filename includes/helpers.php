@@ -27,6 +27,31 @@ function requireLogin($type = 'user') {
         }
         exit;
     }
+
+    if ($type === 'cliente' && isset($_SESSION['user_id'])) {
+        $timeoutMin = (int)getAppSetting('users.session_timeout_minutes', '30');
+        if (!isset($_SESSION['user_last_activity']) || (int)($_SESSION['user_last_activity'] ?? 0) <= 0) {
+            $_SESSION['user_last_activity'] = time();
+        }
+        if ($timeoutMin > 0) {
+            $last = (int)($_SESSION['user_last_activity'] ?? 0);
+            if ($last > 0 && (time() - $last) > ($timeoutMin * 60)) {
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                if (strpos($currentPath, '/upload/') !== false) {
+                    header('Location: login.php?msg=timeout');
+                } else {
+                    header('Location: upload/login.php?msg=timeout');
+                }
+                exit;
+            }
+        }
+
+        $_SESSION['user_last_activity'] = time();
+    }
     if ($type === 'agente' && !isset($_SESSION['staff_id'])) {
         // Detectar si estamos en upload/scp/ o en otro lugar
         $currentPath = $_SERVER['PHP_SELF'];

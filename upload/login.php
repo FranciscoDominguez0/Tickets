@@ -20,6 +20,11 @@ if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline')
     $offlineNotice = 'El sistema se encuentra en mantenimiento. Disculpe las molestias. Por favor intente nuevamente más tarde.';
 }
 
+$loginMsg = (string)($_GET['msg'] ?? '');
+if ($loginMsg === 'timeout') {
+    $_SESSION['flash_error'] = 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.';
+}
+
 // Si ya está logueado, redirigir
 if (isset($_SESSION['user_id'])) {
     header('Location: tickets.php');
@@ -37,29 +42,7 @@ if (isset($_SESSION['flash_error']) || isset($_SESSION['flash_success']) || isse
     unset($_SESSION['flash_error'], $_SESSION['flash_success'], $_SESSION['flash_email']);
 }
 
-if (!isset($_SESSION['login_failed_attempts'])) {
-    $_SESSION['login_failed_attempts'] = 0;
-}
-
 $supportEmail = (string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : 'cuenta9fran@gmail.com');
-
-$isLocked = false;
-$lockEmail = trim((string)$prefillEmail);
-if ($lockEmail !== '' && filter_var($lockEmail, FILTER_VALIDATE_EMAIL)) {
-    $stmtS = $mysqli->prepare("SELECT status FROM users WHERE email = ? LIMIT 1");
-    if ($stmtS) {
-        $stmtS->bind_param('s', $lockEmail);
-        $stmtS->execute();
-        $srow = $stmtS->get_result()->fetch_assoc();
-        if ($srow && ($srow['status'] ?? '') === 'banned') {
-            $isLocked = true;
-        }
-    }
-}
-
-if ($isLocked && $error === '') {
-    $error = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
-}
 
 if ($_POST) {
     $email = trim($_POST['email'] ?? '');
@@ -73,73 +56,26 @@ if ($_POST) {
         exit;
     }
 
-        // Recalcular bloqueo según el email enviado
-        $isLocked = false;
-        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $stmtS = $mysqli->prepare("SELECT status FROM users WHERE email = ? LIMIT 1");
-            if ($stmtS) {
-                $stmtS->bind_param('s', $email);
-                $stmtS->execute();
-                $srow = $stmtS->get_result()->fetch_assoc();
-                if ($srow && ($srow['status'] ?? '') === 'banned') {
-                    $isLocked = true;
-                }
-            }
-        }
-
-        if ($isLocked) {
-            $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
+        if (empty($email) || empty($password)) {
+            $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
             $_SESSION['flash_email'] = $prefillEmail;
-            addLog('Cuenta bloqueada: intento de inicio de sesión (usuario)', 'email=' . $prefillEmail, 'user', null, 'user', null);
             header('Location: login.php');
             exit;
-        } else {
-            if (!$isLocked && (empty($email) || empty($password))) {
-                $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
-                $_SESSION['flash_email'] = $prefillEmail;
-                header('Location: login.php');
-                exit;
-            } elseif (!$isLocked) {
-                $user = Auth::loginUser($email, $password);
-                if ($user) {
-                    $_SESSION['login_failed_attempts'] = 0;
-                    $_SESSION['user_login_time'] = time();
-                    header('Location: tickets.php');
-                    exit;
-                } else {
-                    $_SESSION['login_failed_attempts'] = (int)($_SESSION['login_failed_attempts'] ?? 0) + 1;
-                    addLog('Intento fallido de inicio de sesión (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', null, 'user', null);
-                    if ((int)$_SESSION['login_failed_attempts'] >= 3) {
-                        $isLocked = true;
-                        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                            $stmtLock = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE email = ?");
-                            if ($stmtLock) {
-                                $stmtLock->bind_param('s', $email);
-                                $stmtLock->execute();
-                            }
-                            $stmtUid = $mysqli->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
-                            $uid = null;
-                            if ($stmtUid) {
-                                $stmtUid->bind_param('s', $email);
-                                $stmtUid->execute();
-                                $urow = $stmtUid->get_result()->fetch_assoc();
-                                $uid = $urow ? (int)$urow['id'] : null;
-                            }
-                            addLog('Excesivos intentos de identificación (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', $uid, 'user', $uid);
-                        }
-                        $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
-                        $_SESSION['flash_email'] = $prefillEmail;
-                        header('Location: login.php');
-                        exit;
-                    } else {
-                        $_SESSION['flash_error'] = 'Email o contraseña incorrectos';
-                        $_SESSION['flash_email'] = $prefillEmail;
-                        header('Location: login.php');
-                        exit;
-                    }
-                }
-            }
         }
+
+        $user = Auth::loginUser($email, $password);
+        if ($user) {
+            $_SESSION['user_login_time'] = time();
+            $_SESSION['user_last_activity'] = time();
+            $_SESSION['user_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            header('Location: tickets.php');
+            exit;
+        }
+
+        $_SESSION['flash_error'] = (string)(Auth::$lastError ?: 'Email o contraseña incorrectos');
+        $_SESSION['flash_email'] = $prefillEmail;
+        header('Location: login.php');
+        exit;
 }
 ?>
 <!DOCTYPE html>
