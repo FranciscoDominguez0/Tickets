@@ -25,6 +25,11 @@ if ($_POST) {
         $hasFiles = !empty($_FILES['attachments']['name'][0]);
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
+        $defaultHelpTopic = (int)getAppSetting('tickets.default_help_topic', '0');
+        if ($topic_id <= 0 && $defaultHelpTopic > 0) {
+            $topic_id = $defaultHelpTopic;
+        }
+
         // Si se seleccionó un tema, tomar el dept_id directamente desde la BD
         // (en el formulario el selector de departamento puede estar oculto)
         if ($topic_id > 0) {
@@ -55,6 +60,30 @@ if ($_POST) {
         } elseif (strlen($body) > 500000) {
             $error = 'La descripción es demasiado grande. Por favor adjunta archivos en vez de pegarlos dentro del texto.';
         } else {
+            $maxOpenTicketsSetting = (int)getAppSetting('tickets.max_open_tickets', '0');
+            if ($maxOpenTicketsSetting > 0 && (int)($_SESSION['user_id'] ?? 0) > 0) {
+                $hasClosedCol = false;
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'closed'");
+                if ($c && $c->num_rows > 0) $hasClosedCol = true;
+
+                if ($hasClosedCol) {
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ? AND closed IS NULL');
+                } else {
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ?');
+                }
+                if ($stmtCnt) {
+                    $uid = (int)$_SESSION['user_id'];
+                    $stmtCnt->bind_param('i', $uid);
+                    $stmtCnt->execute();
+                    $cntRow = $stmtCnt->get_result()->fetch_assoc();
+                    $openCount = (int)($cntRow['cnt'] ?? 0);
+                    if ($openCount >= $maxOpenTicketsSetting) {
+                        $error = 'Has alcanzado el máximo de tickets abiertos.';
+                    }
+                }
+            }
+
+            if ($error === '') {
             // Generar número de ticket
             $generateTicketNumberFromFormat = function ($format) use ($mysqli) {
                 $format = trim((string)$format);
@@ -147,22 +176,51 @@ if ($_POST) {
             if ($c && $c->num_rows > 0) $hasTopicCol = true;
             $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
             if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+
+            $hasPriorityCol = false;
+            $cp = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'priority_id'");
+            if ($cp && $cp->num_rows > 0) $hasPriorityCol = true;
+
+            $defaultStatusId = (int)getAppSetting('tickets.default_ticket_status_id', '1');
+            if ($defaultStatusId <= 0) $defaultStatusId = 1;
+            $defaultPriorityId = (int)getAppSetting('tickets.default_priority_id', '1');
+            if ($defaultPriorityId <= 0) $defaultPriorityId = 1;
             
             // Insertar ticket
             error_log('[tickets] INSERT tickets via upload/open.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' user_id=' . (string)($_SESSION['user_id'] ?? '') . ' dept_id=' . (string)$dept_id . ' topic_id=' . (string)$topic_id);
             
             if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
-                $stmt = $mysqli->prepare(
-                    'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, subject, created)
-                     VALUES (?, ?, ?, ?, 1, ?, NOW())'
-                );
-                $stmt->bind_param('siiis', $ticket_number, $_SESSION['user_id'], $dept_id, $topic_id, $subject);
+                if ($hasPriorityCol) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, priority_id, subject, created)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+                    );
+                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiiiis', $ticket_number, $uid, $dept_id, $topic_id, $defaultStatusId, $defaultPriorityId, $subject);
+                } else {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, subject, created)
+                         VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                    );
+                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiiis', $ticket_number, $uid, $dept_id, $topic_id, $defaultStatusId, $subject);
+                }
             } else {
-                $stmt = $mysqli->prepare(
-                    'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, subject, created)
-                     VALUES (?, ?, ?, 1, ?, NOW())'
-                );
-                $stmt->bind_param('siis', $ticket_number, $_SESSION['user_id'], $dept_id, $subject);
+                if ($hasPriorityCol) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, priority_id, subject, created)
+                         VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                    );
+                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiiis', $ticket_number, $uid, $dept_id, $defaultStatusId, $defaultPriorityId, $subject);
+                } else {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, subject, created)
+                         VALUES (?, ?, ?, ?, ?, NOW())'
+                    );
+                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiis', $ticket_number, $uid, $dept_id, $defaultStatusId, $subject);
+                }
             }
             
             if ($stmt->execute()) {
@@ -287,6 +345,8 @@ if ($_POST) {
             }
         }
     }
+}
+
 }
 
 // Obtener departamentos y temas

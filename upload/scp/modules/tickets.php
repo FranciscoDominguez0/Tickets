@@ -65,6 +65,28 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
             if ($dept_id <= 0) $open_errors[] = 'Seleccione un departamento.';
 
+            $maxOpenTicketsSetting = (int)getAppSetting('tickets.max_open_tickets', '0');
+            if ($maxOpenTicketsSetting > 0 && $user_id > 0) {
+                $hasClosedCol = false;
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'closed'");
+                if ($c && $c->num_rows > 0) $hasClosedCol = true;
+
+                if ($hasClosedCol) {
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ? AND closed IS NULL');
+                } else {
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ?');
+                }
+                if ($stmtCnt) {
+                    $stmtCnt->bind_param('i', $user_id);
+                    $stmtCnt->execute();
+                    $cntRow = $stmtCnt->get_result()->fetch_assoc();
+                    $openCount = (int)($cntRow['cnt'] ?? 0);
+                    if ($openCount >= $maxOpenTicketsSetting) {
+                        $open_errors[] = 'Este usuario alcanzó el máximo de tickets abiertos.';
+                    }
+                }
+            }
+
             // Validar asignación inicial por departamento (regla exacta)
             if ($dept_id > 0 && $staff_id !== null) {
                 $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
@@ -175,14 +197,17 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
                 if ($t && $t->num_rows > 0) $hasTopicsTable = true;
 
+                $defaultStatusId = (int)getAppSetting('tickets.default_ticket_status_id', '1');
+                if ($defaultStatusId <= 0) $defaultStatusId = 1;
+
                 if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, 1, ?, ?, NOW())");
-                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (priority_id), s (subject)
-                    $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $priority_id, $subject);
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (status_id), i (priority_id), s (subject)
+                    $stmt->bind_param('siiiiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
                 } else {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, 1, ?, ?, NOW())");
-                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (priority_id), s (subject)
-                    $stmt->bind_param('siiiis', $ticket_number, $user_id, $staff_id, $dept_id, $priority_id, $subject);
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (status_id), i (priority_id), s (subject)
+                    $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject);
                 }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
