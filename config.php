@@ -29,7 +29,24 @@ define('DB_NAME', 'tickets_db');
 // APLICACIÓN
 // ============================================================================
 define('APP_NAME', 'Sistema de Tickets');
-define('APP_URL', 'http://localhost/sistema-tickets');
+
+$__appUrl = 'http://localhost/sistema-tickets';
+if (!empty($_SERVER['HTTP_HOST'])) {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = (string)$_SERVER['HTTP_HOST'];
+    $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '');
+    $scriptName = str_replace('\\', '/', $scriptName);
+
+    $root = '/sistema-tickets';
+    $pos = stripos($scriptName, $root);
+    if ($pos !== false) {
+        $__appUrl = $scheme . '://' . $host . substr($scriptName, 0, $pos + strlen($root));
+    } else {
+        $__appUrl = $scheme . '://' . $host . $root;
+    }
+}
+
+define('APP_URL', $__appUrl);
 define('TIMEZONE', 'America/Mexico_City');
 
 // ============================================================================
