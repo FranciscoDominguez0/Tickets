@@ -56,7 +56,89 @@ if ($_POST) {
             $error = 'La descripción es demasiado grande. Por favor adjunta archivos en vez de pegarlos dentro del texto.';
         } else {
             // Generar número de ticket
-            $ticket_number = 'TKT-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $generateTicketNumberFromFormat = function ($format) use ($mysqli) {
+                $format = trim((string)$format);
+                if ($format === '') $format = '######';
+
+                $build = function ($fmt) {
+                    $out = '';
+                    $len = strlen($fmt);
+                    for ($i = 0; $i < $len; $i++) {
+                        $ch = $fmt[$i];
+                        if ($ch === '#') {
+                            $out .= (string)random_int(0, 9);
+                        } else {
+                            $out .= $ch;
+                        }
+                    }
+                    return $out;
+                };
+
+                for ($i = 0; $i < 30; $i++) {
+                    $num = $build($format);
+                    $stmtChk = $mysqli->prepare('SELECT id FROM tickets WHERE ticket_number = ? LIMIT 1');
+                    if (!$stmtChk) return $num;
+                    $stmtChk->bind_param('s', $num);
+                    $stmtChk->execute();
+                    $row = $stmtChk->get_result()->fetch_assoc();
+                    if (!$row) return $num;
+                }
+
+                return 'TKT-' . date('Ymd') . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
+            };
+
+            $generateTicketNumberFromSequence = function ($sequenceId) use ($mysqli) {
+                $sequenceId = (int)$sequenceId;
+                if ($sequenceId <= 0) return null;
+
+                $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
+                if (!$chkSeq || $chkSeq->num_rows === 0) return null;
+
+                $mysqli->query('START TRANSACTION');
+                $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? FOR UPDATE');
+                if (!$stmtSeq) {
+                    $mysqli->query('ROLLBACK');
+                    return null;
+                }
+                $stmtSeq->bind_param('i', $sequenceId);
+                $stmtSeq->execute();
+                $seqData = $stmtSeq->get_result()->fetch_assoc();
+                if (!$seqData) {
+                    $mysqli->query('ROLLBACK');
+                    return null;
+                }
+
+                $current = (int)($seqData['next'] ?? 1);
+                $increment = (int)($seqData['increment'] ?? 1);
+                $padding = (int)($seqData['padding'] ?? 0);
+                $next = $current + $increment;
+
+                $stmtUpd = $mysqli->prepare('UPDATE sequences SET next = ?, updated = NOW() WHERE id = ?');
+                if (!$stmtUpd) {
+                    $mysqli->query('ROLLBACK');
+                    return null;
+                }
+                $stmtUpd->bind_param('ii', $next, $sequenceId);
+                $stmtUpd->execute();
+                $mysqli->query('COMMIT');
+
+                if ($padding > 0) {
+                    return str_pad((string)$current, $padding, '0', STR_PAD_LEFT);
+                }
+                return (string)$current;
+            };
+
+            $ticketSequenceId = (string)getAppSetting('tickets.ticket_sequence_id', '0');
+            $ticket_number = null;
+
+            if ($ticketSequenceId !== '0') {
+                $ticket_number = $generateTicketNumberFromSequence((int)$ticketSequenceId);
+            }
+
+            if ($ticket_number === null) {
+                $ticketNumberFormat = (string)getAppSetting('tickets.ticket_number_format', '######');
+                $ticket_number = $generateTicketNumberFromFormat($ticketNumberFormat);
+            }
             
             // Verificar si existe la estructura de temas
             $hasTopicCol = false;
