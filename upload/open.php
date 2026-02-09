@@ -155,7 +155,7 @@ if ($_POST) {
                 }
 
                 // Notificar por correo solo al admin
-                $adminEmail = defined('ADMIN_NOTIFY_EMAIL') ? trim((string) ADMIN_NOTIFY_EMAIL) : '';
+                $adminEmail = trim((string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : ''));
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
                 $clientEmail = $user['email'] ?? '';
                 $deptName = 'Soporte';
@@ -306,6 +306,9 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
         .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
         .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+
+        #open-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
+        #open-loading-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:320px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     </style>
 </head>
 <body>
@@ -320,6 +323,21 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     </nav>
 
     <div class="container-main">
+        <div id="open-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+            <div class="box">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                    <div>
+                        <div class="fw-semibold">Creando ticket…</div>
+                        <div class="text-muted small">Por favor espera</div>
+                    </div>
+                </div>
+                <div class="progress" style="height:8px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="page-header">
             <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                 <div>
@@ -346,7 +364,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 <div class="alert alert-success"><?php echo $success; ?></div>
             <?php endif; ?>
 
-            <form method="post" enctype="multipart/form-data">
+            <form id="open-ticket-form" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
                     <input type="text" class="form-control" id="subject" name="subject" required>
@@ -386,7 +404,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                <button type="submit" class="btn btn-primary">Crear Ticket</button>
+                <button id="open-ticket-submit" type="submit" class="btn btn-primary">Crear Ticket</button>
                 <a href="tickets.php" class="btn btn-secondary">Cancelar</a>
             </form>
         </div>
@@ -556,6 +574,25 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     }
                 } catch (e2) {}
             }, true);
+        })();
+
+        (function(){
+            function showLoading(){
+                var overlay = document.getElementById('open-loading-overlay');
+                if (overlay) overlay.style.display = 'flex';
+                var btn = document.getElementById('open-ticket-submit');
+                if (btn) btn.disabled = true;
+            }
+
+            try {
+                var form = document.getElementById('open-ticket-form');
+                if (!form) return;
+
+                form.addEventListener('submit', function(ev){
+                    if (ev.defaultPrevented) return;
+                    showLoading();
+                });
+            } catch (e) {}
         })();
     </script>
 

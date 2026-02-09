@@ -41,7 +41,7 @@ if (!isset($_SESSION['login_failed_attempts'])) {
     $_SESSION['login_failed_attempts'] = 0;
 }
 
-$supportEmail = defined('ADMIN_NOTIFY_EMAIL') ? (string) ADMIN_NOTIFY_EMAIL : 'cuenta9fran@gmail.com';
+$supportEmail = (string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : 'cuenta9fran@gmail.com');
 
 $isLocked = false;
 $lockEmail = trim((string)$prefillEmail);

@@ -106,12 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        $affectedBanId = 0;
         if ($existingId > 0) {
             $stmtU = $mysqli->prepare('UPDATE banlist SET email = ?, domain = ?, notes = ?, is_active = 0, updated = NOW() WHERE id = ?');
             if ($stmtU) {
                 $stmtU->bind_param('sssi', $emailParam, $domainParam, $notesParam, $existingId);
                 if ($stmtU->execute()) {
                     $_SESSION['flash_msg'] = 'Elemento actualizado en la lista de prohibidos.';
+                    $affectedBanId = $existingId;
                 } else {
                     $_SESSION['flash_error'] = 'No se pudo actualizar.';
                 }
@@ -124,11 +126,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('sss', $emailParam, $domainParam, $notesParam);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Elemento agregado a la lista de prohibidos.';
+                    $affectedBanId = (int)($mysqli->insert_id ?? 0);
                 } else {
                     $_SESSION['flash_error'] = 'No se pudo agregar.';
                 }
             } else {
                 $_SESSION['flash_error'] = 'No se pudo agregar.';
+            }
+        }
+
+        if ($affectedBanId > 0) {
+            $stmtForce = $mysqli->prepare('UPDATE banlist SET is_active = 0 WHERE id = ?');
+            if ($stmtForce) {
+                $stmtForce->bind_param('i', $affectedBanId);
+                $stmtForce->execute();
             }
         }
 

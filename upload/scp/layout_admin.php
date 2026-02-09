@@ -145,10 +145,35 @@ if (!isset($collapseSettingsMenu)) {
                                 </a>
                             </li>
                         </ul>
-                        <a href="staff.php" class="sidebar-link <?php echo ($currentRoute === 'staff') ? 'active' : ''; ?>">
+                        <?php
+                        $isAgentsRoute = in_array($currentRoute, ['staff', 'roles', 'departments']);
+                        $expandAgents = ($isAgentsRoute && empty($collapseSettingsMenu));
+                        ?>
+                        <button type="button" class="sidebar-toggle <?php echo $expandAgents ? 'active expanded' : ''; ?>" data-subnav="agents-subnav" aria-controls="agents-subnav" aria-expanded="<?php echo $expandAgents ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-people"></i></span>
                             Agentes
-                        </a>
+                            <span class="arrow"><i class="bi bi-chevron-right"></i></span>
+                        </button>
+                        <ul id="agents-subnav" class="sidebar-subnav <?php echo $expandAgents ? 'open' : ''; ?>">
+                            <li>
+                                <a href="staff.php" class="sidebar-link <?php echo ($currentRoute === 'staff') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-person-badge"></i></span>
+                                    Agentes
+                                </a>
+                            </li>
+                            <li>
+                                <a href="roles.php" class="sidebar-link <?php echo ($currentRoute === 'roles') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-shield-lock"></i></span>
+                                    Roles
+                                </a>
+                            </li>
+                            <li>
+                                <a href="departments.php" class="sidebar-link <?php echo ($currentRoute === 'departments') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-diagram-3"></i></span>
+                                    Departamentos
+                                </a>
+                            </li>
+                        </ul>
                     </li>
 
                 </ul>

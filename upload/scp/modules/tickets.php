@@ -553,7 +553,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $emailNorm = strtolower(trim((string)$email));
                         if ($emailNorm !== '' && filter_var($emailNorm, FILTER_VALIDATE_EMAIL)) {
                             $existsB = false;
-                            $stmtB = $mysqli->prepare('SELECT id FROM banlist WHERE is_active = 1 AND email = ? LIMIT 1');
+                            $stmtB = $mysqli->prepare('SELECT id FROM banlist WHERE email = ? LIMIT 1');
                             if ($stmtB) {
                                 $stmtB->bind_param('s', $emailNorm);
                                 if ($stmtB->execute()) {
@@ -563,7 +563,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
                             if (!$existsB) {
                                 $note = 'Bloqueado desde ticket #' . (string)$tid;
-                                $stmtI = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 1, NOW(), NOW())');
+                                $stmtI = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 0, NOW(), NOW())');
                                 if ($stmtI) {
                                     $stmtI->bind_param('ss', $emailNorm, $note);
                                     $stmtI->execute();

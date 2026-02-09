@@ -4,10 +4,105 @@
  * Soporta mail() nativo o SMTP (Gmail, Outlook, etc.).
  */
 
+require_once __DIR__ . '/helpers.php';
+
 class Mailer {
 
     /** @var string Último error si falla el envío */
     public static $lastError = '';
+
+    protected static $defaultAccountCache = null;
+
+    protected static function getDefaultEmailAccount() {
+        if (self::$defaultAccountCache !== null) return self::$defaultAccountCache;
+
+        self::$defaultAccountCache = false;
+        if (!isset($GLOBALS['mysqli']) || !$GLOBALS['mysqli']) return self::$defaultAccountCache;
+        $mysqli = $GLOBALS['mysqli'];
+
+        $chk = $mysqli->query("SHOW TABLES LIKE 'email_accounts'");
+        if (!$chk || $chk->num_rows < 1) return self::$defaultAccountCache;
+
+        $res = $mysqli->query("SELECT * FROM email_accounts WHERE is_default = 1 ORDER BY id ASC LIMIT 1");
+        if ($res) {
+            $row = $res->fetch_assoc();
+            if (is_array($row) && !empty($row['email'])) {
+                self::$defaultAccountCache = $row;
+                return self::$defaultAccountCache;
+            }
+        }
+
+        $mailFrom = trim((string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : ''));
+        if ($mailFrom !== '' && filter_var($mailFrom, FILTER_VALIDATE_EMAIL)) {
+            $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE email = ? ORDER BY id ASC LIMIT 1');
+            if ($stmt) {
+                $stmt->bind_param('s', $mailFrom);
+                if ($stmt->execute()) {
+                    $row = $stmt->get_result()->fetch_assoc();
+                    if (is_array($row) && !empty($row['email'])) {
+                        self::$defaultAccountCache = $row;
+                        return self::$defaultAccountCache;
+                    }
+                }
+            }
+        }
+
+        $resAny = $mysqli->query('SELECT * FROM email_accounts ORDER BY is_default DESC, id ASC LIMIT 1');
+        if ($resAny) {
+            $row = $resAny->fetch_assoc();
+            if (is_array($row) && !empty($row['email'])) {
+                self::$defaultAccountCache = $row;
+                return self::$defaultAccountCache;
+            }
+        }
+
+        return self::$defaultAccountCache;
+    }
+
+    protected static function getSystemDefaults() {
+        $acc = self::getDefaultEmailAccount();
+
+        $from = '';
+        $fromName = '';
+        $smtp = [
+            'host' => '',
+            'port' => 587,
+            'secure' => 'tls',
+            'user' => '',
+            'pass' => '',
+        ];
+
+        if (is_array($acc)) {
+            $from = trim((string)($acc['email'] ?? ''));
+            $fromName = trim((string)($acc['name'] ?? ''));
+            $smtp['host'] = trim((string)($acc['smtp_host'] ?? ''));
+            $smtp['port'] = ($acc['smtp_port'] ?? '') !== '' ? (int)$acc['smtp_port'] : 587;
+            $smtp['secure'] = strtolower(trim((string)($acc['smtp_secure'] ?? 'tls')));
+            $smtp['user'] = trim((string)($acc['smtp_user'] ?? ''));
+            $smtp['pass'] = (string)($acc['smtp_pass'] ?? '');
+        }
+
+        if ($from === '') {
+            $from = (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : 'noreply@localhost');
+        }
+        if ($fromName === '') {
+            $fromName = (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : 'Sistema');
+        }
+
+        if ($smtp['host'] === '') {
+            $smtp['host'] = defined('SMTP_HOST') ? (string)SMTP_HOST : '';
+            $smtp['port'] = defined('SMTP_PORT') ? (int)SMTP_PORT : 587;
+            $smtp['secure'] = defined('SMTP_SECURE') ? strtolower((string)SMTP_SECURE) : 'tls';
+            $smtp['user'] = defined('SMTP_USER') ? (string)SMTP_USER : '';
+            $smtp['pass'] = defined('SMTP_PASS') ? (string)SMTP_PASS : '';
+        }
+
+        return [
+            'from' => $from,
+            'fromName' => $fromName,
+            'smtp' => $smtp,
+        ];
+    }
 
     /**
      * Envía un correo.
@@ -26,16 +121,11 @@ class Mailer {
             return false;
         }
 
+        $sys = self::getSystemDefaults();
         $opts = [
-            'from' => defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost',
-            'fromName' => defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema',
-            'smtp' => [
-                'host' => defined('SMTP_HOST') ? SMTP_HOST : '',
-                'port' => defined('SMTP_PORT') ? (int)SMTP_PORT : 587,
-                'secure' => defined('SMTP_SECURE') ? strtolower((string)SMTP_SECURE) : 'tls',
-                'user' => defined('SMTP_USER') ? SMTP_USER : '',
-                'pass' => defined('SMTP_PASS') ? SMTP_PASS : '',
-            ],
+            'from' => (string)($sys['from'] ?? (defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost')),
+            'fromName' => (string)($sys['fromName'] ?? (defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema')),
+            'smtp' => is_array($sys['smtp'] ?? null) ? $sys['smtp'] : [],
         ];
         return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $opts);
     }
@@ -46,6 +136,17 @@ class Mailer {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             self::$lastError = 'Email destinatario inválido';
             return false;
+        }
+
+        $sys = self::getSystemDefaults();
+        if (!isset($options['from']) || trim((string)$options['from']) === '') {
+            $options['from'] = (string)($sys['from'] ?? (defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost'));
+        }
+        if (!isset($options['fromName']) || trim((string)$options['fromName']) === '') {
+            $options['fromName'] = (string)($sys['fromName'] ?? (defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Sistema'));
+        }
+        if (!isset($options['smtp']) || !is_array($options['smtp']) || trim((string)($options['smtp']['host'] ?? '')) === '') {
+            $options['smtp'] = is_array($sys['smtp'] ?? null) ? $sys['smtp'] : [];
         }
 
         $from = trim((string)($options['from'] ?? (defined('MAIL_FROM') ? MAIL_FROM : 'noreply@localhost')));
