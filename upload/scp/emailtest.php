@@ -270,6 +270,25 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<style>
+  #emailtest-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
+  #emailtest-loading-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:320px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+</style>
+<div id="emailtest-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+  <div class="box">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+      <div>
+        <div class="fw-semibold">Enviando correo…</div>
+        <div class="text-muted small">Por favor espera</div>
+      </div>
+    </div>
+    <div class="progress" style="height:8px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+    </div>
+  </div>
+</div>
+
 <div class="row">
     <div class="col-12">
         <div class="card settings-card">
@@ -278,7 +297,7 @@ ob_start();
             </div>
             <div class="card-body" style="padding: 12px;">
                 <div style="max-width: 920px; margin: 0 auto;">
-                <form method="post" action="emailtest.php" enctype="multipart/form-data">
+                <form id="emailtest-form" method="post" action="emailtest.php" enctype="multipart/form-data">
                     <?php csrfField(); ?>
                     <div class="alert alert-info py-2 mb-2">Utilice el siguiente formulario para comprobar que su configuración de <strong>Correo electrónico saliente</strong> esté establecida correctamente.</div>
 
@@ -320,7 +339,7 @@ ob_start();
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-envelope"></i> Enviar mensaje</button>
+                        <button id="emailtest-submit" type="submit" class="btn btn-primary btn-sm"><i class="bi bi-envelope"></i> Enviar mensaje</button>
                         <a href="emailtest.php" class="btn btn-outline-secondary btn-sm">Restablecer</a>
                         <a href="emails.php" class="btn btn-outline-secondary btn-sm">Cancelar</a>
                     </div>
@@ -337,6 +356,22 @@ ob_start();
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
 <script>
   (function(){
+    function showEmailTestLoading(){
+      var overlay = document.getElementById('emailtest-loading-overlay');
+      if (overlay) overlay.style.display = 'flex';
+      var btn = document.getElementById('emailtest-submit');
+      if (btn) btn.disabled = true;
+    }
+
+    try {
+      var form = document.getElementById('emailtest-form');
+      if (form) {
+        form.addEventListener('submit', function(){
+          showEmailTestLoading();
+        });
+      }
+    } catch (e) {}
+
     if (typeof window.jQuery === 'undefined') return;
     try {
       jQuery(function(){

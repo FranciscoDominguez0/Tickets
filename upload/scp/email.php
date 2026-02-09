@@ -164,10 +164,32 @@ ob_start();
 <?php endif; ?>
 
 <?php if ($msg): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i><?php echo html($msg); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <style>
+        #email-success-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
+        #email-success-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:280px;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    </style>
+    <div id="email-success-overlay" role="status" aria-live="polite">
+        <div class="box">
+            <div class="d-flex align-items-center gap-3">
+                <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
+                <div>
+                    <div class="fw-semibold"><?php echo html($msg); ?></div>
+                    <div class="text-muted small">Guardado</div>
+                </div>
+            </div>
+        </div>
     </div>
+    <script>
+        (function(){
+            var el = document.getElementById('email-success-overlay');
+            if (!el) return;
+            window.setTimeout(function(){
+                el.style.transition = 'opacity 220ms ease';
+                el.style.opacity = '0';
+                window.setTimeout(function(){ if (el && el.parentNode) el.parentNode.removeChild(el); }, 240);
+            }, 2500);
+        })();
+    </script>
 <?php endif; ?>
 
 <div class="row">

@@ -81,6 +81,11 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
+$defaultEmailAccount = null;
+if (!empty($emailAccounts)) {
+    $defaultEmailAccount = $emailAccounts[0];
+}
+
 $findEmailAccountById = function ($id) use ($emailAccounts) {
     $id = (int)$id;
     foreach ($emailAccounts as $a) {
@@ -97,21 +102,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $mailFromId = (int)($_POST['mail_from_id'] ?? 0);
-    $mailAlertFromId = (int)($_POST['mail_alert_from_id'] ?? 0);
     $adminNotifyId = (int)($_POST['admin_notify_id'] ?? 0);
 
-    $fromAcc = $findEmailAccountById($mailFromId);
-    $alertAcc = $findEmailAccountById($mailAlertFromId);
+    $fromAcc = $defaultEmailAccount;
+    $alertAcc = $defaultEmailAccount;
     $adminAcc = $findEmailAccountById($adminNotifyId);
 
     if (!$fromAcc) {
-        $_SESSION['flash_error'] = 'Selecciona el correo remitente del sistema.';
+        $_SESSION['flash_error'] = 'No hay un correo por defecto configurado. Marca una cuenta como por defecto en Correos.';
         header('Location: emailsettings.php');
         exit;
     }
     if (!$alertAcc) {
-        $_SESSION['flash_error'] = 'Selecciona el correo de alertas.';
+        $_SESSION['flash_error'] = 'No hay un correo por defecto configurado. Marca una cuenta como por defecto en Correos.';
         header('Location: emailsettings.php');
         exit;
     }
@@ -143,18 +146,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Valores actuales (fallback a config.php)
-$valFrom = (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
-$valFromName = (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '');
-$valAlertFrom = (string)getAppSetting('mail.alert_from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
+$valFrom = $defaultEmailAccount ? (string)($defaultEmailAccount['email'] ?? '') : (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
+$valFromName = $defaultEmailAccount ? (string)($defaultEmailAccount['name'] ?? '') : (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '');
+$valAlertFrom = $defaultEmailAccount ? (string)($defaultEmailAccount['email'] ?? '') : (string)getAppSetting('mail.alert_from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
 $valAlertFromName = (string)getAppSetting('mail.alert_from_name', 'Alerts');
 $valAdminNotify = (string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : '');
 
-$selectedFromId = 0;
-$selectedAlertFromId = 0;
+if ($valFromName === '') $valFromName = $valFrom;
+
+$selectedFromId = $defaultEmailAccount ? (int)($defaultEmailAccount['id'] ?? 0) : 0;
+$selectedAlertFromId = $defaultEmailAccount ? (int)($defaultEmailAccount['id'] ?? 0) : 0;
 $selectedAdminNotifyId = 0;
 foreach ($emailAccounts as $a) {
-    if ($selectedFromId === 0 && (string)($a['email'] ?? '') === $valFrom) $selectedFromId = (int)($a['id'] ?? 0);
-    if ($selectedAlertFromId === 0 && (string)($a['email'] ?? '') === $valAlertFrom) $selectedAlertFromId = (int)($a['id'] ?? 0);
     if ($selectedAdminNotifyId === 0 && (string)($a['email'] ?? '') === $valAdminNotify) $selectedAdminNotifyId = (int)($a['id'] ?? 0);
 }
 
@@ -201,7 +204,7 @@ ob_start();
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Email remitente (MAIL_FROM)</label>
-                                <select name="mail_from_id" class="form-select">
+                                <select name="mail_from_id" class="form-select" disabled>
                                     <?php foreach ($emailAccounts as $a): ?>
                                         <?php
                                         $aid = (int)($a['id'] ?? 0);
@@ -212,6 +215,7 @@ ob_start();
                                         <option value="<?php echo $aid; ?>" <?php echo $selectedFromId === $aid ? 'selected' : ''; ?>><?php echo html($label); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <input type="hidden" name="mail_from_id" value="<?php echo (int)$selectedFromId; ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -226,7 +230,7 @@ ob_start();
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Correo electrónico de alerta por defecto</label>
-                                <select name="mail_alert_from_id" class="form-select">
+                                <select name="mail_alert_from_id" class="form-select" disabled>
                                     <?php foreach ($emailAccounts as $a): ?>
                                         <?php
                                         $aid = (int)($a['id'] ?? 0);
@@ -237,6 +241,7 @@ ob_start();
                                         <option value="<?php echo $aid; ?>" <?php echo $selectedAlertFromId === $aid ? 'selected' : ''; ?>><?php echo html($label); ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                                <input type="hidden" name="mail_alert_from_id" value="<?php echo (int)$selectedAlertFromId; ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
