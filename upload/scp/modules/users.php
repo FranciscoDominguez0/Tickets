@@ -176,10 +176,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     $email      = trim($_POST['email'] ?? '');
     $firstname  = trim($_POST['firstname'] ?? '');
     $lastname   = trim($_POST['lastname'] ?? '');
-    $company    = trim($_POST['company'] ?? '');
+    $company    = '';
     $password   = $_POST['password'] ?? '';
     $password2  = $_POST['password2'] ?? '';
-    $status     = in_array($_POST['status'] ?? '', ['active', 'inactive', 'banned']) ? $_POST['status'] : 'active';
+    $status     = 'active';
 
     if (!$email) $add_errors[] = 'El email es obligatorio.';
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $add_errors[] = 'Email no válido.';
@@ -1141,24 +1141,12 @@ $statusBadges = [
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="add-company" class="form-label">Empresa</label>
-                            <input type="text" class="form-control" id="add-company" name="company" placeholder="Opcional" value="<?php echo html($_POST['company'] ?? ''); ?>">
-                        </div>
-                        <div class="mb-3">
                             <label for="add-password" class="form-label">Contraseña <span class="text-danger">*</span></label>
                             <input type="password" class="form-control" id="add-password" name="password" required minlength="6" placeholder="Mínimo 6 caracteres">
                         </div>
                         <div class="mb-3">
                             <label for="add-password2" class="form-label">Repetir contraseña <span class="text-danger">*</span></label>
                             <input type="password" class="form-control" id="add-password2" name="password2" required minlength="6" placeholder="Repetir contraseña">
-                        </div>
-                        <div class="mb-3">
-                            <label for="add-status" class="form-label">Estado</label>
-                            <select class="form-select" id="add-status" name="status">
-                                <option value="active">Activo</option>
-                                <option value="inactive">Inactivo</option>
-                                <option value="banned">Bloqueado</option>
-                            </select>
                         </div>
                     </div>
                     <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
