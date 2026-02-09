@@ -14,8 +14,13 @@ $currentRoute = 'emails';
 $emailTab = 'emails';
 
 $collapseSettingsMenu = false;
-if (!isset($_SESSION['admin_sidebar_menu_seen'])) {
-    $_SESSION['admin_sidebar_menu_seen'] = 1;
+$menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
+    unset($_SESSION[$menuKey]);
+    $_SESSION['sidebar_panel_mode'] = 'admin';
+}
+if (!isset($_SESSION[$menuKey])) {
+    $_SESSION[$menuKey] = 1;
     $collapseSettingsMenu = true;
 }
 

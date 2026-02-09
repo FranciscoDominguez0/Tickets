@@ -1,6 +1,22 @@
 <?php
 // Layout para panel administrador
 // Similar al layout de agentes pero con sidebar de administración
+
+$staffIdForMenu = (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
+    unset($_SESSION['admin_sidebar_menu_seen_' . $staffIdForMenu]);
+    unset($_SESSION['admin_settings_menu_seen_' . $staffIdForMenu]);
+    $_SESSION['sidebar_panel_mode'] = 'admin';
+}
+
+if (!isset($collapseSettingsMenu)) {
+    $collapseSettingsMenu = false;
+    $menuKey = 'admin_sidebar_menu_seen_' . $staffIdForMenu;
+    if (!isset($_SESSION[$menuKey])) {
+        $_SESSION[$menuKey] = 1;
+        $collapseSettingsMenu = true;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">

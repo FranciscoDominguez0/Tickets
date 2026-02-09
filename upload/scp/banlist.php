@@ -14,8 +14,13 @@ $currentRoute = 'emails';
 $emailTab = 'banlist';
 
 $collapseSettingsMenu = false;
-if (!isset($_SESSION['admin_sidebar_menu_seen'])) {
-    $_SESSION['admin_sidebar_menu_seen'] = 1;
+$menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
+    unset($_SESSION[$menuKey]);
+    $_SESSION['sidebar_panel_mode'] = 'admin';
+}
+if (!isset($_SESSION[$menuKey])) {
+    $_SESSION[$menuKey] = 1;
     $collapseSettingsMenu = true;
 }
 
@@ -36,30 +41,6 @@ $ensureBanlistTable = function () use ($mysqli) {
     return (bool)$mysqli->query($sql);
 };
 $ensureBanlistTable();
-
-if (isset($mysqli) && $mysqli) {
-    $resBanned = $mysqli->query("SELECT email FROM users WHERE status = 'banned' AND email IS NOT NULL AND email <> ''");
-    if ($resBanned) {
-        $stmtChk = $mysqli->prepare('SELECT id FROM banlist WHERE is_active = 1 AND email = ? LIMIT 1');
-        $stmtIns = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 1, NOW(), NOW())');
-        while ($row = $resBanned->fetch_assoc()) {
-            $em = strtolower(trim((string)($row['email'] ?? '')));
-            if ($em === '' || !filter_var($em, FILTER_VALIDATE_EMAIL)) continue;
-            $exists = false;
-            if ($stmtChk) {
-                $stmtChk->bind_param('s', $em);
-                if ($stmtChk->execute()) {
-                    $exists = (bool)$stmtChk->get_result()->fetch_assoc();
-                }
-            }
-            if (!$exists && $stmtIns) {
-                $note = 'Sincronizado desde users.status=banned';
-                $stmtIns->bind_param('ss', $em, $note);
-                $stmtIns->execute();
-            }
-        }
-    }
-}
 
 $msg = '';
 $error = '';
@@ -102,19 +83,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, ?, ?, 1, NOW(), NOW())');
-        if ($stmt) {
-            $emailParam = ($email !== '') ? $email : null;
-            $domainParam = ($domain !== '') ? $domain : null;
-            $notesParam = ($notes !== '') ? $notes : null;
-            $stmt->bind_param('sss', $emailParam, $domainParam, $notesParam);
-            if ($stmt->execute()) {
-                $_SESSION['flash_msg'] = 'Elemento agregado a la lista de prohibidos.';
+        $emailParam = ($email !== '') ? strtolower($email) : null;
+        $domainParam = ($domain !== '') ? strtolower($domain) : null;
+        $notesParam = ($notes !== '') ? $notes : null;
+
+        $existingId = 0;
+        if ($emailParam !== null) {
+            $stmtChk = $mysqli->prepare('SELECT id FROM banlist WHERE email = ? LIMIT 1');
+            if ($stmtChk) {
+                $stmtChk->bind_param('s', $emailParam);
+                $stmtChk->execute();
+                $row = $stmtChk->get_result()->fetch_assoc();
+                $existingId = (int)($row['id'] ?? 0);
+            }
+        } elseif ($domainParam !== null) {
+            $stmtChk = $mysqli->prepare('SELECT id FROM banlist WHERE domain = ? LIMIT 1');
+            if ($stmtChk) {
+                $stmtChk->bind_param('s', $domainParam);
+                $stmtChk->execute();
+                $row = $stmtChk->get_result()->fetch_assoc();
+                $existingId = (int)($row['id'] ?? 0);
+            }
+        }
+
+        if ($existingId > 0) {
+            $stmtU = $mysqli->prepare('UPDATE banlist SET email = ?, domain = ?, notes = ?, is_active = 0, updated = NOW() WHERE id = ?');
+            if ($stmtU) {
+                $stmtU->bind_param('sssi', $emailParam, $domainParam, $notesParam, $existingId);
+                if ($stmtU->execute()) {
+                    $_SESSION['flash_msg'] = 'Elemento actualizado en la lista de prohibidos.';
+                } else {
+                    $_SESSION['flash_error'] = 'No se pudo actualizar.';
+                }
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo actualizar.';
+            }
+        } else {
+            $stmt = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, ?, ?, 0, NOW(), NOW())');
+            if ($stmt) {
+                $stmt->bind_param('sss', $emailParam, $domainParam, $notesParam);
+                if ($stmt->execute()) {
+                    $_SESSION['flash_msg'] = 'Elemento agregado a la lista de prohibidos.';
+                } else {
+                    $_SESSION['flash_error'] = 'No se pudo agregar.';
+                }
             } else {
                 $_SESSION['flash_error'] = 'No se pudo agregar.';
             }
-        } else {
-            $_SESSION['flash_error'] = 'No se pudo agregar.';
+        }
+
+        if ($emailParam !== null) {
+            $stmtBanUser = $mysqli->prepare("UPDATE users SET status = 'banned' WHERE email = ?");
+            if ($stmtBanUser) {
+                $stmtBanUser->bind_param('s', $emailParam);
+                $stmtBanUser->execute();
+            }
         }
 
         header('Location: banlist.php');
@@ -164,6 +187,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param($types, ...$ids);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Lista actualizada.';
+
+                    $stmtE = $mysqli->prepare("SELECT email FROM banlist WHERE id IN ($placeholders) AND email IS NOT NULL AND email <> ''");
+                    if ($stmtE) {
+                        $stmtE->bind_param($types, ...$ids);
+                        $stmtE->execute();
+                        $resE = $stmtE->get_result();
+                        $emails = [];
+                        while ($r = $resE->fetch_assoc()) {
+                            $em = strtolower(trim((string)($r['email'] ?? '')));
+                            if ($em !== '' && filter_var($em, FILTER_VALIDATE_EMAIL)) $emails[] = $em;
+                        }
+
+                        if (!empty($emails)) {
+                            $emails = array_values(array_unique($emails));
+                            $emPlace = implode(',', array_fill(0, count($emails), '?'));
+                            $emTypes = str_repeat('s', count($emails));
+                            if ($action === 'disable') {
+                                $stmtU = $mysqli->prepare("UPDATE users SET status = 'banned' WHERE email IN ($emPlace)");
+                            } else {
+                                $stmtU = $mysqli->prepare("UPDATE users SET status = 'active' WHERE email IN ($emPlace)");
+                            }
+                            if ($stmtU) {
+                                $stmtU->bind_param($emTypes, ...$emails);
+                                $stmtU->execute();
+                            }
+                        }
+                    }
                 } else {
                     $_SESSION['flash_error'] = 'No se pudo actualizar.';
                 }
@@ -181,7 +231,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $items = [];
-$res = $mysqli->query('SELECT * FROM banlist ORDER BY is_active DESC, id DESC');
+$res = $mysqli->query("SELECT * FROM banlist WHERE (notes IS NULL OR notes <> 'Sincronizado desde users.status=banned') ORDER BY is_active DESC, id DESC");
 if ($res) {
     while ($r = $res->fetch_assoc()) {
         $items[] = $r;
@@ -228,8 +278,8 @@ ob_start();
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-slash-circle"></i> Prohibidos</strong>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-success btn-sm" id="enableBanBtn"><i class="bi bi-check2-circle"></i> Habilitar</button>
-                    <button type="button" class="btn btn-outline-warning btn-sm" id="disableBanBtn"><i class="bi bi-dash-circle"></i> Deshabilitar</button>
+                    <button type="button" class="btn btn-outline-success btn-sm" id="enableBanBtn"><i class="bi bi-check2-circle"></i> Activar</button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" id="disableBanBtn"><i class="bi bi-slash-circle"></i> Bloquear</button>
                     <button type="button" class="btn btn-outline-danger btn-sm" id="deleteBanBtn"><i class="bi bi-trash"></i> Eliminar</button>
                 </div>
             </div>

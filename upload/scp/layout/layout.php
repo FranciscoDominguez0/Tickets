@@ -29,8 +29,13 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
 
 // Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
 $collapseSidebarMenu = false;
-if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
-    $_SESSION['agent_sidebar_menu_seen'] = 1;
+$menuKey = 'agent_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'agent') {
+    unset($_SESSION[$menuKey]);
+    $_SESSION['sidebar_panel_mode'] = 'agent';
+}
+if (!isset($_SESSION[$menuKey])) {
+    $_SESSION[$menuKey] = 1;
     $collapseSidebarMenu = true;
 }
 ?>
