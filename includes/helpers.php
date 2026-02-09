@@ -37,6 +37,50 @@ function requireLogin($type = 'user') {
         }
         exit;
     }
+
+    if ($type === 'agente' && isset($_SESSION['staff_id'])) {
+        $timeoutMin = (int)getAppSetting('agents.session_timeout_minutes', '30');
+        if (!isset($_SESSION['staff_last_activity']) || (int)($_SESSION['staff_last_activity'] ?? 0) <= 0) {
+            $_SESSION['staff_last_activity'] = time();
+        }
+        if ($timeoutMin > 0) {
+            $last = (int)($_SESSION['staff_last_activity'] ?? 0);
+            if ($last > 0 && (time() - $last) > ($timeoutMin * 60)) {
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $currentPath = $_SERVER['PHP_SELF'];
+                if (strpos($currentPath, '/upload/scp/') !== false) {
+                    header('Location: login.php?msg=timeout');
+                } else {
+                    header('Location: ../upload/scp/login.php?msg=timeout');
+                }
+                exit;
+            }
+        }
+
+        $bindIp = (string)getAppSetting('agents.bind_session_ip', '0') === '1';
+        if ($bindIp) {
+            $currentIp = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $loginIp = (string)($_SESSION['staff_login_ip'] ?? '');
+            if ($loginIp !== '' && $currentIp !== '' && $loginIp !== $currentIp) {
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $currentPath = $_SERVER['PHP_SELF'];
+                if (strpos($currentPath, '/upload/scp/') !== false) {
+                    header('Location: login.php?msg=ip');
+                } else {
+                    header('Location: ../upload/scp/login.php?msg=ip');
+                }
+                exit;
+            }
+        }
+
+        $_SESSION['staff_last_activity'] = time();
+    }
 }
 
 // Validar CSRF

@@ -85,8 +85,6 @@ if ($_POST) {
 
         $max_open_tickets = (string)($_POST['max_open_tickets'] ?? '0');
         if ($max_open_tickets === '') $max_open_tickets = '0';
-
-        $enable_captcha = isset($_POST['enable_captcha']) ? '1' : '0';
         $collaborator_ticket_visibility = isset($_POST['collaborator_ticket_visibility']) ? '1' : '0';
         $auto_claim_tickets = isset($_POST['auto_claim_tickets']) ? '1' : '0';
         $auto_refer_closed = isset($_POST['auto_refer_closed']) ? '1' : '0';
@@ -115,7 +113,6 @@ if ($_POST) {
             setAppSetting('tickets.ticket_lock', $ticket_lock);
             setAppSetting('tickets.default_ticket_queue', $default_ticket_queue);
             setAppSetting('tickets.max_open_tickets', $max_open_tickets);
-            setAppSetting('tickets.enable_captcha', $enable_captcha);
             setAppSetting('tickets.collaborator_ticket_visibility', $collaborator_ticket_visibility);
             setAppSetting('tickets.auto_claim_tickets', $auto_claim_tickets);
             setAppSetting('tickets.auto_refer_closed', $auto_refer_closed);
@@ -146,12 +143,11 @@ $default_help_topic = (string)getAppSetting('tickets.default_help_topic', '0');
 $ticket_lock = (string)getAppSetting('tickets.ticket_lock', 'activity');
 $default_ticket_queue = (string)getAppSetting('tickets.default_ticket_queue', 'open');
 $max_open_tickets = (string)getAppSetting('tickets.max_open_tickets', '0');
-$enable_captcha = (string)getAppSetting('tickets.enable_captcha', '0') === '1';
 $collaborator_ticket_visibility = (string)getAppSetting('tickets.collaborator_ticket_visibility', '1') === '1';
 $auto_claim_tickets = (string)getAppSetting('tickets.auto_claim_tickets', '1') === '1';
 $auto_refer_closed = (string)getAppSetting('tickets.auto_refer_closed', '1') === '1';
-$require_topic_to_close = (string)getAppSetting('tickets.require_topic_to_close', '1') === '1';
-$allow_external_images = (string)getAppSetting('tickets.allow_external_images', '1') === '1';
+$require_topic_to_close = (string)getAppSetting('tickets.require_topic_to_close', '0') === '1';
+$allow_external_images = (string)getAppSetting('tickets.allow_external_images', '0') === '1';
 $ticket_max_file_mb = (string)getAppSetting('tickets.ticket_max_file_mb', '10');
 $ticket_max_uploads = (string)getAppSetting('tickets.ticket_max_uploads', '5');
 
@@ -330,13 +326,6 @@ ob_start();
                         <div class="input-group">
                             <input type="number" class="form-control" name="max_open_tickets" value="<?php echo html($max_open_tickets); ?>" min="0" max="999">
                             <span class="input-group-text">por usuario final</span>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="enable_captcha" name="enable_captcha" value="1" <?php echo $enable_captcha ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="enable_captcha">Verificación humana: Activar CAPTCHA en los nuevos Tickets de web.</label>
                         </div>
                     </div>
 

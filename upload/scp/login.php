@@ -23,6 +23,13 @@ if (isset($_SESSION['staff_id'])) {
 $error = '';
 $success = '';
 
+$loginMsg = (string)($_GET['msg'] ?? '');
+if ($loginMsg === 'timeout') {
+    $error = 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.';
+} elseif ($loginMsg === 'ip') {
+    $error = 'Tu sesión se cerró por cambio de IP. Inicia sesión nuevamente.';
+}
+
 if (!empty($_SESSION['flash_error'])) {
     $error = (string)$_SESSION['flash_error'];
     unset($_SESSION['flash_error']);
@@ -52,10 +59,12 @@ if ($_POST) {
                 $staff = Auth::loginStaff($username, $password);
                 if ($staff) {
                     $_SESSION['user_login_time'] = time();
+                    $_SESSION['staff_last_activity'] = time();
+                    $_SESSION['staff_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
                     header('Location: index.php');
                     exit;
                 } else {
-                    $error = 'Usuario o contraseña incorrectos';
+                    $error = (string)(Auth::$lastError ?: 'Usuario o contraseña incorrectos');
                 }
             }
         }

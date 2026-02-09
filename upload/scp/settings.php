@@ -40,6 +40,10 @@ if ($target === 'pages') {
     require __DIR__ . '/inc/settings_system.inc.php';
 } elseif ($target === 'tickets') {
     require __DIR__ . '/inc/settings_tickets.inc.php';
+} elseif ($target === 'tasks') {
+    require __DIR__ . '/inc/settings_tasks.inc.php';
+} elseif ($target === 'agents') {
+    require __DIR__ . '/inc/settings_agents.inc.php';
 } else {
     $content = '<div class="page-header"><h1>Configuración</h1><p>Sección en construcción.</p></div>';
 }
