@@ -224,12 +224,21 @@ body {
     text-align: left;
     padding: 10px 12px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 400;
     border-radius: 8px;
     color: #9ca3af;
     display: flex;
     align-items: center;
     gap: 10px;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    transition: background .15s, color .15s, transform .1s;
+}
+
+.sidebar .sidebar-toggle span.icon {
+    display: inline-flex;
+    width: 20px;
+    justify-content: center;
 }
 
 .sidebar .sidebar-toggle i {
@@ -239,6 +248,7 @@ body {
 .sidebar .sidebar-toggle:not(.active):hover {
     background: #0b1120;
     color: #e5e7eb;
+    transform: translateX(1px);
 }
 
 .sidebar .sidebar-toggle.active {

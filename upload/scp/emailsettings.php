@@ -276,13 +276,6 @@ ob_start();
                         <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
                     </div>
                 </form>
-
-                <hr>
-
-                <div class="alert alert-warning mb-0">
-                    <div class="fw-semibold">Nota</div>
-                    <div class="small">Actualmente el SMTP se configura por cuenta en <strong>Correos</strong>. En el siguiente paso se conectará el envío real para usar el email por defecto de la base de datos.</div>
-                </div>
             </div>
         </div>
     </div>

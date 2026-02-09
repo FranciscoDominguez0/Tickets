@@ -237,14 +237,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string)($_POST['a'] ?? '');
 
         if (empty($ids) || !is_array($ids)) {
-            $_SESSION['flash_error'] = 'Debes seleccionar al menos un email.';
+            $_SESSION['flash_error'] = 'Debe seleccionar al menos un email.';
             header('Location: emails.php');
             exit;
         }
 
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids), fn($v) => $v > 0)));
         if (empty($ids)) {
-            $_SESSION['flash_error'] = 'Debes seleccionar al menos un email.';
+            $_SESSION['flash_error'] = 'Debe seleccionar al menos un email.';
             header('Location: emails.php');
             exit;
         }
@@ -317,6 +317,11 @@ ob_start();
             </button>
         </div>
     </div>
+</div>
+
+<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="emailsClientError" aria-live="polite">
+    <i class="bi bi-exclamation-triangle me-2"></i><span id="emailsClientErrorText"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
 <?php if ($error): ?>
@@ -491,6 +496,20 @@ window.addEventListener('DOMContentLoaded', function(){
         return ids;
     }
 
+    function requireAtLeastOneEmailSelected(ids) {
+        if (ids.length < 1) {
+            var box = document.getElementById('emailsClientError');
+            var txt = document.getElementById('emailsClientErrorText');
+            if (txt) txt.textContent = 'Debe seleccionar al menos un email';
+            if (box) {
+                box.classList.remove('d-none');
+                box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return false;
+        }
+        return true;
+    }
+
     var selectAll = document.getElementById('selectAllEmails');
     if (selectAll) {
         selectAll.addEventListener('change', function(){
@@ -515,7 +534,7 @@ window.addEventListener('DOMContentLoaded', function(){
     if (deleteBtn) {
         deleteBtn.addEventListener('click', function(){
             var ids = getCheckedIds();
-            if (ids.length < 1) return;
+            if (!requireAtLeastOneEmailSelected(ids)) return;
             var countEl = document.getElementById('deleteEmailsCount');
             if (countEl) countEl.textContent = String(ids.length);
             var modalEl = document.getElementById('deleteEmailsModal');
@@ -528,7 +547,7 @@ window.addEventListener('DOMContentLoaded', function(){
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', function(){
             var ids = getCheckedIds();
-            if (ids.length < 1) return;
+            if (!requireAtLeastOneEmailSelected(ids)) return;
             var form = document.getElementById('emailsMassForm');
             var act = document.getElementById('massActionInput');
             act.value = 'delete';
