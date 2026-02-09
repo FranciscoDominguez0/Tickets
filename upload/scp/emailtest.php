@@ -136,30 +136,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bodyHtml = '<p>Mensaje de prueba</p>';
             }
 
-            // Convertir imágenes embebidas (data:image;base64) a adjuntos inline (cid)
             $bodyHtml = preg_replace_callback(
-                '/<img([^>]+)src="data:image\/([^;]+);base64,([^"]+)"([^>]*)>/i',
+                '/<img([^>]*?)\bsrc=("|\')data:image\/([^;]+);base64,([A-Za-z0-9+\/\n\r\t\s=]+)\2([^>]*)>/i',
                 function ($matches) use (&$attachments) {
                     $tagAttrs = $matches[1];
-                    $ext = strtolower((string)$matches[2]);
-                    $base64 = $matches[3];
-                    $rest = $matches[4];
+                    $subtype = strtolower((string)$matches[3]);
+                    $base64 = (string)$matches[4];
+                    $rest = $matches[5];
 
+                    $base64 = preg_replace('/\s+/', '', $base64);
                     $data = base64_decode($base64);
                     if ($data === false || $data === '') {
                         return $matches[0];
                     }
 
                     $cid = 'img' . uniqid() . '@emailtest';
+                    $ext = $subtype === 'jpeg' ? 'jpg' : $subtype;
                     $filename = 'image_' . uniqid() . '.' . $ext;
                     $attachments[] = [
                         'filename' => $filename,
-                        'contentType' => 'image/' . $ext,
+                        'contentType' => 'image/' . $subtype,
                         'content' => $data,
                         'cid' => $cid,
                     ];
 
                     return '<img' . $tagAttrs . 'src="cid:' . $cid . '"' . $rest . '>';
+                },
+                $bodyHtml
+            );
+
+            $bodyHtml = preg_replace_callback(
+                '/<video([^>]*?)\bsrc=("|\')data:video\/([^;]+);base64,([A-Za-z0-9+\/\n\r\t\s=]+)\2([^>]*)>(.*?)<\/video>/is',
+                function ($matches) use (&$attachments) {
+                    $subtype = strtolower((string)$matches[3]);
+                    $base64 = (string)$matches[4];
+                    $base64 = preg_replace('/\s+/', '', $base64);
+                    $data = base64_decode($base64);
+                    if ($data === false || $data === '') {
+                        return $matches[0];
+                    }
+
+                    $filename = 'video_' . uniqid() . '.' . $subtype;
+                    $attachments[] = [
+                        'filename' => $filename,
+                        'contentType' => 'video/' . $subtype,
+                        'content' => $data,
+                    ];
+
+                    $downloadName = htmlspecialchars($filename, ENT_QUOTES, 'UTF-8');
+                    return '<div style="border:1px solid #ddd;padding:8px;margin:4px 0;background:#f9f9f9;">'
+                        . '<p style="margin:0;font-size:0.9em;color:#555;">Video adjunto: ' . $downloadName . '</p>'
+                        . '</div>';
+                },
+                $bodyHtml
+            );
+
+            $bodyHtml = preg_replace_callback(
+                '/<source([^>]*?)\bsrc=("|\')data:video\/([^;]+);base64,([A-Za-z0-9+\/\n\r\t\s=]+)\2([^>]*)>/i',
+                function ($matches) use (&$attachments) {
+                    $subtype = strtolower((string)$matches[3]);
+                    $base64 = (string)$matches[4];
+                    $base64 = preg_replace('/\s+/', '', $base64);
+                    $data = base64_decode($base64);
+                    if ($data === false || $data === '') {
+                        return $matches[0];
+                    }
+
+                    $filename = 'video_' . uniqid() . '.' . $subtype;
+                    $attachments[] = [
+                        'filename' => $filename,
+                        'contentType' => 'video/' . $subtype,
+                        'content' => $data,
+                    ];
+
+                    return '<source' . $matches[1] . 'src=""' . $matches[5] . '>';
                 },
                 $bodyHtml
             );
@@ -301,7 +351,18 @@ ob_start();
             ['para', ['ul', 'ol', 'paragraph']],
             ['insert', ['link', 'picture', 'video']],
             ['view', ['codeview']]
-          ]
+          ],
+          callbacks: {
+            onImageUpload: function(files) {
+              for (var i = 0; i < files.length; i++) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                  jQuery('#emailtest_body').summernote('insertImage', e.target.result);
+                };
+                reader.readAsDataURL(files[i]);
+              }
+            }
+          }
         });
       });
     } catch (e) {}
