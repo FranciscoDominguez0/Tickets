@@ -97,7 +97,7 @@ if (!isset($collapseSettingsMenu)) {
                             <li>
                                 <a href="settings.php?t=users" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'users') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-people"></i></span>
-                                    Usuarios, osTicket
+                                    Usuarios
                                 </a>
                             </li>
                         </ul>
