@@ -251,17 +251,110 @@ function humanSize($bytes) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
     <style>
-        body { background: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 56px; }
-        .container-main { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        body {
+            background: #f6f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 56px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
+                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
+            z-index: -1;
+        }
+        .topbar {
+            background: linear-gradient(135deg, #0b1220, #111827);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
+        .topbar .profile-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .topbar .profile-brand .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .topbar .profile-brand .name {
+            font-weight: 900;
+            font-size: 0.98rem;
+            line-height: 1.1;
+        }
+        .topbar .btn { border-radius: 999px; font-weight: 700; }
+
+        .container-main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .center-wrap { max-width: 980px; margin: 0 auto; }
+        .panel-soft {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(10px);
+            border-radius: 22px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            padding: 18px;
+        }
+
+        .panel-soft {
+            background-image:
+                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.06), transparent 52%),
+                radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.06), transparent 55%);
+        }
+
+        .card-soft { transition: box-shadow .15s ease, border-color .15s ease; }
+        .card-soft:hover { box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10); border-color: #cbd5e1; }
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.18);
+            padding: 8px 10px;
+            border-radius: 999px;
+        }
+        .user-badge .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .user-badge .name { font-weight: 900; }
+        .user-badge .mail { opacity: 0.9; font-weight: 700; font-size: 0.85rem; }
         .page-header {
-            background: linear-gradient(135deg, #0f172a, #1d4ed8);
-            padding: 26px 28px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            padding: 22px 22px;
             border-radius: 16px;
             margin-bottom: 18px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-            color: #fff;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #2563eb;
         }
-        .page-header .sub { color: rgba(255,255,255,0.85); }
+        .page-header .sub { color: #64748b; font-weight: 700; }
 
         .card-soft { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; overflow: hidden; }
         .card-soft .head { padding: 20px 22px; border-bottom: 1px solid #e2e8f0; }
@@ -352,9 +445,21 @@ function humanSize($bytes) {
     </style>
 </head>
 <body>
-<nav class="navbar navbar-dark bg-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
+<nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
     <div class="container-fluid">
-        <span class="navbar-brand"><?php echo APP_NAME; ?></span>
+        <?php
+            $navUserName = trim((string)($user['name'] ?? ''));
+            $navInitials = '';
+            $parts = preg_split('/\s+/', trim($navUserName));
+            if (!empty($parts[0])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[0], 0, 1) : substr($parts[0], 0, 1));
+            if (!empty($parts[1])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[1], 0, 1) : substr($parts[1], 0, 1));
+            $navInitials = strtoupper($navInitials ?: 'U');
+            if ($navUserName === '') $navUserName = 'Mi Perfil';
+        ?>
+        <a class="navbar-brand profile-brand" href="profile.php">
+            <span class="avatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
+            <span class="name"><?php echo html($navUserName); ?></span>
+        </a>
         <div>
             <a href="tickets.php" class="btn btn-outline-light btn-sm">Mis Tickets</a>
             <a href="open.php" class="btn btn-outline-light btn-sm">Crear Ticket</a>
@@ -364,43 +469,47 @@ function humanSize($bytes) {
 </nav>
 
 <div class="container-main">
-    <div class="page-header">
-        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-            <div>
-                <h2 class="mb-1"><?php echo html($t['subject']); ?></h2>
-                <div class="sub">Ticket <strong><?php echo html($t['ticket_number']); ?></strong> · Departamento <strong><?php echo html($t['dept_name']); ?></strong></div>
-            </div>
-            <div class="text-end">
-                <div class="mb-2">
-                    <span class="badge" style="background-color: <?php echo html($t['status_color']); ?>"><?php echo html($t['status_name']); ?></span>
+    <div class="center-wrap">
+        <div class="panel-soft">
+            <div class="page-header" style="margin-top: 0;">
+                <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                    <div>
+                        <h2 class="mb-1"><?php echo html($t['subject']); ?></h2>
+                        <div class="sub">Ticket #<?php echo html($t['ticket_number']); ?> · <?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-2">
+                            <span class="badge" style="background-color: <?php echo html($t['status_color']); ?>"><?php echo html($t['status_name']); ?></span>
+                        </div>
+                        <a href="tickets.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-arrow-left"></i> Volver</a>
+                    </div>
                 </div>
-                <a href="tickets.php" class="btn btn-light btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
             </div>
-        </div>
-    </div>
 
-    <div class="card-soft">
-        <div class="head">
-            <div class="ticket-meta">
-                <div>
-                    <div class="label">Correo electrónico:</div>
-                    <div class="value"><?php echo html($user['email']); ?></div>
-                </div>
-                <div>
-                    <div class="label">Cliente:</div>
-                    <div class="value"><?php echo html($user['name']); ?></div>
-                </div>
-                <div>
-                    <div class="label">Prioridad:</div>
-                    <div class="value"><?php echo html($t['priority_name']); ?></div>
-                </div>
-                <div>
-                    <div class="label">Creado:</div>
-                    <div class="value"><?php echo !empty($t['created']) ? date('d/m/Y H:i', strtotime($t['created'])) : '-'; ?></div>
+            <div class="card-soft">
+                <div class="head">
+                    <div class="ticket-meta">
+                        <div>
+                            <div class="label">Departamento</div>
+                            <div class="value"><?php echo html($t['dept_name']); ?></div>
+                        </div>
+                        <div>
+                            <div class="label">Prioridad</div>
+                            <div class="value"><?php echo html($t['priority_name']); ?></div>
+                        </div>
+                        <div>
+                            <div class="label">Estado</div>
+                            <div class="value"><?php echo html($t['status_name']); ?></div>
+                        </div>
+                        <div>
+                            <div class="label">Creado</div>
+                            <div class="value"><?php echo !empty($t['created']) ? date('d/m/Y H:i', strtotime($t['created'])) : '-'; ?></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="body">
+
+            <div class="body">
             <div class="thread">
                 <h5 class="mb-3">Hilo del ticket</h5>
 

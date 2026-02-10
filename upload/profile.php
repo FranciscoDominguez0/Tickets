@@ -63,79 +63,152 @@ if ($_POST) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
-            background: #f1f5f9;
+            background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding-top: 56px;
         }
-        .container-main {
-            max-width: 800px;
-            margin: 18px auto;
-            padding: 0 20px;
-        }
-        .page-header {
-            background: linear-gradient(135deg, #0f172a, #1d4ed8);
-            padding: 18px 20px;
-            border-radius: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-            color: #fff;
-        }
-        .page-header .sub { color: rgba(255,255,255,0.85); }
 
-        .profile-card {
-            background: #fff;
-            padding: 18px;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid #e2e8f0;
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
+                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
+            z-index: -1;
         }
-        .profile-top {
-            display: flex;
+
+        .container-main {
+            max-width: 1100px;
+            margin: 18px auto;
+            padding: 0 18px;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0b1220, #111827);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
+        .topbar .profile-brand {
+            display: inline-flex;
             align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .topbar .profile-brand .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .topbar .profile-brand .name {
+            font-weight: 900;
+            font-size: 0.98rem;
+            line-height: 1.1;
+        }
+        .topbar .btn { border-radius: 999px; font-weight: 700; }
+
+        .profile-shell {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: #ffffff;
+            border-radius: 22px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .panel {
+            background-image:
+                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.05), transparent 52%),
+                radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.05), transparent 55%);
+            transition: box-shadow .15s ease, border-color .15s ease;
+        }
+        .panel:hover {
+            box-shadow: 0 26px 70px rgba(15, 23, 42, 0.10);
+            border-color: rgba(203, 213, 225, 0.95);
+        }
+
+        .sidebar-sub { color: #64748b; font-weight: 700; font-size: 0.9rem; }
+
+        .profile-content {
+            padding: 18px;
+        }
+        .content-head {
+            display: flex;
+            align-items: flex-start;
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
-        .profile-badge {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .content-title { margin: 0; font-weight: 1000; color: #0f172a; font-size: 1.25rem; }
+        .content-sub { color: #64748b; font-weight: 700; }
+
+        .content-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 18px;
         }
-        .profile-avatar {
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            background: #dbeafe;
-            border: 1px solid #bfdbfe;
-            color: #1e3a8a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-            flex: 0 0 auto;
-        }
-        .profile-title { margin: 0; font-weight: 900; color: #0f172a; }
-        .profile-meta { color: #64748b; font-weight: 600; font-size: 0.95rem; }
         .section-title {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .section-title h5 { margin: 0; font-weight: 900; color: #0f172a; }
-        .soft-sep { border-top: 1px solid #e2e8f0; margin: 10px 0; }
+        .soft-sep { border-top: 1px solid #e2e8f0; margin: 12px 0; }
         .btn-row { display:flex; gap:10px; flex-wrap: wrap; }
+
+        .content-card .form-control {
+            border-radius: 14px;
+            padding: 10px 12px;
+        }
+        .content-card .form-label { font-weight: 800; color: #0f172a; }
+
+        @media (max-width: 992px) {
+            .profile-shell { max-width: 100%; }
+        }
+    
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
+    <?php
+        $fullName = trim((string)($userData['firstname'] ?? '') . ' ' . (string)($userData['lastname'] ?? ''));
+        $initials = '';
+        $parts = preg_split('/\s+/', trim($fullName));
+        $sub1 = function ($str) {
+            if ($str === null) return '';
+            $str = (string)$str;
+            if ($str === '') return '';
+            return function_exists('mb_substr') ? mb_substr($str, 0, 1) : substr($str, 0, 1);
+        };
+        if (!empty($parts[0])) $initials .= $sub1($parts[0]);
+        if (!empty($parts[1])) $initials .= $sub1($parts[1]);
+        $initials = strtoupper($initials ?: 'U');
+    ?>
+    <nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
         <div class="container-fluid">
-            <span class="navbar-brand"><?php echo APP_NAME; ?></span>
+            <a class="navbar-brand profile-brand" href="profile.php">
+                <span class="avatar" aria-hidden="true"><?php echo html($initials); ?></span>
+                <span class="name"><?php echo html($fullName !== '' ? $fullName : 'Mi Perfil'); ?></span>
+            </a>
             <div>
                 <a href="tickets.php" class="btn btn-outline-light btn-sm">Mis Tickets</a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
@@ -144,100 +217,71 @@ if ($_POST) {
     </nav>
 
     <div class="container-main">
-        <div class="page-header">
-            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-                <div>
-                    <h2 class="mb-1">Mi Perfil</h2>
-                    <div class="sub">Actualiza tus datos para que podamos ayudarte mejor.</div>
-                </div>
-                <div>
-                    <a href="tickets.php" class="btn btn-light btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="profile-card">
-            <?php
-                $fullName = trim((string)($userData['firstname'] ?? '') . ' ' . (string)($userData['lastname'] ?? ''));
-                $initials = '';
-                $parts = preg_split('/\s+/', trim($fullName));
-                $sub1 = function ($str) {
-                    if ($str === null) return '';
-                    $str = (string)$str;
-                    if ($str === '') return '';
-                    return function_exists('mb_substr') ? mb_substr($str, 0, 1) : substr($str, 0, 1);
-                };
-                if (!empty($parts[0])) $initials .= $sub1($parts[0]);
-                if (!empty($parts[1])) $initials .= $sub1($parts[1]);
-                $initials = strtoupper($initials ?: 'U');
-            ?>
-
-            <div class="profile-top">
-                <div class="profile-badge">
-                    <div class="profile-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
+        <div class="profile-shell">
+            <main class="panel profile-content">
+                <div class="content-head">
                     <div>
-                        <h4 class="profile-title"><?php echo html($fullName !== '' ? $fullName : 'Mi Perfil'); ?></h4>
-                        <div class="profile-meta"><i class="bi bi-envelope"></i> <?php echo html((string)($userData['email'] ?? '')); ?></div>
+                        <h2 class="content-title">Información personal</h2>
+                        <div class="content-sub">Actualiza tus datos para que podamos ayudarte mejor.</div>
                     </div>
-                </div>
-                <div class="profile-meta"><i class="bi bi-shield-check"></i> Portal de Cliente</div>
-            </div>
-
-            <div class="soft-sep"></div>
-
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
-            <?php endif; ?>
-
-            <?php if ($success): ?>
-                <div class="alert alert-success" id="profileSuccess"><?php echo $success; ?></div>
-            <?php endif; ?>
-
-            <div class="section-title">
-                <h5><i class="bi bi-pencil-square"></i> Datos de contacto</h5>
-                <div class="profile-meta">Campos con * son obligatorios</div>
-            </div>
-
-            <form method="post" id="profileForm">
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label for="firstname" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="firstname" name="firstname" 
-                               value="<?php echo html($userData['firstname'] ?? ''); ?>" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="lastname" class="form-label">Apellido</label>
-                        <input type="text" class="form-control" id="lastname" name="lastname" 
-                               value="<?php echo html($userData['lastname'] ?? ''); ?>" required>
+                    <div>
+                        <a href="tickets.php" class="btn btn-outline-primary btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-arrow-left"></i> Volver</a>
                     </div>
                 </div>
 
-                <div class="mb-2">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" 
-                           value="<?php echo html($userData['email'] ?? ''); ?>" required>
-                </div>
+                <div class="content-card">
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger"><?php echo $error; ?></div>
+                    <?php endif; ?>
 
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label for="company" class="form-label">Empresa</label>
-                        <input type="text" class="form-control" id="company" name="company" 
-                               value="<?php echo html($userData['company'] ?? ''); ?>">
+                    <?php if ($success): ?>
+                        <div class="alert alert-success" id="profileSuccess"><?php echo $success; ?></div>
+                    <?php endif; ?>
+
+                    <div class="section-title">
+                        <h5><i class="bi bi-pencil-square"></i> Datos de contacto</h5>
+                        <div class="sidebar-sub">Campos con * son obligatorios</div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="phone" class="form-label">Teléfono</label>
-                        <input type="tel" class="form-control" id="phone" name="phone" 
-                               value="<?php echo html($userData['phone'] ?? ''); ?>">
-                    </div>
-                </div>
 
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                    <form method="post" id="profileForm">
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-6">
+                                <label for="firstname" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="firstname" name="firstname" value="<?php echo html($userData['firstname'] ?? ''); ?>" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="lastname" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="lastname" name="lastname" value="<?php echo html($userData['lastname'] ?? ''); ?>" required>
+                            </div>
+                        </div>
 
-                <div class="btn-row">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar cambios</button>
-                    <a href="tickets.php" class="btn btn-secondary"><i class="bi bi-x-circle"></i> Cancelar</a>
+                        <div class="mb-2">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="<?php echo html($userData['email'] ?? ''); ?>" required>
+                        </div>
+
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-6">
+                                <label for="company" class="form-label">Empresa</label>
+                                <input type="text" class="form-control" id="company" name="company" value="<?php echo html($userData['company'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo html($userData['phone'] ?? ''); ?>">
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+
+                        <div class="soft-sep"></div>
+
+                        <div class="btn-row">
+                            <button type="submit" class="btn btn-primary" style="border-radius: 999px; font-weight: 900;"><i class="bi bi-save"></i> Guardar cambios</button>
+                            <a href="tickets.php" class="btn btn-outline-secondary" style="border-radius: 999px; font-weight: 900;"><i class="bi bi-x-circle"></i> Cancelar</a>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </main>
         </div>
     </div>
 

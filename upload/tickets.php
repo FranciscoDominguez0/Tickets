@@ -71,25 +71,92 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body {
-            background: #f1f5f9;
+            background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding-top: 56px;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
+                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
+            z-index: -1;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0b1220, #111827);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
+        .topbar .profile-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .topbar .profile-brand .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .topbar .profile-brand .name {
+            font-weight: 900;
+            font-size: 0.98rem;
+            line-height: 1.1;
+        }
+        .topbar .btn { border-radius: 999px; font-weight: 700; }
+
         .container-main {
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
         }
 
+        .shell {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .panel-soft {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(10px);
+            border-radius: 22px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .panel-soft {
+            background-image:
+                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.06), transparent 52%),
+                radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.06), transparent 55%);
+        }
+
         .page-header {
-            background: linear-gradient(135deg, #0f172a, #1d4ed8);
-            padding: 26px 28px;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            padding: 22px 22px;
             border-radius: 16px;
             margin-bottom: 18px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
-            color: #fff;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #2563eb;
         }
-        .page-header .sub { color: rgba(255,255,255,0.85); }
+        .page-header .sub { color: #64748b; font-weight: 700; }
 
         .panel {
             background: #fff;
@@ -97,6 +164,14 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             box-shadow: 0 4px 24px rgba(0,0,0,0.06);
             border: 1px solid #e2e8f0;
             overflow: hidden;
+        }
+
+        .panel {
+            transition: box-shadow .15s ease, border-color .15s ease;
+        }
+        .panel:hover {
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+            border-color: #cbd5e1;
         }
 
         .tabs {
@@ -116,6 +191,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             align-items: center;
             gap: 8px;
         }
+        .tabs a:hover { color: #0f172a; background: rgba(15,23,42,0.03); }
         .tabs a.active { color: #2563eb; border-bottom-color: #2563eb; background: #fff; border-radius: 10px 10px 0 0; }
         .tabs .count { background: #e2e8f0; color: #0f172a; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; }
 
@@ -137,14 +213,27 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .tickets-table .table { margin-bottom: 0; }
         .tickets-table .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .tickets-table .table tbody tr:hover { background: #f8fafc; }
+        .tickets-table .table tbody tr { transition: background .12s ease; }
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
+    <?php
+        $navUserName = trim((string)($user['name'] ?? ''));
+        $navInitials = '';
+        $parts = preg_split('/\s+/', trim($navUserName));
+        if (!empty($parts[0])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[0], 0, 1) : substr($parts[0], 0, 1));
+        if (!empty($parts[1])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[1], 0, 1) : substr($parts[1], 0, 1));
+        $navInitials = strtoupper($navInitials ?: 'U');
+        if ($navUserName === '') $navUserName = 'Mi Perfil';
+    ?>
+    <nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
         <div class="container-fluid">
-            <span class="navbar-brand"><?php echo APP_NAME; ?></span>
+            <a class="navbar-brand profile-brand" href="profile.php">
+                <span class="avatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
+                <span class="name"><?php echo html($navUserName); ?></span>
+            </a>
             <div>
                 <a href="open.php" class="btn btn-outline-light btn-sm">Crear Ticket</a>
                 <a href="profile.php" class="btn btn-outline-light btn-sm">Mi Perfil</a>
@@ -154,45 +243,47 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     </nav>
 
     <div class="container-main">
-        <div class="page-header">
-            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-                <div>
-                    <h2 class="mb-1">Mis Tickets</h2>
-                    <div class="sub">Bienvenido, <?php echo html($user['name']); ?> (<?php echo html($user['email']); ?>)</div>
-                </div>
-                <div>
-                    <a href="open.php" class="btn btn-light btn-sm"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="tabs">
-                <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                    <i class="bi bi-folder2-open"></i> Abiertos <span class="count"><?php echo (int)$countOpen; ?></span>
-                </a>
-                <a class="<?php echo $filter === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                    <i class="bi bi-check2-circle"></i> Cerrados <span class="count"><?php echo (int)$countClosed; ?></span>
-                </a>
-                <a class="<?php echo $filter === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                    <i class="bi bi-inboxes"></i> Todos <span class="count"><?php echo (int)($countOpen + $countClosed); ?></span>
-                </a>
-            </div>
-
-            <div class="panel-head">
-                <div class="text-muted">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
-                <form method="get" class="search">
-                    <input type="hidden" name="filter" value="<?php echo html($filter); ?>">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" name="q" value="<?php echo html($q); ?>" placeholder="Buscar por número o asunto">
-                        <button class="btn btn-primary" type="submit">Buscar</button>
+        <div class="shell">
+            <main class="panel-soft" style="padding: 18px;">
+                <div class="page-header" style="margin-top: 0;">
+                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                        <div>
+                            <h2 class="mb-1">Mis Tickets</h2>
+                            <div class="sub">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
+                        </div>
+                        <div>
+                            <a href="open.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                        </div>
                     </div>
-                </form>
-            </div>
+                </div>
 
-            <div class="tickets-table">
-                <table class="table table-hover align-middle">
+                <div class="panel">
+                    <div class="tabs">
+                        <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
+                            <i class="bi bi-folder2-open"></i> Abiertos <span class="count"><?php echo (int)$countOpen; ?></span>
+                        </a>
+                        <a class="<?php echo $filter === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
+                            <i class="bi bi-check2-circle"></i> Cerrados <span class="count"><?php echo (int)$countClosed; ?></span>
+                        </a>
+                        <a class="<?php echo $filter === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
+                            <i class="bi bi-inboxes"></i> Todos <span class="count"><?php echo (int)($countOpen + $countClosed); ?></span>
+                        </a>
+                    </div>
+
+                    <div class="panel-head">
+                        <div class="text-muted">Filtros y búsqueda</div>
+                        <form method="get" class="search">
+                            <input type="hidden" name="filter" value="<?php echo html($filter); ?>">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" name="q" value="<?php echo html($q); ?>" placeholder="Buscar por número o asunto">
+                                <button class="btn btn-primary" type="submit">Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tickets-table">
+                        <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Número</th>
@@ -239,8 +330,10 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
-                </table>
-            </div>
+                        </table>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
     <footer style="text-align: center; padding: 20px 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; margin-top: 40px; color: #6c757d; font-size: 12px;">
