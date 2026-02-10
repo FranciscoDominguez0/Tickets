@@ -1,0 +1,448 @@
+/* ============================================
+   ESTILOS RESPONSIVOS PARA REGISTRO DE USUARIOS
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    min-height: 100vh;
+}
+
+.support-center-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* HEADER */
+.support-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+.support-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.support-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.support-header-logo img {
+    height: 40px;
+    width: auto;
+}
+
+.support-header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.support-header-right {
+    display: flex;
+    gap: 16px;
+}
+
+.support-header-right a {
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.support-header-right a:hover {
+    color: #2563eb;
+}
+
+/* CONTENIDO PRINCIPAL */
+.support-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 20px;
+}
+
+.register-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* PANEL IZQUIERDO - FORMULARIO */
+.register-panel-left {
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.register-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    word-break: break-word;
+}
+
+.register-subtitle {
+    color: #64748b;
+    margin-bottom: 2rem;
+    text-align: center;
+    word-break: break-word;
+}
+
+/* FORM ELEMENTS */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+}
+
+.btn-login:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-login.loading {
+    background: #94a3b8;
+}
+
+/* ALERTAS */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+/* FOOTER */
+.support-footer {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 1.5rem 0;
+    text-align: center;
+}
+
+.copyright {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+    word-break: break-word;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .support-header-content {
+        padding: 0 15px;
+    }
+    
+    .support-header-logo img {
+        height: 32px;
+    }
+    
+    .support-header-title {
+        font-size: 1.25rem;
+    }
+    
+    .support-header-right {
+        gap: 12px;
+        font-size: 0.9rem;
+    }
+    
+    .support-main {
+        padding: 1.5rem 15px;
+    }
+    
+    .register-panel {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+    
+    .register-panel-left {
+        padding: 2rem;
+    }
+    
+    .register-title {
+        font-size: 1.75rem;
+    }
+    
+    .register-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group input {
+        padding: 0.75rem 0.875rem;
+        font-size: 0.95rem;
+    }
+    
+    .btn-login {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+    }
+    
+    .support-footer {
+        padding: 1rem 0;
+    }
+    
+    .copyright {
+        font-size: 0.8rem;
+        padding: 0 15px;
+    }
+}
+
+/* Móviles */
+@media (max-width: 576px) {
+    .support-header-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .support-header-logo img {
+        height: 28px;
+    }
+    
+    .support-header-title {
+        font-size: 1.1rem;
+    }
+    
+    .support-header-right {
+        gap: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .support-main {
+        padding: 1rem 10px;
+    }
+    
+    .register-panel {
+        border-radius: 10px;
+        margin: 0 5px;
+    }
+    
+    .register-panel-left {
+        padding: 1.5rem;
+    }
+    
+    .register-title {
+        font-size: 1.5rem;
+    }
+    
+    .register-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    
+    .form-group input {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .form-group small {
+        font-size: 0.75rem;
+    }
+    
+    .btn-login {
+        padding: 0.625rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .alert {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.85rem;
+    }
+    
+    .support-footer {
+        padding: 0.75rem 0;
+    }
+    
+    .copyright {
+        font-size: 0.75rem;
+        padding: 0 10px;
+        line-height: 1.4;
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+    .support-header-content {
+        padding: 0 8px;
+        gap: 0.5rem;
+    }
+    
+    .support-header-logo img {
+        height: 24px;
+    }
+    
+    .support-header-title {
+        font-size: 1rem;
+    }
+    
+    .support-header-right {
+        gap: 8px;
+        font-size: 0.75rem;
+    }
+    
+    .support-main {
+        padding: 0.5rem 8px;
+    }
+    
+    .register-panel {
+        border-radius: 6px;
+        margin: 0 2px;
+    }
+    
+    .register-panel-left {
+        padding: 1rem;
+    }
+    
+    .register-title {
+        font-size: 1.3rem;
+    }
+    
+    .register-subtitle {
+        font-size: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-group label {
+        font-size: 0.75rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    .form-group input {
+        padding: 0.5rem 0.625rem;
+        font-size: 0.8rem;
+    }
+    
+    .form-group small {
+        font-size: 0.65rem;
+    }
+    
+    .btn-login {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.8rem;
+    }
+    
+    .alert {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+    
+    .support-footer {
+        padding: 0.75rem 0;
+    }
+    
+    .copyright {
+        font-size: 0.7rem;
+        padding: 0 8px;
+        line-height: 1.3;
+    }
+}

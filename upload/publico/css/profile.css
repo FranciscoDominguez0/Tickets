@@ -1,0 +1,612 @@
+/* ============================================
+   ESTILOS RESPONSIVOS PARA PERFIL DE USUARIO
+   ============================================ */
+
+body {
+    background: #f1f5f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-top: 56px;
+}
+
+.container-main {
+    max-width: 800px;
+    margin: 18px auto;
+    padding: 0 20px;
+}
+
+/* NAVBAR */
+.navbar {
+    background: linear-gradient(135deg, #0f172a, #1d4ed8);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.navbar-nav .nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+}
+
+/* PAGE HEADER */
+.page-header {
+    background: linear-gradient(135deg, #0f172a, #1d4ed8);
+    padding: 18px 20px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+    color: #fff;
+}
+
+.page-header h2 {
+    margin: 0 0 4px 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.page-header .sub {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.95rem;
+    word-break: break-word;
+}
+
+/* PROFILE CARD */
+.profile-card {
+    background: #fff;
+    padding: 18px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+/* PROFILE TOP */
+.profile-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-avatar {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.profile-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    word-break: break-word;
+}
+
+.profile-meta {
+    color: #64748b;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-word;
+}
+
+/* SEPARATOR */
+.soft-sep {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 16px 0;
+}
+
+/* SECTION TITLE */
+.section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+
+.section-title h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* FORM ELEMENTS */
+.row {
+    display: flex;
+    gap: 16px;
+    margin: 0 -8px;
+}
+
+.col-md-6 {
+    flex: 1;
+    padding: 0 8px;
+}
+
+.mb-2 {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* BUTTONS */
+.btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #f1f5f9;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+/* ALERTS */
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-weight: 500;
+    border: none;
+}
+
+.alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablets */
+@media (max-width: 768px) {
+    body {
+        padding-top: 50px;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+    
+    .container-main {
+        margin: 15px auto;
+        padding: 0 15px;
+    }
+    
+    .page-header {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .page-header .sub {
+        font-size: 0.85rem;
+    }
+    
+    .profile-card {
+        padding: 15px;
+        border-radius: 12px;
+    }
+    
+    .profile-top {
+        margin-bottom: 8px;
+    }
+    
+    .profile-badge {
+        gap: 10px;
+    }
+    
+    .profile-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 1.1rem;
+    }
+    
+    .profile-title {
+        font-size: 1rem;
+    }
+    
+    .profile-meta {
+        font-size: 0.8rem;
+    }
+    
+    .section-title {
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+    }
+    
+    .section-title h5 {
+        font-size: 0.95rem;
+    }
+    
+    .row {
+        gap: 12px;
+    }
+    
+    .mb-2 {
+        margin-bottom: 12px;
+    }
+    
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+    
+    .form-control {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn-row {
+        margin-top: 16px;
+        padding-top: 12px;
+        gap: 8px;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+    
+    .alert {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Móviles */
+@media (max-width: 576px) {
+    body {
+        padding-top: 45px;
+    }
+    
+    .navbar {
+        padding: 0.25rem 0;
+        height: 45px;
+    }
+    
+    .navbar-brand {
+        font-size: 0.9rem;
+    }
+    
+    .navbar-nav .nav-link {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.375rem;
+        margin: 0 2px;
+    }
+    
+    .container-main {
+        margin: 10px auto;
+        padding: 0 8px;
+    }
+    
+    .page-header {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+    
+    .page-header .sub {
+        font-size: 0.75rem;
+        text-align: center;
+    }
+    
+    .page-header .d-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .profile-card {
+        padding: 12px;
+        border-radius: 8px;
+    }
+    
+    .profile-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    
+    .profile-badge {
+        gap: 8px;
+    }
+    
+    .profile-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    .profile-title {
+        font-size: 0.9rem;
+    }
+    
+    .profile-meta {
+        font-size: 0.7rem;
+    }
+    
+    .soft-sep {
+        margin: 10px 0;
+    }
+    
+    .section-title {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+    }
+    
+    .section-title h5 {
+        font-size: 0.85rem;
+        gap: 4px;
+    }
+    
+    .row {
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+    }
+    
+    .col-md-6 {
+        padding: 0;
+    }
+    
+    .mb-2 {
+        margin-bottom: 8px;
+    }
+    
+    .form-label {
+        font-size: 0.75rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    .form-control {
+        padding: 0.5rem 0.625rem;
+        font-size: 0.75rem;
+        border-radius: 6px;
+    }
+    
+    .btn-row {
+        flex-direction: column;
+        margin-top: 10px;
+        padding-top: 8px;
+        gap: 4px;
+    }
+    
+    .btn {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .alert {
+        padding: 0.5rem 0.625rem;
+        font-size: 0.75rem;
+        margin-bottom: 8px;
+    }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+    body {
+        padding-top: 40px;
+    }
+    
+    .navbar {
+        height: 40px;
+        padding: 0.125rem 0;
+    }
+    
+    .navbar-brand {
+        font-size: 0.8rem;
+    }
+    
+    .navbar-nav .nav-link {
+        font-size: 0.7rem;
+        padding: 0.125rem 0.25rem;
+        margin: 0 1px;
+    }
+    
+    .container-main {
+        margin: 8px auto;
+        padding: 0 5px;
+    }
+    
+    .page-header {
+        padding: 10px;
+        margin-bottom: 6px;
+    }
+    
+    .page-header h2 {
+        font-size: 1.1rem;
+    }
+    
+    .page-header .sub {
+        font-size: 0.7rem;
+    }
+    
+    .profile-card {
+        padding: 10px;
+        border-radius: 6px;
+    }
+    
+    .profile-top {
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    
+    .profile-badge {
+        gap: 6px;
+    }
+    
+    .profile-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+    
+    .profile-title {
+        font-size: 0.85rem;
+    }
+    
+    .profile-meta {
+        font-size: 0.65rem;
+    }
+    
+    .soft-sep {
+        margin: 8px 0;
+    }
+    
+    .section-title {
+        gap: 3px;
+        margin-bottom: 6px;
+        padding-bottom: 3px;
+    }
+    
+    .section-title h5 {
+        font-size: 0.8rem;
+        gap: 3px;
+    }
+    
+    .row {
+        gap: 4px;
+    }
+    
+    .mb-2 {
+        margin-bottom: 6px;
+    }
+    
+    .form-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.125rem;
+    }
+    
+    .form-control {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.7rem;
+        border-radius: 4px;
+    }
+    
+    .btn-row {
+        margin-top: 8px;
+        padding-top: 6px;
+        gap: 3px;
+    }
+    
+    .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    .alert {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.7rem;
+        margin-bottom: 6px;
+    }
+}

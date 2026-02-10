@@ -84,6 +84,15 @@ $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '
 $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');') : '';
 ?>
 <body class="agent-login" style="<?php echo $bodyStyle; ?>">
+    <div class="back-to-user-login" style="position:fixed;top:10px;left:10px;z-index:9999;">
+        <a href="../login.php" class="back-btn" style="display:inline-flex;align-items:center;gap:4px;padding:4px 6px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:#fff;text-decoration:none;font-weight:500;font-size:12px;line-height:1;">
+            <svg width="12" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:0 0 auto;">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span>Login de Cliente</span>
+        </a>
+    </div>
+
     <!-- CONTENEDOR PRINCIPAL -->
     <div class="agent-login-container">
         <!-- PANEL DE LOGIN (GLASSMORPHISM) -->
@@ -143,11 +152,5 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
     </div>
 
     <script src="js/login.js"></script>
-    
-    <footer style="text-align: center; padding: 0; margin-top: -10px; color: white; font-size: 12px;">
-        <p style="margin: 0;">
-            Copyright © <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?>
-        </p>
-    </footer>
 </body>
 </html>
