@@ -204,6 +204,66 @@ if (!isset($collapseSettingsMenu)) {
         </main>
     </div>
 
+    <?php if (isset($currentRoute) && $currentRoute === 'staff'): ?>
+        <style>
+            #staff-loading-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(15, 23, 42, 0.55);
+                backdrop-filter: blur(2px);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+                padding: 20px;
+            }
+
+            #staff-loading-overlay .staff-loading-card {
+                width: 100%;
+                max-width: 360px;
+                background: #fff;
+                border-radius: 14px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+                padding: 18px 16px;
+                text-align: center;
+            }
+
+            #staff-loading-overlay .staff-spinner {
+                width: 42px;
+                height: 42px;
+                border-radius: 999px;
+                border: 4px solid #e2e8f0;
+                border-top-color: #0d6efd;
+                margin: 4px auto 10px;
+                animation: staffSpin 0.9s linear infinite;
+            }
+
+            #staff-loading-overlay .staff-loading-title {
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+
+            #staff-loading-overlay .staff-loading-sub {
+                color: #64748b;
+                font-size: 0.9rem;
+                margin: 0;
+            }
+
+            @keyframes staffSpin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        </style>
+
+        <div id="staff-loading-overlay" aria-hidden="true">
+            <div class="staff-loading-card">
+                <div class="staff-spinner" aria-hidden="true"></div>
+                <div class="staff-loading-title" id="staff-loading-title">Procesando...</div>
+                <p class="staff-loading-sub" id="staff-loading-sub">Por favor espera un momento</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
         &copy; VigitecPanama
     </div>
@@ -233,6 +293,50 @@ if (!isset($collapseSettingsMenu)) {
             });
         });
     </script>
+    <?php if (isset($currentRoute) && $currentRoute === 'staff'): ?>
+    <script>
+        (function () {
+            var overlay = document.getElementById('staff-loading-overlay');
+            var titleEl = document.getElementById('staff-loading-title');
+            var subEl = document.getElementById('staff-loading-sub');
+            var isBusy = false;
+
+            function showOverlay(title, sub) {
+                if (!overlay) return;
+                if (titleEl) titleEl.textContent = title || 'Procesando...';
+                if (subEl) subEl.textContent = sub || 'Por favor espera un momento';
+                overlay.style.display = 'flex';
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+
+            function hookForm(form, title, sub) {
+                if (!form) return;
+                form.addEventListener('submit', function () {
+                    if (isBusy) return false;
+                    isBusy = true;
+
+                    var submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.setAttribute('aria-disabled', 'true');
+                    }
+
+                    showOverlay(title, sub);
+                    return true;
+                });
+            }
+
+            document.querySelectorAll('form[action="staff.php"] input[name="do"][value="send_reset"]').forEach(function (input) {
+                hookForm(input.closest('form'), 'Enviando correo...', 'Se está enviando el reseteo de contraseña');
+            });
+
+            var createDo = document.querySelector('#agentCreateModal form[action="staff.php"] input[name="do"][value="create"]');
+            if (createDo) {
+                hookForm(createDo.closest('form'), 'Creando agente...', 'Guardando y enviando correo si aplica');
+            }
+        })();
+    </script>
+    <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'logs'): ?>
     <script src="js/logs.js"></script>
     <?php endif; ?>
