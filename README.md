@@ -11,18 +11,11 @@
 - Contraseña: `12345678`
 - Base de datos: `tickets_db`
 
-**Importar SQL:**
-```bash
-mysql -h localhost -P 33065 -u root -p12345678 tickets_db < SISTEMA_TICKETS_COMPLETO.sql
-```
-
 ### 2. ESTRUCTURA DE CARPETAS
 
 ```
 C:\Users\domin\sistema-tickets\
 ├── config.php              ← Configuración principal
-├── SISTEMA_TICKETS_COMPLETO.sql  ← Base de datos SQL
-├── LOGIN_SQL.sql           ← Queries de login
 │
 ├── cliente/
 │   ├── login.php           ← Login de cliente
@@ -242,30 +235,6 @@ isValidEmail($email)            // Validar email
 2. Session debe destruirse
 3. Redirect a login.php
 4. Al intentar acceder a dashboard → redirect a login
-```
-
----
-
-## 📧 TABLA DE LOGIN
-
-### QUERY: Login Cliente
-```sql
-SELECT id, email, firstname, lastname, password 
-FROM users 
-WHERE email = ? AND status = 'active'
-```
-
-### QUERY: Login Agente
-```sql
-SELECT id, username, email, firstname, lastname, password 
-FROM staff 
-WHERE username = ? AND is_active = 1
-```
-
-### QUERY: Update Last Login
-```sql
-UPDATE users SET last_login = NOW() WHERE id = ?
-UPDATE staff SET last_login = NOW() WHERE id = ?
 ```
 
 ---

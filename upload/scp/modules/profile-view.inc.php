@@ -141,7 +141,7 @@ $p = $profile_staff;
                         </div>
                     <?php else: ?>
                         <div class="alert alert-info">
-                            Ejecuta el archivo <code>SQL_PROFILE_ALTER.sql</code> en tu base de datos para habilitar la firma.
+                            Tu base de datos no tiene habilitada la columna de firma para agentes.
                         </div>
                     <?php endif; ?>
                 </div>
