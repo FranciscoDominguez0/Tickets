@@ -301,6 +301,61 @@ if ($_POST) {
                 $stmt3->execute();
                 $entry_id = (int) $mysqli->insert_id;
 
+                // Notificación + correo al agente asignado por departamento por defecto
+                if ($defaultStaffId !== null && (int)$defaultStaffId > 0) {
+                    $val = (int) $defaultStaffId;
+                    addLog('ticket_assigned_by_dept_default_user', 'Asignación automática por departamento (desde usuario)', 'ticket', $ticket_id, 'staff', $val);
+
+                    // Notificación en BD
+                    $message = 'Se te asignó el ticket ' . (string)$ticket_number . ': ' . (string)$subject;
+                    $type = 'ticket_assigned';
+                    $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                    if ($stmtN) {
+                        $stmtN->bind_param('issi', $val, $message, $type, $ticket_id);
+                        $stmtN->execute();
+                    } else {
+                        addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications (user)', 'ticket', $ticket_id, 'staff', $val);
+                    }
+
+                    // Correo al agente
+                    $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                    if ($stmtE) {
+                        $stmtE->bind_param('i', $val);
+                        if ($stmtE->execute()) {
+                            $r = $stmtE->get_result()->fetch_assoc();
+                            if ($r && !empty($r['email'])) {
+                                $to = $r['email'];
+                                $subj = 'Ticket asignado: ' . (string)$ticket_number;
+                                $staffName = trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? ''));
+                                if ($staffName === '') $staffName = 'Agente';
+                                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (string)$ticket_id;
+                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                    . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                    . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticket_number) . '</td></tr>'
+                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$subject) . '</td></tr>'
+                                    . '</table>'
+                                    . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                    . '</div>';
+                                $bodyText = 'Hola ' . $staffName . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . (string)$subject . "\n\nVer: " . $viewUrl;
+                                $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                if (!$mailOk) {
+                                    $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                    addLog('ticket_assign_email_failed_user', $err, 'ticket', $ticket_id, 'staff', $val);
+                                }
+                            } else {
+                                addLog('ticket_assign_email_missing_user', 'Agente sin email válido (user)', 'ticket', $ticket_id, 'staff', $val);
+                            }
+                        } else {
+                            addLog('ticket_assign_email_lookup_failed_user', 'No se pudo ejecutar SELECT staff(email) (user)', 'ticket', $ticket_id, 'staff', $val);
+                        }
+                    } else {
+                        addLog('ticket_assign_email_lookup_failed_user', 'No se pudo preparar SELECT staff(email) (user)', 'ticket', $ticket_id, 'staff', $val);
+                    }
+                }
+
                 // Adjuntos: guardar archivos y registrar en BD
                 $uploadDir = __DIR__ . '/uploads/attachments';
                 if (!is_dir($uploadDir)) {
