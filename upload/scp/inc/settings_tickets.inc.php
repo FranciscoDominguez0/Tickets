@@ -19,6 +19,44 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
+// Asignación por defecto por departamento
+$generalDeptId = 0;
+if (isset($mysqli) && $mysqli) {
+    $rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
+    if ($rgd && ($row = $rgd->fetch_assoc())) {
+        $generalDeptId = (int) ($row['id'] ?? 0);
+    }
+}
+
+$hasDeptDefaultStaff = false;
+if (isset($mysqli) && $mysqli) {
+    $chkCol = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
+    if ($chkCol && $chkCol->num_rows > 0) {
+        $hasDeptDefaultStaff = true;
+    } else {
+        $mysqli->query("ALTER TABLE departments ADD COLUMN default_staff_id INT NULL");
+        $chkCol2 = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
+        $hasDeptDefaultStaff = $chkCol2 && $chkCol2->num_rows > 0;
+    }
+}
+
+$departments = [];
+$agents = [];
+if (isset($mysqli) && $mysqli) {
+    $res = $mysqli->query('SELECT id, name, default_staff_id FROM departments WHERE is_active = 1 ORDER BY name');
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $departments[] = $row;
+        }
+    }
+    $resA = $mysqli->query('SELECT id, firstname, lastname, dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname');
+    if ($resA) {
+        while ($row = $resA->fetch_assoc()) {
+            $agents[] = $row;
+        }
+    }
+}
+
 $statuses = [];
 if (isset($mysqli) && $mysqli) {
     $res = $mysqli->query('SELECT id, name FROM ticket_status ORDER BY order_by, id');
@@ -121,7 +159,45 @@ if ($_POST) {
             setAppSetting('tickets.ticket_max_file_mb', $ticket_max_file_mb);
             setAppSetting('tickets.ticket_max_uploads', $ticket_max_uploads);
 
-            $msg = 'Cambios guardados correctamente.';
+            if ($hasDeptDefaultStaff && !empty($departments)) {
+                $deptDefaults = $_POST['dept_default_staff'] ?? [];
+                if (!is_array($deptDefaults)) $deptDefaults = [];
+
+                foreach ($departments as $d) {
+                    $deptId = (int)($d['id'] ?? 0);
+                    if ($deptId <= 0) continue;
+
+                    $raw = $deptDefaults[$deptId] ?? '0';
+                    $staffId = is_numeric($raw) ? (int)$raw : 0;
+                    $staffId = $staffId > 0 ? $staffId : null;
+
+                    if ($staffId !== null) {
+                        $allowed = false;
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtSd) {
+                            $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                            if ($stmtSd->execute()) {
+                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                $allowed = ($sdept === $deptId);
+                            }
+                        }
+                        if (!$allowed) {
+                            $error = 'El agente seleccionado no pertenece al departamento: ' . (string)($d['name'] ?? '');
+                            break;
+                        }
+                    }
+
+                    $stmtUp = $mysqli->prepare('UPDATE departments SET default_staff_id = ? WHERE id = ?');
+                    if ($stmtUp) {
+                        $stmtUp->bind_param('ii', $staffId, $deptId);
+                        $stmtUp->execute();
+                    }
+                }
+            }
+
+            if ($error === '') {
+                $msg = 'Cambios guardados correctamente.';
+            }
         }
     }
 }
@@ -386,6 +462,46 @@ ob_start();
                         <input type="number" class="form-control" name="ticket_max_uploads" value="<?php echo html($ticket_max_uploads); ?>" min="0" max="20">
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card settings-card">
+            <div class="card-header"><strong>Asignación por departamento</strong></div>
+            <div class="card-body">
+                <?php if (!$hasDeptDefaultStaff): ?>
+                    <div class="alert alert-warning mb-0">No se pudo habilitar la asignación por departamento (columna departments.default_staff_id).</div>
+                <?php elseif (empty($departments)): ?>
+                    <div class="text-muted">No hay departamentos activos.</div>
+                <?php else: ?>
+                    <div class="row g-3">
+                        <?php foreach ($departments as $d): ?>
+                            <?php
+                            $deptId = (int)($d['id'] ?? 0);
+                            $current = (int)($d['default_staff_id'] ?? 0);
+                            ?>
+                            <div class="col-12 col-lg-6">
+                                <label class="form-label">Agente por defecto — <?php echo html((string)($d['name'] ?? '')); ?></label>
+                                <select class="form-select" name="dept_default_staff[<?php echo (int)$deptId; ?>]">
+                                    <option value="0" <?php echo $current <= 0 ? 'selected' : ''; ?>>— Ninguno —</option>
+                                    <?php foreach ($agents as $a): ?>
+                                        <?php
+                                        $aid = (int)($a['id'] ?? 0);
+                                        $aDept = (int)($a['dept_id'] ?? 0);
+                                        $allowed = ($aDept === $deptId) || ($generalDeptId > 0 && $aDept === 0 && $generalDeptId === $deptId);
+                                        if (!$allowed) continue;
+                                        $label = trim((string)($a['firstname'] ?? '') . ' ' . (string)($a['lastname'] ?? ''));
+                                        if ($label === '') $label = 'Agente #' . (string)$aid;
+                                        ?>
+                                        <option value="<?php echo $aid; ?>" <?php echo $current === $aid ? 'selected' : ''; ?>><?php echo html($label); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text">Si está vacío, los tickets nuevos quedarán sin asignar.</div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

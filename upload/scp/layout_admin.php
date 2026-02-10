@@ -204,6 +204,10 @@ if (!isset($collapseSettingsMenu)) {
         </main>
     </div>
 
+    <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
+        &copy; VigitecPanama
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>

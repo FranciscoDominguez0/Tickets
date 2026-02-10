@@ -756,6 +756,25 @@ document.addEventListener('DOMContentLoaded', function() {
     var zone = document.getElementById('attach-zone');
     var input = document.getElementById('attachments');
     var list = document.getElementById('attach-list');
+    if (zone && input) {
+        zone.addEventListener('click', function (e) {
+            try {
+                var t = e && e.target ? e.target : null;
+                if (t && t.tagName && t.tagName.toLowerCase() === 'a') {
+                    e.preventDefault();
+                }
+            } catch (err) {}
+            try {
+                if (input && typeof input.showPicker === 'function') {
+                    input.showPicker();
+                } else if (input) {
+                    input.click();
+                }
+            } catch (err2) {
+                try { if (input) input.click(); } catch (err3) {}
+            }
+        });
+    }
     function updateList() {
         list.innerHTML = '';
         if (input.files.length) {

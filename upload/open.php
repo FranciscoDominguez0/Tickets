@@ -51,6 +51,41 @@ if ($_POST) {
             $dept_id = 1;
         }
 
+        // Asignación automática por departamento (si está configurado)
+        $generalDeptId = 0;
+        $rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
+        if ($rgd && ($row = $rgd->fetch_assoc())) {
+            $generalDeptId = (int) ($row['id'] ?? 0);
+        }
+
+        $defaultStaffId = null;
+        $hasDeptDefaultStaff = false;
+        $chkCol = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
+        if ($chkCol && $chkCol->num_rows > 0) $hasDeptDefaultStaff = true;
+        if ($hasDeptDefaultStaff && $dept_id > 0) {
+            $stmtDef = $mysqli->prepare('SELECT default_staff_id FROM departments WHERE id = ? AND is_active = 1 LIMIT 1');
+            if ($stmtDef) {
+                $stmtDef->bind_param('i', $dept_id);
+                if ($stmtDef->execute()) {
+                    $v = (int)($stmtDef->get_result()->fetch_assoc()['default_staff_id'] ?? 0);
+                    if ($v > 0) {
+                        $allowed = false;
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtSd) {
+                            $stmtSd->bind_param('ii', $generalDeptId, $v);
+                            if ($stmtSd->execute()) {
+                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                $allowed = ($sdept === $dept_id);
+                            }
+                        }
+                        if ($allowed) {
+                            $defaultStaffId = $v;
+                        }
+                    }
+                }
+            }
+        }
+
         if (empty($subject) || empty($body)) {
             $error = 'Asunto y descripción son requeridos';
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
@@ -181,6 +216,10 @@ if ($_POST) {
             $cp = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'priority_id'");
             if ($cp && $cp->num_rows > 0) $hasPriorityCol = true;
 
+            $hasStaffIdCol = false;
+            $cs = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'staff_id'");
+            if ($cs && $cs->num_rows > 0) $hasStaffIdCol = true;
+
             $defaultStatusId = (int)getAppSetting('tickets.default_ticket_status_id', '1');
             if ($defaultStatusId <= 0) $defaultStatusId = 1;
             $defaultPriorityId = (int)getAppSetting('tickets.default_priority_id', '1');
@@ -189,36 +228,58 @@ if ($_POST) {
             // Insertar ticket
             error_log('[tickets] INSERT tickets via upload/open.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' user_id=' . (string)($_SESSION['user_id'] ?? '') . ' dept_id=' . (string)$dept_id . ' topic_id=' . (string)$topic_id);
             
+            $uid = (int)$_SESSION['user_id'];
+            $staffVal = ($hasStaffIdCol && $defaultStaffId !== null) ? (int)$defaultStaffId : null;
             if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
-                if ($hasPriorityCol) {
+                if ($hasStaffIdCol && $staffVal !== null && $hasPriorityCol) {
                     $stmt = $mysqli->prepare(
-                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, priority_id, subject, created)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+                        'INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())'
                     );
-                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiiiiis', $ticket_number, $uid, $staffVal, $dept_id, $topic_id, $defaultStatusId, $defaultPriorityId, $subject);
+                } elseif ($hasStaffIdCol && $staffVal !== null) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+                    );
+                    $stmt->bind_param('siiiiis', $ticket_number, $uid, $staffVal, $dept_id, $topic_id, $defaultStatusId, $subject);
+                } elseif ($hasPriorityCol) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, priority_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+                    );
                     $stmt->bind_param('siiiiis', $ticket_number, $uid, $dept_id, $topic_id, $defaultStatusId, $defaultPriorityId, $subject);
                 } else {
                     $stmt = $mysqli->prepare(
-                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, subject, created)
-                         VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, topic_id, status_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, NOW())'
                     );
-                    $uid = (int)$_SESSION['user_id'];
                     $stmt->bind_param('siiiis', $ticket_number, $uid, $dept_id, $topic_id, $defaultStatusId, $subject);
                 }
             } else {
-                if ($hasPriorityCol) {
+                if ($hasStaffIdCol && $staffVal !== null && $hasPriorityCol) {
                     $stmt = $mysqli->prepare(
-                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, priority_id, subject, created)
-                         VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                        'INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
                     );
-                    $uid = (int)$_SESSION['user_id'];
+                    $stmt->bind_param('siiiiis', $ticket_number, $uid, $staffVal, $dept_id, $defaultStatusId, $defaultPriorityId, $subject);
+                } elseif ($hasStaffIdCol && $staffVal !== null) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                    );
+                    $stmt->bind_param('siiiis', $ticket_number, $uid, $staffVal, $dept_id, $defaultStatusId, $subject);
+                } elseif ($hasPriorityCol) {
+                    $stmt = $mysqli->prepare(
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, priority_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, ?, NOW())'
+                    );
                     $stmt->bind_param('siiiis', $ticket_number, $uid, $dept_id, $defaultStatusId, $defaultPriorityId, $subject);
                 } else {
                     $stmt = $mysqli->prepare(
-                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, subject, created)
-                         VALUES (?, ?, ?, ?, ?, NOW())'
+                        'INSERT INTO tickets (ticket_number, user_id, dept_id, status_id, subject, created) '
+                        . 'VALUES (?, ?, ?, ?, ?, NOW())'
                     );
-                    $uid = (int)$_SESSION['user_id'];
                     $stmt->bind_param('siiis', $ticket_number, $uid, $dept_id, $defaultStatusId, $subject);
                 }
             }

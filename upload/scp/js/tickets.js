@@ -209,9 +209,32 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('[data-action="attachments-browse"]').forEach(function (el) {
     el.addEventListener('click', function (e) {
       // Permitir que anchors no naveguen
-      e.preventDefault();
-      var input = document.getElementById('attachments');
-      if (input) input.click();
+      if (el && el.tagName && el.tagName.toLowerCase() === 'a') {
+        e.preventDefault();
+      }
+
+      var zone = null;
+      try {
+        zone = (el && el.closest) ? el.closest('.attach-zone') : null;
+      } catch (err) {}
+
+      var input = null;
+      if (zone) {
+        input = zone.querySelector('input[type="file"]');
+      }
+      if (!input) {
+        input = document.getElementById('attachments');
+      }
+
+      try {
+        if (input && typeof input.showPicker === 'function') {
+          input.showPicker();
+        } else if (input) {
+          input.click();
+        }
+      } catch (err2) {
+        try { if (input) input.click(); } catch (err3) {}
+      }
     });
   });
 

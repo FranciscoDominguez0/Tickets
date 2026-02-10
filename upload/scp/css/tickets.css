@@ -369,7 +369,18 @@
 }
 .ticket-view-reply .attach-zone:hover,
 .ticket-view-reply .attach-zone.dragover { border-color: #2563eb; background: #eff6ff; }
-.ticket-view-reply .attach-zone input[type="file"] { display: none; }
+.ticket-view-reply .attach-zone input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+}
 .ticket-view-reply .attach-zone .attach-text { color: #64748b; font-size: 0.95rem; }
 .ticket-view-reply .attach-zone .attach-text a { color: #2563eb; text-decoration: none; }
 .ticket-view-reply .attach-zone .attach-text a:hover { text-decoration: underline; }

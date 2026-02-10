@@ -341,7 +341,7 @@ class Mailer {
         };
 
         $read();
-        $send("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+        $ehloResp = $send("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
         if ($secure === 'tls' && $port != 465) {
             $r = $send('STARTTLS');
             if (strpos($r, '220') !== false) {
@@ -356,7 +356,7 @@ class Mailer {
                     fclose($socket);
                     return false;
                 }
-                $send("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+                $ehloResp = $send("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
             } else {
                 self::$lastError = 'Servidor SMTP no aceptó STARTTLS: ' . trim($r);
                 fclose($socket);
@@ -364,11 +364,33 @@ class Mailer {
             }
         }
         if ($user !== '') {
-            $send('AUTH LOGIN');
-            $send(base64_encode($user));
-            $r = $send(base64_encode($pass));
-            if (strpos($r, '235') === false) {
-                self::$lastError = 'SMTP autenticación fallida';
+            $authCaps = strtoupper((string)$ehloResp);
+            $supportsPlain = (strpos($authCaps, 'AUTH') !== false && strpos($authCaps, 'PLAIN') !== false);
+            $supportsLogin = (strpos($authCaps, 'AUTH') !== false && strpos($authCaps, 'LOGIN') !== false);
+
+            $authed = false;
+            $lastAuthResp = '';
+
+            if ($supportsPlain) {
+                $token = base64_encode("\0" . $user . "\0" . $pass);
+                $lastAuthResp = $send('AUTH PLAIN ' . $token);
+                $authed = (strpos($lastAuthResp, '235') !== false);
+            }
+
+            if (!$authed) {
+                if (!$supportsLogin && !$supportsPlain) {
+                    $supportsLogin = true;
+                }
+                if ($supportsLogin) {
+                    $send('AUTH LOGIN');
+                    $send(base64_encode($user));
+                    $lastAuthResp = $send(base64_encode($pass));
+                    $authed = (strpos($lastAuthResp, '235') !== false);
+                }
+            }
+
+            if (!$authed) {
+                self::$lastError = 'SMTP autenticación fallida' . ($lastAuthResp !== '' ? (': ' . trim($lastAuthResp)) : '');
                 fclose($socket);
                 return false;
             }

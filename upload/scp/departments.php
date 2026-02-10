@@ -68,10 +68,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $descParam = $description !== '' ? $description : null;
         $stmt->bind_param('ssi', $name, $descParam, $isActive);
-        if ($stmt->execute()) {
-            $_SESSION['flash_msg'] = 'Departamento creado correctamente.';
-        } else {
-            $_SESSION['flash_error'] = 'No se pudo crear el departamento (puede que ya exista).';
+        try {
+            if ($stmt->execute()) {
+                $_SESSION['flash_msg'] = 'Departamento creado correctamente.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo crear el departamento.';
+            }
+        } catch (mysqli_sql_exception $e) {
+            if ((int)$e->getCode() === 1062) {
+                $_SESSION['flash_error'] = 'Ya existe un departamento con ese nombre. Por favor usa otro nombre.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo crear el departamento.';
+            }
         }
         header('Location: departments.php');
         exit;
@@ -102,10 +110,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $descParam = $description !== '' ? $description : null;
         $stmt->bind_param('ssii', $name, $descParam, $isActive, $id);
-        if ($stmt->execute()) {
-            $_SESSION['flash_msg'] = 'Departamento actualizado correctamente.';
-        } else {
-            $_SESSION['flash_error'] = 'No se pudo actualizar el departamento.';
+        try {
+            if ($stmt->execute()) {
+                $_SESSION['flash_msg'] = 'Departamento actualizado correctamente.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo actualizar el departamento.';
+            }
+        } catch (mysqli_sql_exception $e) {
+            if ((int)$e->getCode() === 1062) {
+                $_SESSION['flash_error'] = 'Ya existe un departamento con ese nombre. Por favor usa otro nombre.';
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo actualizar el departamento.';
+            }
         }
         header('Location: departments.php');
         exit;

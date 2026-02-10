@@ -109,6 +109,39 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 }
             }
 
+            // Asignación automática por departamento (si no se eligió agente)
+            if ($staff_id === null && $dept_id > 0) {
+                $hasDeptDefaultStaff = false;
+                $chkCol = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
+                if ($chkCol && $chkCol->num_rows > 0) $hasDeptDefaultStaff = true;
+
+                if ($hasDeptDefaultStaff) {
+                    $defaultStaffId = 0;
+                    $stmtDef = $mysqli->prepare('SELECT default_staff_id FROM departments WHERE id = ? AND is_active = 1 LIMIT 1');
+                    if ($stmtDef) {
+                        $stmtDef->bind_param('i', $dept_id);
+                        if ($stmtDef->execute()) {
+                            $defaultStaffId = (int)($stmtDef->get_result()->fetch_assoc()['default_staff_id'] ?? 0);
+                        }
+                    }
+
+                    if ($defaultStaffId > 0) {
+                        $allowed = false;
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        if ($stmtSd) {
+                            $stmtSd->bind_param('ii', $generalDeptId, $defaultStaffId);
+                            if ($stmtSd->execute()) {
+                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                $allowed = ($sdept === $dept_id);
+                            }
+                        }
+                        if ($allowed) {
+                            $staff_id = $defaultStaffId;
+                        }
+                    }
+                }
+            }
+
             if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
             if ($dept_id <= 0) $open_errors[] = 'Seleccione un departamento.';

@@ -135,12 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmtU->bind_param('sssisisssi', $email, $name, $priority, $dept_id_param, $smtp_host, $smtp_port_param, $smtp_secure, $smtp_user, $smtp_pass, $id);
     if ($stmtU->execute()) {
         $_SESSION['flash_msg'] = 'Email actualizado correctamente.';
+        header('Location: emails.php');
+        exit;
     } else {
         $_SESSION['flash_error'] = 'No se pudo actualizar el email.';
+        header('Location: email.php?id=' . $id . '#account');
+        exit;
     }
-
-    header('Location: email.php?id=' . $id . '#account');
-    exit;
 }
 
 ob_start();
@@ -167,6 +168,22 @@ ob_start();
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
+
+<style>
+    #email-saving-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
+    #email-saving-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:280px;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+</style>
+<div id="email-saving-overlay" role="status" aria-live="polite" aria-busy="true">
+    <div class="box">
+        <div class="d-flex align-items-center gap-3">
+            <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+            <div>
+                <div class="fw-semibold">Guardando…</div>
+                <div class="text-muted small">Por favor espera</div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php if ($msg): ?>
     <style>
@@ -297,13 +314,28 @@ ob_start();
 
                     <div class="d-flex justify-content-end gap-2">
                         <a class="btn btn-outline-secondary" href="emails.php">Cerrar</a>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
+                        <button type="submit" class="btn btn-primary" id="btn-email-save"><i class="bi bi-check-circle"></i> Guardar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    (function(){
+        try {
+            var overlay = document.getElementById('email-saving-overlay');
+            var btn = document.getElementById('btn-email-save');
+            var form = btn ? btn.closest('form') : null;
+            if (!form) return;
+            form.addEventListener('submit', function(){
+                if (overlay) overlay.style.display = 'flex';
+                if (btn) btn.disabled = true;
+            });
+        } catch (e) {}
+    })();
+</script>
 
 <?php
 $content = ob_get_clean();
