@@ -242,6 +242,17 @@ if (!empty($_GET['org'])) {
                 <?php echo $action_msg; ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
+            <?php if (isset($_GET['msg']) && $action_type === 'success'): ?>
+                <script>
+                (function(){
+                    try {
+                        var url = new URL(window.location.href);
+                        url.searchParams.delete('msg');
+                        history.replaceState(null, '', url.toString());
+                    } catch (e) {}
+                })();
+                </script>
+            <?php endif; ?>
         <?php endif; ?>
         <div class="user-view-header">
             <div>
@@ -550,6 +561,17 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
             <?php echo $action_msg; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
+        <?php if (isset($_GET['msg']) && $action_type === 'success'): ?>
+            <script>
+            (function(){
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('msg');
+                    history.replaceState(null, '', url.toString());
+                } catch (e) {}
+            })();
+            </script>
+        <?php endif; ?>
     <?php endif; ?>
 
     <div class="org-search-card">

@@ -353,18 +353,22 @@
 .org-back-link {
     color: #2563eb;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-bottom: 12px;
-    transition: all 0.15s;
     font-size: 0.9rem;
 }
 
 .org-back-link:hover {
     color: #1d4ed8;
     text-decoration: underline;
+}
+
+.org-back-link:focus-visible {
+    outline: 2px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 3px;
 }
 
 .org-title {
