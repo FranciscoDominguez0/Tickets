@@ -77,12 +77,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+// Editar organización
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'update') {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $old_name = trim((string)($_POST['old_name'] ?? ''));
+        $org_name = trim((string)($_POST['org_name'] ?? ''));
+        $org_address = trim((string)($_POST['org_address'] ?? ''));
+        $org_phone = trim((string)($_POST['org_phone'] ?? ''));
+        $org_phone_ext = trim((string)($_POST['org_phone_ext'] ?? ''));
+        $org_website = trim((string)($_POST['org_website'] ?? ''));
+        $org_notes = trim((string)($_POST['org_notes'] ?? ''));
+
+        $errors = [];
+        if ($old_name === '') $errors[] = 'Organización inválida.';
+        if ($org_name === '') $errors[] = 'El nombre de la organización es obligatorio.';
+
+        if (empty($errors) && strcasecmp($old_name, $org_name) !== 0) {
+            $stmtC = $mysqli->prepare('SELECT id FROM organizations WHERE name = ? LIMIT 1');
+            if ($stmtC) {
+                $stmtC->bind_param('s', $org_name);
+                $stmtC->execute();
+                if ($stmtC->get_result()->fetch_assoc()) {
+                    $errors[] = 'Ya existe una organización con ese nombre.';
+                }
+            }
+        }
+
+        if (empty($errors)) {
+            $stmtE = $mysqli->prepare('SELECT id FROM organizations WHERE name = ? LIMIT 1');
+            $existingId = 0;
+            if ($stmtE) {
+                $stmtE->bind_param('s', $old_name);
+                $stmtE->execute();
+                $row = $stmtE->get_result()->fetch_assoc();
+                $existingId = (int)($row['id'] ?? 0);
+            }
+
+            if ($existingId > 0) {
+                $stmtU = $mysqli->prepare('UPDATE organizations SET name = ?, address = ?, phone = ?, phone_ext = ?, website = ?, notes = ? WHERE id = ?');
+                if ($stmtU) {
+                    $stmtU->bind_param('ssssssi', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $existingId);
+                    $stmtU->execute();
+                }
+            } else {
+                $stmtI = $mysqli->prepare('INSERT INTO organizations (name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?)');
+                if ($stmtI) {
+                    $stmtI->bind_param('ssssss', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
+                    $stmtI->execute();
+                }
+            }
+
+            if (strcasecmp($old_name, $org_name) !== 0) {
+                $stmtUc = $mysqli->prepare('UPDATE users SET company = ? WHERE company = ?');
+                if ($stmtUc) {
+                    $stmtUc->bind_param('ss', $org_name, $old_name);
+                    $stmtUc->execute();
+                }
+            }
+
+            header('Location: orgs.php?org=' . urlencode($org_name) . '&msg=org_updated');
+            exit;
+        }
+
+        if (!empty($errors)) {
+            $action_msg = implode('<br>', $errors);
+            $action_type = 'danger';
+        }
+    }
+}
+
 if (isset($_GET['msg'])) {
     if ($_GET['msg'] === 'org_added') {
         $action_msg = 'Organización creada exitosamente.';
         $action_type = 'success';
     } elseif ($_GET['msg'] === 'org_deleted') {
         $action_msg = 'Organización eliminada exitosamente.';
+        $action_type = 'success';
+    } elseif ($_GET['msg'] === 'org_updated') {
+        $action_msg = 'Organización actualizada exitosamente.';
         $action_type = 'success';
     }
 }
@@ -180,6 +252,9 @@ if (!empty($_GET['org'])) {
                 </h1>
             </div>
             <div class="user-view-actions">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editOrgModal">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
                 <button type="button" class="btn btn-danger btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
                     <i class="bi bi-trash"></i> Eliminar organización
                 </button>
@@ -296,7 +371,7 @@ if (!empty($_GET['org'])) {
                                 <tbody>
                                     <?php foreach ($orgUsers as $u): ?>
                                         <tr>
-                                            <td><a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html(trim($u['firstname'].' '.$u['lastname'])); ?></a></td>
+                                            <td><a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?></a></td>
                                             <td><?php echo html($u['email']); ?></td>
                                             <td><?php echo html($u['phone'] ?? '—'); ?></td>
                                             <td><span class="user-view-status-badge <?php echo html($u['status']); ?>"><?php echo $u['status'] === 'active' ? 'Activo' : ($u['status'] === 'inactive' ? 'Inactivo' : 'Bloqueado'); ?></span></td>
@@ -345,7 +420,54 @@ if (!empty($_GET['org'])) {
                 </div>
             </div>
         </div>
-    </div>
+
+        <div class="modal fade" id="editOrgModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content org-modal-content">
+                    <div class="modal-header org-modal-header">
+                        <h5 class="modal-title org-modal-title"><i class="bi bi-pencil-square"></i> Editar organización</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="orgs.php?org=<?php echo urlencode($orgInfo['name']); ?>">
+                        <?php csrfField(); ?>
+                        <input type="hidden" name="do" value="update">
+                        <input type="hidden" name="old_name" value="<?php echo html($orgInfo['name']); ?>">
+                        <div class="modal-body org-modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="org_name" required value="<?php echo html($orgInfo['name']); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Sitio Web</label>
+                                    <input type="text" class="form-control" name="org_website" value="<?php echo html($orgInfo['website'] ?? ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" name="org_phone" value="<?php echo html($orgInfo['phone'] ?? ''); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ext</label>
+                                    <input type="text" class="form-control" name="org_phone_ext" value="<?php echo html($orgInfo['phone_ext'] ?? ''); ?>">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Dirección</label>
+                                    <textarea class="form-control" name="org_address" rows="3"><?php echo html($orgInfo['address'] ?? ''); ?></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Notas internas</label>
+                                    <textarea class="form-control" name="org_notes" rows="4"><?php echo html($orgInfo['notes'] ?? ''); ?></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer org-modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
     <div class="modal fade" id="deleteOrgModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
