@@ -330,6 +330,136 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add_user_note' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int)$_POST['user_id'];
+        $note = trim((string)($_POST['note'] ?? ''));
+        if ($note !== '') {
+            $staff_id = isset($_SESSION['staff_id']) && is_numeric($_SESSION['staff_id']) ? (int)$_SESSION['staff_id'] : null;
+            if ($staff_id === 0) $staff_id = null;
+            $stmtN = $mysqli->prepare('INSERT INTO user_notes (user_id, staff_id, note, created) VALUES (?, ?, ?, NOW())');
+            if ($stmtN) {
+                $stmtN->bind_param('iis', $user_id, $staff_id, $note);
+                $stmtN->execute();
+            }
+        }
+        header('Location: users.php?id=' . $user_id . '&t=notes');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'update_user_note' && isset($_POST['user_id']) && is_numeric($_POST['user_id']) && isset($_POST['note_id']) && is_numeric($_POST['note_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int)$_POST['user_id'];
+        $note_id = (int)$_POST['note_id'];
+        $note = trim((string)($_POST['note'] ?? ''));
+        if ($note !== '') {
+            $stmtU = $mysqli->prepare('UPDATE user_notes SET note = ?, updated = NOW() WHERE id = ? AND user_id = ?');
+            if ($stmtU) {
+                $stmtU->bind_param('sii', $note, $note_id, $user_id);
+                $stmtU->execute();
+            }
+        }
+        header('Location: users.php?id=' . $user_id . '&t=notes');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'delete_user_note' && isset($_POST['user_id']) && is_numeric($_POST['user_id']) && isset($_POST['note_id']) && is_numeric($_POST['note_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int)$_POST['user_id'];
+        $note_id = (int)$_POST['note_id'];
+        $stmtD = $mysqli->prepare('DELETE FROM user_notes WHERE id = ? AND user_id = ?');
+        if ($stmtD) {
+            $stmtD->bind_param('ii', $note_id, $user_id);
+            $stmtD->execute();
+        }
+        header('Location: users.php?id=' . $user_id . '&t=notes');
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'send_user_reset' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int)$_POST['user_id'];
+        $tab = isset($_POST['tab']) ? trim((string)$_POST['tab']) : '';
+        $tabParam = ($tab !== '') ? ('&t=' . urlencode($tab)) : '';
+
+        $mysqli->query(
+            "CREATE TABLE IF NOT EXISTS password_resets (\n"
+            . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+            . "  user_id INT NOT NULL,\n"
+            . "  token_hash CHAR(64) NOT NULL,\n"
+            . "  expires_at DATETIME NOT NULL,\n"
+            . "  used_at DATETIME NULL,\n"
+            . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+            . "  KEY idx_user_id (user_id),\n"
+            . "  KEY idx_token_hash (token_hash),\n"
+            . "  KEY idx_expires (expires_at),\n"
+            . "  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE\n"
+            . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $stmtU = $mysqli->prepare('SELECT id, email, firstname, lastname FROM users WHERE id = ? LIMIT 1');
+        if ($stmtU) {
+            $stmtU->bind_param('i', $user_id);
+            $stmtU->execute();
+            $u = $stmtU->get_result()->fetch_assoc();
+            if ($u) {
+                $token = bin2hex(random_bytes(32));
+                $tokenHash = hash('sha256', $token);
+                $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+
+                $stmtIns = $mysqli->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)');
+                if ($stmtIns) {
+                    $uid = (int)($u['id'] ?? 0);
+                    $stmtIns->bind_param('iss', $uid, $tokenHash, $expiresAt);
+                    $stmtIns->execute();
+                }
+
+                $resetUrl = rtrim(APP_URL, '/') . '/upload/reset.php?token=' . urlencode($token);
+                $name = trim(((string)($u['firstname'] ?? '')) . ' ' . ((string)($u['lastname'] ?? '')));
+                if ($name === '') $name = (string)($u['email'] ?? '');
+
+                $subject = 'Restablecer contraseña - ' . APP_NAME;
+                $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+
+                $bodyHtml = ''
+                    . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
+                    . '  <div style="max-width:640px; margin:0 auto;">'
+                    . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
+                    . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
+                    . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>'
+                    . '    </div>'
+                    . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
+                    . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
+                    . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>'
+                    . '      <p style="margin:14px 0 12px 0;">'
+                    . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>'
+                    . '      </p>'
+                    . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
+                    . '      <div style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña no se modificará.</div>'
+                    . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
+                    . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
+                    . '    </div>'
+                    . '  </div>'
+                    . '</div>';
+
+                $bodyText = "Hola $name,\n\n" .
+                    "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n" .
+                    "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
+                    "Si no solicitaste este cambio, puedes ignorar este correo.";
+
+                Mailer::send((string)$u['email'], $subject, $bodyHtml, $bodyText);
+            }
+        }
+
+        header('Location: users.php?id=' . $user_id . $tabParam . '&msg=reset_sent');
+        exit;
+    }
+}
+
 // AJAX: buscar organizaciones
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
     $query = trim($_GET['q']);
@@ -363,6 +493,22 @@ if ($viewUser) {
     $stmt->bind_param('i', $viewUser['id']);
     $stmt->execute();
     $userTickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $userNotes = [];
+    $stmtN = $mysqli->prepare(
+        "SELECT n.id, n.note, n.created, n.updated, n.staff_id, "
+        . "CONCAT(COALESCE(st.firstname,''), ' ', COALESCE(st.lastname,'')) AS staff_name "
+        . "FROM user_notes n "
+        . "LEFT JOIN staff st ON st.id = n.staff_id "
+        . "WHERE n.user_id = ? "
+        . "ORDER BY n.created DESC"
+    );
+    if ($stmtN) {
+        $stmtN->bind_param('i', $viewUser['id']);
+        $stmtN->execute();
+        $userNotes = $stmtN->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+
     $statusLabels = ['active' => 'Activo', 'inactive' => 'Inactivo', 'banned' => 'Bloqueado'];
     $viewUserName = trim($viewUser['firstname'] . ' ' . $viewUser['lastname']) ?: $viewUser['email'];
     require __DIR__ . '/user-view.inc.php';

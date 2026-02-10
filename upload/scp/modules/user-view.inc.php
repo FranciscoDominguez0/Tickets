@@ -19,7 +19,15 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
             <div class="dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-envelope"></i> Enviar restablecer contraseña</a></li>
+                    <li>
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline" id="formSendUserReset">
+                            <input type="hidden" name="do" value="send_user_reset">
+                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                            <input type="hidden" name="tab" value="<?php echo html((string)($_GET['t'] ?? 'tickets')); ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                            <button type="submit" class="dropdown-item" id="btnSendUserReset"><i class="bi bi-envelope"></i> Enviar restablecer contraseña</button>
+                        </form>
+                    </li>
                     <li><a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalEditUser"><i class="bi bi-pencil"></i> Editar perfil</a></li>
                 </ul>
             </div>
@@ -62,6 +70,21 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 <i class="bi bi-person-fill"></i>
             </div>
             <div class="user-view-details">
+                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'reset_sent'): ?>
+                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
+                        Se envió el correo de restablecer contraseña.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                    <script>
+                    (function(){
+                        try {
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('msg');
+                            history.replaceState(null, '', url.toString());
+                        } catch (e) {}
+                    })();
+                    </script>
+                <?php endif; ?>
                 <?php if (isset($_GET['msg']) && $_GET['msg'] === 'status_updated'): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
                         Estado de usuario actualizado correctamente.
@@ -253,12 +276,199 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
         </div>
 
         <div class="user-view-tab-content" id="tab-notes" style="display:<?php echo $activeTab === 'notes' ? 'block' : 'none'; ?>">
-            <div class="empty-state">
-                <div class="icon"><i class="bi bi-pin-angle"></i></div>
-                <p class="mb-0">No hay notas para este usuario</p>
+            <?php if (empty($userNotes)): ?>
+                <div class="empty-state">
+                    <div class="icon"><i class="bi bi-pin-angle"></i></div>
+                    <p class="mb-0">No hay notas para este usuario</p>
+                </div>
+            <?php else: ?>
+                <div class="d-flex flex-column gap-2">
+                    <?php foreach ($userNotes as $n): ?>
+                        <?php
+                        $noteId = (int)($n['id'] ?? 0);
+                        $noteText = (string)($n['note'] ?? '');
+                        $noteCreated = (string)($n['created'] ?? '');
+                        $noteStaff = trim((string)($n['staff_name'] ?? ''));
+                        $noteStaff = $noteStaff !== '' ? $noteStaff : '—';
+                        ?>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start" style="gap:10px;">
+                                    <div class="text-muted small">
+                                        <i class="bi bi-person"></i>
+                                        <?php echo $noteCreated ? date('d/m/y H:i:s', strtotime($noteCreated)) : '—'; ?>
+                                    </div>
+                                    <div class="d-flex align-items-center" style="gap:10px;">
+                                        <div class="small" style="white-space:nowrap;">
+                                            <?php echo html($noteStaff); ?>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalEditUserNote" data-note-id="<?php echo $noteId; ?>" data-note-text="<?php echo html($noteText); ?>"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUserNote" data-note-id="<?php echo $noteId; ?>"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                </div>
+                                <div class="mt-2" style="white-space:pre-wrap;">
+                                    <?php echo html($noteText); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalAddUserNote" style="text-decoration:none;">
+                        <i class="bi bi-plus-lg"></i>
+                        Haga clic para crear una nueva nota
+                    </a>
+                </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalAddUserNote" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-pin-angle me-2"></i>Nueva nota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>&t=notes">
+                    <div class="modal-body">
+                        <input type="hidden" name="do" value="add_user_note">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <label class="form-label">Nota</label>
+                        <textarea name="note" class="form-control" rows="5" required></textarea>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditUserNote" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar nota</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>&t=notes" id="formEditUserNote">
+                    <div class="modal-body">
+                        <input type="hidden" name="do" value="update_user_note">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="note_id" id="edit_note_id" value="">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <label class="form-label">Nota</label>
+                        <textarea name="note" class="form-control" rows="5" required id="edit_note_text"></textarea>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalDeleteUserNote" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar nota?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>&t=notes" id="formDeleteUserNote">
+                    <div class="modal-body">
+                        <input type="hidden" name="do" value="delete_user_note">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="note_id" id="delete_note_id" value="">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <div>Esta acción no se puede deshacer.</div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Eliminar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        var m = document.getElementById('modalEditUserNote');
+        if (!m) return;
+        m.addEventListener('show.bs.modal', function (ev) {
+            try {
+                var btn = ev.relatedTarget;
+                if (!btn) return;
+                var id = (btn.getAttribute('data-note-id') || '').toString();
+                var text = (btn.getAttribute('data-note-text') || '').toString();
+                var idEl = document.getElementById('edit_note_id');
+                var txtEl = document.getElementById('edit_note_text');
+                if (idEl) idEl.value = id;
+                if (txtEl) txtEl.value = text;
+            } catch (e) {}
+        });
+    })();
+    </script>
+
+    <div class="modal fade" id="modalSendResetLoading" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body" style="padding:18px 16px;">
+                    <div class="d-flex align-items-center" style="gap:12px;">
+                        <div class="spinner-border" role="status" aria-hidden="true"></div>
+                        <div>
+                            <div style="font-weight:700;">Enviando correo...</div>
+                            <div class="text-muted small">Por favor espera un momento</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        var form = document.getElementById('formSendUserReset');
+        var btn = document.getElementById('btnSendUserReset');
+        var modalEl = document.getElementById('modalSendResetLoading');
+        if (!form || !modalEl) return;
+        form.addEventListener('submit', function(){
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.setAttribute('aria-disabled', 'true');
+                }
+                if (window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            } catch (e) {}
+        });
+    })();
+    </script>
+
+    <script>
+    (function(){
+        var m = document.getElementById('modalDeleteUserNote');
+        if (!m) return;
+        m.addEventListener('show.bs.modal', function (ev) {
+            try {
+                var btn = ev.relatedTarget;
+                if (!btn) return;
+                var id = (btn.getAttribute('data-note-id') || '').toString();
+                var idEl = document.getElementById('delete_note_id');
+                if (idEl) idEl.value = id;
+            } catch (e) {}
+        });
+    })();
+    </script>
 
     <!-- Modal: confirmar eliminar usuario -->
     <div class="modal fade" id="modalDeleteUser" tabindex="-1" aria-labelledby="modalDeleteUserLabel" aria-hidden="true">

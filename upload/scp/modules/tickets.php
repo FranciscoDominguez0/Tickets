@@ -110,6 +110,17 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             if ($staff_id === 0) $staff_id = null;
             $topic_id = isset($_POST['topic_id']) && is_numeric($_POST['topic_id']) ? (int) $_POST['topic_id'] : 0;
 
+            $open_hasTopics = false;
+            $open_topicsCount = 0;
+            $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+            if ($checkTopics && $checkTopics->num_rows > 0) {
+                $open_hasTopics = true;
+                $rc = $mysqli->query('SELECT COUNT(*) AS c FROM help_topics WHERE is_active = 1');
+                if ($rc && ($rr = $rc->fetch_assoc())) {
+                    $open_topicsCount = (int)($rr['c'] ?? 0);
+                }
+            }
+
             // Si se seleccionó un tema, el departamento se toma del tema (si es válido)
             if ($topic_id > 0) {
                 $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE id = ? AND is_active = 1 LIMIT 1');
@@ -123,6 +134,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                         }
                     }
                 }
+            }
+
+            // Si no se determinó dept, usar General (fallback) para evitar errores en el alta.
+            if ($dept_id <= 0 && $generalDeptId > 0) {
+                $dept_id = $generalDeptId;
             }
 
             // Asignación automática por departamento (si no se eligió agente)
@@ -164,7 +180,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
-            if ($dept_id <= 0) $open_errors[] = 'Seleccione un departamento.';
+            if ($open_hasTopics && $open_topicsCount > 0 && $topic_id <= 0) $open_errors[] = 'Seleccione un tema.';
+            if ($dept_id <= 0) $open_errors[] = 'No se pudo determinar el departamento del ticket.';
 
             $maxOpenTicketsSetting = (int)getAppSetting('tickets.max_open_tickets', '0');
             if ($maxOpenTicketsSetting > 0 && $user_id > 0) {

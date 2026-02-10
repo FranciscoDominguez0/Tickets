@@ -30,6 +30,7 @@ $open_topics = $open_topics ?? [];
         <input type="hidden" name="do" value="open">
         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
         <input type="hidden" name="user_id" value="<?php echo $selected_uid ? (int)$selected_uid : ''; ?>">
+        <input type="hidden" name="dept_id" id="open_dept_id" value="<?php echo (int)$selected_dept_id; ?>">
 
         <!-- Usuarios y colaboradores -->
         <div class="ticket-open-section">
@@ -66,15 +67,6 @@ $open_topics = $open_topics ?? [];
                         <option value="web">Web</option>
                         <option value="phone">Teléfono</option>
                         <option value="email">Email</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Departamento: <span class="required">*</span></label>
-                    <select name="dept_id" class="form-select" id="open_dept_id" required>
-                        <option value="" <?php echo $selected_dept_id <= 0 ? 'selected' : ''; ?>>— Seleccionar departamento —</option>
-                        <?php foreach ($open_departments as $d): ?>
-                            <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === $selected_dept_id ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -135,6 +127,18 @@ $open_topics = $open_topics ?? [];
     var topicSel = document.getElementById('open_topic_id');
     if (!deptSel || !staffSel) return;
 
+    var syncDeptFromTopic = function () {
+      if (!topicSel) return;
+      var opt = topicSel.options[topicSel.selectedIndex];
+      if (!opt) return;
+      var tdept = (opt.getAttribute('data-dept-id') || '').toString();
+      if (tdept !== '' && tdept !== '0') {
+        deptSel.value = tdept;
+      } else {
+        deptSel.value = '';
+      }
+    };
+
     var applyStaffFilter = function () {
       var deptId = (deptSel.value || '').toString();
       var hasDept = deptId !== '' && !isNaN(parseInt(deptId, 10));
@@ -166,10 +170,14 @@ $open_topics = $open_topics ?? [];
         if (tdept !== '' && tdept !== '0') {
           deptSel.value = tdept;
           applyStaffFilter();
+        } else {
+          deptSel.value = '';
+          applyStaffFilter();
         }
       });
     }
 
+    syncDeptFromTopic();
     applyStaffFilter();
   })();
 </script>
@@ -218,5 +226,7 @@ $open_topics = $open_topics ?? [];
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
+  </div>
+</div>
   </div>
 </div>
