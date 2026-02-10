@@ -321,6 +321,18 @@ body {
     margin-left: 280px;
 }
 
+.scp-footer-brand {
+    margin-left: 280px;
+    width: calc(100% - 280px) !important;
+}
+
+@media (max-width: 768px) {
+    .scp-footer-brand {
+        margin-left: 0;
+        width: 100% !important;
+    }
+}
+
 .container-main {
     max-width: 1200px;
     margin: 0 auto;

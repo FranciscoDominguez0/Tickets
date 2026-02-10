@@ -264,7 +264,7 @@ if (!isset($collapseSettingsMenu)) {
         </div>
     <?php endif; ?>
 
-    <div class="text-muted" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
+    <div class="text-muted scp-footer-brand" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
         &copy; VigitecPanama
     </div>
 
