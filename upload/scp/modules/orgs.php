@@ -160,6 +160,9 @@ if (!empty($_GET['org'])) {
     $stmt->bind_param('s', $orgName);
     $stmt->execute();
     $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $activeTab = $_GET['t'] ?? 'users';
+    if ($activeTab !== 'users' && $activeTab !== 'tickets') $activeTab = 'users';
     ?>
     <div class="org-detail-container">
         <?php if ($action_msg): ?>
@@ -266,13 +269,13 @@ if (!empty($_GET['org'])) {
             </div>
         </div>
 
-        <div class="user-view-tabs">
-            <a href="#org-users" class="tab active" data-bs-toggle="tab" data-bs-target="#org-users"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="#org-tickets" class="tab" data-bs-toggle="tab" data-bs-target="#org-tickets"><i class="bi bi-ticket"></i> Tickets</a>
+        <div class="user-view-tabs" id="org-tabs">
+            <a href="orgs.php?org=<?php echo urlencode($orgName); ?>&t=users" class="tab <?php echo $activeTab === 'users' ? 'active' : ''; ?>"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="orgs.php?org=<?php echo urlencode($orgName); ?>&t=tickets" class="tab <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>"><i class="bi bi-ticket"></i> Tickets</a>
         </div>
         <div class="user-view-card">
             <div class="tab-content">
-                <div class="tab-pane fade show active user-view-tab-content" id="org-users">
+                <div class="tab-pane fade <?php echo $activeTab === 'users' ? 'show active' : ''; ?> user-view-tab-content" id="org-users">
                     <?php if (empty($orgUsers)): ?>
                         <div class="empty-state">
                             <i class="bi bi-people icon"></i>
@@ -305,7 +308,7 @@ if (!empty($_GET['org'])) {
                         </div>
                     <?php endif; ?>
                 </div>
-                <div class="tab-pane fade user-view-tab-content" id="org-tickets">
+                <div class="tab-pane fade <?php echo $activeTab === 'tickets' ? 'show active' : ''; ?> user-view-tab-content" id="org-tickets">
                     <?php if (empty($tickets)): ?>
                         <div class="empty-state">
                             <i class="bi bi-ticket icon"></i>

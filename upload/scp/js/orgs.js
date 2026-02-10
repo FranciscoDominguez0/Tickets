@@ -12,6 +12,7 @@
         initDeleteOrgModal();
         initFormValidation();
         initSearchClear();
+        initOrgDetailTabs();
     });
 
     /**
@@ -92,6 +93,99 @@
                 window.location.href = 'orgs.php';
             });
         }
+    }
+
+    /**
+     * Tabs en detalle de organización (Usuarios / Tickets)
+     * Fallback para instalaciones donde el markup no activa correctamente los tabs de Bootstrap.
+     */
+    function initOrgDetailTabs() {
+        const tabsWrap = document.querySelector('.org-detail-container .user-view-tabs');
+        if (!tabsWrap) return;
+
+        const links = tabsWrap.querySelectorAll('a.tab');
+        const panesWrap = document.querySelector('.org-detail-container .user-view-card .tab-content');
+        if (!links.length || !panesWrap) return;
+
+        function stabilizeScroll(beforeTop, cb) {
+            try {
+                cb();
+                window.requestAnimationFrame(function () {
+                    try {
+                        if (typeof beforeTop === 'number' && isFinite(beforeTop)) {
+                            window.scrollTo(0, beforeTop);
+                        }
+                    } catch (e2) {}
+                });
+            } catch (e) {
+                try { cb(); } catch (e3) {}
+            }
+        }
+
+        function getTabsTop() {
+            try {
+                const r = tabsWrap.getBoundingClientRect();
+                return Math.max(0, Math.round((window.scrollY || window.pageYOffset || 0) + r.top));
+            } catch (e) {
+                return (window.scrollY || window.pageYOffset || 0);
+            }
+        }
+
+        function activate(tabKey) {
+            const targetSel = tabKey === 'tickets' ? '#org-tickets' : '#org-users';
+
+            const beforeTop = getTabsTop();
+            stabilizeScroll(beforeTop, function () {
+                links.forEach(function (a) {
+                    try {
+                        const href = (a.getAttribute('href') || '').toString();
+                        const u = new URL(href, window.location.origin);
+                        const t = (u.searchParams.get('t') || 'users').toString();
+                        a.classList.toggle('active', t === tabKey);
+                    } catch (e) {
+                        a.classList.toggle('active', tabKey === 'users');
+                    }
+                });
+
+                panesWrap.querySelectorAll('.tab-pane').forEach(function (p) {
+                    const isTarget = ('#' + p.id) === targetSel;
+                    p.classList.toggle('show', isTarget);
+                    p.classList.toggle('active', isTarget);
+                });
+            });
+        }
+
+        function getTabFromUrl(href) {
+            try {
+                const u = new URL(href, window.location.origin);
+                const t = (u.searchParams.get('t') || 'users').toString();
+                return (t === 'tickets') ? 'tickets' : 'users';
+            } catch (e) {
+                return 'users';
+            }
+        }
+
+        // Activar según URL actual (por si se entra directo con ?t=tickets)
+        activate(getTabFromUrl(window.location.href));
+
+        links.forEach(function (a) {
+            a.addEventListener('click', function (e) {
+                const href = (a.getAttribute('href') || '').toString();
+                if (!href) return;
+                const tabKey = getTabFromUrl(href);
+                e.preventDefault();
+                activate(tabKey);
+                try {
+                    const u = new URL(href, window.location.origin);
+                    u.hash = '';
+                    window.history.pushState({ t: tabKey }, '', u.toString());
+                } catch (e2) {}
+            });
+        });
+
+        window.addEventListener('popstate', function () {
+            activate(getTabFromUrl(window.location.href));
+        });
     }
 
     /**
