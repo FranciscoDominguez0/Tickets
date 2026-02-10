@@ -131,15 +131,12 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                     <div class="modal-header"><h5 class="modal-title">Cambiar Propietario</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
                         <label class="form-label">Nuevo propietario (usuario)</label>
-                        <select name="user_id" class="form-select" required>
-                            <?php
-                            $users = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
-                            while ($u = $users->fetch_assoc()): ?>
-                                <option value="<?php echo (int)$u['id']; ?>" <?php echo (int)$u['id'] === (int)$t['user_id'] ? 'selected' : ''; ?>><?php echo html(trim($u['firstname'].' '.$u['lastname']).' ('.$u['email'].')'); ?></option>
-                            <?php endwhile; ?>
-                        </select>
+                        <input type="hidden" name="user_id" id="owner-user-id" value="">
+                        <input type="text" class="form-control" id="owner-user-search" autocomplete="off" placeholder="Buscar por nombre o correo…" value="">
+                        <div id="owner-user-results" class="list-group mt-2" style="max-height: 240px; overflow:auto; display:none;"></div>
+                        <div class="form-text" id="owner-user-selected" style="display:none;"></div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Cambiar</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary" id="owner-user-submit" disabled>Cambiar</button></div>
                 </form>
             </div>
         </div>
@@ -785,5 +782,88 @@ document.addEventListener('DOMContentLoaded', function() {
         input.value = '';
         list.innerHTML = '';
     });
+
+    var ownerSearch = document.getElementById('owner-user-search');
+    var ownerResults = document.getElementById('owner-user-results');
+    var ownerId = document.getElementById('owner-user-id');
+    var ownerSelected = document.getElementById('owner-user-selected');
+    var ownerSubmit = document.getElementById('owner-user-submit');
+    if (ownerSearch && ownerResults && ownerId && ownerSelected && ownerSubmit) {
+        var ownerTimer = null;
+        var lastOwnerQuery = '';
+
+        function hideOwnerResults() {
+            ownerResults.style.display = 'none';
+            ownerResults.innerHTML = '';
+        }
+
+        function setOwnerSelected(id, label) {
+            ownerId.value = String(id || '');
+            ownerSelected.textContent = label || '';
+            ownerSelected.style.display = label ? '' : 'none';
+            ownerSubmit.disabled = !(id && Number(id) > 0);
+            hideOwnerResults();
+        }
+
+        ownerSearch.addEventListener('input', function () {
+            var q = String(ownerSearch.value || '').trim();
+            setOwnerSelected('', '');
+            if (q.length < 2) {
+                hideOwnerResults();
+                return;
+            }
+            if (ownerTimer) window.clearTimeout(ownerTimer);
+            ownerTimer = window.setTimeout(function () {
+                if (q === lastOwnerQuery) return;
+                lastOwnerQuery = q;
+                fetch('tickets.php?action=user_search&q=' + encodeURIComponent(q), {
+                    credentials: 'same-origin'
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    ownerResults.innerHTML = '';
+                    if (!data || !data.ok || !data.items || !data.items.length) {
+                        hideOwnerResults();
+                        return;
+                    }
+                    data.items.forEach(function (u) {
+                        var a = document.createElement('a');
+                        a.href = '#';
+                        a.className = 'list-group-item list-group-item-action';
+                        var nm = String(u.name || '').trim();
+                        var em = String(u.email || '').trim();
+                        a.textContent = (nm ? nm : 'Usuario') + (em ? (' (' + em + ')') : '');
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            setOwnerSelected(u.id, a.textContent);
+                        });
+                        ownerResults.appendChild(a);
+                    });
+                    ownerResults.style.display = '';
+                })
+                .catch(function () {
+                    hideOwnerResults();
+                });
+            }, 250);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!ownerResults.contains(e.target) && e.target !== ownerSearch) {
+                hideOwnerResults();
+            }
+        });
+
+        var modalOwner = document.getElementById('modalOwner');
+        if (modalOwner) {
+            modalOwner.addEventListener('shown.bs.modal', function () {
+                ownerSearch.focus();
+            });
+            modalOwner.addEventListener('hidden.bs.modal', function () {
+                ownerSearch.value = '';
+                setOwnerSelected('', '');
+                lastOwnerQuery = '';
+            });
+        }
+    }
 });
 </script>

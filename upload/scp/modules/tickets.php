@@ -13,6 +13,54 @@ if ($rgd && ($row = $rgd->fetch_assoc())) {
     $generalDeptId = (int) ($row['id'] ?? 0);
 }
 
+// AJAX: búsqueda de usuarios (para cambiar propietario sin listar todos)
+if (isset($_GET['action']) && $_GET['action'] === 'user_search') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!isset($_SESSION['staff_id'])) {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+    if (!roleHasPermission('ticket.edit')) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Forbidden']);
+        exit;
+    }
+
+    $q = trim((string)($_GET['q'] ?? ''));
+    if ($q === '' || mb_strlen($q) < 2) {
+        echo json_encode(['ok' => true, 'items' => []]);
+        exit;
+    }
+
+    $like = '%' . $q . '%';
+    $items = [];
+    $stmtU = $mysqli->prepare(
+        "SELECT id, firstname, lastname, email\n"
+        . "FROM users\n"
+        . "WHERE (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR CONCAT(firstname, ' ', lastname) LIKE ?)\n"
+        . "ORDER BY firstname, lastname\n"
+        . "LIMIT 20"
+    );
+    if ($stmtU) {
+        $stmtU->bind_param('ssss', $like, $like, $like, $like);
+        if ($stmtU->execute()) {
+            $res = $stmtU->get_result();
+            while ($res && ($u = $res->fetch_assoc())) {
+                $items[] = [
+                    'id' => (int)($u['id'] ?? 0),
+                    'name' => trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? '')),
+                    'email' => (string)($u['email'] ?? ''),
+                ];
+            }
+        }
+    }
+
+    echo json_encode(['ok' => true, 'items' => $items]);
+    exit;
+}
+
 // Abrir nuevo ticket (tickets.php?a=open&uid=X)
 if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
     $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
