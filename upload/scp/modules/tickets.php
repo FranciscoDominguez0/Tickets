@@ -442,15 +442,31 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     }
 
     // Cargar ticket con usuario, estado, prioridad, departamento, asignado
+    $hasTopicCol = false;
+    $hasTopicsTable = false;
+    $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+    if ($c && $c->num_rows > 0) $hasTopicCol = true;
+    $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+    if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+
+    $topicSelect = $hasTopicCol && $hasTopicsTable
+        ? ", ht.name AS topic_name"
+        : "";
+    $topicJoin = $hasTopicCol && $hasTopicsTable
+        ? " LEFT JOIN help_topics ht ON ht.id = t.topic_id"
+        : "";
+
     $stmt = $mysqli->prepare(
         "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
          s.firstname AS staff_first, s.lastname AS staff_last, s.email AS staff_email,
          d.name AS dept_name, ts.name AS status_name, ts.color AS status_color,
-         p.name AS priority_name, p.color AS priority_color
-         FROM tickets t
+         p.name AS priority_name, p.color AS priority_color"
+         . $topicSelect .
+        " FROM tickets t
          JOIN users u ON t.user_id = u.id
-         LEFT JOIN staff s ON t.staff_id = s.id
-         JOIN departments d ON t.dept_id = d.id
+         LEFT JOIN staff s ON t.staff_id = s.id"
+         . $topicJoin .
+        " JOIN departments d ON t.dept_id = d.id
          JOIN ticket_status ts ON t.status_id = ts.id
          JOIN priorities p ON t.priority_id = p.id
          WHERE t.id = ?"

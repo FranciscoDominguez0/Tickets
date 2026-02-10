@@ -318,12 +318,18 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                 </div>
             </div>
             <div class="field">
-                <label>Email</label>
-                <div class="value"><?php echo html($t['user_email']); ?></div>
-            </div>
-            <div class="field">
                 <label>Fuente</label>
                 <div class="value">Web</div>
+            </div>
+            <div class="field">
+                <label>Tema</label>
+                <div class="value">
+                    <?php
+                    $topicName = trim((string)($t['topic_name'] ?? ''));
+                    $topicLabel = $topicName !== '' ? $topicName : 'General';
+                    ?>
+                    <?php echo html($topicLabel); ?>
+                </div>
             </div>
         </div>
         <div>
@@ -411,9 +417,6 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
             window.addEventListener('pageshow', function (ev) {
               if (ev && ev.persisted) {
                 cleanupModals();
-                try {
-                  window.location.replace('tickets.php');
-                } catch (e3) {}
               }
             });
           })();
