@@ -100,6 +100,44 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             color: #fff;
             text-decoration: none;
         }
+        .topbar .profile-brand .brand-logo-wrap {
+            height: 36px;
+            padding: 6px 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+        }
+        .topbar .profile-brand .brand-logo {
+            height: 22px;
+            width: auto;
+            max-width: 160px;
+            object-fit: contain;
+            display: block;
+        }
+        .topbar .user-menu-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 999px;
+            font-weight: 800;
+        }
+        .topbar .user-menu-btn .uavatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
         .topbar .profile-brand .avatar {
             width: 36px;
             height: 36px;
@@ -221,6 +259,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 <body>
     <?php
         $navUserName = trim((string)($user['name'] ?? ''));
+        $companyName = trim((string)getAppSetting('company.name', ''));
+        $companyLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
         $navInitials = '';
         $parts = preg_split('/\s+/', trim($navUserName));
         if (!empty($parts[0])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[0], 0, 1) : substr($parts[0], 0, 1));
@@ -230,14 +270,25 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     ?>
     <nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
         <div class="container-fluid">
-            <a class="navbar-brand profile-brand" href="profile.php">
-                <span class="avatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
-                <span class="name"><?php echo html($navUserName); ?></span>
+            <a class="navbar-brand profile-brand" href="tickets.php">
+                <span class="brand-logo-wrap" aria-hidden="true">
+                    <img class="brand-logo" src="<?php echo html($companyLogoUrl); ?>" alt="<?php echo html($companyName !== '' ? $companyName : 'Logo'); ?>">
+                </span>
             </a>
-            <div>
-                <a href="open.php" class="btn btn-outline-light btn-sm">Crear Ticket</a>
-                <a href="profile.php" class="btn btn-outline-light btn-sm">Mi Perfil</a>
-                <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
+                        <span class="d-none d-sm-inline"><?php echo html($navUserName); ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="tickets.php"><i class="bi bi-inboxes"></i> Mis Tickets</a></li>
+                        <li><a class="dropdown-item" href="open.php"><i class="bi bi-plus-circle"></i> Crear Ticket</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i> Mi perfil</a></li>
+                        <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -341,5 +392,6 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             Derechos de autor &copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?> - Sistema de Tickets - Todos los derechos reservados.
         </p>
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
