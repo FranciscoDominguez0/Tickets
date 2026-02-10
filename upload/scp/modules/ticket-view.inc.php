@@ -174,7 +174,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-header"><h5 class="modal-title">Unir Tiquetes</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
-                        <p class="text-muted small">Este ticket se cerrará y quedará vinculado al ticket destino (no se copian mensajes ni se modifica el ticket destino).</p>
+                        <p class="text-muted small">Este ticket se cerrará y sus mensajes se copiarán al ticket destino (el destino mantiene su número y recibe una copia de los mensajes).</p>
                         <label class="form-label">Ticket destino (ID o número)</label>
                         <input type="text" name="target_ticket_id" class="form-control" placeholder="Ej: 5 o TKT-20250126-0001" required>
                     </div>

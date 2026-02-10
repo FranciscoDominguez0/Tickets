@@ -832,12 +832,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $target_thread_id = (int)$mysqli->insert_id;
                     }
 
-                    // Mover entradas del thread origen al thread destino
+                    // Copiar entradas del thread origen al thread destino (sin borrar las originales)
                     $origin_thread_id = (int)($thread_id ?? 0);
-                    if ($origin_thread_id > 0 && $target_thread_id > 0 && $origin_thread_id !== $target_thread_id) {
-                        $stmtMv = $mysqli->prepare('UPDATE thread_entries SET thread_id = ? WHERE thread_id = ?');
-                        $stmtMv->bind_param('ii', $target_thread_id, $origin_thread_id);
-                        $stmtMv->execute();
+                    if ($origin_thread_id > 0 && $target_thread_id > 0) {
+                        $stmtCopy = $mysqli->prepare('INSERT INTO thread_entries (thread_id, user_id, staff_id, body, is_internal, created) SELECT ?, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ?');
+                        $stmtCopy->bind_param('ii', $target_thread_id, $origin_thread_id);
+                        $stmtCopy->execute();
                     }
 
                     // Cerrar este ticket
@@ -872,7 +872,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 }
 
                 if ($ok) {
-                    $_SESSION['flash_msg'] = 'Ticket unido: se movieron los mensajes al ticket destino y este ticket se cerró.';
+                    $_SESSION['flash_msg'] = 'Ticket unido: se copiaron los mensajes al ticket destino y este ticket se cerró.';
                     header('Location: tickets.php');
                     exit;
                 }
