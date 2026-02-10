@@ -6,6 +6,22 @@ $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
 
+// Tabla de tickets vinculados (si no existe, se crea bajo demanda)
+$ensureTicketLinksTable = function () use ($mysqli) {
+    if (!isset($mysqli) || !$mysqli) return false;
+    $exists = @$mysqli->query("SHOW TABLES LIKE 'ticket_links'");
+    if ($exists && $exists->num_rows > 0) return true;
+    $sql = "CREATE TABLE IF NOT EXISTS ticket_links (\n"
+        . "  ticket_id INT NOT NULL,\n"
+        . "  linked_ticket_id INT NOT NULL,\n"
+        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_ticket_link (ticket_id, linked_ticket_id),\n"
+        . "  KEY idx_ticket (ticket_id),\n"
+        . "  KEY idx_linked (linked_ticket_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool)@$mysqli->query($sql);
+};
+
 // Departamento "General" (fallback). Si no existe, se usará 0 y se omite la excepción.
 $generalDeptId = 0;
 $rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
@@ -284,7 +300,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
                     $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
                     // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (status_id), i (priority_id), s (subject)
-                    $stmt->bind_param('siiiiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
+                    $stmt->bind_param('siiiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
                 } else {
                     $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
                     // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (status_id), i (priority_id), s (subject)
@@ -787,58 +803,139 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $r = $stmt->get_result()->fetch_assoc();
                     if ($r) $target_id = (int) $r['id'];
                 }
-                if ($target_id > 0 && $target_id !== $tid) {
-                    $stmt = $mysqli->prepare("SELECT id FROM threads WHERE ticket_id = ?");
-                    $stmt->bind_param('i', $target_id);
-                    $stmt->execute();
-                    $targetThread = $stmt->get_result()->fetch_assoc();
-                    if ($targetThread) {
-                        $stmt = $mysqli->prepare("SELECT id, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ? ORDER BY created ASC");
-                        $stmt->bind_param('i', $thread_id);
-                        $stmt->execute();
-                        $entries = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                        $ins = $mysqli->prepare("INSERT INTO thread_entries (thread_id, user_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, ?, ?)");
-                        foreach ($entries as $e) {
-                            $ins->bind_param('iiisis', $targetThread['id'], $e['user_id'], $e['staff_id'], $e['body'], $e['is_internal'], $e['created']);
-                            $ins->execute();
-                        }
-                        $closed = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%cerrado%' LIMIT 1");
-                        $closed_id = 5;
-                        if ($closed && $r = $closed->fetch_assoc()) $closed_id = (int)$r['id'];
-                        $stmtUp = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
-                        if ($stmtUp) {
-                            $stmtUp->bind_param('ii', $closed_id, $tid);
-                            $stmtUp->execute();
-                        }
-                        $ok = true;
-                        $msg = 'merged';
-                        header('Location: tickets.php?id=' . $target_id . '&msg=merged');
-                        exit;
+                if ($target_id <= 0) {
+                    $_SESSION['flash_error'] = 'Ticket destino no encontrado.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+                if ($target_id === $tid) {
+                    $_SESSION['flash_error'] = 'No puedes unir un ticket consigo mismo.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+
+                // Unir: mover mensajes de este ticket al ticket destino (sin alterar el número del destino)
+                $ok = false;
+                try {
+                    if (method_exists($mysqli, 'begin_transaction')) {
+                        $mysqli->begin_transaction();
                     }
+
+                    // Obtener/crear thread del ticket destino
+                    $stmtT = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ? LIMIT 1');
+                    $stmtT->bind_param('i', $target_id);
+                    $stmtT->execute();
+                    $targetThreadRow = $stmtT->get_result()->fetch_assoc();
+                    $target_thread_id = (int)($targetThreadRow['id'] ?? 0);
+                    if ($target_thread_id <= 0) {
+                        $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($target_id, NOW())");
+                        $target_thread_id = (int)$mysqli->insert_id;
+                    }
+
+                    // Mover entradas del thread origen al thread destino
+                    $origin_thread_id = (int)($thread_id ?? 0);
+                    if ($origin_thread_id > 0 && $target_thread_id > 0 && $origin_thread_id !== $target_thread_id) {
+                        $stmtMv = $mysqli->prepare('UPDATE thread_entries SET thread_id = ? WHERE thread_id = ?');
+                        $stmtMv->bind_param('ii', $target_thread_id, $origin_thread_id);
+                        $stmtMv->execute();
+                    }
+
+                    // Cerrar este ticket
+                    $closed = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%cerrado%' LIMIT 1");
+                    $closed_id = 5;
+                    if ($closed && $r = $closed->fetch_assoc()) $closed_id = (int)$r['id'];
+                    $stmtUp = $mysqli->prepare('UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?');
+                    $stmtUp->bind_param('ii', $closed_id, $tid);
+                    $stmtUp->execute();
+
+                    // Crear vínculo entre origen y destino
+                    if (!$ensureTicketLinksTable()) {
+                        throw new Exception('ticket_links');
+                    }
+                    $stmtL = $mysqli->prepare('INSERT IGNORE INTO ticket_links (ticket_id, linked_ticket_id) VALUES (?, ?), (?, ?)');
+                    if ($stmtL) {
+                        $stmtL->bind_param('iiii', $tid, $target_id, $target_id, $tid);
+                        $stmtL->execute();
+                    }
+
+                    if (method_exists($mysqli, 'commit')) {
+                        $mysqli->commit();
+                    }
+                    $ok = true;
+                } catch (Throwable $e) {
+                    if (method_exists($mysqli, 'rollback')) {
+                        $mysqli->rollback();
+                    }
+                    $_SESSION['flash_error'] = 'No se pudo unir el ticket.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+
+                if ($ok) {
+                    $_SESSION['flash_msg'] = 'Ticket unido: se movieron los mensajes al ticket destino y este ticket se cerró.';
+                    header('Location: tickets.php');
+                    exit;
                 }
             } elseif ($action === 'link' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['linked_ticket_id']) && is_numeric($_POST['linked_ticket_id'])) {
                 requireRolePermission('ticket.link', 'tickets.php?id=' . $tid);
                 $linked_id = (int) $_POST['linked_ticket_id'];
                 if ($linked_id !== $tid && $linked_id > 0) {
-                    $tbl = 'ticket_links';
-                    $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_links'");
-                    if ($exists && $exists->num_rows > 0) {
-                        $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_links (ticket_id, linked_ticket_id) VALUES (?, ?), (?, ?)");
-                        $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
-                        $ok = $stmt->execute();
-                        $msg = 'linked';
+                    if (!$ensureTicketLinksTable()) {
+                        $_SESSION['flash_error'] = 'No se pudo habilitar la tabla de tickets vinculados.';
+                        header('Location: tickets.php?id=' . $tid);
+                        exit;
+                    }
+                    $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_links (ticket_id, linked_ticket_id) VALUES (?, ?), (?, ?)");
+                    $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
+                    $ok = $stmt->execute();
+                    $msg = 'linked';
+                }
+            } elseif ($action === 'link' && $_SERVER['REQUEST_METHOD'] === 'POST' && !empty(trim((string)($_POST['linked_ticket_id'] ?? '')))) {
+                requireRolePermission('ticket.link', 'tickets.php?id=' . $tid);
+                $input = trim((string)$_POST['linked_ticket_id']);
+                $linked_id = is_numeric($input) ? (int)$input : 0;
+                if ($linked_id === 0) {
+                    $stmtFind = $mysqli->prepare('SELECT id FROM tickets WHERE ticket_number = ? LIMIT 1');
+                    if ($stmtFind) {
+                        $stmtFind->bind_param('s', $input);
+                        if ($stmtFind->execute()) {
+                            $r = $stmtFind->get_result()->fetch_assoc();
+                            if ($r) $linked_id = (int)($r['id'] ?? 0);
+                        }
                     }
                 }
+
+                if ($linked_id <= 0) {
+                    $_SESSION['flash_error'] = 'Ticket a vincular no encontrado.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+                if ($linked_id === $tid) {
+                    $_SESSION['flash_error'] = 'No puedes vincular un ticket consigo mismo.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+                if (!$ensureTicketLinksTable()) {
+                    $_SESSION['flash_error'] = 'No se pudo habilitar la tabla de tickets vinculados.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
+                }
+                $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_links (ticket_id, linked_ticket_id) VALUES (?, ?), (?, ?)");
+                $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
+                $ok = $stmt->execute();
+                $msg = 'linked';
             } elseif ($action === 'unlink' && isset($_GET['linked_id']) && is_numeric($_GET['linked_id'])) {
                 requireRolePermission('ticket.link', 'tickets.php?id=' . $tid);
                 $linked_id = (int) $_GET['linked_id'];
-                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_links'");
-                if ($exists && $exists->num_rows > 0) {
-                    $stmt = $mysqli->prepare("DELETE FROM ticket_links WHERE (ticket_id = ? AND linked_ticket_id = ?) OR (ticket_id = ? AND linked_ticket_id = ?)");
-                    $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
-                    $ok = $stmt->execute();
-                    $msg = 'unlinked';
+                if (!$ensureTicketLinksTable()) {
+                    $_SESSION['flash_error'] = 'No se pudo habilitar la tabla de tickets vinculados.';
+                    header('Location: tickets.php?id=' . $tid);
+                    exit;
                 }
+                $stmt = $mysqli->prepare("DELETE FROM ticket_links WHERE (ticket_id = ? AND linked_ticket_id = ?) OR (ticket_id = ? AND linked_ticket_id = ?)");
+                $stmt->bind_param('iiii', $tid, $linked_id, $linked_id, $tid);
+                $ok = $stmt->execute();
+                $msg = 'unlinked';
             } elseif ($action === 'collab_add' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_POST['user_id'];

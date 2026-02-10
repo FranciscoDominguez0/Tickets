@@ -174,7 +174,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-header"><h5 class="modal-title">Unir Tiquetes</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body">
-                        <p class="text-muted small">Este ticket se unirá al ticket destino (todas las entradas se copiarán y este ticket se cerrará).</p>
+                        <p class="text-muted small">Este ticket se cerrará y quedará vinculado al ticket destino (no se copian mensajes ni se modifica el ticket destino).</p>
                         <label class="form-label">Ticket destino (ID o número)</label>
                         <input type="text" name="target_ticket_id" class="form-control" placeholder="Ej: 5 o TKT-20250126-0001" required>
                     </div>
@@ -205,7 +205,7 @@ $printLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                         <input type="hidden" name="action" value="link">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                         <div class="input-group">
-                            <input type="number" name="linked_ticket_id" class="form-control" placeholder="ID del ticket a vincular" min="1" required>
+                            <input type="text" name="linked_ticket_id" class="form-control" placeholder="ID o número del ticket a vincular" required>
                             <button type="submit" class="btn btn-primary">Vincular</button>
                         </div>
                     </form>
