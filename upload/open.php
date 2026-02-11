@@ -500,7 +500,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         body {
             background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-top: 56px;
+            padding-top: 62px;
         }
 
         body::before {
@@ -519,6 +519,14 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             background: linear-gradient(135deg, #0b1220, #111827);
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
+        .topbar.navbar {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .topbar .container-fluid {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
         .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
         .topbar .profile-brand {
             display: inline-flex;
@@ -528,8 +536,8 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             text-decoration: none;
         }
         .topbar .profile-brand .brand-logo-wrap {
-            height: 36px;
-            padding: 6px 10px;
+            height: 46px;
+            padding: 8px 12px;
             border-radius: 14px;
             background: rgba(255,255,255,0.92);
             border: 1px solid rgba(15, 23, 42, 0.12);
@@ -539,9 +547,9 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
         }
         .topbar .profile-brand .brand-logo {
-            height: 22px;
+            height: 30px;
             width: auto;
-            max-width: 160px;
+            max-width: 220px;
             object-fit: contain;
             display: block;
         }
@@ -921,32 +929,61 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         })();
 
         (function () {
-            var overlay = document.getElementById('creativePop');
-            var msgEl = document.getElementById('creativePopMsg');
-            var titleEl = document.getElementById('creativePopTitle');
+            var bound = false;
+
+            function getEls() {
+                var overlay = document.getElementById('creativePop');
+                var msgEl = document.getElementById('creativePopMsg');
+                var titleEl = document.getElementById('creativePopTitle');
+                return { overlay: overlay, msgEl: msgEl, titleEl: titleEl };
+            }
+
+            function ensureBound() {
+                if (bound) return;
+                var els = getEls();
+                if (!els.overlay) return;
+                bound = true;
+                els.overlay.addEventListener('click', function (e) {
+                    if (e.target === els.overlay) window.__hideCreativePop && window.__hideCreativePop();
+                });
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') window.__hideCreativePop && window.__hideCreativePop();
+                });
+            }
+
             window.__showCreativePop = function (msg, title) {
-                if (!overlay || !msgEl) return;
-                msgEl.textContent = msg || '';
-                if (titleEl) titleEl.textContent = title || 'Atención';
-                overlay.style.display = 'flex';
-                overlay.setAttribute('aria-hidden', 'false');
+                var els = getEls();
+                if (!els.overlay || !els.msgEl) {
+                    alert(msg || 'Atención');
+                    return;
+                }
+                els.msgEl.textContent = msg || '';
+                if (els.titleEl) els.titleEl.textContent = title || 'Atención';
+                els.overlay.style.display = 'flex';
+                els.overlay.setAttribute('aria-hidden', 'false');
+                ensureBound();
             };
             window.__hideCreativePop = function () {
-                if (!overlay) return;
-                overlay.style.display = 'none';
-                overlay.setAttribute('aria-hidden', 'true');
+                var els = getEls();
+                if (!els.overlay) return;
+                els.overlay.style.display = 'none';
+                els.overlay.setAttribute('aria-hidden', 'true');
             };
-            overlay && overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) window.__hideCreativePop();
-            });
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape') window.__hideCreativePop();
-            });
 
             var form = document.querySelector('form[enctype="multipart/form-data"]');
             if (!form) return;
             var fileInput = document.getElementById('attachments');
             var editor = document.getElementById('body');
+
+            var focusEditor = function () {
+                try {
+                    if (typeof jQuery !== 'undefined' && jQuery(editor).summernote) {
+                        jQuery(editor).summernote('focus');
+                        return;
+                    }
+                } catch (e) {}
+                try { editor && editor.focus(); } catch (e2) {}
+            };
 
             var getPlainTextFromHtml = function (html) {
                 var tmp = document.createElement('div');
@@ -954,10 +991,10 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 return (tmp.textContent || tmp.innerText || '').replace(/\u00A0/g, ' ').trim();
             };
 
-            form.addEventListener('submit', function (ev) {
+            var validateAttachmentsNeedText = function (ev) {
                 try {
                     var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-                    if (!hasFiles) return;
+                    if (!hasFiles) return true;
 
                     var html = '';
                     try {
@@ -971,11 +1008,27 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     var plain = getPlainTextFromHtml(html);
                     var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
                     if (!hasMedia && plain === '') {
-                        ev.preventDefault();
-                        window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (window.__showCreativePop) {
+                            window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
+                            try {
+                                var o = document.getElementById('creativePop');
+                                if (!o || o.style.display !== 'flex') {
+                                    alert('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.');
+                                }
+                            } catch (e3) {}
+                        } else {
+                            alert('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.');
+                        }
+                        setTimeout(focusEditor, 50);
                         return false;
                     }
                 } catch (e2) {}
+                return true;
+            };
+
+            form.addEventListener('submit', function (ev) {
+                validateAttachmentsNeedText(ev);
             }, true);
         })();
 
@@ -1109,23 +1162,6 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     myVideo: myVideoBtn
                 }
             });
-
-            // Popup preventivo: adjuntos sin descripción
-            var form = document.querySelector('form[enctype="multipart/form-data"]');
-            var fileInput = document.getElementById('attachments');
-            form && form.addEventListener('submit', function (ev) {
-                try {
-                    var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-                    if (!hasFiles) return;
-                    var isEmpty = false;
-                    try { isEmpty = jQuery('#body').summernote('isEmpty'); } catch (e) {}
-                    if (isEmpty) {
-                        ev.preventDefault();
-                        window.__showCreativePop && window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
-                        return false;
-                    }
-                } catch (e2) {}
-            });
         });
     </script>
 
@@ -1154,7 +1190,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             <div class="creative-pop-body" id="creativePopMsg"></div>
             <div class="creative-pop-actions">
                 <button type="button" class="creative-pop-btn ghost" onclick="window.__hideCreativePop && window.__hideCreativePop()">Entendido</button>
-                <button type="button" class="creative-pop-btn primary" onclick="window.__hideCreativePop && window.__hideCreativePop()">Escribir</button>
+                <button type="button" class="creative-pop-btn primary" onclick="window.__hideCreativePop && window.__hideCreativePop(); try{ if(window.jQuery && jQuery('#body').summernote){ jQuery('#body').summernote('focus'); } else { var el=document.getElementById('body'); el && el.focus(); } }catch(e){}">Escribir</button>
             </div>
         </div>
     </div>

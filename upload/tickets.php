@@ -73,7 +73,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         body {
             background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding-top: 56px;
+            padding-top: 62px;
         }
 
         body::before {
@@ -92,6 +92,14 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             background: linear-gradient(135deg, #0b1220, #111827);
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
+        .topbar.navbar {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .topbar .container-fluid {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
         .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
         .topbar .profile-brand {
             display: inline-flex;
@@ -101,8 +109,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             text-decoration: none;
         }
         .topbar .profile-brand .brand-logo-wrap {
-            height: 36px;
-            padding: 6px 10px;
+            height: 46px;
+            padding: 8px 12px;
             border-radius: 14px;
             background: rgba(255,255,255,0.92);
             border: 1px solid rgba(15, 23, 42, 0.12);
@@ -112,9 +120,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
         }
         .topbar .profile-brand .brand-logo {
-            height: 22px;
+            height: 30px;
             width: auto;
-            max-width: 160px;
+            max-width: 220px;
             object-fit: contain;
             display: block;
         }
