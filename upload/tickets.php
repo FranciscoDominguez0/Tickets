@@ -110,21 +110,24 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
         .topbar .profile-brand .brand-logo-wrap {
             height: 46px;
-            padding: 8px 12px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(15, 23, 42, 0.12);
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+            box-shadow: none;
         }
         .topbar .profile-brand .brand-logo {
             height: 30px;
             width: auto;
-            max-width: 220px;
+            max-width: 320px;
             object-fit: contain;
             display: block;
+        }
+        @media (max-width: 420px) {
+            .topbar .profile-brand .brand-logo { max-width: 200px; }
         }
         .topbar .user-menu-btn {
             display: inline-flex;

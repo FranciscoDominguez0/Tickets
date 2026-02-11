@@ -537,21 +537,24 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         }
         .topbar .profile-brand .brand-logo-wrap {
             height: 46px;
-            padding: 8px 12px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(15, 23, 42, 0.12);
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: 0;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+            box-shadow: none;
         }
         .topbar .profile-brand .brand-logo {
             height: 30px;
             width: auto;
-            max-width: 220px;
+            max-width: 320px;
             object-fit: contain;
             display: block;
+        }
+        @media (max-width: 420px) {
+            .topbar .profile-brand .brand-logo { max-width: 200px; }
         }
         .topbar .user-menu-btn {
             display: inline-flex;
@@ -959,6 +962,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 }
                 els.msgEl.textContent = msg || '';
                 if (els.titleEl) els.titleEl.textContent = title || 'Atención';
+                try { els.overlay.style.display = 'none'; } catch (e0) {}
                 els.overlay.style.display = 'flex';
                 els.overlay.setAttribute('aria-hidden', 'false');
                 ensureBound();
@@ -1009,6 +1013,8 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
                     if (!hasMedia && plain === '') {
                         if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
                         if (window.__showCreativePop) {
                             window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
                             try {
@@ -1028,8 +1034,27 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             };
 
             form.addEventListener('submit', function (ev) {
-                validateAttachmentsNeedText(ev);
+                var ok = validateAttachmentsNeedText(ev);
+                if (!ok) {
+                    if (ev && ev.preventDefault) ev.preventDefault();
+                    if (ev && ev.stopPropagation) ev.stopPropagation();
+                    if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                    return false;
+                }
             }, true);
+
+            var submitBtn = document.getElementById('open-ticket-submit');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function (ev) {
+                    var ok = validateAttachmentsNeedText(ev);
+                    if (!ok) {
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        return false;
+                    }
+                }, true);
+            }
         })();
 
         (function(){
@@ -1166,16 +1191,20 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     </script>
 
     <style>
-        .creative-pop-overlay{position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding:18px; z-index:2000;}
-        .creative-pop{max-width:520px; width:100%; background:linear-gradient(180deg,#ffffff,#f8fafc); border:1px solid #e2e8f0; border-radius:18px; box-shadow:0 24px 80px rgba(0,0,0,.25); overflow:hidden;}
-        .creative-pop-head{display:flex; align-items:center; gap:12px; padding:16px 18px; background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#fff;}
-        .creative-pop-icon{width:38px; height:38px; border-radius:12px; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
-        .creative-pop-title{font-weight:900; margin:0; font-size:14px; letter-spacing:.02em;}
-        .creative-pop-body{padding:16px 18px; color:#0f172a; font-weight:600; line-height:1.35;}
-        .creative-pop-actions{display:flex; gap:10px; justify-content:flex-end; padding:0 18px 16px;}
-        .creative-pop-btn{border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer;}
-        .creative-pop-btn.primary{background:#2563eb; color:#fff;}
-        .creative-pop-btn.ghost{background:#e2e8f0; color:#0f172a;}
+        .creative-pop-overlay{position:fixed; inset:0; background:rgba(15,23,42,.46); display:none; align-items:center; justify-content:center; padding:18px; z-index:2000; backdrop-filter: blur(10px);}
+        .creative-pop{max-width:560px; width:100%; background:rgba(255,255,255,0.88); border:1px solid rgba(226,232,240,0.92); border-radius:22px; box-shadow:0 30px 90px rgba(15,23,42,.30); overflow:hidden; backdrop-filter: blur(10px); animation: creativePopIn .14s ease-out;}
+        .creative-pop-head{display:flex; align-items:center; gap:12px; padding:14px 16px; background:linear-gradient(135deg,#0b1220,#111827); color:#fff; border-bottom:1px solid rgba(255,255,255,0.12);}
+        .creative-pop-icon{width:40px; height:40px; border-radius:14px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+        .creative-pop-title{font-weight:1000; margin:0; font-size:15px; letter-spacing:.02em;}
+        .creative-pop-body{padding:16px 16px; color:#0f172a; font-weight:650; line-height:1.45;}
+        .creative-pop-actions{display:flex; gap:10px; justify-content:flex-end; padding:0 16px 16px;}
+        .creative-pop-btn{border:1px solid transparent; border-radius:999px; padding:10px 14px; font-weight:900; cursor:pointer;}
+        .creative-pop-btn.primary{background:#111827; color:#fff; border-color:rgba(255,255,255,0.12);}
+        .creative-pop-btn.primary:hover{background:#0b1220;}
+        .creative-pop-btn.ghost{background:#f1f5f9; color:#0f172a; border-color:#e2e8f0;}
+        .creative-pop-btn.ghost:hover{background:#e2e8f0;}
+
+        @keyframes creativePopIn{from{transform:translateY(6px) scale(.985); opacity:.65;}to{transform:translateY(0) scale(1); opacity:1;}}
     </style>
     <div class="creative-pop-overlay" id="creativePop" role="dialog" aria-modal="true" aria-hidden="true">
         <div class="creative-pop">
