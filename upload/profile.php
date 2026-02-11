@@ -196,16 +196,77 @@ if ($_POST) {
         .profile-content {
             padding: 18px;
         }
-        .content-head {
+
+        .profile-hero {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: space-between;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
-            margin-bottom: 12px;
+            padding: 16px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(226,232,240,0.95);
+            border-radius: 18px;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+            margin-bottom: 14px;
         }
-        .content-title { margin: 0; font-weight: 1000; color: #0f172a; font-size: 1.25rem; }
-        .content-sub { color: #64748b; font-weight: 700; }
+        .profile-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 240px;
+        }
+        .profile-hero-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.22);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .profile-hero-name {
+            font-weight: 1000;
+            color: #0f172a;
+            font-size: 1.15rem;
+            line-height: 1.15;
+            margin: 0;
+        }
+        .profile-hero-email {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-weight: 800;
+            font-size: 0.92rem;
+            margin-top: 2px;
+        }
+        .profile-hero-email i { opacity: .9; }
+        .profile-hero-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .profile-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(59,130,246,0.10);
+            border: 1px solid rgba(59,130,246,0.18);
+            color: #1e293b;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .profile-badge i { color: #2563eb; }
 
         .content-card {
             background: #ffffff;
@@ -282,13 +343,17 @@ if ($_POST) {
     <div class="container-main">
         <div class="profile-shell">
             <main class="panel profile-content">
-                <div class="content-head">
-                    <div>
-                        <h2 class="content-title">Información personal</h2>
-                        <div class="content-sub">Actualiza tus datos para que podamos ayudarte mejor.</div>
+                <div class="profile-hero">
+                    <div class="profile-hero-left">
+                        <div class="profile-hero-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
+                        <div>
+                            <h2 class="profile-hero-name"><?php echo html($fullName !== '' ? $fullName : 'Mi Perfil'); ?></h2>
+                            <div class="profile-hero-email"><i class="bi bi-envelope"></i> <?php echo html($userData['email'] ?? ''); ?></div>
+                        </div>
                     </div>
-                    <div>
-                        <a href="tickets.php" class="btn btn-outline-primary btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-arrow-left"></i> Volver</a>
+                    <div class="profile-hero-right">
+                        <div class="profile-badge"><i class="bi bi-shield-check"></i> Portal de Cliente</div>
+                        <a href="tickets.php" class="btn btn-outline-primary btn-sm" style="border-radius: 999px; font-weight: 900;"><i class="bi bi-arrow-left"></i> Volver</a>
                     </div>
                 </div>
 
