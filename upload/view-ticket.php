@@ -880,6 +880,26 @@ function humanSize($bytes) {
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="imageInsertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Insertar imagen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <label for="imageInsertFile" class="form-label">Seleccionar imagen</label>
+                <input type="file" class="form-control" id="imageInsertFile" accept="image/*">
+                <div class="form-text">Selecciona una imagen para insertarla en tu respuesta.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="imageInsertConfirm">Insertar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof jQuery === 'undefined' || !jQuery().summernote) return;
@@ -893,12 +913,29 @@ function humanSize($bytes) {
             videoModal = new bootstrap.Modal(videoModalEl);
         }
 
+        var imageModalEl = document.getElementById('imageInsertModal');
+        var imageFileEl = document.getElementById('imageInsertFile');
+        var imageConfirmEl = document.getElementById('imageInsertConfirm');
+        var imageModal = null;
+        var onImageSubmit = null;
+        if (imageModalEl && window.bootstrap && bootstrap.Modal) {
+            imageModal = new bootstrap.Modal(imageModalEl);
+        }
+
         function openVideoModal(cb) {
             onVideoSubmit = cb;
             if (!videoModal || !videoUrlEl) return;
             videoUrlEl.value = '';
             videoModal.show();
             setTimeout(function () { try { videoUrlEl.focus(); } catch (e) {} }, 100);
+        }
+
+        function openImageModal(cb) {
+            onImageSubmit = cb;
+            if (!imageModal || !imageFileEl) return;
+            imageFileEl.value = '';
+            imageModal.show();
+            setTimeout(function () { try { imageFileEl.focus(); } catch (e) {} }, 100);
         }
 
         if (videoConfirmEl) {
@@ -910,11 +947,28 @@ function humanSize($bytes) {
                 try { onVideoSubmit(v); } catch (e2) {}
             });
         }
+        if (imageConfirmEl) {
+            imageConfirmEl.addEventListener('click', function () {
+                if (!onImageSubmit || !imageFileEl) return;
+                var f = imageFileEl.files && imageFileEl.files[0] ? imageFileEl.files[0] : null;
+                if (!f) return;
+                try { imageModal && imageModal.hide(); } catch (e) {}
+                try { onImageSubmit(f); } catch (e2) {}
+            });
+        }
         if (videoUrlEl) {
             videoUrlEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     videoConfirmEl && videoConfirmEl.click();
+                }
+            });
+        }
+        if (imageFileEl) {
+            imageFileEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    imageConfirmEl && imageConfirmEl.click();
                 }
             });
         }
@@ -951,6 +1005,36 @@ function humanSize($bytes) {
             }).render();
         };
 
+        var myImageBtn = function () {
+            var ui = jQuery.summernote.ui;
+            return ui.button({
+                contents: '<i class="note-icon-picture"></i>',
+                tooltip: 'Insertar imagen',
+                click: function () {
+                    openImageModal(function (file) {
+                        if (!file) return;
+                        var data = new FormData();
+                        data.append('file', file);
+                        data.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
+                        fetch('editor_image_upload.php', {
+                            method: 'POST',
+                            body: data,
+                            credentials: 'same-origin'
+                        })
+                        .then(function (r) { return r.json(); })
+                        .then(function (json) {
+                            if (!json || !json.ok || !json.url) throw new Error((json && json.error) ? json.error : 'Upload failed');
+                            jQuery('#reply_body').summernote('insertImage', json.url);
+                        })
+                        .catch(function (err) {
+                            window.__showCreativePop && window.__showCreativePop('No se pudo subir la imagen. Intenta con otra o usa Adjuntar archivos.', 'Error al subir imagen');
+                            try { console.error(err); } catch (e) {}
+                        });
+                    });
+                }
+            }).render();
+        };
+
         jQuery('#reply_body').summernote({
             height: 200,
             lang: 'es-ES',
@@ -958,33 +1042,12 @@ function humanSize($bytes) {
             toolbar: [
                 ['style', ['bold', 'italic', 'underline']],
                 ['para', ['ul', 'ol']],
-                ['insert', ['link', 'picture', 'myVideo']],
+                ['insert', ['link', 'myImage', 'myVideo']],
                 ['view', ['codeview']]
             ],
             buttons: {
-                myVideo: myVideoBtn
-            },
-            callbacks: {
-                onImageUpload: function (files) {
-                    if (!files || !files.length) return;
-                    var data = new FormData();
-                    data.append('file', files[0]);
-                    data.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
-                    fetch('editor_image_upload.php', {
-                        method: 'POST',
-                        body: data,
-                        credentials: 'same-origin'
-                    })
-                    .then(function (r) { return r.json(); })
-                    .then(function (json) {
-                        if (!json || !json.ok || !json.url) throw new Error((json && json.error) ? json.error : 'Upload failed');
-                        jQuery('#reply_body').summernote('insertImage', json.url);
-                    })
-                    .catch(function (err) {
-                        window.__showCreativePop && window.__showCreativePop('No se pudo subir la imagen. Intenta con otra o usa Adjuntar archivos.', 'Error al subir imagen');
-                        try { console.error(err); } catch (e) {}
-                    });
-                }
+                myVideo: myVideoBtn,
+                myImage: myImageBtn
             }
         });
 
