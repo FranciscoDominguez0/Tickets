@@ -68,17 +68,17 @@ if ($_POST) {
                     $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
 
                     $bodyHtml = ''
-                        . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">
-                            <div style="max-width:640px; margin:0 auto;">
-                                <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">
-                                    <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>
-                                    <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>
+                        . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f7f8fc; padding:26px;">
+                            <div style="max-width:680px; margin:0 auto;">
+                                <div style="background:linear-gradient(135deg,#0b1220,#111827); color:#ffffff; border-radius:18px; padding:18px 20px; border:1px solid rgba(255,255,255,.12);">
+                                    <div style="font-size:12px; font-weight:900; letter-spacing:.08em; opacity:.92; text-transform:uppercase;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>
+                                    <div style="font-size:22px; font-weight:1000; margin-top:4px;">Restablecer contraseña</div>
                                 </div>
-                                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">
+                                <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:18px 20px; margin-top:12px; box-shadow:0 18px 60px rgba(15,23,42,.10);">
                                     <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>
-                                    <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>
+                                    <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.55;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>
                                     <p style="margin:14px 0 12px 0;">
-                                        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>
+                                        <a href="' . $safeUrl . '" style="display:inline-block; background:#111827; color:#ffffff; text-decoration:none; padding:12px 16px; border-radius:999px; font-weight:900;">Restablecer contraseña</a>
                                     </p>
                                     <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">
                                         Este enlace vence en <strong>1 hora</strong> por seguridad.
@@ -118,7 +118,7 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar contraseña - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="../publico/css/login.css">
+    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
 </head>
 <?php
 $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
