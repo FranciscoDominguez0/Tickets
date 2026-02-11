@@ -25,6 +25,13 @@ if ($_POST) {
         $hasFiles = !empty($_FILES['attachments']['name'][0]);
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
+        $hasTopicsTable = false;
+        $hasTopicCol = false;
+        $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+        if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+        if ($c && $c->num_rows > 0) $hasTopicCol = true;
+
         $defaultHelpTopic = (int)getAppSetting('tickets.default_help_topic', '0');
         if ($topic_id <= 0 && $defaultHelpTopic > 0) {
             $topic_id = $defaultHelpTopic;
@@ -86,7 +93,12 @@ if ($_POST) {
             }
         }
 
-        if (empty($subject) || empty($body)) {
+        $hasMedia = (stripos($body, '<img') !== false || stripos($body, '<iframe') !== false);
+        $isBodyEmpty = ($plain === '' && !$hasMedia);
+
+        if ($hasTopicsTable && $hasTopicCol && $defaultHelpTopic <= 0 && $topic_id <= 0) {
+            $error = 'Debes seleccionar un tema.';
+        } elseif (empty($subject) || $isBodyEmpty) {
             $error = 'Asunto y descripción son requeridos';
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
             $error = 'Debes escribir una descripción para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
@@ -786,7 +798,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 <?php if ($hasTopics): ?>
                 <div class="mb-3">
                     <label for="topic_id" class="form-label">Tema</label>
-                    <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()">
+                    <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()" required>
                         <option value="">Seleccionar tema...</option>
                         <?php foreach ($topics as $topic): ?>
                             <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>"><?php echo html($topic['name']); ?></option>
@@ -806,7 +818,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="body" name="body" rows="8" required></textarea>
+                    <textarea class="form-control" id="body" name="body" rows="8"></textarea>
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
@@ -977,6 +989,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             var form = document.querySelector('form[enctype="multipart/form-data"]');
             if (!form) return;
             var fileInput = document.getElementById('attachments');
+            var topicSelect = document.getElementById('topic_id');
             var editor = document.getElementById('body');
 
             var focusEditor = function () {
@@ -997,8 +1010,20 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
             var validateAttachmentsNeedText = function (ev) {
                 try {
+                    if (topicSelect && String(topicSelect.value || '').trim() === '') {
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        if (window.__showCreativePop) {
+                            window.__showCreativePop('Debes seleccionar un tema para poder crear el ticket.', 'Tema requerido');
+                        } else {
+                            alert('Debes seleccionar un tema para poder crear el ticket.');
+                        }
+                        try { topicSelect.focus(); } catch (e0) {}
+                        return false;
+                    }
+
                     var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-                    if (!hasFiles) return true;
 
                     var html = '';
                     try {
@@ -1016,15 +1041,25 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                         if (ev && ev.stopPropagation) ev.stopPropagation();
                         if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
                         if (window.__showCreativePop) {
-                            window.__showCreativePop('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.', 'Falta una descripción');
+                            window.__showCreativePop(hasFiles
+                                ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
+                                : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.',
+                                'Falta una descripción'
+                            );
                             try {
                                 var o = document.getElementById('creativePop');
                                 if (!o || o.style.display !== 'flex') {
-                                    alert('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.');
+                                    alert(hasFiles
+                                        ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
+                                        : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.'
+                                    );
                                 }
                             } catch (e3) {}
                         } else {
-                            alert('Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.');
+                            alert(hasFiles
+                                ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
+                                : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.'
+                            );
                         }
                         setTimeout(focusEditor, 50);
                         return false;
