@@ -505,9 +505,9 @@ function humanSize($bytes) {
         }
 
         @media (min-width: 761px) {
-            .ticket-view-entry .entry-body img { max-width: 420px !important; }
+            .ticket-view-entry .entry-body img { max-width: 340px !important; }
             .ticket-view-entry .entry-body iframe { max-width: 520px !important; }
-            .note-editor .note-editable img { max-width: 420px !important; }
+            .note-editor .note-editable img { max-width: 340px !important; }
             .note-editor .note-editable iframe { max-width: 520px !important; }
         }
     </style>
