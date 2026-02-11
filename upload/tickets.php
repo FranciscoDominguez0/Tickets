@@ -367,7 +367,11 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <?php else: ?>
                             <?php foreach ($tickets as $ticket): ?>
                                 <tr>
-                                    <td class="mono"><strong><?php echo html($ticket['ticket_number']); ?></strong></td>
+                                    <td class="mono">
+                                        <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>" class="text-decoration-none">
+                                            <strong class="text-dark"><?php echo html($ticket['ticket_number']); ?></strong>
+                                        </a>
+                                    </td>
                                     <td>
                                         <div class="fw-semibold text-dark"><?php echo html($ticket['subject']); ?></div>
                                         <?php if (!empty($ticket['closed'])): ?>

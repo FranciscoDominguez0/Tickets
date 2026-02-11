@@ -140,12 +140,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 // No enviar notificaciones por correo cuando el usuario responde
                 // El sistema ya registra la respuesta sin necesidad de enviar correos
 
+                $_SESSION['reply_success'] = true;
                 header('Location: view-ticket.php?id=' . (int) $tid);
                 exit;
             }
             $reply_error = 'No se pudo enviar la respuesta.';
         }
     }
+}
+
+$reply_success = false;
+if (!empty($_SESSION['reply_success'])) {
+    $reply_success = true;
+    unset($_SESSION['reply_success']);
 }
 
 // Descarga de adjuntos
@@ -415,33 +422,33 @@ function humanSize($bytes) {
 
         .thread { margin-top: 18px; }
 
-        .ticket-view-entry { margin-bottom: 16px; }
-        .ticket-view-entry .entry-row { display: flex; align-items: flex-start; gap: 12px; }
+        .ticket-view-entry { margin-bottom: 12px; }
+        .ticket-view-entry .entry-row { display: flex; align-items: flex-start; gap: 10px; }
         .ticket-view-entry.user .entry-row { flex-direction: row-reverse; }
         .ticket-view-entry .entry-avatar {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             background: #e2e8f0;
             color: #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
             flex: 0 0 auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
         }
-        .ticket-view-entry .entry-avatar-inner { font-weight: 800; font-size: 0.9rem; letter-spacing: 0.08em; }
+        .ticket-view-entry .entry-avatar-inner { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; }
         .ticket-view-entry.staff .entry-avatar { background: #dcfce7; color: #065f46; }
         .ticket-view-entry.user .entry-avatar { background: #dbeafe; color: #1e3a8a; }
 
         .ticket-view-entry .entry-content {
-            max-width: 820px;
+            max-width: 720px;
             width: 100%;
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
-            padding: 14px 16px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 10px 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
         }
         .ticket-view-entry.user .entry-content { background: #eff6ff; border-color: #bfdbfe; }
         .ticket-view-entry.staff .entry-content { background: #fff7ed; border-color: #fed7aa; }
@@ -452,31 +459,33 @@ function humanSize($bytes) {
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-            margin-bottom: 10px;
-            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-size: 0.78rem;
             color: #475569;
         }
         .ticket-view-entry.user .entry-meta { flex-direction: row-reverse; }
         .ticket-view-entry .entry-meta .author { font-weight: 700; color: #0f172a; }
-        .ticket-view-entry .entry-body { color: #0f172a; white-space: pre-wrap; word-break: break-word; }
-        .ticket-view-entry .entry-body p { margin: 0 0 0.5em; }
+        .ticket-view-entry .entry-body { color: #0f172a; white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; line-height: 1.45; }
+        .ticket-view-entry .entry-body p { margin: 0 0 0.4em; }
         .ticket-view-entry .entry-body p:last-child { margin-bottom: 0; }
-        .ticket-view-entry .entry-body img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-        .ticket-view-entry .entry-body iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+        .ticket-view-entry .entry-body img { max-width: 100% !important; height: auto !important; display: block; object-fit: contain; }
+        .ticket-view-entry .entry-body iframe { width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
-        .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-        .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+            .note-editor .note-editable img { max-width: 100% !important; height: auto !important; display: block; object-fit: contain; }
+            .note-editor .note-editable iframe { width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
-        .entry-footer {
-            font-size: 0.78rem;
-            color: #94a3b8;
-            margin-top: 6px;
-            padding-left: 56px;
-        }
-        .ticket-view-entry.user .entry-footer { text-align: right; padding-left: 0; padding-right: 56px; }
+            .entry-footer {
+                font-size: 0.72rem;
+                color: #94a3b8;
+                margin-top: 4px;
+                padding-left: 46px;
+            }
+            .ticket-view-entry.user .entry-footer { text-align: right; padding-left: 0; padding-right: 46px; }
 
-        .att-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; }
+            .att-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+            .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; }
+            .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; }
+            .att-item .size { color: #64748b; font-size: 0.85rem; }
         .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; }
         .att-item .size { color: #64748b; font-size: 0.85rem; }
 
@@ -490,7 +499,17 @@ function humanSize($bytes) {
         .attach-item .name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .attach-item .size { color: #64748b; font-size: 0.85rem; flex: 0 0 auto; }
 
-        @media (max-width: 760px) { .ticket-meta { grid-template-columns: 1fr; } }
+        @media (max-width: 760px) {
+            .ticket-meta { grid-template-columns: 1fr; }
+            .ticket-view-entry .entry-body img { max-height: 260px !important; }
+        }
+
+        @media (min-width: 761px) {
+            .ticket-view-entry .entry-body img { max-width: 420px !important; }
+            .ticket-view-entry .entry-body iframe { max-width: 520px !important; }
+            .note-editor .note-editable img { max-width: 420px !important; }
+            .note-editor .note-editable iframe { max-width: 520px !important; }
+        }
     </style>
 </head>
 <body>
@@ -639,6 +658,9 @@ function humanSize($bytes) {
                 <?php if ($reply_error !== ''): ?>
                     <div class="alert alert-danger mb-3"><?php echo html($reply_error); ?></div>
                 <?php endif; ?>
+                <?php if (!empty($reply_success)): ?>
+                    <div class="alert alert-success mb-3" id="reply-success-alert">Mensaje enviado correctamente.</div>
+                <?php endif; ?>
 
                 <?php if (!empty($t['closed'])): ?>
                     <div class="alert alert-warning mb-3">Este ticket está cerrado y no admite nuevas respuestas.</div>
@@ -657,7 +679,10 @@ function humanSize($bytes) {
                             <div class="attach-list" id="attach-list"></div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Enviar respuesta</button>
+                        <button type="submit" class="btn btn-primary" id="reply-submit-btn">
+                            <span class="btn-label"><i class="bi bi-send"></i> Enviar respuesta</span>
+                            <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando…</span>
+                        </button>
                     </form>
                 <?php endif; ?>
             </div>
@@ -814,10 +839,49 @@ function humanSize($bytes) {
     })();
 
     (function () {
+        try {
+            if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        } catch (e) {}
+
+        try {
+            var ok = document.getElementById('reply-success-alert');
+            if (ok) {
+                setTimeout(function () {
+                    try {
+                        ok.style.transition = 'opacity .25s ease, transform .25s ease';
+                        ok.style.opacity = '0';
+                        ok.style.transform = 'translateY(-2px)';
+                        setTimeout(function () { try { ok.remove(); } catch (e2) { ok.parentNode && ok.parentNode.removeChild(ok); } }, 260);
+                    } catch (e3) {}
+                }, 2600);
+            }
+        } catch (e4) {}
+
+        try {
+            var saved = sessionStorage.getItem('ticket_reply_scroll');
+            if (saved !== null) {
+                sessionStorage.removeItem('ticket_reply_scroll');
+                var payload = null;
+                try { payload = JSON.parse(saved); } catch (e0) {}
+                if (payload && (payload.bottom || typeof payload.y === 'number')) {
+                    window.addEventListener('load', function () {
+                        requestAnimationFrame(function () {
+                            if (payload.bottom) {
+                                window.scrollTo(0, document.body.scrollHeight);
+                            } else {
+                                window.scrollTo(0, payload.y);
+                            }
+                        });
+                    });
+                }
+            }
+        } catch (e) {}
+
         var form = document.querySelector('.reply-card form');
         if (!form) return;
         var fileInput = document.getElementById('attachments');
         var editor = document.getElementById('reply_body');
+        var submitBtn = document.getElementById('reply-submit-btn');
 
         var getPlainTextFromHtml = function (html) {
             var tmp = document.createElement('div');
@@ -1090,6 +1154,24 @@ function humanSize($bytes) {
                 }
             } catch (e2) {}
         });
+
+        form.addEventListener('submit', function () {
+            try {
+                var y = window.scrollY || 0;
+                var bottomGap = document.body.scrollHeight - (window.innerHeight + y);
+                var atBottom = bottomGap < 80;
+                sessionStorage.setItem('ticket_reply_scroll', JSON.stringify({ y: y, bottom: atBottom }));
+            } catch (e) {}
+            try {
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    var label = submitBtn.querySelector('.btn-label');
+                    var loading = submitBtn.querySelector('.btn-loading');
+                    if (label) label.classList.add('d-none');
+                    if (loading) loading.classList.remove('d-none');
+                }
+            } catch (e2) {}
+        }, true);
     });
 </script>
 </body>
