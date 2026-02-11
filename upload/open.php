@@ -1147,6 +1147,9 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 <div class="modal-body">
                     <label for="imageInsertFile" class="form-label">Seleccionar imagen</label>
                     <input type="file" class="form-control" id="imageInsertFile" accept="image/*">
+                    <div class="my-2 text-center text-muted">o</div>
+                    <label for="imageInsertUrl" class="form-label">Pegar URL de imagen</label>
+                    <input type="url" class="form-control" id="imageInsertUrl" placeholder="https://...">
                     <div class="form-text">Selecciona una imagen para insertarla en la descripción.</div>
                 </div>
                 <div class="modal-footer">
@@ -1172,6 +1175,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
             var imageModalEl = document.getElementById('imageInsertModal');
             var imageFileEl = document.getElementById('imageInsertFile');
+            var imageUrlEl = document.getElementById('imageInsertUrl');
             var imageConfirmEl = document.getElementById('imageInsertConfirm');
             var imageModal = null;
             var onImageSubmit = null;
@@ -1191,6 +1195,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 onImageSubmit = cb;
                 if (!imageModal || !imageFileEl) return;
                 imageFileEl.value = '';
+                if (imageUrlEl) imageUrlEl.value = '';
                 imageModal.show();
                 setTimeout(function () { try { imageFileEl.focus(); } catch (e) {} }, 100);
             }
@@ -1208,9 +1213,10 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 imageConfirmEl.addEventListener('click', function () {
                     if (!onImageSubmit || !imageFileEl) return;
                     var f = imageFileEl.files && imageFileEl.files[0] ? imageFileEl.files[0] : null;
-                    if (!f) return;
+                    var url = imageUrlEl ? (imageUrlEl.value || '').trim() : '';
+                    if (!f && !url) return;
                     try { imageModal && imageModal.hide(); } catch (e) {}
-                    try { onImageSubmit(f); } catch (e2) {}
+                    try { onImageSubmit(f || url); } catch (e2) {}
                 });
             }
             if (videoUrlEl) {
@@ -1223,6 +1229,14 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             }
             if (imageFileEl) {
                 imageFileEl.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        imageConfirmEl && imageConfirmEl.click();
+                    }
+                });
+            }
+            if (imageUrlEl) {
+                imageUrlEl.addEventListener('keydown', function (e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         imageConfirmEl && imageConfirmEl.click();
@@ -1268,8 +1282,13 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     contents: '<i class="note-icon-picture"></i>',
                     tooltip: 'Insertar imagen',
                     click: function () {
-                        openImageModal(function (file) {
-                            if (!file) return;
+                        openImageModal(function (fileOrUrl) {
+                            if (!fileOrUrl) return;
+                            if (typeof fileOrUrl === 'string') {
+                                jQuery('#body').summernote('insertImage', fileOrUrl);
+                                return;
+                            }
+                            var file = fileOrUrl;
                             var data = new FormData();
                             data.append('file', file);
                             data.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
@@ -1299,7 +1318,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 toolbar: [
                     ['style', ['bold', 'italic', 'underline']],
                     ['para', ['ul', 'ol']],
-                    ['insert', ['link', 'myImage', 'myVideo'] ],
+                    ['insert', ['myImage', 'myVideo'] ],
                     ['view', ['codeview']]
                 ],
                 buttons: {
