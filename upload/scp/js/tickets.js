@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var metaEl = document.getElementById('ticketHoverMeta');
       var msgEl = document.getElementById('ticketHoverMsg');
       var openEl = document.getElementById('ticketHoverOpen');
+      var closeEl = document.getElementById('ticketHoverClose');
 
       var inflight = null;
       var currentId = null;
@@ -196,7 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hoverTimer = setTimeout(function () {
           if (!isDesktop()) return;
           markSelected(ticketId);
-          positionPopup(anchorEl);
           loadPreview(ticketId);
         }, 80);
       }
@@ -219,7 +219,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!tid) return;
 
         // Mostrar rápido con loading para que el usuario vea que está funcionando
-        positionPopup(a);
         showPopup();
         setLoading(true);
         schedule(tid, a);
@@ -242,7 +241,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!a) return;
         var tid = (a.getAttribute('data-ticket-id') || '').toString();
         if (!tid) return;
-        positionPopup(a);
         showPopup();
         setLoading(true);
         schedule(tid, a);
@@ -260,12 +258,21 @@ document.addEventListener('DOMContentLoaded', function() {
       pop.addEventListener('mouseenter', function () {
         cancelSchedule();
       });
-      pop.addEventListener('mouseleave', function () {
+
+      function closePopup() {
         cancelSchedule();
         hidePopup();
         currentId = null;
         clearSelected();
-      });
+      }
+
+      if (closeEl) {
+        closeEl.addEventListener('click', function (e) {
+          try { if (e && e.preventDefault) e.preventDefault(); } catch (err) {}
+          try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err2) {}
+          closePopup();
+        });
+      }
 
       // Permitir interacción/scroll dentro del popup sin cerrarlo
       pop.addEventListener('mousedown', function (e) {
@@ -275,25 +282,21 @@ document.addEventListener('DOMContentLoaded', function() {
         try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err) {}
       });
 
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          hidePopup();
-          currentId = null;
-          clearSelected();
-        }
-      });
-
-      document.addEventListener('scroll', function (e) {
+      // Cerrar solo si se hace click fuera del popup
+      document.addEventListener('mousedown', function (e) {
         try {
           if (pop.classList.contains('d-none')) return;
-          // Si el scroll ocurre dentro del popup (scroll interno), no cerrar
-          if (e && e.target && pop.contains && pop.contains(e.target)) return;
+          var t = e && e.target ? e.target : null;
+          if (!t) return;
+
+          // Si el click fue dentro del popup, no cerrar
+          if (pop.contains && pop.contains(t)) return;
+
+          // Si el click fue en un trigger del ticket, no cerrar (el hover/carga lo manejará)
+          if (t.closest && t.closest('.ticket-preview-trigger[data-ticket-id]')) return;
+
+          closePopup();
         } catch (err) {}
-        if (!pop.classList.contains('d-none')) {
-          hidePopup();
-          currentId = null;
-          clearSelected();
-        }
       }, true);
     })();
 

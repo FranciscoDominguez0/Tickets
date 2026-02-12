@@ -2078,7 +2078,12 @@ if (!empty($ticketView)) {
         <div class="ticket-hover-preview-inner">
             <div class="ticket-hover-preview-head">
                 <div class="num" id="ticketHoverNumber"></div>
-                <a class="open" id="ticketHoverOpen" href="#" title="Abrir ticket"><i class="bi bi-box-arrow-up-right"></i></a>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <a class="open" id="ticketHoverOpen" href="#" title="Abrir ticket"><i class="bi bi-box-arrow-up-right"></i></a>
+                    <button type="button" class="close" id="ticketHoverClose" aria-label="Cerrar" title="Cerrar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
             </div>
             <div class="subject" id="ticketHoverSubject"></div>
             <div class="meta" id="ticketHoverMeta"></div>
