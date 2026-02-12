@@ -106,6 +106,125 @@
     box-shadow: 0 4px 24px rgba(0,0,0,0.06);
 }
 
+/* Listado: vista previa tipo osTicket (hover modal) */
+tr.ticket-row.is-selected td { background: #eff6ff !important; }
+
+.ticket-title.ticket-preview-trigger {
+    display: inline-block;
+    text-decoration: none;
+    cursor: pointer;
+}
+.ticket-title.ticket-preview-trigger:hover {
+    text-decoration: underline;
+}
+
+.ticket-hover-preview {
+    position: fixed;
+    z-index: 5000;
+    width: 540px;
+    max-width: min(92vw, 620px);
+    max-height: min(72vh, 520px);
+    background: transparent;
+}
+.ticket-hover-preview-inner {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 18px 60px rgba(2,6,23,0.28);
+    padding: 14px 14px;
+    overflow: hidden;
+}
+.ticket-hover-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ticket-hover-preview-head .num {
+    font-weight: 900;
+    color: #0f172a;
+}
+.ticket-hover-preview-head .open {
+    color: #2563eb;
+    text-decoration: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.ticket-hover-preview-head .open:hover { background: #eef2ff; }
+
+.ticket-hover-preview .subject {
+    margin-top: 10px;
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 1.02rem;
+    line-height: 1.25;
+}
+.ticket-hover-preview .meta {
+    margin-top: 8px;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.ticket-hover-preview .msg {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    color: #334155;
+    white-space: pre-wrap;
+    line-height: 1.45;
+    overflow: auto;
+    max-height: calc(min(72vh, 520px) - 150px);
+}
+.ticket-hover-preview .loading {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #64748b;
+    font-weight: 800;
+}
+
+.ticket-hover-preview .msg .th-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    background: #fff;
+}
+.ticket-hover-preview .msg .th-item:last-child { margin-bottom: 0; }
+.ticket-hover-preview .msg .th-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    font-weight: 800;
+    font-size: 0.86rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ticket-hover-preview .msg .th-author { color: #0f172a; }
+.ticket-hover-preview .msg .th-when { color: #64748b; font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+.ticket-hover-preview .msg .th-body {
+    padding: 10px 12px;
+    color: #334155;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+.ticket-hover-preview .msg .th-item.user .th-head { background: #eff6ff; }
+.ticket-hover-preview .msg .th-item.staff .th-head { background: #fff7ed; }
+.ticket-hover-preview .msg .th-item.internal .th-head { background: #fffbeb; }
+
 .ticket-print-header {
     display: none;
 }

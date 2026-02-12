@@ -2,8 +2,300 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Listado de tickets: búsqueda + acciones masivas (reemplaza <script> inline)
   (function () {
-    var panel = document.querySelector('.tickets-panel[data-filter-key]');
-    if (!panel) return;
+    var panel = document.querySelector('.tickets-panel[data-filter-key]') || document.querySelector('.tickets-panel') || document.body;
+
+    // Vista previa estilo osTicket (desktop): popup al pasar el mouse sobre el número
+    (function initTicketPreviewPane(){
+      var table = document.getElementById('ticketsTable');
+      var pop = document.getElementById('ticketHoverPreview');
+      if (!table || !pop) return;
+
+      function isDesktop() {
+        try { return window.matchMedia && window.matchMedia('(min-width: 992px)').matches; } catch (e) { return true; }
+      }
+
+      var loadingEl = document.getElementById('ticketHoverLoading');
+      var numEl = document.getElementById('ticketHoverNumber');
+      var subjEl = document.getElementById('ticketHoverSubject');
+      var metaEl = document.getElementById('ticketHoverMeta');
+      var msgEl = document.getElementById('ticketHoverMsg');
+      var openEl = document.getElementById('ticketHoverOpen');
+
+      var inflight = null;
+      var currentId = null;
+      var hoverTimer = null;
+
+      function setLoading(loading) {
+        if (loadingEl) loadingEl.classList.toggle('d-none', !loading);
+      }
+
+      function showPopup() {
+        pop.classList.remove('d-none');
+        pop.setAttribute('aria-hidden', 'false');
+      }
+
+      function hidePopup() {
+        pop.classList.add('d-none');
+        pop.setAttribute('aria-hidden', 'true');
+      }
+
+      function clearSelected() {
+        table.querySelectorAll('tr.ticket-row.is-selected').forEach(function (tr) {
+          tr.classList.remove('is-selected');
+        });
+      }
+
+      function markSelected(ticketId) {
+        clearSelected();
+        var tr = table.querySelector('tr.ticket-row[data-ticket-id="' + String(ticketId).replace(/"/g, '') + '"]');
+        if (tr) tr.classList.add('is-selected');
+      }
+
+      function positionPopup(anchorEl) {
+        try {
+          if (!anchorEl || !anchorEl.getBoundingClientRect) return;
+          var r = anchorEl.getBoundingClientRect();
+          var viewportW = window.innerWidth || document.documentElement.clientWidth || 1200;
+          var viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+          var pad = 10;
+          var popW = 520;
+          var popH = 420;
+          try {
+            var measured = pop.getBoundingClientRect();
+            if (measured && measured.width) popW = Math.max(320, Math.min(620, measured.width));
+            if (measured && measured.height) popH = Math.max(220, Math.min(520, measured.height));
+          } catch (e2) {}
+
+          var top = Math.round(r.top);
+          var left = Math.round(r.right + 12);
+
+          if (left + popW + pad > viewportW) {
+            left = Math.round(r.left - popW - 12);
+          }
+          if (left < pad) left = pad;
+
+          if (top + popH + pad > viewportH) {
+            top = Math.round(viewportH - popH - pad);
+          }
+          if (top < pad) top = pad;
+
+          pop.style.top = top + 'px';
+          pop.style.left = left + 'px';
+        } catch (e) {}
+      }
+
+      function formatWhen(whenStr) {
+        try {
+          if (!whenStr) return '';
+          var d = new Date(whenStr.replace(' ', 'T'));
+          if (isNaN(d.getTime())) return whenStr;
+          return d.toLocaleString();
+        } catch (e) {
+          return whenStr || '';
+        }
+      }
+
+      function loadPreview(ticketId) {
+        ticketId = (ticketId || '').toString();
+        if (!ticketId) return;
+
+        currentId = ticketId;
+        setLoading(true);
+        showPopup();
+
+        if (inflight && inflight.abort) {
+          try { inflight.abort(); } catch (e) {}
+        }
+
+        inflight = new AbortController();
+        var url = 'tickets.php?action=ticket_preview&id=' + encodeURIComponent(ticketId);
+
+        fetch(url, { headers: { 'Accept': 'application/json' }, signal: inflight.signal })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || !data.ok || !data.ticket) {
+              throw new Error('bad');
+            }
+            if (currentId !== ticketId) return;
+            var t = data.ticket;
+            if (numEl) numEl.textContent = (t.ticket_number || ('#' + ticketId));
+            if (subjEl) subjEl.textContent = (t.subject || '').toString();
+
+            var parts = [];
+            if (t.client) parts.push('Cliente: ' + t.client);
+            if (t.author) parts.push('Último: ' + t.author);
+            if (t.when) parts.push(formatWhen(t.when));
+            if (t.is_internal) parts.push('Nota interna');
+            if (metaEl) metaEl.textContent = parts.join(' · ');
+
+            if (msgEl) {
+              var entries = (t.entries && Array.isArray(t.entries)) ? t.entries : [];
+              if (!entries.length) {
+                msgEl.textContent = 'Sin mensajes para mostrar.';
+              } else {
+                var html = '';
+                entries.forEach(function (e) {
+                  try {
+                    var author = (e.author || '—').toString();
+                    var when = (e.when || '').toString();
+                    var text = (e.text || '').toString();
+                    var isInternal = !!e.is_internal;
+                    var isStaff = !!e.is_staff;
+                    var cls = 'item';
+                    if (isInternal) cls += ' internal';
+                    else if (isStaff) cls += ' staff';
+                    else cls += ' user';
+                    html += '<div class="th-item ' + cls + '">'
+                      + '<div class="th-head">'
+                      + '<span class="th-author">' + escapeHtml(author) + '</span>'
+                      + (when ? '<span class="th-when">' + escapeHtml(formatWhen(when)) + '</span>' : '')
+                      + '</div>'
+                      + '<div class="th-body">' + escapeHtml(text) + '</div>'
+                      + '</div>';
+                  } catch (err) {}
+                });
+                msgEl.innerHTML = html;
+              }
+            }
+            if (openEl) openEl.setAttribute('href', 'tickets.php?id=' + encodeURIComponent(ticketId));
+          })
+          .catch(function (err) {
+            if (err && err.name === 'AbortError') return;
+            if (currentId !== ticketId) return;
+            if (msgEl) msgEl.textContent = 'No se pudo cargar la vista previa.';
+            if (metaEl) metaEl.textContent = '';
+          })
+          .finally(function () {
+            if (currentId !== ticketId) return;
+            setLoading(false);
+          });
+      }
+
+      function escapeHtml(str) {
+        try {
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        } catch (e) {
+          return '';
+        }
+      }
+
+      hidePopup();
+      setLoading(false);
+
+      function schedule(ticketId, anchorEl) {
+        if (!isDesktop()) return;
+        if (!ticketId) return;
+        if (hoverTimer) {
+          try { clearTimeout(hoverTimer); } catch (e) {}
+        }
+        hoverTimer = setTimeout(function () {
+          if (!isDesktop()) return;
+          markSelected(ticketId);
+          positionPopup(anchorEl);
+          loadPreview(ticketId);
+        }, 80);
+      }
+
+      function cancelSchedule() {
+        if (hoverTimer) {
+          try { clearTimeout(hoverTimer); } catch (e) {}
+        }
+        hoverTimer = null;
+      }
+
+      // Hover en el número (delegación de eventos para asegurar que siempre dispare)
+      table.addEventListener('mouseover', function (ev) {
+        if (!isDesktop()) return;
+        var target = ev && ev.target ? ev.target : null;
+        if (!target || !target.closest) return;
+        var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
+        if (!a) return;
+        var tid = (a.getAttribute('data-ticket-id') || '').toString();
+        if (!tid) return;
+
+        // Mostrar rápido con loading para que el usuario vea que está funcionando
+        positionPopup(a);
+        showPopup();
+        setLoading(true);
+        schedule(tid, a);
+      });
+
+      table.addEventListener('mouseout', function (ev) {
+        var target = ev && ev.target ? ev.target : null;
+        if (!target || !target.closest) return;
+        var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
+        if (!a) return;
+        cancelSchedule();
+        // No cerrar aquí: permite mover el mouse al popup
+      });
+
+      table.addEventListener('focusin', function (ev) {
+        if (!isDesktop()) return;
+        var target = ev && ev.target ? ev.target : null;
+        if (!target || !target.closest) return;
+        var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
+        if (!a) return;
+        var tid = (a.getAttribute('data-ticket-id') || '').toString();
+        if (!tid) return;
+        positionPopup(a);
+        showPopup();
+        setLoading(true);
+        schedule(tid, a);
+      });
+
+      table.addEventListener('focusout', function (ev) {
+        var target = ev && ev.target ? ev.target : null;
+        if (!target || !target.closest) return;
+        var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
+        if (!a) return;
+        cancelSchedule();
+      });
+
+      // Mantener abierto si el mouse está dentro del popup
+      pop.addEventListener('mouseenter', function () {
+        cancelSchedule();
+      });
+      pop.addEventListener('mouseleave', function () {
+        cancelSchedule();
+        hidePopup();
+        currentId = null;
+        clearSelected();
+      });
+
+      // Permitir interacción/scroll dentro del popup sin cerrarlo
+      pop.addEventListener('mousedown', function (e) {
+        try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err) {}
+      });
+      pop.addEventListener('click', function (e) {
+        try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err) {}
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          hidePopup();
+          currentId = null;
+          clearSelected();
+        }
+      });
+
+      document.addEventListener('scroll', function (e) {
+        try {
+          if (pop.classList.contains('d-none')) return;
+          // Si el scroll ocurre dentro del popup (scroll interno), no cerrar
+          if (e && e.target && pop.contains && pop.contains(e.target)) return;
+        } catch (err) {}
+        if (!pop.classList.contains('d-none')) {
+          hidePopup();
+          currentId = null;
+          clearSelected();
+        }
+      }, true);
+    })();
 
     function showInfoModal(msg) {
       var textEl = document.getElementById('bulkInfoText');

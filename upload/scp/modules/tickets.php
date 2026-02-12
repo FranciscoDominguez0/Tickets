@@ -77,6 +77,143 @@ if (isset($_GET['action']) && $_GET['action'] === 'user_search') {
     exit;
 }
 
+// AJAX: vista previa de un ticket (último mensaje)
+if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!isset($_SESSION['staff_id'])) {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $tid = isset($_GET['id']) && is_numeric($_GET['id']) ? (int) $_GET['id'] : 0;
+    if ($tid <= 0) {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'Invalid ticket']);
+        exit;
+    }
+
+    $stmt = $mysqli->prepare(
+        "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
+        . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email\n"
+        . "FROM tickets t\n"
+        . "JOIN users u ON u.id = t.user_id\n"
+        . "WHERE t.id = ?\n"
+        . "LIMIT 1"
+    );
+    if (!$stmt) {
+        http_response_code(500);
+        echo json_encode(['ok' => false, 'error' => 'DB error']);
+        exit;
+    }
+    $stmt->bind_param('i', $tid);
+    $stmt->execute();
+    $ticket = $stmt->get_result()->fetch_assoc();
+    if (!$ticket) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'Not found']);
+        exit;
+    }
+
+    $threadId = 0;
+    $stmtTh = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ? LIMIT 1');
+    if ($stmtTh) {
+        $stmtTh->bind_param('i', $tid);
+        if ($stmtTh->execute()) {
+            $row = $stmtTh->get_result()->fetch_assoc();
+            $threadId = (int)($row['id'] ?? 0);
+        }
+    }
+
+    $previewWhen = $ticket['updated'] ?: $ticket['created'];
+    $previewIsInternal = 0;
+    $previewAuthor = '';
+    $entriesOut = [];
+
+    if ($threadId > 0) {
+        $stmtE = $mysqli->prepare(
+            "SELECT te.id, te.staff_id, te.user_id, te.is_internal, te.body, te.created,\n"
+            . " s.firstname AS staff_first, s.lastname AS staff_last,\n"
+            . " u.firstname AS user_first, u.lastname AS user_last\n"
+            . "FROM thread_entries te\n"
+            . "LEFT JOIN staff s ON s.id = te.staff_id\n"
+            . "LEFT JOIN users u ON u.id = te.user_id\n"
+            . "WHERE te.thread_id = ?\n"
+            . "ORDER BY te.created DESC, te.id DESC\n"
+            . "LIMIT 8"
+        );
+        if ($stmtE) {
+            $stmtE->bind_param('i', $threadId);
+            if ($stmtE->execute()) {
+                $res = $stmtE->get_result();
+                $raw = [];
+                while ($res && ($e = $res->fetch_assoc())) {
+                    $raw[] = $e;
+                }
+                $raw = array_reverse($raw);
+
+                foreach ($raw as $e) {
+                    $author = '';
+                    $isStaff = false;
+                    if (!empty($e['staff_id'])) {
+                        $author = trim((string)($e['staff_first'] ?? '') . ' ' . (string)($e['staff_last'] ?? ''));
+                        $isStaff = true;
+                    } elseif (!empty($e['user_id'])) {
+                        $author = trim((string)($e['user_first'] ?? '') . ' ' . (string)($e['user_last'] ?? ''));
+                    }
+
+                    $bodyHtml = (string)($e['body'] ?? '');
+                    $text = trim(html_entity_decode(strip_tags($bodyHtml), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                    if (mb_strlen($text) > 900) {
+                        $text = mb_substr($text, 0, 900) . '…';
+                    }
+
+                    $entriesOut[] = [
+                        'id' => (int)($e['id'] ?? 0),
+                        'author' => $author,
+                        'when' => (string)($e['created'] ?? ''),
+                        'is_internal' => (int)($e['is_internal'] ?? 0),
+                        'is_staff' => $isStaff ? 1 : 0,
+                        'text' => $text,
+                    ];
+                }
+
+                if (!empty($raw)) {
+                    $last = $raw[count($raw) - 1];
+                    $previewWhen = $last['created'] ?: $previewWhen;
+                    $previewIsInternal = (int)($last['is_internal'] ?? 0);
+                    $author = '';
+                    if (!empty($last['staff_id'])) {
+                        $author = trim((string)($last['staff_first'] ?? '') . ' ' . (string)($last['staff_last'] ?? ''));
+                    } elseif (!empty($last['user_id'])) {
+                        $author = trim((string)($last['user_first'] ?? '') . ' ' . (string)($last['user_last'] ?? ''));
+                    }
+                    $previewAuthor = $author;
+                }
+            }
+        }
+    }
+
+    $clientName = trim((string)($ticket['user_first'] ?? '') . ' ' . (string)($ticket['user_last'] ?? ''));
+    if ($clientName === '') $clientName = (string)($ticket['user_email'] ?? '');
+
+    echo json_encode([
+        'ok' => true,
+        'ticket' => [
+            'id' => (int)$ticket['id'],
+            'ticket_number' => (string)($ticket['ticket_number'] ?? ''),
+            'subject' => (string)($ticket['subject'] ?? ''),
+            'client' => $clientName,
+            'when' => (string)$previewWhen,
+            'author' => (string)$previewAuthor,
+            'is_internal' => (int)$previewIsInternal,
+            'entries' => $entriesOut,
+        ]
+    ]);
+    exit;
+}
+
 // Abrir nuevo ticket (tickets.php?a=open&uid=X)
 if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
     $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
@@ -1872,7 +2009,7 @@ if (!empty($ticketView)) {
         </div>
 
     <div class="tickets-table-wrap">
-        <table class="table table-hover tickets-table mb-0">
+        <table class="table table-hover tickets-table mb-0" id="ticketsTable">
             <thead class="table-light">
                 <tr>
                     <th class="check-cell"><input type="checkbox" class="form-check-input" id="check_all"></th>
@@ -1902,10 +2039,10 @@ if (!empty($ticketView)) {
                         $statusColor = $t['status_color'] ?: '#2563eb';
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
                         ?>
-                        <tr class="ticket-row">
+                        <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>">
                             <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>"></td>
                             <td>
-                                <div class="ticket-title"><?php echo html($t['ticket_number']); ?></div>
+                                <a class="ticket-title ticket-preview-trigger" href="tickets.php?id=<?php echo (int) $t['id']; ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
                                 <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
                                 <div class="ticket-meta">Asignado: <?php echo $staffName ?: '— Sin asignar —'; ?></div>
                             </td>
@@ -1935,6 +2072,22 @@ if (!empty($ticketView)) {
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+
+    <div class="ticket-hover-preview d-none" id="ticketHoverPreview" role="dialog" aria-hidden="true">
+        <div class="ticket-hover-preview-inner">
+            <div class="ticket-hover-preview-head">
+                <div class="num" id="ticketHoverNumber"></div>
+                <a class="open" id="ticketHoverOpen" href="#" title="Abrir ticket"><i class="bi bi-box-arrow-up-right"></i></a>
+            </div>
+            <div class="subject" id="ticketHoverSubject"></div>
+            <div class="meta" id="ticketHoverMeta"></div>
+            <div class="msg" id="ticketHoverMsg"></div>
+            <div class="loading d-none" id="ticketHoverLoading">
+                <div class="spinner-border text-primary" role="status" style="width:1.5rem; height:1.5rem;"></div>
+                <div class="text">Cargando…</div>
+            </div>
+        </div>
     </div>
     </form>
 </div>
