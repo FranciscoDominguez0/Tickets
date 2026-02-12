@@ -77,6 +77,22 @@ if ($_POST) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
+    <style>
+        .agent-login-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0 16px;
+        }
+        .agent-login-brand img {
+            height: 54px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.22));
+        }
+    </style>
 </head>
 <?php
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
@@ -97,8 +113,15 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
     <div class="agent-login-container">
         <!-- PANEL DE LOGIN (GLASSMORPHISM) -->
         <div class="agent-login-panel">
-            <h1 class="agent-login-title">LOGIN</h1>
-
+            <?php
+                $companyLogoMode = (string)getAppSetting('company.logo_mode', 'default');
+                $companyLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+            ?>
+            <?php if ($companyLogoMode === 'default' && $companyLogo !== ''): ?>
+                <div class="agent-login-brand">
+                    <img src="<?php echo html($companyLogo); ?>" alt="<?php echo html((string)getAppSetting('company.name', APP_NAME)); ?>">
+                </div>
+            <?php endif; ?>
             <form method="post" class="agent-login-form">
                 <!-- Alertas -->
                 <?php if ($error): ?>

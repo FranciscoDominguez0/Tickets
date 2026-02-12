@@ -31,7 +31,7 @@ if ($_POST) {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
-        $phone = trim($_POST['phone'] ?? '');
+        $phone = '';
 
         // Validaciones
         if (!$firstname || !$lastname || !$email || !$password) {
@@ -85,6 +85,19 @@ if ($_POST) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrarse - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
+    <style>
+        .login-panel { padding: 32px !important; }
+        .login-form { gap: 18px !important; }
+        .form-grid { gap: 18px !important; grid-template-columns: 1fr 1fr !important; }
+        .form-group label { font-size: 14px !important; }
+        .form-group input { padding: 13px 14px !important; font-size: 15px !important; }
+        .btn-login { padding: 13px 16px !important; font-size: 15px !important; }
+
+        @media (max-width: 760px) {
+            .login-panel { padding: 22px !important; }
+            .form-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
 </head>
 <?php
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
@@ -167,17 +180,6 @@ $bodyStyle = $loginBg !== ''
                                     placeholder="tu@email.com"
                                     value="<?php echo html($_POST['email'] ?? ''); ?>"
                                     required
-                                >
-                            </div>
-
-                            <div class="form-group">
-                                <label for="phone">Teléfono (opcional)</label>
-                                <input 
-                                    type="tel" 
-                                    id="phone" 
-                                    name="phone" 
-                                    placeholder="+507 6621-8585"
-                                    value="<?php echo html($_POST['phone'] ?? ''); ?>"
                                 >
                             </div>
 
