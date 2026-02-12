@@ -84,6 +84,15 @@ if ($_POST) {
             justify-content: center;
             margin: 0 0 16px;
         }
+        .agent-login-subtext {
+            text-align: center;
+            margin: -6px 0 18px;
+            color: rgba(255, 255, 255, 0.92);
+            font-weight: 650;
+            letter-spacing: 0.02em;
+            font-size: 13px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+        }
         .agent-login-brand img {
             height: 54px;
             width: auto;
@@ -121,6 +130,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                 <div class="agent-login-brand">
                     <img src="<?php echo html($companyLogo); ?>" alt="<?php echo html((string)getAppSetting('company.name', APP_NAME)); ?>">
                 </div>
+                <div class="agent-login-subtext">Acceso de Agentes</div>
             <?php endif; ?>
             <form method="post" class="agent-login-form">
                 <!-- Alertas -->
