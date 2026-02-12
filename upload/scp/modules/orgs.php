@@ -235,6 +235,10 @@ if (!empty($_GET['org'])) {
 
     $activeTab = $_GET['t'] ?? 'users';
     if ($activeTab !== 'users' && $activeTab !== 'tickets') $activeTab = 'users';
+
+    $orgsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/orgs.php');
+    $backToOrgTickets = 'orgs.php?org=' . urlencode($orgName) . '&t=tickets';
+    $ticketsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/tickets.php');
     ?>
     <div class="org-detail-container">
         <?php if ($action_msg): ?>
@@ -256,7 +260,7 @@ if (!empty($_GET['org'])) {
         <?php endif; ?>
         <div class="user-view-header">
             <div>
-                <a href="orgs.php" class="org-back-link"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+                <a href="<?php echo html($orgsBaseUrl); ?>" class="org-back-link"><i class="bi bi-arrow-left"></i> Volver al listado</a>
                 <h1 class="user-view-title">
                     <i class="bi bi-building"></i>
                     <?php echo html($orgInfo['name']); ?>
@@ -356,8 +360,8 @@ if (!empty($_GET['org'])) {
         </div>
 
         <div class="user-view-tabs" id="org-tabs">
-            <a href="orgs.php?org=<?php echo urlencode($orgName); ?>&t=users" class="tab <?php echo $activeTab === 'users' ? 'active' : ''; ?>"><i class="bi bi-people"></i> Usuarios</a>
-            <a href="orgs.php?org=<?php echo urlencode($orgName); ?>&t=tickets" class="tab <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>"><i class="bi bi-ticket"></i> Tickets</a>
+            <a href="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($orgName); ?>&t=users" class="tab <?php echo $activeTab === 'users' ? 'active' : ''; ?>"><i class="bi bi-people"></i> Usuarios</a>
+            <a href="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($orgName); ?>&t=tickets" class="tab <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>"><i class="bi bi-ticket"></i> Tickets</a>
         </div>
         <div class="user-view-card">
             <div class="tab-content">
@@ -416,7 +420,11 @@ if (!empty($_GET['org'])) {
                                 <tbody>
                                     <?php foreach ($tickets as $tkt): ?>
                                         <tr>
-                                            <td><a href="tickets.php?id=<?php echo (int)$tkt['id']; ?>"><?php echo html($tkt['ticket_number']); ?></a></td>
+                                            <td>
+                                                <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>">
+                                                    <?php echo html($tkt['ticket_number']); ?>
+                                                </a>
+                                            </td>
                                             <td><?php echo html($tkt['subject']); ?></td>
                                             <td><?php echo html($tkt['dept_name'] ?? '—'); ?></td>
                                             <td><?php echo html($tkt['status_name'] ?? '—'); ?></td>
@@ -439,7 +447,7 @@ if (!empty($_GET['org'])) {
                         <h5 class="modal-title org-modal-title"><i class="bi bi-pencil-square"></i> Editar organización</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form method="post" action="orgs.php?org=<?php echo urlencode($orgInfo['name']); ?>">
+                    <form method="post" action="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($orgInfo['name']); ?>">
                         <?php csrfField(); ?>
                         <input type="hidden" name="do" value="update">
                         <input type="hidden" name="old_name" value="<?php echo html($orgInfo['name']); ?>">
@@ -487,7 +495,7 @@ if (!empty($_GET['org'])) {
                     <h5 class="modal-title org-modal-title"><i class="bi bi-exclamation-triangle"></i> Eliminar organización</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="post" action="orgs.php" id="deleteOrgForm">
+                <form method="post" action="<?php echo html($orgsBaseUrl); ?>" id="deleteOrgForm">
                     <?php csrfField(); ?>
                     <input type="hidden" name="do" value="delete">
                     <input type="hidden" name="org_name" id="delete_org_name" value="<?php echo html($orgInfo['name']); ?>">
@@ -516,6 +524,8 @@ if (!empty($_GET['org'])) {
 $search = trim($_GET['q'] ?? '');
 $pageNum = max(1, (int)($_GET['p'] ?? 1));
 $perPage = 20;
+
+$orgsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/orgs.php');
 
 $like = $search !== '' ? '%' . $search . '%' : '';
 
@@ -575,12 +585,12 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
     <?php endif; ?>
 
     <div class="org-search-card">
-        <form method="get" action="orgs.php" class="org-search-form">
+        <form method="get" action="<?php echo html($orgsBaseUrl); ?>" class="org-search-form">
             <div class="org-search-input-wrapper">
                 <i class="bi bi-search org-search-icon"></i>
                 <input type="text" name="q" class="org-search-input" placeholder="Buscar por nombre de organización..." value="<?php echo html($search); ?>">
                 <?php if ($search): ?>
-                    <a href="orgs.php" class="org-search-clear"><i class="bi bi-x-circle"></i></a>
+                    <a href="<?php echo html($orgsBaseUrl); ?>" class="org-search-clear"><i class="bi bi-x-circle"></i></a>
                 <?php endif; ?>
             </div>
             <button type="submit" class="btn org-search-btn"><i class="bi bi-search"></i> Buscar</button>
@@ -616,7 +626,7 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                         <div class="org-card-header">
                             <div class="org-card-icon"><i class="bi bi-building"></i></div>
                             <h3 class="org-card-title">
-                                <a href="orgs.php?org=<?php echo urlencode($o['name']); ?>"><?php echo html($o['name']); ?></a>
+                                <a href="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($o['name']); ?>"><?php echo html($o['name']); ?></a>
                             </h3>
                         </div>
                         <div class="org-card-body">
@@ -642,7 +652,7 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                                     <i class="bi bi-calendar-event"></i>
                                     Desde <?php echo !empty($o['since']) ? date('d/m/Y', strtotime($o['since'])) : ($o['created'] ?? '—'); ?>
                                 </span>
-                                <a href="orgs.php?org=<?php echo urlencode($o['name']); ?>" class="org-card-link">Ver detalles <i class="bi bi-arrow-right"></i></a>
+                                <a href="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($o['name']); ?>" class="org-card-link">Ver detalles <i class="bi bi-arrow-right"></i></a>
                             </div>
                         </div>
                     </div>
@@ -656,17 +666,17 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                     </div>
                     <div class="pagination-wrap">
                         <?php if ($pageNum > 1): ?>
-                            <a href="orgs.php?<?php echo http_build_query(['q' => $search, 'p' => $pageNum - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
+                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $pageNum - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
                         <?php endif; ?>
                         <?php for ($i = max(1, $pageNum - 2); $i <= min($totalPages, $pageNum + 2); $i++): ?>
                             <?php if ($i === $pageNum): ?>
                                 <strong style="margin: 0 4px;"><?php echo $i; ?></strong>
                             <?php else: ?>
-                                <a href="orgs.php?<?php echo http_build_query(['q' => $search, 'p' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
+                                <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
                             <?php endif; ?>
                         <?php endfor; ?>
                         <?php if ($pageNum < $totalPages): ?>
-                            <a href="orgs.php?<?php echo http_build_query(['q' => $search, 'p' => $pageNum + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
+                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $pageNum + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -683,7 +693,7 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                 <h5 class="modal-title org-modal-title"><i class="bi bi-building"></i> Añadir nueva organización</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="orgs.php" id="addOrgForm">
+            <form method="post" action="<?php echo html($orgsBaseUrl); ?>" id="addOrgForm">
                 <?php csrfField(); ?>
                 <input type="hidden" name="do" value="add">
                 <div class="modal-body org-modal-body">

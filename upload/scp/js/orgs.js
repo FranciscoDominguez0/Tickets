@@ -139,7 +139,7 @@
                 links.forEach(function (a) {
                     try {
                         const href = (a.getAttribute('href') || '').toString();
-                        const u = new URL(href, window.location.origin);
+                        const u = new URL(href, window.location.href);
                         const t = (u.searchParams.get('t') || 'users').toString();
                         a.classList.toggle('active', t === tabKey);
                     } catch (e) {
@@ -157,7 +157,7 @@
 
         function getTabFromUrl(href) {
             try {
-                const u = new URL(href, window.location.origin);
+                const u = new URL(href, window.location.href);
                 const t = (u.searchParams.get('t') || 'users').toString();
                 return (t === 'tickets') ? 'tickets' : 'users';
             } catch (e) {
@@ -176,7 +176,7 @@
                 e.preventDefault();
                 activate(tabKey);
                 try {
-                    const u = new URL(href, window.location.origin);
+                    const u = new URL(href, window.location.href);
                     u.hash = '';
                     window.history.pushState({ t: tabKey }, '', u.toString());
                 } catch (e2) {}
