@@ -178,6 +178,11 @@ if (!isset($collapseSettingsMenu)) {
                                 </a>
                             </li>
                         </ul>
+
+                        <a href="logout.php" class="sidebar-link">
+                            <span class="icon"><i class="bi bi-box-arrow-right"></i></span>
+                            Salir
+                        </a>
                     </li>
 
                 </ul>

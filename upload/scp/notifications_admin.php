@@ -37,8 +37,8 @@ if ($meId > 0) {
     }
 }
 if ($meRole !== 'admin') {
-    http_response_code(403);
-    echo 'Forbidden';
+    $_SESSION['flash_error'] = 'No tienes permisos para acceder a Notificaciones.';
+    header('Location: index.php');
     exit;
 }
 
