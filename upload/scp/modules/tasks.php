@@ -158,7 +158,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                 if ($stmtS->execute()) {
                                     $srow = $stmtS->get_result()->fetch_assoc();
                                     $to = trim((string)($srow['email'] ?? ''));
-                                    if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                    $emailEnabled = ((string)getAppSetting('staff.' . (int)$newAssignedTo . '.email_task_assigned', '1') === '1');
+                                    if ($emailEnabled && $to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
                                         $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
                                         if ($staffName === '') $staffName = 'Agente';
 
@@ -311,7 +312,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                 if ($stmtS->execute()) {
                                     $srow = $stmtS->get_result()->fetch_assoc();
                                     $to = trim((string)($srow['email'] ?? ''));
-                                    if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                    $emailEnabled = ((string)getAppSetting('staff.' . (int)$newAssignedTo . '.email_task_assigned', '1') === '1');
+                                    if ($emailEnabled && $to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
                                         $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
                                         if ($staffName === '') $staffName = 'Agente';
 

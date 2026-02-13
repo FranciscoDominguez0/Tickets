@@ -502,14 +502,17 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                                 if ($stmtE->execute()) {
                                     $r = $stmtE->get_result()->fetch_assoc();
                                     if ($r && !empty($r['email'])) {
-                                        $to = $r['email'];
-                                        $subj = 'Ticket asignado: ' . (string)$ticket_number;
-                                        $bodyHtml = '<p>Hola ' . html(trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? ''))) . ',</p><p>Se te ha asignado el ticket <strong>' . html((string)$ticket_number) . '</strong>: ' . html($subject) . '</p><p><a href="' . html((defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid) . '">Abrir ticket</a></p>';
-                                        $bodyText = 'Hola ' . trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? '')) . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . $subject . "\n\n" . (defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid;
-                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                        if (!$mailOk) {
-                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                            addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                        $emailEnabled = ((string)getAppSetting('staff.' . (int)$val . '.email_ticket_assigned', '1') === '1');
+                                        if ($emailEnabled) {
+                                            $to = $r['email'];
+                                            $subj = 'Ticket asignado: ' . (string)$ticket_number;
+                                            $bodyHtml = '<p>Hola ' . html(trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? ''))) . ',</p><p>Se te ha asignado el ticket <strong>' . html((string)$ticket_number) . '</strong>: ' . html($subject) . '</p><p><a href="' . html((defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid) . '">Abrir ticket</a></p>';
+                                            $bodyText = 'Hola ' . trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? '')) . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . $subject . "\n\n" . (defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid;
+                                            $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                            if (!$mailOk) {
+                                                $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                            }
                                         }
                                     } else {
                                         addLog('ticket_assign_email_missing', 'Agente sin email válido', 'ticket', $new_tid, 'staff', $val);
@@ -810,7 +813,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         if ($stmtS->execute()) {
                             $srow = $stmtS->get_result()->fetch_assoc();
                             $to = trim((string)($srow['email'] ?? ''));
-                            if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                            $emailEnabled = ((string)getAppSetting('staff.' . (int)$val . '.email_ticket_assigned', '1') === '1');
+                            if ($emailEnabled && $to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
                                 $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
                                 $subj = '[Asignación] ' . $ticketNo . ' - ' . (string)($ticketView['subject'] ?? 'Ticket');
                                 $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
@@ -1679,7 +1683,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                             if ($stmtS->execute()) {
                                 $srow = $stmtS->get_result()->fetch_assoc();
                                 $to = trim((string)($srow['email'] ?? ''));
-                                if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                $emailEnabled = ((string)getAppSetting('staff.' . (int)$staffId . '.email_ticket_assigned', '1') === '1');
+                                if ($emailEnabled && $to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
                                     $staffName = trim((string)($srow['firstname'] ?? '') . ' ' . (string)($srow['lastname'] ?? ''));
                                     if ($staffName === '') $staffName = 'Agente';
 

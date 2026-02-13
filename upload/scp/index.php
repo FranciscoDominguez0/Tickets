@@ -27,6 +27,7 @@ $routes = [
     'directory' => 'directory.php',   // Directorio de agentes
     'profile'   => 'profile.php',     // Mi perfil
     'orgs'      => 'orgs.php',        // Organizaciones
+    'notifications' => 'notifications.php', // Notificaciones (preferencias de correo)
 ];
 
 // Página por defecto

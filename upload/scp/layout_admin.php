@@ -105,6 +105,10 @@ if (!isset($collapseSettingsMenu)) {
                             <span class="icon"><i class="bi bi-graph-up"></i></span>
                             Panel de Control
                         </a>
+                        <a href="notifications_admin.php" class="sidebar-link <?php echo ($currentRoute === 'notifications_admin') ? 'active' : ''; ?>">
+                            <span class="icon"><i class="bi bi-bell"></i></span>
+                            Notificaciones
+                        </a>
                         <a href="helptopics.php" class="sidebar-link <?php echo ($currentRoute === 'helptopics') ? 'active' : ''; ?>">
                             <span class="icon"><i class="bi bi-list-check"></i></span>
                             Administrar
