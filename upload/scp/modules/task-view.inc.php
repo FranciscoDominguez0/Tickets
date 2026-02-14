@@ -64,8 +64,8 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
         </div>
     </div>
     <div class="meta">
-        <span class="chip"><i class="bi bi-activity"></i> <?php echo $status_labels[$taskView['status']]; ?></span>
-        <span class="chip"><i class="bi bi-flag"></i> <?php echo $priority_labels[$taskView['priority']]; ?></span>
+        <span class="chip"><i class="bi bi-activity"></i> <?php echo html((string)($status_labels[$taskView['status']] ?? '')); ?></span>
+        <span class="chip"><i class="bi bi-flag"></i> <?php echo html((string)($priority_labels[$taskView['priority']] ?? '')); ?></span>
         <?php if ($is_overdue_header): ?>
             <span class="chip chip-danger"><i class="bi bi-exclamation-triangle"></i> Vencida</span>
         <?php endif; ?>
@@ -157,8 +157,8 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Estado:</strong></div>
                         <div class="col-sm-9">
-                            <span class="badge bg-<?php echo $status_colors[$taskView['status']]; ?> fs-6">
-                                <?php echo $status_labels[$taskView['status']]; ?>
+                            <span class="badge bg-<?php echo html((string)($status_colors[$taskView['status']] ?? 'secondary')); ?> fs-6">
+                                <?php echo html((string)($status_labels[$taskView['status']] ?? '')); ?>
                             </span>
                         </div>
                     </div>
@@ -166,8 +166,8 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Prioridad:</strong></div>
                         <div class="col-sm-9">
-                            <span class="badge bg-<?php echo $priority_colors[$taskView['priority']]; ?>">
-                                <?php echo $priority_labels[$taskView['priority']]; ?>
+                            <span class="badge bg-<?php echo html((string)($priority_colors[$taskView['priority']] ?? 'secondary')); ?>">
+                                <?php echo html((string)($priority_labels[$taskView['priority']] ?? '')); ?>
                             </span>
                         </div>
                     </div>

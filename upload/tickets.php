@@ -379,12 +379,24 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <span class="badge-soft" style="background-color: <?php echo html($ticket['status_color']); ?>; color: #fff;">
+                                        <?php
+                                            $statusColor = (string)($ticket['status_color'] ?? '');
+                                            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $statusColor)) {
+                                                $statusColor = '#2563eb';
+                                            }
+                                        ?>
+                                        <span class="badge-soft" style="background-color: <?php echo html($statusColor); ?>; color: #fff;">
                                             <?php echo html($ticket['status_name']); ?>
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge-soft" style="background-color: <?php echo html($ticket['priority_color'] ?? '#64748b'); ?>; color: #fff;">
+                                        <?php
+                                            $priorityColor = (string)($ticket['priority_color'] ?? '');
+                                            if ($priorityColor === '' || !preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $priorityColor)) {
+                                                $priorityColor = '#64748b';
+                                            }
+                                        ?>
+                                        <span class="badge-soft" style="background-color: <?php echo html($priorityColor); ?>; color: #fff;">
                                             <?php echo html($ticket['priority_name']); ?>
                                         </span>
                                     </td>

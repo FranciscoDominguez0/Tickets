@@ -94,6 +94,13 @@ if ($_POST && $error === '') {
                 $stmtMark->execute();
             }
 
+            // Invalidar cualquier otro token pendiente para el mismo agente
+            $stmtInvalidate = $mysqli->prepare("UPDATE staff_password_resets SET used_at = NOW() WHERE staff_id = ? AND used_at IS NULL");
+            if ($stmtInvalidate) {
+                $stmtInvalidate->bind_param('i', $sid);
+                $stmtInvalidate->execute();
+            }
+
             $_SESSION['flash_success'] = 'Contraseña actualizada. Ya puedes iniciar sesión.';
             $_SESSION['flash_username'] = (string)($resetRow['username'] ?? '');
             header('Location: scp/login.php');

@@ -48,6 +48,14 @@ if ($_POST) {
                 $u = $stmt->get_result()->fetch_assoc();
 
                 if ($u) {
+                    // Invalidar tokens pendientes anteriores (dejar un solo enlace activo)
+                    $stmtInv = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
+                    if ($stmtInv) {
+                        $uid = (int) $u['id'];
+                        $stmtInv->bind_param('i', $uid);
+                        $stmtInv->execute();
+                    }
+
                     $token = bin2hex(random_bytes(32));
                     $tokenHash = hash('sha256', $token);
                     $expiresAt = date('Y-m-d H:i:s', time() + 3600);
@@ -155,10 +163,10 @@ $bodyStyle = $loginBg !== ''
                 <div class="login-panel-left">
                     <form method="post" class="login-form">
                         <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo $error; ?></div>
+                            <div class="alert alert-danger"><?php echo html($error); ?></div>
                         <?php endif; ?>
                         <?php if ($success): ?>
-                            <div class="alert alert-success"><?php echo $success; ?></div>
+                            <div class="alert alert-success"><?php echo html($success); ?></div>
                         <?php endif; ?>
 
                         <div class="form-group">

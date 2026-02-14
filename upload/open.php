@@ -309,7 +309,8 @@ if ($_POST) {
                     'INSERT INTO thread_entries (thread_id, user_id, body, created)
                      VALUES (?, ?, ?, NOW())'
                 );
-                $stmt3->bind_param('iis', $thread_id, $_SESSION['user_id'], $body);
+                $uidEntry = (int)($_SESSION['user_id'] ?? 0);
+                $stmt3->bind_param('iis', $thread_id, $uidEntry, $body);
                 $stmt3->execute();
                 $entry_id = (int) $mysqli->insert_id;
 
@@ -469,7 +470,8 @@ if ($_POST) {
                     }, 2000);
                 </script>';
             } else {
-                $error = 'Error al crear el ticket: ' . $mysqli->error;
+                error_log('[tickets] open.php insert failed: ' . (string)$mysqli->error);
+                $error = 'Error al crear el ticket. Intenta nuevamente.';
             }
         }
     }
@@ -684,7 +686,6 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             margin-bottom: 14px;
         }
         .attach-zone:hover { border-color: #94a3b8; }
-        .attach-zone input[type="file"] { display: none; }
         .attach-text { color: #64748b; font-size: 0.95rem; }
         .attach-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
         .attach-item {
@@ -782,11 +783,11 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     </div>
 
             <?php if ($error): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
+                <div class="alert alert-danger"><?php echo html($error); ?></div>
             <?php endif; ?>
 
             <?php if ($success): ?>
-                <div class="alert alert-success"><?php echo $success; ?></div>
+                <div class="alert alert-success"><?php echo html($success); ?></div>
             <?php endif; ?>
 
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">

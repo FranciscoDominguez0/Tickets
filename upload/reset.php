@@ -78,6 +78,13 @@ if ($_POST && $error === '') {
                 $stmtMark->execute();
             }
 
+            // Invalidar cualquier otro token pendiente para el mismo usuario
+            $stmtInvalidate = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
+            if ($stmtInvalidate) {
+                $stmtInvalidate->bind_param('i', $uid);
+                $stmtInvalidate->execute();
+            }
+
             $_SESSION['login_failed_attempts'] = 0;
             $_SESSION['flash_success'] = 'Contraseña actualizada. Ya puedes iniciar sesión.';
             $_SESSION['flash_email'] = (string)($resetRow['email'] ?? '');
@@ -130,10 +137,10 @@ $bodyStyle = $loginBg !== ''
                 <div class="login-panel-left">
                     <form method="post" class="login-form">
                         <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo $error; ?></div>
+                            <div class="alert alert-danger"><?php echo html($error); ?></div>
                         <?php endif; ?>
                         <?php if ($success): ?>
-                            <div class="alert alert-success"><?php echo $success; ?></div>
+                            <div class="alert alert-success"><?php echo html($success); ?></div>
                         <?php endif; ?>
 
                         <?php if (!$success && $error === ''): ?>

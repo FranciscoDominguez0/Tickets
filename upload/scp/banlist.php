@@ -13,6 +13,13 @@ $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'banlist';
 
+$roleName = getCurrentStaffRoleName();
+$canManageBanlist = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('user.edit');
+if (!$canManageBanlist) {
+    http_response_code(403);
+    exit('No autorizado');
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -193,9 +200,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'enable' || $action === 'disable') {
             $val = ($action === 'enable') ? 1 : 0;
-            $stmt = $mysqli->prepare("UPDATE banlist SET is_active = $val WHERE id IN ($placeholders)");
+            $stmt = $mysqli->prepare("UPDATE banlist SET is_active = ? WHERE id IN ($placeholders)");
             if ($stmt) {
-                $stmt->bind_param($types, ...$ids);
+                $stmt->bind_param('i' . $types, $val, ...$ids);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Lista actualizada.';
 

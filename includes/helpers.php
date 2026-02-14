@@ -29,6 +29,35 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'cliente' && isset($_SESSION['user_id'])) {
+        if (!empty($_SESSION['session_fp'])) {
+            $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+            $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $ipPrefix = '';
+            if ($ip !== '') {
+                if (strpos($ip, ':') !== false) {
+                    $parts = explode(':', $ip);
+                    $ipPrefix = strtolower(implode(':', array_slice($parts, 0, 4)));
+                } else {
+                    $parts = explode('.', $ip);
+                    $ipPrefix = implode('.', array_slice($parts, 0, 3));
+                }
+            }
+            $fpNow = hash('sha256', 'cliente|' . $ua . '|' . $ipPrefix);
+            if (!hash_equals((string)$_SESSION['session_fp'], $fpNow)) {
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                if (strpos($currentPath, '/upload/') !== false) {
+                    header('Location: login.php?msg=timeout');
+                } else {
+                    header('Location: upload/login.php?msg=timeout');
+                }
+                exit;
+            }
+        }
+
         $timeoutMin = (int)getAppSetting('users.session_timeout_minutes', '30');
         if (!isset($_SESSION['user_last_activity']) || (int)($_SESSION['user_last_activity'] ?? 0) <= 0) {
             $_SESSION['user_last_activity'] = time();
@@ -64,6 +93,35 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'agente' && isset($_SESSION['staff_id'])) {
+        if (!empty($_SESSION['session_fp'])) {
+            $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+            $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $ipPrefix = '';
+            if ($ip !== '') {
+                if (strpos($ip, ':') !== false) {
+                    $parts = explode(':', $ip);
+                    $ipPrefix = strtolower(implode(':', array_slice($parts, 0, 4)));
+                } else {
+                    $parts = explode('.', $ip);
+                    $ipPrefix = implode('.', array_slice($parts, 0, 3));
+                }
+            }
+            $fpNow = hash('sha256', 'agente|' . $ua . '|' . $ipPrefix);
+            if (!hash_equals((string)$_SESSION['session_fp'], $fpNow)) {
+                $_SESSION = [];
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    session_destroy();
+                }
+                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                if (strpos($currentPath, '/upload/scp/') !== false) {
+                    header('Location: login.php?msg=timeout');
+                } else {
+                    header('Location: ../upload/scp/login.php?msg=timeout');
+                }
+                exit;
+            }
+        }
+
         $timeoutMin = (int)getAppSetting('agents.session_timeout_minutes', '30');
         if (!isset($_SESSION['staff_last_activity']) || (int)($_SESSION['staff_last_activity'] ?? 0) <= 0) {
             $_SESSION['staff_last_activity'] = time();

@@ -47,7 +47,8 @@ if ($_POST) {
                 $userData['company'] = $company;
                 $userData['phone'] = $phone;
             } else {
-                $error = 'Error al actualizar: ' . $mysqli->error;
+                error_log('[profile] update failed: ' . (string)$mysqli->error);
+                $error = 'Error al actualizar. Intenta nuevamente.';
             }
         }
     }
@@ -359,11 +360,11 @@ if ($_POST) {
 
                 <div class="content-card">
                     <?php if ($error): ?>
-                        <div class="alert alert-danger"><?php echo $error; ?></div>
+                        <div class="alert alert-danger"><?php echo html($error); ?></div>
                     <?php endif; ?>
 
                     <?php if ($success): ?>
-                        <div class="alert alert-success" id="profileSuccess"><?php echo $success; ?></div>
+                        <div class="alert alert-success"><?php echo html($success); ?></div>
                     <?php endif; ?>
 
                     <div class="section-title">

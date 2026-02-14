@@ -2,6 +2,22 @@
 // Módulo: Tareas
 // Similar a osTicket tasks.php pero adaptado al sistema
 
+if (!isset($_SESSION['staff_id'])) {
+    http_response_code(401);
+    echo 'No autorizado';
+    exit;
+}
+
+$roleName = getCurrentStaffRoleName();
+$canTasks = in_array($roleName, ['admin', 'supervisor'], true)
+    || roleHasAnyPermissionPrefix('task.')
+    || roleHasAnyPermissionPrefix('tasks.');
+if (!$canTasks) {
+    http_response_code(403);
+    echo 'No autorizado';
+    exit;
+}
+
 $task = null;
 $errors = [];
 $success = false;
@@ -105,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 }
 
                 if (!$tasksHasDept) {
-                    $errors[] = "Falta configurar el departamento en tareas. Ejecuta: ALTER TABLE tasks ADD dept_id INT NOT NULL AFTER created_by; ALTER TABLE tasks ADD CONSTRAINT fk_tasks_dept FOREIGN KEY (dept_id) REFERENCES departments(id);";
+                    $errors[] = 'Falta configurar la columna de departamento en tareas. Contacta al administrador.';
                 } else {
                     if ($dept_id <= 0) {
                         $errors[] = 'El departamento es obligatorio.';
@@ -183,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                         if (!$mailOk) {
                                             $err = (string)(Mailer::$lastError ?? 'Error desconocido');
                                             addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
-                                            $errors[] = 'No se pudo enviar el correo al agente asignado. ' . $err;
+                                            $errors[] = 'No se pudo enviar el correo al agente asignado.';
                                             $mailProblem = true;
                                         }
                                     } else {
@@ -258,7 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 }
 
                 if (!$tasksHasDept) {
-                    $errors[] = "Falta configurar el departamento en tareas. Ejecuta: ALTER TABLE tasks ADD dept_id INT NOT NULL AFTER created_by; ALTER TABLE tasks ADD CONSTRAINT fk_tasks_dept FOREIGN KEY (dept_id) REFERENCES departments(id);";
+                    $errors[] = 'Falta configurar la columna de departamento en tareas. Contacta al administrador.';
                 } else {
                     if ($dept_id <= 0) {
                         $errors[] = 'El departamento es obligatorio.';
@@ -337,7 +353,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                         if (!$mailOk) {
                                             $err = (string)(Mailer::$lastError ?? 'Error desconocido');
                                             addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
-                                            $errors[] = 'No se pudo enviar el correo al agente asignado. ' . $err;
+                                            $errors[] = 'No se pudo enviar el correo al agente asignado.';
                                             $mailProblem = true;
                                         }
                                     } else {

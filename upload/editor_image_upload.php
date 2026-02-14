@@ -5,6 +5,7 @@ require_once '../includes/helpers.php';
 requireLogin('cliente');
 
 header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -31,6 +32,12 @@ if (($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
     exit;
 }
 
+if (empty($f['tmp_name']) || !is_string($f['tmp_name']) || !is_uploaded_file($f['tmp_name'])) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Invalid upload']);
+    exit;
+}
+
 $maxSize = 5 * 1024 * 1024; // 5MB
 $size = (int)($f['size'] ?? 0);
 if ($size <= 0 || $size > $maxSize) {
@@ -39,37 +46,39 @@ if ($size <= 0 || $size > $maxSize) {
     exit;
 }
 
-$orig = (string)($f['name'] ?? 'image');
-$ext = strtolower((string)(pathinfo($orig, PATHINFO_EXTENSION) ?: ''));
-$allowed = ['jpg','jpeg','png','gif','webp'];
-if ($ext === '' || !in_array($ext, $allowed, true)) {
-    http_response_code(400);
-    echo json_encode(['ok' => false, 'error' => 'Invalid file type']);
-    exit;
-}
-
-$mime = (string)($f['type'] ?? '');
-if (function_exists('finfo_open') && !empty($f['tmp_name'])) {
+$mime = '';
+if (function_exists('finfo_open')) {
     $fi = @finfo_open(FILEINFO_MIME_TYPE);
     if ($fi) {
         $detected = @finfo_file($fi, $f['tmp_name']);
         @finfo_close($fi);
-        if (is_string($detected) && $detected !== '') $mime = $detected;
+        if (is_string($detected) && $detected !== '') {
+            $mime = $detected;
+        }
     }
 }
 
-$allowedMime = [
-    'jpg' => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'png' => 'image/png',
-    'gif' => 'image/gif',
-    'webp' => 'image/webp',
+$allowedMimeToExt = [
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+    'image/webp' => 'webp',
 ];
-if (!empty($mime) && isset($allowedMime[$ext]) && stripos($mime, 'image/') !== 0) {
+
+if ($mime === '' || !isset($allowedMimeToExt[$mime])) {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'Invalid MIME type']);
     exit;
 }
+
+// Validar que sea una imagen real
+if (@getimagesize($f['tmp_name']) === false) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => 'Invalid image']);
+    exit;
+}
+
+$ext = $allowedMimeToExt[$mime];
 
 $dir = __DIR__ . '/uploads/inline-images';
 if (!is_dir($dir)) {

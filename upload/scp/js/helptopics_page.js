@@ -133,6 +133,9 @@
       form.method = 'post';
       form.action = 'helptopics.php';
 
+      var csrfEl = document.querySelector('input[name="csrf_token"]');
+      var csrfToken = csrfEl ? csrfEl.value : '';
+
       function addHidden(name, value) {
         var input = document.createElement('input');
         input.type = 'hidden';
@@ -143,6 +146,10 @@
 
       addHidden('do', 'mass_process');
       addHidden('a', action);
+
+      if (csrfToken) {
+        addHidden('csrf_token', csrfToken);
+      }
 
       (ids || []).forEach(function (id) {
         addHidden('ids[]', id);

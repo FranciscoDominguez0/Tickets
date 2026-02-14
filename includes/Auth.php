@@ -6,6 +6,24 @@
 
 class Auth {
     public static $lastError = '';
+
+    private static function sessionIpPrefix($ip) {
+        $ip = (string)$ip;
+        if ($ip === '') return '';
+        if (strpos($ip, ':') !== false) {
+            $parts = explode(':', $ip);
+            return strtolower(implode(':', array_slice($parts, 0, 4)));
+        }
+        $parts = explode('.', $ip);
+        return implode('.', array_slice($parts, 0, 3));
+    }
+
+    private static function sessionFingerprint($userType) {
+        $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ipPrefix = self::sessionIpPrefix($ip);
+        return hash('sha256', (string)$userType . '|' . $ua . '|' . $ipPrefix);
+    }
     /**
      * Hash de contraseña con bcrypt
      */
@@ -128,11 +146,15 @@ class Auth {
         $update->execute();
 
         // Crear sesión
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            @session_regenerate_id(true);
+        }
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_type'] = 'cliente';
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_name'] = $user['firstname'] . ' ' . $user['lastname'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['session_fp'] = self::sessionFingerprint('cliente');
 
         return $user;
     }
@@ -263,11 +285,15 @@ class Auth {
         $update->execute();
 
         // Crear sesión
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            @session_regenerate_id(true);
+        }
         $_SESSION['staff_id'] = $staff['id'];
         $_SESSION['user_type'] = 'agente';
         $_SESSION['staff_email'] = $staff['email'];
         $_SESSION['staff_name'] = $staff['firstname'] . ' ' . $staff['lastname'];
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['session_fp'] = self::sessionFingerprint('agente');
 
         return $staff;
     }
@@ -285,7 +311,17 @@ class Auth {
      * Logout
      */
     public static function logout() {
-        session_destroy();
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params['path'] ?? '/',
+                $params['domain'] ?? '',
+                (bool)($params['secure'] ?? false),
+                (bool)($params['httponly'] ?? true)
+            );
+            session_destroy();
+        }
         header('Location: login.php');
         exit;
     }

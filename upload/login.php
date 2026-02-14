@@ -130,11 +130,11 @@ $bodyStyle = $loginBg !== ''
                             <div class="alert alert-warning"><?php echo html($offlineNotice); ?></div>
                         <?php endif; ?>
                         <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo $error; ?></div>
+                            <div class="alert alert-danger"><?php echo html($error); ?></div>
                         <?php endif; ?>
 
                         <?php if ($success): ?>
-                            <div class="alert alert-success"><?php echo $success; ?></div>
+                            <div class="alert alert-success"><?php echo html($success); ?></div>
                         <?php endif; ?>
 
                         <!-- Email -->

@@ -12,6 +12,12 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'helptopics';
 
+$roleName = getCurrentStaffRoleName();
+if (!in_array($roleName, ['admin', 'supervisor'], true)) {
+    http_response_code(403);
+    exit('No autorizado');
+}
+
 // Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
 $collapseSidebarMenu = false;
 $menuKey = 'agent_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
@@ -39,6 +45,11 @@ if (!empty($_SESSION['flash_error'])) {
 
 // Procesamiento de acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRF()) {
+        $_SESSION['flash_error'] = 'Token CSRF inválido.';
+        header('Location: helptopics.php');
+        exit;
+    }
     $action = $_POST['do'] ?? '';
     
     switch ($action) {
@@ -261,6 +272,7 @@ ob_start();
                 <!-- Formulario de acciones masivas -->
                 <form method="post" action="helptopics.php" id="massActionForm">
                     <input type="hidden" name="do" value="mass_process">
+                    <?php csrfField(); ?>
                     
                     <!-- Tabla de temas -->
                     <div class="table-responsive">

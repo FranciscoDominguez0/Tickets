@@ -2,6 +2,22 @@
 // Módulo: Directorio de usuarios (end users / clientes)
 // Lista con búsqueda, ordenación, selección y paginación
 
+if (!isset($_SESSION['staff_id'])) {
+    http_response_code(401);
+    echo 'No autorizado';
+    exit;
+}
+
+$roleName = getCurrentStaffRoleName();
+$canUsers = in_array($roleName, ['admin', 'supervisor'], true)
+    || roleHasAnyPermissionPrefix('user.')
+    || roleHasAnyPermissionPrefix('users.');
+if (!$canUsers) {
+    http_response_code(403);
+    echo 'No autorizado';
+    exit;
+}
+
 $usersHasPhone = false;
 $chkPhone = $mysqli->query("SHOW COLUMNS FROM users LIKE 'phone'");
 if ($chkPhone && $chkPhone->num_rows > 0) {
@@ -406,6 +422,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $stmtU->execute();
             $u = $stmtU->get_result()->fetch_assoc();
             if ($u) {
+                // Invalidar tokens pendientes anteriores (dejar un solo enlace activo)
+                $stmtInv = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
+                if ($stmtInv) {
+                    $uid = (int)($u['id'] ?? 0);
+                    $stmtInv->bind_param('i', $uid);
+                    $stmtInv->execute();
+                }
+
                 $token = bin2hex(random_bytes(32));
                 $tokenHash = hash('sha256', $token);
                 $expiresAt = date('Y-m-d H:i:s', time() + 3600);
@@ -462,14 +486,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
 // AJAX: buscar organizaciones
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
+    header('Content-Type: application/json; charset=UTF-8');
+    header('X-Content-Type-Options: nosniff');
+
     $query = trim($_GET['q']);
     $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE name LIKE ? ORDER BY name LIMIT 10");
     $like = '%' . $query . '%';
     $stmt->bind_param('s', $like);
     $stmt->execute();
     $results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    header('Content-Type: application/json');
-    echo json_encode($results);
+    echo json_encode($results, JSON_UNESCAPED_UNICODE);
     exit;
 }
 

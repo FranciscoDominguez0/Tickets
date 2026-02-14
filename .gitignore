@@ -1,0 +1,29 @@
+# Secrets / config
+config.php
+
+# Local env files
+.env
+.env.*
+
+# OS / IDE
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# PHP / composer
+vendor/
+composer.lock
+
+# Uploads (user-generated)
+publico/uploads/
+upload/uploads/
+
+# Allow security hardening files inside ignored uploads
+!publico/uploads/**/.htaccess
+!upload/uploads/**/.htaccess
+
+# Logs / cache
+*.log
+cache/
+tmp/

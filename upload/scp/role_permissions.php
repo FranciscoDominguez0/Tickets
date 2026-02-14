@@ -94,7 +94,12 @@ if (!$roleRow) {
 }
 
 if (isset($mysqli) && $mysqli) {
-    $mysqli->query("DELETE FROM role_permissions WHERE perm_key LIKE 'kb.%'");
+    $stmtDelKb = $mysqli->prepare('DELETE FROM role_permissions WHERE perm_key LIKE ?');
+    if ($stmtDelKb) {
+        $like = 'kb.%';
+        $stmtDelKb->bind_param('s', $like);
+        $stmtDelKb->execute();
+    }
 }
 
 $permissionGroups = [

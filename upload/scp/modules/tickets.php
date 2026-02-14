@@ -24,9 +24,16 @@ $ensureTicketLinksTable = function () use ($mysqli) {
 
 // Departamento "General" (fallback). Si no existe, se usará 0 y se omite la excepción.
 $generalDeptId = 0;
-$rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
-if ($rgd && ($row = $rgd->fetch_assoc())) {
-    $generalDeptId = (int) ($row['id'] ?? 0);
+$stmtGd = $mysqli->prepare("SELECT id FROM departments WHERE LOWER(name) LIKE ? LIMIT 1");
+if ($stmtGd) {
+    $likeGeneral = '%general%';
+    $stmtGd->bind_param('s', $likeGeneral);
+    if ($stmtGd->execute()) {
+        $rgd = $stmtGd->get_result();
+        if ($rgd && ($row = $rgd->fetch_assoc())) {
+            $generalDeptId = (int) ($row['id'] ?? 0);
+        }
+    }
 }
 
 // AJAX: búsqueda de usuarios (para cambiar propietario sin listar todos)
@@ -466,7 +473,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
-                    $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($new_tid, NOW())");
+                    $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+                    if ($stmtThread) {
+                        $stmtThread->bind_param('i', $new_tid);
+                        $stmtThread->execute();
+                    }
                     $thread_id = (int) $mysqli->insert_id;
                     if ($body !== '') {
                         $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
@@ -541,8 +552,14 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
     if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
     $open_staff = [];
-    $r = $mysqli->query("SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
-    if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
+    $stmtStaff = $mysqli->prepare('SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname');
+    if ($stmtStaff) {
+        $stmtStaff->bind_param('i', $generalDeptId);
+        if ($stmtStaff->execute()) {
+            $r = $stmtStaff->get_result();
+            if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
+        }
+    }
 
     // Temas (opcional)
     $open_hasTopics = false;
@@ -640,7 +657,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $stmt->execute();
         $threadRow = $stmt->get_result()->fetch_assoc();
         if (!$threadRow) {
-            $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($tid, NOW())");
+            $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+            if ($stmtThread) {
+                $stmtThread->bind_param('i', $tid);
+                $stmtThread->execute();
+            }
             $threadRow = ['id' => $mysqli->insert_id];
         }
         $thread_id = (int) $threadRow['id'];
@@ -840,9 +861,19 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 }
             } elseif ($action === 'mark_answered') {
                 requireRolePermission('ticket.markanswered', 'tickets.php?id=' . $tid);
-                $stmt = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%resuelto%' OR LOWER(name) LIKE '%contestado%' LIMIT 1");
                 $resolved_id = 4;
-                if ($stmt && $row = $stmt->fetch_assoc()) $resolved_id = (int) $row['id'];
+                $stmt = $mysqli->prepare("SELECT id FROM ticket_status WHERE LOWER(name) LIKE ? OR LOWER(name) LIKE ? LIMIT 1");
+                if ($stmt) {
+                    $like1 = '%resuelto%';
+                    $like2 = '%contestado%';
+                    $stmt->bind_param('ss', $like1, $like2);
+                    if ($stmt->execute()) {
+                        $row = $stmt->get_result()->fetch_assoc();
+                        if ($row) {
+                            $resolved_id = (int) ($row['id'] ?? 4);
+                        }
+                    }
+                }
                 $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
                 $stmt->bind_param('ii', $resolved_id, $tid);
                 $ok = $stmt->execute();
@@ -985,8 +1016,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $targetThreadRow = $stmtT->get_result()->fetch_assoc();
                     $target_thread_id = (int)($targetThreadRow['id'] ?? 0);
                     if ($target_thread_id <= 0) {
-                        $mysqli->query("INSERT INTO threads (ticket_id, created) VALUES ($target_id, NOW())");
-                        $target_thread_id = (int)$mysqli->insert_id;
+                        $stmtNewTh = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+                        if ($stmtNewTh) {
+                            $stmtNewTh->bind_param('i', $target_id);
+                            $stmtNewTh->execute();
+                            $target_thread_id = (int)$mysqli->insert_id;
+                        }
                     }
 
                     // Copiar entradas del thread origen al thread destino (sin borrar las originales)
@@ -998,9 +1033,16 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
 
                     // Cerrar este ticket
-                    $closed = $mysqli->query("SELECT id FROM ticket_status WHERE LOWER(name) LIKE '%cerrado%' LIMIT 1");
                     $closed_id = 5;
-                    if ($closed && $r = $closed->fetch_assoc()) $closed_id = (int)$r['id'];
+                    $stmtClosed = $mysqli->prepare('SELECT id FROM ticket_status WHERE LOWER(name) LIKE ? LIMIT 1');
+                    if ($stmtClosed) {
+                        $likeClosed = '%cerrado%';
+                        $stmtClosed->bind_param('s', $likeClosed);
+                        if ($stmtClosed->execute()) {
+                            $r = $stmtClosed->get_result()->fetch_assoc();
+                            if ($r) $closed_id = (int)($r['id'] ?? 5);
+                        }
+                    }
                     $stmtUp = $mysqli->prepare('UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?');
                     $stmtUp->bind_param('ii', $closed_id, $tid);
                     $stmtUp->execute();
@@ -1238,7 +1280,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $stmtU->bind_param('ii', $new_status_id, $tid);
                         $stmtU->execute();
                         if (!$is_internal && $ticketView['staff_id'] === null) {
-                            $mysqli->query("UPDATE tickets SET staff_id = $staff_id WHERE id = $tid");
+                            $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ?');
+                            if ($stmtAssign) {
+                                $stmtAssign->bind_param('ii', $staff_id, $tid);
+                                $stmtAssign->execute();
+                            }
                         }
                         // Adjuntos: guardar archivos y registrar en BD
                         $uploadDir = dirname(__DIR__, 3) . '/uploads/attachments';

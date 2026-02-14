@@ -81,7 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $stmt->bind_param('iis', $thread_id, $uid, $body);
             if ($stmt->execute()) {
                 $entry_id = (int) $mysqli->insert_id;
-                $mysqli->query('UPDATE tickets SET updated = NOW() WHERE id = ' . (int) $tid);
+                $stmtUpdTicket = $mysqli->prepare('UPDATE tickets SET updated = NOW() WHERE id = ?');
+                if ($stmtUpdTicket) {
+                    $stmtUpdTicket->bind_param('i', $tid);
+                    $stmtUpdTicket->execute();
+                }
 
                 // Adjuntos: guardar archivos y registrar en BD
                 $uploadDir = __DIR__ . '/uploads/attachments';
