@@ -9,10 +9,20 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 $roleName = getCurrentStaffRoleName();
-$canUsers = in_array($roleName, ['admin', 'supervisor'], true)
+$canViewUsers = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
     || roleHasAnyPermissionPrefix('user.')
     || roleHasAnyPermissionPrefix('users.');
-if (!$canUsers) {
+$canManageUsers = in_array($roleName, ['admin', 'supervisor'], true)
+    || roleHasAnyPermissionPrefix('user.')
+    || roleHasAnyPermissionPrefix('users.');
+
+if (!$canViewUsers) {
+    http_response_code(403);
+    echo 'No autorizado';
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     http_response_code(403);
     echo 'No autorizado';
     exit;

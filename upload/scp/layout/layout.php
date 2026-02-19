@@ -120,7 +120,10 @@ if (!isset($_SESSION[$menuKey])) {
                     </ul>
                 </div>
 
-                <a href="settings.php?t=pages" class="btn btn-outline-light btn-sm">Panel Administrador</a>
+                <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
+                <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
+                    <a href="settings.php?t=pages" class="btn btn-outline-light btn-sm">Panel Administrador</a>
+                <?php endif; ?>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
             </div>
         </div>
