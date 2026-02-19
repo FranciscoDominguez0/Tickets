@@ -25,6 +25,48 @@ if ($_POST) {
         $hasFiles = !empty($_FILES['attachments']['name'][0]);
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
+        $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
+        if ($ticketMaxFileMb < 1) $ticketMaxFileMb = 1;
+        if ($ticketMaxFileMb > 256) $ticketMaxFileMb = 256;
+        $ticketMaxUploads = (int)getAppSetting('tickets.ticket_max_uploads', '5');
+        if ($ticketMaxUploads < 0) $ticketMaxUploads = 0;
+        if ($ticketMaxUploads > 20) $ticketMaxUploads = 20;
+        $maxSize = $ticketMaxFileMb * 1024 * 1024;
+
+        if ($error === '' && !empty($_FILES['attachments']) && isset($_FILES['attachments']['name'])) {
+            $files = $_FILES['attachments'];
+            if (!is_array($files['name'])) {
+                $files = ['name' => [$files['name']], 'type' => [$files['type']], 'tmp_name' => [$files['tmp_name']], 'error' => [$files['error']], 'size' => [$files['size']]];
+            }
+
+            $validCount = 0;
+            $n = is_array($files['name']) ? count($files['name']) : 0;
+            for ($i = 0; $i < $n; $i++) {
+                $err = $files['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+                if ($err === UPLOAD_ERR_NO_FILE) continue;
+                if ($err !== UPLOAD_ERR_OK) {
+                    $error = 'No se pudo subir uno de los adjuntos.';
+                    break;
+                }
+                $orig = trim((string)($files['name'][$i] ?? ''));
+                $size = (int)($files['size'][$i] ?? 0);
+                if ($orig === '' || $size <= 0) continue;
+                $validCount++;
+                if ($ticketMaxUploads === 0) {
+                    $error = 'No se permiten adjuntos.';
+                    break;
+                }
+                if ($validCount > $ticketMaxUploads) {
+                    $error = 'Máximo de ' . (string)$ticketMaxUploads . ' adjunto(s) por mensaje.';
+                    break;
+                }
+                if ($size > $maxSize) {
+                    $error = 'El adjunto "' . html($orig) . '" supera el tamaño máximo permitido (' . (string)$ticketMaxFileMb . ' MB).';
+                    break;
+                }
+            }
+        }
+
         $hasTopicsTable = false;
         $hasTopicCol = false;
         $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
@@ -385,7 +427,7 @@ if ($_POST) {
                     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'txt' => 'text/plain',
                 ];
-                $maxSize = 10 * 1024 * 1024; // 10 MB
+                $maxSize = $maxSize;
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $files = $_FILES['attachments'];
                     $n = is_array($files['name']) ? count($files['name']) : 1;
@@ -682,11 +724,12 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             border: 2px dashed #cbd5e1;
             background: #f8fafc;
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px;
             cursor: pointer;
             margin-bottom: 14px;
         }
         .attach-zone:hover { border-color: #94a3b8; }
+        .attach-zone input[type="file"] { display: none; }
         .attach-text { color: #64748b; font-size: 0.95rem; }
         .attach-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
         .attach-item {
@@ -794,7 +837,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
-                    <input type="text" class="form-control" id="subject" name="subject" required>
+                    <input type="text" class="form-control" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" required>
                 </div>
 
                 <?php if ($hasTopics): ?>
@@ -803,7 +846,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()" required>
                         <option value="">Seleccionar tema...</option>
                         <?php foreach ($topics as $topic): ?>
-                            <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>"><?php echo html($topic['name']); ?></option>
+                            <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>" <?php echo ((int)($topic['id'] ?? 0) === (int)($topic_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($topic['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -812,7 +855,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     <label for="dept_id" class="form-label">Departamento</label>
                     <select class="form-select" id="dept_id" name="dept_id" required>
                         <?php foreach ($departments as $dept): ?>
-                            <option value="<?php echo $dept['id']; ?>"><?php echo html($dept['name']); ?></option>
+                            <option value="<?php echo $dept['id']; ?>" <?php echo ((int)($dept['id'] ?? 0) === (int)($dept_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -820,7 +863,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="body" name="body" rows="8"></textarea>
+                    <textarea class="form-control" id="body" name="body" rows="8"><?php echo html($body ?? ''); ?></textarea>
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
@@ -857,25 +900,62 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             }
             
         (function () {
+            try {
+                var alerts = document.querySelectorAll('.alert');
+                if (alerts && alerts.length) {
+                    setTimeout(function () {
+                        alerts.forEach(function (a) {
+                            a.style.transition = 'opacity 200ms ease, max-height 220ms ease, margin 220ms ease, padding 220ms ease';
+                            a.style.opacity = '0';
+                            a.style.maxHeight = '0';
+                            a.style.margin = '0';
+                            a.style.paddingTop = '0';
+                            a.style.paddingBottom = '0';
+                            setTimeout(function () { try { a.remove(); } catch (e) {} }, 260);
+                        });
+                    }, 4500);
+                }
+            } catch (e) {}
+            try {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            } catch (e) {}
+
             var zone = document.getElementById('attach-zone');
             var input = document.getElementById('attachments');
             var list = document.getElementById('attach-list');
             var chooseLink = document.getElementById('attach-choose-link');
             if (!zone || !input || !list) return;
 
+            var picking = false;
+            try {
+                input.addEventListener('click', function (ev) { try { ev.stopPropagation(); } catch (e) {} });
+            } catch (e) {}
+
             var openPicker = function () {
+                if (picking) return;
+                picking = true;
+                try { input.value = ''; } catch (e) {}
                 try { input.click(); } catch (e) {}
+                setTimeout(function () { picking = false; }, 800);
             };
 
             zone.addEventListener('click', function (e) {
                 // Evitar que el click en botones internos (Quitar) dispare el picker
                 if (e.target && (e.target.closest && e.target.closest('button[data-remove-index]'))) return;
+                if (e.target === input) return;
                 openPicker();
             });
             chooseLink && chooseLink.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 openPicker();
+            });
+
+            input.addEventListener('change', function () {
+                picking = false;
+                updateList();
             });
 
             function humanSize(bytes) {

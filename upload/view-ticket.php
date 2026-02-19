@@ -47,6 +47,15 @@ $threadRow = $stmt->get_result()->fetch_assoc();
 $thread_id = (int)($threadRow['id'] ?? 0);
 
 $reply_error = '';
+$replyBodyPrefill = '';
+
+$replySessionKey = 'reply_form_' . (int)$tid;
+if (isset($_SESSION[$replySessionKey]) && is_array($_SESSION[$replySessionKey])) {
+    $reply_error = (string)($_SESSION[$replySessionKey]['error'] ?? '');
+    $replyBodyPrefill = (string)($_SESSION[$replySessionKey]['body'] ?? '');
+    unset($_SESSION[$replySessionKey]);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'reply') {
     if (!validateCSRF()) {
         $reply_error = 'Token de seguridad inválido';
@@ -54,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $reply_error = 'Este ticket está cerrado y no admite nuevas respuestas.';
     } else {
         $body = trim($_POST['body'] ?? '');
+        $replyBodyPrefill = $body;
         $hasFiles = false;
         if (!empty($_FILES['attachments']) && is_array($_FILES['attachments']) && isset($_FILES['attachments']['name'])) {
             $names = $_FILES['attachments']['name'];
@@ -66,7 +76,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             }
         }
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
-        if ($body === '') {
+
+        $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
+        if ($ticketMaxFileMb < 1) $ticketMaxFileMb = 1;
+        if ($ticketMaxFileMb > 256) $ticketMaxFileMb = 256;
+        $ticketMaxUploads = (int)getAppSetting('tickets.ticket_max_uploads', '5');
+        if ($ticketMaxUploads < 0) $ticketMaxUploads = 0;
+        if ($ticketMaxUploads > 20) $ticketMaxUploads = 20;
+        $maxSize = $ticketMaxFileMb * 1024 * 1024;
+
+        if ($reply_error === '' && !empty($_FILES['attachments']) && isset($_FILES['attachments']['name'])) {
+            $files = $_FILES['attachments'];
+            if (!is_array($files['name'])) {
+                $files = ['name' => [$files['name']], 'type' => [$files['type']], 'tmp_name' => [$files['tmp_name']], 'error' => [$files['error']], 'size' => [$files['size']]];
+            }
+            $validCount = 0;
+            $n = is_array($files['name']) ? count($files['name']) : 0;
+            for ($i = 0; $i < $n; $i++) {
+                $err = $files['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+                if ($err === UPLOAD_ERR_NO_FILE) continue;
+                if ($err !== UPLOAD_ERR_OK) {
+                    $reply_error = 'No se pudo subir uno de los adjuntos.';
+                    break;
+                }
+                $orig = trim((string)($files['name'][$i] ?? ''));
+                $size = (int)($files['size'][$i] ?? 0);
+                if ($orig === '' || $size <= 0) continue;
+                $validCount++;
+                if ($ticketMaxUploads === 0) {
+                    $reply_error = 'No se permiten adjuntos.';
+                    break;
+                }
+                if ($validCount > $ticketMaxUploads) {
+                    $reply_error = 'Máximo de ' . (string)$ticketMaxUploads . ' adjunto(s) por mensaje.';
+                    break;
+                }
+                if ($size > $maxSize) {
+                    $reply_error = 'El adjunto "' . html($orig) . '" supera el tamaño máximo permitido (' . (string)$ticketMaxFileMb . ' MB).';
+                    break;
+                }
+            }
+        }
+
+        if ($reply_error !== '') {
+            // No continuar: ya existe un error (ej. adjunto muy grande / demasiados adjuntos)
+        } elseif ($body === '') {
             $reply_error = 'El mensaje no puede estar vacío.';
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
             $reply_error = 'Debes escribir un mensaje para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
@@ -103,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'txt' => 'text/plain',
                 ];
-                $maxSize = 10 * 1024 * 1024; // 10 MB
+                $maxSize = $maxSize;
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $files = $_FILES['attachments'];
                     $n = is_array($files['name']) ? count($files['name']) : 1;
@@ -150,6 +204,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             }
             $reply_error = 'No se pudo enviar la respuesta.';
         }
+    }
+
+    if ($reply_error !== '') {
+        $_SESSION[$replySessionKey] = [
+            'error' => $reply_error,
+            'body' => $replyBodyPrefill,
+        ];
+        header('Location: view-ticket.php?id=' . (int)$tid);
+        exit;
     }
 }
 
@@ -656,14 +719,48 @@ function humanSize($bytes) {
                 <?php endif; ?>
             </div>
 
-            <div class="reply-card">
+            <div class="reply-card" id="reply-section">
                 <h5 class="mb-3">Escriba una respuesta</h5>
 
                 <?php if ($reply_error !== ''): ?>
-                    <div class="alert alert-danger mb-3"><?php echo html($reply_error); ?></div>
+                    <div class="alert alert-danger mb-3" id="reply-error-alert"><?php echo html($reply_error); ?></div>
+                    <script>
+                        (function () {
+                            try {
+                                var el = document.getElementById('reply-error-alert');
+                                if (!el) return;
+                                setTimeout(function () {
+                                    try {
+                                        var rect = el.getBoundingClientRect();
+                                        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+                                        var top = Math.max(0, Math.floor(y + rect.top - 120));
+                                        try { window.scrollTo({ top: top, behavior: 'smooth' }); }
+                                        catch (e2) { window.scrollTo(0, top); }
+                                    } catch (e3) {}
+                                }, 60);
+                            } catch (e1) {}
+                        })();
+                    </script>
                 <?php endif; ?>
                 <?php if (!empty($reply_success)): ?>
                     <div class="alert alert-success mb-3" id="reply-success-alert">Mensaje enviado correctamente.</div>
+                    <script>
+                        (function () {
+                            try {
+                                var el = document.getElementById('reply-success-alert');
+                                if (!el) return;
+                                setTimeout(function () {
+                                    try {
+                                        var rect = el.getBoundingClientRect();
+                                        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+                                        var top = Math.max(0, Math.floor(y + rect.top - 120));
+                                        try { window.scrollTo({ top: top, behavior: 'smooth' }); }
+                                        catch (e2) { window.scrollTo(0, top); }
+                                    } catch (e3) {}
+                                }, 60);
+                            } catch (e1) {}
+                        })();
+                    </script>
                 <?php endif; ?>
 
                 <?php if (!empty($t['closed'])): ?>
@@ -674,7 +771,7 @@ function humanSize($bytes) {
                         <input type="hidden" name="do" value="reply">
 
                         <div class="mb-3">
-                            <textarea name="body" id="reply_body" class="form-control" rows="6" placeholder="Para ayudarle mejor, sea específico y detallado"></textarea>
+                            <textarea name="body" id="reply_body" class="form-control" rows="6" placeholder="Para ayudarle mejor, sea específico y detallado"><?php echo html($replyBodyPrefill); ?></textarea>
                         </div>
 
                         <div class="attach-zone" id="attach-zone">
@@ -702,18 +799,33 @@ function humanSize($bytes) {
         var chooseLink = document.getElementById('attach-choose-link');
         if (!zone || !input || !list) return;
 
+        var picking = false;
+        try {
+            input.addEventListener('click', function (ev) { try { ev.stopPropagation(); } catch (e) {} });
+        } catch (e) {}
+
         var openPicker = function () {
+            if (picking) return;
+            picking = true;
+            try { input.value = ''; } catch (e) {}
             try { input.click(); } catch (e) {}
+            setTimeout(function () { picking = false; }, 800);
         };
 
         zone.addEventListener('click', function (e) {
             if (e.target && (e.target.closest && e.target.closest('button[data-remove-index]'))) return;
+            if (e.target === input) return;
             openPicker();
         });
         chooseLink && chooseLink.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
             openPicker();
+        });
+
+        input.addEventListener('change', function () {
+            picking = false;
+            updateList();
         });
 
         function humanSize(bytes) {
@@ -860,26 +972,6 @@ function humanSize($bytes) {
                 }, 2600);
             }
         } catch (e4) {}
-
-        try {
-            var saved = sessionStorage.getItem('ticket_reply_scroll');
-            if (saved !== null) {
-                sessionStorage.removeItem('ticket_reply_scroll');
-                var payload = null;
-                try { payload = JSON.parse(saved); } catch (e0) {}
-                if (payload && (payload.bottom || typeof payload.y === 'number')) {
-                    window.addEventListener('load', function () {
-                        requestAnimationFrame(function () {
-                            if (payload.bottom) {
-                                window.scrollTo(0, document.body.scrollHeight);
-                            } else {
-                                window.scrollTo(0, payload.y);
-                            }
-                        });
-                    });
-                }
-            }
-        } catch (e) {}
 
         var form = document.querySelector('.reply-card form');
         if (!form) return;
@@ -1158,24 +1250,6 @@ function humanSize($bytes) {
                 }
             } catch (e2) {}
         });
-
-        form.addEventListener('submit', function () {
-            try {
-                var y = window.scrollY || 0;
-                var bottomGap = document.body.scrollHeight - (window.innerHeight + y);
-                var atBottom = bottomGap < 80;
-                sessionStorage.setItem('ticket_reply_scroll', JSON.stringify({ y: y, bottom: atBottom }));
-            } catch (e) {}
-            try {
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    var label = submitBtn.querySelector('.btn-label');
-                    var loading = submitBtn.querySelector('.btn-loading');
-                    if (label) label.classList.add('d-none');
-                    if (loading) loading.classList.remove('d-none');
-                }
-            } catch (e2) {}
-        }, true);
     });
 </script>
 </body>
