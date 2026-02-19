@@ -453,19 +453,18 @@ body.agent-login::before {
    ============================================================================ */
 
 .agent-alert {
-    padding: 14px 18px;
+    padding: 14px 16px;
     border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
     margin-bottom: 20px;
-    border-left: 4px solid;
-    animation: slideIn 0.3s ease-out;
-    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    animation: slideIn 0.25s ease-out;
+    background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     box-shadow: 
         0 4px 12px rgba(0, 0, 0, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.95);
     width: 100%;
     max-width: 100%;
@@ -474,6 +473,11 @@ body.agent-login::before {
     word-break: break-word;
     hyphens: auto;
     white-space: pre-line;
+}
+
+.agent-alert::first-line {
+    font-size: 15px;
+    font-weight: 800;
 }
 
 .agent-alerts .agent-alert {
@@ -503,13 +507,15 @@ body.agent-login::before {
 }
 
 .agent-alert-danger {
-    color: #dc2626;
-    border-left-color: #dc2626;
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(127, 29, 29, 0.18);
 }
 
 .agent-alert-success {
-    color: #16a34a;
-    border-left-color: #16a34a;
+    color: rgba(187, 247, 208, 0.95);
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(20, 83, 45, 0.18);
 }
 
 /* ============================================================================
