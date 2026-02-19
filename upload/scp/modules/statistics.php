@@ -35,11 +35,25 @@ if ($startDate > $endDate) {
 $start = $startDate->format('Y-m-d');
 $end = $endDate->format('Y-m-d');
 
-$statusCerradoId = null;
-$stmt = $mysqli->prepare("SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1");
+function bindDynamicParams($stmt, string $types, array $params): bool {
+    $refs = [];
+    $refs[] = $types;
+    foreach ($params as $k => $v) {
+        $refs[] = &$params[$k];
+    }
+    return (bool)call_user_func_array([$stmt, 'bind_param'], $refs);
+}
+
+$resolvedStatusIds = [];
+$stmt = $mysqli->prepare("SELECT id, name FROM ticket_status WHERE name IN ('Cerrado','Resuelto')");
 if ($stmt && $stmt->execute()) {
-    $row = $stmt->get_result()->fetch_assoc();
-    if ($row) $statusCerradoId = (int)($row['id'] ?? 0);
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $id = (int)($row['id'] ?? 0);
+        if ($id > 0) {
+            $resolvedStatusIds[] = $id;
+        }
+    }
 }
 
 $totalCreated = 0;
@@ -52,16 +66,20 @@ if ($stmt) {
 }
 
 $totalResolved = 0;
-if ($statusCerradoId) {
-    $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE DATE(closed) BETWEEN ? AND ? AND status_id = ? AND closed IS NOT NULL');
+if (!empty($resolvedStatusIds)) {
+    $in = implode(',', array_fill(0, count($resolvedStatusIds), '?'));
+    $sql = 'SELECT COUNT(*) c FROM tickets WHERE DATE(created) BETWEEN ? AND ? AND status_id IN (' . $in . ')';
+    $stmt = $mysqli->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param('ssi', $start, $end, $statusCerradoId);
+        $types = 'ss' . str_repeat('i', count($resolvedStatusIds));
+        $params = array_merge([$start, $end], $resolvedStatusIds);
+        bindDynamicParams($stmt, $types, $params);
         if ($stmt->execute()) {
             $totalResolved = (int)(($stmt->get_result()->fetch_assoc()['c'] ?? 0));
         }
     }
 } else {
-    $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE DATE(closed) BETWEEN ? AND ? AND closed IS NOT NULL');
+    $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE DATE(created) BETWEEN ? AND ? AND closed IS NOT NULL');
     if ($stmt) {
         $stmt->bind_param('ss', $start, $end);
         if ($stmt->execute()) {
@@ -122,10 +140,18 @@ if ($stmt) {
     $stmt->bind_param('ss', $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
+        $agg = [];
         while ($row = $res->fetch_assoc()) {
+            $name = (string)($row['status_name'] ?? '');
+            if ($name === 'Resuelto') {
+                $name = 'Cerrado';
+            }
+            $agg[$name] = ($agg[$name] ?? 0) + (int)($row['total'] ?? 0);
+        }
+        foreach ($agg as $name => $total) {
             $byStatus[] = [
-                'name' => (string)($row['status_name'] ?? ''),
-                'total' => (int)($row['total'] ?? 0),
+                'name' => (string)$name,
+                'total' => (int)$total,
             ];
         }
     }
@@ -254,19 +280,21 @@ if ($stmt) {
 }
 
 $resolvedByMonth = [];
-if ($statusCerradoId) {
+if (!empty($resolvedStatusIds)) {
+    $in = implode(',', array_fill(0, count($resolvedStatusIds), '?'));
     $sqlResolvedMonth = "
-        SELECT DATE_FORMAT(closed, '%Y-%m') AS ym, COUNT(*) AS total
+        SELECT DATE_FORMAT(created, '%Y-%m') AS ym, COUNT(*) AS total
         FROM tickets
-        WHERE DATE(closed) BETWEEN ? AND ?
-        AND status_id = ?
-        AND closed IS NOT NULL
-        GROUP BY DATE_FORMAT(closed, '%Y-%m')
+        WHERE DATE(created) BETWEEN ? AND ?
+        AND status_id IN ($in)
+        GROUP BY DATE_FORMAT(created, '%Y-%m')
         ORDER BY ym
     ";
     $stmt = $mysqli->prepare($sqlResolvedMonth);
     if ($stmt) {
-        $stmt->bind_param('ssi', $start, $end, $statusCerradoId);
+        $types = 'ss' . str_repeat('i', count($resolvedStatusIds));
+        $params = array_merge([$start, $end], $resolvedStatusIds);
+        bindDynamicParams($stmt, $types, $params);
         if ($stmt->execute()) {
             $res = $stmt->get_result();
             while ($row = $res->fetch_assoc()) {
@@ -279,11 +307,11 @@ if ($statusCerradoId) {
     }
 } else {
     $sqlResolvedMonth = "
-        SELECT DATE_FORMAT(closed, '%Y-%m') AS ym, COUNT(*) AS total
+        SELECT DATE_FORMAT(created, '%Y-%m') AS ym, COUNT(*) AS total
         FROM tickets
-        WHERE DATE(closed) BETWEEN ? AND ?
+        WHERE DATE(created) BETWEEN ? AND ?
         AND closed IS NOT NULL
-        GROUP BY DATE_FORMAT(closed, '%Y-%m')
+        GROUP BY DATE_FORMAT(created, '%Y-%m')
         ORDER BY ym
     ";
     $stmt = $mysqli->prepare($sqlResolvedMonth);
