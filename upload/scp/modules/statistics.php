@@ -324,12 +324,34 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
 
 ?>
 
-<div class="container-fluid">
-    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
+<style>
+    .stats-page{padding-bottom:18px}
+    .stats-hero{border-radius:18px; padding:16px 16px; background:linear-gradient(135deg, rgba(37,99,235,.10), rgba(16,185,129,.08)); border:1px solid rgba(226,232,240,.9)}
+    .stats-hero h3{font-weight:900; letter-spacing:.01em}
+    .stats-hero .text-muted{color:#475569 !important; font-weight:650}
+    .stats-range{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.85); border:1px solid rgba(226,232,240,.9); font-weight:800; color:#0f172a; font-size:12px}
+
+    .stats-page .card{border-radius:18px; border:1px solid rgba(226,232,240,.9); box-shadow:0 12px 34px rgba(15,23,42,.08)}
+    .stats-page .card-body{padding:16px}
+
+    .stats-page h5{font-weight:900; letter-spacing:.01em}
+    .stats-page .form-label{font-weight:850; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#475569}
+    .stats-page .form-control{border-radius:12px; font-weight:700}
+    .stats-page .btn{border-radius:12px; font-weight:850}
+
+    .stats-kpi .text-muted{font-weight:650}
+    .stats-kpi .fs-3{font-weight:1000}
+
+    .stats-page .table thead th{font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#475569}
+</style>
+
+<div class="container-fluid stats-page">
+    <div class="stats-hero d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
         <div>
             <h3 class="mb-1">Estadísticas</h3>
             <div class="text-muted">Resumen y métricas de tickets según rango de fechas.</div>
         </div>
+        <span class="stats-range"><i class="bi bi-calendar3"></i> <?php echo html($start); ?> — <?php echo html($end); ?></span>
     </div>
 
     <div class="card mb-3">
@@ -354,7 +376,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
 
     <div class="row g-3 mb-3">
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
+            <div class="card stats-kpi">
                 <div class="card-body">
                     <div class="text-muted">Tickets creados</div>
                     <div class="fs-3 fw-bold"><?php echo (int)$totalCreated; ?></div>
@@ -363,7 +385,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
             </div>
         </div>
         <div class="col-12 col-md-6 col-xl-3">
-            <div class="card">
+            <div class="card stats-kpi">
                 <div class="card-body">
                     <div class="text-muted">Tickets resueltos</div>
                     <div class="fs-3 fw-bold"><?php echo (int)$totalResolved; ?></div>

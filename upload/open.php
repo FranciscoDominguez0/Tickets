@@ -504,6 +504,19 @@ if ($_POST) {
                         $mailSent = 1;
                     } else {
                         $mailError = Mailer::$lastError;
+                        addLog('admin_notify_email_failed', (string)$mailError, 'ticket', $ticket_id, 'staff', 0);
+                    }
+                } else {
+                    $reason = '';
+                    if (!$adminNotifyEnabled) {
+                        $reason = 'Notificación admin desactivada (mail.admin_notify_enabled=0)';
+                    } elseif ($adminEmail === '') {
+                        $reason = 'Email admin vacío (mail.admin_notify_email)';
+                    } elseif (!filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                        $reason = 'Email admin inválido (mail.admin_notify_email)';
+                    }
+                    if ($reason !== '') {
+                        addLog('admin_notify_email_skipped', $reason, 'ticket', $ticket_id, 'staff', 0);
                     }
                 }
                 $success = 'Ticket creado exitosamente! Número: ' . $ticket_number;
