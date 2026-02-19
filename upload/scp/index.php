@@ -21,6 +21,7 @@ $staff = getCurrentUser();
 $routes = [
     'dashboard' => 'dashboard.php',   // Panel de control
     'tickets'   => 'tickets.php',     // Solicitudes
+    'statistics'=> 'statistics.php',  // Estadísticas
     'users'     => 'users.php',       // Usuarios
     'tasks'     => 'tasks.php',       // Tareas
     'canned'    => 'canned.php',      // Base de conocimientos
