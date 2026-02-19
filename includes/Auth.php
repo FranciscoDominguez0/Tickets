@@ -99,7 +99,7 @@ class Auth {
         if ($isLocked) {
             $mins = (int)ceil($remainingSec / 60);
             if ($mins < 1) $mins = 1;
-            self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . $mins . ' minuto(s).';
+            self::$lastError = "Cuenta bloqueada.\nIntenta de nuevo en " . $mins . ' minuto(s).';
             if (function_exists('addLog')) {
                 addLog(
                     'user_login_locked',
@@ -139,7 +139,7 @@ class Auth {
                             $stmtLock->bind_param('iss', $lockoutMin, $email, $ip);
                             $stmtLock->execute();
                         }
-                        self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . (string)$lockoutMin . ' minuto(s).';
+                        self::$lastError = "Cuenta bloqueada.\nIntenta de nuevo en " . (string)$lockoutMin . ' minuto(s).';
                         if (function_exists('addLog')) {
                             addLog(
                                 'user_login_lockout',
@@ -262,7 +262,7 @@ class Auth {
         if ($isLocked) {
             $mins = (int)ceil($remainingSec / 60);
             if ($mins < 1) $mins = 1;
-            self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . $mins . ' minuto(s).';
+            self::$lastError = "Cuenta bloqueada.\nIntenta de nuevo en " . $mins . ' minuto(s).';
             if (function_exists('addLog')) {
                 addLog(
                     'staff_login_locked',

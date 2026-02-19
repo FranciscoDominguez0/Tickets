@@ -140,6 +140,7 @@ body.agent-login::before {
     max-width: 450px;
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-width: 0;
 }
 
 .agent-login-panel:hover {
@@ -205,6 +206,7 @@ body.agent-login::before {
     display: flex;
     flex-direction: column;
     gap: 30px;
+    min-width: 0;
 }
 
 .agent-form-group {
@@ -465,6 +467,28 @@ body.agent-login::before {
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.95);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+    white-space: pre-line;
+}
+
+.agent-alerts .agent-alert {
+    margin-bottom: 0;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.25;
+    max-height: 54px;
+    overflow: hidden;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    pointer-events: auto;
 }
 
 @keyframes slideIn {

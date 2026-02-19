@@ -17,7 +17,7 @@ if (!isset($_SESSION['csrf_token'])) {
 $helpdeskStatus = (string)getAppSetting('system.helpdesk_status', 'online');
 $offlineNotice = '';
 if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline') {
-    $offlineNotice = 'El sistema se encuentra en mantenimiento. Disculpe las molestias. Por favor intente nuevamente más tarde.';
+    $offlineNotice = 'Sistema en mantenimiento.';
 }
 
 // Si ya está logueado, redirigir
