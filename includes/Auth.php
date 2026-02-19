@@ -4,6 +4,10 @@
  * Maneja login, logout y verificación de contraseñas
  */
 
+if (!function_exists('addLog')) {
+    require_once __DIR__ . '/helpers.php';
+}
+
 class Auth {
     public static $lastError = '';
 
@@ -96,6 +100,16 @@ class Auth {
             $mins = (int)ceil($remainingSec / 60);
             if ($mins < 1) $mins = 1;
             self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . $mins . ' minuto(s).';
+            if (function_exists('addLog')) {
+                addLog(
+                    'user_login_locked',
+                    'Intento de login durante bloqueo para ' . (string)$email,
+                    'auth',
+                    null,
+                    'cliente',
+                    null
+                );
+            }
             return false;
         }
         
@@ -126,8 +140,28 @@ class Auth {
                             $stmtLock->execute();
                         }
                         self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . (string)$lockoutMin . ' minuto(s).';
+                        if (function_exists('addLog')) {
+                            addLog(
+                                'user_login_lockout',
+                                'Cuenta bloqueada por intentos fallidos para ' . (string)$email,
+                                'auth',
+                                null,
+                                'cliente',
+                                null
+                            );
+                        }
                     }
                 }
+            }
+            if (function_exists('addLog')) {
+                addLog(
+                    'user_login_failed',
+                    'Credenciales inválidas para ' . (string)$email,
+                    'auth',
+                    null,
+                    'cliente',
+                    null
+                );
             }
             return false;
         }
@@ -229,6 +263,16 @@ class Auth {
             $mins = (int)ceil($remainingSec / 60);
             if ($mins < 1) $mins = 1;
             self::$lastError = 'Cuenta bloqueada por intentos fallidos. Intenta de nuevo en ' . $mins . ' minuto(s).';
+            if (function_exists('addLog')) {
+                addLog(
+                    'staff_login_locked',
+                    'Intento de login durante bloqueo para ' . (string)$username,
+                    'auth',
+                    null,
+                    'staff',
+                    null
+                );
+            }
             return false;
         }
         
@@ -265,8 +309,30 @@ class Auth {
                             $stmtDeact->bind_param('s', $username);
                             $stmtDeact->execute();
                         }
+
+                        if (function_exists('addLog')) {
+                            addLog(
+                                'staff_login_lockout',
+                                'Cuenta bloqueada por intentos fallidos para ' . (string)$username,
+                                'auth',
+                                null,
+                                'staff',
+                                null
+                            );
+                        }
                     }
                 }
+            }
+
+            if (function_exists('addLog')) {
+                addLog(
+                    'staff_login_failed',
+                    'Credenciales inválidas para ' . (string)$username,
+                    'auth',
+                    null,
+                    'staff',
+                    null
+                );
             }
             return false;
         }

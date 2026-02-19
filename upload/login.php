@@ -50,7 +50,6 @@ if ($_POST) {
     $prefillEmail = $email;
 
     if ($helpdeskStatus === 'offline') {
-        $_SESSION['flash_error'] = 'El sistema está fuera de línea. Intente más tarde.';
         $_SESSION['flash_email'] = $prefillEmail;
         header('Location: login.php?msg=offline');
         exit;

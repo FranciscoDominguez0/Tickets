@@ -425,6 +425,7 @@ if ($_POST) {
 
                 // Notificar por correo solo al admin
                 $adminEmail = trim((string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : ''));
+                $adminNotifyEnabled = ((string)getAppSetting('mail.admin_notify_enabled', '1') === '1');
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
                 $clientEmail = $user['email'] ?? '';
                 $deptName = 'Soporte';
@@ -456,7 +457,7 @@ if ($_POST) {
                 $emailSubject = '[Nuevo ticket] ' . $ticket_number . ' - ' . $subject;
                 $mailSent = 0;
                 $mailError = '';
-                if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                if ($adminNotifyEnabled && $adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
                     if (Mailer::send($adminEmail, $emailSubject, $bodyHtml)) {
                         $mailSent = 1;
                     } else {

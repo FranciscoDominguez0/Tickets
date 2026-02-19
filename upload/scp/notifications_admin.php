@@ -45,6 +45,9 @@ if ($meRole !== 'admin') {
 $errors = [];
 $msg = '';
 
+$adminNotifyEmail = trim((string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : ''));
+$adminNotifyEnabled = ((string)getAppSetting('mail.admin_notify_enabled', '1') === '1');
+
 // Asegurar CSRF
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -55,6 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $errors[] = 'Token de seguridad inválido.';
     } else {
+        $adminNotifyEnabledNew = isset($_POST['admin_notify_enabled']) ? '1' : '0';
+        setAppSetting('mail.admin_notify_enabled', $adminNotifyEnabledNew);
+        $adminNotifyEnabled = ($adminNotifyEnabledNew === '1');
+
         $ticketArr = isset($_POST['email_ticket_assigned']) && is_array($_POST['email_ticket_assigned']) ? $_POST['email_ticket_assigned'] : [];
         $taskArr = isset($_POST['email_task_assigned']) && is_array($_POST['email_task_assigned']) ? $_POST['email_task_assigned'] : [];
 
@@ -67,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // También permitir que se apaguen todos (si no vienen, se apaga)
-        $resAll = $mysqli->query("SELECT id FROM staff WHERE is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
+        $resAll = $mysqli->query("SELECT id FROM staff WHERE is_active = 1 AND role IN ('agent','admin') ORDER BY firstname, lastname");
         if ($resAll) {
             while ($row = $resAll->fetch_assoc()) {
                 $sid = (int)($row['id'] ?? 0);
@@ -91,9 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Listar agentes
+// Listar agentes + administradores
 $agents = [];
-$res = $mysqli->query("SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
+$res = $mysqli->query("SELECT id, firstname, lastname, email, role FROM staff WHERE is_active = 1 AND role IN ('agent','admin') ORDER BY role DESC, firstname, lastname");
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $sid = (int)($row['id'] ?? 0);
@@ -101,6 +108,7 @@ if ($res) {
             'id' => $sid,
             'name' => trim((string)($row['firstname'] ?? '') . ' ' . (string)($row['lastname'] ?? '')),
             'email' => (string)($row['email'] ?? ''),
+            'role' => (string)($row['role'] ?? ''),
             'ticket' => ((string)getAppSetting('staff.' . $sid . '.email_ticket_assigned', '1') === '1'),
             'task' => ((string)getAppSetting('staff.' . $sid . '.email_task_assigned', '1') === '1'),
         ];
@@ -110,9 +118,22 @@ if ($res) {
 ob_start();
 ?>
 
-<div class="page-header">
-    <h1>Notificaciones</h1>
-    <p class="text-muted" style="margin:0;">Configura si cada agente recibe correos cuando se le asignen tickets o tareas. Las notificaciones dentro de la app siempre se enviarán.</p>
+<div class="settings-hero">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+            <span class="settings-hero-icon"><i class="bi bi-bell"></i></span>
+            <div>
+                <h1>Notificaciones</h1>
+                <p>Preferencias de correos para asignaciones y notificaciones admin</p>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-info"><?php echo (int)count($agents); ?> Staff</span>
+            <span class="badge <?php echo $adminNotifyEnabled ? 'bg-success' : 'bg-secondary'; ?>">
+                <?php echo $adminNotifyEnabled ? 'Admin email: ON' : 'Admin email: OFF'; ?>
+            </span>
+        </div>
+    </div>
 </div>
 
 <?php if (!empty($errors)): ?>
@@ -123,47 +144,77 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="card" style="border-radius: 14px;">
+<div class="card settings-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-sliders"></i> Preferencias</strong>
+    </div>
     <div class="card-body">
         <form method="post" action="notifications_admin.php">
             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
 
-            <div class="table-responsive">
-                <table class="table table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>Agente</th>
-                            <th>Correo</th>
-                            <th style="width: 220px;">Email ticket asignado</th>
-                            <th style="width: 220px;">Email tarea asignada</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($agents)): ?>
-                            <tr><td colspan="4" class="text-muted">No hay agentes.</td></tr>
-                        <?php endif; ?>
-                        <?php foreach ($agents as $a): ?>
-                            <tr>
-                                <td><strong><?php echo html($a['name'] !== '' ? $a['name'] : ('Agente #' . (int)$a['id'])); ?></strong></td>
-                                <td><?php echo html($a['email']); ?></td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?>>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?>>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="card" style="border-radius: 14px;">
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <div class="fw-semibold"><i class="bi bi-shield-lock me-1"></i> Email para notificaciones admin</div>
+                                    <div class="text-muted small"><?php echo html($adminNotifyEmail !== '' ? $adminNotifyEmail : 'No configurado'); ?></div>
+                                    <div class="form-text">Activa o desactiva el envío de correos al email configurado en Correos Electrónicos.</div>
+                                </div>
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" name="admin_notify_enabled" value="1" <?php echo $adminNotifyEnabled ? 'checked' : ''; ?>>
+                                    <label class="form-check-label">Habilitado</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Correo</th>
+                                    <th style="width: 220px;">Email ticket asignado</th>
+                                    <th style="width: 220px;">Email tarea asignada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($agents)): ?>
+                                    <tr><td colspan="4" class="text-center text-muted py-4">No hay registros.</td></tr>
+                                <?php endif; ?>
+                                <?php foreach ($agents as $a): ?>
+                                    <tr>
+                                        <td>
+                                            <strong><?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?></strong>
+                                            <?php if (($a['role'] ?? '') !== ''): ?>
+                                                <div class="text-muted small"><?php echo html((string)$a['role']); ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><?php echo html($a['email']); ?></td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?>>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?>>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary">Guardar</button>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
             </div>
         </form>
     </div>

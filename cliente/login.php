@@ -31,7 +31,7 @@ $success = '';
 
 if ($_POST) {
         if ($helpdeskStatus === 'offline') {
-            $error = 'El sistema está fuera de línea. Intente más tarde.';
+            $error = '';
         } elseif (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
             $error = 'Token de seguridad inválido';
         } else {
