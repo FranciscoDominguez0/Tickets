@@ -101,15 +101,13 @@ $bodyStyle = $loginBg !== ''
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
             <div class="support-header-right">
-                <span class="guest-user">Usuario Invitado</span>
-                <span class="header-separator">|</span>
-                <a href="#" class="header-login-link">Inicia Sesión</a>
+                <a href="#" class="header-login-link">Acceder</a>
             </div>
         </div>
 
         <!-- NAVEGACIÓN -->
         <div class="support-nav">
-            <button class="nav-item active">Inicio Centro de Soporte</button>
+            <button class="nav-item active">Centro de soporte</button>
         </div>
 
         <!-- CONTENIDO PRINCIPAL -->
@@ -120,9 +118,13 @@ $bodyStyle = $loginBg !== ''
             </div>
 
             <!-- PANEL DE LOGIN -->
-            <div class="login-panel">
+            <div class="login-panel login-panel-split">
                 <!-- COLUMNA IZQUIERDA - FORMULARIO -->
                 <div class="login-panel-left">
+                    <div class="login-form-header">
+                        <h2 class="login-form-title">Inicia sesión</h2>
+                        <p class="login-form-subtitle">Accede a tu cuenta para gestionar tus solicitudes.</p>
+                    </div>
                     <form method="post" class="login-form">
                         <!-- Alertas -->
                         <?php if ($offlineNotice): ?>
@@ -161,34 +163,48 @@ $bodyStyle = $loginBg !== ''
                             >
                         </div>
 
+                        <div class="login-forgot">
+                            <a href="forgot.php" class="register-link">Olvidé mi contraseña</a>
+                        </div>
+
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                         <!-- Botón Login -->
                         <button type="submit" class="btn-login">Inicia Sesión</button>
 
-                        <div style="margin-top:12px;">
-                            <a href="forgot.php" class="register-link">Olvidé mi contraseña</a>
+                        <div class="login-side-links">
+                            <p class="register-text">
+                                ¿Sin cuenta?
+                                <a href="registrar.php" class="register-link">Crear cuenta</a>
+                            </p>
+                            <p class="agent-text">
+                                ¿Eres agente?
+                                <a href="scp/login.php" class="agent-link">Entrar</a>
+                            </p>
                         </div>
                     </form>
                 </div>
 
                 <!-- COLUMNA DERECHA - ENLACES E ICONO -->
-                <div class="login-panel-right">
-                    <div class="login-links">
-                        <p class="register-text">
-                            ¿Aún no está registrado? 
-                            <a href="registrar.php" class="register-link">Cree una cuenta</a>
-                        </p>
-                        <p class="agent-text">
-                            Soy un agente — 
-                            <a href="scp/login.php" class="agent-link">Acceda aquí</a>
-                        </p>
+                <div class="login-panel-right login-panel-right-center">
+                    <div class="login-corner-mark" aria-hidden="true">
+                        <span class="login-corner-dot"></span>
+                        <span class="login-corner-text">
+                            <span class="login-corner-text-top">SISTEMA</span>
+                            <span class="login-corner-text-bottom">TICKETS</span>
+                        </span>
+                    </div>
+                    <div class="login-welcome">
+                        <h2 class="login-welcome-title">Hola, <span>¡bienvenido!</span></h2>
+                        <p class="login-welcome-text">Inicia sesión para crear y dar seguimiento a tus solicitudes. Estamos aquí para ayudarte.</p>
                     </div>
                     <div class="lock-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 11V8.6C8 6.1 9.9 4.2 12.4 4.2c2.5 0 4.4 1.9 4.4 4.4V11" />
+                            <path d="M7.2 11h9.6c1 0 1.9.8 1.9 1.9v5.1c0 1-.8 1.9-1.9 1.9H7.2c-1 0-1.9-.8-1.9-1.9v-5.1c0-1 .8-1.9 1.9-1.9Z" />
+                            <path d="M12 14.1v2.8" />
+                            <path d="M10.9 14.1a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 0 0-2.2 0Z" />
                         </svg>
                     </div>
                 </div>

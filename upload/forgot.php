@@ -159,8 +159,12 @@ $bodyStyle = $loginBg !== ''
                 <p class="welcome-text">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
             </div>
 
-            <div class="login-panel">
+            <div class="login-panel login-panel-split">
                 <div class="login-panel-left">
+                    <div class="login-form-header">
+                        <h2 class="login-form-title">Recuperar contraseña</h2>
+                        <p class="login-form-subtitle">Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+                    </div>
                     <form method="post" class="login-form">
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo html($error); ?></div>
@@ -177,20 +181,27 @@ $bodyStyle = $loginBg !== ''
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                         <button type="submit" class="btn-login">Enviar enlace</button>
+
+                        <div class="login-side-links">
+                            <p class="register-text">
+                                ¿Recordaste tu contraseña?
+                                <a href="login.php" class="register-link">Iniciar sesión</a>
+                            </p>
+                        </div>
                     </form>
                 </div>
 
-                <div class="login-panel-right">
-                    <div class="login-links">
-                        <p class="register-text">
-                            Recupera el acceso a tu cuenta mediante el enlace enviado a tu correo.
-                        </p>
+                <div class="login-panel-right login-panel-right-center">
+                    <div class="login-corner-mark" aria-hidden="true">
+                        <span class="login-corner-dot"></span>
+                        <span class="login-corner-text">
+                            <span class="login-corner-text-top">SISTEMA</span>
+                            <span class="login-corner-text-bottom">TICKETS</span>
+                        </span>
                     </div>
-                    <div class="lock-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
+                    <div class="login-welcome">
+                        <h2 class="login-welcome-title">Recupera <span>tu cuenta</span></h2>
+                        <p class="login-welcome-text">Ingresa tu correo y te enviaremos un enlace seguro para restablecer tu contraseña. Revisa también Spam.</p>
                     </div>
                 </div>
             </div>

@@ -8,6 +8,17 @@
     box-sizing: border-box;
 }
 
+/* ============================================================================
+   LOGIN SPLIT (REFERENCE-LIKE)
+   ============================================================================ */
+
+.support-header,
+.support-nav,
+.support-footer,
+.welcome-section {
+    display: none;
+}
+
 :root {
     --accent: #0d6efd;
     --accent-soft: rgba(13, 110, 253, 0.12);
@@ -21,7 +32,26 @@ body {
     padding: 0;
     margin: 0;
     color: #1e293b;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    cursor: default !important;
+}
+
+body * {
+    cursor: default !important;
+}
+
+body a,
+body button,
+body .btn,
+body [role="button"] {
+    cursor: pointer !important;
+}
+
+body input,
+body textarea,
+body select {
+    cursor: text !important;
 }
 
 body::before {
@@ -56,16 +86,36 @@ body::after {
    ============================================================================ */
 
 .support-center-wrapper {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.82);
-    height: 100vh;
+    max-width: 1100px;
+    width: calc(100% - 32px);
+    margin: 28px auto;
+    background: rgba(255, 255, 255, 0.92);
+    height: auto;
+    min-height: 620px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 28px 90px rgba(15, 23, 42, 0.14);
+    box-shadow: 0 28px 90px rgba(15, 23, 42, 0.16);
     overflow: hidden;
-    border-left: 1px solid rgba(226, 232, 240, 0.9);
-    border-right: 1px solid rgba(226, 232, 240, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    border-radius: 26px;
+    cursor: default !important;
+}
+
+.support-center-wrapper * {
+    cursor: default !important;
+}
+
+.support-center-wrapper a,
+.support-center-wrapper button,
+.support-center-wrapper .btn,
+.support-center-wrapper [role="button"] {
+    cursor: pointer !important;
+}
+
+.support-center-wrapper input,
+.support-center-wrapper textarea,
+.support-center-wrapper select {
+    cursor: text !important;
 }
 
 /* ============================================================================
@@ -188,11 +238,11 @@ body::after {
    ============================================================================ */
 
 .support-content {
-    padding: 18px 20px;
-    max-width: 1000px;
-    margin: 0 auto;
+    padding: 0;
+    max-width: none;
+    margin: 0;
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -245,16 +295,16 @@ body::after {
    ============================================================================ */
 
 .login-panel {
-    background: rgba(255,255,255,0.86);
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    border-radius: 18px;
-    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.12);
-    padding: 24px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 16px;
-    flex-shrink: 0;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 0;
+    margin-bottom: 0;
+    flex: 1;
     position: relative;
     overflow: hidden;
 }
@@ -264,9 +314,7 @@ body::after {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background:
-        radial-gradient(900px circle at 0% 0%, rgba(15, 23, 42, 0.035), transparent 58%),
-        radial-gradient(700px circle at 100% 0%, rgba(15, 23, 42, 0.025), transparent 58%);
+    background: radial-gradient(900px circle at 12% 0%, rgba(15, 23, 42, 0.06), transparent 55%);
 }
 
 .login-panel-left,
@@ -279,16 +327,208 @@ body::after {
 .login-panel-left {
     display: flex;
     flex-direction: column;
+    padding: 52px 54px;
 }
 
 .login-panel-right {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    padding-left: 24px;
-    border-left: 1px solid rgba(226, 232, 240, 0.95);
+    align-items: flex-start;
+    padding: 52px 54px;
+    border-left: 1px solid rgba(226, 232, 240, 0.55);
     position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(720px circle at 18% 22%, rgba(255,255,255,0.16), transparent 60%),
+        radial-gradient(860px circle at 86% 34%, rgba(255,255,255,0.12), transparent 64%),
+        radial-gradient(680px circle at 78% 92%, rgba(13, 110, 253, 0.22), transparent 62%),
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.00) 55%),
+        linear-gradient(145deg, #0b1220 0%, #0b2a73 60%, #0d6efd 100%);
+    color: rgba(255,255,255,0.92);
+}
+
+.login-panel-right::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(255,255,255,0.18) 1px, transparent 1px);
+    background-size: 16px 16px;
+    opacity: 0.32;
+    mix-blend-mode: soft-light;
+}
+
+.login-panel-right::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(240px circle at 18% 10%, rgba(255,255,255,0.14), transparent 62%),
+        radial-gradient(520px circle at 86% 14%, rgba(255,255,255,0.12), transparent 70%),
+        radial-gradient(420px circle at 84% 84%, rgba(255,255,255,0.10), transparent 68%),
+        radial-gradient(360px circle at 18% 82%, rgba(255,255,255,0.10), transparent 68%),
+        conic-gradient(from 210deg at 78% 24%, rgba(255,255,255,0.10), transparent 30%, transparent 70%, rgba(255,255,255,0.08));
+    opacity: 0.72;
+    transform: translate3d(0,0,0);
+    background-size: 120% 120%;
+    animation: loginRightGlow 10s ease-in-out infinite;
+}
+
+@keyframes loginRightGlow {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 70%; }
+    100% { background-position: 0% 0%; }
+}
+
+.login-welcome {
+    max-width: 360px;
+}
+
+.login-panel-right .login-welcome {
+    z-index: 1;
+    margin-top: 18px;
+}
+
+.login-corner-mark {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
+.login-corner-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    box-shadow:
+        0 0 0 6px rgba(255,255,255,0.12),
+        0 16px 40px rgba(0,0,0,0.35);
+}
+
+.login-corner-text {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.login-corner-text-top {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.78);
+}
+
+.login-corner-text-bottom {
+    font-size: 13px;
+    font-weight: 950;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.92);
+}
+
+.login-panel-right-center {
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+
+.login-panel-right-center .login-welcome {
+    margin-top: 0;
+}
+
+.login-panel-right-center .login-welcome-text {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 480px) {
+    .login-corner-mark {
+        top: 16px;
+        right: 16px;
+        gap: 8px;
+    }
+
+    .login-corner-dot {
+        width: 12px;
+        height: 12px;
+        box-shadow:
+            0 0 0 5px rgba(255,255,255,0.12),
+            0 16px 40px rgba(0,0,0,0.35);
+    }
+
+    .login-corner-text-top {
+        font-size: 10px;
+    }
+
+    .login-corner-text-bottom {
+        font-size: 12px;
+    }
+}
+
+.login-welcome-kicker {
+    display: none;
+}
+
+.login-welcome-title {
+    margin: 18px 0 10px;
+    font-size: 44px;
+    line-height: 1.03;
+    letter-spacing: -0.03em;
+    font-weight: 950;
+    color: rgba(255,255,255,0.96);
+    cursor: default;
+}
+
+.login-welcome-title span {
+    display: block;
+}
+
+.login-welcome-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.82);
+    max-width: 320px;
+    cursor: default;
+}
+
+.login-form-header {
+    margin-bottom: 22px;
+}
+
+.login-form-title {
+    font-size: 28px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    margin: 0 0 6px;
+    cursor: default;
+}
+
+.login-form-subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.45;
+    cursor: default;
 }
 
 /* ============================================================================
@@ -457,6 +697,14 @@ body::after {
     color: #64748b;
     line-height: 1.6;
     margin: 0;
+    cursor: default;
+}
+
+.register-text,
+.agent-text {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .register-link,
@@ -474,22 +722,68 @@ body::after {
     text-decoration: underline;
 }
 
+.login-side-links {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.login-side-links .register-text,
+.login-side-links .agent-text {
+    display: block;
+    gap: 0;
+}
+
+.login-side-links .register-text,
+.login-side-links .agent-text {
+    font-size: 13px;
+}
+
+.login-forgot {
+    margin-top: 10px;
+}
+
+.login-forgot a {
+    font-size: 13px;
+}
+
+.login-panel-right .lock-icon {
+    display: none;
+}
+
 /* ============================================================================
    ICONO DE CANDADO
    ============================================================================ */
 
 .lock-icon {
-    width: 80px;
-    height: 80px;
-    color: rgba(15, 23, 42, 0.55);
-    opacity: 0.9;
+    width: 92px;
+    height: 92px;
+    color: rgba(255, 255, 255, 0.92);
+    opacity: 0.98;
     margin-top: 10px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background:
+        radial-gradient(80px circle at 30% 25%, rgba(255,255,255,0.95), rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.55) 100%),
+        linear-gradient(135deg, var(--accent-soft) 0%, rgba(15, 23, 42, 0.03) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.35);
+}
+
+.login-panel-right .lock-icon {
+    position: absolute;
+    left: 42px;
+    bottom: 42px;
+    opacity: 0.88;
+    z-index: 1;
 }
 
 .lock-icon svg {
-    width: 100%;
-    height: 100%;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    width: 54px;
+    height: 54px;
+    filter: drop-shadow(0 10px 22px rgba(15, 23, 42, 0.16));
 }
 
 /* ============================================================================
@@ -603,15 +897,27 @@ body::after {
 @media (max-width: 968px) {
     .login-panel {
         grid-template-columns: 1fr;
-        gap: 32px;
+        gap: 0;
     }
 
     .login-panel-right {
-        padding-left: 0;
         border-left: none;
-        border-top: 1px solid #e2e8f0;
-        padding-top: 32px;
-        align-items: flex-start;
+        border-top: 1px solid rgba(226, 232, 240, 0.65);
+        padding: 26px 22px;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 18px;
+    }
+
+    .login-panel-right .lock-icon {
+        order: -1;
+        margin-top: 0;
+        flex: 0 0 auto;
+    }
+
+    .login-panel-right .login-welcome {
+        flex: 1 1 auto;
     }
 
     .lock-icon {
@@ -619,88 +925,48 @@ body::after {
         height: 80px;
         margin-top: 0;
     }
+
+    .login-panel-left {
+        padding: 34px 22px;
+    }
 }
 
 @media (max-width: 768px) {
-    .support-header {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 20px 24px;
-    }
-
-    .vigitec-logo {
-        height: 50px;
-        max-width: 400px;
-    }
-
-    .support-title {
+    .login-form-title {
         font-size: 24px;
     }
 
-    .support-nav {
-        padding: 0 24px;
-        flex-wrap: wrap;
+    .login-panel-left {
+        padding: 28px 20px;
     }
 
-    .nav-item {
-        padding: 12px 16px;
-        font-size: 13px;
+    .login-panel-right {
+        padding: 24px 20px;
     }
 
-    .support-content {
-        padding: 24px;
-    }
-
-    .login-panel {
-        padding: 24px;
-    }
-
-    .welcome-title {
-        font-size: 24px;
-    }
-
-    .form-grid {
-        grid-template-columns: 1fr;
+    .login-welcome-title {
+        font-size: 34px;
     }
 }
 
 @media (max-width: 480px) {
     .support-center-wrapper {
         box-shadow: none;
+        background: rgba(255, 255, 255, 0.92);
+        width: calc(100% - 16px);
+        margin: 16px auto;
     }
 
-    .support-header {
-        padding: 16px 20px;
+    .login-panel-right {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        gap: 14px;
     }
 
-    .vigitec-logo {
-        height: 45px;
-        max-width: 350px;
-    }
-
-    .support-title {
-        font-size: 20px;
-    }
-
-    .support-subtitle {
-        font-size: 14px;
-    }
-
-    .support-nav {
-        padding: 0 16px;
-    }
-
-    .nav-item {
-        padding: 10px 12px;
-        font-size: 12px;
-    }
-
-    .support-content {
-        padding: 20px 16px;
-    }
-
-    .login-panel {
-        padding: 20px;
+    .login-welcome-title {
+        font-size: 30px;
     }
 
     .welcome-title {
