@@ -123,10 +123,9 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
         <!-- PANEL DE LOGIN (GLASSMORPHISM) -->
         <div class="agent-login-panel">
             <?php
-                $companyLogoMode = (string)getAppSetting('company.logo_mode', 'default');
                 $companyLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
             ?>
-            <?php if ($companyLogoMode === 'default' && $companyLogo !== ''): ?>
+            <?php if ($companyLogo !== ''): ?>
                 <div class="agent-login-brand">
                     <img src="<?php echo html($companyLogo); ?>" alt="<?php echo html((string)getAppSetting('company.name', APP_NAME)); ?>">
                 </div>
