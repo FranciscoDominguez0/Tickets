@@ -16,7 +16,11 @@ if (!isset($_SESSION['csrf_token'])) {
 
 // Si ya está logueado, redirigir
 if (isset($_SESSION['staff_id'])) {
-    header('Location: index.php');
+    if ((string)($_SESSION['staff_role'] ?? '') === 'superadmin') {
+        header('Location: superadmin/index.php');
+    } else {
+        header('Location: index.php');
+    }
     exit;
 }
 
@@ -61,7 +65,11 @@ if ($_POST) {
                     $_SESSION['user_login_time'] = time();
                     $_SESSION['staff_last_activity'] = time();
                     $_SESSION['staff_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-                    header('Location: index.php');
+                    if ((string)($_SESSION['staff_role'] ?? '') === 'superadmin') {
+                        header('Location: superadmin/index.php');
+                    } else {
+                        header('Location: index.php');
+                    }
                     exit;
                 } else {
                     $error = (string)(Auth::$lastError ?: 'Usuario o contraseña incorrectos');

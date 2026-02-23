@@ -11,6 +11,19 @@ if (!function_exists('addLog')) {
 class Auth {
     public static $lastError = '';
 
+    private static function tableHasColumn($table, $column) {
+        global $mysqli;
+        $table = (string)$table;
+        $column = (string)$column;
+        if ($table === '' || $column === '') return false;
+        if (!isset($mysqli) || !$mysqli) return false;
+        $tableEsc = $mysqli->real_escape_string($table);
+        $colEsc = $mysqli->real_escape_string($column);
+        $sql = "SHOW COLUMNS FROM `{$tableEsc}` LIKE '{$colEsc}'";
+        $res = $mysqli->query($sql);
+        return $res && $res->num_rows > 0;
+    }
+
     private static function sessionIpPrefix($ip) {
         $ip = (string)$ip;
         if ($ip === '') return '';
@@ -113,7 +126,11 @@ class Auth {
             return false;
         }
         
-        $stmt = $mysqli->prepare('SELECT id, email, firstname, lastname, password FROM users WHERE email = ? AND status = "active"');
+        $hasEmpresaId = self::tableHasColumn('users', 'empresa_id');
+        $sql = $hasEmpresaId
+            ? 'SELECT id, email, firstname, lastname, password, COALESCE(empresa_id, 1) AS empresa_id FROM users WHERE email = ? AND status = "active"'
+            : 'SELECT id, email, firstname, lastname, password FROM users WHERE email = ? AND status = "active"';
+        $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -187,6 +204,7 @@ class Auth {
         $_SESSION['user_type'] = 'cliente';
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_name'] = $user['firstname'] . ' ' . $user['lastname'];
+        $_SESSION['empresa_id'] = (int)($user['empresa_id'] ?? 1);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('cliente');
 
@@ -276,7 +294,16 @@ class Auth {
             return false;
         }
         
-        $stmt = $mysqli->prepare('SELECT id, username, email, firstname, lastname, password FROM staff WHERE username = ? AND is_active = 1');
+        $hasEmpresaId = self::tableHasColumn('staff', 'empresa_id');
+        $hasRole = self::tableHasColumn('staff', 'role');
+        if ($hasEmpresaId && $hasRole) {
+            $sql = 'SELECT id, username, email, firstname, lastname, password, role, COALESCE(empresa_id, 1) AS empresa_id FROM staff WHERE username = ? AND is_active = 1';
+        } elseif ($hasRole) {
+            $sql = 'SELECT id, username, email, firstname, lastname, password, role FROM staff WHERE username = ? AND is_active = 1';
+        } else {
+            $sql = 'SELECT id, username, email, firstname, lastname, password FROM staff WHERE username = ? AND is_active = 1';
+        }
+        $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('s', $username);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -358,6 +385,8 @@ class Auth {
         $_SESSION['user_type'] = 'agente';
         $_SESSION['staff_email'] = $staff['email'];
         $_SESSION['staff_name'] = $staff['firstname'] . ' ' . $staff['lastname'];
+        $_SESSION['staff_role'] = (string)($staff['role'] ?? 'agent');
+        $_SESSION['empresa_id'] = (int)($staff['empresa_id'] ?? 1);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('agente');
 
