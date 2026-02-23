@@ -200,8 +200,8 @@ $bodyStyle = $loginBg !== ''
                         </span>
                     </div>
                     <div class="login-welcome">
-                        <h2 class="login-welcome-title">Recupera <span>tu cuenta</span></h2>
-                        <p class="login-welcome-text">Ingresa tu correo y te enviaremos un enlace seguro para restablecer tu contraseña. Revisa también Spam.</p>
+                        <h2 class="login-welcome-title">Estás a un paso <span>de volver</span></h2>
+                        <p class="login-welcome-text">Sigue las instrucciones y en minutos tendrás acceso otra vez.</p>
                     </div>
                 </div>
             </div>

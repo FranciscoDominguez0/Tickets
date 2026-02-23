@@ -724,15 +724,27 @@ body::after {
 
 .login-side-links {
     margin-top: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 22px;
+    row-gap: 8px;
 }
 
 .login-side-links .register-text,
 .login-side-links .agent-text {
     display: block;
     gap: 0;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.login-side-links .register-text {
+    text-align: left;
+}
+
+.login-side-links .agent-text {
+    text-align: right;
 }
 
 .login-side-links .register-text,
@@ -893,6 +905,19 @@ body::after {
 /* ============================================================================
    RESPONSIVE
    ============================================================================ */
+
+@media (max-width: 820px) {
+    .login-side-links {
+        grid-template-columns: 1fr;
+        justify-items: start;
+    }
+
+    .login-side-links .register-text,
+    .login-side-links .agent-text {
+        white-space: normal;
+        text-align: left;
+    }
+}
 
 @media (max-width: 968px) {
     .login-panel {
