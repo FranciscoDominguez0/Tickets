@@ -10,6 +10,34 @@ CREATE TABLE IF NOT EXISTS `empresas` (
   KEY `idx_empresas_estado` (`estado`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE `empresas`
+  ADD COLUMN `precio_mensual` DECIMAL(10,2) NOT NULL DEFAULT 0,
+  ADD COLUMN `fecha_inicio_servicio` DATE NULL,
+  ADD COLUMN `fecha_vencimiento` DATE NULL,
+  ADD COLUMN `dias_gracia` INT NOT NULL DEFAULT 0,
+  ADD COLUMN `estado_pago` ENUM('al_dia','vencido','suspendido') NOT NULL DEFAULT 'al_dia',
+  ADD COLUMN `bloqueada` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `motivo_bloqueo` VARCHAR(255) NULL;
+
+ALTER TABLE `empresas`
+  MODIFY `estado` ENUM('activa','suspendida','bloqueada') NOT NULL DEFAULT 'activa';
+
+CREATE TABLE IF NOT EXISTS `pagos_empresas` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `monto` DECIMAL(10,2) NOT NULL,
+  `fecha_pago` DATETIME NOT NULL,
+  `periodo_desde` DATE NOT NULL,
+  `periodo_hasta` DATE NOT NULL,
+  `metodo_pago` VARCHAR(50) DEFAULT NULL,
+  `referencia` VARCHAR(100) DEFAULT NULL,
+  `registrado_por` INT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_pago_empresa` (`empresa_id`),
+  CONSTRAINT `fk_pagos_empresas_empresa` FOREIGN KEY (`empresa_id`) REFERENCES `empresas`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO `empresas` (`id`, `nombre`, `estado`, `fecha_creacion`)
 VALUES (1, 'Vigitec panama', 'activa', NOW())
 ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `estado` = VALUES(`estado`);

@@ -5,6 +5,7 @@
 
 // Proteger página (requiere login)
 function requireLogin($type = 'user') {
+    global $mysqli;
     if ($type === 'cliente') {
         $status = (string)getAppSetting('system.helpdesk_status', 'online');
         if ($status === 'offline') {
@@ -29,6 +30,31 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'cliente' && isset($_SESSION['user_id'])) {
+        $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
+        if ($empresaId > 0 && isset($mysqli) && $mysqli) {
+            try {
+                $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
+                $hasEmpresas = ($res && $res->num_rows > 0);
+                if ($hasEmpresas) {
+                    $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo FROM empresas WHERE id = ? LIMIT 1');
+                    if ($q) {
+                        $q->bind_param('i', $empresaId);
+                        if ($q->execute()) {
+                            $row = $q->get_result()->fetch_assoc();
+                            $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
+                            if ($isBlocked) {
+                                $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                http_response_code(403);
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="login.php">Ir al login</a></div></body></html>';
+                                exit;
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable $e) {
+            }
+        }
+
         if (!empty($_SESSION['session_fp'])) {
             $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
             $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
@@ -93,6 +119,31 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'agente' && isset($_SESSION['staff_id'])) {
+        $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
+        if ($empresaId > 0 && isset($mysqli) && $mysqli) {
+            try {
+                $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
+                $hasEmpresas = ($res && $res->num_rows > 0);
+                if ($hasEmpresas) {
+                    $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo FROM empresas WHERE id = ? LIMIT 1');
+                    if ($q) {
+                        $q->bind_param('i', $empresaId);
+                        if ($q->execute()) {
+                            $row = $q->get_result()->fetch_assoc();
+                            $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
+                            if ($isBlocked) {
+                                $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                http_response_code(403);
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="login.php">Ir al login</a></div></body></html>';
+                                exit;
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable $e) {
+            }
+        }
+
         if (!empty($_SESSION['session_fp'])) {
             $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
             $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
