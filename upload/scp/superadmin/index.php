@@ -1,238 +1,497 @@
 <?php
+/**
+ * estadisticas.php  —  /scp/superadmin/estadisticas.php
+ *
+ * OPTIMIZACIONES DE RENDIMIENTO:
+ *
+ *  [PHP/BD]
+ *  - 1 query INFORMATION_SCHEMA para verificar 4 tablas a la vez
+ *  - KPIs principales con COUNT+CASE en 1 sola query
+ *  - Resumen de pagos (mes + histórico) en 1 query con CASE
+ *  - Crecimiento de empresas: SELECT de columnas indexadas únicamente
+ *  - Comprobaciones de $res !== false antes de fetch (evita warnings fatales)
+ *
+ *  [PHP puro]
+ *  - ob_start() al inicio para buffering eficiente
+ *  - match() en vez de switch para helpers
+ *  - Short-echo <?= en HTML para menos overhead de parser
+ *  - Array de KPIs procesado una vez, no recalculado en el template
+ *
+ *  [Frontend]
+ *  - Chart.js + estadisticas.js con atributo defer
+ *  - window.dashData inyectado ANTES de los scripts diferidos
+ *  - Sin <style> inline (todo en css/estadisticas.css, cacheable)
+ *
+ * Estilos: css/estadisticas.css
+ * Scripts: js/estadisticas.js (defer)
+ */
+
 require_once '../../../config.php';
 require_once '../../../includes/helpers.php';
 
 ob_start();
 
-$hasEmpresas = false;
-$hasPagos = false;
+/* ================================================================
+   PASO 1 — Verificar tablas con 1 query INFORMATION_SCHEMA
+   ================================================================ */
+$hasEmpresas = $hasPagos = $hasTickets = $hasStaff = false;
 $dbName = '';
 
 if (isset($mysqli) && $mysqli) {
     try {
-        $rdb = $mysqli->query('SELECT DATABASE() db');
-        if ($rdb) {
-            $dbName = (string)($rdb->fetch_assoc()['db'] ?? '');
+        $dbName = (string)($mysqli->query('SELECT DATABASE() db')->fetch_assoc()['db'] ?? '');
+
+        if ($dbName !== '') {
+            $esc  = $mysqli->real_escape_string($dbName);
+            $res  = $mysqli->query("
+                SELECT TABLE_NAME
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = '{$esc}'
+                  AND TABLE_NAME IN ('empresas','pagos_empresas','tickets','staff')
+            ");
+            $exist = [];
+            if ($res) while ($r = $res->fetch_row()) $exist[$r[0]] = true;
+
+            $hasEmpresas = isset($exist['empresas']);
+            $hasPagos    = isset($exist['pagos_empresas']);
+            $hasTickets  = isset($exist['tickets']);
+            $hasStaff    = isset($exist['staff']);
         }
+    } catch (Throwable $e) { /* silencioso */ }
+}
 
-        $r1 = $mysqli->query('SELECT 1 FROM empresas LIMIT 1');
-        $hasEmpresas = ($r1 !== false);
+/* ================================================================
+   PASO 2 — KPIs en 1 query COUNT+CASE
+   ================================================================ */
+$kpiActivas = $kpiVencidas = $kpiBloqueadas = 0;
+$pagosAlDia = $pagosVencidos = $pagosSuspendidos = 0;
 
-        $r2 = $mysqli->query('SELECT 1 FROM pagos_empresas LIMIT 1');
-        $hasPagos = ($r2 !== false);
-    } catch (Throwable $e) {
+if ($hasEmpresas) {
+    $res = $mysqli->query("
+        SELECT
+            SUM(estado      = 'activa')      AS activas,
+            SUM(estado_pago = 'vencido')     AS vencidas,
+            SUM(bloqueada   = 1)             AS bloqueadas,
+            SUM(estado_pago = 'al_dia')      AS pago_al_dia,
+            SUM(estado_pago = 'vencido')     AS pago_vencido,
+            SUM(estado_pago = 'suspendido')  AS pago_suspendido
+        FROM empresas
+    ");
+    if ($res && $r = $res->fetch_assoc()) {
+        $kpiActivas       = (int)($r['activas']         ?? 0);
+        $kpiVencidas      = (int)($r['vencidas']        ?? 0);
+        $kpiBloqueadas    = (int)($r['bloqueadas']       ?? 0);
+        $pagosAlDia       = (int)($r['pago_al_dia']      ?? 0);
+        $pagosVencidos    = (int)($r['pago_vencido']     ?? 0);
+        $pagosSuspendidos = (int)($r['pago_suspendido']  ?? 0);
     }
 }
 
+/* ================================================================
+   PASO 3 — Resumen pagos en 1 query
+   ================================================================ */
+$kpiIngresosMes = 0.0;
+$kpiTotalPagos  = 0;
+$incomeLabels   = [];
+$incomeTotals   = [];
+
+if ($hasPagos) {
+    $res = $mysqli->query("
+        SELECT
+            SUM(CASE WHEN DATE_FORMAT(fecha_pago,'%Y-%m') = DATE_FORMAT(CURDATE(),'%Y-%m')
+                     THEN monto ELSE 0 END) AS ingresos_mes,
+            COUNT(*)                        AS total_pagos
+        FROM pagos_empresas
+    ");
+    if ($res && $r = $res->fetch_assoc()) {
+        $kpiIngresosMes = (float)($r['ingresos_mes'] ?? 0);
+        $kpiTotalPagos  = (int)  ($r['total_pagos']  ?? 0);
+    }
+
+    /* Serie temporal: sólo 6 meses, columnas mínimas */
+    $res = $mysqli->query("
+        SELECT DATE_FORMAT(fecha_pago,'%Y-%m') mes, SUM(monto) total
+        FROM pagos_empresas
+        WHERE fecha_pago >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY mes ORDER BY mes
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $incomeLabels[] = $r['mes'];
+        $incomeTotals[] = (float)$r['total'];
+    }
+}
+
+/* ================================================================
+   PASO 4 — Crecimiento de empresas
+   ================================================================ */
+$growthLabels  = [];
+$growthTotals  = [];
+
+if ($hasEmpresas) {
+    $res = $mysqli->query("
+        SELECT DATE_FORMAT(fecha_creacion,'%Y-%m') mes, COUNT(*) total
+        FROM empresas
+        GROUP BY mes ORDER BY mes
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $growthLabels[] = $r['mes'];
+        $growthTotals[] = (int)$r['total'];
+    }
+}
+
+/* ================================================================
+   PASO 5 — Staff top 5 por empresa (sin KPI global)
+   ================================================================ */
+$staffLabels   = [];
+$staffCounts   = [];
+
+if ($hasStaff && $hasEmpresas) {
+    $res = $mysqli->query("
+        SELECT e.nombre, COUNT(s.id) c
+        FROM staff s
+        JOIN empresas e ON e.id = s.empresa_id
+        WHERE s.is_active = 1
+        GROUP BY s.empresa_id, e.nombre
+        ORDER BY c DESC LIMIT 5
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $staffLabels[]  = $r['nombre'];
+        $staffCounts[]  = (int)$r['c'];
+    }
+}
+
+/* ================================================================
+   PASO 6 — Últimos pagos con JOIN  (LIMIT 6, sólo columnas usadas)
+   ================================================================ */
+$ultimosPagos = [];
+
+if ($hasPagos) {
+    $res = $mysqli->query("
+        SELECT p.monto, p.fecha_pago, p.metodo_pago, e.nombre AS empresa_nombre
+        FROM pagos_empresas p
+        JOIN empresas e ON e.id = p.empresa_id
+        ORDER BY p.fecha_pago DESC, p.id DESC
+        LIMIT 6
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) $ultimosPagos[] = $r;
+}
+
+/* ================================================================
+   PASO 7 — Tabla de empresas (columnas mínimas, LIMIT 50)
+   ================================================================ */
 $empresas = [];
-$pagos = [];
 
-$kpiActivas = null;
-$kpiVencidas = null;
-$kpiBloqueadas = null;
-$kpiIngresosMes = null;
-
-if ($hasEmpresas && isset($mysqli) && $mysqli) {
-    $resK1 = $mysqli->query("SELECT COUNT(*) c FROM empresas WHERE estado = 'activa'");
-    if ($resK1) $kpiActivas = (int)($resK1->fetch_assoc()['c'] ?? 0);
-
-    $resK2 = $mysqli->query("SELECT COUNT(*) c FROM empresas WHERE estado_pago = 'vencido'");
-    if ($resK2) $kpiVencidas = (int)($resK2->fetch_assoc()['c'] ?? 0);
-
-    $resK3 = $mysqli->query("SELECT COUNT(*) c FROM empresas WHERE bloqueada = 1");
-    if ($resK3) $kpiBloqueadas = (int)($resK3->fetch_assoc()['c'] ?? 0);
-
-    $sqlE = "SELECT id, nombre, estado, fecha_vencimiento, estado_pago, bloqueada,\n                    CASE\n                        WHEN fecha_vencimiento IS NULL THEN NULL\n                        ELSE DATEDIFF(fecha_vencimiento, CURDATE())\n                    END AS dias_restantes\n             FROM empresas\n             ORDER BY id DESC\n             LIMIT 50";
-    $resE = $mysqli->query($sqlE);
-    if ($resE) {
-        while ($row = $resE->fetch_assoc()) {
-            $empresas[] = $row;
-        }
-    }
+if ($hasEmpresas) {
+    $res = $mysqli->query("
+        SELECT id, nombre, estado, fecha_vencimiento, estado_pago, bloqueada,
+               CASE WHEN fecha_vencimiento IS NULL THEN NULL
+                    ELSE DATEDIFF(fecha_vencimiento, CURDATE()) END AS dias_restantes
+        FROM empresas
+        ORDER BY id DESC
+        LIMIT 50
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) $empresas[] = $r;
 }
 
-if ($hasPagos && isset($mysqli) && $mysqli) {
-    $resK4 = $mysqli->query("SELECT COALESCE(SUM(monto), 0) total FROM pagos_empresas WHERE fecha_pago >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND fecha_pago < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)");
-    if ($resK4) $kpiIngresosMes = (float)($resK4->fetch_assoc()['total'] ?? 0);
-
-    $sqlP = "SELECT p.id, p.empresa_id, p.monto, p.fecha_pago, p.periodo_desde, p.periodo_hasta, p.metodo_pago, p.referencia, p.registrado_por,\n                    e.nombre AS empresa_nombre\n             FROM pagos_empresas p\n             INNER JOIN empresas e ON e.id = p.empresa_id\n             ORDER BY p.fecha_pago DESC, p.id DESC\n             LIMIT 50";
-    $resP = $mysqli->query($sqlP);
-    if ($resP) {
-        while ($row = $resP->fetch_assoc()) {
-            $pagos[] = $row;
-        }
-    }
+/* ── Helpers badge ────────────────────────────────────────── */
+function stEmpresa(string $v): string {
+    return match(strtolower($v)) {
+        'activa'     => 'bg-success bg-opacity-10 text-success',
+        'suspendida' => 'bg-warning bg-opacity-10 text-warning',
+        default      => 'bg-secondary bg-opacity-10 text-secondary',
+    };
 }
+function stPago(string $v): string {
+    return match($v) {
+        'al_dia'    => 'bg-success bg-opacity-10 text-success',
+        'vencido'   => 'bg-warning bg-opacity-10 text-warning',
+        'suspendido'=> 'bg-danger bg-opacity-10 text-danger',
+        default     => 'bg-secondary bg-opacity-10 text-secondary',
+    };
+}
+function stDias(?int $d): string {
+    if ($d === null) return 'bg-secondary bg-opacity-10 text-secondary';
+    if ($d < 0)     return 'bg-danger text-white';
+    if ($d <= 7)    return 'bg-warning text-dark';
+    return 'bg-success bg-opacity-10 text-success';
+}
+
+/* ── Array de KPIs: sin "Tickets este mes", "Staff activo" ni "Pagos vencidos" ── */
+$kpiCards = [
+    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'primary',   'total registradas'],
+    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'success',   date('M Y')],
+    ['bi-slash-circle',   'Bloqueadas',          number_format($kpiBloqueadas),          'danger',    'acceso suspendido'],
+    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'success',   'histórico'],
+    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'secondary', 'estado suspendido'],
+];
 ?>
 
-<div class="settings-hero">
-    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+<!-- ══ CSS externo ══════════════════════════════════════════ -->
+<link rel="stylesheet" href="css/estadisticas.css">
+
+<!-- ══ HEADER ══════════════════════════════════════════════ -->
+<div class="stats-hero mb-1">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-            <span class="settings-hero-icon"><i class="bi bi-speedometer2"></i></span>
+            <div class="hero-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
             <div>
-                <h1>Panel general</h1>
-                <p>Resumen de empresas, facturación y estado del servicio</p>
+                <h1>Estadísticas del sistema</h1>
+                <p>Control global de clientes, pagos y operaciones</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <?php if ($dbName !== ''): ?>
-                <span class="badge bg-info">BD: <?php echo html($dbName); ?></span>
+                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">
+                    <i class="bi bi-database me-1"></i><?= html($dbName) ?>
+                </span>
             <?php endif; ?>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
+                <i class="bi bi-calendar3 me-1"></i><?= date('d M Y') ?>
+            </span>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mt-3">
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Empresas activas</div>
-                <div class="fs-3 fw-semibold"><?php echo $kpiActivas === null ? '-' : (int)$kpiActivas; ?></div>
+<!-- ══ KPIs ═════════════════════════════════════════════════ -->
+<p class="section-title"><i class="bi bi-speedometer2"></i> Resumen general</p>
+
+<div class="row g-3 mb-2">
+    <?php foreach ($kpiCards as [$icon, $label, $value, $color, $sub]): ?>
+    <div class="col-6 col-md-3">
+        <div class="card kpi-card shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <div class="kpi-icon bg-<?= $color ?> bg-opacity-10 text-<?= $color ?>">
+                    <i class="bi <?= $icon ?>"></i>
+                </div>
+                <div>
+                    <div class="kpi-label text-muted"><?= $label ?></div>
+                    <div class="kpi-number text-<?= $color ?>"><?= $value ?></div>
+                    <div class="kpi-sub"><?= $sub ?></div>
+                </div>
+            </div>
+            <div class="kpi-bar bg-<?= $color ?>"></div>
+        </div>
+    </div>
+    <?php endforeach; ?>
+</div>
+
+<!-- ══ GRÁFICAS FILA 1: Ingresos + Comparativo ══════════════ -->
+<p class="section-title"><i class="bi bi-graph-up-arrow"></i> Analítica de ingresos</p>
+
+<div class="row g-3 mb-2">
+    <div class="col-xl-7">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header">
+                <span class="chart-title">Ingresos últimos 6 meses</span>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:.67rem">
+                    <i class="bi bi-currency-dollar"></i> Facturación
+                </span>
+            </div>
+            <div class="card-body pt-3 pb-2">
+                <canvas id="incomeChart" style="max-height:240px"></canvas>
             </div>
         </div>
     </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Empresas vencidas</div>
-                <div class="fs-3 fw-semibold"><?php echo $kpiVencidas === null ? '-' : (int)$kpiVencidas; ?></div>
+    <div class="col-xl-5">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header">
+                <span class="chart-title">Comparativo mensual</span>
+                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size:.67rem">
+                    <i class="bi bi-bar-chart-steps"></i> vs anterior
+                </span>
             </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Empresas bloqueadas</div>
-                <div class="fs-3 fw-semibold"><?php echo $kpiBloqueadas === null ? '-' : (int)$kpiBloqueadas; ?></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-6 col-xl-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted">Ingresos del mes</div>
-                <div class="fs-3 fw-semibold"><?php echo $kpiIngresosMes === null ? '-' : number_format((float)$kpiIngresosMes, 2); ?></div>
+            <div class="card-body pt-3 pb-2">
+                <canvas id="compareChart" style="max-height:240px"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card settings-card mt-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <strong><i class="bi bi-buildings"></i> Empresas</strong>
-        <a href="empresas.php" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-right"></i> Ver todas</a>
-    </div>
-    <div class="card-body">
+<!-- ══ GRÁFICAS FILA 2: Donut + Pagos + Crecimiento + Staff ═ -->
+<p class="section-title"><i class="bi bi-pie-chart"></i> Distribución y crecimiento</p>
 
-        <?php if (!$hasEmpresas): ?>
-            <div class="alert alert-warning mb-0">No se pudo acceder a la tabla <strong>empresas</strong>. Verifica que la migración se ejecutó en la misma base de datos. <?php if ($dbName !== ''): ?>BD actual: <strong><?php echo html($dbName); ?></strong><?php endif; ?></div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Estado</th>
-                            <th>Vencimiento</th>
-                            <th>Días restantes</th>
-                            <th>Estado pago</th>
-                            <th>Bloqueada</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($empresas)): ?>
-                            <tr>
-                                <td colspan="6" class="text-muted">No hay empresas registradas.</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($empresas as $e): ?>
-                                <?php
-                                $dias = isset($e['dias_restantes']) ? (int)$e['dias_restantes'] : null;
-                                $isBlocked = (int)($e['bloqueada'] ?? 0) === 1;
-                                $estadoPago = (string)($e['estado_pago'] ?? '');
-                                $badge = 'bg-secondary';
-                                if ($estadoPago === 'al_dia') $badge = 'bg-success';
-                                if ($estadoPago === 'vencido') $badge = 'bg-warning text-dark';
-                                if ($estadoPago === 'suspendido') $badge = 'bg-danger';
-                                ?>
-                                <tr>
-                                    <td class="fw-semibold"><?php echo html((string)($e['nombre'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($e['estado'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($e['fecha_vencimiento'] ?? '')); ?></td>
-                                    <td>
-                                        <?php if (($e['fecha_vencimiento'] ?? null) === null): ?>
-                                            <span class="text-muted">-</span>
-                                        <?php else: ?>
-                                            <?php echo html((string)$dias); ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><span class="badge <?php echo html($badge); ?>"><?php echo html($estadoPago !== '' ? $estadoPago : '-'); ?></span></td>
-                                    <td>
-                                        <?php if ($isBlocked): ?>
-                                            <span class="badge bg-danger">Sí</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-success">No</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+<div class="row g-3 mb-2">
+    <div class="col-xl-3">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header"><span class="chart-title">Estado empresas</span></div>
+            <div class="card-body d-flex flex-column align-items-center justify-content-center py-3">
+                <canvas id="statusChart" style="max-height:160px;max-width:160px"></canvas>
+                <div class="d-flex gap-3 mt-3 flex-wrap justify-content-center">
+                    <div class="text-center">
+                        <div class="donut-stat-num text-primary"><?= $kpiActivas ?></div>
+                        <div class="donut-stat-label">Activas</div>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="donut-stat-num text-warning"><?= $kpiVencidas ?></div>
+                        <div class="donut-stat-label">Vencidas</div>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <div class="donut-stat-num text-danger"><?= $kpiBloqueadas ?></div>
+                        <div class="donut-stat-label">Bloqueadas</div>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
+        </div>
+    </div>
+    <div class="col-xl-3">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header"><span class="chart-title">Distribución de pagos</span></div>
+            <div class="card-body d-flex flex-column justify-content-center py-3">
+                <canvas id="pagosDistChart" style="max-height:160px"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header"><span class="chart-title">Crecimiento clientes</span></div>
+            <div class="card-body pt-3 pb-2">
+                <canvas id="growthChart" style="max-height:190px"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header"><span class="chart-title">Staff por empresa</span></div>
+            <div class="card-body d-flex align-items-center justify-content-center py-2">
+                <canvas id="staffChart" style="max-height:200px;max-width:200px"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="card settings-card mt-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <strong><i class="bi bi-credit-card"></i> Pagos recientes</strong>
-        <a href="pagos.php" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-right"></i> Ver historial</a>
-    </div>
-    <div class="card-body">
+<!-- ══ FILA 3: Últimos pagos (ancho completo) ═══════════════ -->
+<p class="section-title"><i class="bi bi-activity"></i> Operaciones</p>
 
-        <?php if (!$hasPagos): ?>
-            <div class="alert alert-warning mb-0">No se pudo acceder a la tabla <strong>pagos_empresas</strong>. <?php if ($dbName !== ''): ?>BD actual: <strong><?php echo html($dbName); ?></strong><?php endif; ?></div>
-        <?php else: ?>
-            <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Empresa</th>
-                            <th>Monto</th>
-                            <th>Fecha</th>
-                            <th>Periodo</th>
-                            <th>Método</th>
-                            <th>Referencia</th>
-                            <th>Registrado por</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($pagos)): ?>
-                            <tr>
-                                <td colspan="7" class="text-muted">No hay pagos registrados.</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($pagos as $p): ?>
-                                <tr>
-                                    <td class="fw-semibold"><?php echo html((string)($p['empresa_nombre'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['monto'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['fecha_pago'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['periodo_desde'] ?? '')); ?> - <?php echo html((string)($p['periodo_hasta'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['metodo_pago'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['referencia'] ?? '')); ?></td>
-                                    <td><?php echo html((string)($p['registrado_por'] ?? '')); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+<div class="row g-3 mb-3">
+    <div class="col-12">
+        <div class="card chart-card shadow-sm">
+            <div class="card-header">
+                <span class="chart-title">Últimos pagos registrados</span>
+                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:.67rem">
+                    <i class="bi bi-clock-history"></i> Recientes
+                </span>
             </div>
-        <?php endif; ?>
+            <div class="card-body py-2">
+                <?php if (empty($ultimosPagos)): ?>
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-receipt fs-2 d-block mb-2 opacity-25"></i>
+                        Sin pagos registrados
+                    </div>
+                <?php else: ?>
+                    <div class="row g-0">
+                    <?php foreach ($ultimosPagos as $p): ?>
+                    <div class="col-12 col-md-6">
+                        <div class="pago-item px-3">
+                            <div class="pago-avatar"><i class="bi bi-check-circle-fill"></i></div>
+                            <div>
+                                <div class="pago-empresa"><?= html((string)$p['empresa_nombre']) ?></div>
+                                <div class="pago-fecha">
+                                    <i class="bi bi-calendar3 me-1 opacity-50"></i>
+                                    <?= html(date('d M Y', strtotime((string)$p['fecha_pago']))) ?>
+                                    <?php if (!empty($p['metodo_pago'])): ?>&nbsp;·&nbsp;<?= html((string)$p['metodo_pago']) ?><?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="pago-monto">$<?= number_format((float)$p['monto'], 2) ?></div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- ══ TABLA DE EMPRESAS ════════════════════════════════════ -->
+<p class="section-title"><i class="bi bi-building"></i> Directorio de empresas</p>
+
+<div class="card chart-card shadow-sm mb-4">
+    <div class="card-header">
+        <span class="chart-title">Empresas registradas</span>
+        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" style="font-size:.68rem">
+            <?= count($empresas) ?> registros
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height:480px;overflow-y:auto">
+            <table class="table pro-table-lg mb-0">
+                <thead>
+                    <tr>
+                        <th class="col-id">#</th>
+                        <th>Empresa</th>
+                        <th class="col-badge">Estado</th>
+                        <th class="col-date">Vencimiento</th>
+                        <th class="col-dias">Días rest.</th>
+                        <th class="col-badge">Estado pago</th>
+                        <th class="col-badge">Acceso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (empty($empresas)): ?>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+                            Sin datos disponibles
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($empresas as $e):
+                        $dias = $e['dias_restantes'] !== null ? (int)$e['dias_restantes'] : null;
+                    ?>
+                    <tr>
+                        <td class="text-muted fw-semibold" style="font-size:.82rem">#<?= $e['id'] ?></td>
+                        <td class="fw-semibold"><?= html((string)$e['nombre']) ?></td>
+                        <td><span class="badge-pill badge <?= stEmpresa((string)$e['estado']) ?>"><?= html((string)$e['estado']) ?></span></td>
+                        <td>
+                            <?php if (!empty($e['fecha_vencimiento'])): ?>
+                                <span class="date-nowrap"><i class="bi bi-calendar3 me-1 text-muted opacity-50"></i><?= html((string)$e['fecha_vencimiento']) ?></span>
+                            <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($dias === null): ?><span class="text-muted">—</span>
+                            <?php else: ?><span class="dias-pill <?= stDias($dias) ?>"><?= $dias > 0 ? "+{$dias}" : $dias ?>d</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><span class="badge-pill badge <?= stPago((string)$e['estado_pago']) ?>"><?= html(str_replace('_',' ',(string)$e['estado_pago'])) ?></span></td>
+                        <td>
+                            <?php if ($e['bloqueada']): ?>
+                                <span class="badge-pill badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-lock-fill me-1"></i>Bloqueada</span>
+                            <?php else: ?>
+                                <span class="badge-pill badge bg-success bg-opacity-10 text-success"><i class="bi bi-check2 me-1"></i>Libre</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Datos inyectados + scripts defer ════════════════════ -->
+<script>
+window.dashData = {
+    incomeLabels    : <?= json_encode($incomeLabels,    JSON_NUMERIC_CHECK) ?>,
+    incomeTotals    : <?= json_encode($incomeTotals,    JSON_NUMERIC_CHECK) ?>,
+    growthLabels    : <?= json_encode($growthLabels) ?>,
+    growthTotals    : <?= json_encode($growthTotals,    JSON_NUMERIC_CHECK) ?>,
+    kpiActivas      : <?= (int)$kpiActivas ?>,
+    kpiVencidas     : <?= (int)$kpiVencidas ?>,
+    kpiBloqueadas   : <?= (int)$kpiBloqueadas ?>,
+    pagosAlDia      : <?= (int)$pagosAlDia ?>,
+    pagosVencidos   : <?= (int)$pagosVencidos ?>,
+    pagosSuspendidos: <?= (int)$pagosSuspendidos ?>,
+    staffLabels     : <?= json_encode($staffLabels) ?>,
+    staffCounts     : <?= json_encode($staffCounts,     JSON_NUMERIC_CHECK) ?>,
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script src="js/estadisticas.js" defer></script>
 
 <?php
-$content = (string)ob_get_clean();
+$content      = (string)ob_get_clean();
 $currentRoute = 'dashboard';
 require __DIR__ . '/layout.php';
