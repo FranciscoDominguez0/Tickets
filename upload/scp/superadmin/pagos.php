@@ -198,7 +198,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'warning'],
+        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'info'],
         ['icon' => 'bi-x-circle',           'label' => 'Vencidas',          'value' => $kpiVencidas,     'color' => 'danger'],
         ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas',        'value' => $kpiBloqueadas,   'color' => 'danger'],
         ['icon' => 'bi-cash-stack',         'label' => 'Ingresos del mes',  'value' => $kpiIngresosMes,  'color' => 'success', 'prefix' => '$'],
@@ -232,7 +232,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
     </div>
     <div class="card-body">
         <?php if (!$hasEmpresas || !$hasPagos): ?>
-            <div class="alert alert-warning mb-0">
+            <div class="alert alert-info mb-0">
                 Verifica que existan las tablas <strong>empresas</strong> y <strong>pagos_empresas</strong>.
                 <?php if ($dbName !== ''): ?> BD actual: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
             </div>
@@ -299,7 +299,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
     </div>
     <div class="card-body p-0">
         <?php if (!$hasEmpresas): ?>
-            <div class="alert alert-warning m-3 mb-0">
+            <div class="alert alert-info m-3 mb-0">
                 No se pudo acceder a la tabla <strong>empresas</strong>.
                 <?php if ($dbName !== ''): ?> BD: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
             </div>
@@ -331,7 +331,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
 
                             $badgePago = match($estadoPago) {
                                 'al_dia'     => 'bg-success bg-opacity-10 text-success',
-                                'vencido'    => 'bg-warning bg-opacity-10 text-warning',
+                                'vencido'    => 'bg-info bg-opacity-10 text-info',
                                 'suspendido' => 'bg-danger bg-opacity-10 text-danger',
                                 default      => 'bg-secondary bg-opacity-10 text-secondary',
                             };
@@ -339,7 +339,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
                             $badgeDias = 'bg-success bg-opacity-10 text-success';
                             if ($dias === null) $badgeDias = 'bg-secondary bg-opacity-10 text-secondary';
                             elseif ($dias < 0)  $badgeDias = 'bg-danger text-white';
-                            elseif ($dias <= 7) $badgeDias = 'bg-warning text-dark';
+                            elseif ($dias <= 7) $badgeDias = 'bg-info text-white';
                         ?>
                         <tr>
                             <td class="fw-semibold"><?php echo html((string)($e['nombre'] ?? '')); ?></td>
@@ -397,7 +397,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
     </div>
     <div class="card-body p-0">
         <?php if (!$hasPagos): ?>
-            <div class="alert alert-warning m-3 mb-0">
+            <div class="alert alert-info m-3 mb-0">
                 No se pudo acceder a la tabla <strong>pagos_empresas</strong>.
                 <?php if ($dbName !== ''): ?> BD: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
             </div>

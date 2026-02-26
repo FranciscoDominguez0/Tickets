@@ -293,7 +293,7 @@ function syncEmpresaBillingStatus($empresaId) {
 
         if (!$bloqueada && $estadoPago === 'vencido') {
             $daysPast = (int)floor((strtotime($hoy) - strtotime($fechaVenc)) / 86400);
-            if ($daysPast > 3) {
+            if ($daysPast >= 3) {
                 $u2 = $mysqli->prepare("UPDATE empresas SET estado_pago = 'suspendido', bloqueada = 1, motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago') WHERE id = ? AND estado_pago = 'vencido'");
                 if ($u2) {
                     $u2->bind_param('i', $empresaId);
@@ -326,7 +326,7 @@ function syncAllEmpresasBillingStatus() {
                             bloqueada = 1,
                             motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago')
                         WHERE fecha_vencimiento IS NOT NULL
-                          AND DATEDIFF(CURDATE(), fecha_vencimiento) > 3
+                          AND DATEDIFF(CURDATE(), fecha_vencimiento) >= 3
                           AND estado_pago = 'vencido'");
 
         return true;

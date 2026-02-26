@@ -264,14 +264,14 @@ $totalVencidas   = count(array_filter($empresas, fn($e) => ($e['estado_pago']  ?
 function badgeEstado(string $estado): string {
     return match(strtolower($estado)) {
         'activa'     => 'bg-success bg-opacity-10 text-success',
-        'suspendida' => 'bg-warning bg-opacity-10 text-warning',
+        'suspendida' => 'bg-info bg-opacity-10 text-info',
         default      => 'bg-secondary bg-opacity-10 text-secondary',
     };
 }
 function badgePago(string $pago): string {
     return match($pago) {
         'al_dia'    => 'bg-success bg-opacity-10 text-success',
-        'vencido'   => 'bg-warning bg-opacity-10 text-warning',
+        'vencido'   => 'bg-info bg-opacity-10 text-info',
         'suspendido'=> 'bg-danger bg-opacity-10 text-danger',
         default     => 'bg-secondary bg-opacity-10 text-secondary',
     };
@@ -279,7 +279,7 @@ function badgePago(string $pago): string {
 function badgeDias(?int $d): string {
     if ($d === null) return 'bg-secondary bg-opacity-10 text-secondary';
     if ($d < 0)     return 'bg-danger text-white';
-    if ($d <= 7)    return 'bg-warning text-dark';
+    if ($d <= 7)    return 'bg-info text-white';
     return 'bg-success bg-opacity-10 text-success';
 }
 ?>
@@ -317,7 +317,7 @@ function badgeDias(?int $d): string {
     $kpis = [
         ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'primary'],
         ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'success'],
-        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'warning'],
+        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'info'],
         ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'danger'],
     ];
     foreach ($kpis as $k): ?>
@@ -347,7 +347,7 @@ function badgeDias(?int $d): string {
     </div>
 <?php endif; ?>
 <?php if ($warn !== ''): ?>
-    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-2 mt-3" role="alert">
+    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2 mt-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
         <div><?php echo html($warn); ?></div>
         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
@@ -375,7 +375,7 @@ function badgeDias(?int $d): string {
     </div>
     <div class="card-body p-0">
         <?php if (!$hasEmpresas): ?>
-            <div class="alert alert-warning m-3 mb-0">
+            <div class="alert alert-info m-3 mb-0">
                 No se pudo acceder a la tabla <strong>empresas</strong>. Ejecuta la migración en la BD correcta.
             </div>
         <?php else: ?>
@@ -478,7 +478,7 @@ function badgeDias(?int $d): string {
                                         </button>
                                     </form>
                                 <?php else: ?>
-                                    <button type="button" class="btn btn-outline-warning btn-sm"
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-bs-toggle="modal" data-bs-target="#blockModal"
                                         data-empresa-id="<?php echo $id; ?>"
                                         data-empresa-nombre="<?php echo html((string)($e['nombre'] ?? '')); ?>"
@@ -543,7 +543,7 @@ function badgeDias(?int $d): string {
                     <?php csrfField(); ?>
                     <input type="hidden" name="action" value="suspend">
                     <input type="hidden" name="empresa_id" value="<?php echo $eid; ?>">
-                    <button class="btn btn-outline-warning btn-sm" type="submit">
+                    <button class="btn btn-outline-secondary btn-sm" type="submit">
                         <i class="bi bi-pause-circle me-1"></i>Suspender
                     </button>
                 </form>
@@ -827,7 +827,7 @@ function badgeDias(?int $d): string {
                     <?php csrfField(); ?>
                     <input type="hidden" name="action" value="block">
                     <input type="hidden" name="empresa_id" id="blockEmpresaId" value="">
-                    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3"
+                    <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3"
                          style="border-radius:8px;font-size:.8rem">
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         Empresa: <strong id="blockEmpresaNombre"></strong>
@@ -859,12 +859,13 @@ function badgeDias(?int $d): string {
                     <?php csrfField(); ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="empresa_id" id="deleteEmpresaId" value="">
-                    <div class="alert alert-warning d-flex align-items-center gap-2" style="border-radius:10px">
+                    <div class="alert alert-info d-flex align-items-center gap-2" style="border-radius:10px">
                         <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
                         <div>Esta acción es <strong>permanente</strong> y no se puede deshacer.<br>
                              Empresa: <strong id="deleteEmpresaNombre"></strong>
                         </div>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
