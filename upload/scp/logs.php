@@ -12,6 +12,17 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'logs';
 
+$eid = empresaId();
+$logsHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM logs LIKE 'empresa_id'");
+        $logsHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $logsHasEmpresaId = false;
+    }
+}
+
 $errors = [];
 $msg = '';
 $warn = '';
@@ -43,11 +54,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $placeholders = implode(',', array_fill(0, count($ids), '?'));
                     $types = str_repeat('i', count($ids));
-                    $stmt = $mysqli->prepare("DELETE FROM logs WHERE id IN ($placeholders)");
+                    $sqlDelete = "DELETE FROM logs WHERE id IN ($placeholders)";
+                    if ($logsHasEmpresaId) {
+                        $sqlDelete .= ' AND empresa_id = ?';
+                        $types .= 'i';
+                    }
+                    $stmt = $mysqli->prepare($sqlDelete);
                     if (!$stmt) {
                         $errors['err'] = 'No se pudo preparar la operación.';
                     } else {
-                        $stmt->bind_param($types, ...array_map('intval', $ids));
+                        $bind = array_map('intval', $ids);
+                        if ($logsHasEmpresaId) {
+                            $bind[] = (int)$eid;
+                        }
+                        $stmt->bind_param($types, ...$bind);
                         if ($stmt->execute()) {
                             $num = (int)$stmt->affected_rows;
                             $count = count($ids);
@@ -78,6 +98,12 @@ $offset = ($page - 1) * $pageSize;
 $where = [];
 $params = [];
 $types = '';
+
+if ($logsHasEmpresaId) {
+    $where[] = 'empresa_id = ?';
+    $params[] = (int)$eid;
+    $types .= 'i';
+}
 
 if ($q !== '') {
     $where[] = '(action LIKE ? OR object_type LIKE ? OR details LIKE ? OR ip_address LIKE ?)';

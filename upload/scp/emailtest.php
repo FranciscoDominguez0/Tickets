@@ -14,6 +14,17 @@ $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'test';
 
+$eid = empresaId();
+$emailAccountsHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+        $emailAccountsHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $emailAccountsHasEmpresaId = false;
+    }
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -53,7 +64,12 @@ $error = '';
 $accounts = [];
 $defaultAccount = null;
 if (isset($mysqli) && $mysqli) {
-    $res = $mysqli->query('SELECT * FROM email_accounts ORDER BY is_default DESC, id ASC');
+    $sqlAcc = 'SELECT * FROM email_accounts';
+    if ($emailAccountsHasEmpresaId) {
+        $sqlAcc .= ' WHERE empresa_id = ' . (int)$eid;
+    }
+    $sqlAcc .= ' ORDER BY is_default DESC, id ASC';
+    $res = $mysqli->query($sqlAcc);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
             $accounts[] = $row;

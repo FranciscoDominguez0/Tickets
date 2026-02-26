@@ -13,6 +13,17 @@ $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'emails';
 
+$eid = empresaId();
+
+$emailAccHasEmpresa = false;
+$deptHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+    $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -28,6 +39,7 @@ $ensureEmailAccountsTable = function () use ($mysqli) {
     if (!isset($mysqli) || !$mysqli) return false;
     $sql = "CREATE TABLE IF NOT EXISTS email_accounts (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NULL,\n"
         . "  email VARCHAR(255) NOT NULL,\n"
         . "  name VARCHAR(255) NULL,\n"
         . "  priority VARCHAR(32) NULL,\n"
@@ -42,7 +54,8 @@ $ensureEmailAccountsTable = function () use ($mysqli) {
         . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
         . "  KEY idx_email (email),\n"
         . "  KEY idx_default (is_default),\n"
-        . "  KEY idx_dept (dept_id)\n"
+        . "  KEY idx_dept (dept_id),\n"
+        . "  KEY idx_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
     return (bool)$mysqli->query($sql);
 };
@@ -51,7 +64,11 @@ $ensureEmailAccountsTable();
 
 // Sembrar la cuenta actual (config.php) si no existe ninguna
 if (isset($mysqli) && $mysqli) {
-    $resSeed = $mysqli->query('SELECT COUNT(*) c FROM email_accounts');
+    $seedSql = 'SELECT COUNT(*) c FROM email_accounts';
+    if ($emailAccHasEmpresa) {
+        $seedSql .= ' WHERE empresa_id = ' . (int)$eid;
+    }
+    $resSeed = $mysqli->query($seedSql);
     $countSeed = 0;
     if ($resSeed) {
         $rowSeed = $resSeed->fetch_assoc();
@@ -67,11 +84,19 @@ if (isset($mysqli) && $mysqli) {
         $seedPass = defined('SMTP_PASS') ? (string)SMTP_PASS : '';
 
         if ($seedEmail !== '' && filter_var($seedEmail, FILTER_VALIDATE_EMAIL)) {
-            $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+            if ($emailAccHasEmpresa) {
+                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+            } else {
+                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+            }
             if ($stmtSeed) {
                 $prioritySeed = 'Normal';
                 $portSeed = $seedPort;
-                $stmtSeed->bind_param('ssssisss', $seedEmail, $seedName, $prioritySeed, $seedHost, $portSeed, $seedSecure, $seedUser, $seedPass);
+                if ($emailAccHasEmpresa) {
+                    $stmtSeed->bind_param('issssisss', $eid, $seedEmail, $seedName, $prioritySeed, $seedHost, $portSeed, $seedSecure, $seedUser, $seedPass);
+                } else {
+                    $stmtSeed->bind_param('ssssisss', $seedEmail, $seedName, $prioritySeed, $seedHost, $portSeed, $seedSecure, $seedUser, $seedPass);
+                }
                 $stmtSeed->execute();
             }
         }
@@ -92,7 +117,17 @@ if (!empty($_SESSION['flash_error'])) {
 $loadDepartments = function () use ($mysqli) {
     $departments = [];
     if (!isset($mysqli) || !$mysqli) return $departments;
-    $res = $mysqli->query('SELECT id, name FROM departments ORDER BY name');
+    $deptHasEmpresa = false;
+    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
+
+    $sql = 'SELECT id, name FROM departments';
+    if ($deptHasEmpresa) {
+        $sql .= ' WHERE empresa_id = ' . (int)empresaId();
+    }
+    $sql .= ' ORDER BY name';
+
+    $res = $mysqli->query($sql);
     if ($res) {
         while ($r = $res->fetch_assoc()) {
             $departments[] = $r;
@@ -103,13 +138,20 @@ $loadDepartments = function () use ($mysqli) {
 
 $departments = $loadDepartments();
 
-$fetchEmailAccounts = function () use ($mysqli) {
+$fetchEmailAccounts = function () use ($mysqli, $eid, $emailAccHasEmpresa, $deptHasEmpresa) {
     $items = [];
     if (!isset($mysqli) || !$mysqli) return $items;
     $sql = "SELECT ea.*, d.name AS dept_name\n"
          . "FROM email_accounts ea\n"
-         . "LEFT JOIN departments d ON d.id = ea.dept_id\n"
-         . "ORDER BY ea.is_default DESC, ea.id ASC";
+         . "LEFT JOIN departments d ON d.id = ea.dept_id";
+    if ($deptHasEmpresa) {
+        $sql .= " AND d.empresa_id = " . (int)$eid;
+    }
+    $sql .= "\n";
+    if ($emailAccHasEmpresa) {
+        $sql .= "WHERE ea.empresa_id = " . (int)$eid . "\n";
+    }
+    $sql .= "ORDER BY ea.is_default DESC, ea.id ASC";
     $res = $mysqli->query($sql);
     if ($res) {
         while ($r = $res->fetch_assoc()) {
@@ -119,26 +161,43 @@ $fetchEmailAccounts = function () use ($mysqli) {
     return $items;
 };
 
-$getEmailAccount = function ($id) use ($mysqli) {
+$getEmailAccount = function ($id) use ($mysqli, $eid, $emailAccHasEmpresa) {
     if (!isset($mysqli) || !$mysqli) return null;
     $id = (int)$id;
     if ($id <= 0) return null;
-    $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE id = ?');
+    if ($emailAccHasEmpresa) {
+        $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE id = ? AND empresa_id = ?');
+    } else {
+        $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE id = ?');
+    }
     if (!$stmt) return null;
-    $stmt->bind_param('i', $id);
+    if ($emailAccHasEmpresa) {
+        $stmt->bind_param('ii', $id, $eid);
+    } else {
+        $stmt->bind_param('i', $id);
+    }
     $stmt->execute();
     $res = $stmt->get_result();
     return $res ? $res->fetch_assoc() : null;
 };
 
-$setDefaultEmail = function ($id) use ($mysqli) {
+$setDefaultEmail = function ($id) use ($mysqli, $eid, $emailAccHasEmpresa) {
     if (!isset($mysqli) || !$mysqli) return false;
     $id = (int)$id;
     if ($id <= 0) return false;
-    $mysqli->query('UPDATE email_accounts SET is_default = 0');
-    $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ?');
+    if ($emailAccHasEmpresa) {
+        $mysqli->query('UPDATE email_accounts SET is_default = 0 WHERE empresa_id = ' . (int)$eid);
+        $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ? AND empresa_id = ?');
+    } else {
+        $mysqli->query('UPDATE email_accounts SET is_default = 0');
+        $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ?');
+    }
     if (!$stmt) return false;
-    $stmt->bind_param('i', $id);
+    if ($emailAccHasEmpresa) {
+        $stmt->bind_param('ii', $id, $eid);
+    } else {
+        $stmt->bind_param('i', $id);
+    }
     return $stmt->execute();
 };
 
@@ -161,12 +220,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_error'] = 'Correo electrónico inválido.';
         } else {
             if ($is_default) {
-                $mysqli->query('UPDATE email_accounts SET is_default = 0');
+                if ($emailAccHasEmpresa) {
+                    $mysqli->query('UPDATE email_accounts SET is_default = 0 WHERE empresa_id = ' . (int)$eid);
+                } else {
+                    $mysqli->query('UPDATE email_accounts SET is_default = 0');
+                }
             }
-            $stmt = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, created, updated) VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
+            if ($emailAccHasEmpresa) {
+                $stmt = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, created, updated) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())');
+            } else {
+                $stmt = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, created, updated) VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
+            }
             if ($stmt) {
                 $dept_id_param = $dept_id;
-                $stmt->bind_param('sssii', $email, $name, $priority, $dept_id_param, $is_default);
+                if ($emailAccHasEmpresa) {
+                    $stmt->bind_param('isssiii', $eid, $email, $name, $priority, $dept_id_param, $is_default);
+                } else {
+                    $stmt->bind_param('sssii', $email, $name, $priority, $dept_id_param, $is_default);
+                }
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Email agregado correctamente.';
                 } else {
@@ -206,20 +277,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($keep_pass && $smtp_pass === '') {
-            $stmtP = $mysqli->prepare('SELECT smtp_pass FROM email_accounts WHERE id = ?');
+            if ($emailAccHasEmpresa) {
+                $stmtP = $mysqli->prepare('SELECT smtp_pass FROM email_accounts WHERE id = ? AND empresa_id = ?');
+            } else {
+                $stmtP = $mysqli->prepare('SELECT smtp_pass FROM email_accounts WHERE id = ?');
+            }
             if ($stmtP) {
-                $stmtP->bind_param('i', $id);
+                if ($emailAccHasEmpresa) {
+                    $stmtP->bind_param('ii', $id, $eid);
+                } else {
+                    $stmtP->bind_param('i', $id);
+                }
                 $stmtP->execute();
                 $row = $stmtP->get_result()->fetch_assoc();
                 $smtp_pass = (string)($row['smtp_pass'] ?? '');
             }
         }
 
-        $stmt = $mysqli->prepare('UPDATE email_accounts SET email = ?, name = ?, priority = ?, dept_id = ?, smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_pass = ? WHERE id = ?');
+        if ($emailAccHasEmpresa) {
+            $stmt = $mysqli->prepare('UPDATE email_accounts SET email = ?, name = ?, priority = ?, dept_id = ?, smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_pass = ? WHERE id = ? AND empresa_id = ?');
+        } else {
+            $stmt = $mysqli->prepare('UPDATE email_accounts SET email = ?, name = ?, priority = ?, dept_id = ?, smtp_host = ?, smtp_port = ?, smtp_secure = ?, smtp_user = ?, smtp_pass = ? WHERE id = ?');
+        }
         if ($stmt) {
             $dept_id_param = $dept_id;
             $smtp_port_param = $smtp_port;
-            $stmt->bind_param('sssisisssi', $email, $name, $priority, $dept_id_param, $smtp_host, $smtp_port_param, $smtp_secure, $smtp_user, $smtp_pass, $id);
+            if ($emailAccHasEmpresa) {
+                $stmt->bind_param('sssisisssii', $email, $name, $priority, $dept_id_param, $smtp_host, $smtp_port_param, $smtp_secure, $smtp_user, $smtp_pass, $id, $eid);
+            } else {
+                $stmt->bind_param('sssisisssi', $email, $name, $priority, $dept_id_param, $smtp_host, $smtp_port_param, $smtp_secure, $smtp_user, $smtp_pass, $id);
+            }
             if ($stmt->execute()) {
                 $_SESSION['flash_msg'] = 'Email actualizado correctamente.';
             } else {
@@ -253,9 +340,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $placeholders = implode(',', array_fill(0, count($ids), '?'));
             $types = str_repeat('i', count($ids));
 
-            $stmtDflt = $mysqli->prepare("SELECT COUNT(*) c FROM email_accounts WHERE is_default = 1 AND id IN ($placeholders)");
+            if ($emailAccHasEmpresa) {
+                $stmtDflt = $mysqli->prepare("SELECT COUNT(*) c FROM email_accounts WHERE empresa_id = ? AND is_default = 1 AND id IN ($placeholders)");
+            } else {
+                $stmtDflt = $mysqli->prepare("SELECT COUNT(*) c FROM email_accounts WHERE is_default = 1 AND id IN ($placeholders)");
+            }
             if ($stmtDflt) {
-                $stmtDflt->bind_param($types, ...$ids);
+                if ($emailAccHasEmpresa) {
+                    $stmtDflt->bind_param('i' . $types, $eid, ...$ids);
+                } else {
+                    $stmtDflt->bind_param($types, ...$ids);
+                }
                 $stmtDflt->execute();
                 $row = $stmtDflt->get_result()->fetch_assoc();
                 if ((int)($row['c'] ?? 0) > 0) {
@@ -265,9 +360,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $stmt = $mysqli->prepare("DELETE FROM email_accounts WHERE id IN ($placeholders)");
+            if ($emailAccHasEmpresa) {
+                $stmt = $mysqli->prepare("DELETE FROM email_accounts WHERE empresa_id = ? AND id IN ($placeholders)");
+            } else {
+                $stmt = $mysqli->prepare("DELETE FROM email_accounts WHERE id IN ($placeholders)");
+            }
             if ($stmt) {
-                $stmt->bind_param($types, ...$ids);
+                if ($emailAccHasEmpresa) {
+                    $stmt->bind_param('i' . $types, $eid, ...$ids);
+                } else {
+                    $stmt->bind_param($types, ...$ids);
+                }
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Emails eliminados correctamente.';
                 } else {

@@ -12,6 +12,24 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'roles';
 
+$eid = empresaId();
+$rolesHasEmpresaId = false;
+$staffHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
+        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $rolesHasEmpresaId = false;
+    }
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $staffHasEmpresaId = false;
+    }
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -39,11 +57,48 @@ $ensureRolesTable = function () use ($mysqli) {
 $ensureRolesTable();
 
 if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
+        $hasEmpresaCol = ($res && $res->num_rows > 0);
+        if (!$hasEmpresaCol) {
+            $mysqli->query("ALTER TABLE roles ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
+            $mysqli->query("ALTER TABLE roles ADD INDEX idx_roles_empresa (empresa_id)");
+        }
+
+        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
+        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
+        if ($rolesHasEmpresaId) {
+            $idx = $mysqli->query("SHOW INDEX FROM roles WHERE Key_name = 'uq_roles_name'");
+            if ($idx && $idx->num_rows > 0) {
+                $mysqli->query("ALTER TABLE roles DROP INDEX uq_roles_name");
+            }
+            $idx2 = $mysqli->query("SHOW INDEX FROM roles WHERE Key_name = 'uq_roles_empresa_name'");
+            if (!$idx2 || $idx2->num_rows < 1) {
+                $mysqli->query("ALTER TABLE roles ADD UNIQUE KEY uq_roles_empresa_name (empresa_id, name)");
+            }
+        }
+    } catch (Throwable $e) {
+    }
+}
+
+if (isset($mysqli) && $mysqli) {
     $rolesCount = 0;
-    $rc = $mysqli->query('SELECT COUNT(*) c FROM roles');
+    $sqlRc = 'SELECT COUNT(*) c FROM roles';
+    if ($rolesHasEmpresaId) {
+        $sqlRc .= ' WHERE empresa_id = ' . (int)$eid;
+    }
+    $rc = $mysqli->query($sqlRc);
     if ($rc) $rolesCount = (int)($rc->fetch_assoc()['c'] ?? 0);
     if ($rolesCount === 0) {
-        $mysqli->query("INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES ('admin', 1, NOW(), NOW()), ('supervisor', 1, NOW(), NOW()), ('agent', 1, NOW(), NOW())");
+        if ($rolesHasEmpresaId) {
+            $stmtSeed = $mysqli->prepare("INSERT IGNORE INTO roles (empresa_id, name, is_enabled, created, updated) VALUES (?, 'admin', 1, NOW(), NOW()), (?, 'supervisor', 1, NOW(), NOW()), (?, 'agent', 1, NOW(), NOW())");
+            if ($stmtSeed) {
+                $stmtSeed->bind_param('iii', $eid, $eid, $eid);
+                $stmtSeed->execute();
+            }
+        } else {
+            $mysqli->query("INSERT IGNORE INTO roles (name, is_enabled, created, updated) VALUES ('admin', 1, NOW(), NOW()), ('supervisor', 1, NOW(), NOW()), ('agent', 1, NOW(), NOW())");
+        }
     }
 }
 
@@ -74,13 +129,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $mysqli->prepare('INSERT INTO roles (name, is_enabled, created, updated) VALUES (?, 1, NOW(), NOW())');
+        $sqlCreate = 'INSERT INTO roles (name, is_enabled, created, updated) VALUES (?, 1, NOW(), NOW())';
+        if ($rolesHasEmpresaId) {
+            $sqlCreate = 'INSERT INTO roles (empresa_id, name, is_enabled, created, updated) VALUES (?, ?, 1, NOW(), NOW())';
+        }
+        $stmt = $mysqli->prepare($sqlCreate);
         if (!$stmt) {
             $_SESSION['flash_error'] = 'No se pudo crear el rol.';
             header('Location: roles.php');
             exit;
         }
-        $stmt->bind_param('s', $name);
+        if ($rolesHasEmpresaId) {
+            $stmt->bind_param('is', $eid, $name);
+        } else {
+            $stmt->bind_param('s', $name);
+        }
         if ($stmt->execute()) {
             $_SESSION['flash_msg'] = 'Rol creado correctamente.';
         } else {
@@ -112,9 +175,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'enable' || $action === 'disable') {
             $enabled = $action === 'enable' ? 1 : 0;
-            $stmt = $mysqli->prepare("UPDATE roles SET is_enabled = ?, updated = NOW() WHERE id IN ($placeholders)");
+            $sqlUp = "UPDATE roles SET is_enabled = ?, updated = NOW() WHERE id IN ($placeholders)";
+            $typesUp = 'i' . $types;
+            $bindUp = array_merge([$enabled], $ids);
+            if ($rolesHasEmpresaId) {
+                $sqlUp .= ' AND empresa_id = ?';
+                $typesUp .= 'i';
+                $bindUp[] = (int)$eid;
+            }
+            $stmt = $mysqli->prepare($sqlUp);
             if ($stmt) {
-                $stmt->bind_param('i' . $types, $enabled, ...$ids);
+                $stmt->bind_param($typesUp, ...$bindUp);
                 $stmt->execute();
                 $_SESSION['flash_msg'] = $enabled ? 'Roles habilitados correctamente.' : 'Roles deshabilitados correctamente.';
             } else {
@@ -125,10 +196,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'delete') {
-            $stmtNames = $mysqli->prepare("SELECT id, name FROM roles WHERE id IN ($placeholders)");
+            $sqlNames = "SELECT id, name FROM roles WHERE id IN ($placeholders)";
+            $typesNames = $types;
+            $idsNames = $ids;
+            if ($rolesHasEmpresaId) {
+                $sqlNames .= ' AND empresa_id = ?';
+                $typesNames .= 'i';
+                $idsNames[] = (int)$eid;
+            }
+            $stmtNames = $mysqli->prepare($sqlNames);
             $toDelete = [];
             if ($stmtNames) {
-                $stmtNames->bind_param($types, ...$ids);
+                $stmtNames->bind_param($typesNames, ...$idsNames);
                 $stmtNames->execute();
                 $resN = $stmtNames->get_result();
                 while ($r = $resN->fetch_assoc()) {
@@ -139,9 +218,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $blocked = 0;
             foreach ($toDelete as $r) {
                 $roleName = (string)($r['name'] ?? '');
-                $stmtU = $mysqli->prepare('SELECT COUNT(*) c FROM staff WHERE role = ?');
+                $sqlUse = 'SELECT COUNT(*) c FROM staff WHERE role = ?';
+                if ($staffHasEmpresaId) {
+                    $sqlUse .= ' AND empresa_id = ?';
+                }
+                $stmtU = $mysqli->prepare($sqlUse);
                 if ($stmtU) {
-                    $stmtU->bind_param('s', $roleName);
+                    if ($staffHasEmpresaId) {
+                        $stmtU->bind_param('si', $roleName, $eid);
+                    } else {
+                        $stmtU->bind_param('s', $roleName);
+                    }
                     $stmtU->execute();
                     $row = $stmtU->get_result()->fetch_assoc();
                     if ((int)($row['c'] ?? 0) > 0) {
@@ -156,9 +243,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
 
-            $stmt = $mysqli->prepare("DELETE FROM roles WHERE id IN ($placeholders)");
+            $sqlDel = "DELETE FROM roles WHERE id IN ($placeholders)";
+            $typesDel = $types;
+            $idsDel = $ids;
+            if ($rolesHasEmpresaId) {
+                $sqlDel .= ' AND empresa_id = ?';
+                $typesDel .= 'i';
+                $idsDel[] = (int)$eid;
+            }
+            $stmt = $mysqli->prepare($sqlDel);
             if ($stmt) {
-                $stmt->bind_param($types, ...$ids);
+                $stmt->bind_param($typesDel, ...$idsDel);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Roles eliminados correctamente.';
                 } else {
@@ -179,9 +274,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $roles = [];
 if (isset($mysqli) && $mysqli) {
-    $sql = "SELECT r.*, (SELECT COUNT(*) FROM staff s WHERE s.role = r.name) AS agents_total, (SELECT COUNT(*) FROM staff s WHERE s.role = r.name AND s.is_active = 1) AS agents_active\n"
-        . "FROM roles r\n"
-        . "ORDER BY r.name ASC";
+    $staffEmpresaWhere = '';
+    if ($staffHasEmpresaId) {
+        $staffEmpresaWhere = ' AND s.empresa_id = ' . (int)$eid;
+    }
+
+    $sql = "SELECT r.*, (SELECT COUNT(*) FROM staff s WHERE s.role = r.name" . $staffEmpresaWhere . ") AS agents_total, (SELECT COUNT(*) FROM staff s WHERE s.role = r.name AND s.is_active = 1" . $staffEmpresaWhere . ") AS agents_active\n"
+        . "FROM roles r\n";
+    if ($rolesHasEmpresaId) {
+        $sql .= 'WHERE r.empresa_id = ' . (int)$eid . "\n";
+    }
+    $sql .= "ORDER BY r.name ASC";
     $res = $mysqli->query($sql);
     if ($res) {
         while ($row = $res->fetch_assoc()) {

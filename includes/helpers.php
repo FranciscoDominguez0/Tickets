@@ -590,7 +590,35 @@ function ensureAppSettingsTable() {
         . "  `updated` DATETIME NULL,\n"
         . "  PRIMARY KEY (`key`)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-    return (bool)$mysqli->query($sql);
+
+    if (!$mysqli->query($sql)) return false;
+
+    $hasEmpresa = false;
+    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+    $hasEmpresa = ($col && $col->num_rows > 0);
+    if (!$hasEmpresa) {
+        $mysqli->query("ALTER TABLE app_settings ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
+    }
+
+    $col2 = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+    $hasEmpresa2 = ($col2 && $col2->num_rows > 0);
+    if ($hasEmpresa2) {
+        $primaryCols = [];
+        $idx = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'PRIMARY'");
+        if ($idx) {
+            while ($r = $idx->fetch_assoc()) {
+                $primaryCols[] = (string)($r['Column_name'] ?? '');
+            }
+        }
+        $primaryCols = array_values(array_filter(array_unique($primaryCols)));
+        $hasComposite = in_array('empresa_id', $primaryCols, true) && in_array('key', $primaryCols, true);
+        if (!$hasComposite) {
+            @$mysqli->query('ALTER TABLE app_settings DROP PRIMARY KEY');
+            @$mysqli->query('ALTER TABLE app_settings ADD PRIMARY KEY (empresa_id, `key`)');
+        }
+    }
+
+    return true;
 }
 
 function getAppSetting($key, $default = null) {
@@ -598,9 +626,22 @@ function getAppSetting($key, $default = null) {
     if (!isset($mysqli) || !$mysqli) return $default;
     if (!ensureAppSettingsTable()) return $default;
     $key = (string)$key;
-    $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `key` = ? LIMIT 1');
+
+    $hasEmpresa = false;
+    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+    $hasEmpresa = ($col && $col->num_rows > 0);
+
+    if ($hasEmpresa) {
+        $eid = empresaId();
+        $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `empresa_id` = ? AND `key` = ? LIMIT 1');
+        if (!$stmt) return $default;
+        $stmt->bind_param('is', $eid, $key);
+    } else {
+        $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `key` = ? LIMIT 1');
+        if (!$stmt) return $default;
+        $stmt->bind_param('s', $key);
+    }
     if (!$stmt) return $default;
-    $stmt->bind_param('s', $key);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     return $row ? ($row['value'] ?? $default) : $default;
@@ -612,6 +653,19 @@ function setAppSetting($key, $value) {
     if (!ensureAppSettingsTable()) return false;
     $key = (string)$key;
     $value = $value !== null ? (string)$value : null;
+
+    $hasEmpresa = false;
+    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+    $hasEmpresa = ($col && $col->num_rows > 0);
+
+    if ($hasEmpresa) {
+        $eid = empresaId();
+        $stmt = $mysqli->prepare('INSERT INTO app_settings (`empresa_id`, `key`, `value`, `updated`) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
+        if (!$stmt) return false;
+        $stmt->bind_param('iss', $eid, $key, $value);
+        return $stmt->execute();
+    }
+
     $stmt = $mysqli->prepare('INSERT INTO app_settings (`key`, `value`, `updated`) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
     if (!$stmt) return false;
     $stmt->bind_param('ss', $key, $value);
@@ -666,6 +720,18 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     $object_id = ($object_id !== null && is_numeric($object_id)) ? (int)$object_id : null;
     $user_type = $user_type !== null ? (string)$user_type : null;
     $user_id = ($user_id !== null && is_numeric($user_id)) ? (int)$user_id : null;
+
+    $hasEmpresa = false;
+    $col = $mysqli->query("SHOW COLUMNS FROM logs LIKE 'empresa_id'");
+    $hasEmpresa = ($col && $col->num_rows > 0);
+
+    if ($hasEmpresa) {
+        $eid = empresaId();
+        $stmt = $mysqli->prepare('INSERT INTO logs (empresa_id, action, object_type, object_id, user_type, user_id, details, ip_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+        if (!$stmt) return false;
+        $stmt->bind_param('ississss', $eid, $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
+        return $stmt->execute();
+    }
 
     $stmt = $mysqli->prepare('INSERT INTO logs (action, object_type, object_id, user_type, user_id, details, ip_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
     if (!$stmt) return false;

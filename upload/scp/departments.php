@@ -12,9 +12,36 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'departments';
 
+$eid = empresaId();
+
 $flashError = (string)($_SESSION['flash_error'] ?? '');
 $flashMsg = (string)($_SESSION['flash_msg'] ?? '');
 unset($_SESSION['flash_error'], $_SESSION['flash_msg']);
+
+$deptHasEmpresa = false;
+$emailAccHasEmpresa = false;
+$staffHasEmpresa = false;
+$ticketsHasEmpresa = false;
+$helpTopicsHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
+
+    $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+    $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+
+    $colS = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+    $staffHasEmpresa = ($colS && $colS->num_rows > 0);
+
+    $colT = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'empresa_id'");
+    $ticketsHasEmpresa = ($colT && $colT->num_rows > 0);
+
+    $chkHT = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+    if ($chkHT && $chkHT->num_rows > 0) {
+        $colHT = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'empresa_id'");
+        $helpTopicsHasEmpresa = ($colHT && $colHT->num_rows > 0);
+    }
+}
 
 $ensureEmailAccountsTable = function () use ($mysqli) {
     if (!isset($mysqli) || !$mysqli) return false;
@@ -60,14 +87,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $mysqli->prepare('INSERT INTO departments (name, description, is_active, created) VALUES (?, ?, ?, NOW())');
+        if ($deptHasEmpresa) {
+            $stmt = $mysqli->prepare('INSERT INTO departments (empresa_id, name, description, is_active, created) VALUES (?, ?, ?, ?, NOW())');
+        } else {
+            $stmt = $mysqli->prepare('INSERT INTO departments (name, description, is_active, created) VALUES (?, ?, ?, NOW())');
+        }
         if (!$stmt) {
             $_SESSION['flash_error'] = 'No se pudo crear el departamento.';
             header('Location: departments.php');
             exit;
         }
         $descParam = $description !== '' ? $description : null;
-        $stmt->bind_param('ssi', $name, $descParam, $isActive);
+        if ($deptHasEmpresa) {
+            $stmt->bind_param('issi', $eid, $name, $descParam, $isActive);
+        } else {
+            $stmt->bind_param('ssi', $name, $descParam, $isActive);
+        }
         try {
             if ($stmt->execute()) {
                 $_SESSION['flash_msg'] = 'Departamento creado correctamente.';
@@ -102,14 +137,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ? WHERE id = ?');
+        if ($deptHasEmpresa) {
+            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ? WHERE id = ? AND empresa_id = ?');
+        } else {
+            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ? WHERE id = ?');
+        }
         if (!$stmt) {
             $_SESSION['flash_error'] = 'No se pudo actualizar el departamento.';
             header('Location: departments.php');
             exit;
         }
         $descParam = $description !== '' ? $description : null;
-        $stmt->bind_param('ssii', $name, $descParam, $isActive, $id);
+        if ($deptHasEmpresa) {
+            $stmt->bind_param('ssiii', $name, $descParam, $isActive, $id, $eid);
+        } else {
+            $stmt->bind_param('ssii', $name, $descParam, $isActive, $id);
+        }
         try {
             if ($stmt->execute()) {
                 $_SESSION['flash_msg'] = 'Departamento actualizado correctamente.';
@@ -149,9 +192,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'enable' || $action === 'disable') {
             $enabled = $action === 'enable' ? 1 : 0;
-            $stmt = $mysqli->prepare("UPDATE departments SET is_active = ? WHERE id IN ($placeholders)");
+            if ($deptHasEmpresa) {
+                $stmt = $mysqli->prepare("UPDATE departments SET is_active = ? WHERE empresa_id = ? AND id IN ($placeholders)");
+            } else {
+                $stmt = $mysqli->prepare("UPDATE departments SET is_active = ? WHERE id IN ($placeholders)");
+            }
             if ($stmt) {
-                $stmt->bind_param('i' . $types, $enabled, ...$ids);
+                if ($deptHasEmpresa) {
+                    $stmt->bind_param('ii' . $types, $enabled, $eid, ...$ids);
+                } else {
+                    $stmt->bind_param('i' . $types, $enabled, ...$ids);
+                }
                 $stmt->execute();
                 $_SESSION['flash_msg'] = $enabled ? 'Departamentos habilitados correctamente.' : 'Departamentos deshabilitados correctamente.';
             } else {
@@ -162,9 +213,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'delete') {
-            $stmtCnt = $mysqli->prepare("SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)");
+            $stmtCntSql = "SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)";
+            if ($staffHasEmpresa) $stmtCntSql .= " AND empresa_id = ?";
+            $stmtCnt = $mysqli->prepare($stmtCntSql);
             if ($stmtCnt) {
-                $stmtCnt->bind_param($types, ...$ids);
+                if ($staffHasEmpresa) {
+                    $bind = array_merge($ids, [(int)$eid]);
+                    $stmtCnt->bind_param($types . 'i', ...$bind);
+                } else {
+                    $stmtCnt->bind_param($types, ...$ids);
+                }
                 $stmtCnt->execute();
                 $row = $stmtCnt->get_result()->fetch_assoc();
                 if ((int)($row['c'] ?? 0) > 0) {
@@ -174,9 +232,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $stmtCntT = $mysqli->prepare("SELECT COUNT(*) c FROM tickets WHERE dept_id IN ($placeholders)");
+            $stmtCntTSql = "SELECT COUNT(*) c FROM tickets WHERE dept_id IN ($placeholders)";
+            if ($ticketsHasEmpresa) $stmtCntTSql .= " AND empresa_id = ?";
+            $stmtCntT = $mysqli->prepare($stmtCntTSql);
             if ($stmtCntT) {
-                $stmtCntT->bind_param($types, ...$ids);
+                if ($ticketsHasEmpresa) {
+                    $bind = array_merge($ids, [(int)$eid]);
+                    $stmtCntT->bind_param($types . 'i', ...$bind);
+                } else {
+                    $stmtCntT->bind_param($types, ...$ids);
+                }
                 $stmtCntT->execute();
                 $row = $stmtCntT->get_result()->fetch_assoc();
                 if ((int)($row['c'] ?? 0) > 0) {
@@ -191,9 +256,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rt = @$mysqli->query("SHOW TABLES LIKE 'help_topics'");
             if ($rt && $rt->num_rows > 0) $hasTopics = true;
             if ($hasTopics) {
-                $stmtCntH = $mysqli->prepare("SELECT COUNT(*) c FROM help_topics WHERE dept_id IN ($placeholders)");
+                $stmtCntHSql = "SELECT COUNT(*) c FROM help_topics WHERE dept_id IN ($placeholders)";
+                if ($helpTopicsHasEmpresa) $stmtCntHSql .= " AND empresa_id = ?";
+                $stmtCntH = $mysqli->prepare($stmtCntHSql);
                 if ($stmtCntH) {
-                    $stmtCntH->bind_param($types, ...$ids);
+                    if ($helpTopicsHasEmpresa) {
+                        $bind = array_merge($ids, [(int)$eid]);
+                        $stmtCntH->bind_param($types . 'i', ...$bind);
+                    } else {
+                        $stmtCntH->bind_param($types, ...$ids);
+                    }
                     $stmtCntH->execute();
                     $row = $stmtCntH->get_result()->fetch_assoc();
                     if ((int)($row['c'] ?? 0) > 0) {
@@ -204,9 +276,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            $stmt = $mysqli->prepare("DELETE FROM departments WHERE id IN ($placeholders)");
+            if ($deptHasEmpresa) {
+                $stmt = $mysqli->prepare("DELETE FROM departments WHERE empresa_id = ? AND id IN ($placeholders)");
+            } else {
+                $stmt = $mysqli->prepare("DELETE FROM departments WHERE id IN ($placeholders)");
+            }
             if ($stmt) {
-                $stmt->bind_param($types, ...$ids);
+                if ($deptHasEmpresa) {
+                    $stmt->bind_param('i' . $types, $eid, ...$ids);
+                } else {
+                    $stmt->bind_param($types, ...$ids);
+                }
                 try {
                     if ($stmt->execute()) {
                         $_SESSION['flash_msg'] = 'Departamentos eliminados correctamente.';
@@ -251,12 +331,28 @@ $sql = "
         SELECT dept_id, MIN(id) AS email_id
         FROM email_accounts
         WHERE dept_id IS NOT NULL
-        GROUP BY dept_id
+";
+if ($emailAccHasEmpresa) {
+    $sql .= "        AND empresa_id = " . (int)$eid . "\n";
+}
+$sql .= "        GROUP BY dept_id
     ) eam ON eam.dept_id = d.id
     LEFT JOIN email_accounts ea ON ea.id = eam.email_id
-    LEFT JOIN staff s ON s.dept_id = d.id
-    LEFT JOIN tickets t ON t.dept_id = d.id
-    GROUP BY d.id, d.name, d.description, d.is_active, ea.id, ea.email, ea.name
+    LEFT JOIN staff s ON s.dept_id = d.id";
+if ($staffHasEmpresa) {
+    $sql .= " AND s.empresa_id = " . (int)$eid;
+}
+$sql .= "
+    LEFT JOIN tickets t ON t.dept_id = d.id";
+if ($ticketsHasEmpresa) {
+    $sql .= " AND t.empresa_id = " . (int)$eid;
+}
+$sql .= "
+";
+if ($deptHasEmpresa) {
+    $sql .= "    WHERE d.empresa_id = " . (int)$eid . "\n";
+}
+$sql .= "    GROUP BY d.id, d.name, d.description, d.is_active, ea.id, ea.email, ea.name
     ORDER BY d.name
 ";
 $res = $mysqli->query($sql);
@@ -377,7 +473,7 @@ ob_start();
                                                 <div class="fw-semibold">
                                                     <?php echo html($name); ?>
                                                 </div>
-                                                <div class="text-muted small">#<?php echo $id; ?><?php if ($description !== ''): ?> · <?php echo html($description); ?><?php endif; ?></div>
+                                                <div class="text-muted small"><?php if ($description !== ''): ?><?php echo html($description); ?><?php endif; ?></div>
                                             </td>
                                             <td class="text-center">
                                                 <?php if ($active): ?>

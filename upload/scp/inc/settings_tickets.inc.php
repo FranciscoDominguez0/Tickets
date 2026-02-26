@@ -19,10 +19,33 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
+$eid = empresaId();
+$departmentsHasEmpresaId = false;
+$staffHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+        $departmentsHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $departmentsHasEmpresaId = false;
+    }
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $staffHasEmpresaId = false;
+    }
+}
+
 // Asignación por defecto por departamento
 $generalDeptId = 0;
 if (isset($mysqli) && $mysqli) {
-    $rgd = $mysqli->query("SELECT id FROM departments WHERE LOWER(name) LIKE '%general%' LIMIT 1");
+    $sqlG = "SELECT id FROM departments WHERE LOWER(name) LIKE '%general%'";
+    if ($departmentsHasEmpresaId) {
+        $sqlG .= ' AND empresa_id = ' . (int)$eid;
+    }
+    $sqlG .= ' LIMIT 1';
+    $rgd = $mysqli->query($sqlG);
     if ($rgd && ($row = $rgd->fetch_assoc())) {
         $generalDeptId = (int) ($row['id'] ?? 0);
     }
@@ -43,13 +66,23 @@ if (isset($mysqli) && $mysqli) {
 $departments = [];
 $agents = [];
 if (isset($mysqli) && $mysqli) {
-    $res = $mysqli->query('SELECT id, name, default_staff_id FROM departments WHERE is_active = 1 ORDER BY name');
+    $sqlD = 'SELECT id, name, default_staff_id FROM departments WHERE is_active = 1';
+    if ($departmentsHasEmpresaId) {
+        $sqlD .= ' AND empresa_id = ' . (int)$eid;
+    }
+    $sqlD .= ' ORDER BY name';
+    $res = $mysqli->query($sqlD);
     if ($res) {
         while ($row = $res->fetch_assoc()) {
             $departments[] = $row;
         }
     }
-    $resA = $mysqli->query('SELECT id, firstname, lastname, dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname');
+    $sqlA = 'SELECT id, firstname, lastname, dept_id FROM staff WHERE is_active = 1';
+    if ($staffHasEmpresaId) {
+        $sqlA .= ' AND empresa_id = ' . (int)$eid;
+    }
+    $sqlA .= ' ORDER BY firstname, lastname';
+    $resA = $mysqli->query($sqlA);
     if ($resA) {
         while ($row = $resA->fetch_assoc()) {
             $agents[] = $row;
@@ -173,9 +206,18 @@ if ($_POST) {
 
                     if ($staffId !== null) {
                         $allowed = false;
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        $sqlSd = 'SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1';
+                        if ($staffHasEmpresaId) {
+                            $sqlSd .= ' AND empresa_id = ?';
+                        }
+                        $sqlSd .= ' LIMIT 1';
+                        $stmtSd = $mysqli->prepare($sqlSd);
                         if ($stmtSd) {
-                            $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                            if ($staffHasEmpresaId) {
+                                $stmtSd->bind_param('iii', $generalDeptId, $staffId, $eid);
+                            } else {
+                                $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                            }
                             if ($stmtSd->execute()) {
                                 $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                                 $allowed = ($sdept === $deptId);
@@ -187,9 +229,17 @@ if ($_POST) {
                         }
                     }
 
-                    $stmtUp = $mysqli->prepare('UPDATE departments SET default_staff_id = ? WHERE id = ?');
+                    $sqlUp = 'UPDATE departments SET default_staff_id = ? WHERE id = ?';
+                    if ($departmentsHasEmpresaId) {
+                        $sqlUp .= ' AND empresa_id = ?';
+                    }
+                    $stmtUp = $mysqli->prepare($sqlUp);
                     if ($stmtUp) {
-                        $stmtUp->bind_param('ii', $staffId, $deptId);
+                        if ($departmentsHasEmpresaId) {
+                            $stmtUp->bind_param('iii', $staffId, $deptId, $eid);
+                        } else {
+                            $stmtUp->bind_param('ii', $staffId, $deptId);
+                        }
                         $stmtUp->execute();
                     }
                 }

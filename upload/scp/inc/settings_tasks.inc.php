@@ -19,13 +19,29 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
+$eid = empresaId();
+$sequencesHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM sequences LIKE 'empresa_id'");
+        $sequencesHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $sequencesHasEmpresaId = false;
+    }
+}
+
 $sequences = [];
 $hasSequences = false;
 if (isset($mysqli) && $mysqli) {
     $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
     $hasSequences = $chkSeq && $chkSeq->num_rows > 0;
     if ($hasSequences) {
-        $res = $mysqli->query('SELECT id, name, next, increment, padding FROM sequences ORDER BY id');
+        $sqlSeq = 'SELECT id, name, next, increment, padding FROM sequences';
+        if ($sequencesHasEmpresaId) {
+            $sqlSeq .= ' WHERE empresa_id = ' . (int)$eid;
+        }
+        $sqlSeq .= ' ORDER BY id';
+        $res = $mysqli->query($sqlSeq);
         if ($res) {
             while ($row = $res->fetch_assoc()) {
                 $sequences[] = $row;

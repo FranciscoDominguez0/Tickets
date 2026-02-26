@@ -12,6 +12,8 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'staff';
 
+$eid = empresaId();
+
 $flashMsg = '';
 $flashError = '';
 if (!empty($_SESSION['flash_msg'])) {
@@ -23,12 +25,18 @@ if (!empty($_SESSION['flash_error'])) {
     unset($_SESSION['flash_error']);
 }
 
+$deptHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    $col = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+    $deptHasEmpresa = ($col && $col->num_rows > 0);
+}
+
 $currentStaffId = (int)($_SESSION['staff_id'] ?? 0);
 $currentStaffRole = '';
 if ($currentStaffId > 0) {
-    $stmtMe = $mysqli->prepare("SELECT role FROM staff WHERE id = ? LIMIT 1");
+    $stmtMe = $mysqli->prepare("SELECT role FROM staff WHERE id = ? AND empresa_id = ? LIMIT 1");
     if ($stmtMe) {
-        $stmtMe->bind_param('i', $currentStaffId);
+        $stmtMe->bind_param('ii', $currentStaffId, $eid);
         $stmtMe->execute();
         $me = $stmtMe->get_result()->fetch_assoc();
         $currentStaffRole = (string)($me['role'] ?? '');
@@ -122,19 +130,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: staff.php');
             exit;
         }
+
         if ($id === $currentStaffId) {
             $_SESSION['flash_error'] = 'No puedes eliminar tu propio usuario.';
             header('Location: staff.php');
             exit;
         }
 
-        $stmtChk = $mysqli->prepare('SELECT id FROM staff WHERE id = ? LIMIT 1');
+        $stmtChk = $mysqli->prepare('SELECT id FROM staff WHERE id = ? AND empresa_id = ? LIMIT 1');
         if (!$stmtChk) {
             $_SESSION['flash_error'] = 'No se pudo procesar la solicitud.';
             header('Location: staff.php');
             exit;
         }
-        $stmtChk->bind_param('i', $id);
+        $stmtChk->bind_param('ii', $id, $eid);
         $stmtChk->execute();
         $row = $stmtChk->get_result()->fetch_assoc();
         if (!$row) {
@@ -148,9 +157,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rt = @$mysqli->query("SHOW TABLES LIKE 'tasks'");
         if ($rt && $rt->num_rows > 0) $hasTasks = true;
         if ($hasTasks) {
-            $stmtCntT = $mysqli->prepare('SELECT COUNT(*) c FROM tasks WHERE assigned_to = ?');
+            $stmtCntT = $mysqli->prepare('SELECT COUNT(*) c FROM tasks WHERE assigned_to = ? AND empresa_id = ?');
             if ($stmtCntT) {
-                $stmtCntT->bind_param('i', $id);
+                $stmtCntT->bind_param('ii', $id, $eid);
                 $stmtCntT->execute();
                 $cntRow = $stmtCntT->get_result()->fetch_assoc();
                 if ((int)($cntRow['c'] ?? 0) > 0) {
@@ -161,13 +170,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmtDel = $mysqli->prepare('DELETE FROM staff WHERE id = ?');
+        $stmtDel = $mysqli->prepare('DELETE FROM staff WHERE id = ? AND empresa_id = ?');
         if (!$stmtDel) {
             $_SESSION['flash_error'] = 'No se pudo eliminar el agente.';
             header('Location: staff.php');
             exit;
         }
-        $stmtDel->bind_param('i', $id);
+        $stmtDel->bind_param('ii', $id, $eid);
         try {
             if ($stmtDel->execute()) {
                 $_SESSION['flash_msg'] = 'Agente eliminado correctamente.';
@@ -217,9 +226,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE username = ? OR email = ? LIMIT 1');
+        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE empresa_id = ? AND (username = ? OR email = ?) LIMIT 1');
         if ($stmtDu) {
-            $stmtDu->bind_param('ss', $username, $email);
+            $stmtDu->bind_param('iss', $eid, $username, $email);
             $stmtDu->execute();
             $dup = $stmtDu->get_result()->fetch_assoc();
             if ($dup) {
@@ -232,13 +241,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tempPass = randomPassword(14);
         $hash = Auth::hash($tempPass);
 
-        $stmtIns = $mysqli->prepare('INSERT INTO staff (username, email, firstname, lastname, password, dept_id, role, is_active, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+        $stmtIns = $mysqli->prepare('INSERT INTO staff (empresa_id, username, email, firstname, lastname, password, dept_id, role, is_active, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
         if (!$stmtIns) {
             $_SESSION['flash_error'] = 'No se pudo crear el agente.';
             header('Location: staff.php');
             exit;
         }
-        $stmtIns->bind_param('sssssisi', $username, $email, $firstname, $lastname, $hash, $deptId, $role, $isActive);
+        $stmtIns->bind_param('isssssisi', $eid, $username, $email, $firstname, $lastname, $hash, $deptId, $role, $isActive);
         if (!$stmtIns->execute()) {
             $_SESSION['flash_error'] = 'No se pudo crear el agente.';
             header('Location: staff.php');
@@ -334,9 +343,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE (username = ? OR email = ?) AND id <> ? LIMIT 1');
+        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE empresa_id = ? AND (username = ? OR email = ?) AND id <> ? LIMIT 1');
         if ($stmtDu) {
-            $stmtDu->bind_param('ssi', $username, $email, $id);
+            $stmtDu->bind_param('issi', $eid, $username, $email, $id);
             $stmtDu->execute();
             $dup = $stmtDu->get_result()->fetch_assoc();
             if ($dup) {
@@ -346,13 +355,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmtUp = $mysqli->prepare('UPDATE staff SET username = ?, email = ?, firstname = ?, lastname = ?, dept_id = ?, role = ?, is_active = ?, updated = NOW() WHERE id = ?');
+        $stmtUp = $mysqli->prepare('UPDATE staff SET username = ?, email = ?, firstname = ?, lastname = ?, dept_id = ?, role = ?, is_active = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
         if (!$stmtUp) {
             $_SESSION['flash_error'] = 'No se pudo actualizar el agente.';
             header('Location: staff.php');
             exit;
         }
-        $stmtUp->bind_param('ssssissi', $username, $email, $firstname, $lastname, $deptId, $role, $isActive, $id);
+        $stmtUp->bind_param('ssssissii', $username, $email, $firstname, $lastname, $deptId, $role, $isActive, $id, $eid);
         $stmtUp->execute();
 
         $_SESSION['flash_msg'] = 'Agente actualizado correctamente.';
@@ -368,13 +377,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $stmtS = $mysqli->prepare('SELECT id, email, username, firstname, lastname FROM staff WHERE id = ? LIMIT 1');
+        $stmtS = $mysqli->prepare('SELECT id, email, username, firstname, lastname FROM staff WHERE id = ? AND empresa_id = ? LIMIT 1');
         if (!$stmtS) {
             $_SESSION['flash_error'] = 'No se pudo procesar la solicitud.';
             header('Location: staff.php');
             exit;
         }
-        $stmtS->bind_param('i', $id);
+        $stmtS->bind_param('ii', $id, $eid);
         $stmtS->execute();
         $s = $stmtS->get_result()->fetch_assoc();
         if (!$s || empty($s['email'])) {
@@ -456,9 +465,11 @@ $sql = "
     FROM staff s
     LEFT JOIN departments d ON s.dept_id = d.id
     WHERE 1=1
+        AND s.empresa_id = ?
 ";
 $params = [];
-$types = '';
+$types = 'i';
+$params[] = $eid;
 
 if ($search !== '') {
     $sql .= " AND (s.firstname LIKE ? OR s.lastname LIKE ? OR s.email LIKE ? OR s.username LIKE ?)";
@@ -496,8 +507,16 @@ if ($stmt) {
 }
 
 $departments = [];
-$deptStmt = $mysqli->prepare("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+$deptSql = "SELECT id, name FROM departments WHERE is_active = 1";
+if ($deptHasEmpresa) {
+    $deptSql .= " AND empresa_id = ?";
+}
+$deptSql .= " ORDER BY name";
+$deptStmt = $mysqli->prepare($deptSql);
 if ($deptStmt) {
+    if ($deptHasEmpresa) {
+        $deptStmt->bind_param('i', $eid);
+    }
     $deptStmt->execute();
     $deptRes = $deptStmt->get_result();
     while ($deptRes && ($d = $deptRes->fetch_assoc())) {

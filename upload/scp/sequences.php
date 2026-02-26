@@ -12,12 +12,59 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'settings';
 
+$eid = empresaId();
+$staffHasEmpresaId = false;
+$sequencesHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $staffHasEmpresaId = false;
+    }
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM sequences LIKE 'empresa_id'");
+        $sequencesHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $sequencesHasEmpresaId = false;
+    }
+
+    try {
+        if (!$sequencesHasEmpresaId) {
+            $mysqli->query("ALTER TABLE sequences ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
+            $mysqli->query("ALTER TABLE sequences ADD INDEX idx_sequences_empresa (empresa_id)");
+            $res = $mysqli->query("SHOW COLUMNS FROM sequences LIKE 'empresa_id'");
+            $sequencesHasEmpresaId = ($res && $res->num_rows > 0);
+        }
+        if ($sequencesHasEmpresaId) {
+            $idx = $mysqli->query("SHOW INDEX FROM sequences WHERE Key_name = 'uq_sequences_name'");
+            if ($idx && $idx->num_rows > 0) {
+                $mysqli->query("ALTER TABLE sequences DROP INDEX uq_sequences_name");
+            }
+            $idx2 = $mysqli->query("SHOW INDEX FROM sequences WHERE Key_name = 'uq_sequences_empresa_name'");
+            if (!$idx2 || $idx2->num_rows < 1) {
+                $mysqli->query("ALTER TABLE sequences ADD UNIQUE KEY uq_sequences_empresa_name (empresa_id, name)");
+            }
+        }
+    } catch (Throwable $e) {
+    }
+}
+
 $currentStaffId = (int)($_SESSION['staff_id'] ?? 0);
 $currentStaffRole = '';
 if ($currentStaffId > 0) {
-    $stmtMe = $mysqli->prepare("SELECT role FROM staff WHERE id = ? LIMIT 1");
+    $sqlMe = "SELECT role FROM staff WHERE id = ?";
+    if ($staffHasEmpresaId) {
+        $sqlMe .= ' AND empresa_id = ?';
+    }
+    $sqlMe .= ' LIMIT 1';
+    $stmtMe = $mysqli->prepare($sqlMe);
     if ($stmtMe) {
-        $stmtMe->bind_param('i', $currentStaffId);
+        if ($staffHasEmpresaId) {
+            $stmtMe->bind_param('ii', $currentStaffId, $eid);
+        } else {
+            $stmtMe->bind_param('i', $currentStaffId);
+        }
         $stmtMe->execute();
         $me = $stmtMe->get_result()->fetch_assoc();
         $currentStaffRole = (string)($me['role'] ?? '');
@@ -55,8 +102,13 @@ if ($_POST) {
             } elseif ($padding < 0 || $padding > 20) {
                 $error = 'El relleno debe estar entre 0 y 20.';
             } else {
-                $stmt = $mysqli->prepare('INSERT INTO sequences (name, next, increment, padding, created) VALUES (?, ?, ?, ?, NOW())');
-                $stmt->bind_param('siii', $name, $next, $increment, $padding);
+                if ($sequencesHasEmpresaId) {
+                    $stmt = $mysqli->prepare('INSERT INTO sequences (empresa_id, name, next, increment, padding, created) VALUES (?, ?, ?, ?, ?, NOW())');
+                    $stmt->bind_param('isiii', $eid, $name, $next, $increment, $padding);
+                } else {
+                    $stmt = $mysqli->prepare('INSERT INTO sequences (name, next, increment, padding, created) VALUES (?, ?, ?, ?, NOW())');
+                    $stmt->bind_param('siii', $name, $next, $increment, $padding);
+                }
                 if ($stmt->execute()) {
                     $msg = 'Secuencia creada correctamente.';
                 } else {
@@ -85,8 +137,16 @@ if ($_POST) {
             } elseif ($padding < 0 || $padding > 20) {
                 $error = 'El relleno debe estar entre 0 y 20.';
             } else {
-                $stmt = $mysqli->prepare('UPDATE sequences SET name = ?, next = ?, increment = ?, padding = ?, updated = NOW() WHERE id = ?');
-                $stmt->bind_param('siiii', $name, $next, $increment, $padding, $id);
+                $sqlUp = 'UPDATE sequences SET name = ?, next = ?, increment = ?, padding = ?, updated = NOW() WHERE id = ?';
+                if ($sequencesHasEmpresaId) {
+                    $sqlUp .= ' AND empresa_id = ?';
+                }
+                $stmt = $mysqli->prepare($sqlUp);
+                if ($sequencesHasEmpresaId) {
+                    $stmt->bind_param('siiiii', $name, $next, $increment, $padding, $id, $eid);
+                } else {
+                    $stmt->bind_param('siiii', $name, $next, $increment, $padding, $id);
+                }
                 if ($stmt->execute()) {
                     $msg = 'Secuencia actualizada correctamente.';
                 } else {
@@ -110,8 +170,16 @@ if ($_POST) {
                 if ((int)($usage['cnt'] ?? 0) > 0) {
                     $error = 'No se puede eliminar esta secuencia porque está en uso.';
                 } else {
-                    $stmt = $mysqli->prepare('DELETE FROM sequences WHERE id = ?');
-                    $stmt->bind_param('i', $id);
+                    $sqlDel = 'DELETE FROM sequences WHERE id = ?';
+                    if ($sequencesHasEmpresaId) {
+                        $sqlDel .= ' AND empresa_id = ?';
+                    }
+                    $stmt = $mysqli->prepare($sqlDel);
+                    if ($sequencesHasEmpresaId) {
+                        $stmt->bind_param('ii', $id, $eid);
+                    } else {
+                        $stmt->bind_param('i', $id);
+                    }
                     if ($stmt->execute()) {
                         $msg = 'Secuencia eliminada correctamente.';
                     } else {
@@ -124,7 +192,12 @@ if ($_POST) {
 }
 
 $sequences = [];
-$res = $mysqli->query('SELECT id, name, next, increment, padding, created, updated FROM sequences ORDER BY id');
+$sqlList = 'SELECT id, name, next, increment, padding, created, updated FROM sequences';
+if ($sequencesHasEmpresaId) {
+    $sqlList .= ' WHERE empresa_id = ' . (int)$eid;
+}
+$sqlList .= ' ORDER BY id';
+$res = $mysqli->query($sqlList);
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $sequences[] = $row;

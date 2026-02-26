@@ -12,6 +12,17 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'notifications_admin';
 
+$eid = empresaId();
+$staffHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $staffHasEmpresaId = false;
+    }
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -27,9 +38,18 @@ if (!isset($_SESSION[$menuKey])) {
 $meRole = '';
 $meId = (int)($_SESSION['staff_id'] ?? 0);
 if ($meId > 0) {
-    $stmtMe = $mysqli->prepare('SELECT role FROM staff WHERE id = ? LIMIT 1');
+    $sqlMe = 'SELECT role FROM staff WHERE id = ?';
+    if ($staffHasEmpresaId) {
+        $sqlMe .= ' AND empresa_id = ?';
+    }
+    $sqlMe .= ' LIMIT 1';
+    $stmtMe = $mysqli->prepare($sqlMe);
     if ($stmtMe) {
-        $stmtMe->bind_param('i', $meId);
+        if ($staffHasEmpresaId) {
+            $stmtMe->bind_param('ii', $meId, $eid);
+        } else {
+            $stmtMe->bind_param('i', $meId);
+        }
         if ($stmtMe->execute()) {
             $meRow = $stmtMe->get_result()->fetch_assoc();
             $meRole = (string)($meRow['role'] ?? '');
@@ -100,7 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Listar agentes + administradores
 $agents = [];
-$res = $mysqli->query("SELECT id, firstname, lastname, email, role FROM staff WHERE is_active = 1 AND role IN ('agent','admin') ORDER BY role DESC, firstname, lastname");
+$sqlStaff = "SELECT id, firstname, lastname, email, role FROM staff WHERE is_active = 1 AND role IN ('agent','admin')";
+if ($staffHasEmpresaId) {
+    $sqlStaff .= ' AND empresa_id = ' . (int)$eid;
+}
+$sqlStaff .= ' ORDER BY role DESC, firstname, lastname';
+$res = $mysqli->query($sqlStaff);
 if ($res) {
     while ($row = $res->fetch_assoc()) {
         $sid = (int)($row['id'] ?? 0);
