@@ -192,6 +192,12 @@ if (!isset($collapseSettingsMenu)) {
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-shell">
             <div class="container-main">
+                <?php if ((int)($_SESSION['read_only'] ?? 0) === 1): ?>
+                    <?php $roMsg = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.'); ?>
+                    <div class="alert alert-warning" role="alert" data-alert-static="1">
+                        <i class="bi bi-exclamation-triangle me-2"></i><strong>Modo lectura:</strong> <?php echo html($roMsg); ?>
+                    </div>
+                <?php endif; ?>
                 <?php if (!empty($_SESSION['flash_error'])): ?>
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="bi bi-exclamation-triangle me-2"></i><?php echo html((string)$_SESSION['flash_error']); ?>

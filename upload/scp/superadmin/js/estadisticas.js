@@ -18,7 +18,7 @@
 
     /* ── Destruir instancias si la página se recargó vía PJAX ── */
     ['incomeChart','statusChart','growthChart','compareChart',
-     'pagosDistChart','ticketsChart','staffChart'].forEach(function (id) {
+     'pagosDistChart','ticketsChart'].forEach(function (id) {
         var inst = Chart.getChart(id);
         if (inst) inst.destroy();
     });
@@ -48,6 +48,19 @@
     /* ── Datos desde PHP ──────────────────────────────────── */
     var d = window.dashData || {};
 
+    var monthLabels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    function toMonthSeries(year) {
+        var byYear = d.incomeByYear || {};
+        var yearObj = byYear[String(year)] || byYear[year] || {};
+        var out = [];
+        for (var i = 1; i <= 12; i++) {
+            var v = yearObj[String(i)];
+            out.push(typeof v === 'number' ? v : 0);
+        }
+        return out;
+    }
+
     /* helper */
     function ctx(id){ var e=document.getElementById(id); return e?e.getContext('2d'):null; }
 
@@ -59,10 +72,14 @@
         var g=c.createLinearGradient(0,0,0,250);
         g.addColorStop(0,'rgba(13,110,253,.20)');
         g.addColorStop(1,'rgba(13,110,253,.00)');
-        new Chart(c,{
+        var yearSelect = document.getElementById('incomeYearSelect');
+        var year = (yearSelect && yearSelect.value) ? parseInt(yearSelect.value, 10) : (d.incomeYearDefault || (new Date()).getFullYear());
+        var incomeSeries = toMonthSeries(year);
+
+        var incomeChart = new Chart(c,{
             type:'line',
-            data:{labels:d.incomeLabels||[],datasets:[{
-                data:d.incomeTotals||[], fill:true, backgroundColor:g,
+            data:{labels:monthLabels,datasets:[{
+                data:incomeSeries, fill:true, backgroundColor:g,
                 borderColor:C.primary, borderWidth:2.5,
                 pointBackgroundColor:'#fff', pointBorderColor:C.primary,
                 pointBorderWidth:2, pointRadius:4, pointHoverRadius:7,
@@ -75,6 +92,24 @@
                 callback:function(v){return '$'+(v>=1000?(v/1000).toFixed(1)+'k':v);}
             }})}}
         });
+
+        function syncIncomeYear(newYear) {
+            var s = toMonthSeries(newYear);
+            incomeChart.data.labels = monthLabels;
+            incomeChart.data.datasets[0].data = s;
+            incomeChart.update();
+        }
+
+        if (yearSelect) {
+            yearSelect.addEventListener('change', function () {
+                var y = parseInt(yearSelect.value, 10);
+                if (!isFinite(y)) return;
+                syncIncomeYear(y);
+                if (window.__compareChart && typeof window.__compareChartSync === 'function') {
+                    window.__compareChartSync(y);
+                }
+            });
+        }
     })();
 
     /* ================================================================
@@ -118,11 +153,13 @@
        ================================================================ */
     (function(){
         var c=ctx('compareChart'); if(!c)return;
-        var curr=d.incomeTotals||[];
+        var yearSelect = document.getElementById('incomeYearSelect');
+        var year = (yearSelect && yearSelect.value) ? parseInt(yearSelect.value, 10) : (d.incomeYearDefault || (new Date()).getFullYear());
+        var curr = toMonthSeries(year);
         var prev=[0].concat(curr.slice(0,-1));
-        new Chart(c,{
+        var compareChart = new Chart(c,{
             type:'bar',
-            data:{labels:d.incomeLabels||[],datasets:[
+            data:{labels:monthLabels,datasets:[
                 {label:'Mes actual',   data:curr, backgroundColor:C.primary,             borderRadius:5, borderSkipped:false},
                 {label:'Mes anterior', data:prev, backgroundColor:'rgba(13,110,253,.22)', borderRadius:5, borderSkipped:false}
             ]},
@@ -135,6 +172,15 @@
                 callback:function(v){return '$'+(v>=1000?(v/1000).toFixed(0)+'k':v);}
             }})}}
         });
+
+        window.__compareChart = compareChart;
+        window.__compareChartSync = function (newYear) {
+            var s = toMonthSeries(newYear);
+            compareChart.data.labels = monthLabels;
+            compareChart.data.datasets[0].data = s;
+            compareChart.data.datasets[1].data = [0].concat(s.slice(0,-1));
+            compareChart.update();
+        };
     })();
 
     /* ================================================================
@@ -152,7 +198,7 @@
             options:{indexAxis:'y',
                 plugins:{legend:{display:false},tooltip:TT},
                 scales:{x:Object.assign({},sY,{ticks:{font:{size:11},stepSize:1}}),
-                        y:Object.assign({},sX,{ticks:{font:{size:12,weight:'600'}}})}}
+                        y:Object.assign({},sX,{ticks:{font:{size:11}}})}}
         });
     })();
 
@@ -175,29 +221,4 @@
                         y:Object.assign({},sX,{ticks:{font:{size:11}}})}}
         });
     })();
-
-    /* ================================================================
-       7. STAFF — Polar area
-       ================================================================ */
-    (function(){
-        var c=ctx('staffChart'); if(!c)return;
-        var labels=d.staffLabels||[]; if(!labels.length)return;
-        new Chart(c,{
-            type:'polarArea',
-            data:{labels:labels,datasets:[{
-                data:d.staffCounts||[],
-                backgroundColor:[
-                    'rgba(13,110,253,.55)','rgba(25,135,84,.55)',
-                    'rgba(255,193,7,.55)', 'rgba(220,53,69,.55)',
-                    'rgba(13,202,240,.55)'
-                ],
-                borderWidth:2, borderColor:'#fff'
-            }]},
-            options:{plugins:{
-                legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}},
-                tooltip:TT
-            },scales:{r:{ticks:{display:false},grid:{color:'rgba(0,0,0,.06)'}}}}
-        });
-    })();
-
 })();

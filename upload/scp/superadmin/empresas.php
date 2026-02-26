@@ -35,6 +35,10 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
+if ($hasEmpresas) {
+    syncAllEmpresasBillingStatus();
+}
+
 /* ================================================================
    PROCESAMIENTO POST
    ================================================================ */
@@ -474,7 +478,7 @@ function badgeDias(?int $d): string {
                                         </button>
                                     </form>
                                 <?php else: ?>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                    <button type="button" class="btn btn-outline-warning btn-sm"
                                         data-bs-toggle="modal" data-bs-target="#blockModal"
                                         data-empresa-id="<?php echo $id; ?>"
                                         data-empresa-nombre="<?php echo html((string)($e['nombre'] ?? '')); ?>"
@@ -874,7 +878,45 @@ function badgeDias(?int $d): string {
 </div>
 
 <!-- ══ JS externo ═══════════════════════════════════════════ -->
-<script src="js/empresa.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var editEmpresaModal = document.getElementById('editEmpresaModal');
+    if (editEmpresaModal) {
+        editEmpresaModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            document.getElementById('editEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
+            var nombre = btn.getAttribute('data-empresa-nombre') || '';
+            document.getElementById('editEmpresaNombreLabel').textContent = nombre;
+            document.getElementById('editEmpresaNombre').value = nombre;
+            document.getElementById('editEmpresaPrecio').value = btn.getAttribute('data-empresa-precio') || '0';
+            document.getElementById('editEmpresaInicio').value = btn.getAttribute('data-empresa-inicio') || '';
+            document.getElementById('editEmpresaVencimiento').value = btn.getAttribute('data-empresa-vencimiento') || '';
+            document.getElementById('editEmpresaGracia').value = btn.getAttribute('data-empresa-gracia') || '0';
+        });
+    }
+
+    var blockModal = document.getElementById('blockModal');
+    if (blockModal) {
+        blockModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            document.getElementById('blockEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
+            document.getElementById('blockEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';
+        });
+    }
+
+    var deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            document.getElementById('deleteEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
+            document.getElementById('deleteEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';
+        });
+    }
+});
+</script>
 
 <?php
 $content      = (string)ob_get_clean();

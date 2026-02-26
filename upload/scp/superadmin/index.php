@@ -92,8 +92,9 @@ if ($hasEmpresas) {
    ================================================================ */
 $kpiIngresosMes = 0.0;
 $kpiTotalPagos  = 0;
-$incomeLabels   = [];
-$incomeTotals   = [];
+$incomeYears    = [];
+$incomeByYear   = [];
+$incomeYearDefault = (int)date('Y');
 
 if ($hasPagos) {
     $res = $mysqli->query("
@@ -103,21 +104,37 @@ if ($hasPagos) {
             COUNT(*)                        AS total_pagos
         FROM pagos_empresas
     ");
+
     if ($res && $r = $res->fetch_assoc()) {
         $kpiIngresosMes = (float)($r['ingresos_mes'] ?? 0);
         $kpiTotalPagos  = (int)  ($r['total_pagos']  ?? 0);
     }
 
-    /* Serie temporal: sólo 6 meses, columnas mínimas */
+    /* Serie temporal: ingresos por mes (histórico completo) */
     $res = $mysqli->query("
-        SELECT DATE_FORMAT(fecha_pago,'%Y-%m') mes, SUM(monto) total
+        SELECT YEAR(fecha_pago) y, MONTH(fecha_pago) m, SUM(monto) total
         FROM pagos_empresas
-        WHERE fecha_pago >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-        GROUP BY mes ORDER BY mes
+        GROUP BY y, m
+        ORDER BY y, m
     ");
-    if ($res) while ($r = $res->fetch_assoc()) {
-        $incomeLabels[] = $r['mes'];
-        $incomeTotals[] = (float)$r['total'];
+    if ($res) {
+        while ($r = $res->fetch_assoc()) {
+            $y = (int)($r['y'] ?? 0);
+            $m = (int)($r['m'] ?? 0);
+            $t = (float)($r['total'] ?? 0);
+            if ($y <= 0 || $m <= 0) continue;
+            if (!isset($incomeByYear[$y])) {
+                $incomeByYear[$y] = [];
+            }
+            $incomeByYear[$y][(string)$m] = $t;
+        }
+    }
+
+    if (!empty($incomeByYear)) {
+        $incomeYears = array_keys($incomeByYear);
+        sort($incomeYears);
+        $maxYear = (int)max($incomeYears);
+        $incomeYearDefault = in_array((int)date('Y'), $incomeYears, true) ? (int)date('Y') : $maxYear;
     }
 }
 
@@ -140,28 +157,7 @@ if ($hasEmpresas) {
 }
 
 /* ================================================================
-   PASO 5 — Staff top 5 por empresa (sin KPI global)
-   ================================================================ */
-$staffLabels   = [];
-$staffCounts   = [];
-
-if ($hasStaff && $hasEmpresas) {
-    $res = $mysqli->query("
-        SELECT e.nombre, COUNT(s.id) c
-        FROM staff s
-        JOIN empresas e ON e.id = s.empresa_id
-        WHERE s.is_active = 1
-        GROUP BY s.empresa_id, e.nombre
-        ORDER BY c DESC LIMIT 5
-    ");
-    if ($res) while ($r = $res->fetch_assoc()) {
-        $staffLabels[]  = $r['nombre'];
-        $staffCounts[]  = (int)$r['c'];
-    }
-}
-
-/* ================================================================
-   PASO 6 — Últimos pagos con JOIN  (LIMIT 6, sólo columnas usadas)
+   PASO 5 — Últimos pagos con JOIN  (LIMIT 6, sólo columnas usadas)
    ================================================================ */
 $ultimosPagos = [];
 
@@ -177,7 +173,7 @@ if ($hasPagos) {
 }
 
 /* ================================================================
-   PASO 7 — Tabla de empresas (columnas mínimas, LIMIT 50)
+   PASO 6 — Tabla de empresas (columnas mínimas, LIMIT 50)
    ================================================================ */
 $empresas = [];
 
@@ -224,6 +220,7 @@ $kpiCards = [
     ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'success',   'histórico'],
     ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'secondary', 'estado suspendido'],
 ];
+
 ?>
 
 <!-- ══ CSS externo ══════════════════════════════════════════ -->
@@ -282,10 +279,21 @@ $kpiCards = [
     <div class="col-xl-7">
         <div class="card chart-card shadow-sm h-100">
             <div class="card-header">
-                <span class="chart-title">Ingresos últimos 6 meses</span>
+                <span class="chart-title">Ingresos por mes</span>
                 <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:.67rem">
                     <i class="bi bi-currency-dollar"></i> Facturación
                 </span>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <span class="text-muted" style="font-size:.75rem">Año</span>
+                    <select id="incomeYearSelect" class="form-select form-select-sm" style="width:auto">
+                        <?php foreach ($incomeYears as $yy): ?>
+                            <option value="<?= (int)$yy ?>" <?= ((int)$yy === (int)$incomeYearDefault) ? 'selected' : '' ?>><?= (int)$yy ?></option>
+                        <?php endforeach; ?>
+                        <?php if (empty($incomeYears)): ?>
+                            <option value="<?= (int)$incomeYearDefault ?>" selected><?= (int)$incomeYearDefault ?></option>
+                        <?php endif; ?>
+                    </select>
+                </div>
             </div>
             <div class="card-body pt-3 pb-2">
                 <canvas id="incomeChart" style="max-height:240px"></canvas>
@@ -307,7 +315,7 @@ $kpiCards = [
     </div>
 </div>
 
-<!-- ══ GRÁFICAS FILA 2: Donut + Pagos + Crecimiento + Staff ═ -->
+<!-- ══ GRÁFICAS FILA 2: Donut + Pagos + Crecimiento ═ -->
 <p class="section-title"><i class="bi bi-pie-chart"></i> Distribución y crecimiento</p>
 
 <div class="row g-3 mb-2">
@@ -348,14 +356,6 @@ $kpiCards = [
             <div class="card-header"><span class="chart-title">Crecimiento clientes</span></div>
             <div class="card-body pt-3 pb-2">
                 <canvas id="growthChart" style="max-height:190px"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3">
-        <div class="card chart-card shadow-sm h-100">
-            <div class="card-header"><span class="chart-title">Staff por empresa</span></div>
-            <div class="card-body d-flex align-items-center justify-content-center py-2">
-                <canvas id="staffChart" style="max-height:200px;max-width:200px"></canvas>
             </div>
         </div>
     </div>
@@ -474,8 +474,8 @@ $kpiCards = [
 <!-- ══ Datos inyectados + scripts defer ════════════════════ -->
 <script>
 window.dashData = {
-    incomeLabels    : <?= json_encode($incomeLabels,    JSON_NUMERIC_CHECK) ?>,
-    incomeTotals    : <?= json_encode($incomeTotals,    JSON_NUMERIC_CHECK) ?>,
+    incomeYearDefault: <?= (int)$incomeYearDefault ?>,
+    incomeByYear     : <?= json_encode($incomeByYear, JSON_NUMERIC_CHECK) ?>,
     growthLabels    : <?= json_encode($growthLabels) ?>,
     growthTotals    : <?= json_encode($growthTotals,    JSON_NUMERIC_CHECK) ?>,
     kpiActivas      : <?= (int)$kpiActivas ?>,
@@ -484,10 +484,9 @@ window.dashData = {
     pagosAlDia      : <?= (int)$pagosAlDia ?>,
     pagosVencidos   : <?= (int)$pagosVencidos ?>,
     pagosSuspendidos: <?= (int)$pagosSuspendidos ?>,
-    staffLabels     : <?= json_encode($staffLabels) ?>,
-    staffCounts     : <?= json_encode($staffCounts,     JSON_NUMERIC_CHECK) ?>,
 };
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 <script src="js/estadisticas.js" defer></script>
 

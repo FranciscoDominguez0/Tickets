@@ -44,8 +44,9 @@ function requireLogin($type = 'user') {
                             $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
                                 $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                $loginHref = (strpos((string)($_SERVER['PHP_SELF'] ?? ''), '/upload/scp/') !== false) ? 'logout.php' : 'upload/scp/logout.php';
                                 http_response_code(403);
-                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="login.php">Ir al login</a></div></body></html>';
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="' . html($loginHref) . '">Ir al login</a></div></body></html>';
                                 exit;
                             }
                         }
@@ -119,13 +120,23 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'agente' && isset($_SESSION['staff_id'])) {
+        if (!isset($_SESSION['read_only'])) {
+            $_SESSION['read_only'] = 0;
+        }
+        if (!isset($_SESSION['read_only_reason'])) {
+            $_SESSION['read_only_reason'] = '';
+        }
+
         $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
+        if ($empresaId > 0) {
+            syncEmpresaBillingStatus($empresaId);
+        }
         if ($empresaId > 0 && isset($mysqli) && $mysqli) {
             try {
                 $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
                 $hasEmpresas = ($res && $res->num_rows > 0);
                 if ($hasEmpresas) {
-                    $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo FROM empresas WHERE id = ? LIMIT 1');
+                    $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo, estado_pago, fecha_vencimiento FROM empresas WHERE id = ? LIMIT 1');
                     if ($q) {
                         $q->bind_param('i', $empresaId);
                         if ($q->execute()) {
@@ -133,14 +144,43 @@ function requireLogin($type = 'user') {
                             $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
                                 $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                $loginHref = (strpos((string)($_SERVER['PHP_SELF'] ?? ''), '/upload/scp/') !== false) ? 'logout.php' : 'upload/scp/logout.php';
                                 http_response_code(403);
-                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="login.php">Ir al login</a></div></body></html>';
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="' . html($loginHref) . '">Ir al login</a></div></body></html>';
                                 exit;
+                            }
+
+                            $estadoPago = (string)($row['estado_pago'] ?? '');
+                            $fechaVenc = (string)($row['fecha_vencimiento'] ?? '');
+                            $isVencida = false;
+                            if ($estadoPago === 'vencido') {
+                                $isVencida = true;
+                            } elseif ($fechaVenc !== '') {
+                                $isVencida = (strtotime($fechaVenc) <= strtotime(date('Y-m-d')));
+                            }
+                            if ($isVencida) {
+                                $_SESSION['read_only'] = 1;
+                                $_SESSION['read_only_reason'] = 'Pago vencido. Comuníquese con Vigitec Panamá.';
+                            } else {
+                                $_SESSION['read_only'] = 0;
+                                $_SESSION['read_only_reason'] = '';
                             }
                         }
                     }
                 }
             } catch (Throwable $e) {
+            }
+        }
+
+        $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+        $isScp = (strpos($currentPath, '/upload/scp/') !== false);
+        if ($isScp && (int)($_SESSION['read_only'] ?? 0) === 1) {
+            $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+            if ($method === 'POST') {
+                http_response_code(403);
+                $motivo = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.');
+                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modo lectura</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-warning"><strong>Modo lectura.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-outline-secondary" href="javascript:history.back()">Volver</a></div></body></html>';
+                exit;
             }
         }
 
@@ -215,6 +255,90 @@ function requireLogin($type = 'user') {
 
         $_SESSION['staff_last_activity'] = time();
     }
+}
+
+function syncEmpresaBillingStatus($empresaId) {
+    global $mysqli;
+    $empresaId = (int)$empresaId;
+    if ($empresaId <= 0) return false;
+    if (!isset($mysqli) || !$mysqli) return false;
+
+    try {
+        $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
+        $hasEmpresas = ($res && $res->num_rows > 0);
+        if (!$hasEmpresas) return false;
+
+        $stmt = $mysqli->prepare('SELECT estado_pago, bloqueada, fecha_vencimiento FROM empresas WHERE id = ? LIMIT 1');
+        if (!$stmt) return false;
+        $stmt->bind_param('i', $empresaId);
+        if (!$stmt->execute()) return false;
+        $row = $stmt->get_result()->fetch_assoc();
+        if (!$row) return false;
+
+        $estadoPago = (string)($row['estado_pago'] ?? '');
+        $bloqueada = (int)($row['bloqueada'] ?? 0) === 1;
+        $fechaVenc = (string)($row['fecha_vencimiento'] ?? '');
+        if ($fechaVenc === '') return true;
+
+        $hoy = date('Y-m-d');
+
+        if (!$bloqueada && $estadoPago === 'al_dia' && strtotime($fechaVenc) <= strtotime($hoy)) {
+            $u = $mysqli->prepare("UPDATE empresas SET estado_pago = 'vencido' WHERE id = ? AND estado_pago = 'al_dia'");
+            if ($u) {
+                $u->bind_param('i', $empresaId);
+                $u->execute();
+            }
+            $estadoPago = 'vencido';
+        }
+
+        if (!$bloqueada && $estadoPago === 'vencido') {
+            $daysPast = (int)floor((strtotime($hoy) - strtotime($fechaVenc)) / 86400);
+            if ($daysPast > 3) {
+                $u2 = $mysqli->prepare("UPDATE empresas SET estado_pago = 'suspendido', bloqueada = 1, motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago') WHERE id = ? AND estado_pago = 'vencido'");
+                if ($u2) {
+                    $u2->bind_param('i', $empresaId);
+                    $u2->execute();
+                }
+            }
+        }
+
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function syncAllEmpresasBillingStatus() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    try {
+        $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
+        $hasEmpresas = ($res && $res->num_rows > 0);
+        if (!$hasEmpresas) return false;
+
+        $mysqli->query("UPDATE empresas SET estado_pago = 'vencido'
+                        WHERE fecha_vencimiento IS NOT NULL
+                          AND DATEDIFF(fecha_vencimiento, CURDATE()) <= 0
+                          AND estado_pago = 'al_dia'");
+
+        $mysqli->query("UPDATE empresas
+                        SET estado_pago = 'suspendido',
+                            bloqueada = 1,
+                            motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago')
+                        WHERE fecha_vencimiento IS NOT NULL
+                          AND DATEDIFF(CURDATE(), fecha_vencimiento) > 3
+                          AND estado_pago = 'vencido'");
+
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function empresaId() {
+    $eid = (int)($_SESSION['empresa_id'] ?? 1);
+    if ($eid <= 0) $eid = 1;
+    return $eid;
 }
 
 // Validar CSRF
