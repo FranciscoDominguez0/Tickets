@@ -79,27 +79,44 @@ if (isset($_GET['back'])) {
                     <?php
                     $tdept = (int) ($t['dept_id'] ?? 0);
                     $gd = isset($generalDeptId) ? (int) $generalDeptId : 0;
+                    $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
+                    $st = null;
 
                     // Regla: General NO es comodín. Solo listar agentes del mismo dept_id.
                     // Ticket General => solo agentes General.
                     // Ticket de otro dept => solo agentes de ese dept.
                     if ($tdept > 0) {
                         if ($gd > 0) {
-                            $st = $mysqli->query(
+                            $stmtSt = $mysqli->prepare(
                                 "SELECT id, firstname, lastname FROM staff "
-                                . "WHERE is_active = 1 "
-                                . "AND COALESCE(NULLIF(dept_id, 0), $gd) = $tdept "
+                                . "WHERE empresa_id = ? AND is_active = 1 "
+                                . "AND COALESCE(NULLIF(dept_id, 0), ?) = ? "
                                 . "ORDER BY firstname, lastname"
                             );
+                            if ($stmtSt) {
+                                $stmtSt->bind_param('iii', $empresaId, $gd, $tdept);
+                                $stmtSt->execute();
+                                $st = $stmtSt->get_result();
+                            }
                         } else {
-                            $st = $mysqli->query(
+                            $stmtSt = $mysqli->prepare(
                                 "SELECT id, firstname, lastname FROM staff "
-                                . "WHERE is_active = 1 AND dept_id = $tdept "
+                                . "WHERE empresa_id = ? AND is_active = 1 AND dept_id = ? "
                                 . "ORDER BY firstname, lastname"
                             );
+                            if ($stmtSt) {
+                                $stmtSt->bind_param('ii', $empresaId, $tdept);
+                                $stmtSt->execute();
+                                $st = $stmtSt->get_result();
+                            }
                         }
                     } else {
-                        $st = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE is_active = 1 ORDER BY firstname, lastname");
+                        $stmtSt = $mysqli->prepare("SELECT id, firstname, lastname FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname");
+                        if ($stmtSt) {
+                            $stmtSt->bind_param('i', $empresaId);
+                            $stmtSt->execute();
+                            $st = $stmtSt->get_result();
+                        }
                     }
 
                     while ($st && $row = $st->fetch_assoc()): ?>
@@ -163,7 +180,14 @@ if (isset($_GET['back'])) {
                         <label class="form-label">Nuevo departamento</label>
                         <select name="dept_id" class="form-select" required>
                             <?php
-                            $depts = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+                            $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
+                            $stmtD = $mysqli->prepare("SELECT id, name FROM departments WHERE empresa_id = ? AND is_active = 1 ORDER BY name");
+                            $depts = null;
+                            if ($stmtD) {
+                                $stmtD->bind_param('i', $empresaId);
+                                $stmtD->execute();
+                                $depts = $stmtD->get_result();
+                            }
                             while ($depts && $d = $depts->fetch_assoc()):
                             ?>
                                 <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === (int)($t['dept_id'] ?? 0) ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
@@ -245,7 +269,14 @@ if (isset($_GET['back'])) {
                             <select name="user_id" class="form-select" required>
                                 <option value="">— Añadir usuario —</option>
                                 <?php
-                                $users = $mysqli->query("SELECT id, firstname, lastname, email FROM users ORDER BY firstname, lastname");
+                                $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
+                                $stmtU = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE empresa_id = ? ORDER BY firstname, lastname");
+                                $users = null;
+                                if ($stmtU) {
+                                    $stmtU->bind_param('i', $empresaId);
+                                    $stmtU->execute();
+                                    $users = $stmtU->get_result();
+                                }
                                 while ($u = $users->fetch_assoc()):
                                     if ((int)$u['id'] === (int)$t['user_id']) continue;
                                     $inCollab = false;

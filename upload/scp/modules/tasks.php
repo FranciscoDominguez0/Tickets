@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
                     );
                     $createdBy = (int)($_SESSION['staff_id'] ?? 0);
-                    $stmt->bind_param('issiiisss', $eid, $title, $description, $assigned_to, $createdBy, $dept_id, $priority, $due_date_sql);
+                    $stmt->bind_param('issiisss', $eid, $title, $description, $assigned_to, $createdBy, $dept_id, $priority, $due_date_sql);
                     if ($stmt->execute()) {
                         $taskId = (int)$mysqli->insert_id;
 

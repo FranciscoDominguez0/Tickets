@@ -26,10 +26,10 @@ $ensureTicketLinksTable = function () use ($mysqli) {
 
 // Departamento "General" (fallback). Si no existe, se usará 0 y se omite la excepción.
 $generalDeptId = 0;
-$stmtGd = $mysqli->prepare("SELECT id FROM departments WHERE LOWER(name) LIKE ? LIMIT 1");
+$stmtGd = $mysqli->prepare("SELECT id FROM departments WHERE empresa_id = ? AND LOWER(name) LIKE ? LIMIT 1");
 if ($stmtGd) {
     $likeGeneral = '%general%';
-    $stmtGd->bind_param('s', $likeGeneral);
+    $stmtGd->bind_param('is', $eid, $likeGeneral);
     if ($stmtGd->execute()) {
         $rgd = $stmtGd->get_result();
         if ($rgd && ($row = $rgd->fetch_assoc())) {
@@ -233,11 +233,13 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
         $open_errors[] = 'No tienes permisos para crear tickets.';
     }
     if ($open_uid > 0) {
-        $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE id = ?");
-        $stmt->bind_param('i', $open_uid);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $preSelectedUser = $res ? $res->fetch_assoc() : null;
+        $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE empresa_id = ? AND id = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param('ii', $eid, $open_uid);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $preSelectedUser = $res ? $res->fetch_assoc() : null;
+        }
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'open') {
@@ -261,17 +263,23 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
             if ($checkTopics && $checkTopics->num_rows > 0) {
                 $open_hasTopics = true;
-                $rc = $mysqli->query('SELECT COUNT(*) AS c FROM help_topics WHERE is_active = 1');
-                if ($rc && ($rr = $rc->fetch_assoc())) {
-                    $open_topicsCount = (int)($rr['c'] ?? 0);
+                $stmtCntTopics = $mysqli->prepare('SELECT COUNT(*) AS c FROM help_topics WHERE empresa_id = ? AND is_active = 1');
+                if ($stmtCntTopics) {
+                    $stmtCntTopics->bind_param('i', $eid);
+                    if ($stmtCntTopics->execute()) {
+                        $rc = $stmtCntTopics->get_result();
+                        if ($rc && ($rr = $rc->fetch_assoc())) {
+                            $open_topicsCount = (int)($rr['c'] ?? 0);
+                        }
+                    }
                 }
             }
 
             // Si se seleccionó un tema, el departamento se toma del tema (si es válido)
             if ($topic_id > 0) {
-                $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE id = ? AND is_active = 1 LIMIT 1');
+                $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                 if ($stmtTopicDept) {
-                    $stmtTopicDept->bind_param('i', $topic_id);
+                    $stmtTopicDept->bind_param('ii', $eid, $topic_id);
                     if ($stmtTopicDept->execute()) {
                         $tr = $stmtTopicDept->get_result()->fetch_assoc();
                         $deptFromTopic = (int) ($tr['dept_id'] ?? 0);
@@ -295,9 +303,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
                 if ($hasDeptDefaultStaff) {
                     $defaultStaffId = 0;
-                    $stmtDef = $mysqli->prepare('SELECT default_staff_id FROM departments WHERE id = ? AND is_active = 1 LIMIT 1');
+                    $stmtDef = $mysqli->prepare('SELECT default_staff_id FROM departments WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                     if ($stmtDef) {
-                        $stmtDef->bind_param('i', $dept_id);
+                        $stmtDef->bind_param('ii', $eid, $dept_id);
                         if ($stmtDef->execute()) {
                             $defaultStaffId = (int)($stmtDef->get_result()->fetch_assoc()['default_staff_id'] ?? 0);
                         }
@@ -305,9 +313,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
                     if ($defaultStaffId > 0) {
                         $allowed = false;
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                         if ($stmtSd) {
-                            $stmtSd->bind_param('ii', $generalDeptId, $defaultStaffId);
+                            $stmtSd->bind_param('iii', $generalDeptId, $eid, $defaultStaffId);
                             if ($stmtSd->execute()) {
                                 $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                                 $allowed = ($sdept === $dept_id);
@@ -353,9 +361,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             // Validar asignación inicial por departamento (regla exacta)
             if ($dept_id > 0 && $staff_id !== null) {
-                $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                 if ($stmtSd) {
-                    $stmtSd->bind_param('ii', $generalDeptId, $staff_id);
+                    $stmtSd->bind_param('iii', $generalDeptId, $eid, $staff_id);
                     if ($stmtSd->execute()) {
                         $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                         if ($sdept !== $dept_id) {
@@ -509,9 +517,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                             }
 
                             // Correo al agente
-                            $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                             if ($stmtE) {
-                                $stmtE->bind_param('i', $val);
+                                $stmtE->bind_param('ii', $eid, $val);
                                 if ($stmtE->execute()) {
                                     $r = $stmtE->get_result()->fetch_assoc();
                                     if ($r && !empty($r['email'])) {
@@ -548,15 +556,21 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     }
 
     $open_departments = [];
-    $r = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
-    if ($r) while ($row = $r->fetch_assoc()) $open_departments[] = $row;
+    $stmtOpenDept = $mysqli->prepare("SELECT id, name FROM departments WHERE empresa_id = ? AND is_active = 1 ORDER BY name");
+    if ($stmtOpenDept) {
+        $stmtOpenDept->bind_param('i', $eid);
+        if ($stmtOpenDept->execute()) {
+            $r = $stmtOpenDept->get_result();
+            if ($r) while ($row = $r->fetch_assoc()) $open_departments[] = $row;
+        }
+    }
     $open_priorities = [];
     $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
     if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
     $open_staff = [];
-    $stmtStaff = $mysqli->prepare('SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname');
+    $stmtStaff = $mysqli->prepare('SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname');
     if ($stmtStaff) {
-        $stmtStaff->bind_param('i', $generalDeptId);
+        $stmtStaff->bind_param('ii', $generalDeptId, $eid);
         if ($stmtStaff->execute()) {
             $r = $stmtStaff->get_result();
             if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
@@ -569,10 +583,14 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
     if ($checkTopics && $checkTopics->num_rows > 0) {
         $open_hasTopics = true;
-        $stmt = $mysqli->query('SELECT id, name, dept_id FROM help_topics WHERE is_active = 1 ORDER BY name');
+        $stmt = $mysqli->prepare('SELECT id, name, dept_id FROM help_topics WHERE empresa_id = ? AND is_active = 1 ORDER BY name');
         if ($stmt) {
-            while ($row = $stmt->fetch_assoc()) {
-                $open_topics[] = $row;
+            $stmt->bind_param('i', $eid);
+            if ($stmt->execute()) {
+                $r = $stmt->get_result();
+                while ($r && ($row = $r->fetch_assoc())) {
+                    $open_topics[] = $row;
+                }
             }
         }
     }
@@ -585,11 +603,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
         $stmt = $mysqli->prepare(
             "SELECT id, firstname, lastname, email, phone
              FROM users
-             WHERE firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR phone LIKE ?
+             WHERE empresa_id = ? AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR phone LIKE ?)
              ORDER BY firstname, lastname
              LIMIT 25"
         );
-        $stmt->bind_param('ssss', $term, $term, $term, $term);
+        $stmt->bind_param('issss', $eid, $term, $term, $term, $term);
         $stmt->execute();
         $open_user_results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
@@ -607,8 +625,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $staff_has_signature = false;
     $current_staff_id = (int) ($_SESSION['staff_id'] ?? 0);
     if ($current_staff_id > 0) {
-        $stmtSig = $mysqli->prepare('SELECT * FROM staff WHERE id = ? LIMIT 1');
-        $stmtSig->bind_param('i', $current_staff_id);
+        $stmtSig = $mysqli->prepare('SELECT * FROM staff WHERE empresa_id = ? AND id = ? LIMIT 1');
+        $stmtSig->bind_param('ii', $eid, $current_staff_id);
         $stmtSig->execute();
         $staffRow = $stmtSig->get_result()->fetch_assoc();
         if ($staffRow && array_key_exists('signature', $staffRow)) {
@@ -645,9 +663,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         " JOIN departments d ON t.dept_id = d.id
          JOIN ticket_status ts ON t.status_id = ts.id
          JOIN priorities p ON t.priority_id = p.id
-         WHERE t.id = ?"
+         WHERE t.id = ? AND t.empresa_id = ?"
     );
-    $stmt->bind_param('i', $tid);
+    $stmt->bind_param('ii', $tid, $eid);
     $stmt->execute();
     $res = $stmt->get_result();
     $ticketView = $res ? $res->fetch_assoc() : null;
@@ -774,12 +792,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 
                 if ($isClosingStatus) {
                     requireRolePermission('ticket.close', 'tickets.php?id=' . $tid);
-                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
+                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ? AND empresa_id = ?");
                 } else {
                     requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
-                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ?");
+                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ? AND empresa_id = ?");
                 }
-                $stmt->bind_param('ii', $sid, $tid);
+                $stmt->bind_param('iii', $sid, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'updated';
             } elseif ($action === 'assign') {
@@ -792,9 +810,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     // Validar que el agente pertenezca al mismo departamento del ticket (o sea General)
                     $allowed = true;
                     if ($val !== null) {
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                         if ($stmtSd) {
-                            $stmtSd->bind_param('ii', $generalDeptId, $val);
+                            $stmtSd->bind_param('iii', $generalDeptId, $eid, $val);
                             if ($stmtSd->execute()) {
                                 $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                                 $tdept = (int) ($ticketView['dept_id'] ?? 0);
@@ -808,8 +826,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
 
                     if ($allowed) {
-                        $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ?");
-                        $stmt->bind_param('ii', $val, $tid);
+                        $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                        $stmt->bind_param('iii', $val, $tid, $eid);
                         $ok = $stmt->execute();
                         $msg = 'assigned';
                     } else {
@@ -831,8 +849,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
                     // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
                     if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
-                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
-                        $stmtS->bind_param('i', $val);
+                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
+                        $stmtS->bind_param('ii', $eid, $val);
                         if ($stmtS->execute()) {
                             $srow = $stmtS->get_result()->fetch_assoc();
                             $to = trim((string)($srow['email'] ?? ''));
@@ -876,8 +894,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
                     }
                 }
-                $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ?");
-                $stmt->bind_param('ii', $resolved_id, $tid);
+                $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                $stmt->bind_param('iii', $resolved_id, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'marked';
             } elseif ($action === 'transfer' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -886,9 +904,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 if ($newDeptId > 0) {
                     // Validar departamento destino
                     $deptOk = false;
-                    $stmtD = $mysqli->prepare('SELECT id FROM departments WHERE id = ? AND is_active = 1 LIMIT 1');
+                    $stmtD = $mysqli->prepare('SELECT id FROM departments WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                     if ($stmtD) {
-                        $stmtD->bind_param('i', $newDeptId);
+                        $stmtD->bind_param('ii', $eid, $newDeptId);
                         if ($stmtD->execute()) {
                             $deptOk = (bool) $stmtD->get_result()->fetch_assoc();
                         }
@@ -899,9 +917,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $currentStaffId = isset($ticketView['staff_id']) && is_numeric($ticketView['staff_id']) ? (int) $ticketView['staff_id'] : 0;
                         $unassign = false;
                         if ($currentStaffId > 0) {
-                            $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                             if ($stmtSd) {
-                                $stmtSd->bind_param('ii', $generalDeptId, $currentStaffId);
+                                $stmtSd->bind_param('iii', $generalDeptId, $eid, $currentStaffId);
                                 if ($stmtSd->execute()) {
                                     $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                                     $unassign = ($sdept !== $newDeptId);
@@ -914,15 +932,15 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
 
                         if ($unassign) {
-                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, staff_id = NULL, updated = NOW() WHERE id = ?');
+                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, staff_id = NULL, updated = NOW() WHERE id = ? AND empresa_id = ?');
                             if ($stmtUp) {
-                                $stmtUp->bind_param('ii', $newDeptId, $tid);
+                                $stmtUp->bind_param('iii', $newDeptId, $tid, $eid);
                                 $ok = $stmtUp->execute();
                             }
                         } else {
-                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, updated = NOW() WHERE id = ?');
+                            $stmtUp = $mysqli->prepare('UPDATE tickets SET dept_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                             if ($stmtUp) {
-                                $stmtUp->bind_param('ii', $newDeptId, $tid);
+                                $stmtUp->bind_param('iii', $newDeptId, $tid, $eid);
                                 $ok = $stmtUp->execute();
                             }
                         }
@@ -932,50 +950,49 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             } elseif ($action === 'owner' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_POST['user_id'];
-                $stmt = $mysqli->prepare("UPDATE tickets SET user_id = ?, updated = NOW() WHERE id = ?");
-                $stmt->bind_param('ii', $uid, $tid);
+                $stmt = $mysqli->prepare("UPDATE tickets SET user_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                $stmt->bind_param('iii', $uid, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'owner';
             } elseif ($action === 'block_email' && ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['confirm']) && $_GET['confirm'] === '1')) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $email = $ticketView['user_email'] ?? '';
                 if ($email) {
-                    $stmt = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE id = ?");
-                    $stmt->bind_param('i', $ticketView['user_id']);
+                    $stmt = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE empresa_id = ? AND id = ?");
+                    $uid = (int)($ticketView['user_id'] ?? 0);
+                    $stmt->bind_param('ii', $eid, $uid);
                     $ok = $stmt->execute();
 
-                    if ($ok) {
-                        $mysqli->query("CREATE TABLE IF NOT EXISTS banlist (\n"
-                            . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-                            . "  email VARCHAR(255) NULL,\n"
-                            . "  domain VARCHAR(255) NULL,\n"
-                            . "  notes TEXT NULL,\n"
-                            . "  is_active TINYINT(1) NOT NULL DEFAULT 1,\n"
-                            . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-                            . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-                            . "  KEY idx_email (email),\n"
-                            . "  KEY idx_domain (domain),\n"
-                            . "  KEY idx_active (is_active)\n"
-                            . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+                    $mysqli->query("CREATE TABLE IF NOT EXISTS banlist (\n"
+                        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+                        . "  email VARCHAR(255) NOT NULL,\n"
+                        . "  domain VARCHAR(255) NULL,\n"
+                        . "  notes TEXT NULL,\n"
+                        . "  is_active TINYINT(1) NOT NULL DEFAULT 0,\n"
+                        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+                        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+                        . "  KEY idx_email (email),\n"
+                        . "  KEY idx_domain (domain),\n"
+                        . "  KEY idx_active (is_active)\n"
+                        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-                        $emailNorm = strtolower(trim((string)$email));
-                        if ($emailNorm !== '' && filter_var($emailNorm, FILTER_VALIDATE_EMAIL)) {
-                            $existsB = false;
-                            $stmtB = $mysqli->prepare('SELECT id FROM banlist WHERE email = ? LIMIT 1');
-                            if ($stmtB) {
-                                $stmtB->bind_param('s', $emailNorm);
-                                if ($stmtB->execute()) {
-                                    $existsB = (bool)$stmtB->get_result()->fetch_assoc();
-                                }
+                    $emailNorm = strtolower(trim((string)$email));
+                    if ($emailNorm !== '' && filter_var($emailNorm, FILTER_VALIDATE_EMAIL)) {
+                        $existsB = false;
+                        $stmtB = $mysqli->prepare('SELECT id FROM banlist WHERE email = ? LIMIT 1');
+                        if ($stmtB) {
+                            $stmtB->bind_param('s', $emailNorm);
+                            if ($stmtB->execute()) {
+                                $existsB = (bool)$stmtB->get_result()->fetch_assoc();
                             }
+                        }
 
-                            if (!$existsB) {
-                                $note = 'Bloqueado desde ticket #' . (string)$tid;
-                                $stmtI = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 0, NOW(), NOW())');
-                                if ($stmtI) {
-                                    $stmtI->bind_param('ss', $emailNorm, $note);
-                                    $stmtI->execute();
-                                }
+                        if (!$existsB) {
+                            $note = 'Bloqueado desde ticket #' . (string)$tid;
+                            $stmtI = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, NULL, ?, 0, NOW(), NOW())');
+                            if ($stmtI) {
+                                $stmtI->bind_param('ss', $emailNorm, $note);
+                                $stmtI->execute();
                             }
                         }
                     }
@@ -987,11 +1004,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $target_input = trim($_POST['target_ticket_id']);
                 $target_id = is_numeric($target_input) ? (int) $target_input : 0;
                 if ($target_id === 0) {
-                    $stmt = $mysqli->prepare("SELECT id FROM tickets WHERE ticket_number = ?");
-                    $stmt->bind_param('s', $target_input);
-                    $stmt->execute();
-                    $r = $stmt->get_result()->fetch_assoc();
-                    if ($r) $target_id = (int) $r['id'];
+                    $stmt = $mysqli->prepare("SELECT id FROM tickets WHERE empresa_id = ? AND ticket_number = ? LIMIT 1");
+                    if ($stmt) {
+                        $stmt->bind_param('is', $eid, $target_input);
+                        $stmt->execute();
+                        $r = $stmt->get_result()->fetch_assoc();
+                        if ($r) $target_id = (int) $r['id'];
+                    }
                 }
                 if ($target_id <= 0) {
                     $_SESSION['flash_error'] = 'Ticket destino no encontrado.';
@@ -1045,8 +1064,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             if ($r) $closed_id = (int)($r['id'] ?? 5);
                         }
                     }
-                    $stmtUp = $mysqli->prepare('UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?');
-                    $stmtUp->bind_param('ii', $closed_id, $tid);
+                    $stmtUp = $mysqli->prepare('UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ? AND empresa_id = ?');
+                    $stmtUp->bind_param('iii', $closed_id, $tid, $eid);
                     $stmtUp->execute();
 
                     // Crear vínculo entre origen y destino
@@ -1096,9 +1115,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $input = trim((string)$_POST['linked_ticket_id']);
                 $linked_id = is_numeric($input) ? (int)$input : 0;
                 if ($linked_id === 0) {
-                    $stmtFind = $mysqli->prepare('SELECT id FROM tickets WHERE ticket_number = ? LIMIT 1');
+                    $stmtFind = $mysqli->prepare('SELECT id FROM tickets WHERE empresa_id = ? AND ticket_number = ? LIMIT 1');
                     if ($stmtFind) {
-                        $stmtFind->bind_param('s', $input);
+                        $stmtFind->bind_param('is', $eid, $input);
                         if ($stmtFind->execute()) {
                             $r = $stmtFind->get_result()->fetch_assoc();
                             if ($r) $linked_id = (int)($r['id'] ?? 0);
@@ -1142,10 +1161,22 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $uid = (int) $_POST['user_id'];
                 $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
                 if ($exists && $exists->num_rows > 0) {
-                    $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_collaborators (ticket_id, user_id) VALUES (?, ?)");
-                    $stmt->bind_param('ii', $tid, $uid);
-                    $ok = $stmt->execute();
-                    $msg = 'collab_added';
+                    $userOk = false;
+                    if ($uid > 0) {
+                        $stmtU = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND id = ? LIMIT 1');
+                        if ($stmtU) {
+                            $stmtU->bind_param('ii', $eid, $uid);
+                            if ($stmtU->execute()) {
+                                $userOk = (bool)$stmtU->get_result()->fetch_assoc();
+                            }
+                        }
+                    }
+                    if ($userOk) {
+                        $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_collaborators (ticket_id, user_id) VALUES (?, ?)");
+                        $stmt->bind_param('ii', $tid, $uid);
+                        $ok = $stmt->execute();
+                        $msg = 'collab_added';
+                    }
                 }
             } elseif ($action === 'collab_remove' && isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
@@ -1197,11 +1228,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
                     }
 
-                    $stmtDelTicket = $mysqli->prepare('DELETE FROM tickets WHERE id = ?');
+                    $stmtDelTicket = $mysqli->prepare('DELETE FROM tickets WHERE id = ? AND empresa_id = ?');
                     if (!$stmtDelTicket) {
                         throw new Exception('No se pudo preparar la eliminación.');
                     }
-                    $stmtDelTicket->bind_param('i', $tid);
+                    $stmtDelTicket->bind_param('ii', $tid, $eid);
                     $deleted = (bool)$stmtDelTicket->execute();
 
                     if (!$deleted) {
@@ -1275,16 +1306,16 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
 
                         if ($isClosingStatus) {
-                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ?");
+                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ? AND empresa_id = ?");
                         } else {
-                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ?");
+                            $stmtU = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ? AND empresa_id = ?");
                         }
-                        $stmtU->bind_param('ii', $new_status_id, $tid);
+                        $stmtU->bind_param('iii', $new_status_id, $tid, $eid);
                         $stmtU->execute();
                         if (!$is_internal && $ticketView['staff_id'] === null) {
-                            $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ?');
+                            $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ? AND empresa_id = ?');
                             if ($stmtAssign) {
-                                $stmtAssign->bind_param('ii', $staff_id, $tid);
+                                $stmtAssign->bind_param('iii', $staff_id, $tid, $eid);
                                 $stmtAssign->execute();
                             }
                         }
@@ -1441,15 +1472,15 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         $ticketView['collaborators'] = [];
         $resLinks = @$mysqli->query("SHOW TABLES LIKE 'ticket_links'");
         if ($resLinks && $resLinks->num_rows > 0) {
-            $stmt = $mysqli->prepare("SELECT tl.linked_ticket_id AS id, t.ticket_number, t.subject FROM ticket_links tl JOIN tickets t ON t.id = tl.linked_ticket_id WHERE tl.ticket_id = ?");
-            $stmt->bind_param('i', $tid);
+            $stmt = $mysqli->prepare("SELECT tl.linked_ticket_id AS id, t.ticket_number, t.subject FROM ticket_links tl JOIN tickets t ON t.id = tl.linked_ticket_id WHERE tl.ticket_id = ? AND t.empresa_id = ?");
+            $stmt->bind_param('ii', $tid, $eid);
             $stmt->execute();
             $ticketView['linked_tickets'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
         $resCollab = @$mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
         if ($resCollab && $resCollab->num_rows > 0) {
-            $stmt = $mysqli->prepare("SELECT tc.user_id, u.firstname, u.lastname, u.email FROM ticket_collaborators tc JOIN users u ON u.id = tc.user_id WHERE tc.ticket_id = ?");
-            $stmt->bind_param('i', $tid);
+            $stmt = $mysqli->prepare("SELECT tc.user_id, u.firstname, u.lastname, u.email FROM ticket_collaborators tc JOIN users u ON u.id = tc.user_id WHERE tc.ticket_id = ? AND u.empresa_id = ?");
+            $stmt->bind_param('ii', $tid, $eid);
             $stmt->execute();
             $ticketView['collaborators'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
@@ -1489,12 +1520,18 @@ if ($c && $c->num_rows > 0) $hasTopicCol = true;
 
 if ($hasTopicsTable && $hasTopicCol) {
     $topicFilterAvailable = true;
-    $r = $mysqli->query('SELECT id, name FROM help_topics WHERE is_active = 1 ORDER BY name');
-    if ($r) {
-        while ($row = $r->fetch_assoc()) {
-            $topicOptions[] = $row;
-            if ($selectedTopicId > 0 && (int)($row['id'] ?? 0) === $selectedTopicId) {
-                $selectedTopicName = (string)($row['name'] ?? '');
+    $stmtTp = $mysqli->prepare('SELECT id, name FROM help_topics WHERE empresa_id = ? AND is_active = 1 ORDER BY name');
+    if ($stmtTp) {
+        $stmtTp->bind_param('i', $eid);
+        if ($stmtTp->execute()) {
+            $r = $stmtTp->get_result();
+            if ($r) {
+                while ($row = $r->fetch_assoc()) {
+                    $topicOptions[] = $row;
+                    if ($selectedTopicId > 0 && (int)($row['id'] ?? 0) === $selectedTopicId) {
+                        $selectedTopicName = (string)($row['name'] ?? '');
+                    }
+                }
             }
         }
     }
@@ -1673,9 +1710,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 // Validación: el agente debe ser del mismo dept que el ticket o General (si existe)
                 $staffDept = 0;
                 if ($staffId !== 0) {
-                    $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                    $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                     if ($stmtSd) {
-                        $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                        $stmtSd->bind_param('iii', $generalDeptId, $eid, $staffId);
                         if ($stmtSd->execute()) {
                             $staffDept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
                         }
@@ -1685,10 +1722,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 // Capturar datos previos para notificación (solo cuando se asigna a un agente)
                 $ticketsBefore = [];
                 if ($staffId !== 0) {
-                    $sqlSel = "SELECT t.id, t.ticket_number, t.subject, t.staff_id, t.dept_id, d.name AS dept_name FROM tickets t JOIN departments d ON d.id = t.dept_id WHERE t.id IN ($placeholders)";
+                    $sqlSel = "SELECT t.id, t.ticket_number, t.subject, t.staff_id, t.dept_id, d.name AS dept_name\n"
+                        . "FROM tickets t\n"
+                        . "JOIN departments d ON d.id = t.dept_id AND d.empresa_id = ?\n"
+                        . "WHERE t.empresa_id = ? AND t.id IN ($placeholders)";
                     $stmtSel = $mysqli->prepare($sqlSel);
                     if ($stmtSel) {
-                        $paramsSel = [&$typesIds];
+                        $typesSel = 'ii' . $typesIds;
+                        $paramsSel = [&$typesSel, &$eid, &$eid];
                         foreach ($ticketIds as $k => $v) {
                             $paramsSel[] = &$ticketIds[$k];
                         }
@@ -1703,9 +1744,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 }
 
                 if ($staffId === 0) {
-                    $sqlUp = "UPDATE tickets SET staff_id = NULL, updated = NOW() WHERE id IN ($placeholders)";
+                    $sqlUp = "UPDATE tickets SET staff_id = NULL, updated = NOW() WHERE empresa_id = ? AND id IN ($placeholders)";
                     $stmt = $mysqli->prepare($sqlUp);
-                    $params = [&$typesIds];
+                    $types = 'i' . $typesIds;
+                    $params = [&$types, &$eid];
                     foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                     call_user_func_array([$stmt, 'bind_param'], $params);
                     $okBulk = $stmt->execute();
@@ -1730,10 +1772,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                         $placeAllowed = implode(',', array_fill(0, count($inAllowed), '?'));
                         $typesAllowed = str_repeat('i', count($inAllowed));
 
-                        $sqlUp = "UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id IN ($placeAllowed)";
+                        $sqlUp = "UPDATE tickets SET staff_id = ?, updated = NOW() WHERE empresa_id = ? AND id IN ($placeAllowed)";
                         $stmt = $mysqli->prepare($sqlUp);
-                        $types = 'i' . $typesAllowed;
-                        $params = [&$types, &$staffId];
+                        $types = 'ii' . $typesAllowed;
+                        $params = [&$types, &$staffId, &$eid];
                         foreach ($inAllowed as $k => $v) { $params[] = &$inAllowed[$k]; }
                         call_user_func_array([$stmt, 'bind_param'], $params);
                         $okBulk = $stmt->execute();
@@ -1747,9 +1789,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 if ($okBulk) {
                     // Enviar email al agente asignado (solo si se asignó a alguien y cambió)
                     if ($staffId !== 0 && !empty($ticketsBefore)) {
-                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                        $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                         if ($stmtS) {
-                            $stmtS->bind_param('i', $staffId);
+                            $stmtS->bind_param('ii', $eid, $staffId);
                             if ($stmtS->execute()) {
                                 $srow = $stmtS->get_result()->fetch_assoc();
                                 $to = trim((string)($srow['email'] ?? ''));
@@ -1835,14 +1877,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
                     if ($isClosingStatus) {
                         requireRolePermission('ticket.close', 'tickets.php');
-                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id IN ($placeholders)";
+                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE empresa_id = ? AND id IN ($placeholders)";
                     } else {
                         requireRolePermission('ticket.edit', 'tickets.php');
-                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id IN ($placeholders)";
+                        $sqlUp = "UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE empresa_id = ? AND id IN ($placeholders)";
                     }
                     $stmt = $mysqli->prepare($sqlUp);
-                    $types = 'i' . $typesIds;
-                    $params = [&$types, &$statusId];
+                    $types = 'ii' . $typesIds;
+                    $params = [&$types, &$statusId, &$eid];
                     foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                     call_user_func_array([$stmt, 'bind_param'], $params);
                     if ($stmt->execute()) {
@@ -1863,24 +1905,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                         $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
                         $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
                         if ($threadsOk && $entriesOk) {
-                            $sqlDelEntries = "DELETE te FROM thread_entries te JOIN threads th ON th.id = te.thread_id WHERE th.ticket_id IN ($placeholders)";
+                            $sqlDelEntries = "DELETE te\n"
+                                . "FROM thread_entries te\n"
+                                . "JOIN threads th ON th.id = te.thread_id\n"
+                                . "JOIN tickets t ON t.id = th.ticket_id\n"
+                                . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
                             $stmt = $mysqli->prepare($sqlDelEntries);
-                            $params = [&$typesIds];
+                            $typesDel = 'i' . $typesIds;
+                            $params = [&$typesDel, &$eid];
                             foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                             call_user_func_array([$stmt, 'bind_param'], $params);
                             $stmt->execute();
 
-                            $sqlDelThreads = "DELETE FROM threads WHERE ticket_id IN ($placeholders)";
+                            $sqlDelThreads = "DELETE th\n"
+                                . "FROM threads th\n"
+                                . "JOIN tickets t ON t.id = th.ticket_id\n"
+                                . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
                             $stmt = $mysqli->prepare($sqlDelThreads);
-                            $params = [&$typesIds];
+                            $typesDel = 'i' . $typesIds;
+                            $params = [&$typesDel, &$eid];
                             foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                             call_user_func_array([$stmt, 'bind_param'], $params);
                             $stmt->execute();
                         }
 
-                        $sqlDelTickets = "DELETE FROM tickets WHERE id IN ($placeholders)";
+                        $sqlDelTickets = "DELETE FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)";
                         $stmt = $mysqli->prepare($sqlDelTickets);
-                        $params = [&$typesIds];
+                        $typesDelT = 'i' . $typesIds;
+                        $params = [&$typesDelT, &$eid];
                         foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                         call_user_func_array([$stmt, 'bind_param'], $params);
                         if ($stmt->execute()) {
@@ -1917,8 +1969,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
 // Datos para toolbars
 $staffOptions = [];
-$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE is_active = 1 ORDER BY firstname, lastname";
-$r = $mysqli->query($staffSql);
+$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname";
+$stmtStaffTb = $mysqli->prepare($staffSql);
+$r = null;
+if ($stmtStaffTb) {
+    $stmtStaffTb->bind_param('i', $eid);
+    if ($stmtStaffTb->execute()) {
+        $r = $stmtStaffTb->get_result();
+    }
+}
 if ($r) while ($row = $r->fetch_assoc()) $staffOptions[] = $row;
 $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");

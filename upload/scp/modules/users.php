@@ -258,15 +258,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $user_id = (int) $_POST['user_id'];
         $org_name = trim($_POST['org_name']);
         // Verificar que la organización existe
-        $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? LIMIT 1");
-        $stmt->bind_param('s', $org_name);
-        $stmt->execute();
-        if ($stmt->get_result()->fetch_assoc()) {
-            $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ? AND empresa_id = ?");
-            $stmt->bind_param('sii', $org_name, $user_id, $eid);
-            if ($stmt->execute()) {
-                header('Location: users.php?id=' . $user_id . '&msg=org_assigned');
-                exit;
+        $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param('is', $eid, $org_name);
+            $stmt->execute();
+            if ($stmt->get_result()->fetch_assoc()) {
+                $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ? AND empresa_id = ?");
+                $stmt->bind_param('sii', $org_name, $user_id, $eid);
+                if ($stmt->execute()) {
+                    header('Location: users.php?id=' . $user_id . '&msg=org_assigned');
+                    exit;
+                }
             }
         }
     }
@@ -365,9 +367,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if ($note !== '') {
             $staff_id = isset($_SESSION['staff_id']) && is_numeric($_SESSION['staff_id']) ? (int)$_SESSION['staff_id'] : null;
             if ($staff_id === 0) $staff_id = null;
-            $stmtN = $mysqli->prepare('INSERT INTO user_notes (user_id, staff_id, note, created) VALUES (?, ?, ?, NOW())');
+            $stmtN = $mysqli->prepare('INSERT INTO user_notes (empresa_id, user_id, staff_id, note, created) VALUES (?, ?, ?, ?, NOW())');
             if ($stmtN) {
-                $stmtN->bind_param('iis', $user_id, $staff_id, $note);
+                $stmtN->bind_param('iiis', $eid, $user_id, $staff_id, $note);
                 $stmtN->execute();
             }
         }
@@ -382,9 +384,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $note_id = (int)$_POST['note_id'];
         $note = trim((string)($_POST['note'] ?? ''));
         if ($note !== '') {
-            $stmtU = $mysqli->prepare('UPDATE user_notes SET note = ?, updated = NOW() WHERE id = ? AND user_id = ?');
+            $stmtU = $mysqli->prepare('UPDATE user_notes SET note = ?, updated = NOW() WHERE id = ? AND user_id = ? AND empresa_id = ?');
             if ($stmtU) {
-                $stmtU->bind_param('sii', $note, $note_id, $user_id);
+                $stmtU->bind_param('siii', $note, $note_id, $user_id, $eid);
                 $stmtU->execute();
             }
         }
@@ -397,9 +399,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $user_id = (int)$_POST['user_id'];
         $note_id = (int)$_POST['note_id'];
-        $stmtD = $mysqli->prepare('DELETE FROM user_notes WHERE id = ? AND user_id = ?');
+        $stmtD = $mysqli->prepare('DELETE FROM user_notes WHERE id = ? AND user_id = ? AND empresa_id = ?');
         if ($stmtD) {
-            $stmtD->bind_param('ii', $note_id, $user_id);
+            $stmtD->bind_param('iii', $note_id, $user_id, $eid);
             $stmtD->execute();
         }
         header('Location: users.php?id=' . $user_id . '&t=notes');
@@ -503,9 +505,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])
     header('X-Content-Type-Options: nosniff');
 
     $query = trim($_GET['q']);
-    $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE name LIKE ? ORDER BY name LIMIT 10");
+    $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE empresa_id = ? AND name LIKE ? ORDER BY name LIMIT 10");
     $like = '%' . $query . '%';
-    $stmt->bind_param('s', $like);
+    $stmt->bind_param('is', $eid, $like);
     $stmt->execute();
     $results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     echo json_encode($results, JSON_UNESCAPED_UNICODE);
@@ -699,12 +701,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             exit;
         }
 
-        $stmtO = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? LIMIT 1");
+        $stmtO = $mysqli->prepare("SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1");
         if (!$stmtO) {
             header('Location: users.php?msg=org_bulk_error');
             exit;
         }
-        $stmtO->bind_param('s', $org_name);
+        $stmtO->bind_param('is', $eid, $org_name);
         $stmtO->execute();
         if (!$stmtO->get_result()->fetch_assoc()) {
             header('Location: users.php?msg=org_bulk_error');
@@ -718,9 +720,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             header('Location: users.php?msg=org_bulk_error');
             exit;
         }
-        $types = 's' . str_repeat('i', count($ids));
-        $params = array_merge([$org_name], $ids);
-        $params[] = $eid;
+        $types = 'si' . str_repeat('i', count($ids));
+        $params = array_merge([$org_name, $eid], $ids);
         $stmtU->bind_param($types, ...$params);
         if ($stmtU->execute()) {
             $affected = (int)$stmtU->affected_rows;
