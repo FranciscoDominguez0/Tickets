@@ -22,6 +22,8 @@ if (!$canViewUsers) {
     exit;
 }
 
+$eid = empresaId();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     http_response_code(403);
     echo 'No autorizado';
@@ -63,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             return [$firstname, $lastname];
         };
 
-        $createUser = function ($email, $name, $phone) use ($mysqli, $usersHasPhone, $makePassword, $parseName, &$imported, &$skipped, &$failed) {
+        $createUser = function ($email, $name, $phone) use ($mysqli, $usersHasPhone, $makePassword, $parseName, $eid, &$imported, &$skipped, &$failed) {
             $email = trim((string)$email);
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $failed++;
@@ -79,12 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 $lastname = '';
             }
 
-            $stmtC = $mysqli->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+            $stmtC = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND email = ? LIMIT 1');
             if (!$stmtC) {
                 $failed++;
                 return;
             }
-            $stmtC->bind_param('s', $email);
+            $stmtC->bind_param('is', $eid, $email);
             $stmtC->execute();
             if ($stmtC->get_result()->fetch_assoc()) {
                 $skipped++;
@@ -98,19 +100,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             if ($usersHasPhone) {
                 $phoneVal = trim((string)$phone);
                 $phoneVal = $phoneVal !== '' ? $phoneVal : null;
-                $stmtI = $mysqli->prepare('INSERT INTO users (email, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
                 if (!$stmtI) {
                     $failed++;
                     return;
                 }
-                $stmtI->bind_param('ssssss', $email, $hash, $firstname, $lastname, $phoneVal, $status);
+                $stmtI->bind_param('issssss', $eid, $email, $hash, $firstname, $lastname, $phoneVal, $status);
             } else {
-                $stmtI = $mysqli->prepare('INSERT INTO users (email, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?, ?)');
                 if (!$stmtI) {
                     $failed++;
                     return;
                 }
-                $stmtI->bind_param('sssss', $email, $hash, $firstname, $lastname, $status);
+                $stmtI->bind_param('isssss', $eid, $email, $hash, $firstname, $lastname, $status);
             }
 
             if ($stmtI->execute()) {
@@ -215,8 +217,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     elseif ($password !== $password2) $add_errors[] = 'Las contraseñas no coinciden.';
 
     if (empty($add_errors)) {
-        $stmt = $mysqli->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->bind_param('s', $email);
+        $stmt = $mysqli->prepare("SELECT id FROM users WHERE empresa_id = ? AND email = ?");
+        $stmt->bind_param('is', $eid, $email);
         $stmt->execute();
         if ($stmt->get_result()->fetch_assoc()) {
             $add_errors[] = 'Ya existe un usuario con ese email.';
@@ -225,8 +227,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
     if (empty($add_errors)) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $mysqli->prepare("INSERT INTO users (email, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('ssssss', $email, $hash, $firstname, $lastname, $company, $status);
+        $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('issssss', $eid, $email, $hash, $firstname, $lastname, $company, $status);
         if ($stmt->execute()) {
             header('Location: users.php?added=1');
             exit;
@@ -241,8 +243,8 @@ $add_errors = $add_errors ?? [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'delete' && isset($_POST['id']) && is_numeric($_POST['id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $del_id = (int) $_POST['id'];
-        $stmt = $mysqli->prepare("DELETE FROM users WHERE id = ?");
-        $stmt->bind_param('i', $del_id);
+        $stmt = $mysqli->prepare("DELETE FROM users WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param('ii', $del_id, $eid);
         if ($stmt->execute() && $stmt->affected_rows > 0) {
             header('Location: users.php?msg=user_deleted');
             exit;
@@ -260,8 +262,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $stmt->bind_param('s', $org_name);
         $stmt->execute();
         if ($stmt->get_result()->fetch_assoc()) {
-            $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ?");
-            $stmt->bind_param('si', $org_name, $user_id);
+            $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ? AND empresa_id = ?");
+            $stmt->bind_param('sii', $org_name, $user_id, $eid);
             if ($stmt->execute()) {
                 header('Location: users.php?id=' . $user_id . '&msg=org_assigned');
                 exit;
@@ -274,8 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'remove_org' && isset($_POST['user_id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $user_id = (int) $_POST['user_id'];
-        $stmt = $mysqli->prepare("UPDATE users SET company = NULL WHERE id = ?");
-        $stmt->bind_param('i', $user_id);
+        $stmt = $mysqli->prepare("UPDATE users SET company = NULL WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param('ii', $user_id, $eid);
         if ($stmt->execute()) {
             header('Location: users.php?id=' . $user_id . '&msg=org_removed');
             exit;
@@ -291,8 +293,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if (!in_array($new_status, ['active', 'inactive', 'banned'], true)) {
             $new_status = 'inactive';
         }
-        $stmt = $mysqli->prepare("UPDATE users SET status = ?, updated = NOW() WHERE id = ?");
-        $stmt->bind_param('si', $new_status, $user_id);
+        $stmt = $mysqli->prepare("UPDATE users SET status = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+        $stmt->bind_param('sii', $new_status, $user_id, $eid);
         if ($stmt->execute()) {
             header('Location: users.php?id=' . $user_id . '&msg=status_updated');
             exit;
@@ -318,12 +320,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if ($lastname === '') $edit_errors[] = 'El apellido es obligatorio.';
 
         if (empty($edit_errors)) {
-            $stmtE = $mysqli->prepare('SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1');
+            $stmtE = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND email = ? AND id <> ? LIMIT 1');
             if ($stmtE) {
-                $stmtE->bind_param('si', $email, $user_id);
+                $stmtE->bind_param('isi', $eid, $email, $user_id);
                 if ($stmtE->execute()) {
                     if ($stmtE->get_result()->fetch_assoc()) {
-                        $edit_errors[] = 'Ya existe un usuario con ese email.';
+                        $edit_errors[] = 'Ya existe otro usuario con ese email.';
                     }
                 }
             }
@@ -332,20 +334,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if (empty($edit_errors)) {
             if ($usersHasPhone) {
                 $phoneVal = $phone !== '' ? $phone : null;
-                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, phone = ?, updated = NOW() WHERE id = ?');
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, phone = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('ssssi', $email, $firstname, $lastname, $phoneVal, $user_id);
+                    $stmtU->bind_param('ssssii', $email, $firstname, $lastname, $phoneVal, $user_id, $eid);
                     if ($stmtU->execute()) {
-                        header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
+                        header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
                     }
                 }
             } else {
-                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, updated = NOW() WHERE id = ?');
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('sssi', $email, $firstname, $lastname, $user_id);
+                    $stmtU->bind_param('sssii', $email, $firstname, $lastname, $user_id, $eid);
                     if ($stmtU->execute()) {
-                        header('Location: users.php?id=' . $user_id . '&msg=profile_updated');
+                        header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
                     }
                 }
@@ -426,72 +428,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
-        $stmtU = $mysqli->prepare('SELECT id, email, firstname, lastname FROM users WHERE id = ? LIMIT 1');
+        $stmtU = $mysqli->prepare('SELECT id, email, firstname, lastname FROM users WHERE id = ? AND empresa_id = ? LIMIT 1');
         if ($stmtU) {
-            $stmtU->bind_param('i', $user_id);
+            $stmtU->bind_param('ii', $user_id, $eid);
             $stmtU->execute();
-            $u = $stmtU->get_result()->fetch_assoc();
-            if ($u) {
-                // Invalidar tokens pendientes anteriores (dejar un solo enlace activo)
-                $stmtInv = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
-                if ($stmtInv) {
-                    $uid = (int)($u['id'] ?? 0);
-                    $stmtInv->bind_param('i', $uid);
-                    $stmtInv->execute();
-                }
-
-                $token = bin2hex(random_bytes(32));
-                $tokenHash = hash('sha256', $token);
-                $expiresAt = date('Y-m-d H:i:s', time() + 3600);
-
-                $stmtIns = $mysqli->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)');
-                if ($stmtIns) {
-                    $uid = (int)($u['id'] ?? 0);
-                    $stmtIns->bind_param('iss', $uid, $tokenHash, $expiresAt);
-                    $stmtIns->execute();
-                }
-
-                $resetUrl = rtrim(APP_URL, '/') . '/upload/reset.php?token=' . urlencode($token);
-                $name = trim(((string)($u['firstname'] ?? '')) . ' ' . ((string)($u['lastname'] ?? '')));
-                if ($name === '') $name = (string)($u['email'] ?? '');
-
-                $subject = 'Restablecer contraseña - ' . APP_NAME;
-                $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-                $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
-
-                $bodyHtml = ''
-                    . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
-                    . '  <div style="max-width:640px; margin:0 auto;">'
-                    . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
-                    . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-                    . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>'
-                    . '    </div>'
-                    . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
-                    . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
-                    . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>'
-                    . '      <p style="margin:14px 0 12px 0;">'
-                    . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>'
-                    . '      </p>'
-                    . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
-                    . '      <div style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña no se modificará.</div>'
-                    . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
-                    . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
-                    . '    </div>'
-                    . '  </div>'
-                    . '</div>';
-
-                $bodyText = "Hola $name,\n\n" .
-                    "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n" .
-                    "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
-                    "Si no solicitaste este cambio, puedes ignorar este correo.";
-
-                Mailer::send((string)$u['email'], $subject, $bodyHtml, $bodyText);
+            $userRow = $stmtU->get_result()->fetch_assoc();
+            if ($userRow) {
+                $user_id = (int)($userRow['id'] ?? 0);
             }
         }
+        // Invalidar tokens pendientes anteriores (dejar un solo enlace activo)
+        $stmtInv = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
+        if ($stmtInv) {
+            $uid = (int)($userRow['id'] ?? 0);
+            $stmtInv->bind_param('i', $uid);
+            $stmtInv->execute();
+        }
 
-        header('Location: users.php?id=' . $user_id . $tabParam . '&msg=reset_sent');
-        exit;
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = hash('sha256', $token);
+        $expiresAt = date('Y-m-d H:i:s', time() + 3600);
+
+        $stmtIns = $mysqli->prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)');
+        if ($stmtIns) {
+            $uid = (int)($userRow['id'] ?? 0);
+            $stmtIns->bind_param('iss', $uid, $tokenHash, $expiresAt);
+            $stmtIns->execute();
+        }
+
+        $resetUrl = rtrim(APP_URL, '/') . '/upload/reset.php?token=' . urlencode($token);
+        $name = trim(((string)($userRow['firstname'] ?? '')) . ' ' . ((string)($userRow['lastname'] ?? '')));
+        if ($name === '') $name = (string)($userRow['email'] ?? '');
+
+        $subject = 'Restablecer contraseña - ' . APP_NAME;
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+
+        $bodyHtml = ''
+            . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
+            . '  <div style="max-width:640px; margin:0 auto;">'
+            . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
+            . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
+            . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>'
+            . '    </div>'
+            . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
+            . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
+            . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>'
+            . '      <p style="margin:14px 0 12px 0;">'
+            . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>'
+            . '      </p>'
+            . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
+            . '      <div style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña no se modificará.</div>'
+            . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
+            . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
+            . '    </div>'
+            . '  </div>'
+            . '</div>';
+
+        $bodyText = "Hola $name,\n\n" .
+            "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n" .
+            "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
+            "Si no solicitaste este cambio, puedes ignorar este correo.";
+
+        Mailer::send((string)$userRow['email'], $subject, $bodyHtml, $bodyText);
     }
+
+    header('Location: users.php?id=' . $user_id . $tabParam . '&msg=reset_sent');
+    exit;
 }
 
 // AJAX: buscar organizaciones
@@ -514,19 +517,19 @@ $viewUser = null;
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $uid = (int) $_GET['id'];
     if ($usersHasPhone) {
-        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
     } else {
-        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, company, status, created, updated FROM users WHERE id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
     }
-    $stmt->bind_param('i', $uid);
+    $stmt->bind_param('ii', $uid, $eid);
     $stmt->execute();
-    $res = $stmt->get_result();
-    if ($res && ($row = $res->fetch_assoc())) $viewUser = $row;
+    $viewUser = $stmt->get_result()->fetch_assoc();
 }
 
 if ($viewUser) {
-    $stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.created, s.name as status_name FROM tickets t LEFT JOIN ticket_status s ON s.id = t.status_id WHERE t.user_id = ? ORDER BY t.created DESC");
-    $stmt->bind_param('i', $viewUser['id']);
+    $stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.created, s.name as status_name FROM tickets t LEFT JOIN ticket_status s ON s.id = t.status_id WHERE t.empresa_id = ? AND t.user_id = ? ORDER BY t.created DESC");
+    $uid2 = (int)($viewUser['id'] ?? 0);
+    $stmt->bind_param('ii', $eid, $uid2);
     $stmt->execute();
     $userTickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -536,11 +539,11 @@ if ($viewUser) {
         . "CONCAT(COALESCE(st.firstname,''), ' ', COALESCE(st.lastname,'')) AS staff_name "
         . "FROM user_notes n "
         . "LEFT JOIN staff st ON st.id = n.staff_id "
-        . "WHERE n.user_id = ? "
+        . "WHERE n.user_id = ? AND n.empresa_id = ? "
         . "ORDER BY n.created DESC"
     );
     if ($stmtN) {
-        $stmtN->bind_param('i', $viewUser['id']);
+        $stmtN->bind_param('ii', $viewUser['id'], $eid);
         $stmtN->execute();
         $userNotes = $stmtN->get_result()->fetch_all(MYSQLI_ASSOC);
     }
@@ -577,30 +580,26 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
             u.id,
             u.email,
             u.firstname,
-            u.lastname,";
-
-    if ($usersHasPhone) {
-        $exportSql .= "\n            u.phone,";
-    }
-
-    $exportSql .= "
+            u.lastname,
             u.company,
             u.status,
             u.created,
             u.updated,
             COUNT(t.id) AS ticket_count
         FROM users u
-        LEFT JOIN tickets t ON t.user_id = u.id
-        WHERE 1=1
+        LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
+        WHERE u.empresa_id = ?
     ";
 
     $exportParams = [];
-    $exportTypes = '';
+    $exportTypes = 'ii';
+    $exportParams[] = $eid;
+    $exportParams[] = $eid;
     if ($search !== '') {
         $term = '%' . $search . '%';
         $exportSql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
-        $exportParams = [$term, $term, $term, $term];
-        $exportTypes = 'ssss';
+        array_push($exportParams, $term, $term, $term, $term);
+        $exportTypes .= 'ssss';
     }
 
     $exportSql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
@@ -610,11 +609,15 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
     $exportSql .= " ORDER BY $orderByExport $order";
 
     $stmtX = $mysqli->prepare($exportSql);
-    if (!empty($exportParams)) {
-        $stmtX->bind_param($exportTypes, ...$exportParams);
+    if ($stmtX) {
+        $types = $exportTypes;
+        $stmtX->bind_param($types, ...$exportParams);
+        $stmtX->execute();
+        $resX = $stmtX->get_result();
+    } else {
+        header('Location: users.php');
+        exit;
     }
-    $stmtX->execute();
-    $resX = $stmtX->get_result();
 
     $ts = date('Ymd');
     header('Content-Type: text/csv; charset=utf-8');
@@ -623,7 +626,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
     header('Expires: 0');
 
     $out = fopen('php://output', 'w');
-    // UTF-8 BOM para Excel
     fprintf($out, "\xEF\xBB\xBF");
 
     $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
@@ -710,7 +712,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sqlU = "UPDATE users SET company = ?, updated = NOW() WHERE id IN ($placeholders)";
+        $sqlU = "UPDATE users SET company = ?, updated = NOW() WHERE empresa_id = ? AND id IN ($placeholders)";
         $stmtU = $mysqli->prepare($sqlU);
         if (!$stmtU) {
             header('Location: users.php?msg=org_bulk_error');
@@ -718,6 +720,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
         $types = 's' . str_repeat('i', count($ids));
         $params = array_merge([$org_name], $ids);
+        $params[] = $eid;
         $stmtU->bind_param($types, ...$params);
         if ($stmtU->execute()) {
             $affected = (int)$stmtU->affected_rows;
@@ -839,14 +842,16 @@ if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
 }
 
 // Contar total (con filtro de búsqueda)
-$countSql = "SELECT COUNT(*) AS total FROM users WHERE 1=1";
+$countSql = "SELECT COUNT(*) AS total FROM users WHERE empresa_id = ?";
 $countParams = [];
-$countTypes = '';
+$countTypes = 'i';
+$countParams[] = $eid;
 if ($search !== '') {
     $term = '%' . $search . '%';
     $countSql .= " AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR company LIKE ?)";
     $countParams = [$term, $term, $term, $term];
-    $countTypes = 'ssss';
+    $countTypes .= 'ssss';
+    array_unshift($countParams, $eid);
 }
 $countStmt = $mysqli->prepare($countSql);
 if (!empty($countParams)) $countStmt->bind_param($countTypes, ...$countParams);
@@ -877,16 +882,18 @@ $sql = "
         u.updated,
         COUNT(t.id) AS ticket_count
     FROM users u
-    LEFT JOIN tickets t ON t.user_id = u.id
-    WHERE 1=1
+    LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
+    WHERE u.empresa_id = ?
 ";
 $params = [];
-$types = '';
+$types = 'ii';
+$params[] = $eid;
+$params[] = $eid;
 if ($search !== '') {
     $term = '%' . $search . '%';
     $sql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
-    $params = [$term, $term, $term, $term];
-    $types = 'ssss';
+    array_push($params, $term, $term, $term, $term);
+    $types .= 'ssss';
 }
 $sql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
 $sql .= " ORDER BY $orderBy $order LIMIT ? OFFSET ?";

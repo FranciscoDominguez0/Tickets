@@ -5,6 +5,8 @@
 $action_msg = null;
 $action_type = null;
 
+$eid = empresaId();
+
 // Crear tabla de organizaciones si no existe
 $mysqli->query("
     CREATE TABLE IF NOT EXISTS organizations (
@@ -36,16 +38,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $errors[] = 'El nombre de la organización es obligatorio.';
         }
         if (empty($errors)) {
-            $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? LIMIT 1");
-            $stmt->bind_param('s', $org_name);
+            $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1");
+            $stmt->bind_param('is', $eid, $org_name);
             $stmt->execute();
             if ($stmt->get_result()->fetch_assoc()) {
                 $errors[] = 'Ya existe una organización con ese nombre.';
             }
         }
         if (empty($errors)) {
-            $stmt = $mysqli->prepare("INSERT INTO organizations (name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param('ssssss', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
+            $stmt = $mysqli->prepare("INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('issssss', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
             if ($stmt->execute()) {
                 header('Location: orgs.php?org=' . urlencode($org_name) . '&msg=org_added');
                 exit;
@@ -64,11 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $org_name = trim($_POST['org_name'] ?? '');
         if ($org_name) {
-            $stmt = $mysqli->prepare("DELETE FROM organizations WHERE name = ?");
-            $stmt->bind_param('s', $org_name);
+            $stmt = $mysqli->prepare("DELETE FROM organizations WHERE empresa_id = ? AND name = ?");
+            $stmt->bind_param('is', $eid, $org_name);
             if ($stmt->execute()) {
-                $stmt2 = $mysqli->prepare("UPDATE users SET company = NULL WHERE company = ?");
-                $stmt2->bind_param('s', $org_name);
+                $stmt2 = $mysqli->prepare("UPDATE users SET company = NULL WHERE empresa_id = ? AND company = ?");
+                $stmt2->bind_param('is', $eid, $org_name);
                 $stmt2->execute();
                 header('Location: orgs.php?msg=org_deleted');
                 exit;
@@ -93,9 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if ($org_name === '') $errors[] = 'El nombre de la organización es obligatorio.';
 
         if (empty($errors) && strcasecmp($old_name, $org_name) !== 0) {
-            $stmtC = $mysqli->prepare('SELECT id FROM organizations WHERE name = ? LIMIT 1');
+            $stmtC = $mysqli->prepare('SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
             if ($stmtC) {
-                $stmtC->bind_param('s', $org_name);
+                $stmtC->bind_param('is', $eid, $org_name);
                 $stmtC->execute();
                 if ($stmtC->get_result()->fetch_assoc()) {
                     $errors[] = 'Ya existe una organización con ese nombre.';
@@ -104,33 +106,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
 
         if (empty($errors)) {
-            $stmtE = $mysqli->prepare('SELECT id FROM organizations WHERE name = ? LIMIT 1');
+            $stmtE = $mysqli->prepare('SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
             $existingId = 0;
             if ($stmtE) {
-                $stmtE->bind_param('s', $old_name);
+                $stmtE->bind_param('is', $eid, $old_name);
                 $stmtE->execute();
                 $row = $stmtE->get_result()->fetch_assoc();
                 $existingId = (int)($row['id'] ?? 0);
             }
 
             if ($existingId > 0) {
-                $stmtU = $mysqli->prepare('UPDATE organizations SET name = ?, address = ?, phone = ?, phone_ext = ?, website = ?, notes = ? WHERE id = ?');
+                $stmtU = $mysqli->prepare('UPDATE organizations SET name = ?, address = ?, phone = ?, phone_ext = ?, website = ?, notes = ? WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('ssssssi', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $existingId);
+                    $stmtU->bind_param('ssssssii', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $existingId, $eid);
                     $stmtU->execute();
                 }
             } else {
-                $stmtI = $mysqli->prepare('INSERT INTO organizations (name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
                 if ($stmtI) {
-                    $stmtI->bind_param('ssssss', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
+                    $stmtI->bind_param('issssss', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
                     $stmtI->execute();
                 }
             }
 
             if (strcasecmp($old_name, $org_name) !== 0) {
-                $stmtUc = $mysqli->prepare('UPDATE users SET company = ? WHERE company = ?');
+                $stmtUc = $mysqli->prepare('UPDATE users SET company = ? WHERE empresa_id = ? AND company = ?');
                 if ($stmtUc) {
-                    $stmtUc->bind_param('ss', $org_name, $old_name);
+                    $stmtUc->bind_param('sis', $org_name, $eid, $old_name);
                     $stmtUc->execute();
                 }
             }
@@ -164,8 +166,8 @@ if (!empty($_GET['org'])) {
     $orgName = trim($_GET['org']);
 
     $orgData = null;
-    $stmt = $mysqli->prepare("SELECT * FROM organizations WHERE name = ? LIMIT 1");
-    $stmt->bind_param('s', $orgName);
+    $stmt = $mysqli->prepare("SELECT * FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1");
+    $stmt->bind_param('is', $eid, $orgName);
     $stmt->execute();
     $orgData = $stmt->get_result()->fetch_assoc();
 
@@ -175,12 +177,12 @@ if (!empty($_GET['org'])) {
                    SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
                    MIN(u.created) AS since
             FROM users u
-            LEFT JOIN tickets t ON t.user_id = u.id
+            LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
             LEFT JOIN ticket_status ts ON ts.id = t.status_id
-            WHERE u.company = ?
+            WHERE u.empresa_id = ? AND u.company = ?
             GROUP BY u.company
         ");
-        $stmt->bind_param('s', $orgName);
+        $stmt->bind_param('iis', $eid, $eid, $orgName);
         $stmt->execute();
         $orgData = $stmt->get_result()->fetch_assoc();
     }
@@ -197,11 +199,11 @@ if (!empty($_GET['org'])) {
                    SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
                    MIN(u.created) AS since
             FROM users u
-            LEFT JOIN tickets t ON t.user_id = u.id
+            LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
             LEFT JOIN ticket_status ts ON ts.id = t.status_id
-            WHERE u.company = ?
+            WHERE u.empresa_id = ? AND u.company = ?
         ");
-        $stmt->bind_param('s', $orgName);
+        $stmt->bind_param('iis', $eid, $eid, $orgName);
         $stmt->execute();
         $stats = $stmt->get_result()->fetch_assoc();
         $orgInfo = array_merge($orgData, $stats ?: ['user_count' => 0, 'ticket_count' => 0, 'open_tickets' => 0, 'since' => null]);
@@ -212,8 +214,8 @@ if (!empty($_GET['org'])) {
     $orgInfo['website'] = $orgInfo['website'] ?? '';
     $orgInfo['notes'] = $orgInfo['notes'] ?? '';
 
-    $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email, phone, status, created FROM users WHERE company = ? ORDER BY firstname, lastname");
-    $stmt->bind_param('s', $orgName);
+    $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email, phone, status, created FROM users WHERE empresa_id = ? AND company = ? ORDER BY firstname, lastname");
+    $stmt->bind_param('is', $eid, $orgName);
     $stmt->execute();
     $orgUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -225,11 +227,11 @@ if (!empty($_GET['org'])) {
         JOIN departments d ON t.dept_id = d.id
         JOIN ticket_status ts ON t.status_id = ts.id
         JOIN priorities p ON t.priority_id = p.id
-        WHERE u.company = ?
+        WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
         ORDER BY t.created DESC
         LIMIT 100
     ");
-    $stmt->bind_param('s', $orgName);
+    $stmt->bind_param('iis', $eid, $eid, $orgName);
     $stmt->execute();
     $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -537,13 +539,16 @@ $sql1 = "
            SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
            MIN(u.created) AS since
     FROM organizations o
-    LEFT JOIN users u ON u.company = o.name
-    LEFT JOIN tickets t ON t.user_id = u.id
+    LEFT JOIN users u ON u.company = o.name AND u.empresa_id = ?
+    LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
     LEFT JOIN ticket_status ts ON ts.id = t.status_id
-    WHERE 1=1
+    WHERE o.empresa_id = ?
 ";
 $params1 = [];
-$types1 = '';
+$types1 = 'iii';
+$params1[] = $eid;
+$params1[] = $eid;
+$params1[] = $eid;
 if ($search !== '') {
     $sql1 .= " AND o.name LIKE ?";
     $params1[] = $like;

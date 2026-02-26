@@ -8,6 +8,15 @@ $deptFilter = isset($_GET['did']) && is_numeric($_GET['did']) ? (int)$_GET['did'
 $sort = strtolower($_GET['sort'] ?? 'name');
 $order = strtoupper($_GET['order'] ?? 'ASC');
 
+$eid = empresaId();
+
+$deptHasEmpresa = false;
+try {
+    $c = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+    $deptHasEmpresa = ($c && $c->num_rows > 0);
+} catch (Throwable $e) {
+}
+
 // Validar ordenamiento
 $validSorts = ['name', 'email', 'dept', 'role', 'status', 'created', 'last_login'];
 if (!in_array($sort, $validSorts)) {
@@ -36,12 +45,14 @@ $sql = "
         SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
     FROM staff s
     LEFT JOIN departments d ON s.dept_id = d.id
-    LEFT JOIN tickets t ON t.staff_id = s.id
-    WHERE 1=1
+    LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
+    WHERE s.empresa_id = ?
 ";
 
 $params = [];
-$types = '';
+$types = 'ii';
+$params[] = $eid;
+$params[] = $eid;
 
 // Aplicar filtro de búsqueda
 if ($search) {
@@ -111,7 +122,20 @@ while ($row = $result->fetch_assoc()) {
 }
 
 // Obtener lista de departamentos para el filtro
-$deptStmt = $mysqli->prepare("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
+$deptSql = "SELECT id, name FROM departments WHERE is_active = 1";
+$deptTypes = '';
+$deptParams = [];
+if ($deptHasEmpresa) {
+    $deptSql .= " AND empresa_id = ?";
+    $deptTypes = 'i';
+    $deptParams[] = $eid;
+}
+$deptSql .= " ORDER BY name";
+
+$deptStmt = $mysqli->prepare($deptSql);
+if ($deptStmt && $deptTypes !== '') {
+    $deptStmt->bind_param($deptTypes, ...$deptParams);
+}
 $deptStmt->execute();
 $deptResult = $deptStmt->get_result();
 $departments = [];

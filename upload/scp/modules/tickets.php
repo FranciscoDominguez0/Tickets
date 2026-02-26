@@ -6,6 +6,8 @@ $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
 
+$eid = empresaId();
+
 // Tabla de tickets vinculados (si no existe, se crea bajo demanda)
 $ensureTicketLinksTable = function () use ($mysqli) {
     if (!isset($mysqli) || !$mysqli) return false;
@@ -62,12 +64,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'user_search') {
     $stmtU = $mysqli->prepare(
         "SELECT id, firstname, lastname, email\n"
         . "FROM users\n"
-        . "WHERE (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR CONCAT(firstname, ' ', lastname) LIKE ?)\n"
+        . "WHERE empresa_id = ? AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR CONCAT(firstname, ' ', lastname) LIKE ?)\n"
         . "ORDER BY firstname, lastname\n"
         . "LIMIT 20"
     );
     if ($stmtU) {
-        $stmtU->bind_param('ssss', $like, $like, $like, $like);
+        $stmtU->bind_param('issss', $eid, $like, $like, $like, $like);
         if ($stmtU->execute()) {
             $res = $stmtU->get_result();
             while ($res && ($u = $res->fetch_assoc())) {
@@ -106,7 +108,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email\n"
         . "FROM tickets t\n"
         . "JOIN users u ON u.id = t.user_id\n"
-        . "WHERE t.id = ?\n"
+        . "WHERE t.id = ? AND t.empresa_id = ?\n"
         . "LIMIT 1"
     );
     if (!$stmt) {
@@ -114,7 +116,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         echo json_encode(['ok' => false, 'error' => 'DB error']);
         exit;
     }
-    $stmt->bind_param('i', $tid);
+    $stmt->bind_param('ii', $tid, $eid);
     $stmt->execute();
     $ticket = $stmt->get_result()->fetch_assoc();
     if (!$ticket) {
@@ -124,9 +126,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
     }
 
     $threadId = 0;
-    $stmtTh = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ? LIMIT 1');
+    $stmtTh = $mysqli->prepare('SELECT th.id FROM threads th INNER JOIN tickets t ON t.id = th.ticket_id WHERE th.ticket_id = ? AND t.empresa_id = ? LIMIT 1');
     if ($stmtTh) {
-        $stmtTh->bind_param('i', $tid);
+        $stmtTh->bind_param('ii', $tid, $eid);
         if ($stmtTh->execute()) {
             $row = $stmtTh->get_result()->fetch_assoc();
             $threadId = (int)($row['id'] ?? 0);
@@ -334,12 +336,12 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 if ($c && $c->num_rows > 0) $hasClosedCol = true;
 
                 if ($hasClosedCol) {
-                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ? AND closed IS NULL');
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ? AND closed IS NULL');
                 } else {
-                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE user_id = ?');
+                    $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ?');
                 }
                 if ($stmtCnt) {
-                    $stmtCnt->bind_param('i', $user_id);
+                    $stmtCnt->bind_param('ii', $eid, $user_id);
                     $stmtCnt->execute();
                     $cntRow = $stmtCnt->get_result()->fetch_assoc();
                     $openCount = (int)($cntRow['cnt'] ?? 0);
@@ -388,9 +390,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
                     for ($i = 0; $i < 30; $i++) {
                         $num = $build($format);
-                        $stmtChk = $mysqli->prepare('SELECT id FROM tickets WHERE ticket_number = ? LIMIT 1');
+                        $stmtChk = $mysqli->prepare('SELECT id FROM tickets WHERE empresa_id = ? AND ticket_number = ? LIMIT 1');
                         if (!$stmtChk) return $num;
-                        $stmtChk->bind_param('s', $num);
+                        $stmtChk->bind_param('is', $eid, $num);
                         $stmtChk->execute();
                         $row = $stmtChk->get_result()->fetch_assoc();
                         if (!$row) return $num;
@@ -463,13 +465,13 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 if ($defaultStatusId <= 0) $defaultStatusId = 1;
 
                 if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
                     // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (status_id), i (priority_id), s (subject)
-                    $stmt->bind_param('siiiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
+                    $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
                 } else {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                    $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
                     // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (status_id), i (priority_id), s (subject)
-                    $stmt->bind_param('siiiiis', $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject);
+                    $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject);
                 }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
@@ -1499,9 +1501,9 @@ if ($hasTopicsTable && $hasTopicCol) {
 }
 
 if ($topicFilterAvailable && $selectedTopicId > 0) {
-    $stmtTc = $mysqli->prepare('SELECT COUNT(*) AS c FROM tickets WHERE topic_id = ?');
+    $stmtTc = $mysqli->prepare('SELECT COUNT(*) AS c FROM tickets WHERE empresa_id = ? AND topic_id = ?');
     if ($stmtTc) {
-        $stmtTc->bind_param('i', $selectedTopicId);
+        $stmtTc->bind_param('ii', $eid, $selectedTopicId);
         if ($stmtTc->execute()) {
             $countSelectedTopic = (int)($stmtTc->get_result()->fetch_assoc()['c'] ?? 0);
         }
@@ -1509,19 +1511,41 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
 }
 
 // Contadores rápidos
-$countOpen = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NULL")->fetch_assoc()['c'] ?? 0);
-$countClosed = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE closed IS NOT NULL")->fetch_assoc()['c'] ?? 0);
-$countUnassigned = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE staff_id IS NULL AND closed IS NULL")->fetch_assoc()['c'] ?? 0);
+$countOpen = 0;
+$countClosed = 0;
+$countUnassigned = 0;
+$stmtCo = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NULL');
+if ($stmtCo) {
+    $stmtCo->bind_param('i', $eid);
+    if ($stmtCo->execute()) $countOpen = (int)($stmtCo->get_result()->fetch_assoc()['c'] ?? 0);
+}
+$stmtCc = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL');
+if ($stmtCc) {
+    $stmtCc->bind_param('i', $eid);
+    if ($stmtCc->execute()) $countClosed = (int)($stmtCc->get_result()->fetch_assoc()['c'] ?? 0);
+}
+$stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
+if ($stmtCu) {
+    $stmtCu->bind_param('i', $eid);
+    if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
+}
 $countMine = 0;
 if (!empty($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
-    $countMine = (int) ($mysqli->query("SELECT COUNT(*) c FROM tickets WHERE staff_id = $sid AND closed IS NULL")->fetch_assoc()['c'] ?? 0);
+    $stmtCm = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id = ? AND closed IS NULL');
+    if ($stmtCm) {
+        $stmtCm->bind_param('ii', $eid, $sid);
+        if ($stmtCm->execute()) $countMine = (int)($stmtCm->get_result()->fetch_assoc()['c'] ?? 0);
+    }
 }
 
 // Query listado
 $whereClauses = [];
 $types = '';
 $params = [];
+$whereClauses[] = 't.empresa_id = ?';
+$types .= 'i';
+$params[] = $eid;
 if ($filterKey === 'mine') {
     $whereClauses[] = 't.staff_id = ?';
     $types .= 'i';

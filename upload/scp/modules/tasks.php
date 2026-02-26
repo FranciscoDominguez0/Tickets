@@ -18,6 +18,8 @@ if (!$canTasks) {
     exit;
 }
 
+$eid = empresaId();
+
 $task = null;
 $errors = [];
 $success = false;
@@ -34,23 +36,31 @@ if ($chk && $chk->num_rows > 0) {
 }
 
 $departments = [];
-$rDept = $mysqli->query("SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name");
-if ($rDept) {
-    while ($row = $rDept->fetch_assoc()) {
-        $departments[] = $row;
+$stmtDept = $mysqli->prepare("SELECT id, name FROM departments WHERE empresa_id = ? AND is_active = 1 ORDER BY name");
+if ($stmtDept) {
+    $stmtDept->bind_param('i', $eid);
+    if ($stmtDept->execute()) {
+        $rDept = $stmtDept->get_result();
+        while ($rDept && ($row = $rDept->fetch_assoc())) {
+            $departments[] = $row;
+        }
     }
 }
 
 $agentsByDept = [];
-$rAgents = $mysqli->query("SELECT id, CONCAT(firstname, ' ', lastname) AS name, dept_id FROM staff WHERE is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
-if ($rAgents) {
-    while ($row = $rAgents->fetch_assoc()) {
-        $did = (int)($row['dept_id'] ?? 0);
-        if (!isset($agentsByDept[$did])) $agentsByDept[$did] = [];
-        $agentsByDept[$did][] = [
-            'id' => (int)$row['id'],
-            'name' => (string)$row['name'],
-        ];
+$stmtAgents = $mysqli->prepare("SELECT id, CONCAT(firstname, ' ', lastname) AS name, dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
+if ($stmtAgents) {
+    $stmtAgents->bind_param('i', $eid);
+    if ($stmtAgents->execute()) {
+        $rAgents = $stmtAgents->get_result();
+        while ($rAgents && ($row = $rAgents->fetch_assoc())) {
+            $did = (int)($row['dept_id'] ?? 0);
+            if (!isset($agentsByDept[$did])) $agentsByDept[$did] = [];
+            $agentsByDept[$did][] = [
+                'id' => (int)$row['id'],
+                'name' => (string)$row['name'],
+            ];
+        }
     }
 }
 
@@ -75,7 +85,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
              LEFT JOIN staff s1 ON t.assigned_to = s1.id
              LEFT JOIN staff s2 ON t.created_by = s2.id
              LEFT JOIN departments d ON t.dept_id = d.id
-             WHERE t.id = ?"
+             WHERE t.id = ? AND t.empresa_id = ?"
         );
     } else {
         $stmt = $mysqli->prepare(
@@ -85,10 +95,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
              FROM tasks t
              LEFT JOIN staff s1 ON t.assigned_to = s1.id
              LEFT JOIN staff s2 ON t.created_by = s2.id
-             WHERE t.id = ?"
+             WHERE t.id = ? AND t.empresa_id = ?"
         );
     }
-    $stmt->bind_param('i', $task_id);
+    $stmt->bind_param('ii', $task_id, $eid);
     $stmt->execute();
     $result = $stmt->get_result();
     $task = $result->fetch_assoc();
@@ -129,9 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 }
 
                 if ($tasksHasDept && $assigned_to) {
-                    $stmtA = $mysqli->prepare("SELECT id FROM staff WHERE id = ? AND is_active = 1 AND role = 'agent' AND dept_id = ? LIMIT 1");
+                    $stmtA = $mysqli->prepare("SELECT id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 AND role = 'agent' AND dept_id = ? LIMIT 1");
                     if ($stmtA) {
-                        $stmtA->bind_param('ii', $assigned_to, $dept_id);
+                        $stmtA->bind_param('iii', $eid, $assigned_to, $dept_id);
                         $stmtA->execute();
                         $arow = $stmtA->get_result()->fetch_assoc();
                         if (!$arow) {
@@ -143,11 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 if (empty($errors)) {
                     $due_date_sql = $due_date ? date('Y-m-d H:i:s', strtotime($due_date)) : null;
                     $stmt = $mysqli->prepare(
-                        "INSERT INTO tasks (title, description, assigned_to, created_by, dept_id, priority, due_date, created) 
-                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
+                        "INSERT INTO tasks (empresa_id, title, description, assigned_to, created_by, dept_id, priority, due_date, created) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
                     );
                     $createdBy = (int)($_SESSION['staff_id'] ?? 0);
-                    $stmt->bind_param('ssiiiss', $title, $description, $assigned_to, $createdBy, $dept_id, $priority, $due_date_sql);
+                    $stmt->bind_param('issiiisss', $eid, $title, $description, $assigned_to, $createdBy, $dept_id, $priority, $due_date_sql);
                     if ($stmt->execute()) {
                         $taskId = (int)$mysqli->insert_id;
 
@@ -168,9 +178,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                 addLog('task_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'task', $taskId, 'staff', $newAssignedTo);
                             }
 
-                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                             if ($stmtS) {
-                                $stmtS->bind_param('i', $newAssignedTo);
+                                $stmtS->bind_param('ii', $eid, $newAssignedTo);
                                 if ($stmtS->execute()) {
                                     $srow = $stmtS->get_result()->fetch_assoc();
                                     $to = trim((string)($srow['email'] ?? ''));
@@ -236,8 +246,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                     $new_status = $_POST['status'];
                     $valid_statuses = ['pending', 'in_progress', 'completed'];
                     if (in_array($new_status, $valid_statuses)) {
-                        $stmt = $mysqli->prepare("UPDATE tasks SET status = ?, updated = NOW() WHERE id = ?");
-                        $stmt->bind_param('si', $new_status, $task['id']);
+                        $stmt = $mysqli->prepare("UPDATE tasks SET status = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                        $taskId = (int)($task['id'] ?? 0);
+                        $stmt->bind_param('sii', $new_status, $taskId, $eid);
                         if ($stmt->execute()) {
                             $_SESSION['task_success_flash'] = 'Estado de la tarea actualizado.';
                             // Redirigir para limpiar POST
@@ -282,9 +293,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 }
 
                 if ($tasksHasDept && $assigned_to) {
-                    $stmtA = $mysqli->prepare("SELECT id FROM staff WHERE id = ? AND is_active = 1 AND role = 'agent' AND dept_id = ? LIMIT 1");
+                    $stmtA = $mysqli->prepare("SELECT id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 AND role = 'agent' AND dept_id = ? LIMIT 1");
                     if ($stmtA) {
-                        $stmtA->bind_param('ii', $assigned_to, $dept_id);
+                        $stmtA->bind_param('iii', $eid, $assigned_to, $dept_id);
                         $stmtA->execute();
                         $arow = $stmtA->get_result()->fetch_assoc();
                         if (!$arow) {
@@ -296,9 +307,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                 if (empty($errors)) {
                     $due_date_sql = $due_date ? date('Y-m-d H:i:s', strtotime($due_date)) : null;
                     $stmt = $mysqli->prepare(
-                        "UPDATE tasks SET title = ?, description = ?, status = ?, assigned_to = ?, dept_id = ?, priority = ?, due_date = ?, updated = NOW() WHERE id = ?"
+                        "UPDATE tasks SET title = ?, description = ?, status = ?, assigned_to = ?, dept_id = ?, priority = ?, due_date = ?, updated = NOW() WHERE id = ? AND empresa_id = ?"
                     );
-                    $stmt->bind_param('sssiissi', $title, $description, $status, $assigned_to, $dept_id, $priority, $due_date_sql, $task['id']);
+                    $taskId = (int)($task['id'] ?? 0);
+                    $stmt->bind_param('sssiissii', $title, $description, $status, $assigned_to, $dept_id, $priority, $due_date_sql, $taskId, $eid);
                     if ($stmt->execute()) {
                         $mailProblem = false;
 
@@ -322,9 +334,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                             }
 
                             // Email
-                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE id = ? AND is_active = 1 LIMIT 1');
+                            $stmtS = $mysqli->prepare('SELECT email, firstname, lastname FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                             if ($stmtS) {
-                                $stmtS->bind_param('i', $newAssignedTo);
+                                $stmtS->bind_param('ii', $eid, $newAssignedTo);
                                 if ($stmtS->execute()) {
                                     $srow = $stmtS->get_result()->fetch_assoc();
                                     $to = trim((string)($srow['email'] ?? ''));
@@ -393,8 +405,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                     break;
                 }
 
-                $stmt = $mysqli->prepare("DELETE FROM tasks WHERE id = ?");
-                $stmt->bind_param('i', $task['id']);
+                $stmt = $mysqli->prepare("DELETE FROM tasks WHERE id = ? AND empresa_id = ?");
+                $taskId = (int)($task['id'] ?? 0);
+                $stmt->bind_param('ii', $taskId, $eid);
                 if ($stmt->execute()) {
                     header('Location: tasks.php?msg=deleted');
                     exit;
@@ -408,10 +421,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
 
 // Obtener lista de staff para asignación
 $staff_list = [];
-$result = $mysqli->query("SELECT id, CONCAT(firstname, ' ', lastname) AS name FROM staff WHERE is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $staff_list[] = $row;
+$stmtStaff = $mysqli->prepare("SELECT id, CONCAT(firstname, ' ', lastname) AS name FROM staff WHERE empresa_id = ? AND is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
+if ($stmtStaff) {
+    $stmtStaff->bind_param('i', $eid);
+    if ($stmtStaff->execute()) {
+        $result = $stmtStaff->get_result();
+        while ($result && ($row = $result->fetch_assoc())) {
+            $staff_list[] = $row;
+        }
     }
 }
 
@@ -446,6 +463,10 @@ if ($task) {
     } elseif ($assigned_filter === 'unassigned') {
         $where[] = 't.assigned_to IS NULL';
     }
+
+    $where[] = 't.empresa_id = ?';
+    $params[] = $eid;
+    $types .= 'i';
     
     $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
     
@@ -481,9 +502,15 @@ if ($task) {
     
     // Estadísticas
     $stats = [];
-    $result = $mysqli->query("SELECT status, COUNT(*) as count FROM tasks GROUP BY status");
-    while ($row = $result->fetch_assoc()) {
-        $stats[$row['status']] = $row['count'];
+    $stmtSt = $mysqli->prepare('SELECT status, COUNT(*) as count FROM tasks WHERE empresa_id = ? GROUP BY status');
+    if ($stmtSt) {
+        $stmtSt->bind_param('i', $eid);
+        if ($stmtSt->execute()) {
+            $result = $stmtSt->get_result();
+            while ($result && ($row = $result->fetch_assoc())) {
+                $stats[$row['status']] = $row['count'];
+            }
+        }
     }
     
     require __DIR__ . '/tasks.inc.php';

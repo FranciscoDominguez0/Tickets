@@ -35,6 +35,8 @@ if ($startDate > $endDate) {
 $start = $startDate->format('Y-m-d');
 $end = $endDate->format('Y-m-d');
 
+$eid = empresaId();
+
 function bindDynamicParams($stmt, string $types, array $params): bool {
     $refs = [];
     $refs[] = $types;
@@ -57,9 +59,9 @@ if ($stmt && $stmt->execute()) {
 }
 
 $totalCreated = 0;
-$stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE DATE(created) BETWEEN ? AND ?');
+$stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?');
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $totalCreated = (int)(($stmt->get_result()->fetch_assoc()['c'] ?? 0));
     }
@@ -68,20 +70,20 @@ if ($stmt) {
 $totalResolved = 0;
 if (!empty($resolvedStatusIds)) {
     $in = implode(',', array_fill(0, count($resolvedStatusIds), '?'));
-    $sql = 'SELECT COUNT(*) c FROM tickets WHERE DATE(created) BETWEEN ? AND ? AND status_id IN (' . $in . ')';
+    $sql = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ? AND status_id IN (' . $in . ')';
     $stmt = $mysqli->prepare($sql);
     if ($stmt) {
-        $types = 'ss' . str_repeat('i', count($resolvedStatusIds));
-        $params = array_merge([$start, $end], $resolvedStatusIds);
+        $types = 'iss' . str_repeat('i', count($resolvedStatusIds));
+        $params = array_merge([$eid, $start, $end], $resolvedStatusIds);
         bindDynamicParams($stmt, $types, $params);
         if ($stmt->execute()) {
             $totalResolved = (int)(($stmt->get_result()->fetch_assoc()['c'] ?? 0));
         }
     }
 } else {
-    $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE DATE(created) BETWEEN ? AND ? AND closed IS NOT NULL');
+    $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ? AND closed IS NOT NULL');
     if ($stmt) {
-        $stmt->bind_param('ss', $start, $end);
+        $stmt->bind_param('iss', $eid, $start, $end);
         if ($stmt->execute()) {
             $totalResolved = (int)(($stmt->get_result()->fetch_assoc()['c'] ?? 0));
         }
@@ -89,9 +91,9 @@ if (!empty($resolvedStatusIds)) {
 }
 
 $avgResolveHours = null;
-$stmt = $mysqli->prepare('SELECT AVG(TIMESTAMPDIFF(MINUTE, created, closed)) AS avg_min FROM tickets WHERE closed IS NOT NULL AND DATE(closed) BETWEEN ? AND ?');
+$stmt = $mysqli->prepare('SELECT AVG(TIMESTAMPDIFF(MINUTE, created, closed)) AS avg_min FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL AND DATE(closed) BETWEEN ? AND ?');
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $row = $stmt->get_result()->fetch_assoc();
         $avgMin = isset($row['avg_min']) ? (float)$row['avg_min'] : null;
@@ -112,11 +114,11 @@ $sqlFirstResp = "
         WHERE te.staff_id IS NOT NULL AND (te.is_internal IS NULL OR te.is_internal = 0)
         GROUP BY te.thread_id
     ) fr ON fr.thread_id = th.id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
 ";
 $stmt = $mysqli->prepare($sqlFirstResp);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $row = $stmt->get_result()->fetch_assoc();
         $avgMin = isset($row['avg_min']) ? (float)$row['avg_min'] : null;
@@ -131,13 +133,13 @@ $sqlStatus = "
     SELECT COALESCE(ts.name, 'Sin estado') AS status_name, COUNT(*) AS total
     FROM tickets t
     LEFT JOIN ticket_status ts ON ts.id = t.status_id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
     GROUP BY COALESCE(ts.name, 'Sin estado')
     ORDER BY total DESC
 ";
 $stmt = $mysqli->prepare($sqlStatus);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         $agg = [];
@@ -162,13 +164,13 @@ $sqlPriority = "
     SELECT COALESCE(p.name, 'Sin prioridad') AS priority_name, COUNT(*) AS total
     FROM tickets t
     LEFT JOIN priorities p ON p.id = t.priority_id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
     GROUP BY COALESCE(p.name, 'Sin prioridad')
     ORDER BY total DESC
 ";
 $stmt = $mysqli->prepare($sqlPriority);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -185,13 +187,13 @@ $sqlDept = "
     SELECT COALESCE(d.name, 'Sin departamento') AS dept_name, COUNT(*) AS total
     FROM tickets t
     LEFT JOIN departments d ON d.id = t.dept_id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
     GROUP BY COALESCE(d.name, 'Sin departamento')
     ORDER BY total DESC
 ";
 $stmt = $mysqli->prepare($sqlDept);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -213,14 +215,14 @@ $sqlAgent = "
         COUNT(*) AS total
     FROM tickets t
     LEFT JOIN staff s ON s.id = t.staff_id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
     GROUP BY agent_name
     ORDER BY total DESC
     LIMIT 8
 ";
 $stmt = $mysqli->prepare($sqlAgent);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -239,13 +241,13 @@ $sqlTopic = "
     SELECT COALESCE(ht.name, 'Sin tema') AS topic_name, COUNT(*) AS total
     FROM tickets t
     LEFT JOIN help_topics ht ON ht.id = t.topic_id
-    WHERE DATE(t.created) BETWEEN ? AND ?
+    WHERE t.empresa_id = ? AND DATE(t.created) BETWEEN ? AND ?
     GROUP BY COALESCE(ht.name, 'Sin tema')
     ORDER BY total DESC
 ";
 $stmt = $mysqli->prepare($sqlTopic);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -261,13 +263,13 @@ $createdByMonth = [];
 $sqlCreatedMonth = "
     SELECT DATE_FORMAT(created, '%Y-%m') AS ym, COUNT(*) AS total
     FROM tickets
-    WHERE DATE(created) BETWEEN ? AND ?
+    WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?
     GROUP BY DATE_FORMAT(created, '%Y-%m')
     ORDER BY ym
 ";
 $stmt = $mysqli->prepare($sqlCreatedMonth);
 if ($stmt) {
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     if ($stmt->execute()) {
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
@@ -285,15 +287,15 @@ if (!empty($resolvedStatusIds)) {
     $sqlResolvedMonth = "
         SELECT DATE_FORMAT(created, '%Y-%m') AS ym, COUNT(*) AS total
         FROM tickets
-        WHERE DATE(created) BETWEEN ? AND ?
+        WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?
         AND status_id IN ($in)
         GROUP BY DATE_FORMAT(created, '%Y-%m')
         ORDER BY ym
     ";
     $stmt = $mysqli->prepare($sqlResolvedMonth);
     if ($stmt) {
-        $types = 'ss' . str_repeat('i', count($resolvedStatusIds));
-        $params = array_merge([$start, $end], $resolvedStatusIds);
+        $types = 'iss' . str_repeat('i', count($resolvedStatusIds));
+        $params = array_merge([$eid, $start, $end], $resolvedStatusIds);
         bindDynamicParams($stmt, $types, $params);
         if ($stmt->execute()) {
             $res = $stmt->get_result();
@@ -309,14 +311,14 @@ if (!empty($resolvedStatusIds)) {
     $sqlResolvedMonth = "
         SELECT DATE_FORMAT(created, '%Y-%m') AS ym, COUNT(*) AS total
         FROM tickets
-        WHERE DATE(created) BETWEEN ? AND ?
+        WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?
         AND closed IS NOT NULL
         GROUP BY DATE_FORMAT(created, '%Y-%m')
         ORDER BY ym
     ";
     $stmt = $mysqli->prepare($sqlResolvedMonth);
     if ($stmt) {
-        $stmt->bind_param('ss', $start, $end);
+        $stmt->bind_param('iss', $eid, $start, $end);
         if ($stmt->execute()) {
             $res = $stmt->get_result();
             while ($row = $res->fetch_assoc()) {

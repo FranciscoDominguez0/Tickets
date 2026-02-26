@@ -10,13 +10,14 @@ $profile_success = '';
 $profile_staff = null;
 $profile_password_errors = false; // para reabrir el modal si hubo errores al cambiar contraseña
 $staff_id = (int) ($_SESSION['staff_id'] ?? 0);
+$eid = empresaId();
 
 if ($staff_id <= 0) {
     $profile_errors[] = 'Sesión inválida.';
 } else {
     // Cargar datos del agente (todas las columnas disponibles)
-    $stmt = $mysqli->prepare('SELECT * FROM staff WHERE id = ? LIMIT 1');
-    $stmt->bind_param('i', $staff_id);
+    $stmt = $mysqli->prepare('SELECT * FROM staff WHERE id = ? AND empresa_id = ? LIMIT 1');
+    $stmt->bind_param('ii', $staff_id, $eid);
     $stmt->execute();
     $result = $stmt->get_result();
     $profile_staff = $result->fetch_assoc();
@@ -50,8 +51,8 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['act
             $profile_password_errors = true;
         } else {
             $hash = Auth::hash($new_pass);
-            $up = $mysqli->prepare('UPDATE staff SET password = ?, updated = NOW() WHERE id = ?');
-            $up->bind_param('si', $hash, $staff_id);
+            $up = $mysqli->prepare('UPDATE staff SET password = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+            $up->bind_param('sii', $hash, $staff_id, $eid);
             if ($up->execute()) {
                 $profile_success = 'Contraseña actualizada correctamente.';
                 $profile_staff['password'] = $hash;
@@ -84,8 +85,8 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $profile_errors['email'] = 'Correo electrónico no válido.';
         } else {
-            $check = $mysqli->prepare('SELECT id FROM staff WHERE email = ? AND id != ?');
-            $check->bind_param('si', $email, $staff_id);
+            $check = $mysqli->prepare('SELECT id FROM staff WHERE email = ? AND id != ? AND empresa_id = ?');
+            $check->bind_param('sii', $email, $staff_id, $eid);
             $check->execute();
             if ($check->get_result()->fetch_assoc()) {
                 $profile_errors['email'] = 'Ese correo ya está en uso por otro agente.';
@@ -94,11 +95,11 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
 
         if (empty($profile_errors)) {
             if ($has_signature_column) {
-                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, signature = ?, updated = NOW() WHERE id = ?');
-                $stmt->bind_param('ssssi', $firstname, $lastname, $email, $signature, $staff_id);
+                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, signature = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmt->bind_param('ssssii', $firstname, $lastname, $email, $signature, $staff_id, $eid);
             } else {
-                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, updated = NOW() WHERE id = ?');
-                $stmt->bind_param('sssi', $firstname, $lastname, $email, $staff_id);
+                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmt->bind_param('sssii', $firstname, $lastname, $email, $staff_id, $eid);
             }
             if ($stmt->execute()) {
                 $profile_success = 'Perfil actualizado correctamente.';

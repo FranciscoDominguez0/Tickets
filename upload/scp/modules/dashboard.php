@@ -6,6 +6,8 @@
 $period = $_POST['period'] ?? 'today';
 $startDateInput = $_POST['start'] ?? '';
 
+$eid = empresaId();
+
 // Calcular fechas según el período
 $endDate = new DateTime('today');
 $endDate->setTime(23, 59, 59);
@@ -56,7 +58,7 @@ $end = $endDate->format('Y-m-d');
 $sqlCreated = "
     SELECT DATE(created) AS day, COUNT(*) AS total
     FROM tickets
-    WHERE DATE(created) BETWEEN ? AND ?
+    WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?
     GROUP BY DATE(created)
     ORDER BY DATE(created)
 ";
@@ -64,7 +66,7 @@ $stmt = $mysqli->prepare($sqlCreated);
 if (!$stmt) {
     error_log("Error preparing created query: " . $mysqli->error);
 }
-$stmt->bind_param('ss', $start, $end);
+$stmt->bind_param('iss', $eid, $start, $end);
 $stmt->execute();
 $createdResult = $stmt->get_result();
 $createdByDay = [];
@@ -86,7 +88,7 @@ if ($row = $result->fetch_assoc()) {
 $sqlClosed = "
     SELECT DATE(closed) AS day, COUNT(*) AS total
     FROM tickets
-    WHERE DATE(closed) BETWEEN ? AND ?
+    WHERE empresa_id = ? AND DATE(closed) BETWEEN ? AND ?
     AND status_id = ?
     AND closed IS NOT NULL
     GROUP BY DATE(closed)
@@ -96,7 +98,7 @@ $stmt = $mysqli->prepare($sqlClosed);
 if (!$stmt) {
     error_log("Error preparing closed query: " . $mysqli->error);
 } else {
-    $stmt->bind_param('ssi', $start, $end, $statusCerradoId);
+    $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
     $stmt->execute();
     $closedResult = $stmt->get_result();
     $closedByDay = [];
@@ -114,7 +116,7 @@ if ($statusCerradoId) {
     $sqlDeleted = "
         SELECT DATE(closed) AS day, COUNT(*) AS total
         FROM tickets
-        WHERE DATE(closed) BETWEEN ? AND ?
+        WHERE empresa_id = ? AND DATE(closed) BETWEEN ? AND ?
         AND status_id = ?
         AND closed IS NOT NULL
         AND TIMESTAMPDIFF(MINUTE, closed, updated) BETWEEN 0 AND 60
@@ -126,7 +128,7 @@ if ($statusCerradoId) {
         error_log("Error preparing deleted query: " . $mysqli->error);
         $deletedByDay = [];
     } else {
-        $stmt->bind_param('ssi', $start, $end, $statusCerradoId);
+        $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
         $stmt->execute();
         $deletedResult = $stmt->get_result();
         $deletedByDay = [];
@@ -199,6 +201,7 @@ $sqlStats = "
             ELSE NULL END) as tiempo_respuesta
     FROM departments d
     LEFT JOIN tickets t ON d.id = t.dept_id 
+        AND t.empresa_id = ?
         AND t.created BETWEEN ? AND ?
     WHERE d.is_active = 1
     GROUP BY d.id, d.name
@@ -207,7 +210,7 @@ $sqlStats = "
 ";
 
 $stmt = $mysqli->prepare($sqlStats);
-$stmt->bind_param('ss', $start, $end);
+$stmt->bind_param('iss', $eid, $start, $end);
 $stmt->execute();
 $statsResult = $stmt->get_result();
 $deptStats = [];
@@ -271,12 +274,12 @@ if ($topicsTable && $topicsKeyColumn) {
       AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
       AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
     FROM $topicsTable ht
-    LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.created BETWEEN ? AND ?
+    LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
     GROUP BY ht.$topicsIdColumn, ht.$topicsNameColumn
     HAVING total_tickets > 0
     ORDER BY ht.$topicsNameColumn";
     $stmt = $mysqli->prepare($sqlTopics);
-    $stmt->bind_param('ss', $start, $end);
+    $stmt->bind_param('iss', $eid, $start, $end);
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
@@ -297,14 +300,14 @@ $sqlAgents = "SELECT
   AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
   AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
 FROM staff s
-LEFT JOIN tickets t ON t.staff_id = s.id AND t.created BETWEEN ? AND ?
-WHERE s.is_active = 1
+LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
+WHERE s.is_active = 1 AND s.empresa_id = ?
 GROUP BY s.id, s.firstname, s.lastname
 HAVING total_tickets > 0
 ORDER BY s.firstname, s.lastname";
 
 $stmt = $mysqli->prepare($sqlAgents);
-$stmt->bind_param('ss', $start, $end);
+$stmt->bind_param('issi', $eid, $start, $end, $eid);
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
