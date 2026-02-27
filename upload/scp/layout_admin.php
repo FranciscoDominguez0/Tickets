@@ -2,6 +2,30 @@
 // Layout para panel administrador
 // Similar al layout de agentes pero con sidebar de administración
 
+$notifCount = 0;
+$notifItems = [];
+if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
+    $sid = (int) $_SESSION['staff_id'];
+    $stmtN = $mysqli->prepare('SELECT COUNT(*) c FROM notifications WHERE staff_id = ? AND is_read = 0');
+    if ($stmtN) {
+        $stmtN->bind_param('i', $sid);
+        if ($stmtN->execute()) {
+            $notifCount = (int) (($stmtN->get_result()->fetch_assoc()['c'] ?? 0));
+        }
+    }
+
+    $stmtL = $mysqli->prepare('SELECT id, message, type, related_id, created_at FROM notifications WHERE staff_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 8');
+    if ($stmtL) {
+        $stmtL->bind_param('i', $sid);
+        if ($stmtL->execute()) {
+            $res = $stmtL->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $notifItems[] = $row;
+            }
+        }
+    }
+}
+
 $staffIdForMenu = (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
     unset($_SESSION['admin_sidebar_menu_seen_' . $staffIdForMenu]);
@@ -35,6 +59,55 @@ if (!isset($collapseSettingsMenu)) {
             <span class="navbar-brand"><?php echo APP_NAME; ?> - Panel Administrador</span>
             <div class="d-flex align-items-center gap-3">
                 <span style="color: white;">Agente: <strong><?php echo html($staff['name']); ?></strong></span>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm position-relative scp-notif-btn <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                        <i class="bi bi-bell"></i>
+                        <?php if ($notifCount > 0): ?>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                <?php echo (int) $notifCount; ?>
+                            </span>
+                        <?php endif; ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end scp-notif-menu">
+                        <li>
+                            <div class="scp-notif-head">
+                                <div class="scp-notif-title">Notificaciones</div>
+                                <div class="scp-notif-sub"><?php echo $notifCount > 0 ? ((int)$notifCount . ' nueva(s)') : 'Sin nuevas'; ?></div>
+                            </div>
+                        </li>
+                        <?php if (empty($notifItems)): ?>
+                            <li><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
+                        <?php else: ?>
+                            <?php foreach ($notifItems as $n): ?>
+                                <?php
+                                $t = (string)($n['type'] ?? 'general');
+                                $icon = 'bi-info-circle';
+                                $accent = 'general';
+                                if ($t === 'ticket_assigned') {
+                                    $icon = 'bi-ticket-perforated';
+                                    $accent = 'ticket';
+                                } elseif ($t === 'task_assigned') {
+                                    $icon = 'bi-check2-square';
+                                    $accent = 'task';
+                                }
+                                ?>
+                                <li>
+                                    <a class="dropdown-item scp-notif-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
+                                        <div class="scp-notif-icon <?php echo html($accent); ?>">
+                                            <i class="bi <?php echo html($icon); ?>"></i>
+                                        </div>
+                                        <div class="scp-notif-body">
+                                            <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'Notificación')); ?></div>
+                                            <div class="scp-notif-time"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
+                                        </div>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+
                 <a href="index.php" class="btn btn-outline-light btn-sm">Volver a Agentes</a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
             </div>
