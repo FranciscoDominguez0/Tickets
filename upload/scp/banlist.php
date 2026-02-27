@@ -13,6 +13,17 @@ $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'banlist';
 
+$eid = empresaId();
+$banlistHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
+        $banlistHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $banlistHasEmpresaId = false;
+    }
+}
+
 $roleName = getCurrentStaffRoleName();
 $canManageBanlist = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('user.edit');
 if (!$canManageBanlist) {
@@ -35,6 +46,7 @@ $ensureBanlistTable = function () use ($mysqli) {
     if (!isset($mysqli) || !$mysqli) return false;
     $sql = "CREATE TABLE IF NOT EXISTS banlist (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NULL,\n"
         . "  email VARCHAR(255) NULL,\n"
         . "  domain VARCHAR(255) NULL,\n"
         . "  notes TEXT NULL,\n"
@@ -43,11 +55,26 @@ $ensureBanlistTable = function () use ($mysqli) {
         . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
         . "  KEY idx_email (email),\n"
         . "  KEY idx_domain (domain),\n"
-        . "  KEY idx_active (is_active)\n"
+        . "  KEY idx_active (is_active),\n"
+        . "  KEY idx_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
     return (bool)$mysqli->query($sql);
 };
 $ensureBanlistTable();
+
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
+        $banlistHasEmpresaId = ($res && $res->num_rows > 0);
+        if (!$banlistHasEmpresaId) {
+            $mysqli->query("ALTER TABLE banlist ADD COLUMN empresa_id INT NULL");
+            $mysqli->query("ALTER TABLE banlist ADD INDEX idx_empresa (empresa_id)");
+            $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
+            $banlistHasEmpresaId = ($res && $res->num_rows > 0);
+        }
+    } catch (Throwable $e) {
+    }
+}
 
 $msg = '';
 $error = '';
@@ -96,17 +123,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $existingId = 0;
         if ($emailParam !== null) {
-            $stmtChk = $mysqli->prepare('SELECT id FROM banlist WHERE email = ? LIMIT 1');
+            $sqlChk = 'SELECT id FROM banlist WHERE email = ?';
+            if ($banlistHasEmpresaId) {
+                $sqlChk .= ' AND empresa_id = ?';
+            }
+            $sqlChk .= ' LIMIT 1';
+            $stmtChk = $mysqli->prepare($sqlChk);
             if ($stmtChk) {
-                $stmtChk->bind_param('s', $emailParam);
+                if ($banlistHasEmpresaId) {
+                    $stmtChk->bind_param('si', $emailParam, $eid);
+                } else {
+                    $stmtChk->bind_param('s', $emailParam);
+                }
                 $stmtChk->execute();
                 $row = $stmtChk->get_result()->fetch_assoc();
                 $existingId = (int)($row['id'] ?? 0);
             }
         } elseif ($domainParam !== null) {
-            $stmtChk = $mysqli->prepare('SELECT id FROM banlist WHERE domain = ? LIMIT 1');
+            $sqlChk = 'SELECT id FROM banlist WHERE domain = ?';
+            if ($banlistHasEmpresaId) {
+                $sqlChk .= ' AND empresa_id = ?';
+            }
+            $sqlChk .= ' LIMIT 1';
+            $stmtChk = $mysqli->prepare($sqlChk);
             if ($stmtChk) {
-                $stmtChk->bind_param('s', $domainParam);
+                if ($banlistHasEmpresaId) {
+                    $stmtChk->bind_param('si', $domainParam, $eid);
+                } else {
+                    $stmtChk->bind_param('s', $domainParam);
+                }
                 $stmtChk->execute();
                 $row = $stmtChk->get_result()->fetch_assoc();
                 $existingId = (int)($row['id'] ?? 0);
@@ -115,9 +160,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $affectedBanId = 0;
         if ($existingId > 0) {
-            $stmtU = $mysqli->prepare('UPDATE banlist SET email = ?, domain = ?, notes = ?, is_active = 0, updated = NOW() WHERE id = ?');
+            $sqlU = 'UPDATE banlist SET email = ?, domain = ?, notes = ?, is_active = 0, updated = NOW() WHERE id = ?';
+            if ($banlistHasEmpresaId) {
+                $sqlU .= ' AND empresa_id = ?';
+            }
+            $stmtU = $mysqli->prepare($sqlU);
             if ($stmtU) {
-                $stmtU->bind_param('sssi', $emailParam, $domainParam, $notesParam, $existingId);
+                if ($banlistHasEmpresaId) {
+                    $stmtU->bind_param('sssii', $emailParam, $domainParam, $notesParam, $existingId, $eid);
+                } else {
+                    $stmtU->bind_param('sssi', $emailParam, $domainParam, $notesParam, $existingId);
+                }
                 if ($stmtU->execute()) {
                     $_SESSION['flash_msg'] = 'Elemento actualizado en la lista de prohibidos.';
                     $affectedBanId = $existingId;
@@ -128,9 +181,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['flash_error'] = 'No se pudo actualizar.';
             }
         } else {
-            $stmt = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, ?, ?, 0, NOW(), NOW())');
+            if ($banlistHasEmpresaId) {
+                $stmt = $mysqli->prepare('INSERT INTO banlist (empresa_id, email, domain, notes, is_active, created, updated) VALUES (?, ?, ?, ?, 0, NOW(), NOW())');
+            } else {
+                $stmt = $mysqli->prepare('INSERT INTO banlist (email, domain, notes, is_active, created, updated) VALUES (?, ?, ?, 0, NOW(), NOW())');
+            }
             if ($stmt) {
-                $stmt->bind_param('sss', $emailParam, $domainParam, $notesParam);
+                if ($banlistHasEmpresaId) {
+                    $stmt->bind_param('isss', $eid, $emailParam, $domainParam, $notesParam);
+                } else {
+                    $stmt->bind_param('sss', $emailParam, $domainParam, $notesParam);
+                }
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Elemento agregado a la lista de prohibidos.';
                     $affectedBanId = (int)($mysqli->insert_id ?? 0);
@@ -143,9 +204,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($affectedBanId > 0) {
-            $stmtForce = $mysqli->prepare('UPDATE banlist SET is_active = 0 WHERE id = ?');
+            $sqlForce = 'UPDATE banlist SET is_active = 0 WHERE id = ?';
+            if ($banlistHasEmpresaId) {
+                $sqlForce .= ' AND empresa_id = ?';
+            }
+            $stmtForce = $mysqli->prepare($sqlForce);
             if ($stmtForce) {
-                $stmtForce->bind_param('i', $affectedBanId);
+                if ($banlistHasEmpresaId) {
+                    $stmtForce->bind_param('ii', $affectedBanId, $eid);
+                } else {
+                    $stmtForce->bind_param('i', $affectedBanId);
+                }
                 $stmtForce->execute();
             }
         }
@@ -183,9 +252,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $types = str_repeat('i', count($ids));
 
         if ($action === 'delete') {
-            $stmt = $mysqli->prepare("DELETE FROM banlist WHERE id IN ($placeholders)");
+            $sqlDel = "DELETE FROM banlist WHERE id IN ($placeholders)";
+            $typesDel = $types;
+            $idsDel = $ids;
+            if ($banlistHasEmpresaId) {
+                $sqlDel .= ' AND empresa_id = ?';
+                $typesDel .= 'i';
+                $idsDel[] = (int)$eid;
+            }
+            $stmt = $mysqli->prepare($sqlDel);
             if ($stmt) {
-                $stmt->bind_param($types, ...$ids);
+                $stmt->bind_param($typesDel, ...$idsDel);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Elementos eliminados.';
                 } else {
@@ -200,15 +277,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'enable' || $action === 'disable') {
             $val = ($action === 'enable') ? 1 : 0;
-            $stmt = $mysqli->prepare("UPDATE banlist SET is_active = ? WHERE id IN ($placeholders)");
+            $sqlUp = "UPDATE banlist SET is_active = ? WHERE id IN ($placeholders)";
+            $typesUp = 'i' . $types;
+            $idsUp = array_merge([$val], $ids);
+            if ($banlistHasEmpresaId) {
+                $sqlUp .= ' AND empresa_id = ?';
+                $typesUp .= 'i';
+                $idsUp[] = (int)$eid;
+            }
+            $stmt = $mysqli->prepare($sqlUp);
             if ($stmt) {
-                $stmt->bind_param('i' . $types, $val, ...$ids);
+                $stmt->bind_param($typesUp, ...$idsUp);
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Lista actualizada.';
 
-                    $stmtE = $mysqli->prepare("SELECT email FROM banlist WHERE id IN ($placeholders) AND email IS NOT NULL AND email <> ''");
+                    $sqlEmails = "SELECT email FROM banlist WHERE id IN ($placeholders) AND email IS NOT NULL AND email <> ''";
+                    $typesE = $types;
+                    $idsE = $ids;
+                    if ($banlistHasEmpresaId) {
+                        $sqlEmails .= ' AND empresa_id = ?';
+                        $typesE .= 'i';
+                        $idsE[] = (int)$eid;
+                    }
+                    $stmtE = $mysqli->prepare($sqlEmails);
                     if ($stmtE) {
-                        $stmtE->bind_param($types, ...$ids);
+                        $stmtE->bind_param($typesE, ...$idsE);
                         $stmtE->execute();
                         $resE = $stmtE->get_result();
                         $emails = [];
@@ -249,7 +342,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $items = [];
-$res = $mysqli->query("SELECT * FROM banlist WHERE (notes IS NULL OR notes <> 'Sincronizado desde users.status=banned') ORDER BY is_active DESC, id DESC");
+$sqlList = "SELECT * FROM banlist WHERE (notes IS NULL OR notes <> 'Sincronizado desde users.status=banned')";
+if ($banlistHasEmpresaId) {
+    $sqlList .= ' AND empresa_id = ' . (int)$eid;
+}
+$sqlList .= ' ORDER BY is_active DESC, id DESC';
+$res = $mysqli->query($sqlList);
 if ($res) {
     while ($r = $res->fetch_assoc()) {
         $items[] = $r;

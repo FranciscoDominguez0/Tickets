@@ -13,6 +13,17 @@ $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'settings';
 
+$eid = empresaId();
+$emailAccHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+        $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+    } catch (Throwable $e) {
+        $emailAccHasEmpresa = false;
+    }
+}
+
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -38,6 +49,7 @@ if (!empty($_SESSION['flash_error'])) {
 if (isset($mysqli) && $mysqli) {
     $mysqli->query("CREATE TABLE IF NOT EXISTS email_accounts (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NULL,\n"
         . "  email VARCHAR(255) NOT NULL,\n"
         . "  name VARCHAR(255) NULL,\n"
         . "  priority VARCHAR(32) NULL,\n"
@@ -52,25 +64,57 @@ if (isset($mysqli) && $mysqli) {
         . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
         . "  KEY idx_email (email),\n"
         . "  KEY idx_default (is_default),\n"
-        . "  KEY idx_dept (dept_id)\n"
+        . "  KEY idx_dept (dept_id),\n"
+        . "  KEY idx_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-    $seedEmail = 'cuenta9fran@gmail.com';
-    $stmt = $mysqli->prepare('SELECT id FROM email_accounts WHERE email = ? LIMIT 1');
-    if ($stmt) {
-        $stmt->bind_param('s', $seedEmail);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $exists = $res && $res->fetch_assoc();
-        $stmt->close();
-        if (!$exists) {
-            $stmtIns = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NOW(), NOW())');
-            if ($stmtIns) {
-                $seedName = 'Notificaciones';
-                $seedPriority = 'Normal';
-                $stmtIns->bind_param('sss', $seedEmail, $seedName, $seedPriority);
-                $stmtIns->execute();
-                $stmtIns->close();
+    try {
+        $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+        $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+        if (!$emailAccHasEmpresa) {
+            $mysqli->query("ALTER TABLE email_accounts ADD COLUMN empresa_id INT NULL");
+            $mysqli->query("ALTER TABLE email_accounts ADD INDEX idx_empresa (empresa_id)");
+            $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+            $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+        }
+    } catch (Throwable $e) {
+    }
+
+    if (false) {
+        $seedEmail = 'cuenta9fran@gmail.com';
+        $sqlSeedChk = 'SELECT id FROM email_accounts WHERE email = ?';
+        if ($emailAccHasEmpresa) {
+            $sqlSeedChk .= ' AND empresa_id = ?';
+        }
+        $sqlSeedChk .= ' LIMIT 1';
+        $stmt = $mysqli->prepare($sqlSeedChk);
+        if ($stmt) {
+            if ($emailAccHasEmpresa) {
+                $stmt->bind_param('si', $seedEmail, $eid);
+            } else {
+                $stmt->bind_param('s', $seedEmail);
+            }
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $exists = $res && $res->fetch_assoc();
+            $stmt->close();
+            if (!$exists) {
+                if ($emailAccHasEmpresa) {
+                    $stmtIns = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, ?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NOW(), NOW())');
+                } else {
+                    $stmtIns = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 0, NULL, NULL, NULL, NULL, NULL, NOW(), NOW())');
+                }
+                if ($stmtIns) {
+                    $seedName = 'Notificaciones';
+                    $seedPriority = 'Normal';
+                    if ($emailAccHasEmpresa) {
+                        $stmtIns->bind_param('isss', $eid, $seedEmail, $seedName, $seedPriority);
+                    } else {
+                        $stmtIns->bind_param('sss', $seedEmail, $seedName, $seedPriority);
+                    }
+                    $stmtIns->execute();
+                    $stmtIns->close();
+                }
             }
         }
     }
@@ -78,7 +122,12 @@ if (isset($mysqli) && $mysqli) {
 
 $emailAccounts = [];
 if (isset($mysqli) && $mysqli) {
-    $res = $mysqli->query('SELECT id, email, name, is_default FROM email_accounts ORDER BY is_default DESC, id ASC');
+    $sql = 'SELECT id, email, name, is_default FROM email_accounts';
+    if ($emailAccHasEmpresa) {
+        $sql .= ' WHERE empresa_id = ' . (int)$eid;
+    }
+    $sql .= ' ORDER BY is_default DESC, id ASC';
+    $res = $mysqli->query($sql);
     if ($res) {
         while ($r = $res->fetch_assoc()) {
             $emailAccounts[] = $r;
@@ -87,8 +136,11 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $defaultEmailAccount = null;
-if (!empty($emailAccounts)) {
-    $defaultEmailAccount = $emailAccounts[0];
+foreach ($emailAccounts as $a) {
+    if ((int)($a['is_default'] ?? 0) === 1) {
+        $defaultEmailAccount = $a;
+        break;
+    }
 }
 
 $findEmailAccountById = function ($id) use ($emailAccounts) {
@@ -109,32 +161,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $adminNotifyId = (int)($_POST['admin_notify_id'] ?? 0);
 
-    $fromAcc = $defaultEmailAccount;
-    $alertAcc = $defaultEmailAccount;
+    $mailFromId = (int)($_POST['mail_from_id'] ?? 0);
+    $mailAlertFromId = (int)($_POST['mail_alert_from_id'] ?? 0);
+
+    $fromAcc = $findEmailAccountById($mailFromId);
+    $alertAcc = $findEmailAccountById($mailAlertFromId);
     $adminAcc = $findEmailAccountById($adminNotifyId);
 
-    if (!$fromAcc) {
-        $_SESSION['flash_error'] = 'No hay un correo por defecto configurado. Marca una cuenta como por defecto en Correos.';
-        header('Location: emailsettings.php');
-        exit;
-    }
-    if (!$alertAcc) {
-        $_SESSION['flash_error'] = 'No hay un correo por defecto configurado. Marca una cuenta como por defecto en Correos.';
-        header('Location: emailsettings.php');
-        exit;
-    }
+    // Permitir que no haya email por defecto. Si no se selecciona cuenta, se guarda lo que venga de config/app_settings.
     if (!$adminAcc) {
         $_SESSION['flash_error'] = 'Selecciona el correo de notificaciones del administrador.';
         header('Location: emailsettings.php');
         exit;
     }
 
-    $mailFrom = (string)($fromAcc['email'] ?? '');
-    $mailFromName = trim((string)($fromAcc['name'] ?? ''));
+    $mailFrom = $fromAcc ? (string)($fromAcc['email'] ?? '') : (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
+    $mailFromName = $fromAcc ? trim((string)($fromAcc['name'] ?? '')) : (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '');
     if ($mailFromName === '') $mailFromName = $mailFrom;
 
-    $mailAlertFrom = (string)($alertAcc['email'] ?? '');
-    $mailAlertFromName = trim((string)($alertAcc['name'] ?? 'Alerts'));
+    $mailAlertFrom = $alertAcc ? (string)($alertAcc['email'] ?? '') : (string)getAppSetting('mail.alert_from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
+    $mailAlertFromName = $alertAcc ? trim((string)($alertAcc['name'] ?? 'Alerts')) : (string)getAppSetting('mail.alert_from_name', 'Alerts');
     if ($mailAlertFromName === '') $mailAlertFromName = 'Alerts';
 
     $adminNotify = (string)($adminAcc['email'] ?? '');

@@ -63,7 +63,7 @@ $ensureEmailAccountsTable = function () use ($mysqli) {
 $ensureEmailAccountsTable();
 
 // Sembrar la cuenta actual (config.php) si no existe ninguna
-if (isset($mysqli) && $mysqli) {
+if (false && isset($mysqli) && $mysqli) {
     $seedSql = 'SELECT COUNT(*) c FROM email_accounts';
     if ($emailAccHasEmpresa) {
         $seedSql .= ' WHERE empresa_id = ' . (int)$eid;
@@ -85,13 +85,14 @@ if (isset($mysqli) && $mysqli) {
 
         if ($seedEmail !== '' && filter_var($seedEmail, FILTER_VALIDATE_EMAIL)) {
             if ($emailAccHasEmpresa) {
-                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, ?, NULL, 0, ?, ?, ?, ?, ?, NOW(), NOW())');
             } else {
-                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 1, ?, ?, ?, ?, ?, NOW(), NOW())');
+                $stmtSeed = $mysqli->prepare('INSERT INTO email_accounts (email, name, priority, dept_id, is_default, smtp_host, smtp_port, smtp_secure, smtp_user, smtp_pass, created, updated) VALUES (?, ?, ?, NULL, 0, ?, ?, ?, ?, ?, NOW(), NOW())');
             }
             if ($stmtSeed) {
                 $prioritySeed = 'Normal';
                 $portSeed = $seedPort;
+
                 if ($emailAccHasEmpresa) {
                     $stmtSeed->bind_param('issssisss', $eid, $seedEmail, $seedName, $prioritySeed, $seedHost, $portSeed, $seedSecure, $seedUser, $seedPass);
                 } else {
@@ -181,25 +182,15 @@ $getEmailAccount = function ($id) use ($mysqli, $eid, $emailAccHasEmpresa) {
     return $res ? $res->fetch_assoc() : null;
 };
 
-$setDefaultEmail = function ($id) use ($mysqli, $eid, $emailAccHasEmpresa) {
+$clearDefaultEmail = function () use ($mysqli, $eid, $emailAccHasEmpresa) {
     if (!isset($mysqli) || !$mysqli) return false;
-    $id = (int)$id;
-    if ($id <= 0) return false;
     if ($emailAccHasEmpresa) {
-        $mysqli->query('UPDATE email_accounts SET is_default = 0 WHERE empresa_id = ' . (int)$eid);
-        $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ? AND empresa_id = ?');
-    } else {
-        $mysqli->query('UPDATE email_accounts SET is_default = 0');
-        $stmt = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ?');
+        return (bool)$mysqli->query('UPDATE email_accounts SET is_default = 0 WHERE empresa_id = ' . (int)$eid);
     }
-    if (!$stmt) return false;
-    if ($emailAccHasEmpresa) {
-        $stmt->bind_param('ii', $id, $eid);
-    } else {
-        $stmt->bind_param('i', $id);
-    }
-    return $stmt->execute();
+    return (bool)$mysqli->query('UPDATE email_accounts SET is_default = 0');
 };
+
+$clearDefaultEmail();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
@@ -214,18 +205,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string)($_POST['name'] ?? ''));
         $priority = trim((string)($_POST['priority'] ?? 'Normal'));
         $dept_id = isset($_POST['dept_id']) && $_POST['dept_id'] !== '' ? (int)$_POST['dept_id'] : null;
-        $is_default = isset($_POST['is_default']) ? 1 : 0;
+        $is_default = 0;
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $_SESSION['flash_error'] = 'Correo electrónico inválido.';
         } else {
-            if ($is_default) {
-                if ($emailAccHasEmpresa) {
-                    $mysqli->query('UPDATE email_accounts SET is_default = 0 WHERE empresa_id = ' . (int)$eid);
-                } else {
-                    $mysqli->query('UPDATE email_accounts SET is_default = 0');
-                }
-            }
             if ($emailAccHasEmpresa) {
                 $stmt = $mysqli->prepare('INSERT INTO email_accounts (empresa_id, email, name, priority, dept_id, is_default, created, updated) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())');
             } else {
@@ -236,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($emailAccHasEmpresa) {
                     $stmt->bind_param('isssiii', $eid, $email, $name, $priority, $dept_id_param, $is_default);
                 } else {
-                    $stmt->bind_param('sssii', $email, $name, $priority, $dept_id_param, $is_default);
+                    $stmt->bind_param('ssssii', $email, $name, $priority, $dept_id_param, $is_default);
                 }
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Email agregado correctamente.';
@@ -383,12 +367,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if ($action === 'set_default') {
-            $id = (int)($ids[0] ?? 0);
-            if ($id > 0 && $setDefaultEmail($id)) {
-                $_SESSION['flash_msg'] = 'Email por defecto actualizado.';
+        if ($action === 'clear_default') {
+            if ($clearDefaultEmail()) {
+                $_SESSION['flash_msg'] = 'Email por defecto removido.';
             } else {
-                $_SESSION['flash_error'] = 'No se pudo cambiar el email por defecto.';
+                $_SESSION['flash_error'] = 'No se pudo remover el email por defecto.';
             }
             header('Location: emails.php');
             exit;
@@ -447,8 +430,8 @@ ob_start();
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-inbox"></i> Correos</strong>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="setDefaultBtn">
-                        <i class="bi bi-star"></i> Poner por defecto
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearDefaultBtn">
+                        <i class="bi bi-star"></i> Quitar por defecto
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-sm" id="deleteEmailsBtn">
                         <i class="bi bi-trash"></i> Eliminar
@@ -556,7 +539,7 @@ ob_start();
                         </div>
                     </div>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="is_default" id="new_is_default">
+                        <input class="form-check-input" type="checkbox" id="new_is_default" disabled>
                         <label class="form-check-label" for="new_is_default">Establecer como por defecto</label>
                     </div>
                 </div>
@@ -642,14 +625,12 @@ window.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    var setDefaultBtn = document.getElementById('setDefaultBtn');
-    if (setDefaultBtn) {
-        setDefaultBtn.addEventListener('click', function(){
-            var ids = getCheckedIds();
-            if (ids.length < 1) return;
+    var clearDefaultBtn = document.getElementById('clearDefaultBtn');
+    if (clearDefaultBtn) {
+        clearDefaultBtn.addEventListener('click', function(){
             var form = document.getElementById('emailsMassForm');
             var act = document.getElementById('massActionInput');
-            act.value = 'set_default';
+            act.value = 'clear_default';
             form.submit();
         });
     }
