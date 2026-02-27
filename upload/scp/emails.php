@@ -190,8 +190,6 @@ $clearDefaultEmail = function () use ($mysqli, $eid, $emailAccHasEmpresa) {
     return (bool)$mysqli->query('UPDATE email_accounts SET is_default = 0');
 };
 
-$clearDefaultEmail();
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $_SESSION['flash_error'] = 'Token CSRF inválido.';
@@ -218,9 +216,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt) {
                 $dept_id_param = $dept_id;
                 if ($emailAccHasEmpresa) {
-                    $stmt->bind_param('isssiii', $eid, $email, $name, $priority, $dept_id_param, $is_default);
+                    $stmt->bind_param('isssii', $eid, $email, $name, $priority, $dept_id_param, $is_default);
                 } else {
-                    $stmt->bind_param('ssssii', $email, $name, $priority, $dept_id_param, $is_default);
+                    $stmt->bind_param('sssii', $email, $name, $priority, $dept_id_param, $is_default);
                 }
                 if ($stmt->execute()) {
                     $_SESSION['flash_msg'] = 'Email agregado correctamente.';
@@ -367,12 +365,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if ($action === 'clear_default') {
-            if ($clearDefaultEmail()) {
-                $_SESSION['flash_msg'] = 'Email por defecto removido.';
-            } else {
-                $_SESSION['flash_error'] = 'No se pudo remover el email por defecto.';
+        if ($action === 'set_default') {
+            $targetId = (int)($ids[0] ?? 0);
+            if ($targetId <= 0) {
+                $_SESSION['flash_error'] = 'Debe seleccionar al menos un email.';
+                header('Location: emails.php');
+                exit;
             }
+
+            if ($emailAccHasEmpresa) {
+                $stmtChk = $mysqli->prepare('SELECT id FROM email_accounts WHERE id = ? AND empresa_id = ? LIMIT 1');
+            } else {
+                $stmtChk = $mysqli->prepare('SELECT id FROM email_accounts WHERE id = ? LIMIT 1');
+            }
+            $ok = false;
+            if ($stmtChk) {
+                if ($emailAccHasEmpresa) {
+                    $stmtChk->bind_param('ii', $targetId, $eid);
+                } else {
+                    $stmtChk->bind_param('i', $targetId);
+                }
+                $stmtChk->execute();
+                $resChk = $stmtChk->get_result();
+                $ok = ($resChk && $resChk->fetch_assoc());
+            }
+
+            if (!$ok) {
+                $_SESSION['flash_error'] = 'Email no encontrado.';
+                header('Location: emails.php');
+                exit;
+            }
+
+            $clearDefaultEmail();
+
+            if ($emailAccHasEmpresa) {
+                $stmtSet = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ? AND empresa_id = ?');
+            } else {
+                $stmtSet = $mysqli->prepare('UPDATE email_accounts SET is_default = 1 WHERE id = ?');
+            }
+            if ($stmtSet) {
+                if ($emailAccHasEmpresa) {
+                    $stmtSet->bind_param('ii', $targetId, $eid);
+                } else {
+                    $stmtSet->bind_param('i', $targetId);
+                }
+                if ($stmtSet->execute()) {
+                    $_SESSION['flash_msg'] = 'Email establecido como por defecto.';
+                } else {
+                    $_SESSION['flash_error'] = 'No se pudo establecer el email por defecto.';
+                }
+            } else {
+                $_SESSION['flash_error'] = 'No se pudo establecer el email por defecto.';
+            }
+
             header('Location: emails.php');
             exit;
         }
@@ -430,8 +475,8 @@ ob_start();
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-inbox"></i> Correos</strong>
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearDefaultBtn">
-                        <i class="bi bi-star"></i> Quitar por defecto
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="setDefaultBtn">
+                        <i class="bi bi-star-fill"></i> Poner por defecto
                     </button>
                     <button type="button" class="btn btn-outline-danger btn-sm" id="deleteEmailsBtn">
                         <i class="bi bi-trash"></i> Eliminar
@@ -625,12 +670,14 @@ window.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    var clearDefaultBtn = document.getElementById('clearDefaultBtn');
-    if (clearDefaultBtn) {
-        clearDefaultBtn.addEventListener('click', function(){
+    var setDefaultBtn = document.getElementById('setDefaultBtn');
+    if (setDefaultBtn) {
+        setDefaultBtn.addEventListener('click', function(){
+            var ids = getCheckedIds();
+            if (!requireAtLeastOneEmailSelected(ids)) return;
             var form = document.getElementById('emailsMassForm');
             var act = document.getElementById('massActionInput');
-            act.value = 'clear_default';
+            act.value = 'set_default';
             form.submit();
         });
     }
