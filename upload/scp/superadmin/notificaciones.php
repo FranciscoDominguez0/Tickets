@@ -16,9 +16,15 @@ global $mysqli;
 $err = '';
 $msg = '';
 
+$action = strtolower((string)($_POST['action'] ?? 'manual'));
+
 $selectedEmpresaId = isset($_POST['empresa_id']) && is_numeric($_POST['empresa_id']) ? (int)$_POST['empresa_id'] : 0;
 $subjectVal = trim((string)($_POST['subject'] ?? 'Aviso del sistema'));
 $messageVal = trim((string)($_POST['message'] ?? ''));
+
+$billingDaysVal = trim((string)getAppSetting('billing.notice_days', '3'));
+$billingSubjectVal = trim((string)getAppSetting('billing.notice_subject', 'Aviso: vencimiento próximo'));
+$billingMessageVal = trim((string)getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
 
 $hasEmpresas = false;
 if (isset($mysqli) && $mysqli) {
@@ -59,7 +65,29 @@ if ($hasEmpresas && isset($mysqli) && $mysqli) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
+    if (!validateCSRF()) {
+        $err = 'Token de seguridad inválido.';
+    } else {
+        $billingDaysValNew = trim((string)($_POST['billing_notice_days'] ?? ''));
+        $billingSubjectValNew = trim((string)($_POST['billing_notice_subject'] ?? ''));
+        $billingMessageValNew = trim((string)($_POST['billing_notice_message'] ?? ''));
+
+        if ($billingDaysValNew === '') {
+            $err = 'Los días son obligatorios.';
+        } elseif ($billingMessageValNew === '') {
+            $err = 'El mensaje es obligatorio.';
+        } else {
+            setAppSetting('billing.notice_days', $billingDaysValNew);
+            setAppSetting('billing.notice_subject', $billingSubjectValNew);
+            setAppSetting('billing.notice_message', $billingMessageValNew);
+            $billingDaysVal = $billingDaysValNew;
+            $billingSubjectVal = $billingSubjectValNew;
+            $billingMessageVal = $billingMessageValNew;
+            $msg = 'Configuración guardada.';
+        }
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $err = 'Token de seguridad inválido.';
     } elseif (!$hasEmpresas) {
@@ -148,6 +176,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="alert alert-success mb-3"><?php echo html($msg); ?></div>
 <?php endif; ?>
 
+<p class="section-title"><i class="bi bi-clock"></i> Avisos automáticos de vencimiento</p>
+
+<div class="card pro-card mb-4">
+    <div class="card-header">
+        <span class="card-title-sm"><i class="bi bi-bell me-1"></i>Configuración</span>
+    </div>
+    <div class="card-body">
+        <form method="post" action="notificaciones.php">
+            <?php csrfField(); ?>
+            <input type="hidden" name="action" value="billing_settings">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Días antes de vencer</label>
+                    <input name="billing_notice_days" class="form-control" value="<?php echo html($billingDaysVal); ?>" placeholder="3,4,5">
+                    <div class="form-text">Ejemplo: <strong>3</strong> o <strong>3,4,5</strong></div>
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label">Asunto (opcional)</label>
+                    <input name="billing_notice_subject" class="form-control" value="<?php echo html($billingSubjectVal); ?>" placeholder="Aviso: vencimiento próximo">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Mensaje</label>
+                    <textarea name="billing_notice_message" class="form-control" rows="4" required><?php echo html($billingMessageVal); ?></textarea>
+                    <div class="form-text">
+                        Variables: <strong>{empresa}</strong>, <strong>{dias}</strong>, <strong>{vencimiento}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-primary btn-sm px-4" type="submit">
+                    <i class="bi bi-save me-1"></i>Guardar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <p class="section-title"><i class="bi bi-send"></i> Enviar aviso manual</p>
 
 <div class="card pro-card mb-4">
@@ -164,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php else: ?>
             <form method="post" action="notificaciones.php">
                 <?php csrfField(); ?>
+                <input type="hidden" name="action" value="manual">
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label">Empresa</label>

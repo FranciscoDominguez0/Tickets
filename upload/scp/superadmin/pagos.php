@@ -33,7 +33,26 @@ if ($hasEmpresas) {
 $mensaje = null;
 $error = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasEmpresas && $hasPagos) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') === 'delete_payment' && $hasPagos) {
+    $payId = isset($_POST['payment_id']) && is_numeric($_POST['payment_id']) ? (int)$_POST['payment_id'] : 0;
+    if ($payId <= 0) {
+        $error = 'Pago inválido.';
+    } else {
+        $stmtD = $mysqli->prepare('DELETE FROM pagos_empresas WHERE id = ?');
+        if ($stmtD) {
+            $stmtD->bind_param('i', $payId);
+            if ($stmtD->execute()) {
+                $mensaje = 'Pago eliminado.';
+            } else {
+                $error = 'No se pudo eliminar el pago.';
+            }
+        } else {
+            $error = 'No se pudo preparar la operación.';
+        }
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasEmpresas && $hasPagos && (string)($_POST['action'] ?? '') !== 'delete_payment') {
 
     $empresa_id = (int)($_POST['empresa_id'] ?? 0);
     $monto = (float)($_POST['monto'] ?? 0);
@@ -238,6 +257,7 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
             </div>
         <?php else: ?>
             <form method="post">
+                <input type="hidden" name="action" value="create_payment">
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label">Empresa</label>
@@ -332,7 +352,11 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
                         </tr>
                     <?php else: ?>
                         <?php foreach ($pagos as $p): ?>
-                        <tr>
+                        <tr class="payment-row" role="button" tabindex="0"
+                            data-payment-id="<?php echo (int)($p['id'] ?? 0); ?>"
+                            data-payment-empresa="<?php echo html((string)($p['empresa_nombre'] ?? '')); ?>"
+                            data-payment-monto="<?php echo number_format((float)($p['monto'] ?? 0), 2); ?>"
+                            data-payment-fecha="<?php echo html((string)($p['fecha_pago'] ?? '')); ?>">
                             <td class="fw-semibold"><?php echo html((string)($p['empresa_nombre'] ?? '')); ?></td>
                             <td class="text-success fw-semibold">
                                 $<?php echo number_format((float)($p['monto'] ?? 0), 2); ?>
@@ -364,6 +388,38 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
     </div>
 </div>
 
+<div class="modal fade" id="deletePaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="pagos.php" id="deletePaymentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-trash me-2 text-danger"></i>Eliminar pago</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="delete_payment">
+                    <input type="hidden" name="payment_id" id="deletePaymentId" value="">
+
+                    <div class="alert alert-danger d-flex align-items-center gap-2" style="border-radius:10px">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <div>
+                            Esta acción eliminará el pago seleccionado.
+                            <div class="mt-1">Empresa: <strong id="deletePaymentEmpresa"></strong></div>
+                            <div class="mt-1">Monto: <strong id="deletePaymentMonto"></strong> | Fecha: <strong id="deletePaymentFecha"></strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash me-1"></i>Eliminar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var input = document.getElementById('paymentsSearch');
@@ -382,6 +438,22 @@ document.addEventListener('DOMContentLoaded', function () {
             tr.style.display = (q === '' || txt.indexOf(q) !== -1) ? '' : 'none';
         });
     });
+
+    var deleteModalEl = document.getElementById('deletePaymentModal');
+    var payRows = document.querySelectorAll('tr.payment-row');
+    if (deleteModalEl && payRows && payRows.length) {
+        payRows.forEach(function (tr) {
+            tr.addEventListener('click', function () {
+                var id = tr.getAttribute('data-payment-id') || '';
+                if (!id) return;
+                document.getElementById('deletePaymentId').value = id;
+                document.getElementById('deletePaymentEmpresa').textContent = tr.getAttribute('data-payment-empresa') || '';
+                document.getElementById('deletePaymentMonto').textContent = '$' + (tr.getAttribute('data-payment-monto') || '0.00');
+                document.getElementById('deletePaymentFecha').textContent = tr.getAttribute('data-payment-fecha') || '';
+                bootstrap.Modal.getOrCreateInstance(deleteModalEl).show();
+            });
+        });
+    }
 });
 </script>
 

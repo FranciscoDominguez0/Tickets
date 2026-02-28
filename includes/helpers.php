@@ -333,6 +333,103 @@ function syncAllEmpresasBillingStatus() {
                           AND estado_pago = 'suspendido'
                           AND bloqueada = 0");
 
+        sendBillingDueNotifications();
+
+        return true;
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+function sendBillingDueNotifications() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+
+    try {
+        $resE = $mysqli->query("SHOW TABLES LIKE 'empresas'");
+        if (!$resE || $resE->num_rows <= 0) return false;
+        $resS = $mysqli->query("SHOW TABLES LIKE 'staff'");
+        if (!$resS || $resS->num_rows <= 0) return false;
+        $resN = $mysqli->query("SHOW TABLES LIKE 'notifications'");
+        if (!$resN || $resN->num_rows <= 0) return false;
+
+        $daysRaw = trim((string)getAppSetting('billing.notice_days', '3'));
+        $daysList = [];
+        foreach (preg_split('/\s*,\s*/', $daysRaw) as $d) {
+            if ($d === '') continue;
+            if (is_numeric($d)) {
+                $n = (int)$d;
+                if ($n > 0 && $n <= 365) $daysList[$n] = true;
+            }
+        }
+        $days = array_keys($daysList);
+        if (empty($days)) return true;
+
+        $subjectTpl = trim((string)getAppSetting('billing.notice_subject', 'Aviso: vencimiento próximo'));
+        $msgTpl = trim((string)getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
+
+        $hasStaffEmpresa = false;
+        $col = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $hasStaffEmpresa = ($col && $col->num_rows > 0);
+        if (!$hasStaffEmpresa) return false;
+
+        $in = implode(',', array_map('intval', $days));
+        $sql = "SELECT id, nombre, fecha_vencimiento, DATEDIFF(fecha_vencimiento, CURDATE()) dias\n"
+             . "FROM empresas\n"
+             . "WHERE fecha_vencimiento IS NOT NULL\n"
+             . "  AND estado_pago = 'al_dia'\n"
+             . "  AND bloqueada = 0\n"
+             . "  AND DATEDIFF(fecha_vencimiento, CURDATE()) IN ($in)";
+
+        $res = $mysqli->query($sql);
+        if (!$res) return true;
+
+        $stmtStaff = $mysqli->prepare("SELECT id FROM staff WHERE is_active = 1 AND role = 'admin' AND empresa_id = ? ORDER BY id");
+        $stmtExists = $mysqli->prepare("SELECT 1 FROM notifications WHERE staff_id = ? AND type = ? AND related_id = ? AND DATE(created_at) = CURDATE() LIMIT 1");
+        $stmtIns = $mysqli->prepare("INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
+        if (!$stmtStaff || !$stmtExists || !$stmtIns) return false;
+
+        $type = 'billing_due';
+
+        while ($e = $res->fetch_assoc()) {
+            $empresaId = (int)($e['id'] ?? 0);
+            if ($empresaId <= 0) continue;
+            $dias = (int)($e['dias'] ?? 0);
+            $empresaNombre = (string)($e['nombre'] ?? '');
+            $venc = (string)($e['fecha_vencimiento'] ?? '');
+
+            $subject = $subjectTpl;
+            $message = $msgTpl;
+            $repl = [
+                '{empresa}' => $empresaNombre,
+                '{dias}' => (string)$dias,
+                '{vencimiento}' => $venc,
+            ];
+            $subject = strtr($subject, $repl);
+            $message = strtr($message, $repl);
+            $final = $subject !== '' ? ('[' . $subject . '] ' . $message) : $message;
+
+            $stmtStaff->bind_param('i', $empresaId);
+            if (!$stmtStaff->execute()) continue;
+            $rsStaff = $stmtStaff->get_result();
+            if (!$rsStaff) continue;
+            while ($s = $rsStaff->fetch_assoc()) {
+                $sid = (int)($s['id'] ?? 0);
+                if ($sid <= 0) continue;
+
+                $stmtExists->bind_param('isi', $sid, $type, $empresaId);
+                if ($stmtExists->execute()) {
+                    $rsEx = $stmtExists->get_result();
+                    if ($rsEx && $rsEx->fetch_assoc()) {
+                        continue;
+                    }
+                }
+
+                $stmtIns->bind_param('issi', $sid, $final, $type, $empresaId);
+                $stmtIns->execute();
+            }
+        }
+
         return true;
     } catch (Throwable $e) {
         return false;
