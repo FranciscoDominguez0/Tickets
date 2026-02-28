@@ -282,19 +282,21 @@ function syncEmpresaBillingStatus($empresaId) {
 
         $hoy = date('Y-m-d');
 
+        // Al vencer: pasa a suspendido (sin bloquear) por 3 días
         if (!$bloqueada && $estadoPago === 'al_dia' && strtotime($fechaVenc) <= strtotime($hoy)) {
-            $u = $mysqli->prepare("UPDATE empresas SET estado_pago = 'vencido' WHERE id = ? AND estado_pago = 'al_dia'");
+            $u = $mysqli->prepare("UPDATE empresas SET estado_pago = 'suspendido' WHERE id = ? AND estado_pago = 'al_dia'");
             if ($u) {
                 $u->bind_param('i', $empresaId);
                 $u->execute();
             }
-            $estadoPago = 'vencido';
+            $estadoPago = 'suspendido';
         }
 
-        if (!$bloqueada && $estadoPago === 'vencido') {
+        // Si sigue suspendido y pasaron 3 días desde el vencimiento: bloquear
+        if (!$bloqueada && $estadoPago === 'suspendido') {
             $daysPast = (int)floor((strtotime($hoy) - strtotime($fechaVenc)) / 86400);
             if ($daysPast >= 3) {
-                $u2 = $mysqli->prepare("UPDATE empresas SET estado_pago = 'suspendido', bloqueada = 1, motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago') WHERE id = ? AND estado_pago = 'vencido'");
+                $u2 = $mysqli->prepare("UPDATE empresas SET bloqueada = 1, motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago') WHERE id = ? AND estado_pago = 'suspendido' AND bloqueada = 0");
                 if ($u2) {
                     $u2->bind_param('i', $empresaId);
                     $u2->execute();
@@ -316,18 +318,20 @@ function syncAllEmpresasBillingStatus() {
         $hasEmpresas = ($res && $res->num_rows > 0);
         if (!$hasEmpresas) return false;
 
-        $mysqli->query("UPDATE empresas SET estado_pago = 'vencido'
+        // Al vencer: pasa a suspendido (sin bloquear)
+        $mysqli->query("UPDATE empresas SET estado_pago = 'suspendido'
                         WHERE fecha_vencimiento IS NOT NULL
                           AND DATEDIFF(fecha_vencimiento, CURDATE()) <= 0
                           AND estado_pago = 'al_dia'");
 
+        // Luego de 3 días desde el vencimiento: bloquear (mantiene suspendido)
         $mysqli->query("UPDATE empresas
-                        SET estado_pago = 'suspendido',
-                            bloqueada = 1,
+                        SET bloqueada = 1,
                             motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago')
                         WHERE fecha_vencimiento IS NOT NULL
                           AND DATEDIFF(CURDATE(), fecha_vencimiento) >= 3
-                          AND estado_pago = 'vencido'");
+                          AND estado_pago = 'suspendido'
+                          AND bloqueada = 0");
 
         return true;
     } catch (Throwable $e) {

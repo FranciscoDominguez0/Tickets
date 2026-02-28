@@ -288,112 +288,20 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
     </div>
 </div>
 
-<!-- ══ ESTADO DE EMPRESAS ═══════════════════════════════════ -->
-<p class="section-title"><i class="bi bi-buildings"></i> Estado de empresas</p>
-
-<div class="card pro-card mb-3">
-    <div class="card-header">
-        <span class="card-title-sm">Empresas registradas</span>
-        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"
-              style="font-size:.67rem"><?php echo count($empresas); ?> registros</span>
-    </div>
-    <div class="card-body p-0">
-        <?php if (!$hasEmpresas): ?>
-            <div class="alert alert-info m-3 mb-0">
-                No se pudo acceder a la tabla <strong>empresas</strong>.
-                <?php if ($dbName !== ''): ?> BD: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
-            </div>
-        <?php else: ?>
-        <div class="table-responsive">
-            <table class="table pro-table mb-0">
-                <thead>
-                    <tr>
-                        <th>Empresa</th>
-                        <th>Vencimiento</th>
-                        <th>Días restantes</th>
-                        <th>Estado pago</th>
-                        <th>Bloqueada</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($empresas)): ?>
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-5">
-                                <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
-                                No hay empresas registradas.
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($empresas as $e):
-                            $dias = isset($e['dias_restantes']) ? (int)$e['dias_restantes'] : null;
-                            $isBlocked  = (int)($e['bloqueada'] ?? 0) === 1;
-                            $estadoPago = (string)($e['estado_pago'] ?? '');
-
-                            $badgePago = match($estadoPago) {
-                                'al_dia'     => 'bg-success bg-opacity-10 text-success',
-                                'vencido'    => 'bg-info bg-opacity-10 text-info',
-                                'suspendido' => 'bg-danger bg-opacity-10 text-danger',
-                                default      => 'bg-secondary bg-opacity-10 text-secondary',
-                            };
-
-                            $badgeDias = 'bg-success bg-opacity-10 text-success';
-                            if ($dias === null) $badgeDias = 'bg-secondary bg-opacity-10 text-secondary';
-                            elseif ($dias < 0)  $badgeDias = 'bg-danger text-white';
-                            elseif ($dias <= 7) $badgeDias = 'bg-info text-white';
-                        ?>
-                        <tr>
-                            <td class="fw-semibold"><?php echo html((string)($e['nombre'] ?? '')); ?></td>
-                            <td>
-                                <?php if (!empty($e['fecha_vencimiento'])): ?>
-                                    <i class="bi bi-calendar3 me-1 text-muted opacity-50"></i>
-                                    <?php echo html((string)$e['fecha_vencimiento']); ?>
-                                <?php else: ?>
-                                    <span class="text-muted">—</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($dias === null): ?>
-                                    <span class="text-muted">—</span>
-                                <?php else: ?>
-                                    <span class="dias-pill <?php echo $badgeDias; ?>">
-                                        <?php echo $dias > 0 ? "+{$dias}" : $dias; ?>d
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <span class="badge-pill badge <?php echo $badgePago; ?>">
-                                    <?php echo html($estadoPago !== '' ? str_replace('_', ' ', $estadoPago) : '—'); ?>
-                                </span>
-                            </td>
-                            <td>
-                                <?php if ($isBlocked): ?>
-                                    <span class="badge-pill badge bg-danger bg-opacity-10 text-danger">
-                                        <i class="bi bi-lock-fill me-1"></i>Bloqueada
-                                    </span>
-                                <?php else: ?>
-                                    <span class="badge-pill badge bg-success bg-opacity-10 text-success">
-                                        <i class="bi bi-check2 me-1"></i>Libre
-                                    </span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php endif; ?>
-    </div>
-</div>
-
 <!-- ══ PAGOS RECIENTES ══════════════════════════════════════ -->
 <p class="section-title"><i class="bi bi-clock-history"></i> Pagos recientes</p>
 
 <div class="card pro-card mb-4">
     <div class="card-header">
         <span class="card-title-sm">Historial de pagos</span>
-        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"
-              style="font-size:.67rem"><?php echo count($pagos); ?> registros</span>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="input-group input-group-sm" style="max-width: 320px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="paymentsSearch" placeholder="Buscar (empresa, referencia, método...)" autocomplete="off">
+            </div>
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25"
+                  style="font-size:.67rem"><?php echo count($pagos); ?> registros</span>
+        </div>
     </div>
     <div class="card-body p-0">
         <?php if (!$hasPagos): ?>
@@ -455,6 +363,27 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('paymentsSearch');
+    var table = document.querySelector('.card.pro-card.mb-4 table');
+    if (!input || !table) return;
+
+    function normalize(s) {
+        return (s || '').toString().toLowerCase().trim();
+    }
+
+    input.addEventListener('input', function () {
+        var q = normalize(input.value);
+        var rows = table.querySelectorAll('tbody tr');
+        rows.forEach(function (tr) {
+            var txt = normalize(tr.textContent);
+            tr.style.display = (q === '' || txt.indexOf(q) !== -1) ? '' : 'none';
+        });
+    });
+});
+</script>
 
 <?php
 $content = (string)ob_get_clean();

@@ -111,13 +111,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             /* ── Desbloquear ── */
             } elseif ($action === 'unblock') {
                 $stmt = $mysqli->prepare(
-                    "UPDATE empresas SET bloqueada = 0, motivo_bloqueo = NULL WHERE id = ?"
+                    "UPDATE empresas SET bloqueada = 0, estado_pago = 'al_dia', motivo_bloqueo = NULL WHERE id = ?"
                 );
                 if ($stmt) {
                     $stmt->bind_param('i', $empresaId);
                     if ($stmt->execute()) { $msg = 'Empresa desbloqueada.'; $selectedId = $empresaId; }
                     else                  { $err = 'No se pudo desbloquear la empresa.'; }
                 } else { $err = 'No se pudo preparar la operación.'; }
+
+            /* ── Cancelar servicio ── */
+            } elseif ($action === 'cancel_service') {
+                $motivo = trim((string)($_POST['motivo_bloqueo'] ?? 'Servicio cancelado'));
+                $stmt = $mysqli->prepare(
+                    "UPDATE empresas
+                     SET fecha_vencimiento = CURDATE(),
+                         estado_pago = 'suspendido',
+                         bloqueada = 0,
+                         motivo_bloqueo = ?
+                     WHERE id = ?"
+                );
+                if ($stmt) {
+                    $stmt->bind_param('si', $motivo, $empresaId);
+                    if ($stmt->execute()) {
+                        $msg = 'Servicio cancelado.';
+                        $selectedId = $empresaId;
+                    } else {
+                        $err = 'No se pudo cancelar el servicio.';
+                    }
+                } else {
+                    $err = 'No se pudo preparar la operación.';
+                }
+
+            /* ── Volver activar (3 días) ── */
+            } elseif ($action === 'grace_3days') {
+                $stmt = $mysqli->prepare(
+                    "UPDATE empresas
+                     SET fecha_vencimiento = DATE_ADD(CURDATE(), INTERVAL 3 DAY),
+                         estado_pago = 'al_dia',
+                         bloqueada = 0,
+                         motivo_bloqueo = NULL
+                     WHERE id = ?"
+                );
+                if ($stmt) {
+                    $stmt->bind_param('i', $empresaId);
+                    if ($stmt->execute()) {
+                        $msg = 'Servicio reactivado por 3 días.';
+                        $selectedId = $empresaId;
+                    } else {
+                        $err = 'No se pudo reactivar el servicio.';
+                    }
+                } else {
+                    $err = 'No se pudo preparar la operación.';
+                }
 
             /* ── Suspender ── */
             } elseif ($action === 'suspend') {
@@ -258,7 +303,7 @@ if ($hasEmpresas && isset($mysqli) && $mysqli) {
 $totalEmpresas   = count($empresas);
 $totalActivas    = count(array_filter($empresas, fn($e) => ($e['estado']       ?? '') === 'activa'));
 $totalBloqueadas = count(array_filter($empresas, fn($e) => (int)($e['bloqueada'] ?? 0) === 1));
-$totalVencidas   = count(array_filter($empresas, fn($e) => ($e['estado_pago']  ?? '') === 'vencido'));
+$totalVencidas   = count(array_filter($empresas, fn($e) => ($e['estado_pago']  ?? '') === 'suspendido'));
 
 /* ── Helpers de badge ─────────────────────────────────────── */
 function badgeEstado(string $estado): string {
@@ -439,7 +484,7 @@ function badgeDias(?int $d): string {
 
                         <td>
                             <span class="badge-pill badge <?php echo badgePago($estadoPago); ?>">
-                                <?php echo html($estadoPago !== '' ? str_replace('_', ' ', $estadoPago) : '—'); ?>
+                                <?php echo html(str_replace('_', ' ', $estadoPago) ?? '—'); ?>
                             </span>
                         </td>
 
@@ -468,6 +513,7 @@ function badgeDias(?int $d): string {
                                     title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
+
                                 <?php if ($isBlocked): ?>
                                     <form method="post" action="empresas.php?id=<?php echo $id; ?>" class="d-inline">
                                         <?php csrfField(); ?>
@@ -486,6 +532,7 @@ function badgeDias(?int $d): string {
                                         <i class="bi bi-lock"></i>
                                     </button>
                                 <?php endif; ?>
+
                                 <button type="button" class="btn btn-outline-danger btn-sm"
                                     data-bs-toggle="modal" data-bs-target="#deleteModal"
                                     data-empresa-id="<?php echo $id; ?>"
@@ -520,60 +567,20 @@ function badgeDias(?int $d): string {
         ?>
         <div class="d-flex gap-2 flex-wrap btn-action-group">
 
-            <?php if ($blocked): ?>
-                <form method="post" action="empresas.php?id=<?php echo $eid; ?>" class="d-inline">
-                    <?php csrfField(); ?>
-                    <input type="hidden" name="action" value="unblock">
-                    <input type="hidden" name="empresa_id" value="<?php echo $eid; ?>">
-                    <button class="btn btn-success btn-sm" type="submit">
-                        <i class="bi bi-unlock me-1"></i>Desbloquear
-                    </button>
-                </form>
-            <?php else: ?>
-                <button type="button" class="btn btn-danger btn-sm"
-                    data-bs-toggle="modal" data-bs-target="#blockModal"
-                    data-empresa-id="<?php echo $eid; ?>"
-                    data-empresa-nombre="<?php echo html((string)($empresa['nombre'] ?? '')); ?>">
-                    <i class="bi bi-lock me-1"></i>Bloquear
+            <form method="post" action="empresas.php?id=<?php echo $eid; ?>" class="d-inline">
+                <?php csrfField(); ?>
+                <input type="hidden" name="action" value="grace_3days">
+                <input type="hidden" name="empresa_id" value="<?php echo $eid; ?>">
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-play-circle me-1"></i>Volver activar (3 días)
                 </button>
-            <?php endif; ?>
-
-            <?php if ((string)($empresa['estado'] ?? '') === 'activa'): ?>
-                <form method="post" action="empresas.php?id=<?php echo $eid; ?>" class="d-inline">
-                    <?php csrfField(); ?>
-                    <input type="hidden" name="action" value="suspend">
-                    <input type="hidden" name="empresa_id" value="<?php echo $eid; ?>">
-                    <button class="btn btn-outline-secondary btn-sm" type="submit">
-                        <i class="bi bi-pause-circle me-1"></i>Suspender
-                    </button>
-                </form>
-            <?php else: ?>
-                <form method="post" action="empresas.php?id=<?php echo $eid; ?>" class="d-inline">
-                    <?php csrfField(); ?>
-                    <input type="hidden" name="action" value="activate">
-                    <input type="hidden" name="empresa_id" value="<?php echo $eid; ?>">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-play-circle me-1"></i>Activar
-                    </button>
-                </form>
-            <?php endif; ?>
-
-            <button type="button" class="btn btn-outline-secondary btn-sm"
-                data-bs-toggle="modal" data-bs-target="#editEmpresaModal"
-                data-empresa-id="<?php echo $eid; ?>"
-                data-empresa-nombre="<?php echo html((string)($empresa['nombre'] ?? '')); ?>"
-                data-empresa-inicio="<?php echo html((string)($empresa['fecha_inicio_servicio'] ?? '')); ?>"
-                data-empresa-vencimiento="<?php echo html((string)($empresa['fecha_vencimiento'] ?? '')); ?>"
-                data-empresa-gracia="<?php echo html((string)($empresa['dias_gracia'] ?? '0')); ?>"
-                data-empresa-precio="<?php echo html((string)($empresa['precio_mensual'] ?? '0')); ?>">
-                <i class="bi bi-pencil-square me-1"></i>Editar
-            </button>
+            </form>
 
             <button type="button" class="btn btn-outline-danger btn-sm"
-                data-bs-toggle="modal" data-bs-target="#deleteModal"
+                data-bs-toggle="modal" data-bs-target="#cancelServiceModal"
                 data-empresa-id="<?php echo $eid; ?>"
                 data-empresa-nombre="<?php echo html((string)($empresa['nombre'] ?? '')); ?>">
-                <i class="bi bi-trash me-1"></i>Eliminar
+                <i class="bi bi-x-circle me-1"></i>Cancelar servicio
             </button>
 
         </div>
@@ -818,7 +825,7 @@ function badgeDias(?int $d): string {
 <div class="modal fade" id="blockModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="post" action="empresas.php">
+            <form method="post" action="empresas.php" id="blockForm">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-lock me-2 text-danger"></i>Bloquear empresa</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -827,18 +834,56 @@ function badgeDias(?int $d): string {
                     <?php csrfField(); ?>
                     <input type="hidden" name="action" value="block">
                     <input type="hidden" name="empresa_id" id="blockEmpresaId" value="">
-                    <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3"
-                         style="border-radius:8px;font-size:.8rem">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        Empresa: <strong id="blockEmpresaNombre"></strong>
+
+                    <div class="alert alert-danger d-flex align-items-center gap-2" style="border-radius:10px">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <div>
+                            Esta acción marcará el <strong>estado de pago</strong> como <strong>suspendido</strong> y bloqueará el acceso.
+                            <div class="mt-1">Empresa: <strong id="blockEmpresaNombre"></strong></div>
+                        </div>
                     </div>
-                    <label class="form-label">Motivo de bloqueo</label>
-                    <input type="text" name="motivo_bloqueo" class="form-control" value="Pago mensual vencido">
+
+                    <label class="form-label">Motivo</label>
+                    <input type="text" class="form-control" name="motivo_bloqueo" value="Pago mensual vencido">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="submit" class="btn btn-danger px-4">
                         <i class="bi bi-lock me-1"></i>Bloquear
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ MODAL: CANCELAR SERVICIO ═════════════════════════════ -->
+<div class="modal fade" id="cancelServiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="empresas.php" id="cancelServiceForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-x-circle me-2 text-danger"></i>Cancelar servicio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <?php csrfField(); ?>
+                    <input type="hidden" name="action" value="cancel_service">
+                    <input type="hidden" name="empresa_id" id="cancelEmpresaId" value="">
+                    <input type="hidden" name="motivo_bloqueo" value="Servicio cancelado">
+
+                    <div class="alert alert-danger d-flex align-items-center gap-2" style="border-radius:10px">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <div>
+                            Esta acción pondrá el servicio en <strong>0 días</strong> y el <strong>estado de pago</strong> en <strong>suspendido</strong>.
+                            <div class="mt-1">Empresa: <strong id="cancelEmpresaNombre"></strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-x-circle me-1"></i>Confirmar cancelación
                     </button>
                 </div>
             </form>
@@ -902,8 +947,14 @@ document.addEventListener('DOMContentLoaded', function () {
         blockModal.addEventListener('show.bs.modal', function (event) {
             var btn = event.relatedTarget;
             if (!btn) return;
-            document.getElementById('blockEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
+            var eid = btn.getAttribute('data-empresa-id') || '';
+            document.getElementById('blockEmpresaId').value = eid;
             document.getElementById('blockEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';
+
+            var form = document.getElementById('blockForm');
+            if (form && eid) {
+                form.setAttribute('action', 'empresas.php?id=' + encodeURIComponent(eid));
+            }
         });
     }
 
@@ -911,9 +962,26 @@ document.addEventListener('DOMContentLoaded', function () {
     if (deleteModal) {
         deleteModal.addEventListener('show.bs.modal', function (event) {
             var btn = event.relatedTarget;
+
             if (!btn) return;
             document.getElementById('deleteEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
             document.getElementById('deleteEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';
+        });
+    }
+
+    var cancelServiceModal = document.getElementById('cancelServiceModal');
+    if (cancelServiceModal) {
+        cancelServiceModal.addEventListener('show.bs.modal', function (event) {
+            var btn = event.relatedTarget;
+            if (!btn) return;
+            var eid = btn.getAttribute('data-empresa-id') || '';
+            document.getElementById('cancelEmpresaId').value = eid;
+            document.getElementById('cancelEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';
+
+            var form = document.getElementById('cancelServiceForm');
+            if (form && eid) {
+                form.setAttribute('action', 'empresas.php?id=' + encodeURIComponent(eid));
+            }
         });
     }
 });
