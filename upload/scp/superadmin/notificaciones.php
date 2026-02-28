@@ -23,6 +23,7 @@ $subjectVal = trim((string)($_POST['subject'] ?? 'Aviso del sistema'));
 $messageVal = trim((string)($_POST['message'] ?? ''));
 
 $billingDaysVal = trim((string)getAppSetting('billing.notice_days', '3'));
+$billingEnabledVal = (string)getAppSetting('billing.notice_enabled', '1');
 $billingSubjectVal = trim((string)getAppSetting('billing.notice_subject', 'Aviso: vencimiento próximo'));
 $billingMessageVal = trim((string)getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
 
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
         $err = 'Token de seguridad inválido.';
     } else {
         $billingDaysValNew = trim((string)($_POST['billing_notice_days'] ?? ''));
+        $billingEnabledValNew = isset($_POST['billing_notice_enabled']) && (string)$_POST['billing_notice_enabled'] === '1' ? '1' : '0';
         $billingSubjectValNew = trim((string)($_POST['billing_notice_subject'] ?? ''));
         $billingMessageValNew = trim((string)($_POST['billing_notice_message'] ?? ''));
 
@@ -79,9 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
             $err = 'El mensaje es obligatorio.';
         } else {
             setAppSetting('billing.notice_days', $billingDaysValNew);
+            setAppSetting('billing.notice_enabled', $billingEnabledValNew);
             setAppSetting('billing.notice_subject', $billingSubjectValNew);
             setAppSetting('billing.notice_message', $billingMessageValNew);
             $billingDaysVal = $billingDaysValNew;
+            $billingEnabledVal = $billingEnabledValNew;
             $billingSubjectVal = $billingSubjectValNew;
             $billingMessageVal = $billingMessageValNew;
             $msg = 'Configuración guardada.';
@@ -187,6 +191,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
             <?php csrfField(); ?>
             <input type="hidden" name="action" value="billing_settings">
             <div class="row g-3">
+                <div class="col-12">
+                    <div class="form-check mt-1">
+                        <input class="form-check-input" type="checkbox" name="billing_notice_enabled" value="1" id="billingNoticeEnabled" <?php echo $billingEnabledVal === '1' ? 'checked' : ''; ?>>
+                        <label class="form-check-label" for="billingNoticeEnabled">Activar notificaciones automáticas</label>
+                    </div>
+                </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label">Días antes de vencer</label>
                     <input name="billing_notice_days" class="form-control" value="<?php echo html($billingDaysVal); ?>" placeholder="3,4,5">

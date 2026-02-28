@@ -346,6 +346,9 @@ function sendBillingDueNotifications() {
     if (!isset($mysqli) || !$mysqli) return false;
 
     try {
+        $enabled = (string)getAppSetting('billing.notice_enabled', '1');
+        if ($enabled !== '1') return true;
+
         $resE = $mysqli->query("SHOW TABLES LIKE 'empresas'");
         if (!$resE || $resE->num_rows <= 0) return false;
         $resS = $mysqli->query("SHOW TABLES LIKE 'staff'");
