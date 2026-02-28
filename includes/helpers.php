@@ -310,6 +310,21 @@ function syncEmpresaBillingStatus($empresaId) {
     }
 }
 
+function ensureBillingNoticeLogTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS billing_notice_log (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL,\n"
+        . "  days_before INT NOT NULL,\n"
+        . "  fecha_vencimiento DATE NOT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_billing_notice (empresa_id, days_before, fecha_vencimiento),\n"
+        . "  KEY idx_empresa (empresa_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+    return (bool)$mysqli->query($sql);
+}
+
 function syncAllEmpresasBillingStatus() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;
@@ -348,6 +363,8 @@ function sendBillingDueNotifications() {
     try {
         $enabled = (string)getAppSetting('billing.notice_enabled', '1');
         if ($enabled !== '1') return true;
+
+        if (!ensureBillingNoticeLogTable()) return false;
 
         $resE = $mysqli->query("SHOW TABLES LIKE 'empresas'");
         if (!$resE || $resE->num_rows <= 0) return false;
@@ -388,9 +405,9 @@ function sendBillingDueNotifications() {
         if (!$res) return true;
 
         $stmtStaff = $mysqli->prepare("SELECT id FROM staff WHERE is_active = 1 AND role = 'admin' AND empresa_id = ? ORDER BY id");
-        $stmtExists = $mysqli->prepare("SELECT 1 FROM notifications WHERE staff_id = ? AND type = ? AND related_id = ? AND DATE(created_at) = CURDATE() LIMIT 1");
+        $stmtLogIns = $mysqli->prepare("INSERT IGNORE INTO billing_notice_log (empresa_id, days_before, fecha_vencimiento, created_at) VALUES (?, ?, ?, NOW())");
         $stmtIns = $mysqli->prepare("INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
-        if (!$stmtStaff || !$stmtExists || !$stmtIns) return false;
+        if (!$stmtStaff || !$stmtLogIns || !$stmtIns) return false;
 
         $type = 'billing_due';
 
@@ -400,6 +417,16 @@ function sendBillingDueNotifications() {
             $dias = (int)($e['dias'] ?? 0);
             $empresaNombre = (string)($e['nombre'] ?? '');
             $venc = (string)($e['fecha_vencimiento'] ?? '');
+
+            if ($venc === '') continue;
+
+            $stmtLogIns->bind_param('iis', $empresaId, $dias, $venc);
+            if (!$stmtLogIns->execute()) {
+                continue;
+            }
+            if ((int)$stmtLogIns->affected_rows <= 0) {
+                continue;
+            }
 
             $subject = $subjectTpl;
             $message = $msgTpl;
@@ -419,14 +446,6 @@ function sendBillingDueNotifications() {
             while ($s = $rsStaff->fetch_assoc()) {
                 $sid = (int)($s['id'] ?? 0);
                 if ($sid <= 0) continue;
-
-                $stmtExists->bind_param('isi', $sid, $type, $empresaId);
-                if ($stmtExists->execute()) {
-                    $rsEx = $stmtExists->get_result();
-                    if ($rsEx && $rsEx->fetch_assoc()) {
-                        continue;
-                    }
-                }
 
                 $stmtIns->bind_param('issi', $sid, $final, $type, $empresaId);
                 $stmtIns->execute();
