@@ -23,7 +23,7 @@ if (!isset($_SESSION[$menuKey])) {
     $collapseSettingsMenu = true;
 }
 
-$allowedTargets = ['pages','system','tickets','tasks','agents','users'];
+$allowedTargets = ['pages','system','tickets','tasks','agents','users','billing'];
 $target = (string)($_GET['t'] ?? 'pages');
 if (!in_array($target, $allowedTargets, true)) {
     $target = 'pages';
@@ -46,6 +46,8 @@ if ($target === 'pages') {
     require __DIR__ . '/inc/settings_agents.inc.php';
 } elseif ($target === 'users') {
     require __DIR__ . '/inc/settings_users.inc.php';
+} elseif ($target === 'billing') {
+    require __DIR__ . '/inc/settings_billing.inc.php';
 } else {
     $content = '<div class="page-header"><h1>Configuración</h1><p>Sección en construcción.</p></div>';
 }

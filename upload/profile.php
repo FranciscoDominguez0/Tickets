@@ -14,12 +14,21 @@ $user = getCurrentUser();
 $error = '';
 $success = '';
 
+$eid = (int)($_SESSION['empresa_id'] ?? 0);
+if ($eid <= 0) $eid = 1;
+
 // Obtener datos completos del usuario
-$stmt = $mysqli->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->bind_param('i', $_SESSION['user_id']);
+$stmt = $mysqli->prepare('SELECT * FROM users WHERE id = ? AND empresa_id = ?');
+$uid = (int)($_SESSION['user_id'] ?? 0);
+$stmt->bind_param('ii', $uid, $eid);
 $stmt->execute();
 $result = $stmt->get_result();
 $userData = $result->fetch_assoc();
+
+if (!$userData) {
+    http_response_code(404);
+    exit;
+}
 
 if ($_POST) {
     if (!validateCSRF()) {
@@ -34,8 +43,8 @@ if ($_POST) {
         if (empty($firstname) || empty($lastname) || empty($email)) {
             $error = 'Nombre, apellido y email son requeridos';
         } else {
-            $stmt = $mysqli->prepare('UPDATE users SET firstname = ?, lastname = ?, email = ?, company = ?, phone = ? WHERE id = ?');
-            $stmt->bind_param('sssssi', $firstname, $lastname, $email, $company, $phone, $_SESSION['user_id']);
+            $stmt = $mysqli->prepare('UPDATE users SET firstname = ?, lastname = ?, email = ?, company = ?, phone = ? WHERE id = ? AND empresa_id = ?');
+            $stmt->bind_param('sssssii', $firstname, $lastname, $email, $company, $phone, $uid, $eid);
             
             if ($stmt->execute()) {
                 $_SESSION['user_name'] = $firstname . ' ' . $lastname;

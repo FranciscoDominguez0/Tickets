@@ -144,6 +144,12 @@ if (!isset($collapseSettingsMenu)) {
                                 </a>
                             </li>
                             <li>
+                                <a href="settings.php?t=billing" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'billing') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-receipt"></i></span>
+                                    Facturación
+                                </a>
+                            </li>
+                            <li>
                                 <a href="settings.php?t=system" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'system') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-sliders"></i></span>
                                     Sistema

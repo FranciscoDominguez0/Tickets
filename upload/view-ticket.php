@@ -11,6 +11,8 @@ requireLogin('cliente');
 
 $user = getCurrentUser();
 $uid = (int) ($_SESSION['user_id'] ?? 0);
+$eid = (int)($_SESSION['empresa_id'] ?? 0);
+if ($eid <= 0) $eid = 1;
 $tid = isset($_GET['id']) && is_numeric($_GET['id']) ? (int) $_GET['id'] : 0;
 
 if ($tid <= 0) {
@@ -28,10 +30,10 @@ $stmt = $mysqli->prepare(
     . "JOIN ticket_status ts ON t.status_id = ts.id\n"
     . "JOIN priorities p ON t.priority_id = p.id\n"
     . "JOIN departments d ON t.dept_id = d.id\n"
-    . "WHERE t.id = ? AND t.user_id = ?\n"
+    . "WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ?\n"
     . "LIMIT 1"
 );
-$stmt->bind_param('ii', $tid, $uid);
+$stmt->bind_param('iii', $tid, $uid, $eid);
 $stmt->execute();
 $t = $stmt->get_result()->fetch_assoc();
 if (!$t) {
@@ -40,8 +42,8 @@ if (!$t) {
 }
 
 // Thread id
-$stmt = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ?');
-$stmt->bind_param('i', $tid);
+$stmt = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+$stmt->bind_param('ii', $tid, $eid);
 $stmt->execute();
 $threadRow = $stmt->get_result()->fetch_assoc();
 $thread_id = (int)($threadRow['id'] ?? 0);
@@ -131,13 +133,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         } elseif ($thread_id <= 0) {
             $reply_error = 'No se encontró el hilo del ticket.';
         } else {
-            $stmt = $mysqli->prepare('INSERT INTO thread_entries (thread_id, user_id, body, created) VALUES (?, ?, ?, NOW())');
-            $stmt->bind_param('iis', $thread_id, $uid, $body);
+            $stmt = $mysqli->prepare('INSERT INTO thread_entries (empresa_id, thread_id, user_id, body, created) VALUES (?, ?, ?, ?, NOW())');
+            $stmt->bind_param('iiis', $eid, $thread_id, $uid, $body);
             if ($stmt->execute()) {
                 $entry_id = (int) $mysqli->insert_id;
-                $stmtUpdTicket = $mysqli->prepare('UPDATE tickets SET updated = NOW() WHERE id = ?');
+                $stmtUpdTicket = $mysqli->prepare('UPDATE tickets SET updated = NOW() WHERE id = ? AND user_id = ? AND empresa_id = ?');
                 if ($stmtUpdTicket) {
-                    $stmtUpdTicket->bind_param('i', $tid);
+                    $stmtUpdTicket->bind_param('iii', $tid, $uid, $eid);
                     $stmtUpdTicket->execute();
                 }
 
@@ -159,6 +161,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 ];
                 $maxSize = $maxSize;
                 if (!empty($_FILES['attachments']['name'][0])) {
+                    $attachmentsHasEmpresa = false;
+                    $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
+                    $attachmentsHasEmpresa = ($colA && $colA->num_rows > 0);
+
                     $files = $_FILES['attachments'];
                     $n = is_array($files['name']) ? count($files['name']) : 1;
                     if ($n === 1 && !is_array($files['name'])) {
@@ -188,8 +194,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                         if (move_uploaded_file($files['tmp_name'][$i], $path)) {
                             $relPath = 'uploads/attachments/' . $safeName;
                             $hash = @hash_file('sha256', $path) ?: '';
-                            $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-                            $stmtA->bind_param('isssiss', $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                            if ($attachmentsHasEmpresa) {
+                                $stmtA = $mysqli->prepare("INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                                $stmtA->bind_param('iisssiss', $eid, $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                            } else {
+                                $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                                $stmtA->bind_param('isssiss', $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                            }
                             $stmtA->execute();
                         }
                     }
@@ -231,10 +242,10 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
         . "JOIN thread_entries te ON te.id = a.thread_entry_id\n"
         . "JOIN threads th ON th.id = te.thread_id\n"
         . "JOIN tickets tk ON tk.id = th.ticket_id\n"
-        . "WHERE a.id = ? AND te.thread_id = ? AND tk.user_id = ?\n"
+        . "WHERE a.id = ? AND te.thread_id = ? AND tk.user_id = ? AND tk.empresa_id = ?\n"
         . "LIMIT 1"
     );
-    $stmt->bind_param('iii', $aid, $thread_id, $uid);
+    $stmt->bind_param('iiii', $aid, $thread_id, $uid, $eid);
     $stmt->execute();
     $att = $stmt->get_result()->fetch_assoc();
     if (!$att) {
@@ -277,10 +288,10 @@ if ($thread_id > 0) {
         . "FROM thread_entries te\n"
         . "LEFT JOIN users u ON u.id = te.user_id\n"
         . "LEFT JOIN staff s ON s.id = te.staff_id\n"
-        . "WHERE te.thread_id = ? AND (te.is_internal IS NULL OR te.is_internal = 0)\n"
-        . "ORDER BY te.created ASC"
+        . "WHERE te.thread_id = ? AND (te.empresa_id = ? OR te.empresa_id IS NULL) AND (te.is_internal IS NULL OR te.is_internal = 0)\n"
+        . "ORDER BY te.created ASC, te.id ASC"
     );
-    $stmt->bind_param('i', $thread_id);
+    $stmt->bind_param('ii', $thread_id, $eid);
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
@@ -291,15 +302,26 @@ if ($thread_id > 0) {
         $entryIds = array_map(fn($e) => (int)$e['id'], $entries);
         $placeholders = implode(',', array_fill(0, count($entryIds), '?'));
         $types = str_repeat('i', count($entryIds));
-        $sql = "SELECT id, thread_entry_id, original_filename, mimetype, size FROM attachments WHERE thread_entry_id IN ($placeholders) ORDER BY id";
+        $attachmentsHasEmpresa = false;
+        $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
+        $attachmentsHasEmpresa = ($colA && $colA->num_rows > 0);
+
+        $sql = "SELECT id, thread_entry_id, original_filename, mimetype, size FROM attachments WHERE thread_entry_id IN ($placeholders)";
+        if ($attachmentsHasEmpresa) {
+            $sql .= " AND empresa_id = ?";
+            $types .= 'i';
+            $entryIds[] = (int)$eid;
+        }
+        $sql .= " ORDER BY id";
         $stmtA = $mysqli->prepare($sql);
         $stmtA->bind_param($types, ...$entryIds);
         $stmtA->execute();
         $resA = $stmtA->get_result();
         while ($a = $resA->fetch_assoc()) {
-            $eid = (int) $a['thread_entry_id'];
-            if (!isset($attachmentsByEntry[$eid])) $attachmentsByEntry[$eid] = [];
-            $attachmentsByEntry[$eid][] = $a;
+            $entryId = (int) ($a['thread_entry_id'] ?? 0);
+            if ($entryId <= 0) continue;
+            if (!isset($attachmentsByEntry[$entryId])) $attachmentsByEntry[$entryId] = [];
+            $attachmentsByEntry[$entryId][] = $a;
         }
     }
 }

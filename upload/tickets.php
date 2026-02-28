@@ -12,10 +12,13 @@ requireLogin('cliente');
 
 $user = getCurrentUser();
 
+$eid = (int)($_SESSION['empresa_id'] ?? 0);
+if ($eid <= 0) $eid = 1;
+
 $filter = $_GET['filter'] ?? 'open';
 if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');
-$where = 't.user_id = ?';
+$where = 't.user_id = ? AND t.empresa_id = ?';
 if ($filter === 'open') {
     $where .= ' AND t.closed IS NULL';
 } elseif ($filter === 'closed') {
@@ -41,9 +44,9 @@ $stmt = $mysqli->prepare($sql);
 $uid = (int) ($_SESSION['user_id'] ?? 0);
 if ($q !== '') {
     $like = '%' . $q . '%';
-    $stmt->bind_param('iss', $uid, $like, $like);
+    $stmt->bind_param('iiss', $uid, $eid, $like, $like);
 } else {
-    $stmt->bind_param('i', $uid);
+    $stmt->bind_param('ii', $uid, $eid);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -53,8 +56,8 @@ while ($row = $result->fetch_assoc()) {
 
 $countOpen = 0;
 $countClosed = 0;
-$stmtC = $mysqli->prepare('SELECT SUM(closed IS NULL) AS c_open, SUM(closed IS NOT NULL) AS c_closed FROM tickets WHERE user_id = ?');
-$stmtC->bind_param('i', $uid);
+$stmtC = $mysqli->prepare('SELECT SUM(closed IS NULL) AS c_open, SUM(closed IS NOT NULL) AS c_closed FROM tickets WHERE user_id = ? AND empresa_id = ?');
+$stmtC->bind_param('ii', $uid, $eid);
 $stmtC->execute();
 if ($r = $stmtC->get_result()->fetch_assoc()) {
     $countOpen = (int) ($r['c_open'] ?? 0);

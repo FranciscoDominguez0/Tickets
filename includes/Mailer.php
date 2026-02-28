@@ -11,52 +11,111 @@ class Mailer {
     /** @var string Último error si falla el envío */
     public static $lastError = '';
 
-    protected static $defaultAccountCache = null;
+    protected static $defaultAccountCache = [];
 
-    protected static function getDefaultEmailAccount() {
-        if (self::$defaultAccountCache !== null) return self::$defaultAccountCache;
+    protected static function getDefaultEmailAccount($empresaId = null) {
+        $eid = 0;
+        if ($empresaId !== null) {
+            $eid = (int)$empresaId;
+        } elseif (function_exists('empresaId')) {
+            $eid = (int)empresaId();
+        } elseif (isset($_SESSION['empresa_id'])) {
+            $eid = (int)$_SESSION['empresa_id'];
+        }
+        if ($eid <= 0) $eid = 1;
 
-        self::$defaultAccountCache = false;
-        if (!isset($GLOBALS['mysqli']) || !$GLOBALS['mysqli']) return self::$defaultAccountCache;
+        if (!isset($GLOBALS['mysqli']) || !$GLOBALS['mysqli']) return false;
         $mysqli = $GLOBALS['mysqli'];
 
         $chk = $mysqli->query("SHOW TABLES LIKE 'email_accounts'");
-        if (!$chk || $chk->num_rows < 1) return self::$defaultAccountCache;
+        if (!$chk || $chk->num_rows < 1) return false;
 
-        $res = $mysqli->query("SELECT * FROM email_accounts WHERE is_default = 1 ORDER BY id ASC LIMIT 1");
-        if ($res) {
-            $row = $res->fetch_assoc();
-            if (is_array($row) && !empty($row['email'])) {
-                self::$defaultAccountCache = $row;
-                return self::$defaultAccountCache;
+        $emailAccHasEmpresa = false;
+        $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
+        $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
+        $cacheKey = $emailAccHasEmpresa ? $eid : 0;
+
+        if (array_key_exists($cacheKey, self::$defaultAccountCache)) {
+            return self::$defaultAccountCache[$cacheKey];
+        }
+        self::$defaultAccountCache[$cacheKey] = false;
+
+        if ($emailAccHasEmpresa) {
+            $stmtD = $mysqli->prepare("SELECT * FROM email_accounts WHERE empresa_id = ? AND is_default = 1 ORDER BY id ASC LIMIT 1");
+            if ($stmtD) {
+                $stmtD->bind_param('i', $eid);
+                if ($stmtD->execute()) {
+                    $row = $stmtD->get_result()->fetch_assoc();
+                    if (is_array($row) && !empty($row['email'])) {
+                        self::$defaultAccountCache[$cacheKey] = $row;
+                        return self::$defaultAccountCache[$cacheKey];
+                    }
+                }
+            }
+        } else {
+            $res = $mysqli->query("SELECT * FROM email_accounts WHERE is_default = 1 ORDER BY id ASC LIMIT 1");
+            if ($res) {
+                $row = $res->fetch_assoc();
+                if (is_array($row) && !empty($row['email'])) {
+                    self::$defaultAccountCache[$cacheKey] = $row;
+                    return self::$defaultAccountCache[$cacheKey];
+                }
             }
         }
 
         $mailFrom = trim((string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : ''));
         if ($mailFrom !== '' && filter_var($mailFrom, FILTER_VALIDATE_EMAIL)) {
-            $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE email = ? ORDER BY id ASC LIMIT 1');
-            if ($stmt) {
-                $stmt->bind_param('s', $mailFrom);
-                if ($stmt->execute()) {
-                    $row = $stmt->get_result()->fetch_assoc();
-                    if (is_array($row) && !empty($row['email'])) {
-                        self::$defaultAccountCache = $row;
-                        return self::$defaultAccountCache;
+            if ($emailAccHasEmpresa) {
+                $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE empresa_id = ? AND email = ? ORDER BY id ASC LIMIT 1');
+                if ($stmt) {
+                    $stmt->bind_param('is', $eid, $mailFrom);
+                    if ($stmt->execute()) {
+                        $row = $stmt->get_result()->fetch_assoc();
+                        if (is_array($row) && !empty($row['email'])) {
+                            self::$defaultAccountCache[$cacheKey] = $row;
+                            return self::$defaultAccountCache[$cacheKey];
+                        }
+                    }
+                }
+            } else {
+                $stmt = $mysqli->prepare('SELECT * FROM email_accounts WHERE email = ? ORDER BY id ASC LIMIT 1');
+                if ($stmt) {
+                    $stmt->bind_param('s', $mailFrom);
+                    if ($stmt->execute()) {
+                        $row = $stmt->get_result()->fetch_assoc();
+                        if (is_array($row) && !empty($row['email'])) {
+                            self::$defaultAccountCache[$cacheKey] = $row;
+                            return self::$defaultAccountCache[$cacheKey];
+                        }
                     }
                 }
             }
         }
 
-        $resAny = $mysqli->query('SELECT * FROM email_accounts ORDER BY is_default DESC, id ASC LIMIT 1');
-        if ($resAny) {
-            $row = $resAny->fetch_assoc();
-            if (is_array($row) && !empty($row['email'])) {
-                self::$defaultAccountCache = $row;
-                return self::$defaultAccountCache;
+        if ($emailAccHasEmpresa) {
+            $stmtAny = $mysqli->prepare('SELECT * FROM email_accounts WHERE empresa_id = ? ORDER BY is_default DESC, id ASC LIMIT 1');
+            if ($stmtAny) {
+                $stmtAny->bind_param('i', $eid);
+                if ($stmtAny->execute()) {
+                    $row = $stmtAny->get_result()->fetch_assoc();
+                    if (is_array($row) && !empty($row['email'])) {
+                        self::$defaultAccountCache[$cacheKey] = $row;
+                        return self::$defaultAccountCache[$cacheKey];
+                    }
+                }
+            }
+        } else {
+            $resAny = $mysqli->query('SELECT * FROM email_accounts ORDER BY is_default DESC, id ASC LIMIT 1');
+            if ($resAny) {
+                $row = $resAny->fetch_assoc();
+                if (is_array($row) && !empty($row['email'])) {
+                    self::$defaultAccountCache[$cacheKey] = $row;
+                    return self::$defaultAccountCache[$cacheKey];
+                }
             }
         }
 
-        return self::$defaultAccountCache;
+        return self::$defaultAccountCache[$cacheKey];
     }
 
     protected static function getSystemDefaults() {

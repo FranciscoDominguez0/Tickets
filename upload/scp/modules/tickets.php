@@ -8,6 +8,15 @@ $reply_success = false;
 
 $eid = empresaId();
 
+$threadsHasEmpresa = false;
+$entriesHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    $colTh = $mysqli->query("SHOW COLUMNS FROM threads LIKE 'empresa_id'");
+    $threadsHasEmpresa = ($colTh && $colTh->num_rows > 0);
+    $colTe = $mysqli->query("SHOW COLUMNS FROM thread_entries LIKE 'empresa_id'");
+    $entriesHasEmpresa = ($colTe && $colTe->num_rows > 0);
+}
+
 // Tabla de tickets vinculados (si no existe, se crea bajo demanda)
 $ensureTicketLinksTable = function () use ($mysqli) {
     if (!isset($mysqli) || !$mysqli) return false;
@@ -483,16 +492,29 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
-                    $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+                    if ($threadsHasEmpresa) {
+                        $stmtThread = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
+                    } else {
+                        $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+                    }
                     if ($stmtThread) {
-                        $stmtThread->bind_param('i', $new_tid);
+                        if ($threadsHasEmpresa) {
+                            $stmtThread->bind_param('ii', $eid, $new_tid);
+                        } else {
+                            $stmtThread->bind_param('i', $new_tid);
+                        }
                         $stmtThread->execute();
                     }
                     $thread_id = (int) $mysqli->insert_id;
                     if ($body !== '') {
                         $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
-                        $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
-                        $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
+                        if ($entriesHasEmpresa) {
+                            $stmtE = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, 0, NOW())");
+                            $stmtE->bind_param('iiis', $eid, $thread_id, $staff_id_entry, $body);
+                        } else {
+                            $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
+                            $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
+                        }
                         $stmtE->execute();
                     }
 
@@ -672,14 +694,26 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
     if ($ticketView) {
         // Asegurar que exista un thread para este ticket
-        $stmt = $mysqli->prepare("SELECT id FROM threads WHERE ticket_id = ?");
-        $stmt->bind_param('i', $tid);
+        $stmt = $mysqli->prepare("SELECT id FROM threads WHERE ticket_id = ?" . ($threadsHasEmpresa ? " AND empresa_id = ?" : ""));
+        if ($threadsHasEmpresa) {
+            $stmt->bind_param('ii', $tid, $eid);
+        } else {
+            $stmt->bind_param('i', $tid);
+        }
         $stmt->execute();
         $threadRow = $stmt->get_result()->fetch_assoc();
         if (!$threadRow) {
-            $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+            if ($threadsHasEmpresa) {
+                $stmtThread = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
+            } else {
+                $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+            }
             if ($stmtThread) {
-                $stmtThread->bind_param('i', $tid);
+                if ($threadsHasEmpresa) {
+                    $stmtThread->bind_param('ii', $eid, $tid);
+                } else {
+                    $stmtThread->bind_param('i', $tid);
+                }
                 $stmtThread->execute();
             }
             $threadRow = ['id' => $mysqli->insert_id];
@@ -1048,8 +1082,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     // Copiar entradas del thread origen al thread destino (sin borrar las originales)
                     $origin_thread_id = (int)($thread_id ?? 0);
                     if ($origin_thread_id > 0 && $target_thread_id > 0) {
-                        $stmtCopy = $mysqli->prepare('INSERT INTO thread_entries (thread_id, user_id, staff_id, body, is_internal, created) SELECT ?, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ?');
-                        $stmtCopy->bind_param('ii', $target_thread_id, $origin_thread_id);
+                        if ($entriesHasEmpresa) {
+                            $stmtCopy = $mysqli->prepare('INSERT INTO thread_entries (empresa_id, thread_id, user_id, staff_id, body, is_internal, created) SELECT ?, ?, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ?');
+                            $stmtCopy->bind_param('iii', $eid, $target_thread_id, $origin_thread_id);
+                        } else {
+                            $stmtCopy = $mysqli->prepare('INSERT INTO thread_entries (thread_id, user_id, staff_id, body, is_internal, created) SELECT ?, user_id, staff_id, body, is_internal, created FROM thread_entries WHERE thread_id = ?');
+                            $stmtCopy->bind_param('ii', $target_thread_id, $origin_thread_id);
+                        }
                         $stmtCopy->execute();
                     }
 
@@ -1285,10 +1324,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 } else {
                     $staff_id = (int) ($_SESSION['staff_id'] ?? 0);
 
-                    $stmt = $mysqli->prepare(
-                        "INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, NOW())"
-                    );
-                    $stmt->bind_param('iisi', $thread_id, $staff_id, $body, $is_internal);
+                    if ($entriesHasEmpresa) {
+                        $stmt = $mysqli->prepare(
+                            "INSERT INTO thread_entries (empresa_id, thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, ?, NOW())"
+                        );
+                        $stmt->bind_param('iiisi', $eid, $thread_id, $staff_id, $body, $is_internal);
+                    } else {
+                        $stmt = $mysqli->prepare(
+                            "INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, NOW())"
+                        );
+                        $stmt->bind_param('iisi', $thread_id, $staff_id, $body, $is_internal);
+                    }
                     if ($stmt->execute()) {
                         $entry_id = (int) $mysqli->insert_id;
                         // Actualizar estado del ticket
