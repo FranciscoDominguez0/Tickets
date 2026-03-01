@@ -111,8 +111,9 @@ function requireLogin($type = 'user') {
     if ($type === 'agente' && !isset($_SESSION['staff_id'])) {
         // Detectar si estamos en upload/scp/ o en otro lugar
         $currentPath = $_SERVER['PHP_SELF'];
+        $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
         if (strpos($currentPath, '/upload/scp/') !== false) {
-            header('Location: login.php');
+            header('Location: ' . ($isSuperadmin ? '../login.php' : 'login.php'));
         } else {
             header('Location: ../upload/scp/login.php');
         }
@@ -174,6 +175,7 @@ function requireLogin($type = 'user') {
 
         $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
         $isScp = (strpos($currentPath, '/upload/scp/') !== false);
+        $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
         if ($isScp && (int)($_SESSION['read_only'] ?? 0) === 1) {
             $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
             if ($method === 'POST') {
@@ -204,8 +206,9 @@ function requireLogin($type = 'user') {
                     session_destroy();
                 }
                 $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
                 if (strpos($currentPath, '/upload/scp/') !== false) {
-                    header('Location: login.php?msg=timeout');
+                    header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
                 } else {
                     header('Location: ../upload/scp/login.php?msg=timeout');
                 }
@@ -225,8 +228,9 @@ function requireLogin($type = 'user') {
                     session_destroy();
                 }
                 $currentPath = $_SERVER['PHP_SELF'];
+                $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
                 if (strpos($currentPath, '/upload/scp/') !== false) {
-                    header('Location: login.php?msg=timeout');
+                    header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
                 } else {
                     header('Location: ../upload/scp/login.php?msg=timeout');
                 }
@@ -244,8 +248,9 @@ function requireLogin($type = 'user') {
                     session_destroy();
                 }
                 $currentPath = $_SERVER['PHP_SELF'];
+                $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
                 if (strpos($currentPath, '/upload/scp/') !== false) {
-                    header('Location: login.php?msg=ip');
+                    header('Location: ' . ($isSuperadmin ? '../login.php?msg=ip' : 'login.php?msg=ip'));
                 } else {
                     header('Location: ../upload/scp/login.php?msg=ip');
                 }

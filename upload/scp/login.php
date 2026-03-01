@@ -29,7 +29,7 @@ $success = '';
 
 $loginMsg = (string)($_GET['msg'] ?? '');
 if ($loginMsg === 'timeout') {
-    $error = 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.';
+    $error = 'Tu sesión expiró por inactividad';
 } elseif ($loginMsg === 'ip') {
     $error = 'Tu sesión se cerró por cambio de IP. Inicia sesión nuevamente.';
 }

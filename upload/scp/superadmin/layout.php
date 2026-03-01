@@ -61,6 +61,19 @@ $content = (string)($content ?? '');
                     </a>
                 </li>
                 <li>
+                    <a href="superadmins.php" class="sidebar-link <?php echo $currentRoute === 'superadmins' ? 'active' : ''; ?>">
+                        <span class="icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16 21V19A4 4 0 0 0 12 15H7A4 4 0 0 0 3 19V21" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9.5 11A4 4 0 1 0 9.5 3A4 4 0 1 0 9.5 11Z" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M20 8V14" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M23 11H17" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        Superadmins
+                    </a>
+                </li>
+                <li>
                     <a href="empresas.php" class="sidebar-link <?php echo $currentRoute === 'empresas' ? 'active' : ''; ?>">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
