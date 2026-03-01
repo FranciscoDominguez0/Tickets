@@ -282,6 +282,34 @@ ob_start();
     </div>
 <?php endif; ?>
 
+<script>
+    (function () {
+        function autoCloseAlerts() {
+            var alerts = document.querySelectorAll('.alert.alert-dismissible');
+            if (!alerts || alerts.length === 0) return;
+            window.setTimeout(function () {
+                alerts.forEach(function (el) {
+                    try {
+                        if (window.bootstrap && bootstrap.Alert) {
+                            var inst = bootstrap.Alert.getOrCreateInstance(el);
+                            inst.close();
+                        } else {
+                            el.classList.remove('show');
+                            window.setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 200);
+                        }
+                    } catch (e) {}
+                });
+            }, 4500);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', autoCloseAlerts);
+        } else {
+            autoCloseAlerts();
+        }
+    })();
+</script>
+
 <div class="card pro-card mt-3">
     <div class="card-header">
         <span class="card-title-sm"><i class="bi bi-people me-1"></i>Listado</span>
@@ -332,12 +360,18 @@ ob_start();
                                     >
                                         Editar
                                     </button>
-                                    <form method="post" onsubmit="return confirm('¿Eliminar este superadmin?');">
-                                        <?php csrfField(); ?>
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="id" value="<?php echo (int)($r['id'] ?? 0); ?>">
-                                        <button class="btn btn-sm btn-outline-danger" type="submit" <?php echo ((int)($r['id'] ?? 0) === $meId) ? 'disabled' : ''; ?>>Eliminar</button>
-                                    </form>
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger btnDeleteSuperadmin"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteSuperadminModal"
+                                        data-id="<?php echo (int)($r['id'] ?? 0); ?>"
+                                        data-username="<?php echo htmlspecialchars((string)($r['username'] ?? ''), ENT_QUOTES); ?>"
+                                        data-email="<?php echo htmlspecialchars((string)($r['email'] ?? ''), ENT_QUOTES); ?>"
+                                        <?php echo ((int)($r['id'] ?? 0) === $meId) ? 'disabled' : ''; ?>
+                                    >
+                                        Eliminar
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -345,6 +379,38 @@ ob_start();
                 <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteSuperadminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="deleteSuperadminForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar superadmin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php csrfField(); ?>
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" id="delSaId" value="">
+                    <div class="alert alert-warning mb-0">
+                        <div class="fw-semibold mb-1">Esta acción no se puede deshacer.</div>
+                        <div>
+                            Vas a eliminar:
+                            <div class="mt-2">
+                                <div><strong>Usuario:</strong> <span id="delSaUsername"></span></div>
+                                <div><strong>Email:</strong> <span id="delSaEmail"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -418,6 +484,10 @@ ob_start();
         var submitEl = document.getElementById('saSubmit');
         var btnCreate = document.getElementById('btnOpenCreate');
 
+        var delIdEl = document.getElementById('delSaId');
+        var delUsernameEl = document.getElementById('delSaUsername');
+        var delEmailEl = document.getElementById('delSaEmail');
+
         function setCreate() {
             titleEl.textContent = 'Nuevo superadmin';
             actionEl.value = 'create';
@@ -459,6 +529,14 @@ ob_start();
         document.querySelectorAll('.btnEditSuperadmin').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 setEdit(btn);
+            });
+        });
+
+        document.querySelectorAll('.btnDeleteSuperadmin').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (delIdEl) delIdEl.value = btn.getAttribute('data-id') || '';
+                if (delUsernameEl) delUsernameEl.textContent = btn.getAttribute('data-username') || '';
+                if (delEmailEl) delEmailEl.textContent = btn.getAttribute('data-email') || '';
             });
         });
 

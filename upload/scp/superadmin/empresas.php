@@ -17,6 +17,20 @@ ob_start();
 
 global $mysqli;
 
+$alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+$alwaysActiveIds = [];
+if ($alwaysRaw !== '') {
+    foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
+        if ($v === '') continue;
+        if (is_numeric($v)) {
+            $n = (int)$v;
+            if ($n > 0) $alwaysActiveIds[$n] = true;
+        }
+    }
+}
+// La empresa principal siempre queda activa
+$alwaysActiveIds[1] = true;
+
 /* ── Estado de mensajes ──────────────────────────────────── */
 $err  = '';
 $msg  = '';
@@ -201,6 +215,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($nombre === '') {
         $err = 'El nombre es obligatorio.';
     } else {
+        $alwaysActiveNew = isset($_POST['always_active']) && (string)$_POST['always_active'] === '1';
+        if ($empresaId > 1) {
+            if ($alwaysActiveNew) {
+                $alwaysActiveIds[$empresaId] = true;
+            } else {
+                unset($alwaysActiveIds[$empresaId]);
+            }
+        }
+        $alwaysActiveIds[1] = true;
+        $newSetting = implode(',', array_map('intval', array_keys($alwaysActiveIds)));
+        setAppSetting('billing.always_active_empresas', $newSetting);
+
         $inicioVal = $inicio !== '' ? $inicio : null;
         $vencVal   = $venc   !== '' ? $venc   : null;
 
@@ -451,6 +477,7 @@ function badgeDias(?int $d): string {
                         $isBlocked = (int)($e['bloqueada'] ?? 0) === 1;
                         $estadoPago= (string)($e['estado_pago'] ?? '');
                         $diasNum   = ($e['dias_restantes'] ?? null) !== null ? (int)$e['dias_restantes'] : null;
+                        $isAlwaysActive = isset($alwaysActiveIds[$id]);
                     ?>
                     <tr class="<?php echo ($selectedId === $id) ? 'row-selected' : ''; ?>"
                         onclick="window.location='empresas.php?id=<?php echo $id; ?>'">
@@ -510,6 +537,7 @@ function badgeDias(?int $d): string {
                                     data-empresa-vencimiento="<?php echo html((string)($e['fecha_vencimiento'] ?? '')); ?>"
                                     data-empresa-gracia="<?php echo html((string)($e['dias_gracia'] ?? '0')); ?>"
                                     data-empresa-precio="<?php echo html((string)($e['precio_mensual'] ?? '0')); ?>"
+                                    data-empresa-alwaysactive="<?php echo $isAlwaysActive ? '1' : '0'; ?>"
                                     title="Editar">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
@@ -595,6 +623,7 @@ function badgeDias(?int $d): string {
             </div>
         <?php else:
             $detDiasNum = ($empresa['dias_restantes'] ?? null) !== null ? (int)$empresa['dias_restantes'] : null;
+            $isAlwaysActive = isset($alwaysActiveIds[$eid]);
         ?>
         <div class="row g-3">
 
@@ -703,6 +732,20 @@ function badgeDias(?int $d): string {
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Siempre activa</div>
+                            <div class="detail-value">
+                                <?php if ($isAlwaysActive): ?>
+                                    <span class="badge-pill badge bg-success bg-opacity-10 text-success">
+                                        <i class="bi bi-check2 me-1"></i>Sí
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge-pill badge bg-secondary bg-opacity-10 text-secondary">
+                                        <i class="bi bi-x me-1"></i>No
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -785,6 +828,13 @@ function badgeDias(?int $d): string {
                         <div class="col-12">
                             <label class="form-label">Nombre</label>
                             <input type="text" name="nombre" id="editEmpresaNombre" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="always_active" value="1" id="editEmpresaAlwaysActive">
+                                <label class="form-check-label" for="editEmpresaAlwaysActive">Siempre activa (no vence por falta de pago)</label>
+                            </div>
+                            <div class="form-text">La empresa principal (ID 1) siempre permanece activa.</div>
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label">Precio mensual</label>
@@ -939,6 +989,18 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('editEmpresaInicio').value = btn.getAttribute('data-empresa-inicio') || '';
             document.getElementById('editEmpresaVencimiento').value = btn.getAttribute('data-empresa-vencimiento') || '';
             document.getElementById('editEmpresaGracia').value = btn.getAttribute('data-empresa-gracia') || '0';
+
+            var eid = parseInt(btn.getAttribute('data-empresa-id') || '0', 10);
+            var chk = document.getElementById('editEmpresaAlwaysActive');
+            if (chk) {
+                if (eid === 1) {
+                    chk.checked = true;
+                    chk.disabled = true;
+                } else {
+                    chk.disabled = false;
+                    chk.checked = (btn.getAttribute('data-empresa-alwaysactive') === '1');
+                }
+            }
         });
     }
 
@@ -946,7 +1008,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (blockModal) {
         blockModal.addEventListener('show.bs.modal', function (event) {
             var btn = event.relatedTarget;
+
             if (!btn) return;
+            document.getElementById('blockEmpresaId').value = btn.getAttribute('data-empresa-id') || '';
             var eid = btn.getAttribute('data-empresa-id') || '';
             document.getElementById('blockEmpresaId').value = eid;
             document.getElementById('blockEmpresaNombre').textContent = btn.getAttribute('data-empresa-nombre') || '';

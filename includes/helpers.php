@@ -268,6 +268,24 @@ function syncEmpresaBillingStatus($empresaId) {
     if ($empresaId <= 0) return false;
     if (!isset($mysqli) || !$mysqli) return false;
 
+    $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+    $alwaysIds = [];
+    if ($alwaysRaw !== '') {
+        foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
+            if ($v === '') continue;
+            if (is_numeric($v)) {
+                $n = (int)$v;
+                if ($n > 0) $alwaysIds[$n] = true;
+            }
+        }
+    }
+    if (isset($alwaysIds[$empresaId])) {
+        try {
+            $mysqli->query("UPDATE empresas SET estado_pago = 'al_dia', bloqueada = 0, motivo_bloqueo = NULL WHERE id = {$empresaId}");
+        } catch (Throwable $e) {}
+        return true;
+    }
+
     try {
         $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
         $hasEmpresas = ($res && $res->num_rows > 0);
@@ -338,11 +356,27 @@ function syncAllEmpresasBillingStatus() {
         $hasEmpresas = ($res && $res->num_rows > 0);
         if (!$hasEmpresas) return false;
 
+        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysIds = [];
+        if ($alwaysRaw !== '') {
+            foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
+                if ($v === '') continue;
+                if (is_numeric($v)) {
+                    $n = (int)$v;
+                    if ($n > 0) $alwaysIds[$n] = true;
+                }
+            }
+        }
+        $notAlwaysSql = '';
+        if (!empty($alwaysIds)) {
+            $notAlwaysSql = ' AND id NOT IN (' . implode(',', array_map('intval', array_keys($alwaysIds))) . ')';
+        }
+
         // Al vencer: pasa a suspendido (sin bloquear)
         $mysqli->query("UPDATE empresas SET estado_pago = 'suspendido'
                         WHERE fecha_vencimiento IS NOT NULL
                           AND DATEDIFF(fecha_vencimiento, CURDATE()) <= 0
-                          AND estado_pago = 'al_dia'");
+                          AND estado_pago = 'al_dia'{$notAlwaysSql}");
 
         // Luego de 3 días desde el vencimiento: bloquear (mantiene suspendido)
         $mysqli->query("UPDATE empresas
@@ -351,7 +385,11 @@ function syncAllEmpresasBillingStatus() {
                         WHERE fecha_vencimiento IS NOT NULL
                           AND DATEDIFF(CURDATE(), fecha_vencimiento) >= 3
                           AND estado_pago = 'suspendido'
-                          AND bloqueada = 0");
+                          AND bloqueada = 0{$notAlwaysSql}");
+
+        if (!empty($alwaysIds)) {
+            $mysqli->query("UPDATE empresas SET estado_pago = 'al_dia', bloqueada = 0, motivo_bloqueo = NULL WHERE id IN (" . implode(',', array_map('intval', array_keys($alwaysIds))) . ")");
+        }
 
         sendBillingDueNotifications();
 
@@ -368,6 +406,18 @@ function sendBillingDueNotifications() {
     try {
         $enabled = (string)getAppSetting('billing.notice_enabled', '1');
         if ($enabled !== '1') return true;
+
+        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysIds = [];
+        if ($alwaysRaw !== '') {
+            foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
+                if ($v === '') continue;
+                if (is_numeric($v)) {
+                    $n = (int)$v;
+                    if ($n > 0) $alwaysIds[$n] = true;
+                }
+            }
+        }
 
         if (!ensureBillingNoticeLogTable()) return false;
 
@@ -404,6 +454,7 @@ function sendBillingDueNotifications() {
              . "WHERE fecha_vencimiento IS NOT NULL\n"
              . "  AND estado_pago = 'al_dia'\n"
              . "  AND bloqueada = 0\n"
+             . (!empty($alwaysIds) ? ('  AND id NOT IN (' . implode(',', array_map('intval', array_keys($alwaysIds))) . ')\n') : '')
              . "  AND DATEDIFF(fecha_vencimiento, CURDATE()) IN ($in)";
 
         $res = $mysqli->query($sql);
