@@ -58,9 +58,24 @@ $ensureRolesTable = function () use ($mysqli) {
 
 $ensureRolesTable();
 
+$rolesHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
+        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $rolesHasEmpresaId = false;
+    }
+}
+
 $enabledRoles = [];
 if (isset($mysqli) && $mysqli) {
-    $resRoles = $mysqli->query('SELECT name FROM roles WHERE is_enabled = 1 ORDER BY name');
+    $sqlRoles = 'SELECT name FROM roles WHERE is_enabled = 1';
+    if ($rolesHasEmpresaId) {
+        $sqlRoles .= ' AND empresa_id = ' . (int)$eid;
+    }
+    $sqlRoles .= ' ORDER BY name';
+    $resRoles = $mysqli->query($sqlRoles);
     if ($resRoles) {
         while ($r = $resRoles->fetch_assoc()) {
             $name = trim((string)($r['name'] ?? ''));
@@ -69,13 +84,23 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
-$isValidEnabledRole = function (string $role) use ($mysqli) {
+$isValidEnabledRole = function (string $role) use ($mysqli, $eid, $rolesHasEmpresaId) {
     $role = trim($role);
     if ($role === '') return false;
     if (!isset($mysqli) || !$mysqli) return false;
-    $stmt = $mysqli->prepare('SELECT is_enabled FROM roles WHERE name = ? LIMIT 1');
+    $sql = 'SELECT is_enabled FROM roles WHERE name = ?';
+    if ($rolesHasEmpresaId) {
+        $sql .= ' AND empresa_id = ?';
+    }
+    $sql .= ' LIMIT 1';
+
+    $stmt = $mysqli->prepare($sql);
     if (!$stmt) return false;
-    $stmt->bind_param('s', $role);
+    if ($rolesHasEmpresaId) {
+        $stmt->bind_param('si', $role, $eid);
+    } else {
+        $stmt->bind_param('s', $role);
+    }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     return $row && (int)($row['is_enabled'] ?? 0) === 1;
