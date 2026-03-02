@@ -186,11 +186,6 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
                 <i class="bi bi-calendar3 me-1"></i><?php echo date('d M Y'); ?>
             </span>
-            <?php if ($dbName !== ''): ?>
-                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">
-                    <i class="bi bi-database me-1"></i><?php echo html($dbName); ?>
-                </span>
-            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -253,7 +248,6 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
         <?php if (!$hasEmpresas || !$hasPagos): ?>
             <div class="alert alert-info mb-0">
                 Verifica que existan las tablas <strong>empresas</strong> y <strong>pagos_empresas</strong>.
-                <?php if ($dbName !== ''): ?> BD actual: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
             </div>
         <?php else: ?>
             <form method="post">
@@ -327,7 +321,6 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
         <?php if (!$hasPagos): ?>
             <div class="alert alert-info m-3 mb-0">
                 No se pudo acceder a la tabla <strong>pagos_empresas</strong>.
-                <?php if ($dbName !== ''): ?> BD: <strong><?php echo html($dbName); ?></strong><?php endif; ?>
             </div>
         <?php else: ?>
         <div class="table-responsive">

@@ -834,7 +834,6 @@ function badgeDias(?int $d): string {
                                 <input class="form-check-input" type="checkbox" name="always_active" value="1" id="editEmpresaAlwaysActive">
                                 <label class="form-check-label" for="editEmpresaAlwaysActive">Siempre activa (no vence por falta de pago)</label>
                             </div>
-                            <div class="form-text">La empresa principal (ID 1) siempre permanece activa.</div>
                         </div>
                         <div class="col-12 col-md-4">
                             <label class="form-label">Precio mensual</label>

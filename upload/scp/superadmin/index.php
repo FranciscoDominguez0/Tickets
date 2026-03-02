@@ -236,11 +236,6 @@ $kpiCards = [
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <?php if ($dbName !== ''): ?>
-                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">
-                    <i class="bi bi-database me-1"></i><?= html($dbName) ?>
-                </span>
-            <?php endif; ?>
             <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
                 <i class="bi bi-calendar3 me-1"></i><?= date('d M Y') ?>
             </span>
@@ -317,8 +312,8 @@ $kpiCards = [
 <!-- ══ GRÁFICAS FILA 2: Donut + Pagos + Crecimiento ═ -->
 <p class="section-title"><i class="bi bi-pie-chart"></i> Distribución y crecimiento</p>
 
-<div class="row g-3 mb-2">
-    <div class="col-xl-3">
+<div class="row g-3 mb-2 justify-content-center">
+    <div class="col-12 col-lg-6 col-xl-5">
         <div class="card chart-card shadow-sm h-100">
             <div class="card-header"><span class="chart-title">Estado empresas</span></div>
             <div class="card-body d-flex flex-column align-items-center justify-content-center py-3">
@@ -330,31 +325,23 @@ $kpiCards = [
                     </div>
                     <div class="vr"></div>
                     <div class="text-center">
-                        <div class="donut-stat-num text-warning"><?= $kpiVencidas ?></div>
+                        <div class="donut-stat-num text-primary"><?= $kpiVencidas ?></div>
                         <div class="donut-stat-label">Vencidas</div>
                     </div>
                     <div class="vr"></div>
                     <div class="text-center">
-                        <div class="donut-stat-num text-danger"><?= $kpiBloqueadas ?></div>
+                        <div class="donut-stat-num text-primary"><?= $kpiBloqueadas ?></div>
                         <div class="donut-stat-label">Bloqueadas</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-3">
+    <div class="col-12 col-lg-6 col-xl-6">
         <div class="card chart-card shadow-sm h-100">
             <div class="card-header"><span class="chart-title">Distribución de pagos</span></div>
             <div class="card-body d-flex flex-column justify-content-center py-3">
                 <canvas id="pagosDistChart" style="max-height:160px"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3">
-        <div class="card chart-card shadow-sm h-100">
-            <div class="card-header"><span class="chart-title">Crecimiento clientes</span></div>
-            <div class="card-body pt-3 pb-2">
-                <canvas id="growthChart" style="max-height:190px"></canvas>
             </div>
         </div>
     </div>

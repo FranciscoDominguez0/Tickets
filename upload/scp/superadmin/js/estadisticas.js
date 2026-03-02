@@ -121,8 +121,8 @@
             type:'doughnut',
             data:{labels:['Activas','Vencidas','Bloqueadas'],datasets:[{
                 data:[d.kpiActivas||0,d.kpiVencidas||0,d.kpiBloqueadas||0],
-                backgroundColor:[C.primary,C.warning,C.danger],
-                hoverBackgroundColor:['#0b5ed7','#e0a800','#b02a37'],
+                backgroundColor:[C.primary,'#3b82f6','#60a5fa'],
+                hoverBackgroundColor:['#0b5ed7','#2563eb','#3b82f6'],
                 borderWidth:3, borderColor:'#fff', hoverOffset:4
             }]},
             options:{cutout:'72%',plugins:{legend:{display:false},tooltip:TT}}
@@ -192,7 +192,7 @@
             type:'bar',
             data:{labels:['Al día','Vencido','Suspendido'],datasets:[{
                 data:[d.pagosAlDia||0,d.pagosVencidos||0,d.pagosSuspendidos||0],
-                backgroundColor:[C.success,C.warning,C.danger],
+                backgroundColor:[C.primary,'#3b82f6','#60a5fa'],
                 borderRadius:6, borderSkipped:false
             }]},
             options:{indexAxis:'y',
