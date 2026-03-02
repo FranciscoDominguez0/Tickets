@@ -85,6 +85,47 @@ if ($_POST) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
+    <?php
+        $uploadRootAbs = realpath(__DIR__ . '/..');
+        $companyLogoRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+        $companyLogoV = 1;
+        $pLogo = parse_url($companyLogoRaw, PHP_URL_PATH);
+        if (is_string($pLogo) && $pLogo !== '' && is_string($uploadRootAbs) && $uploadRootAbs !== '') {
+            $pos = strpos($pLogo, '/upload/');
+            if ($pos !== false) {
+                $rel = substr($pLogo, $pos + 8);
+                $fs = rtrim($uploadRootAbs, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
+                if (is_file($fs)) {
+                    $companyLogoV = (int)@filemtime($fs);
+                    if ($companyLogoV <= 0) $companyLogoV = 1;
+                }
+            }
+        }
+        $companyLogo = $companyLogoRaw . (strpos($companyLogoRaw, '?') !== false ? '&' : '?') . 'v=' . (string)$companyLogoV;
+
+        $bgMode = (string)getAppSetting('login.background_mode', 'default');
+        $loginBgRaw = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
+        $loginBgV = 1;
+        $pBg = parse_url($loginBgRaw, PHP_URL_PATH);
+        if (is_string($pBg) && $pBg !== '' && is_string($uploadRootAbs) && $uploadRootAbs !== '') {
+            $pos = strpos($pBg, '/upload/');
+            if ($pos !== false) {
+                $rel = substr($pBg, $pos + 8);
+                $fs = rtrim($uploadRootAbs, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
+                if (is_file($fs)) {
+                    $loginBgV = (int)@filemtime($fs);
+                    if ($loginBgV <= 0) $loginBgV = 1;
+                }
+            }
+        }
+        $loginBg = $loginBgRaw !== '' ? ($loginBgRaw . (strpos($loginBgRaw, '?') !== false ? '&' : '?') . 'v=' . (string)$loginBgV) : '';
+    ?>
+    <?php if ($companyLogo !== ''): ?>
+        <link rel="preload" as="image" href="<?php echo html($companyLogo); ?>">
+    <?php endif; ?>
+    <?php if ($loginBg !== ''): ?>
+        <link rel="preload" as="image" href="<?php echo html($loginBg); ?>">
+    <?php endif; ?>
     <style>
         .agent-login-brand {
             display: flex;
@@ -112,8 +153,6 @@ if ($_POST) {
     </style>
 </head>
 <?php
-$bgMode = (string)getAppSetting('login.background_mode', 'default');
-$loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');') : '';
 ?>
 <body class="agent-login" style="<?php echo $bodyStyle; ?>">
@@ -130,12 +169,9 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
     <div class="agent-login-container">
         <!-- PANEL DE LOGIN (GLASSMORPHISM) -->
         <div class="agent-login-panel">
-            <?php
-                $companyLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
-            ?>
             <?php if ($companyLogo !== ''): ?>
                 <div class="agent-login-brand">
-                    <img src="<?php echo html($companyLogo); ?>" alt="<?php echo html((string)getAppSetting('company.name', APP_NAME)); ?>">
+                    <img src="<?php echo html($companyLogo); ?>" alt="<?php echo html((string)getAppSetting('company.name', APP_NAME)); ?>" loading="eager" fetchpriority="high" decoding="async">
                 </div>
                 <div class="agent-login-subtext">Acceso de Agentes</div>
             <?php endif; ?>

@@ -283,7 +283,34 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <?php
         $navUserName = trim((string)($user['name'] ?? ''));
         $companyName = trim((string)getAppSetting('company.name', ''));
-        $companyLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+        $companyLogoUrlRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+        $companyLogoV = 1;
+        try {
+            $pLogo = parse_url($companyLogoUrlRaw, PHP_URL_PATH);
+            if (is_string($pLogo) && $pLogo !== '') {
+                $pos = strpos($pLogo, '/upload/');
+                if ($pos !== false) {
+                    $rel = substr($pLogo, $pos + 8);
+                    $fs = rtrim((string)__DIR__, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
+                    if (is_file($fs)) {
+                        $companyLogoV = (int)@filemtime($fs);
+                        if ($companyLogoV <= 0) $companyLogoV = 1;
+                    }
+                } else {
+                    $pos2 = strpos($pLogo, '/publico/');
+                    if ($pos2 !== false) {
+                        $rel2 = substr($pLogo, $pos2 + 9);
+                        $fs2 = rtrim((string)realpath(__DIR__ . '/..'), '/\\') . DIRECTORY_SEPARATOR . 'publico' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel2, '/'));
+                        if (is_file($fs2)) {
+                            $companyLogoV = (int)@filemtime($fs2);
+                            if ($companyLogoV <= 0) $companyLogoV = 1;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+        }
+        $companyLogoUrl = $companyLogoUrlRaw . (strpos($companyLogoUrlRaw, '?') !== false ? '&' : '?') . 'v=' . (string)$companyLogoV;
         $navInitials = '';
         $parts = preg_split('/\s+/', trim($navUserName));
         if (!empty($parts[0])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[0], 0, 1) : substr($parts[0], 0, 1));

@@ -886,6 +886,28 @@ function toAppAbsoluteUrl($path) {
 
 function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
     $val = (string)getAppSetting($settingKey, '');
+    if ($val === '' && function_exists('empresaId')) {
+        $eid = (int)empresaId();
+        if ($eid !== 1) {
+            global $mysqli;
+            if (isset($mysqli) && $mysqli) {
+                try {
+                    if (ensureAppSettingsTable()) {
+                        $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `empresa_id` = 1 AND `key` = ? LIMIT 1');
+                        if ($stmt) {
+                            $k = (string)$settingKey;
+                            $stmt->bind_param('s', $k);
+                            if ($stmt->execute()) {
+                                $row = $stmt->get_result()->fetch_assoc();
+                                $val = (string)($row['value'] ?? '');
+                            }
+                        }
+                    }
+                } catch (Throwable $e) {
+                }
+            }
+        }
+    }
     if ($val !== '') {
         return toAppAbsoluteUrl($val);
     }
@@ -895,6 +917,30 @@ function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
 function getCompanyLogoUrl($fallbackRelativePath = 'publico/img/vigitec-logo.png') {
     $mode = (string)getAppSetting('company.logo_mode', '');
     $logo = (string)getAppSetting('company.logo', '');
+
+    if (($mode === '' && $logo === '') && function_exists('empresaId')) {
+        $eid = (int)empresaId();
+        if ($eid !== 1) {
+            global $mysqli;
+            if (isset($mysqli) && $mysqli) {
+                try {
+                    if (ensureAppSettingsTable()) {
+                        $stmt = $mysqli->prepare("SELECT `key`, `value` FROM app_settings WHERE `empresa_id` = 1 AND `key` IN ('company.logo_mode','company.logo')");
+                        if ($stmt && $stmt->execute()) {
+                            $res = $stmt->get_result();
+                            while ($row = $res->fetch_assoc()) {
+                                $k = (string)($row['key'] ?? '');
+                                $v = (string)($row['value'] ?? '');
+                                if ($k === 'company.logo_mode' && $mode === '') $mode = $v;
+                                if ($k === 'company.logo' && $logo === '') $logo = $v;
+                            }
+                        }
+                    }
+                } catch (Throwable $e) {
+                }
+            }
+        }
+    }
 
     if ($mode === '') {
         $mode = $logo !== '' ? 'custom' : 'default';

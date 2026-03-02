@@ -83,14 +83,15 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
+    <?php $loginCssV = (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: 1); ?>
+    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo $loginCssV; ?>">
 </head>
 <?php
 $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
 $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== ''
-    ? ('background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
+    ? ('background-color: #f6f7fb; background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
     : '';
 ?>
 <body style="<?php echo $bodyStyle; ?>">
@@ -232,6 +233,27 @@ $bodyStyle = $loginBg !== ''
             btn.classList.add('loading');
             btn.textContent = 'Verificando...';
         });
+
+        // Auto-ocultar alertas
+        (function () {
+            try {
+                var alerts = document.querySelectorAll('.login-form .alert');
+                if (!alerts || !alerts.length) return;
+                setTimeout(function () {
+                    try {
+                        alerts.forEach(function (el) {
+                            try {
+                                el.style.transition = 'opacity 300ms ease';
+                                el.style.opacity = '0';
+                                setTimeout(function () {
+                                    try { el.remove(); } catch (e2) { if (el && el.parentNode) el.parentNode.removeChild(el); }
+                                }, 320);
+                            } catch (e1) {}
+                        });
+                    } catch (e3) {}
+                }, 4500);
+            } catch (e4) {}
+        })();
     </script>
 </body>
 </html>
