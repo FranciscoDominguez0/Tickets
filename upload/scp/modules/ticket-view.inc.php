@@ -15,10 +15,52 @@ $backUrl = '';
 if (isset($_GET['back'])) {
     $candidate = trim((string)$_GET['back']);
     if ($candidate !== '') {
-        $candidate = ltrim($candidate, '/');
-        $backUrl = (string)toAppAbsoluteUrl('upload/scp/' . $candidate);
+        // Permitir 'tickets.php?...' o una URL/ruta completa que contenga '/upload/scp/'
+        $path = (string)parse_url($candidate, PHP_URL_PATH);
+        if ($path === '') {
+            $path = $candidate;
+        }
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        $needle = 'upload/scp/';
+        $pos = strpos($path, $needle);
+        if ($pos !== false) {
+            $path = substr($path, $pos + strlen($needle));
+        }
+        $path = trim($path);
+
+        $query = (string)parse_url($candidate, PHP_URL_QUERY);
+        $rel = $path . ($query !== '' ? ('?' . $query) : '');
+        $rel = trim($rel);
+        if ($rel !== '') {
+            $backUrl = (string)toAppAbsoluteUrl('upload/scp/' . $rel);
+        }
     }
 }
+
+if ($backUrl === '') {
+    $ref = trim((string)($_SERVER['HTTP_REFERER'] ?? ''));
+    if ($ref !== '') {
+        $appBase = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/');
+        if ($appBase !== '' && str_starts_with($ref, $appBase)) {
+            $refPath = (string)parse_url($ref, PHP_URL_PATH);
+            $refQuery = (string)parse_url($ref, PHP_URL_QUERY);
+            $refRel = ltrim($refPath, '/');
+            if (str_starts_with($refRel, 'upload/scp/')) {
+                $candidate = substr($refRel, strlen('upload/scp/'));
+                if ($refQuery !== '') {
+                    $candidate .= '?' . $refQuery;
+                }
+                $candidate = trim($candidate);
+                if ($candidate !== '' && !str_starts_with($candidate, 'tickets.php?id=' . (string)$tid)) {
+                    $backUrl = (string)toAppAbsoluteUrl('upload/scp/' . $candidate);
+                }
+            }
+        }
+    }
+}
+
+$backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
 ?>
 
 <div class="ticket-view-wrap">
@@ -50,7 +92,7 @@ if (isset($_GET['back'])) {
         ?>
 
         <div class="ticket-view-actions">
-            <a href="<?php echo html($backUrl !== '' ? $backUrl : ('users.php?id=' . (int)$t['user_id'])); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
+            <a href="<?php echo html($backUrlFinal); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
             <a href="users.php?id=<?php echo (int)$t['user_id']; ?>" class="btn-icon" title="Guardar"><i class="bi bi-save"></i></a>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>><i class="bi bi-flag"></i></button>

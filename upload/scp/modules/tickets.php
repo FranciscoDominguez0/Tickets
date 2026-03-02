@@ -2219,10 +2219,29 @@ if (!empty($ticketView)) {
                         $statusColor = $t['status_color'] ?: '#2563eb';
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
                         ?>
+                        <?php
+                            $backRel = 'tickets.php';
+                            if (!empty($_SERVER['REQUEST_URI'])) {
+                                $u = (string)$_SERVER['REQUEST_URI'];
+                                $path = (string)parse_url($u, PHP_URL_PATH);
+                                $query = (string)parse_url($u, PHP_URL_QUERY);
+                                $rel = ltrim($path, '/');
+                                $needle = 'upload/scp/';
+                                $pos = strpos($rel, $needle);
+                                if ($pos !== false) {
+                                    $rel = substr($rel, $pos + strlen($needle));
+                                }
+                                $rel = trim($rel);
+                                if ($rel !== '') {
+                                    $backRel = $rel . ($query !== '' ? ('?' . $query) : '');
+                                }
+                            }
+                            $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
+                        ?>
                         <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>">
                             <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>"></td>
                             <td>
-                                <a class="ticket-title ticket-preview-trigger" href="tickets.php?id=<?php echo (int) $t['id']; ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
+                                <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
                                 <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
                                 <div class="ticket-meta">Asignado: <?php echo $staffName ?: '— Sin asignar —'; ?></div>
                             </td>
@@ -2245,7 +2264,7 @@ if (!empty($ticketView)) {
                                 <div class="ticket-meta"><?php echo formatDate($t['updated'] ?: $t['created']); ?></div>
                             </td>
                             <td>
-                                <a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="btn btn-sm btn-outline-primary">Ver</a>
+                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm btn-outline-primary">Ver</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

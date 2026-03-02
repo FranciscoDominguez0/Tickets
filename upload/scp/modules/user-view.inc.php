@@ -249,6 +249,12 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                     <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-create"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
                 </div>
             <?php else: ?>
+                <?php
+                    $backRel = 'users.php?id=' . (int)$uid;
+                    if ($activeTab !== '') {
+                        $backRel .= '&t=' . urlencode($activeTab);
+                    }
+                ?>
                 <table class="user-view-tickets-table">
                     <thead>
                         <tr>
@@ -261,8 +267,9 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                     <tbody>
                         <?php foreach ($userTickets as $t): ?>
                             <tr>
-                                <td><a href="tickets.php?id=<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a></td>
-                                <td><a href="tickets.php?id=<?php echo (int)$t['id']; ?>"><?php echo html($t['subject']); ?></a></td>
+                                <?php $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel); ?>
+                                <td><a href="<?php echo html($ticketHref); ?>"><?php echo html($t['ticket_number']); ?></a></td>
+                                <td><a href="<?php echo html($ticketHref); ?>"><?php echo html($t['subject']); ?></a></td>
                                 <td><?php echo html($t['status_name'] ?? '—'); ?></td>
                                 <td><?php echo $t['created'] ? date('d/m/y H:i', strtotime($t['created'])) : '—'; ?></td>
                             </tr>
