@@ -946,10 +946,49 @@ function getCompanyLogoUrl($fallbackRelativePath = 'publico/img/vigitec-logo.png
         $mode = $logo !== '' ? 'custom' : 'default';
     }
 
+    $finalUrl = '';
     if ($mode === 'custom' && $logo !== '') {
-        return toAppAbsoluteUrl($logo);
+        $finalUrl = toAppAbsoluteUrl($logo);
+    } else {
+        $finalUrl = toAppAbsoluteUrl($fallbackRelativePath);
     }
-    return toAppAbsoluteUrl($fallbackRelativePath);
+
+    try {
+        $path = (string)parse_url($finalUrl, PHP_URL_PATH);
+        if ($path !== '') {
+            $rootAbs = realpath(__DIR__ . '/..');
+            $publicAbs = $rootAbs ? (rtrim((string)$rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'publico') : '';
+            $uploadAbs = $rootAbs ? (rtrim((string)$rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'upload') : '';
+
+            $ver = 1;
+            $posPub = strpos($path, '/publico/');
+            if ($posPub !== false && $publicAbs !== '') {
+                $rel = substr($path, $posPub + 9);
+                $fs = rtrim($publicAbs, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
+                if (is_file($fs)) {
+                    $ver = (int)@filemtime($fs);
+                    if ($ver <= 0) $ver = 1;
+                }
+            } else {
+                $posUp = strpos($path, '/upload/');
+                if ($posUp !== false && $uploadAbs !== '') {
+                    $rel = substr($path, $posUp + 7);
+                    $fs = rtrim($uploadAbs, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
+                    if (is_file($fs)) {
+                        $ver = (int)@filemtime($fs);
+                        if ($ver <= 0) $ver = 1;
+                    }
+                }
+            }
+
+            if ($ver > 1) {
+                $finalUrl .= (strpos($finalUrl, '?') !== false ? '&' : '?') . 'v=' . (string)$ver;
+            }
+        }
+    } catch (Throwable $e) {
+    }
+
+    return $finalUrl;
 }
 
 function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null) {
