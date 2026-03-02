@@ -129,7 +129,7 @@ $bodyStyle = $loginBg !== ''
                     <form method="post" class="login-form">
                         <!-- Alertas -->
                         <?php if ($offlineNotice): ?>
-                            <div class="alert alert-warning"><?php echo html($offlineNotice); ?></div>
+                            <div class="alert alert-warning" data-alert-static="1"><?php echo html($offlineNotice); ?></div>
                         <?php endif; ?>
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo html($error); ?></div>
@@ -237,7 +237,7 @@ $bodyStyle = $loginBg !== ''
         // Auto-ocultar alertas
         (function () {
             try {
-                var alerts = document.querySelectorAll('.login-form .alert');
+                var alerts = document.querySelectorAll('.login-form .alert:not([data-alert-static="1"])');
                 if (!alerts || !alerts.length) return;
                 setTimeout(function () {
                     try {

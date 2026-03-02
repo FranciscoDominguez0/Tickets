@@ -23,8 +23,14 @@ if (!isset($_SESSION[$menuKey])) {
     $collapseSettingsMenu = true;
 }
 
-$allowedTargets = ['pages','system','tickets','tasks','agents','users','billing'];
-$target = (string)($_GET['t'] ?? 'pages');
+$requestedTarget = (string)($_GET['t'] ?? 'pages');
+if ($requestedTarget === 'system' && (string)($_SESSION['staff_role'] ?? '') !== 'superadmin') {
+    header('Location: settings.php?t=pages');
+    exit;
+}
+
+$allowedTargets = ['pages','tickets','tasks','agents','users','billing'];
+$target = $requestedTarget;
 if (!in_array($target, $allowedTargets, true)) {
     $target = 'pages';
 }
@@ -36,8 +42,6 @@ require_once __DIR__ . '/inc/settings_helpers.inc.php';
 
 if ($target === 'pages') {
     require __DIR__ . '/inc/settings_pages.inc.php';
-} elseif ($target === 'system') {
-    require __DIR__ . '/inc/settings_system.inc.php';
 } elseif ($target === 'tickets') {
     require __DIR__ . '/inc/settings_tickets.inc.php';
 } elseif ($target === 'tasks') {

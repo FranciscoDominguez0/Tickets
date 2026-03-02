@@ -92,7 +92,10 @@ if ($_POST) {
 if ($_POST) {
     $_SESSION['flash_msg'] = (string)$msg;
     $_SESSION['flash_error'] = (string)$error;
-    header('Location: settings.php?t=system');
+    $redirectTo = isset($settingsRedirectUrl) && (string)$settingsRedirectUrl !== ''
+        ? (string)$settingsRedirectUrl
+        : 'settings.php?t=system';
+    header('Location: ' . $redirectTo);
     exit;
 }
 
@@ -391,7 +394,8 @@ ob_start();
 
     <div class="col-12 d-flex gap-2">
         <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        <a class="btn btn-outline-secondary" href="settings.php?t=system">Restaurar</a>
+        <?php $restoreHref = isset($settingsRedirectUrl) && (string)$settingsRedirectUrl !== '' ? (string)$settingsRedirectUrl : 'settings.php?t=system'; ?>
+        <a class="btn btn-outline-secondary" href="<?php echo html($restoreHref); ?>">Restaurar</a>
     </div>
 </form>
 <?php

@@ -150,12 +150,6 @@ if (!isset($collapseSettingsMenu)) {
                                 </a>
                             </li>
                             <li>
-                                <a href="settings.php?t=system" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'system') ? 'active' : ''; ?>">
-                                    <span class="icon"><i class="bi bi-sliders"></i></span>
-                                    Sistema
-                                </a>
-                            </li>
-                            <li>
                                 <a href="settings.php?t=tickets" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'tickets') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-ticket-perforated"></i></span>
                                     Solicitudes

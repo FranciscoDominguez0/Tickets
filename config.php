@@ -18,9 +18,9 @@ if (!extension_loaded('mysqli')) {
 // BASE DE DATOS
 // ============================================================================
 define('DB_HOST', 'localhost');
-define('DB_PORT', '3309');
+define('DB_PORT', '3306');
 define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_PASS', '12345678');
 // IMPORTANTE: usar el nombre REAL de la BD
 // El usuario indicó que la base se llama "tickets_db"
 define('DB_NAME', 'tickets_db');

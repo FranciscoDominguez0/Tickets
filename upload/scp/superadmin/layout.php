@@ -107,6 +107,12 @@ $content = (string)($content ?? '');
                         Notificaciones
                     </a>
                 </li>
+                <li>
+                    <a href="configuracion.php" class="sidebar-link <?php echo $currentRoute === 'configuracion' ? 'active' : ''; ?>">
+                        <span class="icon"><i class="bi bi-gear"></i></span>
+                        Configuración
+                    </a>
+                </li>
             </ul>
         </div>
 

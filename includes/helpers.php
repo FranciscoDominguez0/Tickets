@@ -6,6 +6,15 @@
 // Proteger página (requiere login)
 function requireLogin($type = 'user') {
     global $mysqli;
+    if ((string)getAppSetting('system.force_https', '0') === '1') {
+        $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ((string)($_SERVER['SERVER_PORT'] ?? '') === '443')
+            || (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https');
+        if (!$isHttps && !headers_sent() && !empty($_SERVER['HTTP_HOST']) && !empty($_SERVER['REQUEST_URI'])) {
+            header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
+            exit;
+        }
+    }
     if ($type === 'cliente') {
         $status = (string)getAppSetting('system.helpdesk_status', 'online');
         if ($status === 'offline') {
