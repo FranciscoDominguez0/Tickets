@@ -10,6 +10,261 @@ body {
     padding-top: 56px;
 }
 
+body.superadmin.superadmin-dark {
+    background: #0b1220;
+    color: #e5e7eb;
+}
+
+body.superadmin.superadmin-dark .main-shell {
+    background: transparent;
+}
+
+body.superadmin.superadmin-dark .container-main {
+    color: #e5e7eb;
+}
+
+body.superadmin.superadmin-dark .card,
+body.superadmin.superadmin-dark .pro-card,
+body.superadmin.superadmin-dark .chart-card,
+body.superadmin.superadmin-dark .kpi-card,
+body.superadmin.superadmin-dark .modal-content {
+    background: #0f172a;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .card-header {
+    background: rgba(148, 163, 184, 0.06);
+    border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .text-muted,
+body.superadmin.superadmin-dark .form-text,
+body.superadmin.superadmin-dark .kpi-label {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .table {
+    color: #e5e7eb;
+}
+
+body.superadmin.superadmin-dark .table thead th {
+    color: #cbd5e1;
+}
+
+body.superadmin.superadmin-dark .table > :not(caption) > * > * {
+    background-color: transparent;
+    border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+body.superadmin.superadmin-dark .table-hover > tbody > tr:hover > * {
+    background-color: rgba(148, 163, 184, 0.08);
+}
+
+body.superadmin.superadmin-dark .form-control,
+body.superadmin.superadmin-dark .form-select,
+body.superadmin.superadmin-dark .input-group-text {
+    background: rgba(2, 6, 23, 0.35);
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+body.superadmin.superadmin-dark .form-control:focus,
+body.superadmin.superadmin-dark .form-select:focus {
+    border-color: rgba(59, 130, 246, 0.55);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.20);
+}
+
+body.superadmin.superadmin-dark .modal-header,
+body.superadmin.superadmin-dark .modal-footer {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .btn-close {
+    filter: invert(1) grayscale(100%);
+}
+
+body.superadmin.superadmin-dark .stats-hero {
+    background: radial-gradient(1200px circle at 15% 10%, rgba(59, 130, 246, 0.22), transparent 55%),
+        radial-gradient(900px circle at 85% 30%, rgba(14, 165, 233, 0.18), transparent 55%),
+        linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .stats-hero h1 {
+    color: #f1f5f9;
+}
+
+body.superadmin.superadmin-dark .stats-hero p {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .section-title {
+    color: #cbd5e1 !important;
+}
+
+body.superadmin.superadmin-dark .section-title::after {
+    background: rgba(148, 163, 184, 0.22) !important;
+}
+
+body.superadmin.superadmin-dark .chart-title {
+    color: #cbd5e1 !important;
+}
+
+body.superadmin.superadmin-dark .kpi-card .kpi-number {
+    color: #f1f5f9 !important;
+}
+
+body.superadmin.superadmin-dark .kpi-card .kpi-number.text-secondary,
+body.superadmin.superadmin-dark .kpi-card .kpi-number.text-muted {
+    color: #f1f5f9 !important;
+}
+
+body.superadmin.superadmin-dark .kpi-card .kpi-sub {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .emp-hero {
+    background: radial-gradient(1200px circle at 15% 10%, rgba(59, 130, 246, 0.20), transparent 55%),
+        radial-gradient(900px circle at 85% 30%, rgba(14, 165, 233, 0.16), transparent 55%),
+        linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .emp-hero h1 {
+    color: #f1f5f9;
+}
+
+body.superadmin.superadmin-dark .emp-hero p {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .pro-card .card-title-sm,
+body.superadmin.superadmin-dark .pro-table thead th {
+    color: #cbd5e1 !important;
+}
+
+body.superadmin.superadmin-dark .pro-table thead th {
+    border-bottom-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .pro-table tbody td {
+    border-bottom-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+body.superadmin.superadmin-dark .pro-table tbody tr:hover {
+    background: rgba(148, 163, 184, 0.08) !important;
+}
+
+body.superadmin.superadmin-dark .detail-row {
+    border-bottom-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+body.superadmin.superadmin-dark .detail-label {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .modal .form-label {
+    color: #cbd5e1 !important;
+}
+
+body.superadmin.superadmin-dark .settings-hero {
+    background: radial-gradient(1200px circle at 15% 10%, rgba(59, 130, 246, 0.20), transparent 55%),
+        radial-gradient(900px circle at 85% 30%, rgba(14, 165, 233, 0.16), transparent 55%),
+        linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.18) !important;
+}
+
+body.superadmin.superadmin-dark .settings-hero h1 {
+    color: #f1f5f9;
+}
+
+body.superadmin.superadmin-dark .settings-hero p {
+    color: #94a3b8 !important;
+}
+
+body.superadmin.superadmin-dark .table-striped {
+    color: #e5e7eb;
+}
+
+body.superadmin.superadmin-dark .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background-color: rgba(148, 163, 184, 0.06);
+}
+
+body.superadmin.superadmin-dark .table-striped > tbody > tr:nth-of-type(even) > * {
+    background-color: transparent;
+}
+
+body.superadmin.superadmin-dark .table-striped > tbody > tr:hover > * {
+    background-color: rgba(148, 163, 184, 0.10) !important;
+}
+
+body.superadmin.superadmin-dark .table-striped td,
+body.superadmin.superadmin-dark .table-striped th {
+    color: inherit;
+}
+
+body.superadmin.superadmin-dark .pro-table-lg tbody tr:hover {
+    background: rgba(148, 163, 184, 0.08) !important;
+}
+
+body.superadmin.superadmin-dark .pro-table-lg tbody tr:hover td {
+    color: #e5e7eb;
+}
+
+body.superadmin .settings-hero {
+    background: linear-gradient(135deg, rgba(13, 110, 253, .07) 0%, #fff 70%);
+    border: 1px solid rgba(13, 110, 253, .13);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    color: inherit;
+    box-shadow: none;
+    margin-bottom: 16px;
+}
+
+body.superadmin .settings-hero h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+body.superadmin .settings-hero p {
+    margin: .2rem 0 0;
+    color: #6c757d;
+    font-size: .875rem;
+}
+
+body.superadmin .settings-hero .settings-hero-icon {
+    width: 52px;
+    height: 52px;
+    background: #0d6efd;
+    color: #fff;
+    border-radius: 14px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 14px rgba(13, 110, 253, .35);
+    border: 0;
+}
+
+body.superadmin .settings-hero .settings-hero-icon i {
+    color: inherit;
+}
+
+body.superadmin .settings-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+}
+
+body.superadmin .settings-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+
 .navbar {
     background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #0ea5e9 100%);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -313,6 +568,20 @@ body {
     margin-top: 24px;
     font-size: 0.8rem;
     color: #4b5563;
+    text-align: center;
+    padding: 14px 10px;
+    position: sticky;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.98);
+}
+
+body:not(.superadmin-dark) .sidebar-footer {
+    background: rgba(15, 23, 42, 0.98);
+}
+
+body.superadmin.superadmin-dark .sidebar-footer {
+    background: rgba(11, 18, 32, 0.98);
+    color: #64748b;
 }
 
 .main-shell {

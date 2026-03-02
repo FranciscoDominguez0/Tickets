@@ -13,6 +13,7 @@ $staff = getCurrentUser();
 $staffName = (string)($_SESSION['staff_name'] ?? ($staff['name'] ?? ''));
 $currentRoute = (string)($currentRoute ?? 'dashboard');
 $content = (string)($content ?? '');
+$isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,11 +25,19 @@ $content = (string)($content ?? '');
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
 </head>
-<body>
+<body class="superadmin<?php echo $isDarkMode ? ' superadmin-dark' : ''; ?>">
 <nav class="navbar navbar-dark">
     <div class="container-fluid">
         <span class="navbar-brand"><?php echo APP_NAME; ?> - SuperAdmin</span>
         <div class="d-flex align-items-center gap-3">
+            <form method="post" action="toggle_dark.php" class="d-inline" style="margin:0">
+                <?php csrfField(); ?>
+                <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
+                <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'index.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
+                <button type="submit" class="btn btn-outline-light btn-sm" title="Modo oscuro">
+                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?>"></i>
+                </button>
+            </form>
             <span style="color: white;">SuperAdmin: <strong><?php echo html($staffName); ?></strong></span>
             <a href="../logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
         </div>
@@ -135,7 +144,7 @@ $content = (string)($content ?? '');
         </div>
 
         <div class="sidebar-footer">
-            <div>Sesión iniciada como<br><strong><?php echo html($staffName); ?></strong></div>
+            <div>&copy; VigitecPanama</div>
         </div>
     </aside>
 

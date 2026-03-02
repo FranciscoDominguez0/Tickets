@@ -303,9 +303,6 @@ if (!isset($_SESSION[$menuKey])) {
                     </li>
                 </ul>
             </div>
-            <div class="sidebar-footer">
-                <div>Sesión iniciada como<br><strong><?php echo html($staff['name']); ?></strong></div>
-            </div>
         </aside>
 
         <!-- ZONA PRINCIPAL (contenido dinámico) -->
