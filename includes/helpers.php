@@ -1036,16 +1036,40 @@ function ensureRolePermissionsTable() {
     if (!isset($mysqli) || !$mysqli) return false;
     $sql = "CREATE TABLE IF NOT EXISTS role_permissions (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
         . "  role_name VARCHAR(100) NOT NULL,\n"
         . "  perm_key VARCHAR(120) NOT NULL,\n"
         . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
         . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
         . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_role_perm (role_name, perm_key),\n"
+        . "  UNIQUE KEY uq_role_perm (empresa_id, role_name, perm_key),\n"
         . "  KEY idx_role (role_name),\n"
-        . "  KEY idx_perm (perm_key)\n"
+        . "  KEY idx_perm (perm_key),\n"
+        . "  KEY idx_role_perm_empresa (empresa_id, role_name)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
+    $ok = (bool)$mysqli->query($sql);
+
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
+        $hasEmpresaId = ($res && $res->num_rows > 0);
+        if (!$hasEmpresaId) {
+            $mysqli->query("ALTER TABLE role_permissions ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
+            $mysqli->query("ALTER TABLE role_permissions ADD INDEX idx_role_perm_empresa (empresa_id, role_name)");
+        }
+
+        $idxOld = $mysqli->query("SHOW INDEX FROM role_permissions WHERE Key_name = 'uq_role_perm'");
+        if ($idxOld && $idxOld->num_rows > 0) {
+            $mysqli->query("ALTER TABLE role_permissions DROP INDEX uq_role_perm");
+        }
+
+        $idxNew = $mysqli->query("SHOW INDEX FROM role_permissions WHERE Key_name = 'uq_role_perm_empresa_role_perm'");
+        if (!$idxNew || $idxNew->num_rows < 1) {
+            $mysqli->query("ALTER TABLE role_permissions ADD UNIQUE KEY uq_role_perm_empresa_role_perm (empresa_id, role_name, perm_key)");
+        }
+    } catch (Throwable $e) {
+    }
+
+    return $ok;
 }
 
 function getCurrentStaffRoleName() {
@@ -1085,9 +1109,25 @@ function roleHasPermission($permKey) {
     if (!isset($mysqli) || !$mysqli) return false;
     ensureRolePermissionsTable();
 
-    $stmt = $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
+    $eid = empresaId();
+    $hasEmpresa = false;
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
+        $hasEmpresa = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasEmpresa = false;
+    }
+
+    $stmt = $hasEmpresa
+        ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
+        : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
     if (!$stmt) return false;
-    $stmt->bind_param('ss', $role, $permKey);
+
+    if ($hasEmpresa) {
+        $stmt->bind_param('iss', $eid, $role, $permKey);
+    } else {
+        $stmt->bind_param('ss', $role, $permKey);
+    }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     return (bool)$row;
@@ -1104,9 +1144,26 @@ function roleHasAnyPermissionPrefix($prefix) {
     ensureRolePermissionsTable();
 
     $like = $prefix . '%';
-    $stmt = $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1');
+
+    $eid = empresaId();
+    $hasEmpresa = false;
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
+        $hasEmpresa = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasEmpresa = false;
+    }
+
+    $stmt = $hasEmpresa
+        ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1')
+        : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1');
     if (!$stmt) return false;
-    $stmt->bind_param('ss', $role, $like);
+
+    if ($hasEmpresa) {
+        $stmt->bind_param('iss', $eid, $role, $like);
+    } else {
+        $stmt->bind_param('ss', $role, $like);
+    }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     return (bool)$row;
@@ -1123,7 +1180,22 @@ function requireRolePermission($permKey, $redirectUrl = null) {
         header('Location: ' . $redirectUrl);
         exit;
     }
+
+    $fallback = toAppAbsoluteUrl('upload/scp/index.php');
+    $ref = (string)($_SERVER['HTTP_REFERER'] ?? '');
+    if ($ref !== '') {
+        $refHost = (string)parse_url($ref, PHP_URL_HOST);
+        $curHost = (string)($_SERVER['HTTP_HOST'] ?? '');
+        if ($refHost === '' || $refHost === $curHost) {
+            $refPath = (string)parse_url($ref, PHP_URL_PATH);
+            if ($refPath !== '' && strpos($refPath, '/upload/scp/') !== false) {
+                $fallback = $ref;
+            }
+        }
+    }
+
     http_response_code(403);
-    exit('No autorizado');
+    header('Location: ' . $fallback);
+    exit;
 }
 ?>

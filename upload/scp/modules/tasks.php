@@ -4,7 +4,11 @@
 
 if (!isset($_SESSION['staff_id'])) {
     http_response_code(401);
-    echo 'No autorizado';
+    $_SESSION['flash_error'] = 'No autorizado.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php')
+        : 'index.php';
+    header('Location: ' . $to);
     exit;
 }
 
@@ -12,9 +16,19 @@ $roleName = getCurrentStaffRoleName();
 $canTasks = in_array($roleName, ['admin', 'supervisor'], true)
     || roleHasAnyPermissionPrefix('task.')
     || roleHasAnyPermissionPrefix('tasks.');
-if (!$canTasks) {
+$tasksReadOnly = !$canTasks;
+
+if ($tasksReadOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
     http_response_code(403);
-    echo 'No autorizado';
+    $_SESSION['flash_error'] = 'No tienes permiso para realizar acciones en tareas.';
+    $qs = 'page=tasks';
+    if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+        $qs .= '&id=' . (int)$_GET['id'];
+    }
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php?' . $qs)
+        : ('index.php?' . $qs);
+    header('Location: ' . $to);
     exit;
 }
 

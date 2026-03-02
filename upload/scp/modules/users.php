@@ -4,7 +4,11 @@
 
 if (!isset($_SESSION['staff_id'])) {
     http_response_code(401);
-    echo 'No autorizado';
+    $_SESSION['flash_error'] = 'No autorizado.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php')
+        : 'index.php';
+    header('Location: ' . $to);
     exit;
 }
 
@@ -18,7 +22,11 @@ $canManageUsers = in_array($roleName, ['admin', 'supervisor'], true)
 
 if (!$canViewUsers) {
     http_response_code(403);
-    echo 'No autorizado';
+    $_SESSION['flash_error'] = 'No tienes permiso para ver usuarios.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php')
+        : 'index.php';
+    header('Location: ' . $to);
     exit;
 }
 
@@ -26,7 +34,11 @@ $eid = empresaId();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     http_response_code(403);
-    echo 'No autorizado';
+    $_SESSION['flash_error'] = 'No tienes permiso para gestionar usuarios.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php?page=users')
+        : 'index.php?page=users';
+    header('Location: ' . $to);
     exit;
 }
 

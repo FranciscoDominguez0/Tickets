@@ -28,7 +28,9 @@ $roleName = getCurrentStaffRoleName();
 $canManageBanlist = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('user.edit');
 if (!$canManageBanlist) {
     http_response_code(403);
-    exit('No autorizado');
+    $_SESSION['flash_error'] = 'No tienes permiso para gestionar la lista de prohibidos.';
+    header('Location: index.php');
+    exit;
 }
 
 $collapseSettingsMenu = false;
