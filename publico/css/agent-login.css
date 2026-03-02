@@ -11,7 +11,7 @@
 body.agent-login {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: #1a1a2e;
-    background-image: url('../img/agent-background.jpg');
+    background-image: url('../img/agent-background.webp');
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;

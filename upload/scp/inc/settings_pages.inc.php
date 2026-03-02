@@ -21,6 +21,34 @@ if ($_POST) {
     if (!validateCSRF()) {
         $error = 'Token de seguridad inválido';
     } else {
+        $prevLogo = (string)getAppSetting('company.logo', '');
+        $prevBg = (string)getAppSetting('login.background', '');
+        $uploadsAbsLocal = realpath(__DIR__ . '/../../../publico') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'settings';
+        $deleteOld = function ($rel) use ($uploadsAbsLocal) {
+            $rel = (string)$rel;
+            if ($rel === '') return;
+            $p = parse_url($rel, PHP_URL_PATH);
+            if (!is_string($p) || $p === '') $p = $rel;
+            $p = str_replace('\\', '/', $p);
+            $needle = '/publico/uploads/settings/';
+            $pos = strpos($p, $needle);
+            if ($pos !== false) {
+                $p = substr($p, $pos + strlen($needle));
+            } else {
+                $needle2 = '../publico/uploads/settings/';
+                $pos2 = strpos($p, $needle2);
+                if ($pos2 !== false) {
+                    $p = substr($p, $pos2 + strlen($needle2));
+                }
+            }
+            $p = ltrim($p, '/');
+            if ($p === '') return;
+            $full = rtrim((string)$uploadsAbsLocal, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $p);
+            if (is_file($full)) {
+                @unlink($full);
+            }
+        };
+
         $company_name = trim((string)($_POST['company_name'] ?? ''));
         $company_website = trim((string)($_POST['company_website'] ?? ''));
         $company_phone = trim((string)($_POST['company_phone'] ?? ''));
@@ -65,10 +93,16 @@ if ($_POST) {
 
             if ($logoMode === 'default') {
                 setAppSetting('company.logo', '');
+                if ($prevLogo !== '') {
+                    $deleteOld($prevLogo);
+                }
             }
 
             if ($bgMode === 'default') {
                 setAppSetting('login.background', '');
+                if ($prevBg !== '') {
+                    $deleteOld($prevBg);
+                }
             }
 
             list($okLogo, $logoPathOrErr) = scpSettingsHandleImageUpload('company_logo', $uploadsAbs, $uploadsPublicPrefix);
@@ -76,6 +110,9 @@ if ($_POST) {
                 $error = (string)$logoPathOrErr;
             } else {
                 if ($logoPathOrErr) {
+                    if ($prevLogo !== '' && $prevLogo !== (string)$logoPathOrErr) {
+                        $deleteOld($prevLogo);
+                    }
                     setAppSetting('company.logo', $logoPathOrErr);
                     setAppSetting('company.logo_mode', 'custom');
                 }
@@ -85,6 +122,9 @@ if ($_POST) {
                     $error = (string)$bgPathOrErr;
                 } else {
                     if ($bgPathOrErr) {
+                        if ($prevBg !== '' && $prevBg !== (string)$bgPathOrErr) {
+                            $deleteOld($prevBg);
+                        }
                         setAppSetting('login.background', $bgPathOrErr);
                         setAppSetting('login.background_mode', 'custom');
                     }
@@ -123,7 +163,7 @@ $login_bg_mode = (string)getAppSetting('login.background_mode', $login_backgroun
 if (!in_array($login_bg_mode, ['default', 'custom'], true)) {
     $login_bg_mode = 'default';
 }
-$default_staff_bg = (string)toAppAbsoluteUrl('publico/img/agent-background.jpg');
+$default_staff_bg = (string)toAppAbsoluteUrl('publico/img/agent-background.webp');
 
 ob_start();
 ?>
