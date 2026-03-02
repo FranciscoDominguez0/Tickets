@@ -261,13 +261,22 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             width: 100%;
         }
 
-        .tickets-table { padding: 0 18px 18px; }
+        .tickets-table { padding: 0 18px 18px; overflow-x: auto; }
+        .tickets-table .table { min-width: 720px; }
         .tickets-table .table { margin-bottom: 0; }
         .tickets-table .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .tickets-table .table tbody tr:hover { background: #f8fafc; }
         .tickets-table .table tbody tr { transition: background .12s ease; }
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
+
+        @media (max-width: 576px) {
+            .container-main { padding: 0 12px; margin: 18px auto; }
+            .shell { max-width: 100%; }
+            .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .tabs a { white-space: nowrap; }
+            .tickets-table { padding: 0 12px 12px; }
+        }
     </style>
 </head>
 <body>

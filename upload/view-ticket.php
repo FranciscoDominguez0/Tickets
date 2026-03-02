@@ -533,6 +533,7 @@ function humanSize($bytes) {
         .ticket-view-entry .entry-content {
             max-width: 720px;
             width: 100%;
+            min-width: 0;
             border-radius: 10px;
             border: 1px solid #e2e8f0;
             background: #ffffff;
@@ -572,11 +573,10 @@ function humanSize($bytes) {
             .ticket-view-entry.user .entry-footer { text-align: right; padding-left: 0; padding-right: 46px; }
 
             .att-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-            .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; }
-            .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; }
+            .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; flex-wrap: wrap; }
+            .att-item > div:first-child { min-width: 0; }
+            .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
             .att-item .size { color: #64748b; font-size: 0.85rem; }
-        .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; }
-        .att-item .size { color: #64748b; font-size: 0.85rem; }
 
         .reply-card { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
         .attach-zone { border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 12px; padding: 14px; cursor: pointer; margin-bottom: 12px; }
@@ -591,6 +591,7 @@ function humanSize($bytes) {
         @media (max-width: 760px) {
             .ticket-meta { grid-template-columns: 1fr; }
             .ticket-view-entry .entry-body img { max-height: 260px !important; }
+            .att-item a { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
         }
 
         @media (min-width: 761px) {

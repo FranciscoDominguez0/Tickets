@@ -132,6 +132,25 @@ function requireLogin($type = 'user') {
         if ($empresaId > 0) {
             syncEmpresaBillingStatus($empresaId);
         }
+
+        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysIds = [];
+        if ($alwaysRaw !== '') {
+            foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
+                if ($v === '') continue;
+                if (is_numeric($v)) {
+                    $n = (int)$v;
+                    if ($n > 0) $alwaysIds[$n] = true;
+                }
+            }
+        }
+        $alwaysIds[1] = true;
+        $isAlwaysActiveEmpresa = ($empresaId > 0 && isset($alwaysIds[$empresaId]));
+
+        if ($isAlwaysActiveEmpresa) {
+            $_SESSION['read_only'] = 0;
+            $_SESSION['read_only_reason'] = '';
+        }
         if ($empresaId > 0 && isset($mysqli) && $mysqli) {
             try {
                 $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
@@ -159,7 +178,7 @@ function requireLogin($type = 'user') {
                             } elseif ($fechaVenc !== '') {
                                 $isVencida = (strtotime($fechaVenc) <= strtotime(date('Y-m-d')));
                             }
-                            if ($isVencida) {
+                            if ($isVencida && !$isAlwaysActiveEmpresa) {
                                 $_SESSION['read_only'] = 1;
                                 $_SESSION['read_only_reason'] = 'Pago vencido. Comuníquese con Vigitec Panamá.';
                             } else {
