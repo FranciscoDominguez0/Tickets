@@ -386,10 +386,10 @@ function badgeDias(?int $d): string {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'primary'],
-        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'success'],
-        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'info'],
-        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'danger'],
+        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'secondary'],
+        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'secondary'],
+        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'secondary'],
+        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'secondary'],
     ];
     foreach ($kpis as $k): ?>
     <div class="col-6 col-md-3">

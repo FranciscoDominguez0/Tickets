@@ -217,10 +217,10 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'info'],
-        ['icon' => 'bi-x-circle',           'label' => 'Vencidas',          'value' => $kpiVencidas,     'color' => 'danger'],
-        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas',        'value' => $kpiBloqueadas,   'color' => 'danger'],
-        ['icon' => 'bi-cash-stack',         'label' => 'Ingresos del mes',  'value' => $kpiIngresosMes,  'color' => 'success', 'prefix' => '$'],
+        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'secondary'],
+        ['icon' => 'bi-x-circle',           'label' => 'Vencidas',          'value' => $kpiVencidas,     'color' => 'secondary'],
+        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas',        'value' => $kpiBloqueadas,   'color' => 'secondary'],
+        ['icon' => 'bi-cash-stack',         'label' => 'Ingresos del mes',  'value' => $kpiIngresosMes,  'color' => 'secondary', 'prefix' => '$'],
     ];
     foreach ($kpis as $k):
         $display = $k['value'] === null ? '—' : (($k['prefix'] ?? '') . ($k['color'] === 'success' ? number_format((float)$k['value'], 2) : (int)$k['value']));

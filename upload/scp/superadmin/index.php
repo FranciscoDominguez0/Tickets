@@ -214,11 +214,10 @@ function stDias(?int $d): string {
 
 /* ── Array de KPIs: sin "Tickets este mes", "Staff activo" ni "Pagos vencidos" ── */
 $kpiCards = [
-    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'primary',   'total registradas'],
-    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'success',   date('M Y')],
-    ['bi-slash-circle',   'Bloqueadas',          number_format($kpiBloqueadas),          'danger',    'acceso suspendido'],
-    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'success',   'histórico'],
-    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'secondary', 'estado suspendido'],
+    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'secondary',   'total registradas'],
+    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'secondary',   date('M Y')],
+    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'secondary',   'histórico'],
+    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'secondary',   'estado suspendido'],
 ];
 
 ?>
