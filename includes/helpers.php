@@ -792,10 +792,11 @@ function ensureAppSettingsTable() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;
     $sql = "CREATE TABLE IF NOT EXISTS app_settings (\n"
+        . "  `empresa_id` INT NOT NULL DEFAULT 1,\n"
         . "  `key` VARCHAR(191) NOT NULL,\n"
         . "  `value` LONGTEXT NULL,\n"
         . "  `updated` DATETIME NULL,\n"
-        . "  PRIMARY KEY (`key`)\n"
+        . "  PRIMARY KEY (`empresa_id`, `key`)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
     if (!$mysqli->query($sql)) return false;
@@ -822,6 +823,18 @@ function ensureAppSettingsTable() {
         if (!$hasComposite) {
             @$mysqli->query('ALTER TABLE app_settings DROP PRIMARY KEY');
             @$mysqli->query('ALTER TABLE app_settings ADD PRIMARY KEY (empresa_id, `key`)');
+        }
+
+        // Asegurar que no exista un UNIQUE/PRIMARY legacy sobre `key` solamente,
+        // porque haría que los cambios de una empresa afecten a otra.
+        $idxU = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'uq_app_settings_key'");
+        if ($idxU && $idxU->num_rows > 0) {
+            @$mysqli->query('ALTER TABLE app_settings DROP INDEX uq_app_settings_key');
+        }
+
+        $idxComposite = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'uq_app_settings_empresa_key'");
+        if (!$idxComposite || $idxComposite->num_rows < 1) {
+            @$mysqli->query('ALTER TABLE app_settings ADD UNIQUE KEY uq_app_settings_empresa_key (empresa_id, `key`)');
         }
     }
 

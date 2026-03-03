@@ -30,15 +30,18 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
     <div class="container-fluid">
         <span class="navbar-brand"><?php echo APP_NAME; ?> - SuperAdmin</span>
         <div class="d-flex align-items-center gap-3">
+            <span style="color: white;">SuperAdmin: <strong><?php echo html($staffName); ?></strong></span>
             <form method="post" action="toggle_dark.php" class="d-inline" style="margin:0">
                 <?php csrfField(); ?>
                 <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
                 <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'index.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
-                <button type="submit" class="btn btn-outline-light btn-sm" title="Modo oscuro">
-                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?>"></i>
+                <button type="submit" class="btn btn-outline-light btn-sm superadmin-theme-toggle" title="Modo oscuro">
+                    <span class="superadmin-theme-toggle-track" aria-hidden="true">
+                        <span class="superadmin-theme-toggle-thumb"></span>
+                    </span>
+                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> superadmin-theme-toggle-icon"></i>
                 </button>
             </form>
-            <span style="color: white;">SuperAdmin: <strong><?php echo html($staffName); ?></strong></span>
             <a href="../logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
         </div>
     </div>
