@@ -193,7 +193,7 @@ if (!isset($_SESSION[$menuKey])) {
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <rect x="4" y="4" width="16" height="16" rx="2" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                    <path d="M8 9H16" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M8 8H16" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                     <path d="M8 13H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>

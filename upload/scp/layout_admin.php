@@ -6,6 +6,7 @@ $notifCount = 0;
 $notifItems = [];
 if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
+
     $stmtN = $mysqli->prepare('SELECT COUNT(*) c FROM notifications WHERE staff_id = ? AND is_read = 0');
     if ($stmtN) {
         $stmtN->bind_param('i', $sid);

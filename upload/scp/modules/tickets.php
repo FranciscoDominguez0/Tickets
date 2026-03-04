@@ -6,6 +6,60 @@ $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
 
+$seenKey = 'tickets_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if (!isset($_SESSION[$seenKey]) || !is_array($_SESSION[$seenKey])) {
+    $_SESSION[$seenKey] = [];
+}
+$seenIds = [];
+foreach (($_SESSION[$seenKey] ?? []) as $v) {
+    if (is_numeric($v)) $seenIds[(int)$v] = true;
+}
+
+$sidNewSince = (int)($_SESSION['staff_id'] ?? 0);
+if ($sidNewSince > 0) {
+    $sinceKey = 'tickets_new_since_' . $sidNewSince;
+    if (!isset($_SESSION[$sinceKey]) || !is_numeric($_SESSION[$sinceKey])) {
+        $since = time();
+        if (isset($mysqli) && $mysqli) {
+            $q = @$mysqli->query('SELECT UNIX_TIMESTAMP(NOW()) ts');
+            if ($q && ($r = $q->fetch_assoc()) && is_numeric($r['ts'] ?? null)) {
+                $since = (int)$r['ts'];
+            }
+        }
+        $_SESSION[$sinceKey] = $since;
+    }
+}
+
+$sidSeenDb = (int)($_SESSION['staff_id'] ?? 0);
+if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
+    @$mysqli->query(
+        "CREATE TABLE IF NOT EXISTS staff_ticket_seen (\n"
+        . "  staff_id INT NOT NULL,\n"
+        . "  ticket_id INT NOT NULL,\n"
+        . "  seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  PRIMARY KEY (staff_id, ticket_id),\n"
+        . "  KEY idx_ticket (ticket_id),\n"
+        . "  KEY idx_staff_seen_at (staff_id, seen_at)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+    );
+
+    $stmtSeenLoad = $mysqli->prepare('SELECT ticket_id FROM staff_ticket_seen WHERE staff_id = ? ORDER BY seen_at DESC LIMIT 500');
+    if ($stmtSeenLoad) {
+        $stmtSeenLoad->bind_param('i', $sidSeenDb);
+        if ($stmtSeenLoad->execute()) {
+            $rs = $stmtSeenLoad->get_result();
+            while ($rs && ($r = $rs->fetch_assoc())) {
+                $tidSeen = (int)($r['ticket_id'] ?? 0);
+                if ($tidSeen > 0) $seenIds[$tidSeen] = true;
+            }
+        }
+    }
+
+    if (!empty($seenIds)) {
+        $_SESSION[$seenKey] = array_values(array_slice(array_unique(array_map('intval', array_keys($seenIds))), -500));
+    }
+}
+
 $eid = empresaId();
 
 $threadsHasEmpresa = false;
@@ -693,6 +747,23 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $ticketView = $res ? $res->fetch_assoc() : null;
 
     if ($ticketView) {
+        $sidForSeen = (int)($_SESSION['staff_id'] ?? 0);
+        if ($sidForSeen > 0) {
+            $tk = 'tickets_seen_' . $sidForSeen;
+            if (!isset($_SESSION[$tk]) || !is_array($_SESSION[$tk])) $_SESSION[$tk] = [];
+            $_SESSION[$tk][] = (int)$tid;
+            $_SESSION[$tk] = array_values(array_slice(array_unique(array_map('intval', $_SESSION[$tk])), -500));
+            $seenIds[(int)$tid] = true;
+
+            if (isset($mysqli) && $mysqli) {
+                $stmtSeenIns = $mysqli->prepare('INSERT INTO staff_ticket_seen (staff_id, ticket_id, seen_at) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE seen_at = VALUES(seen_at)');
+                if ($stmtSeenIns) {
+                    $stmtSeenIns->bind_param('ii', $sidForSeen, $tid);
+                    $stmtSeenIns->execute();
+                }
+            }
+        }
+
         // Asegurar que exista un thread para este ticket
         $stmt = $mysqli->prepare("SELECT id FROM threads WHERE ticket_id = ?" . ($threadsHasEmpresa ? " AND empresa_id = ?" : ""));
         if ($threadsHasEmpresa) {
@@ -2218,6 +2289,14 @@ if (!empty($ticketView)) {
                         $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
                         $statusColor = $t['status_color'] ?: '#2563eb';
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
+
+                        $tidRow = (int)($t['id'] ?? 0);
+                        $createdTs = !empty($t['created']) ? @strtotime((string)$t['created']) : 0;
+                        $sidNew = (int)($_SESSION['staff_id'] ?? 0);
+                        $sinceKey = $sidNew > 0 ? ('tickets_new_since_' . $sidNew) : '';
+                        $newSince = ($sinceKey !== '' && isset($_SESSION[$sinceKey]) && is_numeric($_SESSION[$sinceKey])) ? (int)$_SESSION[$sinceKey] : 0;
+                        $isAfterSince = ($newSince > 0 && $createdTs > 0 && $createdTs >= $newSince);
+                        $isNew = ($tidRow > 0 && $isAfterSince && !isset($seenIds[$tidRow]));
                         ?>
                         <?php
                             $backRel = 'tickets.php';
@@ -2242,6 +2321,9 @@ if (!empty($ticketView)) {
                             <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>"></td>
                             <td>
                                 <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
+                                <?php if ($isNew): ?>
+                                    <span class="badge bg-danger ms-2">New</span>
+                                <?php endif; ?>
                                 <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
                                 <div class="ticket-meta">Asignado: <?php echo $staffName ?: '— Sin asignar —'; ?></div>
                             </td>

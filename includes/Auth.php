@@ -390,6 +390,18 @@ class Auth {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('agente');
 
+        $sid = (int)$staff['id'];
+        if ($sid > 0) {
+            $since = time();
+            if (isset($mysqli) && $mysqli) {
+                $q = @$mysqli->query('SELECT UNIX_TIMESTAMP(NOW()) ts');
+                if ($q && ($r = $q->fetch_assoc()) && is_numeric($r['ts'] ?? null)) {
+                    $since = (int)$r['ts'];
+                }
+            }
+            $_SESSION['tickets_new_since_' . $sid] = $since;
+        }
+
         return $staff;
     }
 
