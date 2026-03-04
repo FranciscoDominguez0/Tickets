@@ -76,6 +76,16 @@
 
         console.log('Creando gráfica...');
 
+        var isShortRange = Array.isArray(labels) && labels.length <= 2;
+
+        function makeGradient(canvasCtx, area, color) {
+            var g = canvasCtx.createLinearGradient(0, area.top, 0, area.bottom);
+            g.addColorStop(0, color + '33');
+            g.addColorStop(0.55, color + '14');
+            g.addColorStop(1, color + '00');
+            return g;
+        }
+
         // Crear la gráfica con Chart.js
         const chart = new Chart(ctx, {
             type: 'line',
@@ -85,47 +95,78 @@
                     {
                         label: 'created',
                         data: createdData,
-                        borderColor: '#28a745', // Verde para created
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        fill: false,
-                        tension: 0.1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
+                        borderColor: '#28a745',
+                        backgroundColor: function(context) {
+                            var chart = context.chart;
+                            var area = chart.chartArea;
+                            if (!area) return 'rgba(40, 167, 69, 0.08)';
+                            return makeGradient(chart.ctx, area, '#28a745');
+                        },
+                        fill: !isShortRange,
+                        tension: 0.38,
+                        cubicInterpolationMode: 'monotone',
+                        pointRadius: isShortRange ? 3 : 0,
+                        pointHoverRadius: isShortRange ? 5 : 4,
+                        pointHitRadius: 10,
+                        borderWidth: 2,
+                        borderCapStyle: 'round',
                         pointBackgroundColor: '#28a745',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: isShortRange ? 2 : 0
                     },
                     {
                         label: 'closed',
                         data: closedData,
-                        borderColor: '#007bff', // Azul para closed
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        fill: false,
-                        tension: 0.1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
+                        borderColor: '#007bff',
+                        backgroundColor: function(context) {
+                            var chart = context.chart;
+                            var area = chart.chartArea;
+                            if (!area) return 'rgba(0, 123, 255, 0.08)';
+                            return makeGradient(chart.ctx, area, '#007bff');
+                        },
+                        fill: !isShortRange,
+                        tension: 0.38,
+                        cubicInterpolationMode: 'monotone',
+                        pointRadius: isShortRange ? 3 : 0,
+                        pointHoverRadius: isShortRange ? 5 : 4,
+                        pointHitRadius: 10,
+                        borderWidth: 2,
+                        borderCapStyle: 'round',
                         pointBackgroundColor: '#007bff',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: isShortRange ? 2 : 0
                     },
                     {
                         label: 'deleted',
                         data: deletedData,
-                        borderColor: '#dc3545', // Rojo para deleted
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        fill: false,
-                        tension: 0.1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5,
+                        borderColor: '#dc3545',
+                        backgroundColor: function(context) {
+                            var chart = context.chart;
+                            var area = chart.chartArea;
+                            if (!area) return 'rgba(220, 53, 69, 0.08)';
+                            return makeGradient(chart.ctx, area, '#dc3545');
+                        },
+                        fill: !isShortRange,
+                        tension: 0.38,
+                        cubicInterpolationMode: 'monotone',
+                        pointRadius: isShortRange ? 3 : 0,
+                        pointHoverRadius: isShortRange ? 5 : 4,
+                        pointHitRadius: 10,
+                        borderWidth: 2,
+                        borderCapStyle: 'round',
                         pointBackgroundColor: '#dc3545',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: isShortRange ? 2 : 0
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 650,
+                    easing: 'easeOutQuart'
+                },
                 plugins: {
                     legend: {
                         display: true,
@@ -141,8 +182,12 @@
                     tooltip: {
                         mode: 'index',
                         intersect: false,
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 10,
+                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        padding: 12,
+                        cornerRadius: 10,
+                        caretSize: 6,
+                        displayColors: true,
+                        boxPadding: 6,
                         titleFont: {
                             size: 12
                         },
@@ -155,20 +200,43 @@
                     mode: 'index',
                     intersect: false
                 },
+                elements: {
+                    line: {
+                        borderJoinStyle: 'round'
+                    }
+                },
                 scales: {
                     x: {
                         grid: {
                             display: true,
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            color: 'rgba(148, 163, 184, 0.25)'
                         },
                         ticks: {
-                            autoSkip: true,
+                            autoSkip: false,
                             maxTicksLimit: 10,
                             maxRotation: 45,
                             minRotation: 0,
+                            callback: function(value, index, ticks) {
+                                if (isShortRange) {
+                                    try {
+                                        if (Array.isArray(labels) && typeof labels[index] !== 'undefined') {
+                                            return String(labels[index]);
+                                        }
+                                    } catch (e) {}
+                                }
+                                try {
+                                    var r = (window.dashboardData && window.dashboardData.range) ? window.dashboardData.range : null;
+                                    var first = r && r.start_label ? String(r.start_label) : null;
+                                    var last = r && r.end_label ? String(r.end_label) : null;
+                                    if (index === 0 && first) return first;
+                                    if (index === (ticks.length - 1) && last) return last;
+                                } catch (e) {}
+                                return '';
+                            },
                             font: {
                                 size: 10
-                            }
+                            },
+                            color: '#64748b'
                         }
                     },
                     y: {
@@ -178,10 +246,11 @@
                             stepSize: 1,
                             font: {
                                 size: 10
-                            }
+                            },
+                            color: '#64748b'
                         },
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            color: 'rgba(148, 163, 184, 0.25)'
                         }
                     }
                 }

@@ -16,10 +16,10 @@ if ($startDateInput) {
     try {
         $startDate = new DateTime($startDateInput);
     } catch (Exception $e) {
-        $startDate = (clone $endDate)->modify('-29 days');
+        $startDate = (clone $endDate)->modify('first day of this month');
     }
 } else {
-    $startDate = (clone $endDate)->modify('-29 days'); // Último mes por defecto
+    $startDate = (clone $endDate)->modify('first day of this month');
 }
 
 // Ajustar fecha final según período
@@ -152,8 +152,7 @@ $cursor = clone $startDate;
 
 while ($cursor <= $endDate) {
     $dayKey = $cursor->format('Y-m-d');
-    // Formato de fecha más simple: 12-27-2025
-    $labels[] = $cursor->format('m-d-Y');
+    $labels[] = $cursor->format('d-m-Y');
     $times[] = $cursor->getTimestamp(); // Timestamp Unix
     $createdData[] = isset($createdByDay[$dayKey]) ? (int)$createdByDay[$dayKey] : 0;
     $closedData[] = isset($closedByDay[$dayKey]) ? (int)$closedByDay[$dayKey] : 0;
@@ -542,6 +541,10 @@ $dashboardData = [
         'created' => $createdData,
         'closed' => $closedData,
         'deleted' => $deletedData,
+    ],
+    'range' => [
+        'start_label' => $startDate->format('d-m-Y'),
+        'end_label' => $endDate->format('d-m-Y'),
     ],
 ];
 ?>
