@@ -31,11 +31,11 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
         <span class="navbar-brand"><?php echo APP_NAME; ?> - SuperAdmin</span>
         <div class="d-flex align-items-center gap-3">
             <span style="color: white;">SuperAdmin: <strong><?php echo html($staffName); ?></strong></span>
-            <form method="post" action="toggle_dark.php" class="d-inline" style="margin:0">
+            <form method="post" action="toggle_dark.php" class="d-inline" style="margin:0" data-superadmin-dark-toggle-form>
                 <?php csrfField(); ?>
                 <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
                 <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'index.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
-                <button type="submit" class="btn btn-outline-light btn-sm superadmin-theme-toggle" title="Modo oscuro">
+                <button type="submit" class="btn btn-outline-light btn-sm superadmin-theme-toggle" title="Modo oscuro" data-superadmin-dark-toggle-btn>
                     <span class="superadmin-theme-toggle-track" aria-hidden="true">
                         <span class="superadmin-theme-toggle-thumb"></span>
                     </span>
@@ -160,5 +160,57 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../js/scp.js"></script>
+<script>
+    (function(){
+        var form = document.querySelector('[data-superadmin-dark-toggle-form]');
+        if (!form) return;
+        var btn = form.querySelector('[data-superadmin-dark-toggle-btn]');
+        var body = document.body;
+        var input = form.querySelector('input[name="dark_mode"]');
+        var icon = form.querySelector('.superadmin-theme-toggle-icon');
+
+        function setUi(isDark) {
+            if (isDark) body.classList.add('superadmin-dark');
+            else body.classList.remove('superadmin-dark');
+            if (icon) {
+                icon.classList.remove('bi-sun');
+                icon.classList.remove('bi-moon-stars');
+                icon.classList.add(isDark ? 'bi-sun' : 'bi-moon-stars');
+            }
+            if (input) input.value = isDark ? '0' : '1';
+        }
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var isDark = body.classList.contains('superadmin-dark');
+            var nextDark = !isDark;
+            setUi(nextDark);
+            try {
+                if (btn) btn.disabled = true;
+                var fd = new FormData(form);
+                fd.set('dark_mode', nextDark ? '1' : '0');
+                fetch(form.getAttribute('action') || 'toggle_dark.php', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                }).then(function(r){ return r.json().catch(function(){ return null; }); })
+                  .then(function(data){
+                      if (data && typeof data.dark_mode !== 'undefined') {
+                          setUi(String(data.dark_mode) === '1' || data.dark_mode === 1);
+                      }
+                  })
+                  .catch(function(){
+                      setUi(isDark);
+                  })
+                  .finally(function(){
+                      if (btn) btn.disabled = false;
+                  });
+            } catch (err) {
+                setUi(isDark);
+                if (btn) btn.disabled = false;
+            }
+        });
+    })();
+</script>
 </body>
 </html>

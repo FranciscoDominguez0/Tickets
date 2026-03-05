@@ -7,6 +7,10 @@
 require_once '../config.php';
 require_once '../includes/helpers.php';
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 // Validar que sea cliente
 requireLogin('cliente');
 
@@ -184,6 +188,24 @@ if ($_POST) {
             }
 
             if ($error === '') {
+            $enqueueMail = function ($to, $subj, $htmlBody, $textBody = '') {
+                $to = trim((string)$to);
+                $subj = (string)$subj;
+                if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
+                if (!isset($_SESSION['pending_mail_queue']) || !is_array($_SESSION['pending_mail_queue'])) {
+                    $_SESSION['pending_mail_queue'] = [];
+                }
+                $_SESSION['pending_mail_queue'][] = [
+                    'to' => $to,
+                    'subj' => $subj,
+                    'html' => (string)$htmlBody,
+                    'text' => (string)$textBody,
+                    'ts' => time(),
+                ];
+                $_SESSION['pending_mail_queue'] = array_values(array_slice($_SESSION['pending_mail_queue'], -20));
+                return true;
+            };
+
             // Generar número de ticket
             $generateTicketNumberFromFormat = function ($format) use ($mysqli, $eid) {
                 $format = trim((string)$format);
@@ -383,7 +405,7 @@ if ($_POST) {
                         addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications (user)', 'ticket', $ticket_id, 'staff', $val);
                     }
 
-                    // Correo al agente
+                    // Correo al agente (en cola, no bloquea al usuario)
                     $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE id = ? AND empresa_id = ? AND is_active = 1 LIMIT 1');
                     if ($stmtE) {
                         $stmtE->bind_param('ii', $val, $eid);
@@ -406,10 +428,8 @@ if ($_POST) {
                                     . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
                                     . '</div>';
                                 $bodyText = 'Hola ' . $staffName . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . (string)$subject . "\n\nVer: " . $viewUrl;
-                                $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                if (!$mailOk) {
-                                    $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                    addLog('ticket_assign_email_failed_user', $err, 'ticket', $ticket_id, 'staff', $val);
+                                if (!$enqueueMail($to, $subj, $bodyHtml, $bodyText)) {
+                                    addLog('ticket_assign_email_enqueue_failed_user', 'No se pudo encolar el correo al agente (user)', 'ticket', $ticket_id, 'staff', $val);
                                 }
                             } else {
                                 addLog('ticket_assign_email_missing_user', 'Agente sin email válido (user)', 'ticket', $ticket_id, 'staff', $val);
@@ -485,7 +505,7 @@ if ($_POST) {
                     }
                 }
 
-                // Notificar por correo solo al admin
+                // Notificar por correo solo al admin (en cola, no bloquea al usuario)
                 $adminEmail = trim((string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : ''));
                 $adminNotifyEnabled = ((string)getAppSetting('mail.admin_notify_enabled', '1') === '1');
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
@@ -520,11 +540,10 @@ if ($_POST) {
                 $mailSent = 0;
                 $mailError = '';
                 if ($adminNotifyEnabled && $adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                    if (Mailer::send($adminEmail, $emailSubject, $bodyHtml)) {
+                    if ($enqueueMail($adminEmail, $emailSubject, $bodyHtml, '')) {
                         $mailSent = 1;
                     } else {
-                        $mailError = Mailer::$lastError;
-                        addLog('admin_notify_email_failed', (string)$mailError, 'ticket', $ticket_id, 'staff', 0);
+                        addLog('admin_notify_email_enqueue_failed', 'No se pudo encolar el correo al admin', 'ticket', $ticket_id, 'staff', 0);
                     }
                 } else {
                     $reason = '';
@@ -539,12 +558,12 @@ if ($_POST) {
                         addLog('admin_notify_email_skipped', $reason, 'ticket', $ticket_id, 'staff', 0);
                     }
                 }
-                $success = 'Ticket creado exitosamente! Número: ' . $ticket_number;
-                echo '<script>
-                    setTimeout(function() {
-                        window.location.href = "tickets.php";
-                    }, 2000);
-                </script>';
+                $_SESSION['flash_msg'] = 'Ticket creado exitosamente! Número: ' . (string)$ticket_number;
+                $_SESSION['new_ticket_id'] = (int)$ticket_id;
+                $_SESSION['prevent_open_back'] = 1;
+                $_SESSION['pending_mail_queue_needs_process'] = 1;
+                header('Location: tickets.php', true, 303);
+                exit;
             } else {
                 error_log('[tickets] open.php insert failed: ' . (string)$mysqli->error);
                 $error = 'Error al crear el ticket. Intenta nuevamente.';
@@ -553,6 +572,12 @@ if ($_POST) {
     }
 }
 
+}
+
+// Bloquear volver atrás a open.php después de crear ticket
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_SESSION['prevent_open_back'])) {
+    header('Location: tickets.php', true, 302);
+    exit;
 }
 
 // Obtener departamentos y temas
@@ -782,8 +807,12 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
         .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
-        #open-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
-        #open-loading-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:320px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+        #open-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.46);z-index:2000;backdrop-filter: blur(10px);padding:18px}
+        #open-loading-overlay .box{background:rgba(255,255,255,0.92);border:1px solid rgba(226,232,240,0.92);border-radius:22px;padding:18px 20px;min-width:320px;max-width:560px;width:100%;box-shadow:0 30px 90px rgba(15,23,42,.30);backdrop-filter: blur(10px);animation: openLoadingIn .14s ease-out}
+        #open-loading-overlay .spinner-border{width:2.25rem;height:2.25rem}
+        #open-loading-overlay .progress{border-radius:999px;overflow:hidden;background:rgba(148,163,184,0.25)}
+        #open-loading-overlay .progress-bar{background:linear-gradient(90deg,#2563eb,#60a5fa);width:100%}
+        @keyframes openLoadingIn{from{transform:translateY(6px) scale(.985); opacity:.65;}to{transform:translateY(0) scale(1); opacity:1;}}
     </style>
 </head>
 <body>
@@ -1215,6 +1244,13 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 if (btn) btn.disabled = true;
             }
 
+            function hideLoading(){
+                var overlay = document.getElementById('open-loading-overlay');
+                if (overlay) overlay.style.display = 'none';
+                var btn = document.getElementById('open-ticket-submit');
+                if (btn) btn.disabled = false;
+            }
+
             try {
                 var form = document.getElementById('open-ticket-form');
                 if (!form) return;
@@ -1222,6 +1258,19 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 form.addEventListener('submit', function(ev){
                     if (ev.defaultPrevented) return;
                     showLoading();
+                });
+
+                window.addEventListener('pageshow', function(ev){
+                    try {
+                        if (ev && ev.persisted) {
+                            hideLoading();
+                        } else if (window.performance && performance.getEntriesByType) {
+                            var nav = performance.getEntriesByType('navigation');
+                            if (nav && nav[0] && nav[0].type === 'back_forward') {
+                                hideLoading();
+                            }
+                        }
+                    } catch (e) {}
                 });
             } catch (e) {}
         })();

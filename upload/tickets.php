@@ -15,6 +15,25 @@ $user = getCurrentUser();
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
+$shouldProcessMailQueue = (!empty($_SESSION['pending_mail_queue_needs_process']) && (int)$_SESSION['pending_mail_queue_needs_process'] === 1);
+
+$flashMsg = '';
+if (!empty($_SESSION['flash_msg'])) {
+    $flashMsg = (string)$_SESSION['flash_msg'];
+    unset($_SESSION['flash_msg']);
+}
+
+$preventOpenBack = !empty($_SESSION['prevent_open_back']);
+if ($preventOpenBack) {
+    unset($_SESSION['prevent_open_back']);
+}
+
+$newTicketId = 0;
+if (!empty($_SESSION['new_ticket_id'])) {
+    $newTicketId = (int)$_SESSION['new_ticket_id'];
+    unset($_SESSION['new_ticket_id']);
+}
+
 $filter = $_GET['filter'] ?? 'open';
 if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');
@@ -267,6 +286,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .tickets-table .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .tickets-table .table tbody tr:hover { background: #f8fafc; }
         .tickets-table .table tbody tr { transition: background .12s ease; }
+        .ticket-new-highlight { background: rgba(37, 99, 235, 0.08) !important; box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.25); }
+        .ticket-new-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(16, 185, 129, 0.14); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.25); margin-left: 10px; }
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
 
@@ -278,6 +299,41 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             .tickets-table { padding: 0 12px 12px; }
         }
     </style>
+    <?php if ($shouldProcessMailQueue): ?>
+    <script>
+        (function(){
+            try {
+                var fd = new FormData();
+                fd.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
+                fetch('process_mail_queue.php', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                }).catch(function(){});
+            } catch (e) {}
+        })();
+    </script>
+    <?php endif; ?>
+
+    <?php if ($preventOpenBack || $flashMsg !== ''): ?>
+    <script>
+        (function(){
+            try {
+                if (window.history && history.replaceState) {
+                    history.replaceState(null, document.title, 'tickets.php');
+                    history.pushState(null, document.title, 'tickets.php');
+                    window.addEventListener('popstate', function(){
+                        try {
+                            history.pushState(null, document.title, 'tickets.php');
+                            window.location.replace('tickets.php');
+                        } catch (e) {}
+                    });
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <?php endif; ?>
+
 </head>
 <body>
     <?php
@@ -358,6 +414,31 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     </div>
                 </div>
 
+                <?php if ($flashMsg !== ''): ?>
+                    <div class="alert alert-success" role="alert" id="tickets-flash-success"><?php echo html($flashMsg); ?></div>
+                    <script>
+                        (function(){
+                            try {
+                                var el = document.getElementById('tickets-flash-success');
+                                if (!el) return;
+                                window.setTimeout(function(){
+                                    try {
+                                        el.style.transition = 'opacity 220ms ease, max-height 260ms ease, margin 260ms ease, padding 260ms ease';
+                                        el.style.opacity = '0';
+                                        el.style.maxHeight = '0';
+                                        el.style.margin = '0';
+                                        el.style.paddingTop = '0';
+                                        el.style.paddingBottom = '0';
+                                        window.setTimeout(function(){
+                                            if (el && el.parentNode) el.parentNode.removeChild(el);
+                                        }, 320);
+                                    } catch (e) {}
+                                }, 3500);
+                            } catch (e) {}
+                        })();
+                    </script>
+                <?php endif; ?>
+
                 <div class="panel">
                     <div class="tabs">
                         <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
@@ -405,10 +486,14 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($tickets as $ticket): ?>
-                                <tr>
+                                <?php $isNew = ($newTicketId > 0 && (int)$ticket['id'] === (int)$newTicketId); ?>
+                                <tr id="ticket-row-<?php echo (int)$ticket['id']; ?>" class="<?php echo $isNew ? 'ticket-new-highlight' : ''; ?>">
                                     <td class="mono">
                                         <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>" class="text-decoration-none">
                                             <strong class="text-dark"><?php echo html($ticket['ticket_number']); ?></strong>
+                                            <?php if ($isNew): ?>
+                                                <span class="ticket-new-badge">Nuevo</span>
+                                            <?php endif; ?>
                                         </a>
                                     </td>
                                     <td>
