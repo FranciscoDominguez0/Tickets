@@ -86,16 +86,32 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
                     </a>
                 </li>
                 <li>
-                    <a href="empresas.php" class="sidebar-link <?php echo $currentRoute === 'empresas' ? 'active' : ''; ?>">
+                    <?php $empresasGroupActive = ($currentRoute === 'empresas' || $currentRoute === 'empresas_actividad'); ?>
+                    <button type="button" class="sidebar-toggle <?php echo $empresasGroupActive ? 'active expanded' : ''; ?>" aria-expanded="<?php echo $empresasGroupActive ? 'true' : 'false'; ?>">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="4" y="7" width="16" height="13" rx="2" stroke="<?php echo $currentRoute === 'empresas' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                <path d="M8 7V5" stroke="<?php echo $currentRoute === 'empresas' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M16 7V5" stroke="<?php echo $currentRoute === 'empresas' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <rect x="4" y="7" width="16" height="13" rx="2" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                <path d="M8 7V5" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M16 7V5" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                             </svg>
                         </span>
                         Empresas
-                    </a>
+                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                    </button>
+                    <ul class="sidebar-subnav <?php echo $empresasGroupActive ? 'open' : ''; ?>">
+                        <li>
+                            <a href="empresas.php" class="sidebar-link <?php echo $currentRoute === 'empresas' ? 'active' : ''; ?>">
+                                <span class="icon"><i class="bi bi-buildings"></i></span>
+                                Empresas
+                            </a>
+                        </li>
+                        <li>
+                            <a href="empresas_actividad.php" class="sidebar-link <?php echo $currentRoute === 'empresas_actividad' ? 'active' : ''; ?>">
+                                <span class="icon"><i class="bi bi-activity"></i></span>
+                                Actividad de tickets
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <a href="pagos.php" class="sidebar-link <?php echo $currentRoute === 'pagos' ? 'active' : ''; ?>">
@@ -109,21 +125,26 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
                     </a>
                 </li>
                 <li>
-                    <a href="notificaciones.php" class="sidebar-link <?php echo $currentRoute === 'notificaciones' ? 'active' : ''; ?>">
-                        <span class="icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M18 8A6 6 0 0 0 6 8C6 15 4 15 4 15H20C20 15 18 15 18 8Z" stroke="<?php echo $currentRoute === 'notificaciones' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M13.73 21A2 2 0 0 1 10.27 21" stroke="<?php echo $currentRoute === 'notificaciones' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                        </span>
-                        Notificaciones
-                    </a>
-                </li>
-                <li>
-                    <a href="configuracion.php" class="sidebar-link <?php echo $currentRoute === 'configuracion' ? 'active' : ''; ?>">
+                    <?php $configGroupActive = ($currentRoute === 'configuracion' || $currentRoute === 'notificaciones'); ?>
+                    <button type="button" class="sidebar-toggle <?php echo $configGroupActive ? 'active expanded' : ''; ?>" aria-expanded="<?php echo $configGroupActive ? 'true' : 'false'; ?>">
                         <span class="icon"><i class="bi bi-gear"></i></span>
                         Configuración
-                    </a>
+                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                    </button>
+                    <ul class="sidebar-subnav <?php echo $configGroupActive ? 'open' : ''; ?>">
+                        <li>
+                            <a href="configuracion.php" class="sidebar-link <?php echo $currentRoute === 'configuracion' ? 'active' : ''; ?>">
+                                <span class="icon"><i class="bi bi-gear"></i></span>
+                                Configuración
+                            </a>
+                        </li>
+                        <li>
+                            <a href="notificaciones.php" class="sidebar-link <?php echo $currentRoute === 'notificaciones' ? 'active' : ''; ?>">
+                                <span class="icon"><i class="bi bi-bell"></i></span>
+                                Notificaciones
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>
@@ -161,6 +182,27 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../js/scp.js"></script>
 <script>
+    (function(){
+        try {
+            var toggles = document.querySelectorAll('.sidebar-toggle');
+            toggles.forEach(function(btn){
+                btn.addEventListener('click', function(){
+                    var sub = btn.nextElementSibling;
+                    if (!sub || !sub.classList || !sub.classList.contains('sidebar-subnav')) return;
+                    var isOpen = sub.classList.contains('open');
+                    if (isOpen) {
+                        sub.classList.remove('open');
+                        btn.classList.remove('expanded');
+                        btn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        sub.classList.add('open');
+                        btn.classList.add('expanded');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+        } catch (e) {}
+    })();
     (function(){
         var form = document.querySelector('[data-superadmin-dark-toggle-form]');
         if (!form) return;
