@@ -386,10 +386,10 @@ function badgeDias(?int $d): string {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'secondary'],
-        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'secondary'],
-        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'secondary'],
-        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'secondary'],
+        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'primary'],
+        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'primary'],
+        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'primary'],
+        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'primary'],
     ];
     foreach ($kpis as $k): ?>
     <div class="col-6 col-md-3">
@@ -399,8 +399,8 @@ function badgeDias(?int $d): string {
                     <i class="bi <?php echo $k['icon']; ?>"></i>
                 </div>
                 <div>
-                    <div class="kpi-label text-muted"><?php echo $k['label']; ?></div>
-                    <div class="kpi-number text-<?php echo $k['color']; ?>"><?php echo $k['value']; ?></div>
+                    <div class="kpi-label"><?php echo $k['label']; ?></div>
+                    <div class="kpi-number"><?php echo $k['value']; ?></div>
                 </div>
             </div>
             <div class="kpi-bar bg-<?php echo $k['color']; ?>"></div>

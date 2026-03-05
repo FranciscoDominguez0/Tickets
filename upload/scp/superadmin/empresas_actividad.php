@@ -377,6 +377,54 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
         </div>
     </div>
 
+    <p class="section-title"><i class="bi bi-speedometer2"></i> Resumen</p>
+    <div class="row g-3 mb-2">
+        <?php
+            $kpis = [
+                [
+                    'label' => 'Usuarios',
+                    'value' => (int)($auditCounts['users'] ?? 0),
+                    'icon' => 'bi-people',
+                    'color' => 'primary',
+                ],
+                [
+                    'label' => 'Admins',
+                    'value' => (int)($auditCounts['staff_admins'] ?? 0),
+                    'icon' => 'bi-shield-lock',
+                    'color' => 'primary',
+                ],
+                [
+                    'label' => 'Agentes',
+                    'value' => (int)($auditCounts['staff_agents'] ?? 0),
+                    'icon' => 'bi-headset',
+                    'color' => 'primary',
+                ],
+                [
+                    'label' => 'Tickets recientes',
+                    'value' => (int)count($auditRecentTickets),
+                    'icon' => 'bi-ticket-perforated',
+                    'color' => 'primary',
+                ],
+            ];
+            foreach ($kpis as $k):
+        ?>
+        <div class="col-6 col-md-3">
+            <div class="card kpi-card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center gap-3 py-3">
+                    <div class="kpi-icon bg-<?php echo $k['color']; ?> bg-opacity-10 text-<?php echo $k['color']; ?>">
+                        <i class="bi <?php echo $k['icon']; ?>"></i>
+                    </div>
+                    <div>
+                        <div class="kpi-label"><?php echo html((string)$k['label']); ?></div>
+                        <div class="kpi-number"><?php echo (int)$k['value']; ?></div>
+                    </div>
+                </div>
+                <div class="kpi-bar bg-<?php echo $k['color']; ?>"></div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+
     <div class="card pro-card mb-3">
         <div class="card-body">
             <form method="get">
@@ -396,42 +444,6 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <p class="section-title"><i class="bi bi-speedometer2"></i> Resumen</p>
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
-            <div class="card kpi-card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted" style="font-size:.8rem">Usuarios</div>
-                    <div class="fs-4 fw-bold"><?php echo (int)($auditCounts['users'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card kpi-card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted" style="font-size:.8rem">Admins</div>
-                    <div class="fs-4 fw-bold"><?php echo (int)($auditCounts['staff_admins'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card kpi-card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted" style="font-size:.8rem">Agentes</div>
-                    <div class="fs-4 fw-bold"><?php echo (int)($auditCounts['staff_agents'] ?? 0); ?></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card kpi-card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted" style="font-size:.8rem">Tickets recientes</div>
-                    <div class="fs-4 fw-bold"><?php echo (int)count($auditRecentTickets); ?></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -478,7 +490,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table pro-table table-hover table-striped mb-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Nombre</th>
@@ -536,7 +548,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
                             $staffColspan++; // ID col (even if hidden on mobile)
                         ?>
                         <table class="table pro-table table-striped table-sm table-hover align-middle mb-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th class="d-none d-md-table-cell text-nowrap">ID</th>
                                     <th class="text-nowrap">Staff</th>
@@ -599,7 +611,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table pro-table table-hover table-striped mb-0">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Número</th>
@@ -679,38 +691,50 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
 
 <?php if ($selectedId <= 0): ?>
 <div class="row g-3 mb-3">
+    <?php
+        $kpisGlobal = [
+            [
+                'label' => 'Empresas',
+                'value' => (int)$totalEmpresas,
+                'icon' => 'bi-buildings',
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Tickets (total)',
+                'value' => (int)$totalTickets,
+                'icon' => 'bi-ticket',
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Tickets (últimos 30 días)',
+                'value' => (int)$totalTickets30d,
+                'icon' => 'bi-calendar2-week',
+                'color' => 'primary',
+            ],
+            [
+                'label' => 'Staff',
+                'value' => (int)$totalStaff,
+                'icon' => 'bi-person-badge',
+                'color' => 'primary',
+            ],
+        ];
+        foreach ($kpisGlobal as $k):
+    ?>
     <div class="col-6 col-md-3">
         <div class="card kpi-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted" style="font-size:.8rem">Empresas</div>
-                <div class="fs-4 fw-bold"><?php echo (int)$totalEmpresas; ?></div>
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <div class="kpi-icon bg-<?php echo $k['color']; ?> bg-opacity-10 text-<?php echo $k['color']; ?>">
+                    <i class="bi <?php echo $k['icon']; ?>"></i>
+                </div>
+                <div>
+                    <div class="kpi-label"><?php echo html((string)$k['label']); ?></div>
+                    <div class="kpi-number"><?php echo (int)$k['value']; ?></div>
+                </div>
             </div>
+            <div class="kpi-bar bg-<?php echo $k['color']; ?>"></div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="card kpi-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted" style="font-size:.8rem">Tickets (total)</div>
-                <div class="fs-4 fw-bold"><?php echo (int)$totalTickets; ?></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card kpi-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted" style="font-size:.8rem">Tickets (últimos 30 días)</div>
-                <div class="fs-4 fw-bold"><?php echo (int)$totalTickets30d; ?></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="card kpi-card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted" style="font-size:.8rem">Staff</div>
-                <div class="fs-4 fw-bold"><?php echo (int)$totalStaff; ?></div>
-            </div>
-        </div>
-    </div>
+    <?php endforeach; ?>
 </div>
 
 <div class="card pro-card shadow-sm">
@@ -724,7 +748,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
         <?php else: ?>
             <div class="table-responsive">
                 <table class="table pro-table table-hover table-striped mb-0">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>#</th>
                             <th>Empresa</th>

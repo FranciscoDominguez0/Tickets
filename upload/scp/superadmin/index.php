@@ -214,10 +214,10 @@ function stDias(?int $d): string {
 
 /* ── Array de KPIs: sin "Tickets este mes", "Staff activo" ni "Pagos vencidos" ── */
 $kpiCards = [
-    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'secondary',   'total registradas'],
-    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'secondary',   date('M Y')],
-    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'secondary',   'histórico'],
-    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'secondary',   'estado suspendido'],
+    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'primary',   'total registradas'],
+    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'primary',   date('M Y')],
+    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'primary',   'histórico'],
+    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'primary',   'estado suspendido'],
 ];
 
 ?>
@@ -255,8 +255,8 @@ $kpiCards = [
                     <i class="bi <?= $icon ?>"></i>
                 </div>
                 <div>
-                    <div class="kpi-label text-muted"><?= $label ?></div>
-                    <div class="kpi-number text-<?= $color ?>"><?= $value ?></div>
+                    <div class="kpi-label text-dark"><?= $label ?></div>
+                    <div class="kpi-number text-dark"><?= $value ?></div>
                     <div class="kpi-sub"><?= $sub ?></div>
                 </div>
             </div>
