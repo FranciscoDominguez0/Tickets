@@ -64,7 +64,35 @@ function requireLogin($type = 'user') {
                                 $logoutPath = $basePrefix . '/upload/logout.php';
                                 $logoutHref = ($host !== '') ? ($scheme . '://' . $host . $logoutPath) : $logoutPath;
                                 http_response_code(403);
-                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="' . html($logoutHref) . '" target="_top" rel="noopener">Ir al login</a></div></body></html>';
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">'
+                                    . '<style>'
+                                    . 'body{min-height:100vh;background:radial-gradient(1100px 600px at 15% 10%,rgba(220,53,69,.12),transparent 60%),radial-gradient(900px 520px at 90% 85%,rgba(13,110,253,.10),transparent 55%),#f6f8fb;}'
+                                    . '.blk-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}'
+                                    . '.blk-card{width:min(760px,96vw);border:1px solid rgba(0,0,0,.08);border-radius:18px;overflow:hidden;box-shadow:0 18px 55px rgba(16,24,40,.12);background:#fff;}'
+                                    . '.blk-head{padding:18px 18px;background:linear-gradient(135deg,rgba(220,53,69,.95),rgba(220,53,69,.78));color:#fff;display:flex;gap:12px;align-items:center;}'
+                                    . '.blk-ico{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;}'
+                                    . '.blk-title{margin:0;font-weight:800;letter-spacing:.2px;font-size:18px;}'
+                                    . '.blk-sub{margin:0;opacity:.92;font-size:13px;}'
+                                    . '.blk-body{padding:18px;}'
+                                    . '.blk-kv{background:rgba(220,53,69,.06);border:1px solid rgba(220,53,69,.18);border-radius:14px;padding:12px 14px;}'
+                                    . '.blk-kv strong{color:#b02a37;}'
+                                    . '</style></head><body>'
+                                    . '<div class="blk-wrap"><div class="blk-card">'
+                                    . '<div class="blk-head">'
+                                    . '<div class="blk-ico" aria-hidden="true">'
+                                    . '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.964 0L.165 13.233c-.457.778.091 1.767.982 1.767h13.706c.89 0 1.438-.99.982-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>'
+                                    . '</div>'
+                                    . '<div><p class="blk-title">Acceso suspendido temporalmente</p><p class="blk-sub">Verificación de pago requerida para continuar</p></div>'
+                                    . '</div>'
+                                    . '<div class="blk-body">'
+                                    . '<div class="blk-kv">'
+                                    . '<div><strong>Motivo:</strong> ' . html($motivo) . '</div>'
+                                    . '<div class="mt-2">Si ya realizaste el pago, comunícate con <strong>Vigitec Panamá</strong> para reactivar el servicio.</div>'
+                                    . '</div>'
+                                    . '<div class="d-flex gap-2 flex-wrap mt-3">'
+                                    . '<a class="btn btn-primary" href="' . html($logoutHref) . '" target="_top" rel="noopener">Ir al login</a>'
+                                    . '</div>'
+                                    . '</div></div></div></body></html>';
                                 exit;
                             }
                         }
@@ -194,13 +222,35 @@ function requireLogin($type = 'user') {
                                 $logoutHref = ($host !== '') ? ($scheme . '://' . $host . $logoutPath) : $logoutPath;
                                 http_response_code(403);
                                 echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-                                    . '<title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light">'
-                                    . '<div class="container py-5" style="max-width:720px">'
-                                    . '<div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div>'
-                                    . '<div class="d-flex align-items-center gap-2 flex-wrap">'
+                                    . '<title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">'
+                                    . '<style>'
+                                    . 'body{min-height:100vh;background:radial-gradient(1100px 600px at 15% 10%,rgba(220,53,69,.12),transparent 60%),radial-gradient(900px 520px at 90% 85%,rgba(13,110,253,.10),transparent 55%),#f6f8fb;}'
+                                    . '.blk-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}'
+                                    . '.blk-card{width:min(760px,96vw);border:1px solid rgba(0,0,0,.08);border-radius:18px;overflow:hidden;box-shadow:0 18px 55px rgba(16,24,40,.12);background:#fff;}'
+                                    . '.blk-head{padding:18px 18px;background:linear-gradient(135deg,rgba(220,53,69,.95),rgba(220,53,69,.78));color:#fff;display:flex;gap:12px;align-items:center;}'
+                                    . '.blk-ico{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;}'
+                                    . '.blk-title{margin:0;font-weight:800;letter-spacing:.2px;font-size:18px;}'
+                                    . '.blk-sub{margin:0;opacity:.92;font-size:13px;}'
+                                    . '.blk-body{padding:18px;}'
+                                    . '.blk-kv{background:rgba(220,53,69,.06);border:1px solid rgba(220,53,69,.18);border-radius:14px;padding:12px 14px;}'
+                                    . '.blk-kv strong{color:#b02a37;}'
+                                    . '</style></head><body>'
+                                    . '<div class="blk-wrap"><div class="blk-card">'
+                                    . '<div class="blk-head">'
+                                    . '<div class="blk-ico" aria-hidden="true">'
+                                    . '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.964 0L.165 13.233c-.457.778.091 1.767.982 1.767h13.706c.89 0 1.438-.99.982-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>'
+                                    . '</div>'
+                                    . '<div><p class="blk-title">Acceso suspendido temporalmente</p><p class="blk-sub">Verificación de pago requerida para continuar</p></div>'
+                                    . '</div>'
+                                    . '<div class="blk-body">'
+                                    . '<div class="blk-kv">'
+                                    . '<div><strong>Motivo:</strong> ' . html($motivo) . '</div>'
+                                    . '<div class="mt-2">Si ya realizaste el pago, comunícate con <strong>Vigitec Panamá</strong> para reactivar el servicio.</div>'
+                                    . '</div>'
+                                    . '<div class="d-flex gap-2 flex-wrap mt-3">'
                                     . '<a class="btn btn-primary" href="' . html($logoutHref) . '" target="_top" rel="noopener">Ir al login</a>'
                                     . '</div>'
-                                    . '</div></body></html>';
+                                    . '</div></div></div></body></html>';
                                 exit;
                             }
 
