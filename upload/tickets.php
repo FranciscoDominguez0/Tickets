@@ -116,10 +116,15 @@ if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_co
             echo json_encode(['ok' => false, 'error' => 'Invalid id']);
             exit;
         }
-        $stmt = $mysqli->prepare('UPDATE user_notifications SET is_read = 1, read_at = NOW() WHERE id = ? AND empresa_id = ? AND user_id = ?');
-        if ($stmt) {
-            $stmt->bind_param('iii', $id, $eidAjax, $uidAjax);
-            $stmt->execute();
+        $stmtU = $mysqli->prepare('UPDATE user_notifications SET is_read = 1, read_at = NOW() WHERE id = ? AND empresa_id = ? AND user_id = ?');
+        if ($stmtU) {
+            $stmtU->bind_param('iii', $id, $eidAjax, $uidAjax);
+            $stmtU->execute();
+        }
+        $stmtD = $mysqli->prepare('DELETE FROM user_notifications WHERE id = ? AND empresa_id = ? AND user_id = ?');
+        if ($stmtD) {
+            $stmtD->bind_param('iii', $id, $eidAjax, $uidAjax);
+            $stmtD->execute();
         }
         echo json_encode(['ok' => true]);
         exit;
@@ -441,6 +446,51 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .mono { font-variant-numeric: tabular-nums; }
         .dropdown-menu .notif-item:hover { background: #f1f5f9; }
 
+        .notif-dd {
+            border-radius: 18px;
+            border: 1px solid rgba(226,232,240,0.95);
+            overflow: hidden;
+            box-shadow: 0 22px 55px rgba(15, 23, 42, 0.22);
+        }
+        .notif-dd-head {
+            background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
+                        linear-gradient(135deg, #2563eb, #4f46e5);
+            color: #fff;
+        }
+        .notif-dd-title {
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .notif-dd-sub {
+            opacity: .85;
+            font-weight: 700;
+            font-size: .85rem;
+        }
+        .notif-dd-count {
+            background: rgba(255,255,255,0.22);
+            border: 1px solid rgba(255,255,255,0.28);
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-weight: 900;
+            font-size: .78rem;
+        }
+        .notif-empty {
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            background: rgba(248, 250, 252, 0.7);
+            border-radius: 16px;
+        }
+        .notif-item {
+            border: 1px solid rgba(226,232,240,0.95);
+            background: #fff;
+            transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+        }
+        .notif-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.10);
+        }
+        .notif-item + .notif-item { margin-top: 10px; }
+
         @media (max-width: 576px) {
             .container-main { padding: 0 12px; margin: 18px auto; }
             .shell { max-width: 100%; }
@@ -537,15 +587,26 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <i class="bi bi-bell"></i>
                         <span id="notifBellBadge" class="badge bg-danger ms-1" style="display:none; font-size:.7rem;">0</span>
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 360px;" aria-labelledby="notifBellBtn">
-                        <div class="p-3 border-bottom" style="background: #f8fafc;">
+                    <div class="dropdown-menu dropdown-menu-end p-0 notif-dd" style="min-width: 380px;" aria-labelledby="notifBellBtn">
+                        <div class="p-3 notif-dd-head">
                             <div class="d-flex align-items-center justify-content-between">
-                                <div class="fw-bold text-dark">Notificaciones</div>
-                                <div class="text-muted" style="font-size:.85rem" id="notifBellSub">Respuestas a tus tickets</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px;height:36px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.22);">
+                                        <i class="bi bi-bell" style="font-size:1.05rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div class="notif-dd-title">Notificaciones</div>
+                                        <div class="notif-dd-sub" id="notifBellSub">Respuestas a tus tickets</div>
+                                    </div>
+                                </div>
+                                <div id="notifBellCountPill" class="notif-dd-count" style="display:none;">0 nuevas</div>
                             </div>
                         </div>
-                        <div id="notifBellList" class="p-2" style="max-height: 340px; overflow:auto;">
-                            <div class="text-center text-muted py-3" style="font-size:.9rem">Sin notificaciones</div>
+                        <div id="notifBellList" class="p-3" style="max-height: 360px; overflow:auto;">
+                            <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
+                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div>
+                                <div style="color:#64748b;">Cuando el equipo responda, te aparecerá aquí.</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -738,6 +799,37 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 } catch (e) {}
             }
 
+            function formatNotifMessage(raw) {
+                try {
+                    var s = (raw || '').toString().trim();
+                    if (!s) return '';
+                    var m = s.match(/ticket\s*(#?\d+)/i);
+                    if (m && m[1]) {
+                        return 'Respuesta nueva · Ticket #' + String(m[1]).replace('#','');
+                    }
+                    return s;
+                } catch (e) {
+                    return (raw || '').toString();
+                }
+            }
+
+            function formatNotifWhen(raw) {
+                try {
+                    var s = (raw || '').toString().trim();
+                    if (!s) return '';
+                    var d = new Date(s.replace(' ', 'T'));
+                    if (!isFinite(d.getTime())) return s;
+                    return d.toLocaleString('es-PA', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (e) {
+                    return (raw || '').toString();
+                }
+            }
+
             function tryBrowserNotify(title, body, url) {
                 try {
                     if (!('Notification' in window)) return;
@@ -761,8 +853,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     }
                     var html = '';
                     items.forEach(function(it){
-                        var msg = (it.message || '').toString();
-                        var when = (it.created_at || '').toString();
+                        var msg = formatNotifMessage(it.message || '');
+                        var when = formatNotifWhen(it.created_at || '');
                         var href = it.ticket_id ? ('view-ticket.php?id=' + String(it.ticket_id)) : 'tickets.php';
                         html += ''
                             + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
@@ -787,10 +879,15 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             function setBellCount(n) {
                 try {
                     var badge = document.getElementById('notifBellBadge');
+                    var pill = document.getElementById('notifBellCountPill');
                     if (!badge) return;
                     var v = parseInt(n || 0, 10) || 0;
                     badge.textContent = String(v);
                     badge.style.display = v > 0 ? '' : 'none';
+                    if (pill) {
+                        pill.textContent = String(v) + ' nuevas';
+                        pill.style.display = v > 0 ? '' : 'none';
+                    }
                 } catch (e) {}
             }
 
@@ -822,9 +919,10 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 }
                                 if (lastId <= 0 || lastId <= seenId) return;
                                 try { localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
-                                var msg = (last.message || 'Tienes una nueva respuesta del equipo.').toString();
+                                var msg = formatNotifMessage(last.message || '');
+                                if (!msg) msg = 'Respuesta nueva · Revisa tu ticket';
                                 showToast(msg);
-                                tryBrowserNotify('Nueva respuesta en tu ticket', msg, last.ticket_id ? ('view-ticket.php?id=' + String(last.ticket_id)) : 'tickets.php');
+                                tryBrowserNotify('Nueva respuesta', msg, last.ticket_id ? ('view-ticket.php?id=' + String(last.ticket_id)) : 'tickets.php');
                             });
                     })
                     .catch(function(){});

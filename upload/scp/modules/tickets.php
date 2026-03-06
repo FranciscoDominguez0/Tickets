@@ -1418,7 +1418,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 if ($hasUserNotifs) {
                                     $uidOwner = (int)($ticketView['user_id'] ?? 0);
                                     if ($uidOwner > 0) {
-                                        $msgNotif = 'Nueva respuesta en tu ticket ' . (string)($ticketView['ticket_number'] ?? '') . ': ' . (string)($ticketView['subject'] ?? '');
+                                        $msgNotif = 'Respuesta nueva · Ticket #' . (string)($ticketView['ticket_number'] ?? '');
                                         $typeNotif = 'ticket_reply';
                                         $stmtUn = $mysqli->prepare('INSERT INTO user_notifications (empresa_id, user_id, type, message, ticket_id, thread_entry_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())');
                                         if ($stmtUn) {
