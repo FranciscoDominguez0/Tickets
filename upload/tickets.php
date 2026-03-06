@@ -454,7 +454,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
-                        linear-gradient(135deg, #2563eb, #4f46e5);
+                        linear-gradient(135deg, #2563eb, #0ea5e9);
             color: #fff;
         }
         .notif-dd-title {

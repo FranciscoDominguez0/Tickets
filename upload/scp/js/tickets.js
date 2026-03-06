@@ -319,6 +319,111 @@ document.addEventListener('DOMContentLoaded', function() {
       return document.querySelectorAll('.ticket-check:checked').length;
     }
 
+    function getSelectedDeptInfo() {
+      try {
+        var checks = Array.prototype.slice.call(document.querySelectorAll('input.ticket-check:checked'));
+        var deptIds = {};
+        checks.forEach(function (c) {
+          var did = parseInt(c.getAttribute('data-ticket-dept-id') || '0', 10) || 0;
+          if (did > 0) deptIds[String(did)] = true;
+        });
+        var keys = Object.keys(deptIds);
+        return {
+          deptIds: keys.map(function (k) { return parseInt(k, 10) || 0; }).filter(function (v) { return v > 0; }),
+          singleDeptId: (keys.length === 1 ? (parseInt(keys[0], 10) || 0) : 0),
+          mixed: keys.length > 1
+        };
+      } catch (e) {
+        return { deptIds: [], singleDeptId: 0, mixed: false };
+      }
+    }
+
+    function showBulkWarn(msg) {
+      try {
+        var el = document.getElementById('bulkClientAlert');
+        if (!el) return;
+        if (el._autoHideTimer) {
+          clearTimeout(el._autoHideTimer);
+          el._autoHideTimer = null;
+        }
+        el.textContent = msg;
+        el.classList.remove('d-none');
+        el._autoHideTimer = setTimeout(function () {
+          try { hideBulkWarn(); } catch (e) {}
+        }, 5000);
+      } catch (e) {}
+    }
+
+    function hideBulkWarn() {
+      try {
+        var el = document.getElementById('bulkClientAlert');
+        if (!el) return;
+        if (el._autoHideTimer) {
+          clearTimeout(el._autoHideTimer);
+          el._autoHideTimer = null;
+        }
+        el.classList.add('d-none');
+        el.textContent = '';
+      } catch (e) {}
+    }
+
+    function filterBulkAssignMenu() {
+      try {
+        var menu = document.getElementById('bulkAssignMenu');
+        if (!menu) return;
+        var emptyItem = document.getElementById('bulkAssignEmptyItem');
+        var unassignItem = document.getElementById('bulkAssignUnassignItem');
+        var dividerItem = document.getElementById('bulkAssignDivider');
+        var panelEl = document.querySelector('.tickets-panel[data-general-dept-id]');
+        var generalDeptId = panelEl ? (parseInt(panelEl.getAttribute('data-general-dept-id') || '0', 10) || 0) : 0;
+
+        var info = getSelectedDeptInfo();
+        if (!selectedTicketCount()) {
+          hideBulkWarn();
+          if (emptyItem) emptyItem.classList.remove('d-none');
+          if (unassignItem) unassignItem.classList.add('d-none');
+          if (dividerItem) dividerItem.classList.add('d-none');
+          menu.querySelectorAll('.bulk-assign-staff-item').forEach(function (a) { a.classList.add('d-none'); });
+          return;
+        }
+
+        if (emptyItem) emptyItem.classList.add('d-none');
+
+        // If we can't detect dept_id, do not allow assignment
+        if (!info.deptIds || !info.deptIds.length) {
+          showBulkWarn('No es posible asignar un agente: no se pudo detectar el departamento del ticket seleccionado.');
+          if (unassignItem) unassignItem.classList.add('d-none');
+          if (dividerItem) dividerItem.classList.add('d-none');
+          menu.querySelectorAll('.bulk-assign-staff-item').forEach(function (a) { a.classList.add('d-none'); });
+          return;
+        }
+
+        if (info.mixed) {
+          showBulkWarn('No es posible asignar un agente a tickets de distintos departamentos.');
+          if (unassignItem) unassignItem.classList.add('d-none');
+          if (dividerItem) dividerItem.classList.add('d-none');
+          menu.querySelectorAll('.bulk-assign-staff-item').forEach(function (a) { a.classList.add('d-none'); });
+          return;
+        }
+
+        hideBulkWarn();
+        if (unassignItem) unassignItem.classList.remove('d-none');
+        if (dividerItem) dividerItem.classList.remove('d-none');
+        var deptId = info.singleDeptId;
+        menu.querySelectorAll('.bulk-assign-staff-item').forEach(function (a) {
+          var staffDept = parseInt(a.getAttribute('data-staff-dept-id') || '0', 10) || 0;
+          var ok = false;
+          if (deptId > 0) {
+            ok = (staffDept === deptId);
+          } else {
+            ok = false;
+          }
+          if (!ok && generalDeptId > 0 && staffDept === generalDeptId) ok = true;
+          a.classList.toggle('d-none', !ok);
+        });
+      } catch (e) {}
+    }
+
     function toggleAllTickets(state) {
       var checks = document.querySelectorAll('.ticket-check');
       checks.forEach(function (c) {
@@ -450,8 +555,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (checkAll) {
       checkAll.addEventListener('change', function () {
         toggleAllTickets(checkAll.checked);
+        filterBulkAssignMenu();
       });
     }
+
+    document.querySelectorAll('input.ticket-check').forEach(function (c) {
+      c.addEventListener('change', function () {
+        filterBulkAssignMenu();
+      });
+    });
 
     // Acciones masivas
     document.querySelectorAll('[data-action="tickets-bulk-delete"]').forEach(function (btn) {
@@ -464,6 +576,20 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-action="tickets-bulk-assign"]').forEach(function (a) {
       a.addEventListener('click', function (e) {
         e.preventDefault();
+        filterBulkAssignMenu();
+        if (!selectedTicketCount()) {
+          showInfoModal('Debes seleccionar un ticket.');
+          return;
+        }
+        var info = getSelectedDeptInfo();
+        if (!info.deptIds || !info.deptIds.length) {
+          showInfoModal('No es posible asignar un agente: no se pudo detectar el departamento del ticket seleccionado.');
+          return;
+        }
+        if (info.mixed) {
+          showInfoModal('No es posible asignar un agente a tickets de distintos departamentos.');
+          return;
+        }
         var staffId = (a.getAttribute('data-staff-id') || '').toString();
         var label = (a.getAttribute('data-staff-label') || '').toString();
         var valEl = document.getElementById('bulk_staff_id');
@@ -473,6 +599,8 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmBulk('bulk_assign');
       });
     });
+
+    filterBulkAssignMenu();
 
     document.querySelectorAll('[data-action="tickets-bulk-status"]').forEach(function (a) {
       a.addEventListener('click', function (e) {

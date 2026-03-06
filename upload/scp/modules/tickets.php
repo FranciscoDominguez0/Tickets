@@ -62,6 +62,57 @@ if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
 
 $eid = empresaId();
 
+// Ticket status ids (best-effort mapping by name)
+$statusIdOpen = 0;
+$statusIdInProgress = 0;
+$statusIdResolved = 0;
+$statusIdClosed = 0;
+try {
+    if (isset($mysqli) && $mysqli) {
+        $rsSt = @$mysqli->query('SELECT id, name FROM ticket_status');
+        if ($rsSt) {
+            while ($rsSt && ($st = $rsSt->fetch_assoc())) {
+                $sid = (int)($st['id'] ?? 0);
+                $sname = strtolower(trim((string)($st['name'] ?? '')));
+                if ($sid <= 0 || $sname === '') continue;
+                if ($statusIdOpen === 0 && (str_contains($sname, 'abiert') || str_contains($sname, 'open'))) {
+                    $statusIdOpen = $sid;
+                    continue;
+                }
+                if ($statusIdInProgress === 0 && (str_contains($sname, 'progres') || str_contains($sname, 'progress') || str_contains($sname, 'en curso') || str_contains($sname, 'working'))) {
+                    $statusIdInProgress = $sid;
+                    continue;
+                }
+                if ($statusIdResolved === 0 && (str_contains($sname, 'resuelt') || str_contains($sname, 'resolved'))) {
+                    $statusIdResolved = $sid;
+                    continue;
+                }
+                if ($statusIdClosed === 0 && (str_contains($sname, 'cerrad') || str_contains($sname, 'closed'))) {
+                    $statusIdClosed = $sid;
+                    continue;
+                }
+            }
+        }
+    }
+} catch (Throwable $e) {
+}
+
+// Auto-close: after 24h in Resolved, move to Closed
+try {
+    if (isset($mysqli) && $mysqli && $statusIdResolved > 0 && $statusIdClosed > 0) {
+        $stmtAutoClose = $mysqli->prepare(
+            'UPDATE tickets '
+            . 'SET status_id = ?, closed = NOW(), updated = NOW() '
+            . 'WHERE empresa_id = ? AND status_id = ? AND (closed IS NULL) AND updated <= (NOW() - INTERVAL 1 DAY)'
+        );
+        if ($stmtAutoClose) {
+            $stmtAutoClose->bind_param('iii', $statusIdClosed, $eid, $statusIdResolved);
+            $stmtAutoClose->execute();
+        }
+    }
+} catch (Throwable $e) {
+}
+
 $threadsHasEmpresa = false;
 $entriesHasEmpresa = false;
 if (isset($mysqli) && $mysqli) {
@@ -1409,6 +1460,21 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     if ($stmt->execute()) {
                         $entry_id = (int) $mysqli->insert_id;
 
+                        // Auto status: when staff replies publicly and ticket is Open, move to In Progress
+                        // Only if staff didn't change the status manually in the form.
+                        try {
+                            $currentStatusId = (int)($ticketView['status_id'] ?? 0);
+                            if (!$is_internal
+                                && $statusIdOpen > 0
+                                && $statusIdInProgress > 0
+                                && $currentStatusId === $statusIdOpen
+                                && $new_status_id === $currentStatusId
+                            ) {
+                                $new_status_id = $statusIdInProgress;
+                            }
+                        } catch (Throwable $e) {
+                        }
+
                         // Notificar al cliente (solo respuestas públicas)
                         if (!$is_internal) {
                             try {
@@ -1439,7 +1505,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             if ($stmtSt->execute()) {
                                 $stRow = $stmtSt->get_result()->fetch_assoc();
                                 $stName = strtolower(trim((string)($stRow['name'] ?? '')));
-                                if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                                if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'closed'))) {
                                     $isClosingStatus = true;
                                 }
                             }
@@ -1770,7 +1836,7 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
     }
 }
 
-$sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed,
+$sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated, t.closed,
                ts.name AS status_name, ts.color AS status_color,
                p.name AS priority_name, p.color AS priority_color,
                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
@@ -1846,6 +1912,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
             if ($_POST['do'] === 'bulk_assign') {
                 $staffId = isset($_POST['bulk_staff_id']) && is_numeric($_POST['bulk_staff_id']) ? (int) $_POST['bulk_staff_id'] : 0;
                 $inAllowed = [];
+
+                // Validación: no permitir asignar a agente tickets de distintos departamentos
+                // (para evitar mezclas y mostrar advertencia consistente con el frontend)
+                if ($staffId !== 0) {
+                    $deptIds = [];
+                    $sqlDept = "SELECT DISTINCT dept_id FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)";
+                    $stmtDept = $mysqli->prepare($sqlDept);
+                    if ($stmtDept) {
+                        $typesDept = 'i' . $typesIds;
+                        $paramsDept = [&$typesDept, &$eid];
+                        foreach ($ticketIds as $k => $v) { $paramsDept[] = &$ticketIds[$k]; }
+                        call_user_func_array([$stmtDept, 'bind_param'], $paramsDept);
+                        if ($stmtDept->execute()) {
+                            $resDept = $stmtDept->get_result();
+                            while ($resDept && ($dr = $resDept->fetch_assoc())) {
+                                $did = (int)($dr['dept_id'] ?? 0);
+                                if ($did > 0) $deptIds[$did] = true;
+                            }
+                        }
+                    }
+                    if (count($deptIds) > 1) {
+                        $postErrors[] = 'Solo puedes asignar tickets del mismo departamento. Selecciona tickets de un solo departamento.';
+                        $ticketIds = [];
+                    }
+                }
+
+                if (empty($ticketIds)) {
+                    // no continuar
+                } else {
 
                 // Validación: el agente debe ser del mismo dept que el ticket o General (si existe)
                 $staffDept = 0;
@@ -1997,6 +2092,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 } else {
                     $postErrors[] = 'Error al asignar tickets.';
                 }
+                }
             } elseif ($_POST['do'] === 'bulk_status') {
                 $statusId = isset($_POST['bulk_status_id']) && is_numeric($_POST['bulk_status_id']) ? (int) $_POST['bulk_status_id'] : 0;
                 if ($statusId <= 0) {
@@ -2109,7 +2205,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
 
 // Datos para toolbars
 $staffOptions = [];
-$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname";
+$staffHasRole = false;
+if (isset($mysqli) && $mysqli) {
+    $col = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'role'");
+    $staffHasRole = ($col && $col->num_rows > 0);
+}
+
+$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1";
+if ($staffHasRole) {
+    $staffSql .= " AND (role IS NULL OR role <> 'superadmin')";
+}
+$staffSql .= " ORDER BY firstname, lastname";
 $stmtStaffTb = $mysqli->prepare($staffSql);
 $r = null;
 if ($stmtStaffTb) {
@@ -2198,7 +2304,7 @@ if (!empty($ticketView)) {
         $canBulkDelete = roleHasPermission('ticket.delete');
         $bulkStatusLocked = !$canBulkEdit && !$canBulkClose;
         ?>
-        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>">
+        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>" data-general-dept-id="<?php echo (int)$generalDeptId; ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-actions">
                 <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-all">Seleccionar</button>
@@ -2211,12 +2317,13 @@ if (!empty($ticketView)) {
                     <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" <?php echo $canBulkAssign ? '' : 'disabled'; ?>>
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="0" data-staff-label="— Sin asignar —">— Sin asignar —</a></li>
-                        <li><hr class="dropdown-divider"></li>
+                    <ul class="dropdown-menu" id="bulkAssignMenu">
+                        <li id="bulkAssignEmptyItem" class="d-none"><span class="dropdown-item-text text-muted" style="font-weight:700;">Debes seleccionar un ticket</span></li>
+                        <li id="bulkAssignUnassignItem"><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="0" data-staff-label="— Sin asignar —">— Sin asignar —</a></li>
+                        <li id="bulkAssignDivider"><hr class="dropdown-divider"></li>
                         <?php foreach ($staffOptions as $s): ?>
                             <?php $sn = trim($s['firstname'] . ' ' . $s['lastname']); ?>
-                            <li><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="<?php echo (int) $s['id']; ?>" data-staff-label="<?php echo html($sn); ?>"><?php echo html($sn); ?></a></li>
+                            <li><a class="dropdown-item bulk-assign-staff-item" href="#" data-action="tickets-bulk-assign" data-staff-id="<?php echo (int) $s['id']; ?>" data-staff-label="<?php echo html($sn); ?>" data-staff-dept-id="<?php echo (int)($s['dept_id'] ?? 0); ?>"><?php echo html($sn); ?></a></li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
@@ -2340,8 +2447,8 @@ if (!empty($ticketView)) {
                             }
                             $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
                         ?>
-                        <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>">
-                            <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>"></td>
+                        <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>">
+                            <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>"></td>
                             <td>
                                 <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
                                 <?php if ($isNew): ?>
