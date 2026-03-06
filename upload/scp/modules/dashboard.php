@@ -6,6 +6,12 @@
 $period = $_POST['period'] ?? 'today';
 $startDateInput = $_POST['start'] ?? '';
 
+// Export CSV (GET)
+if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
+    $period = isset($_GET['period']) ? (string)$_GET['period'] : $period;
+    $startDateInput = isset($_GET['start']) ? (string)$_GET['start'] : $startDateInput;
+}
+
 $eid = empresaId();
 
 // Calcular fechas según el período
@@ -49,6 +55,207 @@ switch ($period) {
 $startDate->setTime(0, 0, 0);
 $start = $startDate->format('Y-m-d');
 $end = $endDate->format('Y-m-d');
+
+if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
+    $type = isset($_GET['type']) ? strtolower(trim((string)$_GET['type'])) : '';
+    $allowed = ['dept', 'topics', 'agent'];
+    if (!in_array($type, $allowed, true)) {
+        http_response_code(400);
+        echo 'Tipo de exportación inválido.';
+        exit;
+    }
+
+    $filename = 'dashboard_' . $type . '_' . $start . '_to_' . $end . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    if (!$out) {
+        http_response_code(500);
+        echo 'No se pudo generar el archivo.';
+        exit;
+    }
+    // UTF-8 BOM para Excel
+    fwrite($out, "\xEF\xBB\xBF");
+
+    if ($type === 'dept') {
+        fputcsv($out, ['Departamento', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        $sql = "SELECT 
+            d.name as departamento,
+            COUNT(t.id) as total_tickets,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as abierto,
+            SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) as asignado,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) 
+                AND t.closed IS NOT NULL 
+                AND t.closed < NOW() 
+                AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) as atrasado,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) as cerrado,
+            0 as reabierto,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) 
+                AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) as borrado,
+            AVG(CASE WHEN t.closed IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) 
+                ELSE NULL END) as tiempo_servicio,
+            AVG(CASE WHEN t.staff_id IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, t.created, 
+                    (SELECT MIN(created) FROM thread_entries WHERE thread_id = 
+                        (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) 
+                        AND staff_id IS NOT NULL 
+                        AND is_internal = 0 
+                        LIMIT 1))
+                ELSE NULL END) as tiempo_respuesta
+        FROM departments d
+        LEFT JOIN tickets t ON d.id = t.dept_id 
+            AND t.empresa_id = ?
+            AND t.created BETWEEN ? AND ?
+        WHERE d.is_active = 1
+        GROUP BY d.id, d.name
+        HAVING total_tickets > 0
+        ORDER BY d.name";
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param('iss', $eid, $start, $end);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                fputcsv($out, [
+                    (string)$row['departamento'],
+                    (int)$row['abierto'],
+                    (int)$row['asignado'],
+                    (int)$row['atrasado'],
+                    (int)$row['cerrado'],
+                    (int)$row['reabierto'],
+                    (int)$row['borrado'],
+                    ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
+                    ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
+                ]);
+            }
+        }
+    }
+
+    if ($type === 'topics') {
+        $topicsTable = null;
+        $topicsKeyColumn = null;
+        $topicsNameColumn = null;
+        $topicsIdColumn = null;
+        $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
+        if ($t && $t->num_rows > 0) {
+            $topicsTable = 'help_topics';
+            $topicsIdColumn = 'id';
+            $topicsNameColumn = 'name';
+        }
+        if (!$topicsTable) {
+            $t = $mysqli->query("SHOW TABLES LIKE 'helptopics'");
+            if ($t && $t->num_rows > 0) {
+                $topicsTable = 'helptopics';
+                $topicsIdColumn = 'id';
+                $topicsNameColumn = 'name';
+            }
+        }
+        if ($topicsTable) {
+            $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
+            if ($c && $c->num_rows > 0) {
+                $topicsKeyColumn = 'topic_id';
+            }
+            if (!$topicsKeyColumn) {
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'help_topic_id'");
+                if ($c && $c->num_rows > 0) {
+                    $topicsKeyColumn = 'help_topic_id';
+                }
+            }
+            if (!$topicsKeyColumn) {
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'helptopic_id'");
+                if ($c && $c->num_rows > 0) {
+                    $topicsKeyColumn = 'helptopic_id';
+                }
+            }
+        }
+
+        fputcsv($out, ['Tema', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        if ($topicsTable && $topicsKeyColumn) {
+            $sql = "SELECT 
+                ht.$topicsNameColumn AS tema,
+                COUNT(t.id) AS total_tickets,
+                SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+                SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
+                SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+                SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+                0 AS reabierto,
+                SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+                AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
+                AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+            FROM $topicsTable ht
+            LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
+            GROUP BY ht.$topicsIdColumn, ht.$topicsNameColumn
+            HAVING total_tickets > 0
+            ORDER BY ht.$topicsNameColumn";
+            $stmt = $mysqli->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param('iss', $eid, $start, $end);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                while ($row = $res->fetch_assoc()) {
+                    fputcsv($out, [
+                        (string)$row['tema'],
+                        (int)$row['abierto'],
+                        (int)$row['asignado'],
+                        (int)$row['atrasado'],
+                        (int)$row['cerrado'],
+                        (int)$row['reabierto'],
+                        (int)$row['borrado'],
+                        ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
+                        ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
+                    ]);
+                }
+            }
+        }
+    }
+
+    if ($type === 'agent') {
+        fputcsv($out, ['Agente', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        $sql = "SELECT
+            CONCAT(TRIM(s.firstname), ' ', TRIM(s.lastname)) AS agente,
+            COUNT(t.id) AS total_tickets,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+            SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
+            SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+            0 AS reabierto,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+            AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
+            AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+        FROM staff s
+        LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
+        WHERE s.is_active = 1 AND s.empresa_id = ?
+        GROUP BY s.id, s.firstname, s.lastname
+        HAVING total_tickets > 0
+        ORDER BY s.firstname, s.lastname";
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param('issi', $eid, $start, $end, $eid);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                fputcsv($out, [
+                    (string)$row['agente'],
+                    (int)$row['abierto'],
+                    (int)$row['asignado'],
+                    (int)$row['atrasado'],
+                    (int)$row['cerrado'],
+                    (int)$row['reabierto'],
+                    (int)$row['borrado'],
+                    ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
+                    ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
+                ]);
+            }
+        }
+    }
+
+    fclose($out);
+    exit;
+}
 
 // ============================================================================
 // DATOS PARA LA GRÁFICA: Created, Closed, Deleted por día

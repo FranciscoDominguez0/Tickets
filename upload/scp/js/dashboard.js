@@ -18,15 +18,31 @@
         }
     })();
 
-    // Export placeholder
+    // Export CSV
     document.addEventListener('click', function (e) {
         var t = e.target;
         if (!t) return;
         var btn = t.closest ? t.closest('[data-action="dashboard-export"]') : null;
         if (!btn) return;
         e.preventDefault();
+
         var type = (btn.getAttribute('data-export-type') || '').toString();
-        alert('Función de exportación en desarrollo');
+        if (!type) return;
+
+        var form = document.querySelector('form[action="dashboard.php"]') || document.querySelector('form');
+        var startEl = form ? form.querySelector('input[name="start"]') : null;
+        var periodEl = form ? form.querySelector('select[name="period"]') : null;
+
+        var start = startEl ? (startEl.value || '').toString() : '';
+        var period = periodEl ? (periodEl.value || '').toString() : '';
+
+        var qs = new URLSearchParams();
+        qs.set('action', 'export_csv');
+        qs.set('type', type);
+        if (period) qs.set('period', period);
+        if (start) qs.set('start', start);
+
+        window.location.href = 'dashboard.php?' + qs.toString();
     });
     
     // Esperar a que el DOM esté completamente cargado
