@@ -53,8 +53,16 @@ function requireLogin($type = 'user') {
                             $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
                                 $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
-                                $baseUrl = defined('APP_URL') ? rtrim((string)APP_URL, '/') : '';
-                                $loginHref = ($baseUrl !== '' ? ($baseUrl . '/upload/login.php') : 'upload/login.php');
+                                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                                $basePrefix = '';
+                                $posUpload = strpos($currentPath, '/upload/');
+                                if ($posUpload !== false) {
+                                    $basePrefix = substr($currentPath, 0, $posUpload);
+                                }
+                                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                                $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+                                $loginPath = $basePrefix . '/upload/login.php';
+                                $loginHref = ($host !== '') ? ($scheme . '://' . $host . $loginPath) : $loginPath;
                                 http_response_code(403);
                                 echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="' . html($loginHref) . '">Ir al login</a></div></body></html>';
                                 exit;
@@ -174,10 +182,25 @@ function requireLogin($type = 'user') {
                             $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
                                 $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
-                                $baseUrl = defined('APP_URL') ? rtrim((string)APP_URL, '/') : '';
-                                $loginHref = ($baseUrl !== '' ? ($baseUrl . '/upload/login.php') : 'upload/login.php');
+                                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                                $basePrefix = '';
+                                $posUpload = strpos($currentPath, '/upload/');
+                                if ($posUpload !== false) {
+                                    $basePrefix = substr($currentPath, 0, $posUpload);
+                                }
+                                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                                $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+                                $logoutPath = $basePrefix . '/upload/scp/logout.php';
+                                $logoutHref = ($host !== '') ? ($scheme . '://' . $host . $logoutPath) : $logoutPath;
                                 http_response_code(403);
-                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-primary" href="' . html($loginHref) . '">Ir al login</a></div></body></html>';
+                                echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+                                    . '<title>Servicio suspendido</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light">'
+                                    . '<div class="container py-5" style="max-width:720px">'
+                                    . '<div class="alert alert-danger"><strong>Servicio suspendido por falta de pago. Comuníquese con Vigitec Panamá.</strong><div class="mt-2">' . html($motivo) . '</div></div>'
+                                    . '<div class="d-flex align-items-center gap-2 flex-wrap">'
+                                    . '<a class="btn btn-primary" href="' . html($logoutHref) . '" target="_top" rel="noopener">Ir al login</a>'
+                                    . '</div>'
+                                    . '</div></body></html>';
                                 exit;
                             }
 
