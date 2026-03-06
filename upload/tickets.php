@@ -12,6 +12,155 @@ requireLogin('cliente');
 
 $user = getCurrentUser();
 
+// AJAX: check for new staff replies while user is on tickets.php
+if (isset($_GET['action']) && $_GET['action'] === 'check_staff_replies') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $uidAjax = (int)($_SESSION['user_id'] ?? 0);
+    $eidAjax = (int)($_SESSION['empresa_id'] ?? 0);
+    if ($eidAjax <= 0) $eidAjax = 1;
+    $sinceId = isset($_GET['since_id']) && is_numeric($_GET['since_id']) ? (int)$_GET['since_id'] : 0;
+    if ($sinceId < 0) $sinceId = 0;
+
+    if (!isset($mysqli) || !$mysqli || $uidAjax <= 0) {
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $hasStaffIdCol = false;
+    try {
+        $col = $mysqli->query("SHOW COLUMNS FROM thread_entries LIKE 'staff_id'");
+        $hasStaffIdCol = ($col && $col->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffIdCol = false;
+    }
+
+    if (!$hasStaffIdCol) {
+        echo json_encode(['ok' => true, 'items' => [], 'max_id' => $sinceId]);
+        exit;
+    }
+
+    $items = [];
+    $maxId = $sinceId;
+
+    $stmtN = $mysqli->prepare(
+        "SELECT te.id, te.created, tk.id AS ticket_id, tk.ticket_number, tk.subject\n"
+        . "FROM tickets tk\n"
+        . "JOIN threads th ON th.ticket_id = tk.id\n"
+        . "JOIN thread_entries te ON te.thread_id = th.id\n"
+        . "WHERE tk.user_id = ? AND tk.empresa_id = ? AND te.staff_id IS NOT NULL AND te.id > ?\n"
+        . "ORDER BY te.id ASC\n"
+        . "LIMIT 5"
+    );
+    if ($stmtN) {
+        $stmtN->bind_param('iii', $uidAjax, $eidAjax, $sinceId);
+        if ($stmtN->execute()) {
+            $rs = $stmtN->get_result();
+            while ($rs && ($r = $rs->fetch_assoc())) {
+                $id = (int)($r['id'] ?? 0);
+                if ($id > $maxId) $maxId = $id;
+                $items[] = [
+                    'id' => $id,
+                    'created' => (string)($r['created'] ?? ''),
+                    'ticket_id' => (int)($r['ticket_id'] ?? 0),
+                    'ticket_number' => (string)($r['ticket_number'] ?? ''),
+                    'subject' => (string)($r['subject'] ?? ''),
+                ];
+            }
+        }
+    }
+
+    echo json_encode([
+        'ok' => true,
+        'items' => $items,
+        'max_id' => $maxId,
+    ]);
+    exit;
+}
+
+// AJAX: user notifications (DB)
+if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_count', 'user_notifs_list', 'user_notifs_mark_read'], true)) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $uidAjax = (int)($_SESSION['user_id'] ?? 0);
+    $eidAjax = (int)($_SESSION['empresa_id'] ?? 0);
+    if ($eidAjax <= 0) $eidAjax = 1;
+    if (!isset($mysqli) || !$mysqli || $uidAjax <= 0) {
+        echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
+        exit;
+    }
+
+    $hasUserNotifs = false;
+    try {
+        $chkT = @$mysqli->query("SHOW TABLES LIKE 'user_notifications'");
+        $hasUserNotifs = ($chkT && $chkT->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasUserNotifs = false;
+    }
+
+    if (!$hasUserNotifs) {
+        echo json_encode(['ok' => true, 'has_table' => false, 'count' => 0, 'items' => []]);
+        exit;
+    }
+
+    $action = (string)$_GET['action'];
+
+    if ($action === 'user_notifs_mark_read') {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['ok' => false, 'error' => 'Method not allowed']);
+            exit;
+        }
+        $id = isset($_POST['id']) && is_numeric($_POST['id']) ? (int)$_POST['id'] : 0;
+        if ($id <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Invalid id']);
+            exit;
+        }
+        $stmt = $mysqli->prepare('UPDATE user_notifications SET is_read = 1, read_at = NOW() WHERE id = ? AND empresa_id = ? AND user_id = ?');
+        if ($stmt) {
+            $stmt->bind_param('iii', $id, $eidAjax, $uidAjax);
+            $stmt->execute();
+        }
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    if ($action === 'user_notifs_count') {
+        $cnt = 0;
+        $stmt = $mysqli->prepare('SELECT COUNT(*) c FROM user_notifications WHERE empresa_id = ? AND user_id = ? AND is_read = 0');
+        if ($stmt) {
+            $stmt->bind_param('ii', $eidAjax, $uidAjax);
+            if ($stmt->execute()) {
+                $cnt = (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+            }
+        }
+        echo json_encode(['ok' => true, 'has_table' => true, 'count' => $cnt]);
+        exit;
+    }
+
+    // user_notifs_list
+    $items = [];
+    $stmt = $mysqli->prepare('SELECT id, type, message, ticket_id, thread_entry_id, created_at FROM user_notifications WHERE empresa_id = ? AND user_id = ? AND is_read = 0 ORDER BY id DESC LIMIT 10');
+    if ($stmt) {
+        $stmt->bind_param('ii', $eidAjax, $uidAjax);
+        if ($stmt->execute()) {
+            $rs = $stmt->get_result();
+            while ($rs && ($r = $rs->fetch_assoc())) {
+                $items[] = [
+                    'id' => (int)($r['id'] ?? 0),
+                    'type' => (string)($r['type'] ?? ''),
+                    'message' => (string)($r['message'] ?? ''),
+                    'ticket_id' => (int)($r['ticket_id'] ?? 0),
+                    'thread_entry_id' => (int)($r['thread_entry_id'] ?? 0),
+                    'created_at' => (string)($r['created_at'] ?? ''),
+                ];
+            }
+        }
+    }
+    echo json_encode(['ok' => true, 'has_table' => true, 'items' => $items]);
+    exit;
+}
+
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
@@ -290,6 +439,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .ticket-new-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(16, 185, 129, 0.14); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.25); margin-left: 10px; }
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
+        .dropdown-menu .notif-item:hover { background: #f1f5f9; }
 
         @media (max-width: 576px) {
             .container-main { padding: 0 12px; margin: 18px auto; }
@@ -382,6 +532,23 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 </span>
             </a>
             <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm user-menu-btn" type="button" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                        <i class="bi bi-bell"></i>
+                        <span id="notifBellBadge" class="badge bg-danger ms-1" style="display:none; font-size:.7rem;">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0" style="min-width: 360px;" aria-labelledby="notifBellBtn">
+                        <div class="p-3 border-bottom" style="background: #f8fafc;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="fw-bold text-dark">Notificaciones</div>
+                                <div class="text-muted" style="font-size:.85rem" id="notifBellSub">Respuestas a tus tickets</div>
+                            </div>
+                        </div>
+                        <div id="notifBellList" class="p-2" style="max-height: 340px; overflow:auto;">
+                            <div class="text-center text-muted py-3" style="font-size:.9rem">Sin notificaciones</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="dropdown">
                     <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
@@ -543,6 +710,145 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             Derechos de autor &copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?> - Sistema de Tickets - Todos los derechos reservados.
         </p>
     </footer>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+        <div id="staffReplyToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="fw-bold">Nueva respuesta en tu ticket</div>
+                    <div id="staffReplyToastText" style="font-size:.9rem">Tienes una nueva actualización del equipo.</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function(){
+            var POLL_MS = 12000;
+
+            function showToast(msg) {
+                try {
+                    var toastEl = document.getElementById('staffReplyToast');
+                    var textEl = document.getElementById('staffReplyToastText');
+                    if (!toastEl || !textEl) return;
+                    textEl.textContent = msg;
+                    bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 6500 }).show();
+                } catch (e) {}
+            }
+
+            function tryBrowserNotify(title, body, url) {
+                try {
+                    if (!('Notification' in window)) return;
+                    if (Notification.permission !== 'granted') return;
+                    var n = new Notification(title, { body: body });
+                    n.onclick = function(){
+                        try { window.focus(); } catch (e) {}
+                        if (url) window.location.href = url;
+                        try { n.close(); } catch (e) {}
+                    };
+                } catch (e) {}
+            }
+
+            function renderBell(items) {
+                try {
+                    var list = document.getElementById('notifBellList');
+                    if (!list) return;
+                    if (!items || !items.length) {
+                        list.innerHTML = '<div class="text-center text-muted py-3" style="font-size:.9rem">Sin notificaciones</div>';
+                        return;
+                    }
+                    var html = '';
+                    items.forEach(function(it){
+                        var msg = (it.message || '').toString();
+                        var when = (it.created_at || '').toString();
+                        var href = it.ticket_id ? ('view-ticket.php?id=' + String(it.ticket_id)) : 'tickets.php';
+                        html += ''
+                            + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
+                            +   '<div class="d-flex align-items-start gap-2">'
+                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(37,99,235,.12);display:flex;align-items:center;justify-content:center;color:#2563eb;">'
+                            +       '<i class="bi bi-chat-dots"></i>'
+                            +     '</div>'
+                            +     '<div class="flex-grow-1">'
+                            +       '<div class="text-dark" style="font-weight:800;font-size:.92rem;line-height:1.15;">' + msg.replace(/</g,'&lt;') + '</div>'
+                            +       '<div class="text-muted" style="font-size:.78rem;">' + when.replace(/</g,'&lt;') + '</div>'
+                            +     '</div>'
+                            +     '<div class="flex-shrink-0">'
+                            +       '<button class="btn btn-sm btn-outline-primary" data-mark-read="' + String(it.id) + '" data-href="' + href + '" style="border-radius:999px;">Ver</button>'
+                            +     '</div>'
+                            +   '</div>'
+                            + '</div>';
+                    });
+                    list.innerHTML = html;
+                } catch (e) {}
+            }
+
+            function setBellCount(n) {
+                try {
+                    var badge = document.getElementById('notifBellBadge');
+                    if (!badge) return;
+                    var v = parseInt(n || 0, 10) || 0;
+                    badge.textContent = String(v);
+                    badge.style.display = v > 0 ? '' : 'none';
+                } catch (e) {}
+            }
+
+            function poll(firstRun) {
+                fetch('tickets.php?action=user_notifs_count', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (!data || !data.ok) return;
+                        setBellCount(data.count || 0);
+                        var cnt = (parseInt(data.count || 0, 10) || 0);
+                        if (cnt <= 0) {
+                            renderBell([]);
+                            return;
+                        }
+                        return fetch('tickets.php?action=user_notifs_list', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                            .then(function(r){ return r.json(); })
+                            .then(function(d2){
+                                if (!d2 || !d2.ok) return;
+                                var items = Array.isArray(d2.items) ? d2.items : [];
+                                renderBell(items);
+                                if (!items.length) return;
+                                var last = items[0] || {};
+                                var lastId = parseInt(last.id || 0, 10) || 0;
+                                var seenId = 0;
+                                try { seenId = parseInt(localStorage.getItem('tickets_last_notif_id') || '0', 10) || 0; } catch (e) { seenId = 0; }
+                                if (firstRun) {
+                                    try { if (lastId > 0) localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
+                                    return;
+                                }
+                                if (lastId <= 0 || lastId <= seenId) return;
+                                try { localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
+                                var msg = (last.message || 'Tienes una nueva respuesta del equipo.').toString();
+                                showToast(msg);
+                                tryBrowserNotify('Nueva respuesta en tu ticket', msg, last.ticket_id ? ('view-ticket.php?id=' + String(last.ticket_id)) : 'tickets.php');
+                            });
+                    })
+                    .catch(function(){});
+            }
+
+            document.addEventListener('click', function(ev){
+                try {
+                    var btn = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mark-read') : null;
+                    if (!btn) return;
+                    ev.preventDefault();
+                    var id = parseInt(btn, 10) || 0;
+                    if (!id) return;
+                    var href = ev.target.getAttribute('data-href') || 'tickets.php';
+                    var fd = new FormData();
+                    fd.append('id', String(id));
+                    fetch('tickets.php?action=user_notifs_mark_read', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                        .then(function(){ window.location.href = href; })
+                        .catch(function(){ window.location.href = href; });
+                } catch (e) {}
+            });
+
+            poll(true);
+            window.setInterval(function(){ poll(false); }, POLL_MS);
+        })();
+    </script>
 </body>
 </html>

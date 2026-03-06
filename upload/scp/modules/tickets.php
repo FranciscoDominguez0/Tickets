@@ -1408,6 +1408,29 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                     if ($stmt->execute()) {
                         $entry_id = (int) $mysqli->insert_id;
+
+                        // Notificar al cliente (solo respuestas públicas)
+                        if (!$is_internal) {
+                            try {
+                                $hasUserNotifs = false;
+                                $chkT = @$mysqli->query("SHOW TABLES LIKE 'user_notifications'");
+                                $hasUserNotifs = ($chkT && $chkT->num_rows > 0);
+                                if ($hasUserNotifs) {
+                                    $uidOwner = (int)($ticketView['user_id'] ?? 0);
+                                    if ($uidOwner > 0) {
+                                        $msgNotif = 'Nueva respuesta en tu ticket ' . (string)($ticketView['ticket_number'] ?? '') . ': ' . (string)($ticketView['subject'] ?? '');
+                                        $typeNotif = 'ticket_reply';
+                                        $stmtUn = $mysqli->prepare('INSERT INTO user_notifications (empresa_id, user_id, type, message, ticket_id, thread_entry_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())');
+                                        if ($stmtUn) {
+                                            $stmtUn->bind_param('iissii', $eid, $uidOwner, $typeNotif, $msgNotif, $tid, $entry_id);
+                                            $stmtUn->execute();
+                                        }
+                                    }
+                                }
+                            } catch (Throwable $e) {
+                            }
+                        }
+
                         // Actualizar estado del ticket
                         $isClosingStatus = false;
                         $stmtSt = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');

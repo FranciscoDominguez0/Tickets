@@ -273,3 +273,21 @@ ALTER TABLE `app_settings`
   ADD KEY `idx_app_settings_empresa_id` (`empresa_id`);
 
 COMMIT;
+
+
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  empresa_id INT NOT NULL,
+  user_id INT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  message VARCHAR(255) NOT NULL,
+  ticket_id INT NULL,
+  thread_entry_id INT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  read_at DATETIME NULL,
+
+  KEY idx_emp_user_read (empresa_id, user_id, is_read, id),
+  KEY idx_ticket (ticket_id),
+  KEY idx_thread_entry (thread_entry_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
