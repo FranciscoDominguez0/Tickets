@@ -59,10 +59,8 @@ if (!isset($collapseSettingsMenu)) {
         <div class="container-fluid">
             <span class="navbar-brand"><?php echo APP_NAME; ?> - Panel Administrador</span>
             <div class="d-flex align-items-center gap-3">
-                <span style="color: white;">Agente: <strong><?php echo html($staff['name']); ?></strong></span>
-
                 <div class="dropdown">
-                    <button class="btn btn-outline-light btn-sm position-relative scp-notif-btn <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                    <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                         <i class="bi bi-bell"></i>
                         <?php if ($notifCount > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -110,7 +108,32 @@ if (!isset($collapseSettingsMenu)) {
                 </div>
 
                 <a href="index.php" class="btn btn-outline-light btn-sm">Volver a Agentes</a>
-                <a href="logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
+                <div class="dropdown">
+                    <?php
+                    $staffName = (string)($staff['name'] ?? '');
+                    $parts = preg_split('/\s+/', trim($staffName));
+                    $i1 = strtoupper((string)($parts[0][0] ?? ''));
+                    $i2 = '';
+                    if (count($parts) > 1) {
+                        $i2 = strtoupper((string)($parts[1][0] ?? ''));
+                    } elseif (strlen($staffName) > 1) {
+                        $i2 = strtoupper(substr($staffName, 1, 1));
+                    }
+                    $initials = trim($i1 . $i2);
+                    if ($initials === '') {
+                        $initials = 'U';
+                    }
+                    ?>
+                    <button class="dropdown-toggle scp-profile-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="scp-profile-avatar" aria-hidden="true"><?php echo html($initials); ?></span>
+                        <span class="scp-profile-name"><?php echo html($staffName !== '' ? $staffName : 'Perfil'); ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end scp-profile-menu">
+                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i>Mi perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i>Desconectar</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>

@@ -10,6 +10,183 @@ body {
     padding-top: 56px;
 }
 
+ .scp-profile-toggle {
+     display: inline-flex;
+     align-items: center;
+     gap: 10px;
+     padding: 6px 10px;
+     border: 1px solid rgba(255, 255, 255, 0.22);
+     background: rgba(255, 255, 255, 0.08);
+     color: #fff;
+     border-radius: 999px;
+     line-height: 1;
+ }
+
+ .scp-profile-toggle:hover,
+ .scp-profile-toggle:focus {
+     background: rgba(255, 255, 255, 0.14);
+     border-color: rgba(255, 255, 255, 0.32);
+     color: #fff;
+ }
+
+ .scp-profile-toggle:focus {
+     outline: 0;
+     box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.12);
+ }
+
+ .scp-profile-toggle::after {
+     display: none;
+ }
+
+ .scp-profile-avatar {
+     width: 34px;
+     height: 34px;
+     border-radius: 999px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     background: rgba(255, 255, 255, 0.18);
+     border: 1px solid rgba(255, 255, 255, 0.25);
+     font-weight: 800;
+     font-size: 13px;
+     letter-spacing: 0.5px;
+ }
+
+ .scp-profile-name {
+     font-weight: 600;
+     font-size: 13px;
+     max-width: 220px;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+ }
+
+ .scp-profile-menu {
+     min-width: 240px;
+     padding: 8px;
+     border-radius: 14px;
+     border: 1px solid rgba(148, 163, 184, 0.25);
+     background: rgba(15, 23, 42, 0.92);
+     backdrop-filter: blur(10px);
+     box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+ }
+
+ .scp-profile-menu .dropdown-item {
+     border-radius: 10px;
+     padding: 10px 10px;
+     color: #e5e7eb;
+     font-weight: 600;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+ }
+
+ .scp-profile-menu .dropdown-item:hover,
+ .scp-profile-menu .dropdown-item:focus {
+     background: rgba(59, 130, 246, 0.16);
+     color: #fff;
+ }
+
+ .scp-profile-menu .dropdown-divider {
+     margin: 8px 6px;
+     border-top-color: rgba(148, 163, 184, 0.20);
+ }
+
+ .scp-profile-menu .scp-profile-menu-head {
+     padding: 10px;
+     border-radius: 12px;
+     background: rgba(59, 130, 246, 0.12);
+     border: 1px solid rgba(59, 130, 246, 0.18);
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     color: #e5e7eb;
+ }
+
+ .scp-profile-menu .scp-profile-menu-head .scp-profile-menu-title {
+     font-weight: 800;
+     line-height: 1.1;
+ }
+
+ .scp-profile-menu .scp-profile-menu-head .scp-profile-menu-sub {
+     margin-top: 2px;
+     font-size: 12px;
+     color: rgba(226, 232, 240, 0.78);
+ }
+
+ .scp-admin-pill {
+     display: inline-flex;
+     align-items: center;
+     gap: 8px;
+     padding: 6px 12px;
+     border-radius: 999px;
+     border: 1px solid rgba(255, 255, 255, 0.22);
+     background: rgba(255, 255, 255, 0.08);
+     color: #fff;
+     text-decoration: none;
+     font-weight: 600;
+     font-size: 13px;
+ }
+
+ .scp-admin-pill-ico {
+     width: 34px;
+     height: 34px;
+     border-radius: 999px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     background: rgba(255, 255, 255, 0.18);
+     border: 1px solid rgba(255, 255, 255, 0.25);
+ }
+
+ .scp-admin-pill-ico i {
+     font-size: 16px;
+     line-height: 1;
+ }
+
+ .scp-notif-toggle {
+     width: 34px;
+     height: 34px;
+     padding: 0;
+     border-radius: 999px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     border: 1px solid rgba(255, 255, 255, 0.22);
+     background: rgba(255, 255, 255, 0.08);
+     color: #fff;
+ }
+
+ .scp-notif-toggle:hover,
+ .scp-notif-toggle:focus {
+     background: rgba(255, 255, 255, 0.14);
+     border-color: rgba(255, 255, 255, 0.32);
+     color: #fff;
+ }
+
+ .scp-notif-toggle:focus {
+     outline: 0;
+     box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.12);
+ }
+
+ .scp-notif-toggle i {
+     font-size: 16px;
+     line-height: 1;
+ }
+
+ .scp-admin-pill:hover,
+ .scp-admin-pill:focus {
+     background: rgba(255, 255, 255, 0.14);
+     border-color: rgba(255, 255, 255, 0.32);
+     color: #fff;
+     text-decoration: none;
+ }
+
+ .scp-admin-pill:focus {
+     outline: 0;
+     box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.12);
+ }
+
 body.superadmin.superadmin-dark {
     background: #0b1220;
     color: #e5e7eb;
