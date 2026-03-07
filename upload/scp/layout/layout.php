@@ -219,7 +219,7 @@ if (!isset($_SESSION[$menuKey])) {
 
                 <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
                 <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
-                    <a href="settings.php?t=pages" class="scp-admin-pill"><span class="scp-admin-pill-ico" aria-hidden="true"><i class="bi bi-gear"></i></span>Panel Administrador</a>
+                    <a href="settings.php?t=pages" class="scp-admin-pill scp-admin-pill-lg">Administrador</a>
                 <?php endif; ?>
                 <div class="dropdown">
                     <?php
