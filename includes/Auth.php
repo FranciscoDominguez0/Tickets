@@ -17,11 +17,20 @@ class Auth {
         $column = (string)$column;
         if ($table === '' || $column === '') return false;
         if (!isset($mysqli) || !$mysqli) return false;
+
+        static $cache = [];
+        if (isset($cache[$table]) && array_key_exists($column, $cache[$table])) {
+            return (bool)$cache[$table][$column];
+        }
+
         $tableEsc = $mysqli->real_escape_string($table);
         $colEsc = $mysqli->real_escape_string($column);
         $sql = "SHOW COLUMNS FROM `{$tableEsc}` LIKE '{$colEsc}'";
         $res = $mysqli->query($sql);
-        return $res && $res->num_rows > 0;
+        $ok = ($res && $res->num_rows > 0);
+        if (!isset($cache[$table])) $cache[$table] = [];
+        $cache[$table][$column] = $ok;
+        return $ok;
     }
 
     private static function sessionIpPrefix($ip) {
@@ -66,6 +75,8 @@ class Auth {
 
         $ensureAttemptsTable = function () use ($mysqli) {
             if (!isset($mysqli) || !$mysqli) return false;
+            static $done = null;
+            if ($done !== null) return (bool)$done;
             $sql = "CREATE TABLE IF NOT EXISTS user_login_attempts (\n"
                 . "  id INT AUTO_INCREMENT PRIMARY KEY,\n"
                 . "  email VARCHAR(255) NOT NULL,\n"
@@ -75,7 +86,8 @@ class Auth {
                 . "  updated DATETIME NULL,\n"
                 . "  UNIQUE KEY uq_user_login_attempts (email, ip)\n"
                 . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-            return (bool)$mysqli->query($sql);
+            $done = (bool)$mysqli->query($sql);
+            return (bool)$done;
         };
 
         $ensureAttemptsTable();
@@ -223,6 +235,8 @@ class Auth {
 
         $ensureAttemptsTable = function () use ($mysqli) {
             if (!isset($mysqli) || !$mysqli) return false;
+            static $done = null;
+            if ($done !== null) return (bool)$done;
             $sql = "CREATE TABLE IF NOT EXISTS staff_login_attempts (\n"
                 . "  id INT AUTO_INCREMENT PRIMARY KEY,\n"
                 . "  username VARCHAR(255) NOT NULL,\n"
@@ -232,7 +246,8 @@ class Auth {
                 . "  updated DATETIME NULL,\n"
                 . "  UNIQUE KEY uq_staff_login_attempts (username, ip)\n"
                 . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-            return (bool)$mysqli->query($sql);
+            $done = (bool)$mysqli->query($sql);
+            return (bool)$done;
         };
 
         $ensureAttemptsTable();

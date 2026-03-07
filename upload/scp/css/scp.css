@@ -128,6 +128,11 @@ body {
      font-size: 13px;
  }
 
+ .scp-admin-pill.scp-admin-pill-lg {
+     padding: 8px 14px;
+     font-size: 14px;
+ }
+
  .scp-admin-pill-ico {
      width: 34px;
      height: 34px;

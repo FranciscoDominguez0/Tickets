@@ -866,6 +866,12 @@ function generateTicketNumber() {
 function ensureAppSettingsTable() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;
+
+    static $ensured = null;
+    if ($ensured !== null) {
+        return (bool)$ensured;
+    }
+
     $sql = "CREATE TABLE IF NOT EXISTS app_settings (\n"
         . "  `empresa_id` INT NOT NULL DEFAULT 1,\n"
         . "  `key` VARCHAR(191) NOT NULL,\n"
@@ -874,7 +880,10 @@ function ensureAppSettingsTable() {
         . "  PRIMARY KEY (`empresa_id`, `key`)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
-    if (!$mysqli->query($sql)) return false;
+    if (!$mysqli->query($sql)) {
+        $ensured = false;
+        return false;
+    }
 
     $hasEmpresa = false;
     $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
@@ -913,6 +922,7 @@ function ensureAppSettingsTable() {
         }
     }
 
+    $ensured = true;
     return true;
 }
 
@@ -922,9 +932,11 @@ function getAppSetting($key, $default = null) {
     if (!ensureAppSettingsTable()) return $default;
     $key = (string)$key;
 
-    $hasEmpresa = false;
-    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-    $hasEmpresa = ($col && $col->num_rows > 0);
+    static $hasEmpresa = null;
+    if ($hasEmpresa === null) {
+        $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+        $hasEmpresa = ($col && $col->num_rows > 0);
+    }
 
     if ($hasEmpresa) {
         $eid = empresaId();
@@ -949,9 +961,11 @@ function setAppSetting($key, $value) {
     $key = (string)$key;
     $value = $value !== null ? (string)$value : null;
 
-    $hasEmpresa = false;
-    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-    $hasEmpresa = ($col && $col->num_rows > 0);
+    static $hasEmpresa = null;
+    if ($hasEmpresa === null) {
+        $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
+        $hasEmpresa = ($col && $col->num_rows > 0);
+    }
 
     if ($hasEmpresa) {
         $eid = empresaId();

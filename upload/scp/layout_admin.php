@@ -107,7 +107,7 @@ if (!isset($collapseSettingsMenu)) {
                     </ul>
                 </div>
 
-                <a href="index.php" class="btn btn-outline-light btn-sm">Volver a Agentes</a>
+                <a href="index.php" class="scp-admin-pill scp-admin-pill-lg">Volver a Agentes</a>
                 <div class="dropdown">
                     <?php
                     $staffName = (string)($staff['name'] ?? '');
@@ -208,7 +208,7 @@ if (!isset($collapseSettingsMenu)) {
                         </a>
                         <a href="helptopics.php" class="sidebar-link <?php echo ($currentRoute === 'helptopics') ? 'active' : ''; ?>">
                             <span class="icon"><i class="bi bi-list-check"></i></span>
-                            Administrar
+                            Temas
                         </a>
                         <?php
                         $emailTab = isset($emailTab) ? (string)$emailTab : '';
