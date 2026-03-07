@@ -65,6 +65,7 @@ if ($_POST) {
                     $_SESSION['user_login_time'] = time();
                     $_SESSION['staff_last_activity'] = time();
                     $_SESSION['staff_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+                    $_SESSION['show_agent_loading_overlay'] = 1;
                     $redirectTo = ((string)($_SESSION['staff_role'] ?? '') === 'superadmin')
                         ? 'superadmin/index.php'
                         : 'index.php';
@@ -72,7 +73,7 @@ if ($_POST) {
                     echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ingresando...</title>';
                     echo '<style>html,body{height:100%;margin:0}body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;background:radial-gradient(1200px 600px at 20% 10%,rgba(99,102,241,.25),transparent 60%),radial-gradient(900px 500px at 90% 80%,rgba(34,197,94,.18),transparent 55%),#0b1220;color:#e5e7eb;display:flex;align-items:center;justify-content:center} .box{width:min(520px,92vw);padding:26px 22px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);box-shadow:0 20px 70px rgba(0,0,0,.45)} .t{font-weight:800;letter-spacing:.01em;font-size:18px;margin:0 0 6px} .s{margin:0 0 16px;opacity:.85;font-size:13px} .bar{height:10px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden} .bar>i{display:block;height:100%;width:30%;background:linear-gradient(90deg,#60a5fa,#a78bfa,#34d399);border-radius:999px;animation:mv 1.05s ease-in-out infinite} @keyframes mv{0%{transform:translateX(-120%)}50%{transform:translateX(140%)}100%{transform:translateX(340%)}} .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.82);animation:sp .85s linear infinite;margin:0 0 16px} @keyframes sp{to{transform:rotate(360deg)}} </style>';
                     echo '</head><body><div class="box"><div class="spin"></div><p class="t">Ingresando...</p><p class="s">Verificando acceso y cargando tu panel</p><div class="bar"><i></i></div></div>';
-                    echo '<script>(function(){var u=' . json_encode($redirectTo) . ';setTimeout(function(){try{window.location.replace(u);}catch(e){window.location.href=u;}},120);})();</script>';
+                    echo '<script>(function(){var u=' . json_encode($redirectTo) . ';setTimeout(function(){try{window.location.replace(u);}catch(e){window.location.href=u;}},250);})();</script>';
                     echo '</body></html>';
                     exit;
                 } else {

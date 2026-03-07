@@ -7,23 +7,36 @@ $notifCount = 0;
 $notifItems = [];
 if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
-    $stmtN = $mysqli->prepare('SELECT COUNT(*) c FROM notifications WHERE staff_id = ? AND is_read = 0');
-    if ($stmtN) {
-        $stmtN->bind_param('i', $sid);
-        if ($stmtN->execute()) {
-            $notifCount = (int) (($stmtN->get_result()->fetch_assoc()['c'] ?? 0));
-        }
-    }
 
-    $stmtL = $mysqli->prepare('SELECT id, message, type, related_id, created_at FROM notifications WHERE staff_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 8');
-    if ($stmtL) {
-        $stmtL->bind_param('i', $sid);
-        if ($stmtL->execute()) {
-            $res = $stmtL->get_result();
-            while ($row = $res->fetch_assoc()) {
-                $notifItems[] = $row;
+    $cacheKey = 'notif_cache_' . $sid;
+    $cacheTsKey = 'notif_cache_ts_' . $sid;
+    $cacheTs = (int)($_SESSION[$cacheTsKey] ?? 0);
+    if ($cacheTs > 0 && (time() - $cacheTs) < 10 && isset($_SESSION[$cacheKey]) && is_array($_SESSION[$cacheKey])) {
+        $payload = $_SESSION[$cacheKey];
+        $notifCount = (int)($payload['count'] ?? 0);
+        $notifItems = is_array(($payload['items'] ?? null)) ? $payload['items'] : [];
+    } else {
+        $stmtN = $mysqli->prepare('SELECT COUNT(*) c FROM notifications WHERE staff_id = ? AND is_read = 0');
+        if ($stmtN) {
+            $stmtN->bind_param('i', $sid);
+            if ($stmtN->execute()) {
+                $notifCount = (int) (($stmtN->get_result()->fetch_assoc()['c'] ?? 0));
             }
         }
+
+        $stmtL = $mysqli->prepare('SELECT id, message, type, related_id, created_at FROM notifications WHERE staff_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 8');
+        if ($stmtL) {
+            $stmtL->bind_param('i', $sid);
+            if ($stmtL->execute()) {
+                $res = $stmtL->get_result();
+                while ($row = $res->fetch_assoc()) {
+                    $notifItems[] = $row;
+                }
+            }
+        }
+
+        $_SESSION[$cacheKey] = ['count' => $notifCount, 'items' => $notifItems];
+        $_SESSION[$cacheTsKey] = time();
     }
 }
 
@@ -65,6 +78,92 @@ if (!isset($_SESSION[$menuKey])) {
     <?php endif; ?>
 </head>
 <body<?php if (isset($currentRoute) && $currentRoute === 'users'): ?> data-user-active-tab="<?php echo isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets'; ?>"<?php endif; ?>>
+    <?php $showOverlay = !empty($_SESSION['show_agent_loading_overlay']); ?>
+    <?php if ($showOverlay): ?>
+        <style>
+            #scp-agent-loading {
+                position: fixed;
+                inset: 0;
+                background: rgba(11, 18, 32, 0.78);
+                backdrop-filter: blur(6px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2500;
+                padding: 18px;
+            }
+            #scp-agent-loading .box {
+                width: min(520px, 92vw);
+                padding: 22px 20px;
+                border-radius: 18px;
+                background: rgba(255,255,255,.06);
+                border: 1px solid rgba(255,255,255,.12);
+                box-shadow: 0 20px 70px rgba(0,0,0,.45);
+                color: #e5e7eb;
+                font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;
+            }
+            #scp-agent-loading .spin {
+                width: 34px;
+                height: 34px;
+                border-radius: 50%;
+                border: 3px solid rgba(255,255,255,.18);
+                border-top-color: rgba(255,255,255,.82);
+                animation: scpAgentSpin .85s linear infinite;
+                margin: 0 0 14px;
+            }
+            #scp-agent-loading .t {
+                font-weight: 800;
+                letter-spacing: .01em;
+                font-size: 18px;
+                margin: 0 0 6px;
+            }
+            #scp-agent-loading .s {
+                margin: 0 0 16px;
+                opacity: .85;
+                font-size: 13px;
+            }
+            #scp-agent-loading .bar {
+                height: 10px;
+                border-radius: 999px;
+                background: rgba(255,255,255,.10);
+                overflow: hidden;
+            }
+            #scp-agent-loading .bar>i {
+                display: block;
+                height: 100%;
+                width: 30%;
+                background: linear-gradient(90deg,#60a5fa,#a78bfa,#34d399);
+                border-radius: 999px;
+                animation: scpAgentMv 1.05s ease-in-out infinite;
+            }
+            @keyframes scpAgentSpin { to { transform: rotate(360deg); } }
+            @keyframes scpAgentMv { 0%{transform:translateX(-120%)}50%{transform:translateX(140%)}100%{transform:translateX(340%)} }
+        </style>
+        <div id="scp-agent-loading" aria-hidden="false">
+            <div class="box">
+                <div class="spin" aria-hidden="true"></div>
+                <p class="t">Cargando panel...</p>
+                <p class="s">Espera un momento, estamos preparando todo</p>
+                <div class="bar" aria-hidden="true"><i></i></div>
+            </div>
+        </div>
+        <script>
+            (function(){
+                function hide(){
+                    var el = document.getElementById('scp-agent-loading');
+                    if (!el) return;
+                    el.style.opacity = '0';
+                    el.style.transition = 'opacity 180ms ease';
+                    window.setTimeout(function(){
+                        if (el && el.parentNode) el.parentNode.removeChild(el);
+                    }, 220);
+                }
+                window.addEventListener('load', function(){ hide(); }, { once: true });
+                window.setTimeout(function(){ hide(); }, 15000);
+            })();
+        </script>
+        <?php unset($_SESSION['show_agent_loading_overlay']); ?>
+    <?php endif; ?>
     <!-- NAVBAR -->
     <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
         <div class="container-fluid">
