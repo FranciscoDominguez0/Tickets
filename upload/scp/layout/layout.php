@@ -319,7 +319,7 @@ if (!isset($_SESSION[$menuKey])) {
                                     <path d="M8 13H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
-                            Solicitudes
+                            Tickets
                         </a>
                     </li>
                     <li class="sidebar-group">
