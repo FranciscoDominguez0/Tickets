@@ -290,25 +290,30 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             border-radius: 0;
             background: transparent;
             border: 0;
-            display: inline-flex;
-            align-items: center;
             justify-content: center;
             box-shadow: none;
-        }
-        .topbar .profile-brand .brand-logo {
-            height: 30px;
-            width: auto;
-            max-width: 320px;
-            object-fit: contain;
-            display: block;
-        }
-        @media (max-width: 420px) {
-            .topbar .profile-brand .brand-logo { max-width: 200px; }
-        }
-        .topbar .user-menu-btn {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+        }
+        .topbar .profile-brand .brand-logo {
+            height: 28px;
+            width: auto;
+            max-height: 28px;
+            max-width: 160px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
+        }
+        .agent-login-brand img {
+            height: 54px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.22));
+        }
+
+        .topbar .user-menu-btn {
             border-radius: 999px;
             font-weight: 800;
         }
@@ -445,6 +450,161 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
         .dropdown-menu .notif-item:hover { background: #f1f5f9; }
+
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+
+        /* ── Grid ── */
+        .ticket-cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            padding: 22px 22px 26px;
+        }
+        @media (max-width: 992px) { .ticket-cards { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 576px)  { .ticket-cards { grid-template-columns: 1fr; padding: 14px; gap: 14px; } }
+
+        /* ── Card shell ── */
+        .ticket-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border-radius: 18px;
+            border: 1px solid #e8edf5;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(15,23,42,.04), 0 8px 20px rgba(15,23,42,.06);
+            transition:
+                transform .24s cubic-bezier(.22,1,.36,1),
+                box-shadow .24s cubic-bezier(.22,1,.36,1),
+                border-color .18s ease;
+        }
+        .ticket-card:hover {
+            transform: translateY(-6px);
+            border-color: #c5d5f0;
+            box-shadow: 0 0 0 4px rgba(37,99,235,.06), 0 24px 52px rgba(15,23,42,.14);
+        }
+
+        /* ── Top tinted header band ── */
+        .ticket-card-head {
+            position: relative;
+            padding: 18px 20px 16px 20px;
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--tc-status-color, #2563eb) 8%, #fff) 0%,
+                #fff 80%);
+            border-bottom: 1px solid rgba(0,0,0,.05);
+        }
+        @supports not (background: color-mix(in srgb, red 8%, white)) {
+            .ticket-card-head { background: #f8fafc; }
+        }
+
+        /* glowing dot indicator (top-right) */
+        .ticket-card-head::after {
+            content: '';
+            position: absolute; top: 18px; right: 20px;
+            width: 9px; height: 9px; border-radius: 50%;
+            background: var(--tc-status-color, #2563eb);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc-status-color, #2563eb) 22%, transparent);
+        }
+        @supports not (background: color-mix(in srgb, red 8%, white)) {
+            .ticket-card-head::after { box-shadow: none; }
+        }
+
+        /* ── Number + badge row ── */
+        .ticket-card-top {
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 8px;
+            margin-bottom: 10px;
+        }
+        .ticket-card-number {
+            font-family: 'DM Mono', monospace;
+            font-size: .74rem; font-weight: 500;
+            letter-spacing: .06em; color: #64748b;
+        }
+        .ticket-card-number a {
+            color: inherit; text-decoration: none;
+            padding: 3px 10px; border-radius: 7px;
+            background: rgba(255,255,255,.85); border: 1px solid rgba(0,0,0,.10);
+            transition: background .14s, color .14s, border-color .14s;
+        }
+        .ticket-card-number a:hover { background: #fff; color: #2563eb; border-color: #bfdbfe; }
+
+        .ticket-new-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px; border-radius: 999px;
+            font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+            background: #ecfdf5; color: #065f46; border: 1px solid #6ee7b7;
+            animation: pulseBadge 2.5s ease infinite;
+        }
+        @keyframes pulseBadge {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.4); }
+            55%      { box-shadow: 0 0 0 6px rgba(16,185,129,.0); }
+        }
+
+        /* ── Subject ── */
+        .ticket-card-subject {
+            font-size: 1rem; font-weight: 700; line-height: 1.38;
+            color: #0f172a; margin: 0; letter-spacing: -.01em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* ── Body section ── */
+        .ticket-card-body {
+            display: flex; flex-direction: column; flex: 1;
+            padding: 14px 20px 18px; gap: 12px;
+        }
+
+        /* ── Badges ── */
+        .ticket-card-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .ticket-card .badge-soft {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 11px; border-radius: 999px;
+            font-size: .72rem; font-weight: 700; letter-spacing: .02em; line-height: 1;
+            border: 1px solid transparent;
+        }
+
+        /* ── Footer ── */
+        .ticket-card-foot {
+            display: flex; align-items: center;
+            justify-content: space-between; gap: 10px;
+            padding-top: 12px; border-top: 1px solid #f1f5f9; margin-top: auto;
+        }
+        .ticket-card-dates { display: flex; flex-direction: column; gap: 3px; }
+        .ticket-card-date-row {
+            display: flex; align-items: center; gap: 5px;
+            font-size: .75rem; color: #94a3b8; line-height: 1.25;
+        }
+        .ticket-card-date-row i { font-size: .67rem; }
+        .ticket-card-date-row.is-closed-date { color: #10b981; }
+
+        /* ── CTA ── */
+        .ticket-card-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 18px; border-radius: 999px;
+            font-size: .81rem; font-weight: 700;
+            background: #2563eb; color: #fff; border: none;
+            text-decoration: none; white-space: nowrap; flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(37,99,235,.30);
+            transition: background .15s, box-shadow .15s, transform .15s;
+        }
+        .ticket-card-btn i { transition: transform .2s cubic-bezier(.22,1,.36,1); }
+        .ticket-card-btn:hover { background: #1d4ed8; color: #fff; box-shadow: 0 4px 18px rgba(37,99,235,.42); transform: scale(1.06); }
+        .ticket-card-btn:hover i { transform: translateX(3px); }
+        .ticket-card.is-closed .ticket-card-btn { background: #64748b; box-shadow: 0 2px 8px rgba(100,116,139,.22); }
+        .ticket-card.is-closed .ticket-card-btn:hover { background: #475569; }
+
+        /* ── New highlight ── */
+        .ticket-card.ticket-new-highlight {
+            border-color: #bfdbfe;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.10), 0 8px 24px rgba(37,99,235,.12);
+        }
+        .ticket-card.ticket-new-highlight .ticket-card-head::after {
+            animation: dotPulse 1.8s ease infinite;
+        }
+        @keyframes dotPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,.5); }
+            55%      { box-shadow: 0 0 0 7px rgba(37,99,235,.0); }
+        }
 
         .notif-dd {
             border-radius: 18px;
@@ -692,76 +852,104 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         </form>
                     </div>
 
-                    <div class="tickets-table">
-                        <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Número</th>
-                            <th>Asunto</th>
-                            <th>Estado</th>
-                            <th>Prioridad</th>
-                            <th>Fecha</th>
-                            <th class="text-end">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($tickets)): ?>
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <div class="text-muted mb-3">No hay tickets para este filtro.</div>
-                                    <a href="open.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
-                                </td>
-                            </tr>
-                        <?php else: ?>
+                    <?php if (empty($tickets)): ?>
+                        <div class="text-center py-5">
+                            <div class="text-muted mb-3">No hay tickets para este filtro.</div>
+                            <a href="open.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                        </div>
+                    <?php else: ?>
+                        <div class="ticket-cards">
                             <?php foreach ($tickets as $ticket): ?>
-                                <?php $isNew = ($newTicketId > 0 && (int)$ticket['id'] === (int)$newTicketId); ?>
-                                <tr id="ticket-row-<?php echo (int)$ticket['id']; ?>" class="<?php echo $isNew ? 'ticket-new-highlight' : ''; ?>">
-                                    <td class="mono">
-                                        <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>" class="text-decoration-none">
-                                            <strong class="text-dark"><?php echo html($ticket['ticket_number']); ?></strong>
+                                <?php
+                                    $isNew    = ($newTicketId > 0 && (int)$ticket['id'] === (int)$newTicketId);
+                                    $isClosed = !empty($ticket['closed']);
+
+                                    $statusColor = (string)($ticket['status_color'] ?? '');
+                                    if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $statusColor)) $statusColor = '#2563eb';
+
+                                    $priorityColor = (string)($ticket['priority_color'] ?? '');
+                                    if ($priorityColor === '' || !preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $priorityColor)) $priorityColor = '#64748b';
+
+                                    $pName = strtolower((string)($ticket['priority_name'] ?? ''));
+                                    $priorityIcon = 'bi-flag';
+                                    if (str_contains($pName,'alta')||str_contains($pName,'high')||str_contains($pName,'urgent')) $priorityIcon = 'bi-flag-fill';
+                                    elseif (str_contains($pName,'media')||str_contains($pName,'medium')) $priorityIcon = 'bi-flag-fill';
+
+                                    $cardClass = 'ticket-card';
+                                    if ($isNew)    $cardClass .= ' ticket-new-highlight';
+                                    if ($isClosed) $cardClass .= ' is-closed';
+
+                                    $createdFmt = date('d M Y · H:i', strtotime($ticket['created']));
+                                    $closedFmt  = !empty($ticket['closed']) ? date('d M Y · H:i', strtotime($ticket['closed'])) : '';
+                                ?>
+                                <div id="ticket-row-<?php echo (int)$ticket['id']; ?>"
+                                     class="<?php echo $cardClass; ?>"
+                                     style="--tc-status-color:<?php echo html($statusColor); ?>;">
+
+                                    <!-- HEADER BAND: número + asunto con fondo tintado -->
+                                    <div class="ticket-card-head">
+                                        <div class="ticket-card-top">
+                                            <span class="ticket-card-number mono">
+                                                <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>">
+                                                    <?php echo html($ticket['ticket_number']); ?>
+                                                </a>
+                                            </span>
                                             <?php if ($isNew): ?>
-                                                <span class="ticket-new-badge">Nuevo</span>
+                                                <span class="ticket-new-badge">
+                                                    <i class="bi bi-lightning-charge-fill"></i> Nuevo
+                                                </span>
                                             <?php endif; ?>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold text-dark"><?php echo html($ticket['subject']); ?></div>
-                                        <?php if (!empty($ticket['closed'])): ?>
-                                            <div class="text-muted" style="font-size: 0.85rem;">Cerrado: <?php echo date('d/m/Y H:i', strtotime($ticket['closed'])); ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php
-                                            $statusColor = (string)($ticket['status_color'] ?? '');
-                                            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $statusColor)) {
-                                                $statusColor = '#2563eb';
-                                            }
-                                        ?>
-                                        <span class="badge-soft" style="background-color: <?php echo html($statusColor); ?>; color: #fff;">
-                                            <?php echo html($ticket['status_name']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php
-                                            $priorityColor = (string)($ticket['priority_color'] ?? '');
-                                            if ($priorityColor === '' || !preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $priorityColor)) {
-                                                $priorityColor = '#64748b';
-                                            }
-                                        ?>
-                                        <span class="badge-soft" style="background-color: <?php echo html($priorityColor); ?>; color: #fff;">
-                                            <?php echo html($ticket['priority_name']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="text-muted"><?php echo date('d/m/Y H:i', strtotime($ticket['created'])); ?></td>
-                                    <td class="text-end">
-                                        <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>" class="btn btn-sm btn-primary"><i class="bi bi-eye"></i> Ver</a>
-                                    </td>
-                                </tr>
+                                        </div>
+                                        <p class="ticket-card-subject"><?php echo html($ticket['subject']); ?></p>
+                                    </div>
+
+                                    <!-- BODY: badges + fechas + botón -->
+                                    <div class="ticket-card-body">
+                                        <div class="ticket-card-meta">
+                                            <?php if (!empty($ticket['status_name'])): ?>
+                                                <span class="badge-soft"
+                                                      style="background:<?php echo html($statusColor); ?>18;
+                                                             color:<?php echo html($statusColor); ?>;
+                                                             border-color:<?php echo html($statusColor); ?>35;">
+                                                    <i class="bi bi-circle-fill" style="font-size:.38rem;"></i>
+                                                    <?php echo html($ticket['status_name']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($ticket['priority_name'])): ?>
+                                                <span class="badge-soft"
+                                                      style="background:<?php echo html($priorityColor); ?>18;
+                                                             color:<?php echo html($priorityColor); ?>;
+                                                             border-color:<?php echo html($priorityColor); ?>35;">
+                                                    <i class="bi <?php echo $priorityIcon; ?>" style="font-size:.60rem;"></i>
+                                                    <?php echo html($ticket['priority_name']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <div class="ticket-card-foot">
+                                            <div class="ticket-card-dates">
+                                                <div class="ticket-card-date-row">
+                                                    <i class="bi bi-calendar3"></i>
+                                                    <?php echo $createdFmt; ?>
+                                                </div>
+                                                <?php if ($closedFmt !== ''): ?>
+                                                    <div class="ticket-card-date-row is-closed-date">
+                                                        <i class="bi bi-check-circle-fill"></i>
+                                                        <?php echo $closedFmt; ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <a href="view-ticket.php?id=<?php echo (int)$ticket['id']; ?>"
+                                               class="ticket-card-btn">
+                                                Ver <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </div>
                             <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                        </table>
-                    </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </main>
         </div>
