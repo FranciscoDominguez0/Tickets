@@ -14,6 +14,9 @@ $staffName = (string)($_SESSION['staff_name'] ?? ($staff['name'] ?? ''));
 $currentRoute = (string)($currentRoute ?? 'dashboard');
 $content = (string)($content ?? '');
 $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
+$sidebarCookieState = isset($_COOKIE['scp_sidebar_collapsed']) ? (string)$_COOKIE['scp_sidebar_collapsed'] : '';
+$sidebarDefaultCollapsed = ($sidebarCookieState === 'collapsed');
+$allowExpandedGroups = !$sidebarDefaultCollapsed;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -25,10 +28,15 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
 </head>
-<body class="superadmin<?php echo $isDarkMode ? ' superadmin-dark' : ''; ?>">
+<body class="superadmin scp-panel<?php echo $isDarkMode ? ' superadmin-dark' : ''; ?><?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>">
 <nav class="navbar navbar-dark">
     <div class="container-fluid">
-        <span class="navbar-brand"><?php echo APP_NAME; ?> - SuperAdmin</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
+            <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
         <div class="d-flex align-items-center gap-3">
             <span style="color: white;">SuperAdmin: <strong><?php echo html($staffName); ?></strong></span>
             <form method="post" action="toggle_dark.php" class="d-inline" style="margin:0" data-superadmin-dark-toggle-form>
@@ -54,6 +62,7 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
                 <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
                 <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
             </span>
+            <span class="sidebar-brand-collapsed-mark" aria-hidden="true">//</span>
         </div>
 
         <div class="sidebar-section">
@@ -73,32 +82,44 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
                     </a>
                 </li>
                 <li>
-                    <a href="superadmins.php" class="sidebar-link <?php echo $currentRoute === 'superadmins' ? 'active' : ''; ?>">
+                    <?php $agentsGroupActive = ($currentRoute === 'superadmins'); ?>
+                    <?php $expandAgents = ($agentsGroupActive && $allowExpandedGroups); ?>
+                    <button type="button" class="sidebar-toggle <?php echo $expandAgents ? 'active expanded' : ''; ?>" data-subnav="superadmin-agents-subnav" aria-controls="superadmin-agents-subnav" aria-expanded="<?php echo $expandAgents ? 'true' : 'false'; ?>">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 21V19A4 4 0 0 0 12 15H7A4 4 0 0 0 3 19V21" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M9.5 11A4 4 0 1 0 9.5 3A4 4 0 1 0 9.5 11Z" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M20 8V14" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M23 11H17" stroke="<?php echo $currentRoute === 'superadmins' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M16 21V19A4 4 0 0 0 12 15H7A4 4 0 0 0 3 19V21" stroke="<?php echo $expandAgents ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9.5 11A4 4 0 1 0 9.5 3A4 4 0 1 0 9.5 11Z" stroke="<?php echo $expandAgents ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M20 8V14" stroke="<?php echo $expandAgents ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M23 11H17" stroke="<?php echo $expandAgents ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                             </svg>
                         </span>
-                        Superadmins
-                    </a>
+                        Agentes
+                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                    </button>
+                    <ul id="superadmin-agents-subnav" class="sidebar-subnav <?php echo $expandAgents ? 'open' : ''; ?>">
+                        <li>
+                            <a href="superadmins.php" class="sidebar-link <?php echo $currentRoute === 'superadmins' ? 'active' : ''; ?>">
+                                <span class="icon"><i class="bi bi-person-badge"></i></span>
+                                Superadmins
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li>
                     <?php $empresasGroupActive = ($currentRoute === 'empresas' || $currentRoute === 'empresas_actividad'); ?>
-                    <button type="button" class="sidebar-toggle <?php echo $empresasGroupActive ? 'active expanded' : ''; ?>" aria-expanded="<?php echo $empresasGroupActive ? 'true' : 'false'; ?>">
+                    <?php $expandEmpresas = ($empresasGroupActive && $allowExpandedGroups); ?>
+                    <button type="button" class="sidebar-toggle <?php echo $expandEmpresas ? 'active expanded' : ''; ?>" data-subnav="superadmin-empresas-subnav" aria-controls="superadmin-empresas-subnav" aria-expanded="<?php echo $expandEmpresas ? 'true' : 'false'; ?>">
                         <span class="icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="4" y="7" width="16" height="13" rx="2" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                <path d="M8 7V5" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M16 7V5" stroke="<?php echo $empresasGroupActive ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <rect x="4" y="7" width="16" height="13" rx="2" stroke="<?php echo $expandEmpresas ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                <path d="M8 7V5" stroke="<?php echo $expandEmpresas ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M16 7V5" stroke="<?php echo $expandEmpresas ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                             </svg>
                         </span>
-                        Empresas
+                        Empresa
                         <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
                     </button>
-                    <ul class="sidebar-subnav <?php echo $empresasGroupActive ? 'open' : ''; ?>">
+                    <ul id="superadmin-empresas-subnav" class="sidebar-subnav <?php echo $expandEmpresas ? 'open' : ''; ?>">
                         <li>
                             <a href="empresas.php" class="sidebar-link <?php echo $currentRoute === 'empresas' ? 'active' : ''; ?>">
                                 <span class="icon"><i class="bi bi-buildings"></i></span>
@@ -126,12 +147,13 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
                 </li>
                 <li>
                     <?php $configGroupActive = ($currentRoute === 'configuracion' || $currentRoute === 'notificaciones'); ?>
-                    <button type="button" class="sidebar-toggle <?php echo $configGroupActive ? 'active expanded' : ''; ?>" aria-expanded="<?php echo $configGroupActive ? 'true' : 'false'; ?>">
+                    <?php $expandConfig = ($configGroupActive && $allowExpandedGroups); ?>
+                    <button type="button" class="sidebar-toggle <?php echo $expandConfig ? 'active expanded' : ''; ?>" data-subnav="superadmin-config-subnav" aria-controls="superadmin-config-subnav" aria-expanded="<?php echo $expandConfig ? 'true' : 'false'; ?>">
                         <span class="icon"><i class="bi bi-gear"></i></span>
                         Configuración
                         <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
                     </button>
-                    <ul class="sidebar-subnav <?php echo $configGroupActive ? 'open' : ''; ?>">
+                    <ul id="superadmin-config-subnav" class="sidebar-subnav <?php echo $expandConfig ? 'open' : ''; ?>">
                         <li>
                             <a href="configuracion.php" class="sidebar-link <?php echo $currentRoute === 'configuracion' ? 'active' : ''; ?>">
                                 <span class="icon"><i class="bi bi-gear"></i></span>
@@ -167,10 +189,8 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
             </ul>
         </div>
 
-        <div class="sidebar-footer">
-            <div>&copy; VigitecPanama</div>
-        </div>
     </aside>
+    <div id="scpSidebarFlyout" class="sidebar-flyout" aria-hidden="true"></div>
 
     <main class="main-shell">
         <div class="container-main">
@@ -182,27 +202,6 @@ $isDarkMode = (int)($_SESSION['superadmin_dark_mode'] ?? 0) === 1;
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../js/scp.js"></script>
 <script>
-    (function(){
-        try {
-            var toggles = document.querySelectorAll('.sidebar-toggle');
-            toggles.forEach(function(btn){
-                btn.addEventListener('click', function(){
-                    var sub = btn.nextElementSibling;
-                    if (!sub || !sub.classList || !sub.classList.contains('sidebar-subnav')) return;
-                    var isOpen = sub.classList.contains('open');
-                    if (isOpen) {
-                        sub.classList.remove('open');
-                        btn.classList.remove('expanded');
-                        btn.setAttribute('aria-expanded', 'false');
-                    } else {
-                        sub.classList.add('open');
-                        btn.classList.add('expanded');
-                        btn.setAttribute('aria-expanded', 'true');
-                    }
-                });
-            });
-        } catch (e) {}
-    })();
     (function(){
         var form = document.querySelector('[data-superadmin-dark-toggle-form]');
         if (!form) return;
