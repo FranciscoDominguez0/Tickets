@@ -31,7 +31,7 @@ if ($_POST) {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
-        $phone = '';
+        $phone = trim($_POST['phone'] ?? '');
 
         // Validaciones
         if (!$firstname || !$lastname || !$email || !$password) {
@@ -84,20 +84,7 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrarse - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
-    <style>
-        .login-panel { padding: 32px !important; }
-        .login-form { gap: 18px !important; }
-        .form-grid { gap: 18px !important; grid-template-columns: 1fr 1fr !important; }
-        .form-group label { font-size: 14px !important; }
-        .form-group input { padding: 13px 14px !important; font-size: 15px !important; }
-        .btn-login { padding: 13px 16px !important; font-size: 15px !important; }
-
-        @media (max-width: 760px) {
-            .login-panel { padding: 22px !important; }
-            .form-grid { grid-template-columns: 1fr !important; }
-        }
-    </style>
+    <link rel="stylesheet" href="../publico/css/login.css">
 </head>
 <?php
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
@@ -127,14 +114,14 @@ $bodyStyle = $loginBg !== ''
         </div>
 
         <!-- CONTENIDO PRINCIPAL -->
-        <div class="support-content" style="max-width: 1320px;">
+        <div class="support-content" style="max-width: 1200px;">
             <div class="welcome-section">
                 <h2 class="welcome-title">Cree una cuenta en <?php echo APP_NAME; ?></h2>
                 <p class="welcome-text">Complete el formulario para registrarse. Si ya tiene cuenta, puede iniciar sesión.</p>
             </div>
 
             <!-- PANEL DE REGISTRO -->
-            <div class="login-panel" style="grid-template-columns: 1fr; width: 100%; max-width: 1240px; margin-left: auto; margin-right: auto;">
+            <div class="login-panel" style="grid-template-columns: 1fr; width: 100%; max-width: 1100px; margin-left: auto; margin-right: auto;">
                 <div class="login-panel-left" style="width: 100%;">
                     <form method="post" class="login-form">
                         <!-- Alertas -->
@@ -146,65 +133,74 @@ $bodyStyle = $loginBg !== ''
                             <div class="alert alert-success"><?php echo $success; ?></div>
                         <?php endif; ?>
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="firstname">Nombre</label>
-                                <input 
-                                    type="text" 
-                                    id="firstname" 
-                                    name="firstname" 
-                                    placeholder="Tu nombre"
-                                    value="<?php echo html($_POST['firstname'] ?? ''); ?>"
-                                    required
-                                >
-                            </div>
+                        <div class="form-group">
+                            <label for="firstname">Nombre</label>
+                            <input 
+                                type="text" 
+                                id="firstname" 
+                                name="firstname" 
+                                placeholder="Tu nombre"
+                                value="<?php echo html($_POST['firstname'] ?? ''); ?>"
+                                required
+                            >
+                        </div>
 
-                            <div class="form-group">
-                                <label for="lastname">Apellido</label>
-                                <input 
-                                    type="text" 
-                                    id="lastname" 
-                                    name="lastname" 
-                                    placeholder="Tu apellido"
-                                    value="<?php echo html($_POST['lastname'] ?? ''); ?>"
-                                    required
-                                >
-                            </div>
+                        <div class="form-group">
+                            <label for="lastname">Apellido</label>
+                            <input 
+                                type="text" 
+                                id="lastname" 
+                                name="lastname" 
+                                placeholder="Tu apellido"
+                                value="<?php echo html($_POST['lastname'] ?? ''); ?>"
+                                required
+                            >
+                        </div>
 
-                            <div class="form-group">
-                                <label for="email">Correo electrónico</label>
-                                <input 
-                                    type="email" 
-                                    id="email" 
-                                    name="email" 
-                                    placeholder="tu@email.com"
-                                    value="<?php echo html($_POST['email'] ?? ''); ?>"
-                                    required
-                                >
-                            </div>
+                        <div class="form-group">
+                            <label for="email">Correo electrónico</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                placeholder="tu@email.com"
+                                value="<?php echo html($_POST['email'] ?? ''); ?>"
+                                required
+                            >
+                        </div>
 
-                            <div class="form-group">
-                                <label for="password">Contraseña</label>
-                                <input 
-                                    type="password" 
-                                    id="password" 
-                                    name="password" 
-                                    placeholder="Contraseña"
-                                    required
-                                >
-                                <small>Mínimo 6 caracteres</small>
-                            </div>
+                        <div class="form-group">
+                            <label for="phone">Teléfono (opcional)</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                placeholder="+507 6621-8585"
+                                value="<?php echo html($_POST['phone'] ?? ''); ?>"
+                            >
+                        </div>
 
-                            <div class="form-group">
-                                <label for="password_confirm">Confirmar Contraseña</label>
-                                <input 
-                                    type="password" 
-                                    id="password_confirm" 
-                                    name="password_confirm" 
-                                    placeholder="Confirmar contraseña"
-                                    required
-                                >
-                            </div>
+                        <div class="form-group">
+                            <label for="password">Contraseña</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Contraseña"
+                                required
+                            >
+                            <small>Mínimo 6 caracteres</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password_confirm">Confirmar Contraseña</label>
+                            <input 
+                                type="password" 
+                                id="password_confirm" 
+                                name="password_confirm" 
+                                placeholder="Confirmar contraseña"
+                                required
+                            >
                         </div>
 
                         <!-- CSRF Token -->

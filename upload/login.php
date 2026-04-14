@@ -17,12 +17,7 @@ if (!isset($_SESSION['csrf_token'])) {
 $helpdeskStatus = (string)getAppSetting('system.helpdesk_status', 'online');
 $offlineNotice = '';
 if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline') {
-    $offlineNotice = 'Sistema en mantenimiento.';
-}
-
-$loginMsg = (string)($_GET['msg'] ?? '');
-if ($loginMsg === 'timeout') {
-    $_SESSION['flash_error'] = 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.';
+    $offlineNotice = 'El sistema se encuentra en mantenimiento. Disculpe las molestias. Por favor intente nuevamente más tarde.';
 }
 
 // Si ya está logueado, redirigir
@@ -42,7 +37,29 @@ if (isset($_SESSION['flash_error']) || isset($_SESSION['flash_success']) || isse
     unset($_SESSION['flash_error'], $_SESSION['flash_success'], $_SESSION['flash_email']);
 }
 
-$supportEmail = (string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : 'cuenta9fran@gmail.com');
+if (!isset($_SESSION['login_failed_attempts'])) {
+    $_SESSION['login_failed_attempts'] = 0;
+}
+
+$supportEmail = defined('ADMIN_NOTIFY_EMAIL') ? (string) ADMIN_NOTIFY_EMAIL : 'cuenta9fran@gmail.com';
+
+$isLocked = false;
+$lockEmail = trim((string)$prefillEmail);
+if ($lockEmail !== '' && filter_var($lockEmail, FILTER_VALIDATE_EMAIL)) {
+    $stmtS = $mysqli->prepare("SELECT status FROM users WHERE email = ? LIMIT 1");
+    if ($stmtS) {
+        $stmtS->bind_param('s', $lockEmail);
+        $stmtS->execute();
+        $srow = $stmtS->get_result()->fetch_assoc();
+        if ($srow && ($srow['status'] ?? '') === 'banned') {
+            $isLocked = true;
+        }
+    }
+}
+
+if ($isLocked && $error === '') {
+    $error = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
+}
 
 if ($_POST) {
     $email = trim($_POST['email'] ?? '');
@@ -50,31 +67,79 @@ if ($_POST) {
     $prefillEmail = $email;
 
     if ($helpdeskStatus === 'offline') {
+        $_SESSION['flash_error'] = 'El sistema está fuera de línea. Intente más tarde.';
         $_SESSION['flash_email'] = $prefillEmail;
         header('Location: login.php?msg=offline');
         exit;
     }
 
-        if (empty($email) || empty($password)) {
-            $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
+        // Recalcular bloqueo según el email enviado
+        $isLocked = false;
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $stmtS = $mysqli->prepare("SELECT status FROM users WHERE email = ? LIMIT 1");
+            if ($stmtS) {
+                $stmtS->bind_param('s', $email);
+                $stmtS->execute();
+                $srow = $stmtS->get_result()->fetch_assoc();
+                if ($srow && ($srow['status'] ?? '') === 'banned') {
+                    $isLocked = true;
+                }
+            }
+        }
+
+        if ($isLocked) {
+            $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
             $_SESSION['flash_email'] = $prefillEmail;
+            addLog('Cuenta bloqueada: intento de inicio de sesión (usuario)', 'email=' . $prefillEmail, 'user', null, 'user', null);
             header('Location: login.php');
             exit;
+        } else {
+            if (!$isLocked && (empty($email) || empty($password))) {
+                $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
+                $_SESSION['flash_email'] = $prefillEmail;
+                header('Location: login.php');
+                exit;
+            } elseif (!$isLocked) {
+                $user = Auth::loginUser($email, $password);
+                if ($user) {
+                    $_SESSION['login_failed_attempts'] = 0;
+                    $_SESSION['user_login_time'] = time();
+                    header('Location: tickets.php');
+                    exit;
+                } else {
+                    $_SESSION['login_failed_attempts'] = (int)($_SESSION['login_failed_attempts'] ?? 0) + 1;
+                    addLog('Intento fallido de inicio de sesión (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', null, 'user', null);
+                    if ((int)$_SESSION['login_failed_attempts'] >= 3) {
+                        $isLocked = true;
+                        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            $stmtLock = $mysqli->prepare("UPDATE users SET status = 'banned', updated = NOW() WHERE email = ?");
+                            if ($stmtLock) {
+                                $stmtLock->bind_param('s', $email);
+                                $stmtLock->execute();
+                            }
+                            $stmtUid = $mysqli->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+                            $uid = null;
+                            if ($stmtUid) {
+                                $stmtUid->bind_param('s', $email);
+                                $stmtUid->execute();
+                                $urow = $stmtUid->get_result()->fetch_assoc();
+                                $uid = $urow ? (int)$urow['id'] : null;
+                            }
+                            addLog('Excesivos intentos de identificación (usuario)', 'email=' . $prefillEmail . ' attempts=' . (string)$_SESSION['login_failed_attempts'], 'user', $uid, 'user', $uid);
+                        }
+                        $_SESSION['flash_error'] = 'Has alcanzado el máximo de intentos fallidos de inicio de sesión.';
+                        $_SESSION['flash_email'] = $prefillEmail;
+                        header('Location: login.php');
+                        exit;
+                    } else {
+                        $_SESSION['flash_error'] = 'Email o contraseña incorrectos';
+                        $_SESSION['flash_email'] = $prefillEmail;
+                        header('Location: login.php');
+                        exit;
+                    }
+                }
+            }
         }
-
-        $user = Auth::loginUser($email, $password);
-        if ($user) {
-            $_SESSION['user_login_time'] = time();
-            $_SESSION['user_last_activity'] = time();
-            $_SESSION['user_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-            header('Location: tickets.php');
-            exit;
-        }
-
-        $_SESSION['flash_error'] = (string)(Auth::$lastError ?: 'Email o contraseña incorrectos');
-        $_SESSION['flash_email'] = $prefillEmail;
-        header('Location: login.php');
-        exit;
 }
 ?>
 <!DOCTYPE html>
@@ -83,15 +148,14 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - <?php echo APP_NAME; ?></title>
-    <?php $loginCssV = (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: 1); ?>
-    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo $loginCssV; ?>">
+    <link rel="stylesheet" href="../publico/css/login.css">
 </head>
 <?php
 $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
 $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== ''
-    ? ('background-color: #f6f7fb; background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
+    ? ('background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
     : '';
 ?>
 <body style="<?php echo $bodyStyle; ?>">
@@ -102,13 +166,15 @@ $bodyStyle = $loginBg !== ''
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
             <div class="support-header-right">
-                <a href="#" class="header-login-link">Acceder</a>
+                <span class="guest-user">Usuario Invitado</span>
+                <span class="header-separator">|</span>
+                <a href="#" class="header-login-link">Inicia Sesión</a>
             </div>
         </div>
 
         <!-- NAVEGACIÓN -->
         <div class="support-nav">
-            <button class="nav-item active">Centro de soporte</button>
+            <button class="nav-item active">Inicio Centro de Soporte</button>
         </div>
 
         <!-- CONTENIDO PRINCIPAL -->
@@ -119,24 +185,20 @@ $bodyStyle = $loginBg !== ''
             </div>
 
             <!-- PANEL DE LOGIN -->
-            <div class="login-panel login-panel-split">
+            <div class="login-panel">
                 <!-- COLUMNA IZQUIERDA - FORMULARIO -->
                 <div class="login-panel-left">
-                    <div class="login-form-header">
-                        <h2 class="login-form-title">Inicia sesión</h2>
-                        <p class="login-form-subtitle">Accede a tu cuenta para gestionar tus solicitudes.</p>
-                    </div>
                     <form method="post" class="login-form">
                         <!-- Alertas -->
                         <?php if ($offlineNotice): ?>
-                            <div class="alert alert-warning" data-alert-static="1"><?php echo html($offlineNotice); ?></div>
+                            <div class="alert alert-warning"><?php echo html($offlineNotice); ?></div>
                         <?php endif; ?>
                         <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo html($error); ?></div>
+                            <div class="alert alert-danger"><?php echo $error; ?></div>
                         <?php endif; ?>
 
                         <?php if ($success): ?>
-                            <div class="alert alert-success"><?php echo html($success); ?></div>
+                            <div class="alert alert-success"><?php echo $success; ?></div>
                         <?php endif; ?>
 
                         <!-- Email -->
@@ -164,48 +226,34 @@ $bodyStyle = $loginBg !== ''
                             >
                         </div>
 
-                        <div class="login-forgot">
-                            <a href="forgot.php" class="register-link">Olvidé mi contraseña</a>
-                        </div>
-
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                         <!-- Botón Login -->
                         <button type="submit" class="btn-login">Inicia Sesión</button>
 
-                        <div class="login-side-links">
-                            <p class="register-text">
-                                ¿Sin cuenta?
-                                <a href="registrar.php" class="register-link">Crear cuenta</a>
-                            </p>
-                            <p class="agent-text">
-                                ¿Eres agente?
-                                <a href="scp/login.php" class="agent-link">Entrar</a>
-                            </p>
+                        <div style="margin-top:12px;">
+                            <a href="forgot.php" class="register-link">Olvidé mi contraseña</a>
                         </div>
                     </form>
                 </div>
 
                 <!-- COLUMNA DERECHA - ENLACES E ICONO -->
-                <div class="login-panel-right login-panel-right-center">
-                    <div class="login-corner-mark" aria-hidden="true">
-                        <span class="login-corner-dot"></span>
-                        <span class="login-corner-text">
-                            <span class="login-corner-text-top">SISTEMA</span>
-                            <span class="login-corner-text-bottom">TICKETS</span>
-                        </span>
-                    </div>
-                    <div class="login-welcome">
-                        <h2 class="login-welcome-title">Hola, <span>¡bienvenido!</span></h2>
-                        <p class="login-welcome-text">Inicia sesión para crear y dar seguimiento a tus solicitudes. Estamos aquí para ayudarte.</p>
+                <div class="login-panel-right">
+                    <div class="login-links">
+                        <p class="register-text">
+                            ¿Aún no está registrado? 
+                            <a href="registrar.php" class="register-link">Cree una cuenta</a>
+                        </p>
+                        <p class="agent-text">
+                            Soy un agente — 
+                            <a href="scp/login.php" class="agent-link">Acceda aquí</a>
+                        </p>
                     </div>
                     <div class="lock-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 11V8.6C8 6.1 9.9 4.2 12.4 4.2c2.5 0 4.4 1.9 4.4 4.4V11" />
-                            <path d="M7.2 11h9.6c1 0 1.9.8 1.9 1.9v5.1c0 1-.8 1.9-1.9 1.9H7.2c-1 0-1.9-.8-1.9-1.9v-5.1c0-1 .8-1.9 1.9-1.9Z" />
-                            <path d="M12 14.1v2.8" />
-                            <path d="M10.9 14.1a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 0 0-2.2 0Z" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                     </div>
                 </div>
@@ -233,27 +281,6 @@ $bodyStyle = $loginBg !== ''
             btn.classList.add('loading');
             btn.textContent = 'Verificando...';
         });
-
-        // Auto-ocultar alertas
-        (function () {
-            try {
-                var alerts = document.querySelectorAll('.login-form .alert:not([data-alert-static="1"])');
-                if (!alerts || !alerts.length) return;
-                setTimeout(function () {
-                    try {
-                        alerts.forEach(function (el) {
-                            try {
-                                el.style.transition = 'opacity 300ms ease';
-                                el.style.opacity = '0';
-                                setTimeout(function () {
-                                    try { el.remove(); } catch (e2) { if (el && el.parentNode) el.parentNode.removeChild(el); }
-                                }, 320);
-                            } catch (e1) {}
-                        });
-                    } catch (e3) {}
-                }, 4500);
-            } catch (e4) {}
-        })();
     </script>
 </body>
 </html>

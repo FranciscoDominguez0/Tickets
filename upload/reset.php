@@ -78,13 +78,6 @@ if ($_POST && $error === '') {
                 $stmtMark->execute();
             }
 
-            // Invalidar cualquier otro token pendiente para el mismo usuario
-            $stmtInvalidate = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
-            if ($stmtInvalidate) {
-                $stmtInvalidate->bind_param('i', $uid);
-                $stmtInvalidate->execute();
-            }
-
             $_SESSION['login_failed_attempts'] = 0;
             $_SESSION['flash_success'] = 'Contraseña actualizada. Ya puedes iniciar sesión.';
             $_SESSION['flash_email'] = (string)($resetRow['email'] ?? '');
@@ -100,7 +93,7 @@ if ($_POST && $error === '') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restablecer contraseña - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
+    <link rel="stylesheet" href="../publico/css/login.css">
 </head>
 <?php
 $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
@@ -137,10 +130,10 @@ $bodyStyle = $loginBg !== ''
                 <div class="login-panel-left">
                     <form method="post" class="login-form">
                         <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo html($error); ?></div>
+                            <div class="alert alert-danger"><?php echo $error; ?></div>
                         <?php endif; ?>
                         <?php if ($success): ?>
-                            <div class="alert alert-success"><?php echo html($success); ?></div>
+                            <div class="alert alert-success"><?php echo $success; ?></div>
                         <?php endif; ?>
 
                         <?php if (!$success && $error === ''): ?>
