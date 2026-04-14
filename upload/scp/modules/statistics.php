@@ -355,39 +355,96 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
 ?>
 
 <style>
-    .stats-page{padding-bottom:18px}
-    .stats-hero{border-radius:18px; padding:16px 16px; background:linear-gradient(135deg, rgba(37,99,235,.10), rgba(16,185,129,.08)); border:1px solid rgba(226,232,240,.9)}
-    .stats-hero h3{font-weight:900; letter-spacing:.01em}
-    .stats-hero .text-muted{color:#475569 !important; font-weight:650}
-    .stats-range{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.85); border:1px solid rgba(226,232,240,.9); font-weight:800; color:#0f172a; font-size:12px}
-
-    .stats-page .card{border-radius:18px; border:1px solid rgba(226,232,240,.9); box-shadow:0 12px 34px rgba(15,23,42,.08)}
-    .stats-page .card-body{padding:16px}
-
-    .stats-page h5{font-weight:900; letter-spacing:.01em}
-    .stats-page .form-label{font-weight:850; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#475569}
-    .stats-page .form-control{border-radius:12px; font-weight:700}
-    .stats-page .btn{border-radius:12px; font-weight:850}
-
-    .stats-kpi .text-muted{font-weight:650}
-    .stats-kpi .fs-3{font-weight:1000}
-
-    .stats-page .table thead th{font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:#475569}
+    .stats-page { padding-bottom: 18px; }
+    .stats-hero {
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        border-radius: 14px;
+        padding: 1.5rem 2rem;
+        color: #fff;
+        box-shadow: 0 14px 32px rgba(37, 99, 235, 0.28);
+        margin-bottom: 16px;
+    }
+    .stats-hero-title {
+        font-size: 1.45rem;
+        font-weight: 700;
+        margin: 0;
+        color: #fff;
+    }
+    .stats-hero-sub {
+        margin: .2rem 0 0;
+        color: rgba(255, 255, 255, .9);
+        font-size: .95rem;
+        font-weight: 600;
+    }
+    .stats-hero-icon {
+        width: 52px;
+        height: 52px;
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        border-radius: 14px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.45rem;
+        box-shadow: 0 4px 14px rgba(2, 6, 23, .2);
+        border: 1px solid rgba(255, 255, 255, .22);
+    }
+    .stats-range {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .15);
+        border: 1px solid rgba(255, 255, 255, .28);
+        font-weight: 800;
+        color: #fff;
+        font-size: 12px;
+    }
+    .stats-page .card {
+        border-radius: 14px;
+        border: 1px solid rgba(226, 232, 240, .9);
+        box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+    }
+    .stats-page .card-body { padding: 18px; }
+    .stats-page h5 { font-weight: 800; letter-spacing: .01em; color: #0f172a; }
+    .stats-page .form-label {
+        font-weight: 700;
+        font-size: 12px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #475569;
+    }
+    .stats-page .form-control { border-radius: 10px; font-weight: 600; }
+    .stats-page .btn { border-radius: 10px; font-weight: 700; }
+    .stats-kpi .text-muted { font-size: .82rem; font-weight: 600; color: #64748b !important; }
+    .stats-kpi .fs-3 { font-weight: 800; color: #0f172a; }
+    .stats-page .table thead th {
+        font-size: 12px;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #475569;
+        border-bottom-color: rgba(148, 163, 184, 0.25);
+    }
 </style>
 
-<div class="container-fluid stats-page">
+<div class="stats-page">
     <div class="stats-hero d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
-        <div>
-            <h3 class="mb-1">Estadísticas</h3>
-            <div class="text-muted">Resumen y métricas de tickets según rango de fechas.</div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="stats-hero-icon"><i class="bi bi-bar-chart-line"></i></span>
+            <div>
+                <h3 class="stats-hero-title">Estadísticas</h3>
+                <div class="stats-hero-sub">Resumen y métricas de tickets según rango de fechas.</div>
+            </div>
         </div>
         <span class="stats-range"><i class="bi bi-calendar3"></i> <?php echo html($start); ?> — <?php echo html($end); ?></span>
     </div>
 
     <div class="card mb-3">
         <div class="card-body">
-            <form method="get" action="index.php" class="row g-3 align-items-end">
-                <input type="hidden" name="page" value="statistics">
+            <form method="get" action="statics.php" class="row g-3 align-items-end">
                 <div class="col-12 col-md-4">
                     <label class="form-label" for="stat-start">Desde</label>
                     <input class="form-control" type="date" id="stat-start" name="start" value="<?php echo html($start); ?>">
@@ -398,7 +455,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">Filtrar</button>
-                    <a class="btn btn-outline-secondary" href="index.php?page=statistics">Limpiar</a>
+                    <a class="btn btn-outline-secondary" href="statics.php">Limpiar</a>
                 </div>
             </form>
         </div>

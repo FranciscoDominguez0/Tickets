@@ -37,6 +37,15 @@ if (!isset($routes[$page])) {
     $page = 'dashboard';
 }
 
+// Compatibilidad: la vista de estadísticas ahora es independiente
+if ($page === 'statistics') {
+    $qs = $_GET;
+    unset($qs['page']);
+    $to = 'statics.php' . (!empty($qs) ? ('?' . http_build_query($qs)) : '');
+    header('Location: ' . $to);
+    exit;
+}
+
 $currentRoute = $page;
 $moduleFile   = __DIR__ . '/modules/' . $routes[$page];
 

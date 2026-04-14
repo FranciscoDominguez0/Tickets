@@ -393,7 +393,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                         </a>
                     </li>
                     <li>
-                        <a href="index.php?page=statistics" class="sidebar-link <?php echo $currentRoute === 'statistics' ? 'active' : ''; ?>">
+                        <a href="statics.php" class="sidebar-link <?php echo $currentRoute === 'statistics' ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M5 19V10" stroke="<?php echo $currentRoute === 'statistics' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
