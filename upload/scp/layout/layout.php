@@ -51,6 +51,7 @@ if (!isset($_SESSION[$menuKey])) {
     $_SESSION[$menuKey] = 1;
     $collapseSidebarMenu = true;
 }
+$sidebarDefaultCollapsed = $collapseSidebarMenu;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -77,7 +78,8 @@ if (!isset($_SESSION[$menuKey])) {
     <link rel="stylesheet" href="css/tasks.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tasks.css'); ?>">
     <?php endif; ?>
 </head>
-<body<?php if (isset($currentRoute) && $currentRoute === 'users'): ?> data-user-active-tab="<?php echo isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets'; ?>"<?php endif; ?>>
+<?php $userActiveTab = (isset($currentRoute) && $currentRoute === 'users') ? (isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets') : ''; ?>
+<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>"<?php if ($userActiveTab !== ''): ?> data-user-active-tab="<?php echo $userActiveTab; ?>"<?php endif; ?>>
     <?php $showOverlay = !empty($_SESSION['show_agent_loading_overlay']); ?>
     <?php if ($showOverlay): ?>
         <style>
@@ -167,7 +169,12 @@ if (!isset($_SESSION[$menuKey])) {
     <!-- NAVBAR -->
     <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
         <div class="container-fluid">
-            <span class="navbar-brand"><?php echo APP_NAME; ?> - Agente</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
+                <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
                     <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
@@ -260,6 +267,7 @@ if (!isset($_SESSION[$menuKey])) {
                     <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
                     <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
                 </span>
+                <span class="sidebar-brand-collapsed-mark" aria-hidden="true">//</span>
             </div>
 
             <div class="sidebar-section">
@@ -426,6 +434,7 @@ if (!isset($_SESSION[$menuKey])) {
                 </ul>
             </div>
         </aside>
+        <div id="scpSidebarFlyout" class="sidebar-flyout" aria-hidden="true"></div>
 
         <!-- ZONA PRINCIPAL (contenido dinámico) -->
         <main class="main-shell">

@@ -467,6 +467,40 @@ body.superadmin .settings-card .card-header {
     font-size: 1.4rem;
 }
 
+.scp-brand-title {
+    margin-right: 2px;
+}
+
+.scp-menu-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .2s ease, border-color .2s ease, transform .15s ease;
+}
+
+.scp-menu-toggle i {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.scp-menu-toggle:hover,
+.scp-menu-toggle:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.36);
+}
+
+.scp-menu-toggle:active {
+    transform: translateY(1px);
+}
+
 .scp-notif-btn {
     border-radius: 999px;
     padding: 0.28rem 0.55rem;
@@ -647,6 +681,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     overflow-y: scroll;
     z-index: 1000;
     box-sizing: border-box;
+    transition: width .25s ease, min-width .25s ease, max-width .25s ease, transform .25s ease;
 }
 
 .sidebar-logo {
@@ -673,12 +708,23 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     object-position: center;
 }
 
+.sidebar-brand-collapsed-mark {
+    display: none;
+    color: #ef4444;
+    font-size: 1.45rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    user-select: none;
+}
+
 .sidebar-section-title {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: .08em;
     color: #4b5563;
     margin: 16px 0 8px;
+    transition: opacity .2s ease;
 }
 
 .sidebar-nav {
@@ -698,6 +744,8 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     font-size: 0.9rem;
     margin-bottom: 4px;
     transition: background .15s, color .15s, transform .1s;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar-link span.icon {
@@ -728,6 +776,8 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     font-size: 0.9rem;
     margin-bottom: 4px;
     transition: background .15s, color .15s, transform .1s;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar .sidebar-toggle span.icon {
@@ -799,6 +849,117 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     transform: rotate(90deg);
 }
 
+.sidebar-flyout {
+    position: fixed;
+    min-width: 220px;
+    max-width: 280px;
+    background: #0b1220;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 18px 45px rgba(2, 6, 23, 0.45);
+    z-index: 1300;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+}
+
+.sidebar-flyout.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.sidebar-flyout-title {
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    margin: 2px 4px 8px;
+}
+
+.sidebar-flyout-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-flyout-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #cbd5e1;
+    text-decoration: none;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.sidebar-flyout-link:hover {
+    color: #fff;
+    background: rgba(37, 99, 235, 0.25);
+}
+
+.sidebar-flyout-link.active {
+    color: #fff;
+    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+}
+
+body.sidebar-collapsed .sidebar-group > .sidebar-toggle {
+    position: relative;
+}
+
+body.sidebar-collapsed .sidebar {
+    width: 84px;
+    min-width: 84px;
+    max-width: 84px;
+    padding: 20px 10px;
+}
+
+body.sidebar-collapsed .sidebar-brand-logo {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-logo {
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+body.sidebar-collapsed .sidebar-brand-collapsed-mark {
+    display: inline-block;
+}
+
+body.sidebar-collapsed .sidebar-section-title {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+body.sidebar-collapsed .sidebar-link,
+body.sidebar-collapsed .sidebar .sidebar-toggle {
+    justify-content: center;
+    gap: 0;
+    font-size: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+body.sidebar-collapsed .sidebar-link span.icon,
+body.sidebar-collapsed .sidebar .sidebar-toggle span.icon {
+    width: 24px;
+}
+
+body.sidebar-collapsed .sidebar .sidebar-toggle .arrow {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-subnav {
+    display: none !important;
+}
+
 .sidebar-link.active {
     background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
     color: #f9fafb;
@@ -828,11 +989,45 @@ body.superadmin.superadmin-dark .sidebar-footer {
     flex: 1;
     padding: 24px 24px 40px;
     margin-left: 280px;
+    transition: margin-left .25s ease, width .25s ease;
 }
 
 .scp-footer-brand {
     margin-left: 280px;
     width: calc(100% - 280px) !important;
+    transition: margin-left .25s ease, width .25s ease;
+}
+
+body.sidebar-collapsed .main-shell {
+    margin-left: 84px;
+}
+
+body.sidebar-collapsed .scp-footer-brand {
+    margin-left: 84px;
+    width: calc(100% - 84px) !important;
+}
+
+@media (max-width: 991px) {
+    .sidebar-flyout {
+        display: none !important;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: 0 16px 40px rgba(2, 6, 23, 0.35);
+    }
+
+    body.sidebar-mobile-open .sidebar {
+        transform: translateX(0);
+    }
+
+    .main-shell,
+    .scp-footer-brand,
+    body.sidebar-collapsed .main-shell,
+    body.sidebar-collapsed .scp-footer-brand {
+        margin-left: 0;
+        width: 100% !important;
+    }
 }
 
 @media (max-width: 768px) {
