@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var sidebarFlyout = document.getElementById('scpSidebarFlyout');
     var mobileQuery = window.matchMedia('(max-width: 991px)');
     var SIDEBAR_STATE_KEY = 'scp_sidebar_collapsed_v1';
+    var SIDEBAR_STATE_COOKIE = 'scp_sidebar_collapsed';
+
+    function persistSidebarCookie(value) {
+        var maxAge = 60 * 60 * 24 * 365;
+        document.cookie = SIDEBAR_STATE_COOKIE + '=' + value + '; path=/; max-age=' + maxAge + '; samesite=lax';
+    }
 
     function isMobile() {
         return mobileQuery.matches;
@@ -27,7 +33,9 @@ document.addEventListener('DOMContentLoaded', function () {
             closeSidebarFlyout();
         }
         if (persist) {
-            localStorage.setItem(SIDEBAR_STATE_KEY, collapsed ? 'collapsed' : 'expanded');
+            var nextState = collapsed ? 'collapsed' : 'expanded';
+            localStorage.setItem(SIDEBAR_STATE_KEY, nextState);
+            persistSidebarCookie(nextState);
         }
         updateToggleAria();
     }
@@ -96,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     hydrateSidebarState();
+    body.classList.add('sidebar-ready');
 
     if (sidebarToggle && sidebar) {
         sidebarToggle.addEventListener('click', function () {

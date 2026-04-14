@@ -27,21 +27,9 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     }
 }
 
-$staffIdForMenu = (int)($_SESSION['staff_id'] ?? 0);
-if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
-    unset($_SESSION['admin_sidebar_menu_seen_' . $staffIdForMenu]);
-    unset($_SESSION['admin_settings_menu_seen_' . $staffIdForMenu]);
-    $_SESSION['sidebar_panel_mode'] = 'admin';
-}
-
-if (!isset($collapseSettingsMenu)) {
-    $collapseSettingsMenu = false;
-    $menuKey = 'admin_sidebar_menu_seen_' . $staffIdForMenu;
-    if (!isset($_SESSION[$menuKey])) {
-        $_SESSION[$menuKey] = 1;
-        $collapseSettingsMenu = true;
-    }
-}
+$sidebarCookieState = isset($_COOKIE['scp_sidebar_collapsed']) ? (string)$_COOKIE['scp_sidebar_collapsed'] : '';
+$sidebarDefaultCollapsed = ($sidebarCookieState === 'collapsed');
+$allowExpandedGroups = !$sidebarDefaultCollapsed;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -53,11 +41,16 @@ if (!isset($collapseSettingsMenu)) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/scp.css'); ?>">
 </head>
-<body style="padding-top: 64px;">
+<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>" style="padding-top: 64px;">
     <!-- NAVBAR ADMINISTRADOR -->
     <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
         <div class="container-fluid">
-            <span class="navbar-brand"><?php echo APP_NAME; ?> - Panel Administrador</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
+                <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
+                    <i class="bi bi-list"></i>
+                </button>
+            </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
                     <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
@@ -147,6 +140,7 @@ if (!isset($collapseSettingsMenu)) {
                     <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
                     <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
                 </div>
+                <span class="sidebar-brand-collapsed-mark" aria-hidden="true">//</span>
             </div>
 
             <div class="sidebar-section">
@@ -154,7 +148,7 @@ if (!isset($collapseSettingsMenu)) {
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
                         <?php $settingsTab = (string)($_GET['t'] ?? ''); $isSettingsRoute = ($currentRoute === 'settings'); ?>
-                        <?php $expandSettings = ($isSettingsRoute && empty($collapseSettingsMenu)); ?>
+                        <?php $expandSettings = ($isSettingsRoute && $allowExpandedGroups); ?>
                         <button type="button" class="sidebar-toggle <?php echo $expandSettings ? 'active expanded' : ''; ?>" data-subnav="settings-subnav" aria-controls="settings-subnav" aria-expanded="<?php echo $expandSettings ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-gear"></i></span>
                             Configuración
@@ -213,7 +207,7 @@ if (!isset($collapseSettingsMenu)) {
                         <?php
                         $emailTab = isset($emailTab) ? (string)$emailTab : '';
                         $isEmailRoute = ($currentRoute === 'emails');
-                        $expandEmail = ($isEmailRoute && empty($collapseSettingsMenu));
+                        $expandEmail = ($isEmailRoute && $allowExpandedGroups);
                         ?>
                         <button type="button" class="sidebar-toggle <?php echo $expandEmail ? 'active expanded' : ''; ?>" data-subnav="emails-subnav" aria-controls="emails-subnav" aria-expanded="<?php echo $expandEmail ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-envelope"></i></span>
@@ -248,7 +242,7 @@ if (!isset($collapseSettingsMenu)) {
                         </ul>
                         <?php
                         $isAgentsRoute = in_array($currentRoute, ['staff', 'roles', 'departments']);
-                        $expandAgents = ($isAgentsRoute && empty($collapseSettingsMenu));
+                        $expandAgents = ($isAgentsRoute && $allowExpandedGroups);
                         ?>
                         <button type="button" class="sidebar-toggle <?php echo $expandAgents ? 'active expanded' : ''; ?>" data-subnav="agents-subnav" aria-controls="agents-subnav" aria-expanded="<?php echo $expandAgents ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-people"></i></span>
@@ -285,6 +279,7 @@ if (!isset($collapseSettingsMenu)) {
                 </ul>
             </div>
         </aside>
+        <div id="scpSidebarFlyout" class="sidebar-flyout" aria-hidden="true"></div>
 
         <!-- CONTENIDO PRINCIPAL -->
         <main class="main-shell">

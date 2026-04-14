@@ -40,18 +40,10 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     }
 }
 
-// Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
-$collapseSidebarMenu = false;
-$menuKey = 'agent_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
-if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'agent') {
-    unset($_SESSION[$menuKey]);
-    $_SESSION['sidebar_panel_mode'] = 'agent';
-}
-if (!isset($_SESSION[$menuKey])) {
-    $_SESSION[$menuKey] = 1;
-    $collapseSidebarMenu = true;
-}
-$sidebarDefaultCollapsed = $collapseSidebarMenu;
+// Estado inicial del sidebar: persistido por cookie, sin auto-toggle al cargar páginas.
+$sidebarCookieState = isset($_COOKIE['scp_sidebar_collapsed']) ? (string)$_COOKIE['scp_sidebar_collapsed'] : '';
+$sidebarDefaultCollapsed = ($sidebarCookieState === 'collapsed');
+$allowExpandedGroups = !$sidebarDefaultCollapsed;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -276,7 +268,7 @@ $sidebarDefaultCollapsed = $collapseSidebarMenu;
                     <li class="sidebar-group">
                         <?php 
                         $isPanelRoute = in_array($currentRoute, ['dashboard','directory']);
-                        $expandPanel = ($isPanelRoute && empty($collapseSidebarMenu));
+                        $expandPanel = ($isPanelRoute && $allowExpandedGroups);
                         ?>
                         <button type="button"
                                 class="sidebar-link sidebar-toggle <?php echo $expandPanel ? 'active expanded' : ''; ?>"
@@ -333,7 +325,7 @@ $sidebarDefaultCollapsed = $collapseSidebarMenu;
                     <li class="sidebar-group">
                         <?php
                         $isUsersRoute = in_array($currentRoute, ['users', 'orgs']);
-                        $expandUsers = ($isUsersRoute && empty($collapseSidebarMenu));
+                        $expandUsers = ($isUsersRoute && $allowExpandedGroups);
                         ?>
                         <button type="button"
                                 class="sidebar-link sidebar-toggle <?php echo $expandUsers ? 'active expanded' : ''; ?>"

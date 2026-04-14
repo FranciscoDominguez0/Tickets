@@ -681,7 +681,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     overflow-y: scroll;
     z-index: 1000;
     box-sizing: border-box;
-    transition: width .25s ease, min-width .25s ease, max-width .25s ease, transform .25s ease;
+    transition: none;
 }
 
 .sidebar-logo {
@@ -724,7 +724,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     letter-spacing: .08em;
     color: #4b5563;
     margin: 16px 0 8px;
-    transition: opacity .2s ease;
+    transition: none;
 }
 
 .sidebar-nav {
@@ -750,14 +750,40 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
 
 .sidebar-link span.icon {
     display: inline-flex;
-    width: 20px;
+    width: 30px;
+    height: 30px;
     justify-content: center;
+    align-items: center;
+    border-radius: 9px;
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    flex: 0 0 30px;
+}
+
+.sidebar-link span.icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sidebar-link span.icon i {
+    font-size: 18px;
+    line-height: 1;
 }
 
 .sidebar-link:hover {
     background: #0b1120;
     color: #e5e7eb;
     transform: translateX(1px);
+}
+
+.sidebar-link:hover span.icon,
+.sidebar .sidebar-toggle:hover span.icon,
+.sidebar .sidebar-toggle.active span.icon,
+.sidebar-link.active span.icon {
+    background: rgba(59, 130, 246, 0.22);
+    border-color: rgba(59, 130, 246, 0.45);
+    box-shadow: 0 8px 14px rgba(37, 99, 235, 0.22);
 }
 
 .sidebar .sidebar-toggle {
@@ -782,8 +808,25 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
 
 .sidebar .sidebar-toggle span.icon {
     display: inline-flex;
-    width: 20px;
+    width: 30px;
+    height: 30px;
     justify-content: center;
+    align-items: center;
+    border-radius: 9px;
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    flex: 0 0 30px;
+}
+
+.sidebar .sidebar-toggle span.icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.sidebar .sidebar-toggle span.icon i {
+    font-size: 18px;
+    line-height: 1;
 }
 
 .sidebar .sidebar-toggle i {
@@ -949,7 +992,24 @@ body.sidebar-collapsed .sidebar .sidebar-toggle {
 
 body.sidebar-collapsed .sidebar-link span.icon,
 body.sidebar-collapsed .sidebar .sidebar-toggle span.icon {
-    width: 24px;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 11px;
+    background: rgba(148, 163, 184, 0.16);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+body.sidebar-collapsed .sidebar-link span.icon svg,
+body.sidebar-collapsed .sidebar .sidebar-toggle span.icon svg {
+    width: 21px;
+    height: 21px;
+}
+
+body.sidebar-collapsed .sidebar-link span.icon i,
+body.sidebar-collapsed .sidebar .sidebar-toggle span.icon i {
+    font-size: 21px;
+    line-height: 1;
 }
 
 body.sidebar-collapsed .sidebar .sidebar-toggle .arrow {
@@ -989,12 +1049,28 @@ body.superadmin.superadmin-dark .sidebar-footer {
     flex: 1;
     padding: 24px 24px 40px;
     margin-left: 280px;
-    transition: margin-left .25s ease, width .25s ease;
+    transition: none;
 }
 
 .scp-footer-brand {
     margin-left: 280px;
     width: calc(100% - 280px) !important;
+    transition: none;
+}
+
+body.sidebar-ready .sidebar {
+    transition: width .25s ease, min-width .25s ease, max-width .25s ease, transform .25s ease;
+}
+
+body.sidebar-ready .sidebar-section-title {
+    transition: opacity .2s ease;
+}
+
+body.sidebar-ready .main-shell {
+    transition: margin-left .25s ease, width .25s ease;
+}
+
+body.sidebar-ready .scp-footer-brand {
     transition: margin-left .25s ease, width .25s ease;
 }
 

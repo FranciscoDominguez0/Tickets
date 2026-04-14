@@ -12,17 +12,6 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'settings';
 
-$collapseSettingsMenu = false;
-$menuKey = 'admin_settings_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
-if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
-    unset($_SESSION[$menuKey]);
-    $_SESSION['sidebar_panel_mode'] = 'admin';
-}
-if (!isset($_SESSION[$menuKey])) {
-    $_SESSION[$menuKey] = 1;
-    $collapseSettingsMenu = true;
-}
-
 $requestedTarget = (string)($_GET['t'] ?? 'pages');
 if ($requestedTarget === 'system' && (string)($_SESSION['staff_role'] ?? '') !== 'superadmin') {
     header('Location: settings.php?t=pages');
