@@ -92,7 +92,7 @@ $level = trim((string)($_GET['level'] ?? ''));
 $date_from = trim((string)($_GET['from'] ?? ''));
 $date_to = trim((string)($_GET['to'] ?? ''));
 $page = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
-$pageSize = 25;
+$pageSize = 10;
 $offset = ($page - 1) * $pageSize;
 
 $where = [];

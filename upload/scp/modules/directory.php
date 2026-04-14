@@ -7,6 +7,8 @@ $search = trim($_GET['q'] ?? '');
 $deptFilter = isset($_GET['did']) && is_numeric($_GET['did']) ? (int)$_GET['did'] : 0;
 $sort = strtolower($_GET['sort'] ?? 'name');
 $order = strtoupper($_GET['order'] ?? 'ASC');
+$pageNum = max(1, (int)($_GET['p'] ?? 1));
+$perPage = 10;
 
 $eid = empresaId();
 
@@ -90,6 +92,46 @@ if ($deptFilter > 0) {
     $types .= 'i';
 }
 
+// Conteo total (para paginación) - mismo filtro pero sin JOIN/GROUP BY
+$countSql = "SELECT COUNT(*) AS total FROM staff s WHERE s.empresa_id = ?";
+$countParams = [$eid];
+$countTypes = 'i';
+if ($search) {
+    if (is_numeric($search)) {
+        $countSql .= " AND s.id = ?";
+        $countParams[] = (int)$search;
+        $countTypes .= 'i';
+    } elseif (strpos($search, '@') !== false && filter_var($search, FILTER_VALIDATE_EMAIL)) {
+        $countSql .= " AND s.email = ?";
+        $countParams[] = $search;
+        $countTypes .= 's';
+    } else {
+        $countSql .= " AND (s.firstname LIKE ? OR s.lastname LIKE ? OR s.email LIKE ? OR s.username LIKE ?)";
+        $searchTerm2 = '%' . $search . '%';
+        $countParams[] = $searchTerm2;
+        $countParams[] = $searchTerm2;
+        $countParams[] = $searchTerm2;
+        $countParams[] = $searchTerm2;
+        $countTypes .= 'ssss';
+    }
+}
+if ($deptFilter > 0) {
+    $countSql .= " AND s.dept_id = ?";
+    $countParams[] = $deptFilter;
+    $countTypes .= 'i';
+}
+$totalRows = 0;
+$stmtCount = $mysqli->prepare($countSql);
+if ($stmtCount) {
+    $stmtCount->bind_param($countTypes, ...$countParams);
+    if ($stmtCount->execute()) {
+        $totalRows = (int)($stmtCount->get_result()->fetch_assoc()['total'] ?? 0);
+    }
+}
+$totalPages = $totalRows > 0 ? (int)ceil($totalRows / $perPage) : 1;
+if ($pageNum > $totalPages) $pageNum = $totalPages;
+$offset = ($pageNum - 1) * $perPage;
+
 // Agrupar para contar tickets
 $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login, d.id, d.name";
 
@@ -106,6 +148,12 @@ $sortColumns = [
 
 $orderBy = $sortColumns[$sort] ?? 's.firstname, s.lastname';
 $sql .= " ORDER BY $orderBy $order";
+
+// Paginación
+$sql .= " LIMIT ? OFFSET ?";
+$params[] = $perPage;
+$params[] = $offset;
+$types .= 'ii';
 
 // Ejecutar query
 $stmt = $mysqli->prepare($sql);
@@ -188,7 +236,7 @@ $nextOrder = $order === 'ASC' ? 'DESC' : 'ASC';
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Directorio de Agentes</h2>
     <span class="text-muted">
-        <?php echo count($agents); ?> agente(s) encontrado(s)
+        <?php echo (int)$totalRows; ?> agente(s) encontrado(s)
     </span>
 </div>
 
@@ -318,6 +366,45 @@ $nextOrder = $order === 'ASC' ? 'DESC' : 'ASC';
                 <?php endforeach; ?>
             </tbody>
         </table>
+    </div>
+
+    <?php
+    $basePaging = $queryParams;
+    $basePaging['sort'] = $currentSort;
+    $basePaging['order'] = $currentOrder;
+
+    $prevUrl = '';
+    $nextUrl = '';
+    if ($pageNum > 1) {
+        $prevParams = $basePaging;
+        $prevParams['p'] = $pageNum - 1;
+        $prevUrl = 'directory.php?' . http_build_query($prevParams);
+    }
+    if ($pageNum < $totalPages) {
+        $nextParams = $basePaging;
+        $nextParams['p'] = $pageNum + 1;
+        $nextUrl = 'directory.php?' . http_build_query($nextParams);
+    }
+    $showStart = ($totalRows > 0) ? ($offset + 1) : 0;
+    $showEnd = min($offset + count($agents), $totalRows);
+    ?>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+        <div class="text-muted" style="font-size:.9rem;">
+            Mostrando <?php echo (int)$showStart; ?>-<?php echo (int)$showEnd; ?> de <?php echo (int)$totalRows; ?>
+            · Página <?php echo (int)$pageNum; ?> de <?php echo (int)$totalPages; ?>
+        </div>
+        <div class="d-flex gap-2">
+            <?php if ($prevUrl !== ''): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>"><i class="bi bi-chevron-left"></i> Anterior</a>
+            <?php else: ?>
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
+            <?php endif; ?>
+            <?php if ($nextUrl !== ''): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">Siguiente <i class="bi bi-chevron-right"></i></a>
+            <?php else: ?>
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
+            <?php endif; ?>
+        </div>
     </div>
 <?php endif; ?>
 

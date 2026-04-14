@@ -572,7 +572,7 @@ $search   = trim($_GET['q'] ?? '');
 $sort     = strtolower($_GET['sort'] ?? 'name');
 $order    = strtoupper($_GET['order'] ?? 'ASC');
 $pageNum  = max(1, (int)($_GET['p'] ?? 1));
-$perPage  = 15;
+$perPage  = 10;
 
 $validSorts = ['name', 'status', 'created', 'updated'];
 if (!in_array($sort, $validSorts)) $sort = 'name';
@@ -1297,15 +1297,24 @@ $statusBadges = [
                     <a href="#" data-select="none">Ninguno</a>
                 </div>
                 <div class="pagination-wrap">
-                    Página:
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <?php $qp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => $i]); ?>
-                        <?php if ($i === $pageNum): ?>
-                            <strong>[<?php echo $i; ?>]</strong>
-                        <?php else: ?>
-                            <a href="users.php?<?php echo http_build_query($qp); ?>"><?php echo $i; ?></a>
-                        <?php endif; ?>
-                    <?php endfor; ?>
+                    <?php
+                    $prevQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => max(1, $pageNum - 1)]);
+                    $nextQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => min($totalPages, $pageNum + 1)]);
+                    ?>
+                    <?php if ($pageNum > 1): ?>
+                        <a href="users.php?<?php echo http_build_query($prevQp); ?>">Anterior</a>
+                    <?php else: ?>
+                        <span class="text-muted">Anterior</span>
+                    <?php endif; ?>
+
+                    <span>Página <?php echo $pageNum; ?> de <?php echo $totalPages; ?></span>
+
+                    <?php if ($pageNum < $totalPages): ?>
+                        <a href="users.php?<?php echo http_build_query($nextQp); ?>">Siguiente</a>
+                    <?php else: ?>
+                        <span class="text-muted">Siguiente</span>
+                    <?php endif; ?>
+
                     <a href="users.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => $pageNum, 'a' => 'export'])); ?>">Exportar</a>
                 </div>
                 <div class="showing-text">

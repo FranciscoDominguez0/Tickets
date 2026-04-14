@@ -192,30 +192,10 @@ $filter = $_GET['filter'] ?? 'open';
 if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');
 
-// ─────────────────────────────────────────────────────────────
-//  LÍMITES POR FILTRO  ← cambia estos números cuando quieras
-//  0 = sin límite (carga todos)
-//
-//  Configuración recomendada para tu caso:
-//  Usuarios con pocos tickets (<20) que abren tickets frecuente.
-//  No necesitas paginar abiertos ni todos. Solo limita cerrados
-//  para no cargar historial viejo que nadie revisa.
-// ─────────────────────────────────────────────────────────────
-$limitConfig = [
-    'open'   => 0,   // Abiertos: sin límite — siempre deben verse todos
-    'closed' => 10,  // Cerrados: últimos 10 por defecto
-    'all'    => 10,  // Todos:    primeros 10 por defecto
-];
-
-// El usuario puede cambiar cuántos ve con ?limit=N (5, 10, 25, 50, 0=todos)
-$allowedLimits = [5, 10, 25, 50, 0];
-$perPage = (int)($limitConfig[$filter] ?? 10);
-if (isset($_GET['limit']) && in_array((int)$_GET['limit'], $allowedLimits, true)) {
-    $perPage = (int)$_GET['limit'];
-}
-$page    = isset($_GET['page']) && is_numeric($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$offset  = $perPage > 0 ? ($page - 1) * $perPage : 0;
-// ─────────────────────────────────────────────────────────────
+// Paginación fija: 10 tickets por página (mejor rendimiento)
+$perPage = 10;
+$page    = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$offset  = ($page - 1) * $perPage;
 
 $where = 't.user_id = ? AND t.empresa_id = ?';
 if ($filter === 'open') {
@@ -238,17 +218,15 @@ if ($q !== '') {
     $sql .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
 }
 $sql .= ' ORDER BY COALESCE(t.updated, t.created) DESC, t.created DESC';
-if ($perPage > 0) {
-    $sql .= ' LIMIT ' . $perPage . ' OFFSET ' . $offset;
-}
+$sql .= ' LIMIT ? OFFSET ?';
 
 $stmt = $mysqli->prepare($sql);
 $uid = (int) ($_SESSION['user_id'] ?? 0);
 if ($q !== '') {
     $like = '%' . $q . '%';
-    $stmt->bind_param('iiss', $uid, $eid, $like, $like);
+    $stmt->bind_param('iissii', $uid, $eid, $like, $like, $perPage, $offset);
 } else {
-    $stmt->bind_param('ii', $uid, $eid);
+    $stmt->bind_param('iiii', $uid, $eid, $perPage, $offset);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -258,20 +236,22 @@ while ($row = $result->fetch_assoc()) {
 
 // Total real para paginación
 $totalFiltered = 0;
-if ($perPage > 0) {
-    $sqlCount = 'SELECT COUNT(*) c FROM tickets t WHERE ' . $where;
-    if ($q !== '') $sqlCount .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
-    $stmtCount = $mysqli->prepare($sqlCount);
-    if ($q !== '') {
-        $like2 = '%' . $q . '%';
-        $stmtCount->bind_param('iiss', $uid, $eid, $like2, $like2);
-    } else {
-        $stmtCount->bind_param('ii', $uid, $eid);
-    }
-    $stmtCount->execute();
-    $totalFiltered = (int)($stmtCount->get_result()->fetch_assoc()['c'] ?? 0);
+$sqlCount = 'SELECT COUNT(*) c FROM tickets t WHERE ' . $where;
+if ($q !== '') $sqlCount .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
+$stmtCount = $mysqli->prepare($sqlCount);
+if ($q !== '') {
+    $like2 = '%' . $q . '%';
+    $stmtCount->bind_param('iiss', $uid, $eid, $like2, $like2);
+} else {
+    $stmtCount->bind_param('ii', $uid, $eid);
 }
-$totalPages = $perPage > 0 ? (int)ceil($totalFiltered / $perPage) : 1;
+$stmtCount->execute();
+$totalFiltered = (int)($stmtCount->get_result()->fetch_assoc()['c'] ?? 0);
+$totalPages = max(1, (int)ceil($totalFiltered / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+    $offset = ($page - 1) * $perPage;
+}
 
 $countOpen = 0;
 $countClosed = 0;
@@ -927,33 +907,15 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                         <!-- IZQUIERDA: selector de límite -->
                         <div>
-                            <?php if ($filter !== 'open'): ?>
-                            <div class="limit-selector">
-                                <span class="limit-label"><i class="bi bi-layout-three-columns"></i> Mostrar</span>
-                                <?php foreach ([5, 10, 25, 50] as $opt): ?>
-                                    <a href="tickets.php?filter=<?php echo urlencode($filter); ?><?php echo $q !== '' ? '&q='.urlencode($q) : ''; ?>&limit=<?php echo $opt; ?>"
-                                       class="limit-btn <?php echo $perPage === $opt ? 'active' : ''; ?>">
-                                        <?php echo $opt; ?>
-                                    </a>
-                                <?php endforeach; ?>
-                                <a href="tickets.php?filter=<?php echo urlencode($filter); ?><?php echo $q !== '' ? '&q='.urlencode($q) : ''; ?>&limit=0"
-                                   class="limit-btn <?php echo $perPage === 0 ? 'active' : ''; ?>">
-                                    Todos
-                                </a>
-                            </div>
-                            <?php else: ?>
-                                <span style="font-size:.78rem;font-weight:600;color:#94a3b8;">
-                                    <i class="bi bi-folder2-open me-1"></i> Mostrando todos los abiertos
-                                </span>
-                            <?php endif; ?>
+                            <span style="font-size:.78rem;font-weight:600;color:#94a3b8;">
+                                <i class="bi bi-layout-three-columns me-1"></i> Mostrando 10 por página
+                            </span>
                         </div>
 
                         <!-- DERECHA: buscador -->
                         <form method="get" class="search">
                             <input type="hidden" name="filter" value="<?php echo html($filter); ?>">
-                            <?php if ($perPage !== ($limitConfig[$filter] ?? 10)): ?>
-                                <input type="hidden" name="limit" value="<?php echo $perPage; ?>">
-                            <?php endif; ?>
+                            <input type="hidden" name="p" value="1">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
                                 <input type="text" class="form-control" name="q" value="<?php echo html($q); ?>" placeholder="Buscar por número o asunto…">
@@ -1027,17 +989,16 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <?php if ($perPage > 0 && $totalPages > 1): ?>
                         <div class="pagination-bar">
                             <?php
-                                $limitParam = ($perPage !== ($limitConfig[$filter] ?? 10)) ? '&limit=' . $perPage : '';
-                                $baseUrl = 'tickets.php?filter=' . urlencode($filter) . ($q !== '' ? '&q=' . urlencode($q) : '') . $limitParam;
+                                $baseUrl = 'tickets.php?filter=' . urlencode($filter) . ($q !== '' ? '&q=' . urlencode($q) : '');
                                 $showWindow = 2; // páginas a cada lado de la actual
                             ?>
                             <div class="pagination-info">
-                                Mostrando <?php echo min($offset + count($tickets), $totalFiltered); ?> de <?php echo $totalFiltered; ?> tickets
+                                Mostrando <?php echo ((int)$totalFiltered > 0) ? ((int)$offset + 1) : 0; ?>-<?php echo min((int)$offset + (int)count($tickets), (int)$totalFiltered); ?> de <?php echo (int)$totalFiltered; ?> tickets
                             </div>
                             <nav class="pagination-nav" aria-label="Paginación de tickets">
                                 <!-- Anterior -->
                                 <?php if ($page > 1): ?>
-                                    <a href="<?php echo $baseUrl . '&page=' . ($page - 1); ?>" class="pg-btn pg-arrow" title="Anterior">
+                                    <a href="<?php echo $baseUrl . '&p=' . ($page - 1); ?>" class="pg-btn pg-arrow" title="Anterior">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 <?php else: ?>
@@ -1052,13 +1013,13 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                     <?php if ($p === $page): ?>
                                         <span class="pg-btn pg-current"><?php echo $p; ?></span>
                                     <?php else: ?>
-                                        <a href="<?php echo $baseUrl . '&page=' . $p; ?>" class="pg-btn"><?php echo $p; ?></a>
+                                        <a href="<?php echo $baseUrl . '&p=' . $p; ?>" class="pg-btn"><?php echo $p; ?></a>
                                     <?php endif; ?>
                                 <?php endfor; ?>
 
                                 <!-- Siguiente -->
                                 <?php if ($page < $totalPages): ?>
-                                    <a href="<?php echo $baseUrl . '&page=' . ($page + 1); ?>" class="pg-btn pg-arrow" title="Siguiente">
+                                    <a href="<?php echo $baseUrl . '&p=' . ($page + 1); ?>" class="pg-btn pg-arrow" title="Siguiente">
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 <?php else: ?>

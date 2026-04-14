@@ -73,16 +73,16 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="btn-group" role="group">
-                    <a href="tasks.php" class="btn btn-outline-primary <?php echo !$status_filter ? 'active' : ''; ?>">Todas</a>
-                    <a href="tasks.php?status=pending" class="btn btn-outline-secondary <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pendientes</a>
-                    <a href="tasks.php?status=in_progress" class="btn btn-outline-primary <?php echo $status_filter === 'in_progress' ? 'active' : ''; ?>">En Progreso</a>
-                    <a href="tasks.php?status=completed" class="btn btn-outline-success <?php echo $status_filter === 'completed' ? 'active' : ''; ?>">Completadas</a>
+                    <a href="tasks.php<?php echo $assigned_filter !== '' ? ('?assigned=' . urlencode($assigned_filter)) : ''; ?>" class="btn btn-outline-primary <?php echo !$status_filter ? 'active' : ''; ?>">Todas</a>
+                    <a href="tasks.php?<?php echo http_build_query(array_filter(['status' => 'pending', 'assigned' => $assigned_filter])); ?>" class="btn btn-outline-secondary <?php echo $status_filter === 'pending' ? 'active' : ''; ?>">Pendientes</a>
+                    <a href="tasks.php?<?php echo http_build_query(array_filter(['status' => 'in_progress', 'assigned' => $assigned_filter])); ?>" class="btn btn-outline-primary <?php echo $status_filter === 'in_progress' ? 'active' : ''; ?>">En Progreso</a>
+                    <a href="tasks.php?<?php echo http_build_query(array_filter(['status' => 'completed', 'assigned' => $assigned_filter])); ?>" class="btn btn-outline-success <?php echo $status_filter === 'completed' ? 'active' : ''; ?>">Completadas</a>
                 </div>
             </div>
             <div class="col-md-6 text-end">
                 <div class="btn-group" role="group">
-                    <a href="tasks.php?assigned=me" class="btn btn-outline-secondary <?php echo $assigned_filter === 'me' ? 'active' : ''; ?>">Mis Tareas</a>
-                    <a href="tasks.php?assigned=unassigned" class="btn btn-outline-secondary <?php echo $assigned_filter === 'unassigned' ? 'active' : ''; ?>">Sin Asignar</a>
+                    <a href="tasks.php?<?php echo http_build_query(array_filter(['assigned' => 'me', 'status' => $status_filter])); ?>" class="btn btn-outline-secondary <?php echo $assigned_filter === 'me' ? 'active' : ''; ?>">Mis Tareas</a>
+                    <a href="tasks.php?<?php echo http_build_query(array_filter(['assigned' => 'unassigned', 'status' => $status_filter])); ?>" class="btn btn-outline-secondary <?php echo $assigned_filter === 'unassigned' ? 'active' : ''; ?>">Sin Asignar</a>
                     <a href="tasks.php?a=create" class="btn btn-primary">
                         <i class="bi bi-plus-lg"></i> Nueva Tarea
                     </a>
@@ -207,6 +207,47 @@
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <?php
+            $basePaging = array_filter([
+                'status' => $status_filter !== '' ? $status_filter : null,
+                'assigned' => $assigned_filter !== '' ? $assigned_filter : null,
+            ], function ($v) { return $v !== null && $v !== ''; });
+            $prevUrl = '';
+            $nextUrl = '';
+            if (($pageNum ?? 1) > 1) {
+                $prevParams = $basePaging;
+                $prevParams['p'] = $pageNum - 1;
+                $prevUrl = 'tasks.php?' . http_build_query($prevParams);
+            }
+            if (($pageNum ?? 1) < ($totalPages ?? 1)) {
+                $nextParams = $basePaging;
+                $nextParams['p'] = $pageNum + 1;
+                $nextUrl = 'tasks.php?' . http_build_query($nextParams);
+            }
+            $showStart = ((int)($totalRows ?? 0) > 0) ? (((int)($offset ?? 0)) + 1) : 0;
+            $showEnd = min(((int)($offset ?? 0) + (int)($perPage ?? 10)), (int)($totalRows ?? 0));
+            ?>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                <div class="text-muted" style="font-size:.9rem;">
+                    Página <?php echo (int)($pageNum ?? 1); ?> de <?php echo (int)($totalPages ?? 1); ?>
+                    <?php if (isset($totalRows)): ?>
+                        · Mostrando <?php echo $showStart; ?>-<?php echo $showEnd; ?> de <?php echo (int)($totalRows ?? 0); ?>
+                    <?php endif; ?>
+                </div>
+                <div class="d-flex gap-2">
+                    <?php if ($prevUrl !== ''): ?>
+                        <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>"><i class="bi bi-chevron-left"></i> Anterior</a>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
+                    <?php endif; ?>
+                    <?php if ($nextUrl !== ''): ?>
+                        <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">Siguiente <i class="bi bi-chevron-right"></i></a>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
+                    <?php endif; ?>
+                </div>
             </div>
         <?php endif; ?>
     </div>

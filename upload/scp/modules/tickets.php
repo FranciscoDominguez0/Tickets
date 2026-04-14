@@ -1812,6 +1812,40 @@ if ($query !== '') {
 }
 $whereSql = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
+// Paginación en bloques de 10
+$perPage = 10;
+$page = isset($_GET['p']) && is_numeric($_GET['p']) ? (int)$_GET['p'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $perPage;
+
+$totalTickets = 0;
+$sqlTotal = "SELECT COUNT(*) AS c
+        FROM tickets t
+        JOIN users u ON t.user_id = u.id
+        $whereSql";
+if ($types !== '') {
+    $stmtTotal = $mysqli->prepare($sqlTotal);
+    if ($stmtTotal) {
+        $bindTotal = [$types];
+        foreach ($params as $k => $v) { $bindTotal[] = &$params[$k]; }
+        call_user_func_array([$stmtTotal, 'bind_param'], $bindTotal);
+        if ($stmtTotal->execute()) {
+            $totalTickets = (int)($stmtTotal->get_result()->fetch_assoc()['c'] ?? 0);
+        }
+    }
+} else {
+    $rsTotal = $mysqli->query($sqlTotal);
+    if ($rsTotal) {
+        $totalTickets = (int)($rsTotal->fetch_assoc()['c'] ?? 0);
+    }
+}
+
+$totalPages = max(1, (int)ceil($totalTickets / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+    $offset = ($page - 1) * $perPage;
+}
+
 // Conteo del tema seleccionado dentro de la vista actual (sin LIMIT)
 if ($topicFilterAvailable && $selectedTopicId > 0) {
     $sqlCnt = "SELECT COUNT(*) AS c\n"
@@ -1848,13 +1882,16 @@ $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated
         JOIN priorities p ON t.priority_id = p.id
         $whereSql
         ORDER BY t.updated DESC
-        LIMIT 200";
+        LIMIT ?, ?";
 
 $tickets = [];
 if ($types !== '') {
     $stmt = $mysqli->prepare($sql);
-    $bind = [$types];
+    $typesWithPage = $types . 'ii';
+    $bind = [$typesWithPage];
     foreach ($params as $k => $v) { $bind[] = &$params[$k]; }
+    $bind[] = &$offset;
+    $bind[] = &$perPage;
     call_user_func_array([$stmt, 'bind_param'], $bind);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -2346,7 +2383,11 @@ if (!empty($ticketView)) {
                 </div>
 
                 <div class="text-muted" style="font-size: 0.85rem; font-weight: 700;">
-                    Máx 200 resultados
+                    <?php if ($totalTickets > 0): ?>
+                        Mostrando <?php echo (int)$offset + 1; ?>-<?php echo min((int)$offset + $perPage, $totalTickets); ?> de <?php echo $totalTickets; ?> resultados
+                    <?php else: ?>
+                        0 resultados
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -2433,7 +2474,7 @@ if (!empty($ticketView)) {
                             if (!empty($_SERVER['REQUEST_URI'])) {
                                 $u = (string)$_SERVER['REQUEST_URI'];
                                 $path = (string)parse_url($u, PHP_URL_PATH);
-                                $query = (string)parse_url($u, PHP_URL_QUERY);
+                                $reqQueryStr = (string)parse_url($u, PHP_URL_QUERY);
                                 $rel = ltrim($path, '/');
                                 $needle = 'upload/scp/';
                                 $pos = strpos($rel, $needle);
@@ -2442,7 +2483,7 @@ if (!empty($ticketView)) {
                                 }
                                 $rel = trim($rel);
                                 if ($rel !== '') {
-                                    $backRel = $rel . ($query !== '' ? ('?' . $query) : '');
+                                    $backRel = $rel . ($reqQueryStr !== '' ? ('?' . $reqQueryStr) : '');
                                 }
                             }
                             $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
@@ -2483,6 +2524,50 @@ if (!empty($ticketView)) {
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+
+    <?php
+    $basePageParams = ['filter' => $filterKey];
+    if ($query !== '') $basePageParams['q'] = $query;
+    if ($topicFilterAvailable && $selectedTopicId > 0) $basePageParams['topic_id'] = (int)$selectedTopicId;
+    $prevUrl = '';
+    $nextUrl = '';
+    if ($page > 1) {
+        $prevParams = $basePageParams;
+        $prevParams['p'] = $page - 1;
+        $prevUrl = 'tickets.php?' . http_build_query($prevParams);
+    }
+    if ($page < $totalPages) {
+        $nextParams = $basePageParams;
+        $nextParams['p'] = $page + 1;
+        $nextUrl = 'tickets.php?' . http_build_query($nextParams);
+    }
+    ?>
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+        <div class="text-muted" style="font-size:0.9rem;">
+            Página <?php echo $page; ?> de <?php echo $totalPages; ?>
+        </div>
+        <div class="d-flex gap-2">
+            <?php if ($prevUrl !== ''): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
+            <?php else: ?>
+                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </button>
+            <?php endif; ?>
+
+            <?php if ($nextUrl !== ''): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </a>
+            <?php else: ?>
+                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </button>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div class="ticket-hover-preview d-none" id="ticketHoverPreview" role="dialog" aria-hidden="true">

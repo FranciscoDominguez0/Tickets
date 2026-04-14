@@ -459,6 +459,8 @@ if ($task) {
     // Obtener tareas con filtros
     $status_filter = $_GET['status'] ?? '';
     $assigned_filter = $_GET['assigned'] ?? '';
+    $pageNum = max(1, (int)($_GET['p'] ?? 1));
+    $perPage = 10;
     
     $where = [];
     $params = [];
@@ -483,6 +485,22 @@ if ($task) {
     $types .= 'i';
     
     $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    // Conteo total para paginación
+    $totalRows = 0;
+    $countSql = "SELECT COUNT(*) AS total FROM tasks t $where_clause";
+    $stmtCount = $mysqli->prepare($countSql);
+    if ($stmtCount) {
+        if ($params) {
+            $stmtCount->bind_param($types, ...$params);
+        }
+        if ($stmtCount->execute()) {
+            $totalRows = (int)($stmtCount->get_result()->fetch_assoc()['total'] ?? 0);
+        }
+    }
+    $totalPages = $totalRows > 0 ? (int)ceil($totalRows / $perPage) : 1;
+    if ($pageNum > $totalPages) $pageNum = $totalPages;
+    $offset = ($pageNum - 1) * $perPage;
     
     $stmt = $mysqli->prepare(
         ($tasksHasDept
@@ -495,7 +513,8 @@ if ($task) {
              LEFT JOIN staff s2 ON t.created_by = s2.id
              LEFT JOIN departments d ON t.dept_id = d.id
              $where_clause
-             ORDER BY t.created DESC"
+             ORDER BY t.created DESC
+             LIMIT ? OFFSET ?"
             : "SELECT t.*, 
              CONCAT(s1.firstname, ' ', s1.lastname) AS assigned_name,
              CONCAT(s2.firstname, ' ', s2.lastname) AS created_name
@@ -503,12 +522,17 @@ if ($task) {
              LEFT JOIN staff s1 ON t.assigned_to = s1.id
              LEFT JOIN staff s2 ON t.created_by = s2.id
              $where_clause
-             ORDER BY t.created DESC"
+             ORDER BY t.created DESC
+             LIMIT ? OFFSET ?"
         )
     );
     
-    if ($params) {
-        $stmt->bind_param($types, ...$params);
+    $queryParams = $params;
+    $queryTypes = $types . 'ii';
+    $queryParams[] = $perPage;
+    $queryParams[] = $offset;
+    if ($queryParams) {
+        $stmt->bind_param($queryTypes, ...$queryParams);
     }
     
     $stmt->execute();
