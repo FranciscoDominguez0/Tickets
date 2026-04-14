@@ -12,10 +12,41 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'helptopics';
 
+$eid = empresaId();
+$helpTopicsHasEmpresaId = false;
+$departmentsHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'empresa_id'");
+        $helpTopicsHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $helpTopicsHasEmpresaId = false;
+    }
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
+        $departmentsHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $departmentsHasEmpresaId = false;
+    }
+}
+
+$roleName = getCurrentStaffRoleName();
+if (!in_array($roleName, ['admin', 'supervisor'], true)) {
+    http_response_code(403);
+    $_SESSION['flash_error'] = 'No tienes permiso para administrar temas de ayuda.';
+    header('Location: index.php');
+    exit;
+}
+
 // Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
 $collapseSidebarMenu = false;
-if (!isset($_SESSION['agent_sidebar_menu_seen'])) {
-    $_SESSION['agent_sidebar_menu_seen'] = 1;
+$menuKey = 'agent_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'agent') {
+    unset($_SESSION[$menuKey]);
+    $_SESSION['sidebar_panel_mode'] = 'agent';
+}
+if (!isset($_SESSION[$menuKey])) {
+    $_SESSION[$menuKey] = 1;
     $collapseSidebarMenu = true;
 }
 
@@ -34,23 +65,49 @@ if (!empty($_SESSION['flash_error'])) {
 
 // Procesamiento de acciones POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRF()) {
+        $_SESSION['flash_error'] = 'Token CSRF inválido.';
+        header('Location: helptopics.php');
+        exit;
+    }
     $action = $_POST['do'] ?? '';
-    
+
     switch ($action) {
         case 'create':
             $name = trim($_POST['topic'] ?? '');
             $description = trim($_POST['description'] ?? '');
             $deptId = !empty($_POST['dept_id']) ? (int)$_POST['dept_id'] : null;
             $isActive = isset($_POST['isactive']) ? 1 : 0;
-            
+
             if (empty($name)) {
                 $error = 'El nombre del tema es requerido';
             } else {
                 global $mysqli;
-                $sql = "INSERT INTO help_topics (name, description, dept_id, is_active, created) 
-                        VALUES (?, ?, ?, ?, NOW())";
+                if ($departmentsHasEmpresaId && $deptId) {
+                    $stmtDept = $mysqli->prepare('SELECT id FROM departments WHERE id = ? AND empresa_id = ? LIMIT 1');
+                    if ($stmtDept) {
+                        $stmtDept->bind_param('ii', $deptId, $eid);
+                        $stmtDept->execute();
+                        $okDept = (bool)$stmtDept->get_result()->fetch_assoc();
+                        if (!$okDept) {
+                            $deptId = null;
+                        }
+                    }
+                }
+
+                if ($helpTopicsHasEmpresaId) {
+                    $sql = "INSERT INTO help_topics (empresa_id, name, description, dept_id, is_active, created) 
+                            VALUES (?, ?, ?, ?, ?, NOW())";
+                } else {
+                    $sql = "INSERT INTO help_topics (name, description, dept_id, is_active, created) 
+                            VALUES (?, ?, ?, ?, NOW())";
+                }
                 $stmt = $mysqli->prepare($sql);
-                $stmt->bind_param('ssii', $name, $description, $deptId, $isActive);
+                if ($helpTopicsHasEmpresaId) {
+                    $stmt->bind_param('issii', $eid, $name, $description, $deptId, $isActive);
+                } else {
+                    $stmt->bind_param('ssii', $name, $description, $deptId, $isActive);
+                }
                 if ($stmt->execute()) {
                     $msg = 'Tema de ayuda creado exitosamente';
                 } else {
@@ -58,23 +115,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'update':
             $topicId = (int)($_POST['id'] ?? 0);
             $name = trim($_POST['topic'] ?? '');
             $description = trim($_POST['description'] ?? '');
             $deptId = !empty($_POST['dept_id']) ? (int)$_POST['dept_id'] : null;
             $isActive = isset($_POST['isactive']) ? 1 : 0;
-            
+
             if (empty($name)) {
                 $error = 'El nombre del tema es requerido';
             } elseif ($topicId <= 0) {
                 $error = 'ID de tema inválido';
             } else {
                 global $mysqli;
+                if ($departmentsHasEmpresaId && $deptId) {
+                    $stmtDept = $mysqli->prepare('SELECT id FROM departments WHERE id = ? AND empresa_id = ? LIMIT 1');
+                    if ($stmtDept) {
+                        $stmtDept->bind_param('ii', $deptId, $eid);
+                        $stmtDept->execute();
+                        $okDept = (bool)$stmtDept->get_result()->fetch_assoc();
+                        if (!$okDept) {
+                            $deptId = null;
+                        }
+                    }
+                }
+
                 $sql = "UPDATE help_topics SET name = ?, description = ?, dept_id = ?, is_active = ? WHERE id = ?";
+                if ($helpTopicsHasEmpresaId) {
+                    $sql .= ' AND empresa_id = ?';
+                }
                 $stmt = $mysqli->prepare($sql);
-                $stmt->bind_param('ssiii', $name, $description, $deptId, $isActive, $topicId);
+                if ($helpTopicsHasEmpresaId) {
+                    $stmt->bind_param('ssiiii', $name, $description, $deptId, $isActive, $topicId, $eid);
+                } else {
+                    $stmt->bind_param('ssiii', $name, $description, $deptId, $isActive, $topicId);
+                }
                 if ($stmt->execute()) {
                     $msg = 'Tema de ayuda actualizado exitosamente';
                 } else {
@@ -82,74 +158,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'mass_process':
             $ids = $_POST['ids'] ?? [];
             $massAction = $_POST['a'] ?? '';
-            
+
             if (empty($ids) || !is_array($ids)) {
                 $error = 'Debe seleccionar al menos un tema';
             } else {
                 $ids = array_map('intval', $ids);
+                $idsCount = count($ids);
                 $placeholders = str_repeat('?,', count($ids) - 1) . '?';
                 $types = str_repeat('i', count($ids));
-                
+
                 global $mysqli;
                 switch ($massAction) {
                     case 'enable':
                         $sql = "UPDATE help_topics SET is_active = 1 WHERE id IN ($placeholders)";
+                        $typesBind = $types;
+                        $idsBind = $ids;
+                        if ($helpTopicsHasEmpresaId) {
+                            $sql .= ' AND empresa_id = ?';
+                            $typesBind .= 'i';
+                            $idsBind[] = (int)$eid;
+                        }
                         $stmt = $mysqli->prepare($sql);
-                        $stmt->bind_param($types, ...$ids);
+                        $stmt->bind_param($typesBind, ...$idsBind);
                         if ($stmt->execute()) {
-                            $msg = count($ids) . ' temas habilitados exitosamente';
+                            $msg = $idsCount . ' temas habilitados exitosamente';
                         } else {
                             $error = 'Error al habilitar temas';
                         }
                         break;
-                        
+
                     case 'disable':
                         $sql = "UPDATE help_topics SET is_active = 0 WHERE id IN ($placeholders)";
+                        $typesBind = $types;
+                        $idsBind = $ids;
+                        if ($helpTopicsHasEmpresaId) {
+                            $sql .= ' AND empresa_id = ?';
+                            $typesBind .= 'i';
+                            $idsBind[] = (int)$eid;
+                        }
                         $stmt = $mysqli->prepare($sql);
-                        $stmt->bind_param($types, ...$ids);
+                        $stmt->bind_param($typesBind, ...$idsBind);
                         if ($stmt->execute()) {
-                            $msg = count($ids) . ' temas deshabilitados exitosamente';
+                            $msg = $idsCount . ' temas deshabilitados exitosamente';
                         } else {
                             $error = 'Error al deshabilitar temas';
                         }
                         break;
-                        
+
                     case 'delete':
                         // Verificar que no se eliminen todos los temas activos
                         $activeCount = 0;
                         $countSql = "SELECT COUNT(*) as count FROM help_topics WHERE is_active = 1";
+                        if ($helpTopicsHasEmpresaId) {
+                            $countSql .= ' AND empresa_id = ' . (int)$eid;
+                        }
                         $countResult = $mysqli->query($countSql);
                         if ($countResult) {
                             $activeCount = (int)$countResult->fetch_assoc()['count'];
                         }
-                        
+
                         $selectedActiveCount = 0;
                         $selectedActiveSql = "SELECT COUNT(*) as count FROM help_topics WHERE id IN ($placeholders) AND is_active = 1";
+                        $typesSel = $types;
+                        $idsSel = $ids;
+                        if ($helpTopicsHasEmpresaId) {
+                            $selectedActiveSql .= ' AND empresa_id = ?';
+                            $typesSel .= 'i';
+                            $idsSel[] = (int)$eid;
+                        }
                         $selectedResult = $mysqli->prepare($selectedActiveSql);
-                        $selectedResult->bind_param($types, ...$ids);
+                        $selectedResult->bind_param($typesSel, ...$idsSel);
                         $selectedResult->execute();
                         if ($selectedResult) {
                             $selectedActiveCount = (int)$selectedResult->get_result()->fetch_assoc()['count'];
                         }
-                        
+
                         if ($selectedActiveCount >= $activeCount) {
                             $error = 'Debe mantener al menos un tema activo';
                         } else {
                             $sql = "DELETE FROM help_topics WHERE id IN ($placeholders)";
+                            $typesDel = $types;
+                            $idsDel = $ids;
+                            if ($helpTopicsHasEmpresaId) {
+                                $sql .= ' AND empresa_id = ?';
+                                $typesDel .= 'i';
+                                $idsDel[] = (int)$eid;
+                            }
                             $stmt = $mysqli->prepare($sql);
-                            $stmt->bind_param($types, ...$ids);
+                            $stmt->bind_param($typesDel, ...$idsDel);
                             if ($stmt->execute()) {
-                                $msg = count($ids) . ' temas eliminados exitosamente';
+                                $msg = $idsCount . ' temas eliminados exitosamente';
                             } else {
                                 $error = 'Error al eliminar temas';
                             }
                         }
                         break;
-                        
+
                     default:
                         $error = 'Acción no reconocida';
                 }
@@ -173,8 +281,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 global $mysqli;
 $sql = "SELECT ht.*, d.name as dept_name 
           FROM help_topics ht 
-          LEFT JOIN departments d ON ht.dept_id = d.id 
-          ORDER BY ht.is_active DESC, ht.name ASC";
+          LEFT JOIN departments d ON ht.dept_id = d.id";
+if ($departmentsHasEmpresaId) {
+    $sql .= ' AND d.empresa_id = ' . (int)$eid;
+}
+if ($helpTopicsHasEmpresaId) {
+    $sql .= ' WHERE ht.empresa_id = ' . (int)$eid;
+}
+$sql .= ' ORDER BY ht.is_active DESC, ht.name ASC';
 $result = $mysqli->query($sql);
 $topics = [];
 if ($result) {
@@ -184,7 +298,12 @@ if ($result) {
 }
 
 // Obtener departamentos
-$deptResult = $mysqli->query("SELECT * FROM departments ORDER BY name");
+$deptSql = 'SELECT * FROM departments';
+if ($departmentsHasEmpresaId) {
+    $deptSql .= ' WHERE empresa_id = ' . (int)$eid;
+}
+$deptSql .= ' ORDER BY name';
+$deptResult = $mysqli->query($deptSql);
 $departments = [];
 if ($deptResult) {
     while ($row = $deptResult->fetch_assoc()) {
@@ -196,8 +315,16 @@ if ($deptResult) {
 $editingTopic = null;
 if (isset($_GET['id'])) {
     $topicId = (int)$_GET['id'];
-    $stmt = $mysqli->prepare("SELECT * FROM help_topics WHERE id = ?");
-    $stmt->bind_param('i', $topicId);
+    $sqlEdit = 'SELECT * FROM help_topics WHERE id = ?';
+    if ($helpTopicsHasEmpresaId) {
+        $sqlEdit .= ' AND empresa_id = ?';
+    }
+    $stmt = $mysqli->prepare($sqlEdit);
+    if ($helpTopicsHasEmpresaId) {
+        $stmt->bind_param('ii', $topicId, $eid);
+    } else {
+        $stmt->bind_param('i', $topicId);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
     $editingTopic = $result ? $result->fetch_assoc() : null;
@@ -256,6 +383,7 @@ ob_start();
                 <!-- Formulario de acciones masivas -->
                 <form method="post" action="helptopics.php" id="massActionForm">
                     <input type="hidden" name="do" value="mass_process">
+                    <?php csrfField(); ?>
                     
                     <!-- Tabla de temas -->
                     <div class="table-responsive">
