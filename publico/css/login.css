@@ -957,16 +957,27 @@ body::after {
 }
 
 @media (max-width: 768px) {
-    .login-form-title {
-        font-size: 24px;
-    }
-
-    .login-panel-left {
-        padding: 28px 20px;
+    .login-panel {
+        grid-template-columns: 1fr;
     }
 
     .login-panel-right {
-        padding: 24px 20px;
+        display: none;
+    }
+
+    .login-panel-left {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 28px 20px;
+    }
+
+    .login-form {
+        width: 100%;
+    }
+
+    .login-form-title {
+        font-size: 24px;
     }
 
     .login-welcome-title {

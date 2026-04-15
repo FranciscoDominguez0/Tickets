@@ -852,6 +852,39 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         .section-title h4 { margin: 0; font-weight: 800; color: #0f172a; }
         .help { color: #64748b; font-size: 0.95rem; }
 
+        .contact-fields-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 1rem;
+        }
+        .contact-fields-row .contact-field {
+            flex: 1 1 100%;
+            min-width: 0;
+        }
+        .contact-fields-row .anydesk-field {
+            display: none;
+        }
+        .contact-fields-row.has-anydesk .contact-field {
+            flex: 1 1 calc(50% - 8px);
+        }
+        .contact-fields-row.has-anydesk .anydesk-field {
+            display: block;
+        }
+
+        @media (max-width: 767.98px) {
+            .contact-fields-row,
+            .contact-fields-row.has-anydesk {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .contact-fields-row .contact-field,
+            .contact-fields-row.has-anydesk .contact-field {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+        }
+
         .attach-zone {
             border: 2px dashed #cbd5e1;
             background: #f8fafc;
@@ -1058,13 +1091,15 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 </div>
                 <?php endif; ?>
 
-                <div id="network-extra-fields" class="mb-3" style="display: none;">
-                    <label for="anydesk" class="form-label">Anydesk</label>
-                    <input type="text" class="form-control" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
-                </div>
-                <div class="mb-3">
-                    <label for="telefono_display" class="form-label">Teléfono registrado</label>
-                    <input type="text" class="form-control" id="telefono_display" value="<?php echo html($userPhone !== '' ? $userPhone : 'No registrado'); ?>" readonly disabled>
+                <div id="contact-fields-row" class="contact-fields-row">
+                    <div class="contact-field telefono-field">
+                        <label for="telefono_display" class="form-label">Teléfono registrado</label>
+                        <input type="text" class="form-control" id="telefono_display" value="<?php echo html($userPhone !== '' ? $userPhone : 'No registrado'); ?>" readonly disabled>
+                    </div>
+                    <div id="network-extra-fields" class="contact-field anydesk-field">
+                        <label for="anydesk" class="form-label">Anydesk</label>
+                        <input type="text" class="form-control" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -1280,6 +1315,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             var topicSelect = document.getElementById('topic_id');
             var editor = document.getElementById('body');
             var extraFieldsWrap = document.getElementById('network-extra-fields');
+            var contactFieldsRow = document.getElementById('contact-fields-row');
             var anydeskInput = document.getElementById('anydesk');
             var hasUserPhone = <?php echo $hasUserPhone ? 'true' : 'false'; ?>;
 
@@ -1304,7 +1340,10 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             var toggleNetworkFields = function () {
                 var shouldShow = isNetworkTopicSelected();
                 if (!extraFieldsWrap) return shouldShow;
-                extraFieldsWrap.style.display = shouldShow ? '' : 'none';
+                if (contactFieldsRow) {
+                    if (shouldShow) contactFieldsRow.classList.add('has-anydesk');
+                    else contactFieldsRow.classList.remove('has-anydesk');
+                }
                 if (anydeskInput) anydeskInput.required = shouldShow;
                 if (anydeskInput) anydeskInput.disabled = !shouldShow;
                 return shouldShow;
