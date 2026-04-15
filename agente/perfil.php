@@ -15,10 +15,35 @@ $error = '';
 $success = '';
 
 // Obtener datos del agente
-$stmt = $mysqli->prepare(
-    'SELECT id, username, email, firstname, lastname, dept_id, role, is_active
-     FROM staff WHERE id = ?'
-);
+// Check if staff_departments table exists
+$hasStaffDepartmentsTable = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffDepartmentsTable = false;
+    }
+}
+
+if ($hasStaffDepartmentsTable) {
+    // New model: get departments from staff_departments
+    $stmt = $mysqli->prepare(
+        'SELECT s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active,
+                GROUP_CONCAT(DISTINCT d.name ORDER BY d.name SEPARATOR ", ") AS dept_name
+         FROM staff s
+         LEFT JOIN staff_departments sd ON sd.staff_id = s.id
+         LEFT JOIN departments d ON d.id = sd.dept_id
+         WHERE s.id = ?
+         GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active'
+    );
+} else {
+    // Legacy model
+    $stmt = $mysqli->prepare(
+        'SELECT id, username, email, firstname, lastname, dept_id, role, is_active
+         FROM staff WHERE id = ?'
+    );
+}
 $stmt->bind_param('i', $staff_id);
 $stmt->execute();
 $staff = $stmt->get_result()->fetch_assoc();

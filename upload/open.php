@@ -188,12 +188,37 @@ if ($_POST) {
                     $v = (int)($stmtDef->get_result()->fetch_assoc()['default_staff_id'] ?? 0);
                     if ($v > 0) {
                         $allowed = false;
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND empresa_id = ? AND is_active = 1 LIMIT 1');
-                        if ($stmtSd) {
-                            $stmtSd->bind_param('iii', $generalDeptId, $v, $eid);
-                            if ($stmtSd->execute()) {
-                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                                $allowed = ($sdept === $dept_id);
+                        
+                        // Check if staff_departments table exists
+                        $hasStaffDepartmentsTableOpen = false;
+                        if (isset($mysqli) && $mysqli) {
+                            try {
+                                $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+                                $hasStaffDepartmentsTableOpen = ($rt && $rt->num_rows > 0);
+                            } catch (Throwable $e) {
+                                $hasStaffDepartmentsTableOpen = false;
+                            }
+                        }
+                        
+                        if ($hasStaffDepartmentsTableOpen) {
+                            // New model: check staff_departments
+                            $stmtSd = $mysqli->prepare('SELECT 1 FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.id = ? AND s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? LIMIT 1');
+                            if ($stmtSd) {
+                                $stmtSd->bind_param('iii', $v, $eid, $dept_id);
+                                if ($stmtSd->execute()) {
+                                    $row = $stmtSd->get_result()->fetch_assoc();
+                                    $allowed = ($row !== null);
+                                }
+                            }
+                        } else {
+                            // Legacy model
+                            $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND empresa_id = ? AND is_active = 1 LIMIT 1');
+                            if ($stmtSd) {
+                                $stmtSd->bind_param('iii', $generalDeptId, $v, $eid);
+                                if ($stmtSd->execute()) {
+                                    $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                    $allowed = ($sdept === $dept_id);
+                                }
                             }
                         }
                         if ($allowed) {

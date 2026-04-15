@@ -213,7 +213,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'delete') {
-            $stmtCntSql = "SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)";
+            // Check if staff_departments table exists
+            $hasStaffDepartmentsTableDel = false;
+            if (isset($mysqli) && $mysqli) {
+                try {
+                    $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+                    $hasStaffDepartmentsTableDel = ($rt && $rt->num_rows > 0);
+                } catch (Throwable $e) {
+                    $hasStaffDepartmentsTableDel = false;
+                }
+            }
+            
+            if ($hasStaffDepartmentsTableDel) {
+                // New model: check staff_departments
+                $stmtCntSql = "SELECT COUNT(DISTINCT sd.staff_id) c FROM staff_departments sd WHERE sd.dept_id IN ($placeholders)";
+            } else {
+                // Legacy model
+                $stmtCntSql = "SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)";
+            }
             if ($staffHasEmpresa) $stmtCntSql .= " AND empresa_id = ?";
             $stmtCnt = $mysqli->prepare($stmtCntSql);
             if ($stmtCnt) {
@@ -338,9 +355,30 @@ if ($emailAccHasEmpresa) {
 $sql .= "        GROUP BY dept_id
     ) eam ON eam.dept_id = d.id
     LEFT JOIN email_accounts ea ON ea.id = eam.email_id
-    LEFT JOIN staff s ON s.dept_id = d.id";
-if ($staffHasEmpresa) {
-    $sql .= " AND s.empresa_id = " . (int)$eid;
+";
+
+// Check if staff_departments table exists for proper JOIN
+$hasStaffDepartmentsTableDept = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+        $hasStaffDepartmentsTableDept = ($rt && $rt->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffDepartmentsTableDept = false;
+    }
+}
+
+if ($hasStaffDepartmentsTableDept) {
+    $sql .= "    LEFT JOIN staff_departments sd ON sd.dept_id = d.id\n";
+    $sql .= "    LEFT JOIN staff s ON s.id = sd.staff_id";
+    if ($staffHasEmpresa) {
+        $sql .= " AND s.empresa_id = " . (int)$eid;
+    }
+} else {
+    $sql .= "    LEFT JOIN staff s ON s.dept_id = d.id";
+    if ($staffHasEmpresa) {
+        $sql .= " AND s.empresa_id = " . (int)$eid;
+    }
 }
 $sql .= "
     LEFT JOIN tickets t ON t.dept_id = d.id";

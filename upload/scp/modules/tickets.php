@@ -77,6 +77,7 @@ $staffBelongsToDept = function (int $staffId, int $deptId, int $generalDeptId) u
     if ($staffId <= 0) return false;
     if (!isset($mysqli) || !$mysqli) return false;
 
+    // Use staff_departments table (new multi-department model)
     if ($hasStaffDepartmentsTable) {
         $stmt = $mysqli->prepare('SELECT 1 FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.empresa_id = ? AND s.id = ? AND s.is_active = 1 AND sd.dept_id = ? LIMIT 1');
         if ($stmt) {
@@ -85,9 +86,10 @@ $staffBelongsToDept = function (int $staffId, int $deptId, int $generalDeptId) u
             $row = $stmt->get_result()->fetch_assoc();
             if ($row) return true;
         }
-        // Fallback por compatibilidad mientras exista staff.dept_id
+        return false;
     }
 
+    // Legacy fallback: staff.dept_id (temporary compatibility)
     $stmt = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
     if (!$stmt) return false;
     $stmt->bind_param('iii', $generalDeptId, $eid, $staffId);
@@ -711,9 +713,24 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $r = $mysqli->query("SELECT id, name FROM priorities ORDER BY level");
     if ($r) while ($row = $r->fetch_assoc()) $open_priorities[] = $row;
     $open_staff = [];
-    $stmtStaff = $mysqli->prepare('SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname');
+    // Use staff_departments if available, otherwise fallback to legacy dept_id
+    if ($hasStaffDepartmentsTable) {
+        $stmtStaff = $mysqli->prepare(
+            'SELECT DISTINCT s.id, s.firstname, s.lastname 
+             FROM staff s 
+             LEFT JOIN staff_departments sd ON sd.staff_id = s.id 
+             WHERE s.empresa_id = ? AND s.is_active = 1 
+             ORDER BY s.firstname, s.lastname'
+        );
+    } else {
+        $stmtStaff = $mysqli->prepare('SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname');
+    }
     if ($stmtStaff) {
-        $stmtStaff->bind_param('ii', $generalDeptId, $eid);
+        if ($hasStaffDepartmentsTable) {
+            $stmtStaff->bind_param('i', $eid);
+        } else {
+            $stmtStaff->bind_param('ii', $generalDeptId, $eid);
+        }
         if ($stmtStaff->execute()) {
             $r = $stmtStaff->get_result();
             if ($r) while ($row = $r->fetch_assoc()) $open_staff[] = $row;
@@ -2247,6 +2264,7 @@ if (!empty($ticketView)) {
 }
 
 if ($hasStaffDepartmentsTable && $ticketDeptForStaffOptions > 0) {
+    // New model: use staff_departments table for multi-department support
     $staffSql = "SELECT DISTINCT s.id, s.firstname, s.lastname\n"
         . "FROM staff s\n"
         . "JOIN staff_departments sd ON sd.staff_id = s.id\n"
@@ -2281,8 +2299,8 @@ $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
 if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
 
-// Nota: en modo multi-departamento, el filtrado ya se aplica en SQL (JOIN staff_departments)
-// En modo legacy, se mantiene el comportamiento existente con dept_id.
+// Nota: el filtrado por departamento se aplica en SQL mediante JOIN staff_departments
+// En modo legacy, se mantiene el filtrado PHP con dept_id.
 if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
     $tdept = (int) ($ticketView['dept_id'] ?? 0);
     if ($tdept > 0) {

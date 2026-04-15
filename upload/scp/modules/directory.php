@@ -30,26 +30,61 @@ if (!in_array($order, $validOrders)) {
 }
 
 // Construir query base
-$sql = "
-    SELECT 
-        s.id,
-        s.username,
-        s.email,
-        s.firstname,
-        s.lastname,
-        s.role,
-        s.is_active,
-        s.created,
-        s.last_login,
-        d.id as dept_id,
-        d.name as dept_name,
-        COUNT(DISTINCT t.id) as total_tickets,
-        SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
-    FROM staff s
-    LEFT JOIN departments d ON s.dept_id = d.id
-    LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
-    WHERE s.empresa_id = ?
-";
+// Check if staff_departments table exists
+$hasStaffDepartmentsTable = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffDepartmentsTable = false;
+    }
+}
+
+if ($hasStaffDepartmentsTable) {
+    $sql = "
+        SELECT
+            s.id,
+            s.username,
+            s.email,
+            s.firstname,
+            s.lastname,
+            s.role,
+            s.is_active,
+            s.created,
+            s.last_login,
+            GROUP_CONCAT(DISTINCT d.name ORDER BY d.name SEPARATOR ', ') AS dept_name,
+            GROUP_CONCAT(DISTINCT d.id ORDER BY d.id SEPARATOR ',') AS dept_ids,
+            COUNT(DISTINCT t.id) as total_tickets,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
+        FROM staff s
+        LEFT JOIN staff_departments sd ON sd.staff_id = s.id
+        LEFT JOIN departments d ON d.id = sd.dept_id
+        LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
+        WHERE s.empresa_id = ?
+    ";
+} else {
+    $sql = "
+        SELECT
+            s.id,
+            s.username,
+            s.email,
+            s.firstname,
+            s.lastname,
+            s.role,
+            s.is_active,
+            s.created,
+            s.last_login,
+            d.id as dept_id,
+            d.name as dept_name,
+            COUNT(DISTINCT t.id) as total_tickets,
+            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
+        FROM staff s
+        LEFT JOIN departments d ON s.dept_id = d.id
+        LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
+        WHERE s.empresa_id = ?
+    ";
+}
 
 $params = [];
 $types = 'ii';
@@ -87,9 +122,15 @@ if ($search) {
 
 // Aplicar filtro por departamento
 if ($deptFilter > 0) {
-    $sql .= " AND s.dept_id = ?";
-    $params[] = $deptFilter;
-    $types .= 'i';
+    if ($hasStaffDepartmentsTable) {
+        $sql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
+        $params[] = $deptFilter;
+        $types .= 'i';
+    } else {
+        $sql .= " AND s.dept_id = ?";
+        $params[] = $deptFilter;
+        $types .= 'i';
+    }
 }
 
 // Conteo total (para paginación) - mismo filtro pero sin JOIN/GROUP BY
@@ -116,9 +157,15 @@ if ($search) {
     }
 }
 if ($deptFilter > 0) {
-    $countSql .= " AND s.dept_id = ?";
-    $countParams[] = $deptFilter;
-    $countTypes .= 'i';
+    if ($hasStaffDepartmentsTable) {
+        $countSql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
+        $countParams[] = $deptFilter;
+        $countTypes .= 'i';
+    } else {
+        $countSql .= " AND s.dept_id = ?";
+        $countParams[] = $deptFilter;
+        $countTypes .= 'i';
+    }
 }
 $totalRows = 0;
 $stmtCount = $mysqli->prepare($countSql);

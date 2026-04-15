@@ -124,11 +124,36 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
                     $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
                     $st = null;
 
+                    // Check if staff_departments table exists
+                    $hasStaffDepartmentsTable = false;
+                    if (isset($mysqli) && $mysqli) {
+                        try {
+                            $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+                            $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
+                        } catch (Throwable $e) {
+                            $hasStaffDepartmentsTable = false;
+                        }
+                    }
+
                     // Regla: General NO es comodín. Solo listar agentes del mismo dept_id.
                     // Ticket General => solo agentes General.
                     // Ticket de otro dept => solo agentes de ese dept.
                     if ($tdept > 0) {
-                        if ($gd > 0) {
+                        if ($hasStaffDepartmentsTable) {
+                            // New model: use staff_departments for multi-department support
+                            $stmtSt = $mysqli->prepare(
+                                "SELECT DISTINCT s.id, s.firstname, s.lastname FROM staff s "
+                                . "JOIN staff_departments sd ON sd.staff_id = s.id "
+                                . "WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? "
+                                . "ORDER BY s.firstname, s.lastname"
+                            );
+                            if ($stmtSt) {
+                                $stmtSt->bind_param('ii', $empresaId, $tdept);
+                                $stmtSt->execute();
+                                $st = $stmtSt->get_result();
+                            }
+                        } elseif ($gd > 0) {
+                            // Legacy model with general dept fallback
                             $stmtSt = $mysqli->prepare(
                                 "SELECT id, firstname, lastname FROM staff "
                                 . "WHERE empresa_id = ? AND is_active = 1 "

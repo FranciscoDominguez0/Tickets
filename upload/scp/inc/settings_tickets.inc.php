@@ -77,7 +77,7 @@ if (isset($mysqli) && $mysqli) {
             $departments[] = $row;
         }
     }
-    $sqlA = 'SELECT id, firstname, lastname, dept_id FROM staff WHERE is_active = 1';
+    $sqlA = 'SELECT id, firstname, lastname FROM staff WHERE is_active = 1';
     if ($staffHasEmpresaId) {
         $sqlA .= ' AND empresa_id = ' . (int)$eid;
     }
@@ -218,22 +218,57 @@ if ($_POST) {
                     $staffId = $staffId > 0 ? $staffId : null;
 
                     if ($staffId !== null) {
+                        // Check if staff belongs to department using staff_departments or legacy dept_id
                         $allowed = false;
-                        $sqlSd = 'SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1';
-                        if ($staffHasEmpresaId) {
-                            $sqlSd .= ' AND empresa_id = ?';
-                        }
-                        $sqlSd .= ' LIMIT 1';
-                        $stmtSd = $mysqli->prepare($sqlSd);
-                        if ($stmtSd) {
-                            if ($staffHasEmpresaId) {
-                                $stmtSd->bind_param('iii', $generalDeptId, $staffId, $eid);
-                            } else {
-                                $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                        
+                        // Check if staff_departments table exists
+                        $hasStaffDepartmentsTableSettings = false;
+                        if (isset($mysqli) && $mysqli) {
+                            try {
+                                $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+                                $hasStaffDepartmentsTableSettings = ($rt && $rt->num_rows > 0);
+                            } catch (Throwable $e) {
+                                $hasStaffDepartmentsTableSettings = false;
                             }
-                            if ($stmtSd->execute()) {
-                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                                $allowed = ($sdept === $deptId);
+                        }
+                        
+                        if ($hasStaffDepartmentsTableSettings) {
+                            // New model: check staff_departments
+                            $sqlSd = 'SELECT 1 FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.id = ? AND sd.dept_id = ?';
+                            if ($staffHasEmpresaId) {
+                                $sqlSd .= ' AND s.empresa_id = ?';
+                            }
+                            $sqlSd .= ' LIMIT 1';
+                            $stmtSd = $mysqli->prepare($sqlSd);
+                            if ($stmtSd) {
+                                if ($staffHasEmpresaId) {
+                                    $stmtSd->bind_param('iii', $staffId, $deptId, $eid);
+                                } else {
+                                    $stmtSd->bind_param('ii', $staffId, $deptId);
+                                }
+                                if ($stmtSd->execute()) {
+                                    $row = $stmtSd->get_result()->fetch_assoc();
+                                    $allowed = ($row !== null);
+                                }
+                            }
+                        } else {
+                            // Legacy model
+                            $sqlSd = 'SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE id = ? AND is_active = 1';
+                            if ($staffHasEmpresaId) {
+                                $sqlSd .= ' AND empresa_id = ?';
+                            }
+                            $sqlSd .= ' LIMIT 1';
+                            $stmtSd = $mysqli->prepare($sqlSd);
+                            if ($stmtSd) {
+                                if ($staffHasEmpresaId) {
+                                    $stmtSd->bind_param('iii', $generalDeptId, $staffId, $eid);
+                                } else {
+                                    $stmtSd->bind_param('ii', $generalDeptId, $staffId);
+                                }
+                                if ($stmtSd->execute()) {
+                                    $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
+                                    $allowed = ($sdept === $deptId);
+                                }
                             }
                         }
                         if (!$allowed) {
@@ -551,8 +586,36 @@ ob_start();
                                     <?php foreach ($agents as $a): ?>
                                         <?php
                                         $aid = (int)($a['id'] ?? 0);
-                                        $aDept = (int)($a['dept_id'] ?? 0);
-                                        $allowed = ($aDept === $deptId) || ($generalDeptId > 0 && $aDept === 0 && $generalDeptId === $deptId);
+                                        
+                                        // Check if staff_departments table exists
+                                        $hasStaffDepartmentsTableAgent = false;
+                                        if (isset($mysqli) && $mysqli) {
+                                            try {
+                                                $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+                                                $hasStaffDepartmentsTableAgent = ($rt && $rt->num_rows > 0);
+                                            } catch (Throwable $e) {
+                                                $hasStaffDepartmentsTableAgent = false;
+                                            }
+                                        }
+                                        
+                                        if ($hasStaffDepartmentsTableAgent) {
+                                            // New model: check staff_departments
+                                            $stmtCheck = $mysqli->prepare(
+                                                'SELECT 1 FROM staff_departments WHERE staff_id = ? AND dept_id = ? LIMIT 1'
+                                            );
+                                            $allowed = false;
+                                            if ($stmtCheck) {
+                                                $stmtCheck->bind_param('ii', $aid, $deptId);
+                                                if ($stmtCheck->execute()) {
+                                                    $rowCheck = $stmtCheck->get_result()->fetch_assoc();
+                                                    $allowed = ($rowCheck !== null);
+                                                }
+                                            }
+                                        } else {
+                                            // Legacy model
+                                            $aDept = (int)($a['dept_id'] ?? 0);
+                                            $allowed = ($aDept === $deptId) || ($generalDeptId > 0 && $aDept === 0 && $generalDeptId === $deptId);
+                                        }
                                         if (!$allowed) continue;
                                         $label = trim((string)($a['firstname'] ?? '') . ' ' . (string)($a['lastname'] ?? ''));
                                         if ($label === '') $label = 'Agente #' . (string)$aid;
