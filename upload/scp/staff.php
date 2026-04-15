@@ -31,6 +31,23 @@ if (isset($mysqli) && $mysqli) {
     $deptHasEmpresa = ($col && $col->num_rows > 0);
 }
 
+$hasStaffDepartmentsTable = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffDepartmentsTable = false;
+    }
+}
+
+function normalizeDeptIds($raw): array {
+    if (!is_array($raw)) return [];
+    $ids = array_map('intval', $raw);
+    $ids = array_values(array_unique(array_filter($ids, fn($v) => $v > 0)));
+    return $ids;
+}
+
 $currentStaffId = (int)($_SESSION['staff_id'] ?? 0);
 $currentStaffRole = '';
 if ($currentStaffId > 0) {
@@ -226,7 +243,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim((string)($_POST['email'] ?? ''));
         $username = trim((string)($_POST['username'] ?? ''));
         $role = trim((string)($_POST['role'] ?? 'agent'));
+        $deptIds = normalizeDeptIds($_POST['dept_ids'] ?? []);
         $deptId = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int)$_POST['dept_id'] : 0;
+        if (!empty($deptIds)) {
+            $deptId = (int)$deptIds[0];
+        }
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $sendReset = isset($_POST['send_reset']) ? 1 : 0;
 
@@ -280,6 +301,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $newId = (int)$mysqli->insert_id;
+
+        if ($newId > 0 && $hasStaffDepartmentsTable) {
+            if (!empty($deptIds)) {
+                $stmtSd = $mysqli->prepare('INSERT IGNORE INTO staff_departments (staff_id, dept_id) VALUES (?, ?)');
+                if ($stmtSd) {
+                    foreach ($deptIds as $did) {
+                        $stmtSd->bind_param('ii', $newId, $did);
+                        $stmtSd->execute();
+                    }
+                }
+            }
+        }
 
         if ($sendReset && $newId > 0) {
             if (ensureStaffPasswordResetsTableExists($mysqli)) {
@@ -339,7 +372,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim((string)($_POST['email'] ?? ''));
         $username = trim((string)($_POST['username'] ?? ''));
         $role = trim((string)($_POST['role'] ?? 'agent'));
+        $deptIds = normalizeDeptIds($_POST['dept_ids'] ?? []);
         $deptId = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int)$_POST['dept_id'] : 0;
+        if (!empty($deptIds)) {
+            $deptId = (int)$deptIds[0];
+        }
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
         if ($id <= 0) {
@@ -388,6 +425,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmtUp->bind_param('ssssissii', $username, $email, $firstname, $lastname, $deptId, $role, $isActive, $id, $eid);
         $stmtUp->execute();
+
+        if ($hasStaffDepartmentsTable) {
+            $stmtDelSd = $mysqli->prepare('DELETE FROM staff_departments WHERE staff_id = ?');
+            if ($stmtDelSd) {
+                $stmtDelSd->bind_param('i', $id);
+                $stmtDelSd->execute();
+            }
+
+            if (!empty($deptIds)) {
+                $stmtInsSd = $mysqli->prepare('INSERT IGNORE INTO staff_departments (staff_id, dept_id) VALUES (?, ?)');
+                if ($stmtInsSd) {
+                    foreach ($deptIds as $did) {
+                        $stmtInsSd->bind_param('ii', $id, $did);
+                        $stmtInsSd->execute();
+                    }
+                }
+            }
+        }
 
         $_SESSION['flash_msg'] = 'Agente actualizado correctamente.';
         header('Location: staff.php');
@@ -486,9 +541,21 @@ $sql = "
         s.created,
         s.last_login,
         d.id AS dept_id,
-        d.name AS dept_name
+        d.name AS dept_name";
+if ($hasStaffDepartmentsTable) {
+    $sql .= ",\n        GROUP_CONCAT(DISTINCT d2.name ORDER BY d2.name SEPARATOR ', ') AS dept_names,\n        GROUP_CONCAT(DISTINCT d2.id ORDER BY d2.id SEPARATOR ',') AS dept_ids\n";
+} else {
+    $sql .= ",\n        NULL AS dept_names,\n        NULL AS dept_ids\n";
+}
+$sql .= "
     FROM staff s
     LEFT JOIN departments d ON s.dept_id = d.id
+";
+if ($hasStaffDepartmentsTable) {
+    $sql .= "    LEFT JOIN staff_departments sd ON sd.staff_id = s.id\n";
+    $sql .= "    LEFT JOIN departments d2 ON d2.id = sd.dept_id\n";
+}
+$sql .= "
     WHERE 1=1
         AND s.empresa_id = ?
 ";
@@ -506,9 +573,15 @@ if ($search !== '') {
     $types .= 'ssss';
 }
 if ($deptFilter > 0) {
-    $sql .= " AND s.dept_id = ?";
-    $params[] = $deptFilter;
-    $types .= 'i';
+    if ($hasStaffDepartmentsTable) {
+        $sql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
+        $params[] = $deptFilter;
+        $types .= 'i';
+    } else {
+        $sql .= " AND s.dept_id = ?";
+        $params[] = $deptFilter;
+        $types .= 'i';
+    }
 }
 if (isset($_GET['status']) && ($_GET['status'] === 'active' || $_GET['status'] === 'inactive')) {
     $sql .= " AND s.is_active = ?";
@@ -516,7 +589,7 @@ if (isset($_GET['status']) && ($_GET['status'] === 'active' || $_GET['status'] =
     $types .= 'i';
 }
 
-$sql .= " ORDER BY s.firstname, s.lastname";
+$sql .= " GROUP BY s.id ORDER BY s.firstname, s.lastname";
 
 $agents = [];
 $stmt = $mysqli->prepare($sql);
@@ -641,7 +714,7 @@ ob_start();
                     <tr>
                         <th>Nombre</th>
                         <th>Email</th>
-                        <th>Departamento</th>
+                        <th>Departamento(s)</th>
                         <th>Rol</th>
                         <th class="text-center">Estado</th>
                         <th>Último acceso</th>
@@ -656,7 +729,9 @@ ob_start();
                         <?php
                         $name = trim((string)($a['firstname'] ?? '') . ' ' . (string)($a['lastname'] ?? ''));
                         if ($name === '') $name = (string)($a['username'] ?? '');
-                        $dept = (string)($a['dept_name'] ?? '');
+                        $dept = (string)($a['dept_names'] ?? '');
+                        if ($dept === '') $dept = (string)($a['dept_name'] ?? '');
+
                         $role = (string)($a['role'] ?? '');
                         $active = (int)($a['is_active'] ?? 0) === 1;
                         $last = $a['last_login'] ?? null;
@@ -671,7 +746,9 @@ ob_start();
                             </td>
                             <td>
                                 <?php if ($dept !== ''): ?>
-                                    <span class="badge bg-secondary"><?php echo html($dept); ?></span>
+                                    <?php foreach (array_filter(array_map('trim', explode(',', $dept))) as $dn): ?>
+                                        <span class="badge bg-secondary me-1"><?php echo html($dn); ?></span>
+                                    <?php endforeach; ?>
                                 <?php else: ?>
                                     <span class="text-muted">Sin asignar</span>
                                 <?php endif; ?>
@@ -706,7 +783,7 @@ ob_start();
                                         data-email="<?php echo htmlspecialchars((string)($a['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                         data-username="<?php echo htmlspecialchars((string)($a['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                         data-role="<?php echo htmlspecialchars((string)($a['role'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-dept-id="<?php echo (int)($a['dept_id'] ?? 0); ?>"
+                                        data-dept-ids="<?php echo htmlspecialchars((string)($a['dept_ids'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                         data-is-active="<?php echo $active ? '1' : '0'; ?>"
                                         data-bs-toggle="modal" data-bs-target="#agentEditModal">
                                         <i class="bi bi-pencil"></i>
@@ -779,13 +856,16 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Departamento</label>
-                            <select name="dept_id" class="form-select">
-                                <option value="0">Sin asignar</option>
+                            <label class="form-label">Departamento(s)</label>
+                            <div class="border rounded p-2" style="max-height: 220px; overflow: auto;">
                                 <?php foreach ($departments as $d): ?>
-                                    <option value="<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></option>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dept_ids[]" id="createDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
+                                        <label class="form-check-label" for="createDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                                    </div>
                                 <?php endforeach; ?>
-                            </select>
+                            </div>
+                            <div class="form-text">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
                         </div>
                         <div class="col-12">
                             <div class="form-check">
@@ -849,13 +929,16 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Departamento</label>
-                            <select name="dept_id" id="edit_dept_id" class="form-select">
-                                <option value="0">Sin asignar</option>
+                            <label class="form-label">Departamento(s)</label>
+                            <div class="border rounded p-2" style="max-height: 220px; overflow: auto;" id="edit_dept_box">
                                 <?php foreach ($departments as $d): ?>
-                                    <option value="<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></option>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="dept_ids[]" id="editDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
+                                        <label class="form-check-label" for="editDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                                    </div>
                                 <?php endforeach; ?>
-                            </select>
+                            </div>
+                            <div class="form-text">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
                         </div>
                         <div class="col-12">
                             <div class="form-check">
@@ -911,7 +994,15 @@ ob_start();
                 document.getElementById('edit_email').value = this.getAttribute('data-email') || '';
                 document.getElementById('edit_username').value = this.getAttribute('data-username') || '';
                 document.getElementById('edit_role').value = this.getAttribute('data-role') || 'agent';
-                document.getElementById('edit_dept_id').value = this.getAttribute('data-dept-id') || '0';
+                var raw = (this.getAttribute('data-dept-ids') || '').toString();
+                var ids = raw.split(',').map(function (s) { return parseInt((s || '').trim(), 10) || 0; }).filter(function (v) { return v > 0; });
+                var box = document.getElementById('edit_dept_box');
+                if (box) {
+                    box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                        var v = parseInt(cb.value, 10) || 0;
+                        cb.checked = ids.indexOf(v) !== -1;
+                    });
+                }
                 document.getElementById('editIsActive').checked = (this.getAttribute('data-is-active') || '0') === '1';
             });
         });

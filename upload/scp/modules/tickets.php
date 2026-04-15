@@ -62,6 +62,40 @@ if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
 
 $eid = empresaId();
 
+$hasStaffDepartmentsTable = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
+        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
+    } catch (Throwable $e) {
+        $hasStaffDepartmentsTable = false;
+    }
+}
+
+$staffBelongsToDept = function (int $staffId, int $deptId, int $generalDeptId) use ($mysqli, $eid, $hasStaffDepartmentsTable): bool {
+    if ($deptId <= 0) return true;
+    if ($staffId <= 0) return false;
+    if (!isset($mysqli) || !$mysqli) return false;
+
+    if ($hasStaffDepartmentsTable) {
+        $stmt = $mysqli->prepare('SELECT 1 FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.empresa_id = ? AND s.id = ? AND s.is_active = 1 AND sd.dept_id = ? LIMIT 1');
+        if ($stmt) {
+            $stmt->bind_param('iii', $eid, $staffId, $deptId);
+            $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc();
+            if ($row) return true;
+        }
+        // Fallback por compatibilidad mientras exista staff.dept_id
+    }
+
+    $stmt = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
+    if (!$stmt) return false;
+    $stmt->bind_param('iii', $generalDeptId, $eid, $staffId);
+    $stmt->execute();
+    $sdept = (int)($stmt->get_result()->fetch_assoc()['dept_id'] ?? 0);
+    return ($sdept === $deptId);
+};
+
 // Ticket status ids (best-effort mapping by name)
 $statusIdOpen = 0;
 $statusIdInProgress = 0;
@@ -426,15 +460,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     }
 
                     if ($defaultStaffId > 0) {
-                        $allowed = false;
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                        if ($stmtSd) {
-                            $stmtSd->bind_param('iii', $generalDeptId, $eid, $defaultStaffId);
-                            if ($stmtSd->execute()) {
-                                $sdept = (int)($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                                $allowed = ($sdept === $dept_id);
-                            }
-                        }
+                        $allowed = $staffBelongsToDept((int)$defaultStaffId, (int)$dept_id, (int)$generalDeptId);
                         if ($allowed) {
                             $staff_id = $defaultStaffId;
                             // Forzar que se ejecute el bloque de notificación más abajo (simula asignación manual)
@@ -475,19 +501,9 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             // Validar asignación inicial por departamento (regla exacta)
             if ($dept_id > 0 && $staff_id !== null) {
-                $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                if ($stmtSd) {
-                    $stmtSd->bind_param('iii', $generalDeptId, $eid, $staff_id);
-                    if ($stmtSd->execute()) {
-                        $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                        if ($sdept !== $dept_id) {
-                            $open_errors[] = 'El agente seleccionado no pertenece al departamento del ticket.';
-                        }
-                    } else {
-                        $open_errors[] = 'No se pudo validar el agente seleccionado.';
-                    }
-                } else {
-                    $open_errors[] = 'No se pudo validar el agente seleccionado.';
+                $allowed = $staffBelongsToDept((int)$staff_id, (int)$dept_id, (int)$generalDeptId);
+                if (!$allowed) {
+                    $open_errors[] = 'El agente seleccionado no pertenece al departamento del ticket.';
                 }
             }
 
@@ -966,18 +982,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     // Validar que el agente pertenezca al mismo departamento del ticket (o sea General)
                     $allowed = true;
                     if ($val !== null) {
-                        $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                        if ($stmtSd) {
-                            $stmtSd->bind_param('iii', $generalDeptId, $eid, $val);
-                            if ($stmtSd->execute()) {
-                                $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                                $tdept = (int) ($ticketView['dept_id'] ?? 0);
-
-                                if ($tdept > 0) {
-                                    // Regla: solo se puede asignar a agentes del mismo departamento
-                                    $allowed = ($sdept === $tdept);
-                                }
-                            }
+                        $tdept = (int) ($ticketView['dept_id'] ?? 0);
+                        if ($tdept > 0) {
+                            $allowed = $staffBelongsToDept((int)$val, $tdept, (int)$generalDeptId);
                         }
                     }
 
@@ -1073,18 +1080,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $currentStaffId = isset($ticketView['staff_id']) && is_numeric($ticketView['staff_id']) ? (int) $ticketView['staff_id'] : 0;
                         $unassign = false;
                         if ($currentStaffId > 0) {
-                            $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                            if ($stmtSd) {
-                                $stmtSd->bind_param('iii', $generalDeptId, $eid, $currentStaffId);
-                                if ($stmtSd->execute()) {
-                                    $sdept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                                    $unassign = ($sdept !== $newDeptId);
-                                } else {
-                                    $unassign = true;
-                                }
-                            } else {
-                                $unassign = true;
-                            }
+                            $unassign = !$staffBelongsToDept((int)$currentStaffId, (int)$newDeptId, (int)$generalDeptId);
                         }
 
                         if ($unassign) {
@@ -1982,13 +1978,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                 // Validación: el agente debe ser del mismo dept que el ticket o General (si existe)
                 $staffDept = 0;
                 if ($staffId !== 0) {
-                    $stmtSd = $mysqli->prepare('SELECT COALESCE(NULLIF(dept_id, 0), ?) AS dept_id FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                    if ($stmtSd) {
-                        $stmtSd->bind_param('iii', $generalDeptId, $eid, $staffId);
-                        if ($stmtSd->execute()) {
-                            $staffDept = (int) ($stmtSd->get_result()->fetch_assoc()['dept_id'] ?? 0);
-                        }
-                    }
+                    // Para asignación masiva, validamos departamento por ticket más abajo.
+                    $staffDept = 0;
                 }
 
                 // Capturar datos previos para notificación (solo cuando se asigna a un agente)
@@ -2029,7 +2020,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                         $tdeptId = (int) ($trow['dept_id'] ?? 0);
 
                         if ($tdeptId > 0) {
-                            if ($staffDept === $tdeptId) {
+                            if ($staffBelongsToDept((int)$staffId, (int)$tdeptId, (int)$generalDeptId)) {
                                 $inAllowed[] = (int) $tid0;
                             }
                         } else {
@@ -2248,15 +2239,39 @@ if (isset($mysqli) && $mysqli) {
     $staffHasRole = ($col && $col->num_rows > 0);
 }
 
-$staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1";
-if ($staffHasRole) {
-    $staffSql .= " AND (role IS NULL OR role <> 'superadmin')";
+// Staff options para asignación
+// Si estamos viendo un ticket, filtramos agentes por dept del ticket.
+$ticketDeptForStaffOptions = 0;
+if (!empty($ticketView)) {
+    $ticketDeptForStaffOptions = (int) ($ticketView['dept_id'] ?? 0);
 }
-$staffSql .= " ORDER BY firstname, lastname";
-$stmtStaffTb = $mysqli->prepare($staffSql);
+
+if ($hasStaffDepartmentsTable && $ticketDeptForStaffOptions > 0) {
+    $staffSql = "SELECT DISTINCT s.id, s.firstname, s.lastname\n"
+        . "FROM staff s\n"
+        . "JOIN staff_departments sd ON sd.staff_id = s.id\n"
+        . "WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ?";
+    if ($staffHasRole) {
+        $staffSql .= " AND (s.role IS NULL OR s.role <> 'superadmin')";
+    }
+    $staffSql .= " ORDER BY s.firstname, s.lastname";
+    $stmtStaffTb = $mysqli->prepare($staffSql);
+} else {
+    // Fallback (modo legacy o si no hay ticket especifico)
+    $staffSql = "SELECT id, firstname, lastname, COALESCE(NULLIF(dept_id, 0), $generalDeptId) AS dept_id FROM staff WHERE empresa_id = ? AND is_active = 1";
+    if ($staffHasRole) {
+        $staffSql .= " AND (role IS NULL OR role <> 'superadmin')";
+    }
+    $staffSql .= " ORDER BY firstname, lastname";
+    $stmtStaffTb = $mysqli->prepare($staffSql);
+}
 $r = null;
 if ($stmtStaffTb) {
-    $stmtStaffTb->bind_param('i', $eid);
+    if ($hasStaffDepartmentsTable && $ticketDeptForStaffOptions > 0) {
+        $stmtStaffTb->bind_param('ii', $eid, $ticketDeptForStaffOptions);
+    } else {
+        $stmtStaffTb->bind_param('i', $eid);
+    }
     if ($stmtStaffTb->execute()) {
         $r = $stmtStaffTb->get_result();
     }
@@ -2266,14 +2281,14 @@ $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
 if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
 
-// Si estamos viendo un ticket en particular, filtrar agentes por dept del ticket (o General)
-if (!empty($ticketView)) {
+// Nota: en modo multi-departamento, el filtrado ya se aplica en SQL (JOIN staff_departments)
+// En modo legacy, se mantiene el comportamiento existente con dept_id.
+if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
     $tdept = (int) ($ticketView['dept_id'] ?? 0);
     if ($tdept > 0) {
-        $staffOptions = array_values(array_filter($staffOptions, function ($s) use ($tdept, $generalDeptId) {
+        $staffOptions = array_values(array_filter($staffOptions, function ($s) use ($tdept) {
             $sd = (int) ($s['dept_id'] ?? 0);
-            if ($sd === $tdept) return true;
-            return false;
+            return $sd === $tdept;
         }));
     }
 }
