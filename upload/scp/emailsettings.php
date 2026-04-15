@@ -151,6 +151,56 @@ $findEmailAccountById = function ($id) use ($emailAccounts) {
     return null;
 };
 
+if (isset($mysqli) && $mysqli) {
+    ensureNotificationRecipientsTable();
+}
+
+$staffHasEmpresa = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $staffHasEmpresa = dbColumnExists('staff', 'empresa_id');
+    } catch (Throwable $e) {
+        $staffHasEmpresa = false;
+    }
+}
+
+$notificationCandidates = [];
+if (isset($mysqli) && $mysqli) {
+    $sqlCandidates = 'SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1';
+    if ($staffHasEmpresa) $sqlCandidates .= ' AND empresa_id = ?';
+    $sqlCandidates .= ' ORDER BY firstname ASC, lastname ASC, email ASC';
+
+    $stmtC = $mysqli->prepare($sqlCandidates);
+    if ($stmtC) {
+        if ($staffHasEmpresa) {
+            $stmtC->bind_param('i', $eid);
+        }
+        if ($stmtC->execute()) {
+            $rsC = $stmtC->get_result();
+            while ($rsC && ($r = $rsC->fetch_assoc())) {
+                $email = trim((string)($r['email'] ?? ''));
+                if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+                $notificationCandidates[] = $r;
+            }
+        }
+    }
+}
+
+$selectedRecipientIds = [];
+if (isset($mysqli) && $mysqli && ensureNotificationRecipientsTable()) {
+    $stmtSel = $mysqli->prepare('SELECT staff_id FROM notification_recipients WHERE empresa_id = ?');
+    if ($stmtSel) {
+        $stmtSel->bind_param('i', $eid);
+        if ($stmtSel->execute()) {
+            $rsSel = $stmtSel->get_result();
+            while ($rsSel && ($r = $rsSel->fetch_assoc())) {
+                $sid = (int)($r['staff_id'] ?? 0);
+                if ($sid > 0) $selectedRecipientIds[$sid] = true;
+            }
+        }
+    }
+}
+
 // Guardar configuración global (en app_settings)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
@@ -159,21 +209,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $adminNotifyId = (int)($_POST['admin_notify_id'] ?? 0);
+    $recipientIds = $_POST['notification_recipients'] ?? [];
+    if (!is_array($recipientIds)) $recipientIds = [];
+    $recipientIds = array_values(array_unique(array_filter(array_map('intval', $recipientIds), function ($v) {
+        return $v > 0;
+    })));
 
     $mailFromId = (int)($_POST['mail_from_id'] ?? 0);
     $mailAlertFromId = (int)($_POST['mail_alert_from_id'] ?? 0);
 
     $fromAcc = $findEmailAccountById($mailFromId);
     $alertAcc = $findEmailAccountById($mailAlertFromId);
-    $adminAcc = $findEmailAccountById($adminNotifyId);
-
-    // Permitir que no haya email por defecto. Si no se selecciona cuenta, se guarda lo que venga de config/app_settings.
-    if (!$adminAcc) {
-        $_SESSION['flash_error'] = 'Selecciona el correo de notificaciones del administrador.';
-        header('Location: emailsettings.php');
-        exit;
-    }
 
     $mailFrom = $fromAcc ? (string)($fromAcc['email'] ?? '') : (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
     $mailFromName = $fromAcc ? trim((string)($fromAcc['name'] ?? '')) : (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '');
@@ -183,15 +229,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mailAlertFromName = $alertAcc ? trim((string)($alertAcc['name'] ?? 'Alerts')) : (string)getAppSetting('mail.alert_from_name', 'Alerts');
     if ($mailAlertFromName === '') $mailAlertFromName = 'Alerts';
 
-    $adminNotify = (string)($adminAcc['email'] ?? '');
-
     setAppSetting('mail.from', $mailFrom);
     setAppSetting('mail.from_name', $mailFromName);
     setAppSetting('mail.alert_from', $mailAlertFrom);
     setAppSetting('mail.alert_from_name', $mailAlertFromName);
-    setAppSetting('mail.admin_notify_email', $adminNotify);
 
-    $_SESSION['flash_msg'] = 'Configuración guardada.';
+    $allowedMap = [];
+    foreach ($notificationCandidates as $cand) {
+        $allowedMap[(int)($cand['id'] ?? 0)] = true;
+    }
+    $validRecipientIds = [];
+    foreach ($recipientIds as $sid) {
+        if (isset($allowedMap[$sid])) $validRecipientIds[] = $sid;
+    }
+
+    if (ensureNotificationRecipientsTable()) {
+        $stmtDel = $mysqli->prepare('DELETE FROM notification_recipients WHERE empresa_id = ?');
+        if ($stmtDel) {
+            $stmtDel->bind_param('i', $eid);
+            $stmtDel->execute();
+        }
+        if (!empty($validRecipientIds)) {
+            $stmtIns = $mysqli->prepare('INSERT INTO notification_recipients (empresa_id, staff_id, created_at) VALUES (?, ?, NOW())');
+            if ($stmtIns) {
+                foreach ($validRecipientIds as $sid) {
+                    $stmtIns->bind_param('ii', $eid, $sid);
+                    $stmtIns->execute();
+                }
+            }
+        }
+        setAppSetting('mail.admin_notify_email', '');
+        $_SESSION['flash_msg'] = 'Configuración guardada. Destinatarios seleccionados: ' . (string)count($validRecipientIds);
+    } else {
+        $_SESSION['flash_error'] = 'No se pudo guardar destinatarios de notificación.';
+    }
     header('Location: emailsettings.php');
     exit;
 }
@@ -201,17 +272,10 @@ $valFrom = $defaultEmailAccount ? (string)($defaultEmailAccount['email'] ?? '') 
 $valFromName = $defaultEmailAccount ? (string)($defaultEmailAccount['name'] ?? '') : (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : '');
 $valAlertFrom = $defaultEmailAccount ? (string)($defaultEmailAccount['email'] ?? '') : (string)getAppSetting('mail.alert_from', defined('MAIL_FROM') ? (string)MAIL_FROM : '');
 $valAlertFromName = (string)getAppSetting('mail.alert_from_name', 'Alerts');
-$valAdminNotify = (string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : '');
-
 if ($valFromName === '') $valFromName = $valFrom;
 
 $selectedFromId = $defaultEmailAccount ? (int)($defaultEmailAccount['id'] ?? 0) : 0;
 $selectedAlertFromId = $defaultEmailAccount ? (int)($defaultEmailAccount['id'] ?? 0) : 0;
-$selectedAdminNotifyId = 0;
-foreach ($emailAccounts as $a) {
-    if ($selectedAdminNotifyId === 0 && (string)($a['email'] ?? '') === $valAdminNotify) $selectedAdminNotifyId = (int)($a['id'] ?? 0);
-}
-
 ob_start();
 ?>
 
@@ -304,18 +368,57 @@ ob_start();
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Email para notificaciones admin (ADMIN_NOTIFY_EMAIL)</label>
-                        <select name="admin_notify_id" class="form-select">
-                            <?php foreach ($emailAccounts as $a): ?>
-                                <?php
-                                $aid = (int)($a['id'] ?? 0);
-                                $aEmail = (string)($a['email'] ?? '');
-                                $aName = trim((string)($a['name'] ?? ''));
-                                $label = ($aName !== '' ? $aName : $aEmail) . ' <' . $aEmail . '>';
-                                ?>
-                                <option value="<?php echo $aid; ?>" <?php echo $selectedAdminNotifyId === $aid ? 'selected' : ''; ?>><?php echo html($label); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label class="form-label">Destinatarios de notificaciones</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#recipientsModal">
+                                Seleccionar destinatarios
+                            </button>
+                            <span class="text-muted small" id="selectedRecipientsLabel">Seleccionados: <?php echo (int)count($selectedRecipientIds); ?></span>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="recipientsModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Seleccionar destinatarios</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <?php if (empty($notificationCandidates)): ?>
+                                        <div class="text-muted">No hay usuarios activos con email válido.</div>
+                                    <?php else: ?>
+                                        <?php foreach ($notificationCandidates as $cand): ?>
+                                            <?php
+                                                $sid = (int)($cand['id'] ?? 0);
+                                                $first = trim((string)($cand['firstname'] ?? ''));
+                                                $last = trim((string)($cand['lastname'] ?? ''));
+                                                $fullName = trim($first . ' ' . $last);
+                                                if ($fullName === '') $fullName = 'Sin nombre';
+                                                $email = trim((string)($cand['email'] ?? ''));
+                                            ?>
+                                            <div class="form-check mb-2">
+                                                <input
+                                                    class="form-check-input recipient-checkbox"
+                                                    type="checkbox"
+                                                    name="notification_recipients[]"
+                                                    id="recipient_<?php echo $sid; ?>"
+                                                    value="<?php echo $sid; ?>"
+                                                    <?php echo isset($selectedRecipientIds[$sid]) ? 'checked' : ''; ?>
+                                                >
+                                                <label class="form-check-label" for="recipient_<?php echo $sid; ?>">
+                                                    <?php echo html($fullName); ?> - <?php echo html($email); ?>
+                                                </label>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-recipient-cancel>Cancelar</button>
+                                    <button type="submit" class="btn btn-primary" data-recipient-save>Guardar</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-end">
@@ -326,6 +429,59 @@ ob_start();
         </div>
     </div>
 </div>
+
+<script>
+    (function () {
+        var modalEl = document.getElementById('recipientsModal');
+        if (!modalEl) return;
+        var checkboxes = modalEl.querySelectorAll('.recipient-checkbox');
+        var saveBtn = modalEl.querySelector('[data-recipient-save]');
+        var cancelBtn = modalEl.querySelector('[data-recipient-cancel]');
+        var selectedLabel = document.getElementById('selectedRecipientsLabel');
+        var snapshot = [];
+
+        function countSelected() {
+            var n = 0;
+            checkboxes.forEach(function (cb) { if (cb.checked) n++; });
+            if (selectedLabel) selectedLabel.textContent = 'Seleccionados: ' + String(n);
+        }
+
+        function saveSnapshot() {
+            snapshot = [];
+            checkboxes.forEach(function (cb) { snapshot.push(!!cb.checked); });
+        }
+
+        function restoreSnapshot() {
+            checkboxes.forEach(function (cb, idx) {
+                cb.checked = !!snapshot[idx];
+            });
+        }
+
+        modalEl.addEventListener('show.bs.modal', function () {
+            saveSnapshot();
+        });
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                restoreSnapshot();
+                countSelected();
+                var m = bootstrap.Modal.getOrCreateInstance(modalEl);
+                m.hide();
+            });
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function () {
+                countSelected();
+            });
+        }
+
+        checkboxes.forEach(function (cb) {
+            cb.addEventListener('change', countSelected);
+        });
+        countSelected();
+    })();
+</script>
 
 <?php
 $content = ob_get_clean();

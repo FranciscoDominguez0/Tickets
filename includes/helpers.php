@@ -1235,6 +1235,216 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     return $stmt->execute();
 }
 
+function ensureEmailQueueTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+
+    $sql = "CREATE TABLE IF NOT EXISTS email_queue (\n"
+        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  recipient_email VARCHAR(255) NOT NULL,\n"
+        . "  subject VARCHAR(255) NOT NULL,\n"
+        . "  body_html MEDIUMTEXT NULL,\n"
+        . "  body_text MEDIUMTEXT NULL,\n"
+        . "  status VARCHAR(20) NOT NULL DEFAULT 'pending',\n"
+        . "  attempts INT NOT NULL DEFAULT 0,\n"
+        . "  max_attempts INT NOT NULL DEFAULT 5,\n"
+        . "  next_attempt_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  last_error TEXT NULL,\n"
+        . "  context_type VARCHAR(50) NULL,\n"
+        . "  context_id INT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  sent_at DATETIME NULL,\n"
+        . "  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_email_queue_status_next (status, next_attempt_at),\n"
+        . "  KEY idx_email_queue_empresa (empresa_id),\n"
+        . "  KEY idx_email_queue_context (context_type, context_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    if (!$mysqli->query($sql)) return false;
+
+    if (!dbColumnExists('email_queue', 'empresa_id')) {
+        @$mysqli->query("ALTER TABLE email_queue ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
+        @$mysqli->query("ALTER TABLE email_queue ADD INDEX idx_email_queue_empresa (empresa_id)");
+    }
+    return true;
+}
+
+function ensureEmailLogsTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS email_logs (\n"
+        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  queue_id BIGINT NULL,\n"
+        . "  recipient_email VARCHAR(255) NULL,\n"
+        . "  status VARCHAR(20) NOT NULL,\n"
+        . "  error_message TEXT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_email_logs_empresa (empresa_id),\n"
+        . "  KEY idx_email_logs_queue (queue_id),\n"
+        . "  KEY idx_email_logs_status (status)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    if (!$mysqli->query($sql)) return false;
+    return true;
+}
+
+function ensureNotificationRecipientsTable() {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $sql = "CREATE TABLE IF NOT EXISTS notification_recipients (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  staff_id INT NOT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_notification_recipient (empresa_id, staff_id),\n"
+        . "  KEY idx_notification_staff (staff_id),\n"
+        . "  KEY idx_notification_empresa (empresa_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    if (!$mysqli->query($sql)) return false;
+    return true;
+}
+
+function parseEmailList($rawEmails) {
+    $out = [
+        'valid' => [],
+        'invalid' => [],
+    ];
+    $raw = (string)$rawEmails;
+    if ($raw === '') return $out;
+
+    $parts = preg_split('/[;,]+/', $raw);
+    if (!is_array($parts)) return $out;
+
+    $seen = [];
+    foreach ($parts as $item) {
+        $email = strtolower(trim((string)$item));
+        if ($email === '') continue;
+        if (isset($seen[$email])) continue;
+        $seen[$email] = true;
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $out['valid'][] = $email;
+        } else {
+            $out['invalid'][] = $email;
+        }
+    }
+    return $out;
+}
+
+function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta = []) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    if (!ensureEmailQueueTable()) return false;
+
+    $to = strtolower(trim((string)$to));
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
+
+    $eid = isset($meta['empresa_id']) && is_numeric($meta['empresa_id'])
+        ? (int)$meta['empresa_id']
+        : (function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1));
+    if ($eid <= 0) $eid = 1;
+
+    $contextType = isset($meta['context_type']) ? trim((string)$meta['context_type']) : null;
+    if ($contextType === '') $contextType = null;
+    $contextId = isset($meta['context_id']) && is_numeric($meta['context_id']) ? (int)$meta['context_id'] : null;
+    $maxAttempts = isset($meta['max_attempts']) && is_numeric($meta['max_attempts']) ? (int)$meta['max_attempts'] : 5;
+    if ($maxAttempts < 1) $maxAttempts = 1;
+    if ($maxAttempts > 15) $maxAttempts = 15;
+
+    $subject = trim((string)$subject);
+    if ($subject === '') $subject = '(Sin asunto)';
+
+    $stmt = $mysqli->prepare(
+        "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"
+        . "VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, NOW(), ?, ?, NOW(), NOW())"
+    );
+    if (!$stmt) return false;
+    $htmlBody = (string)$bodyHtml;
+    $textBody = (string)$bodyText;
+    $stmt->bind_param('issssisi', $eid, $to, $subject, $htmlBody, $textBody, $maxAttempts, $contextType, $contextId);
+    return (bool)$stmt->execute();
+}
+
+function addEmailLog($status, $errorMessage = '', array $meta = []) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    if (!ensureEmailLogsTable()) return false;
+
+    $status = trim((string)$status);
+    if ($status === '') $status = 'unknown';
+    $error = trim((string)$errorMessage);
+    if ($error === '') $error = null;
+
+    $eid = isset($meta['empresa_id']) && is_numeric($meta['empresa_id'])
+        ? (int)$meta['empresa_id']
+        : (function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1));
+    if ($eid <= 0) $eid = 1;
+
+    $queueId = isset($meta['queue_id']) && is_numeric($meta['queue_id']) ? (int)$meta['queue_id'] : null;
+    $recipient = isset($meta['recipient_email']) ? trim((string)$meta['recipient_email']) : null;
+    if ($recipient === '') $recipient = null;
+
+    $stmt = $mysqli->prepare('INSERT INTO email_logs (empresa_id, queue_id, recipient_email, status, error_message, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
+    if (!$stmt) return false;
+    $stmt->bind_param('iisss', $eid, $queueId, $recipient, $status, $error);
+    return (bool)$stmt->execute();
+}
+
+function triggerEmailQueueWorkerAsync($limit = 30) {
+    $limit = (int)$limit;
+    if ($limit < 1) $limit = 1;
+    if ($limit > 100) $limit = 100;
+
+    $token = trim((string)getAppSetting('mail.queue_worker_token', ''));
+    if ($token === '') {
+        try {
+            $token = bin2hex(random_bytes(24));
+            setAppSetting('mail.queue_worker_token', $token);
+        } catch (Throwable $e) {
+            error_log('[mail_queue] token generation failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '/upload/open.php');
+    $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+    if ($baseDir === '' || $baseDir === '.') $baseDir = '/upload';
+    $workerPath = $baseDir . '/process_mail_queue.php';
+    $eid = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1);
+    if ($eid <= 0) $eid = 1;
+    $qs = http_build_query(['token' => $token, 'limit' => $limit, 'eid' => $eid]);
+    $path = $workerPath . '?' . $qs;
+
+    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $hostOnly = preg_replace('/:\d+$/', '', $host);
+    if ($hostOnly === '') $hostOnly = 'localhost';
+    $port = 80;
+    $scheme = 'http';
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        $scheme = 'https';
+        $port = 443;
+    }
+    if (preg_match('/:(\d+)$/', $host, $m)) {
+        $port = (int)$m[1];
+    }
+
+    $transport = ($scheme === 'https') ? 'ssl://' : '';
+    $errno = 0;
+    $errstr = '';
+    $fp = @fsockopen($transport . $hostOnly, $port, $errno, $errstr, 1.5);
+    if (!$fp) {
+        error_log('[mail_queue] async trigger failed: ' . $hostOnly . ':' . $port . ' ' . $errstr . ' (' . $errno . ')');
+        return false;
+    }
+
+    stream_set_blocking($fp, false);
+    $out = "GET " . $path . " HTTP/1.1\r\n";
+    $out .= "Host: " . $host . "\r\n";
+    $out .= "Connection: Close\r\n\r\n";
+    @fwrite($fp, $out);
+    @fclose($fp);
+    return true;
+}
+
 function ensureRolePermissionsTable() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;

@@ -169,8 +169,6 @@ if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_co
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
-$shouldProcessMailQueue = (!empty($_SESSION['pending_mail_queue_needs_process']) && (int)$_SESSION['pending_mail_queue_needs_process'] === 1);
-
 $flashMsg = '';
 if (!empty($_SESSION['flash_msg'])) {
     $flashMsg = (string)$_SESSION['flash_msg'];
@@ -722,22 +720,6 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             .tickets-table { padding: 0 12px 12px; }
         }
     </style>
-    <?php if ($shouldProcessMailQueue): ?>
-    <script>
-        (function(){
-            try {
-                var fd = new FormData();
-                fd.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
-                fetch('process_mail_queue.php', {
-                    method: 'POST',
-                    body: fd,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-                }).catch(function(){});
-            } catch (e) {}
-        })();
-    </script>
-    <?php endif; ?>
-
     <?php if ($preventOpenBack || $flashMsg !== ''): ?>
     <script>
         (function(){

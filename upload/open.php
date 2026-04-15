@@ -246,24 +246,6 @@ if ($_POST) {
             }
 
             if ($error === '') {
-            $enqueueMail = function ($to, $subj, $htmlBody, $textBody = '') {
-                $to = trim((string)$to);
-                $subj = (string)$subj;
-                if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
-                if (!isset($_SESSION['pending_mail_queue']) || !is_array($_SESSION['pending_mail_queue'])) {
-                    $_SESSION['pending_mail_queue'] = [];
-                }
-                $_SESSION['pending_mail_queue'][] = [
-                    'to' => $to,
-                    'subj' => $subj,
-                    'html' => (string)$htmlBody,
-                    'text' => (string)$textBody,
-                    'ts' => time(),
-                ];
-                $_SESSION['pending_mail_queue'] = array_values(array_slice($_SESSION['pending_mail_queue'], -20));
-                return true;
-            };
-
             // Generar número de ticket
             $generateTicketNumberFromFormat = function ($format) use ($mysqli, $eid) {
                 $format = trim((string)$format);
@@ -502,7 +484,7 @@ if ($_POST) {
                                     . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
                                     . '</div>';
                                 $bodyText = 'Hola ' . $staffName . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . (string)$subject . "\n\nVer: " . $viewUrl;
-                                if (!$enqueueMail($to, $subj, $bodyHtml, $bodyText)) {
+                                if (!enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'ticket_assign', 'context_id' => $ticket_id])) {
                                     addLog('ticket_assign_email_enqueue_failed_user', 'No se pudo encolar el correo al agente (user)', 'ticket', $ticket_id, 'staff', $val);
                                 }
                             } else {
@@ -579,8 +561,7 @@ if ($_POST) {
                     }
                 }
 
-                // Notificar por correo solo al admin (en cola, no bloquea al usuario)
-                $adminEmail = trim((string)getAppSetting('mail.admin_notify_email', defined('ADMIN_NOTIFY_EMAIL') ? (string)ADMIN_NOTIFY_EMAIL : ''));
+                // Notificar por correo a destinatarios configurados (staff), en cola
                 $adminNotifyEnabled = ((string)getAppSetting('mail.admin_notify_enabled', '1') === '1');
                 $clientName = trim(($user['name'] ?? '') ?: 'Cliente');
                 $clientEmail = $user['email'] ?? '';
@@ -612,30 +593,80 @@ if ($_POST) {
                     </div>';
                 $emailSubject = '[Nuevo ticket] ' . $ticket_number . ' - ' . $subject;
                 $mailSent = 0;
-                $mailError = '';
-                if ($adminNotifyEnabled && $adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                    if ($enqueueMail($adminEmail, $emailSubject, $bodyHtml, '')) {
-                        $mailSent = 1;
-                    } else {
-                        addLog('admin_notify_email_enqueue_failed', 'No se pudo encolar el correo al admin', 'ticket', $ticket_id, 'staff', 0);
+                $recipientCount = 0;
+                if ($adminNotifyEnabled) {
+                    $recipientEmails = [];
+                    if (ensureNotificationRecipientsTable()) {
+                        $staffHasEmpresa = false;
+                        try {
+                            $staffHasEmpresa = dbColumnExists('staff', 'empresa_id');
+                        } catch (Throwable $e) {
+                            $staffHasEmpresa = false;
+                        }
+
+                        $sqlRcpt = "SELECT s.email\n"
+                            . "FROM notification_recipients nr\n"
+                            . "INNER JOIN staff s ON s.id = nr.staff_id\n"
+                            . "WHERE nr.empresa_id = ? AND s.is_active = 1";
+                        if ($staffHasEmpresa) {
+                            $sqlRcpt .= ' AND s.empresa_id = ?';
+                        }
+                        $sqlRcpt .= ' ORDER BY s.id ASC';
+                        $stmtRcpt = $mysqli->prepare($sqlRcpt);
+                        if ($stmtRcpt) {
+                            if ($staffHasEmpresa) {
+                                $stmtRcpt->bind_param('ii', $eid, $eid);
+                            } else {
+                                $stmtRcpt->bind_param('i', $eid);
+                            }
+                            if ($stmtRcpt->execute()) {
+                                $rsRcpt = $stmtRcpt->get_result();
+                                while ($rsRcpt && ($rr = $rsRcpt->fetch_assoc())) {
+                                    $em = strtolower(trim((string)($rr['email'] ?? '')));
+                                    if ($em === '' || !filter_var($em, FILTER_VALIDATE_EMAIL)) continue;
+                                    $recipientEmails[$em] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    $recipientCount = count($recipientEmails);
+                    foreach (array_keys($recipientEmails) as $notifyEmail) {
+                        if (enqueueEmailJob($notifyEmail, $emailSubject, $bodyHtml, '', ['empresa_id' => $eid, 'context_type' => 'ticket_created', 'context_id' => $ticket_id])) {
+                            $mailSent++;
+                        } else {
+                            addLog('admin_notify_email_enqueue_failed', 'No se pudo encolar correo para destinatario: ' . (string)$notifyEmail, 'ticket', $ticket_id, 'staff', 0);
+                        }
+                    }
+                    if ($mailSent === 0) {
+                        addLog('admin_notify_email_skipped', 'No hay destinatarios seleccionados en notification_recipients', 'ticket', $ticket_id, 'staff', 0);
                     }
                 } else {
                     $reason = '';
                     if (!$adminNotifyEnabled) {
                         $reason = 'Notificación admin desactivada (mail.admin_notify_enabled=0)';
-                    } elseif ($adminEmail === '') {
-                        $reason = 'Email admin vacío (mail.admin_notify_email)';
-                    } elseif (!filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                        $reason = 'Email admin inválido (mail.admin_notify_email)';
                     }
                     if ($reason !== '') {
                         addLog('admin_notify_email_skipped', $reason, 'ticket', $ticket_id, 'staff', 0);
                     }
                 }
+                addLog(
+                    'ticket_email_queue_summary',
+                    'Ticket ' . (string)$ticket_number . ' | recipients=' . (string)$recipientCount . ' | enqueued=' . (string)$mailSent . ' | notify=' . ($adminNotifyEnabled ? 'on' : 'off'),
+                    'ticket',
+                    $ticket_id,
+                    'staff',
+                    0
+                );
+                if ($mailSent > 0) {
+                    $triggered = triggerEmailQueueWorkerAsync(40);
+                    if (!$triggered) {
+                        addLog('ticket_email_queue_trigger_failed', 'No se pudo disparar worker asíncrono', 'ticket', $ticket_id, 'staff', 0);
+                    }
+                }
                 $_SESSION['flash_msg'] = 'Ticket creado exitosamente! Número: ' . (string)$ticket_number;
                 $_SESSION['new_ticket_id'] = (int)$ticket_id;
                 $_SESSION['prevent_open_back'] = 1;
-                $_SESSION['pending_mail_queue_needs_process'] = 1;
                 header('Location: tickets.php', true, 303);
                 exit;
             } else {
