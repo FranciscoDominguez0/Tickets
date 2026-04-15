@@ -737,47 +737,20 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="attach-text">Agregar archivos aquí o <a href="#" data-action="attachments-browse">elegirlos</a></div>
                 <div class="attach-list" id="attach-list"></div>
             </div>
-            <div class="reply-options">
-                <div class="opt-group">
-                    <label>Firma:</label>
-                    <label class="me-3"><input type="radio" name="signature" value="none" class="form-radio" <?php echo empty($staff_has_signature) ? 'checked' : ''; ?>> Ninguno</label>
-                    <?php if (!empty($staff_has_signature)): ?>
-                        <label class="me-3"><input type="radio" name="signature" value="staff" class="form-radio" checked> Mi firma</label>
-                    <?php endif; ?>
-                    <label><input type="radio" name="signature" value="dept" class="form-radio"> Firma del Departamento (<?php echo html($t['dept_name'] ?? 'Soporte'); ?>)</label>
-                </div>
-                <div class="opt-group">
-                    <label>Estado del Ticket:</label>
-                    <select name="status_id" class="form-select form-control">
-                        <?php
-                        $statusList = $ticket_status_list ?? [];
-                        foreach ($statusList as $st): ?>
-                            <option value="<?php echo (int)$st['id']; ?>" <?php echo (int)$st['id'] === (int)$t['status_id'] ? 'selected' : ''; ?>><?php echo html($st['name']); ?><?php echo (int)$st['id'] === (int)$t['status_id'] ? ' (actual)' : ''; ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
             <div class="reply-buttons">
                 <button type="submit" name="do" value="reply" class="btn btn-reply btn-publish">
                     <i class="bi bi-send"></i> Publicar Respuesta
                 </button>
-                <button type="submit" name="do" value="internal" class="btn btn-reply btn-internal">
-                    <i class="bi bi-lock"></i> publicar nota interna
+                <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
+                <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
+                    <i class="bi bi-check2-circle"></i> Cerrar ticket
                 </button>
-                <button type="button" class="btn btn-reset" id="btn-reset">Restablecer</button>
+                <?php endif; ?>
             </div>
             <div class="reply-from">
                 <strong>De:</strong> <?php echo html($staff['name'] ?? 'Agente'); ?> &lt;<?php echo html($staff['email'] ?? ''); ?>&gt;<br>
                 <strong>Destinatarios:</strong> <?php echo html($t['user_name']); ?> &lt;<?php echo html($t['user_email']); ?>&gt;
             </div>
-
-            <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
-                <div class="reply-buttons mt-3">
-                    <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
-                        <i class="bi bi-check2-circle"></i> Cerrar ticket
-                    </button>
-                </div>
-            <?php endif; ?>
         </form>
     </div>
 </div>
@@ -1024,13 +997,16 @@ document.addEventListener('DOMContentLoaded', function() {
             updateList();
         }
     });
-    document.getElementById('btn-reset').addEventListener('click', function() {
-        if (typeof jQuery !== 'undefined' && jQuery('#reply_body').length && jQuery('#reply_body').summernote('code')) {
-            jQuery('#reply_body').summernote('reset');
-        }
-        input.value = '';
-        list.innerHTML = '';
-    });
+    var btnReset = document.getElementById('btn-reset');
+    if (btnReset) {
+        btnReset.addEventListener('click', function() {
+            if (typeof jQuery !== 'undefined' && jQuery('#reply_body').length && jQuery('#reply_body').summernote('code')) {
+                jQuery('#reply_body').summernote('reset');
+            }
+            input.value = '';
+            list.innerHTML = '';
+        });
+    }
 
     var ownerSearch = document.getElementById('owner-user-search');
     var ownerResults = document.getElementById('owner-user-results');
