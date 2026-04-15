@@ -818,32 +818,338 @@ tr.ticket-row.is-selected td { background: #eff6ff !important; }
 .tickets-actions .btn-danger-soft:hover { background: rgba(239, 68, 68, 0.14); color: #991b1b; }
 .check-cell { width: 34px; }
 
-/* Modales de cierre (SCP) alineados al tema del panel */
-.scp-close-modal-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 58%, #0ea5e9 100%);
+/* ============================================================
+   Modales de cierre de ticket – diseño premium
+   ============================================================ */
+
+/* Contenedor del modal */
+.scp-modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(2, 6, 23, 0.22);
+}
+
+/* Tamaños de dialog */
+.scp-modal-dialog-sm { max-width: 420px; }
+.scp-modal-dialog-sig { max-width: 720px; }
+
+/* HEADER */
+.scp-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
     color: #fff;
 }
-.scp-close-modal-body-choice {
-    padding: 26px;
+.scp-modal-header-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex: 0 0 auto;
+    backdrop-filter: blur(4px);
 }
-.scp-close-modal-title {
-    font-size: 1.02rem;
+.scp-modal-header-icon-warn {
+    background: rgba(251, 191, 36, 0.22);
+    border-color: rgba(251, 191, 36, 0.4);
+    color: #fde68a;
+}
+.scp-modal-header-text { flex: 1 1 auto; }
+.scp-modal-header-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+.scp-modal-header-sub {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.78);
+    margin-top: 2px;
+    min-height: 1em;
+}
+.scp-modal-close {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    border-radius: 10px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.18s;
+    flex: 0 0 auto;
+}
+.scp-modal-close:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* BODY */
+.scp-modal-body {
+    padding: 24px;
+    background: #fff;
+}
+.scp-modal-body-choice { padding-bottom: 28px; }
+
+/* Botones de elección (Modal 1) */
+.scp-choice-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #334155;
+    text-align: center;
+    margin-bottom: 18px;
+}
+.scp-choice-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.scp-btn-choice {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    width: 100%;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+.scp-btn-choice:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.14); }
+.scp-btn-choice-primary { border-color: #bfdbfe; background: #eff6ff; }
+.scp-btn-choice-primary:hover { border-color: #2563eb; background: #dbeafe; }
+.scp-btn-choice-ghost { border-color: #e2e8f0; background: #f8fafc; }
+.scp-btn-choice-ghost:hover { border-color: #94a3b8; background: #f1f5f9; }
+.scp-btn-choice-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex: 0 0 auto;
+}
+.scp-btn-choice-ghost .scp-btn-choice-icon {
+    background: #e2e8f0;
+    color: #475569;
+}
+.scp-btn-choice-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.scp-btn-choice-main { font-size: 0.95rem; font-weight: 700; color: #0f172a; }
+.scp-btn-choice-sub { font-size: 0.8rem; color: #64748b; }
+.scp-btn-choice-arrow { color: #94a3b8; font-size: 0.85rem; flex: 0 0 auto; }
+
+/* Info bloque (Modal 2 – sin firma) */
+.scp-nosig-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 16px;
+}
+.scp-nosig-info-icon {
+    font-size: 1.5rem;
+    color: #2563eb;
+    flex: 0 0 auto;
+    margin-top: 2px;
+}
+.scp-nosig-info-title {
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 16px;
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+}
+.scp-nosig-info-desc {
+    color: #475569;
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+/* Campos del formulario (Modal 3 – con firma) */
+.scp-field-label {
+    display: block;
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 6px;
+}
+.scp-field-optional { font-weight: 400; color: #94a3b8; }
+.scp-textarea {
+    width: 100%;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    resize: vertical;
+    transition: border-color 0.18s;
+    outline: none;
+    font-family: inherit;
+}
+.scp-textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+
+/* Sección firma */
+.scp-sig-section { margin-top: 4px; }
+.scp-sig-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.scp-btn-clear {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.18s;
+}
+.scp-btn-clear:hover { background: #e2e8f0; color: #1e293b; }
+
+.scp-sig-canvas-wrap {
+    position: relative;
+    border: 2px dashed #bfdbfe;
+    border-radius: 14px;
+    background: #f8fbff;
+    overflow: hidden;
 }
 .scp-signature-canvas {
+    display: block;
     width: 100%;
-    border: 2px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: 12px;
     background: #fff;
     touch-action: none;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    cursor: crosshair;
+    min-height: 160px;
 }
-.scp-signature-canvas:focus,
-.scp-signature-canvas:hover {
-    border-color: #93c5fd;
+.scp-sig-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.78rem;
+    color: #94a3b8;
+    pointer-events: none;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.85);
+    padding: 4px 10px;
+    border-radius: 20px;
 }
+
+/* Aviso de rotar (solo visible en móvil retrato) */
+.scp-rotate-hint {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #92400e;
+    font-weight: 600;
+}
+
+/* FOOTER */
+.scp-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+.scp-btn-cancel {
+    padding: 9px 20px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+.scp-btn-cancel:hover { background: #f1f5f9; color: #1e293b; }
+.scp-btn-confirm {
+    padding: 9px 22px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: opacity 0.18s, transform 0.18s;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.scp-btn-confirm:hover { opacity: 0.92; transform: translateY(-1px); }
+.scp-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* ── RESPONSIVE MÓVIL ── */
+@media (max-width: 600px) {
+    .scp-modal-dialog-sm,
+    .scp-modal-dialog-sig {
+        max-width: 96vw;
+        margin: 12px auto;
+    }
+    .scp-modal-content { border-radius: 16px; }
+    .scp-modal-header { padding: 16px 16px; }
+    .scp-modal-body { padding: 18px 16px; }
+    .scp-modal-footer { padding: 14px 16px; }
+}
+
+/* En móvil vertical: mostrar aviso de rotación */
+@media (max-width: 600px) and (orientation: portrait) {
+    .scp-rotate-hint { display: flex; }
+    .scp-sig-canvas-wrap { min-height: 130px; }
+}
+
+/* En móvil horizontal: canvas ocupa toda la pantalla disponible */
+@media (max-width: 900px) and (orientation: landscape) {
+    .scp-modal-dialog-sig {
+        max-width: 98vw;
+        margin: 6px auto;
+    }
+    .scp-modal-body { padding: 12px 16px; }
+    .scp-signature-canvas { min-height: 200px; }
+    .scp-rotate-hint { display: none !important; }
+    .scp-modal-content { border-radius: 12px; }
+}
+
 
 @media print {
     body.print-thread-only {

@@ -416,73 +416,115 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
 
+    <!-- Modal 1: Elegir tipo de cierre -->
     <div class="modal fade" id="modalCloseChoiceScp" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header scp-close-modal-header">
-                    <h5 class="modal-title" id="modalCloseChoiceScpLabel">Cerrar Ticket #<?php echo html($t['ticket_number']); ?></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-dialog modal-dialog-centered scp-modal-dialog-sm">
+            <div class="modal-content scp-modal-content">
+                <div class="scp-modal-header">
+                    <div class="scp-modal-header-icon"><i class="bi bi-check2-circle"></i></div>
+                    <div class="scp-modal-header-text">
+                        <div class="scp-modal-header-title">Cerrar Ticket #<?php echo html($t['ticket_number']); ?></div>
+                        <div class="scp-modal-header-sub" id="closeChoiceStatusLabelScp"></div>
+                    </div>
+                    <button type="button" class="scp-modal-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
-                <div class="modal-body text-center scp-close-modal-body-choice">
-                    <p class="scp-close-modal-title">Como deseas cerrar este ticket?</p>
-                    <p class="text-muted mb-3" id="closeChoiceStatusLabelScp"></p>
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-primary" id="btnCloseWithSignatureScp">Con firma del cliente</button>
-                        <button type="button" class="btn btn-outline-secondary" id="btnCloseWithoutSignatureScp">Sin firma</button>
+                <div class="scp-modal-body scp-modal-body-choice">
+                    <p class="scp-choice-label">¿Cómo deseas cerrar este ticket?</p>
+                    <div class="scp-choice-buttons">
+                        <button type="button" class="scp-btn-choice scp-btn-choice-primary" id="btnCloseWithSignatureScp">
+                            <span class="scp-btn-choice-icon"><i class="bi bi-pen"></i></span>
+                            <span class="scp-btn-choice-text">
+                                <span class="scp-btn-choice-main">Con firma del cliente</span>
+                                <span class="scp-btn-choice-sub">El cliente firmará digitalmente</span>
+                            </span>
+                            <i class="bi bi-chevron-right scp-btn-choice-arrow"></i>
+                        </button>
+                        <button type="button" class="scp-btn-choice scp-btn-choice-ghost" id="btnCloseWithoutSignatureScp">
+                            <span class="scp-btn-choice-icon"><i class="bi bi-x-circle"></i></span>
+                            <span class="scp-btn-choice-text">
+                                <span class="scp-btn-choice-main">Sin firma</span>
+                                <span class="scp-btn-choice-sub">Cerrar sin conformidad del cliente</span>
+                            </span>
+                            <i class="bi bi-chevron-right scp-btn-choice-arrow"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal 2: Cerrar sin firma -->
     <div class="modal fade" id="modalCloseNoSignatureScp" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header scp-close-modal-header">
-                    <h5 class="modal-title">Cerrar sin firma</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-dialog modal-dialog-centered scp-modal-dialog-sm">
+            <div class="modal-content scp-modal-content">
+                <div class="scp-modal-header">
+                    <div class="scp-modal-header-icon scp-modal-header-icon-warn"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="scp-modal-header-text">
+                        <div class="scp-modal-header-title">Cerrar sin firma</div>
+                        <div class="scp-modal-header-sub">El ticket se cerrará sin conformidad</div>
+                    </div>
+                    <button type="button" class="scp-modal-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-2">Este ticket se cerrara sin firma del cliente.</p>
-                    <div class="alert alert-warning mb-0" style="font-size: 0.9rem;">Se enviara una notificacion interna a los agentes configurados.</div>
+                <div class="scp-modal-body">
+                    <div class="scp-nosig-info">
+                        <div class="scp-nosig-info-icon"><i class="bi bi-info-circle-fill"></i></div>
+                        <div>
+                            <p class="scp-nosig-info-title">Este ticket se cerrará sin firma del cliente.</p>
+                            <p class="scp-nosig-info-desc">Se enviará una notificación interna a los agentes configurados.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmCloseNoSigScp">Cerrar ticket</button>
+                <div class="scp-modal-footer">
+                    <button type="button" class="scp-btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="scp-btn-confirm" id="btnConfirmCloseNoSigScp"><i class="bi bi-check2-circle"></i> Cerrar ticket</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modal 3: Cerrar con firma -->
     <div class="modal fade" id="modalCloseWithSignatureScp" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header scp-close-modal-header">
-                    <h5 class="modal-title">Cerrar con firma</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal-dialog modal-lg modal-dialog-centered scp-modal-dialog-sig">
+            <div class="modal-content scp-modal-content">
+                <div class="scp-modal-header">
+                    <div class="scp-modal-header-icon"><i class="bi bi-vector-pen"></i></div>
+                    <div class="scp-modal-header-text">
+                        <div class="scp-modal-header-title">Firma del cliente</div>
+                        <div class="scp-modal-header-sub">Dibuje la firma en el área indicada</div>
+                    </div>
+                    <button type="button" class="scp-modal-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
                 </div>
-                <div class="modal-body">
+                <div class="scp-modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Motivo de cierre</label>
-                        <textarea id="closeMessageWithSigScp" class="form-control" rows="3" placeholder="Describe el motivo del cierre..."></textarea>
+                        <label class="scp-field-label">Motivo de cierre <span class="scp-field-optional">(opcional)</span></label>
+                        <textarea id="closeMessageWithSigScp" class="scp-textarea" rows="2" placeholder="Describe brevemente el motivo del cierre..."></textarea>
                     </div>
-                    <div>
-                        <label class="form-label fw-bold">Firma del cliente</label>
-                        <div class="d-flex gap-2 mb-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearSignatureScp">Limpiar firma</button>
+                    <div class="scp-sig-section">
+                        <div class="scp-sig-header">
+                            <label class="scp-field-label mb-0">Firma del cliente</label>
+                            <button type="button" class="scp-btn-clear" id="btnClearSignatureScp"><i class="bi bi-eraser"></i> Limpiar</button>
                         </div>
-                        <canvas id="signatureCanvasScp" width="700" height="220" class="scp-signature-canvas"></canvas>
+                        <div class="scp-sig-canvas-wrap" id="sigCanvasWrap">
+                            <canvas id="signatureCanvasScp" width="700" height="240" class="scp-signature-canvas"></canvas>
+                            <div class="scp-sig-hint"><i class="bi bi-pencil-fill"></i> Firme aquí con el dedo o el ratón</div>
+                        </div>
+                        <div class="scp-rotate-hint" id="scpRotateHint">
+                            <i class="bi bi-phone-landscape"></i>
+                            <span>Gira el teléfono horizontalmente para una mejor experiencia de firma</span>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmCloseWithSigScp">Cerrar ticket</button>
+                <div class="scp-modal-footer">
+                    <button type="button" class="scp-btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="scp-btn-confirm" id="btnConfirmCloseWithSigScp"><i class="bi bi-check2-circle"></i> Cerrar ticket</button>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Resumen del ticket -->
+
     <div class="ticket-view-overview">
         <div>
             <div class="field">
