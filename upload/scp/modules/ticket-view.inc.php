@@ -425,8 +425,17 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
                 </div>
             </div>
             <div class="field">
-                <label>Fuente</label>
-                <div class="value">Web</div>
+                <?php
+                $topicName = trim((string)($t['topic_name'] ?? ''));
+                $isRedesInformatica = (stripos($topicName, 'redes') !== false || stripos($topicName, 'informática') !== false || stripos($topicName, 'informatica') !== false);
+                ?>
+                <?php if ($isRedesInformatica): ?>
+                    <label>AnyDesk</label>
+                    <div class="value"><?php echo html($t['anydesk'] ?? '—'); ?></div>
+                <?php else: ?>
+                    <label>Fuente</label>
+                    <div class="value">Web</div>
+                <?php endif; ?>
             </div>
             <div class="field">
                 <label>Tema</label>
