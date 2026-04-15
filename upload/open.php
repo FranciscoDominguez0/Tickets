@@ -21,6 +21,48 @@ $success = '';
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
+if (!function_exists('normalizeTopicMatchValue')) {
+    function normalizeTopicMatchValue($value) {
+        $value = trim((string)$value);
+        if ($value === '') return '';
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if (is_string($ascii) && $ascii !== '') {
+            $value = $ascii;
+        }
+        if (function_exists('mb_strtolower')) {
+            $value = mb_strtolower($value, 'UTF-8');
+        } else {
+            $value = strtolower($value);
+        }
+        $value = preg_replace('/[^a-z0-9\s]/', ' ', $value);
+        $value = preg_replace('/\s+/', ' ', (string)$value);
+        return trim((string)$value);
+    }
+}
+
+if (!function_exists('isRedesInformaticaTopic')) {
+    function isRedesInformaticaTopic($topicName) {
+        $normalized = normalizeTopicMatchValue($topicName);
+        return $normalized !== '' && strpos($normalized, 'redes') !== false;
+    }
+}
+
+$anydesk = trim((string)($_POST['anydesk'] ?? ''));
+$requiresNetworkFields = false;
+$userPhone = trim((string)($user['phone'] ?? ''));
+if ($userPhone === '' && (int)($_SESSION['user_id'] ?? 0) > 0) {
+    $stmtPhone = $mysqli->prepare('SELECT phone FROM users WHERE id = ? LIMIT 1');
+    if ($stmtPhone) {
+        $uidPhone = (int)$_SESSION['user_id'];
+        $stmtPhone->bind_param('i', $uidPhone);
+        if ($stmtPhone->execute()) {
+            $phoneRow = $stmtPhone->get_result()->fetch_assoc();
+            $userPhone = trim((string)($phoneRow['phone'] ?? ''));
+        }
+    }
+}
+$hasUserPhone = ($userPhone !== '');
+
 if ($_POST) {
     if (!validateCSRF()) {
         $error = 'Token de seguridad inválido';
@@ -29,6 +71,7 @@ if ($_POST) {
         $body = trim($_POST['body'] ?? '');
         $topic_id = intval($_POST['topic_id'] ?? 0);
         $dept_id = intval($_POST['dept_id'] ?? 0);
+        $anydesk = trim((string)($_POST['anydesk'] ?? ''));
         $hasFiles = !empty($_FILES['attachments']['name'][0]);
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
@@ -102,6 +145,17 @@ if ($_POST) {
             }
         }
 
+        if ($topic_id > 0) {
+            $stmtTopicName = $mysqli->prepare('SELECT name FROM help_topics WHERE id = ? AND empresa_id = ? LIMIT 1');
+            if ($stmtTopicName) {
+                $stmtTopicName->bind_param('ii', $topic_id, $eid);
+                if ($stmtTopicName->execute()) {
+                    $topicRow = $stmtTopicName->get_result()->fetch_assoc();
+                    $requiresNetworkFields = isRedesInformaticaTopic($topicRow['name'] ?? '');
+                }
+            }
+        }
+
         // Fallback final
         if ($dept_id <= 0) {
             $fallbackDept = 0;
@@ -155,6 +209,10 @@ if ($_POST) {
 
         if ($hasTopicsTable && $hasTopicCol && $defaultHelpTopic <= 0 && $topic_id <= 0) {
             $error = 'Debes seleccionar un tema.';
+        } elseif (!$hasUserPhone) {
+            $error = 'Debes registrar tu teléfono en tu perfil antes de crear un ticket.';
+        } elseif ($requiresNetworkFields && $anydesk === '') {
+            $error = 'Para temas de Redes Informática debes completar Anydesk.';
         } elseif (empty($subject) || $isBodyEmpty) {
             $error = 'Asunto y descripción son requeridos';
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
@@ -373,6 +431,22 @@ if ($_POST) {
             
             if ($stmt->execute()) {
                 $ticket_id = $mysqli->insert_id;
+
+                $hasAnydeskCol = false;
+                $colAnydesk = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'anydesk'");
+                if ($colAnydesk && $colAnydesk->num_rows > 0) $hasAnydeskCol = true;
+
+                if (!$requiresNetworkFields) {
+                    $anydesk = '';
+                }
+
+                if ($hasAnydeskCol) {
+                    $stmtExtra = $mysqli->prepare('UPDATE tickets SET anydesk = ? WHERE id = ? LIMIT 1');
+                    if ($stmtExtra) {
+                        $stmtExtra->bind_param('si', $anydesk, $ticket_id);
+                        $stmtExtra->execute();
+                    }
+                }
                 
                 // Crear thread y primer mensaje
                 $stmt2 = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
@@ -951,6 +1025,12 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 <div class="alert alert-success"><?php echo html($success); ?></div>
             <?php endif; ?>
 
+            <?php if (!$hasUserPhone): ?>
+                <div class="alert alert-warning">
+                    Debes registrar tu teléfono en tu perfil antes de crear un ticket.
+                </div>
+            <?php endif; ?>
+
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
@@ -978,6 +1058,15 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 </div>
                 <?php endif; ?>
 
+                <div id="network-extra-fields" class="mb-3" style="display: none;">
+                    <label for="anydesk" class="form-label">Anydesk</label>
+                    <input type="text" class="form-control" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="telefono_display" class="form-label">Teléfono registrado</label>
+                    <input type="text" class="form-control" id="telefono_display" value="<?php echo html($userPhone !== '' ? $userPhone : 'No registrado'); ?>" readonly disabled>
+                </div>
+
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
                     <textarea class="form-control" id="body" name="body" rows="8"><?php echo html($body ?? ''); ?></textarea>
@@ -991,7 +1080,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                <button id="open-ticket-submit" type="submit" class="btn btn-primary">Crear Ticket</button>
+                <button id="open-ticket-submit" type="submit" class="btn btn-primary" <?php echo !$hasUserPhone ? 'disabled' : ''; ?>>Crear Ticket</button>
                 <a href="tickets.php" class="btn btn-secondary">Cancelar</a>
             </form>
                 </div>
@@ -1190,6 +1279,41 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             var fileInput = document.getElementById('attachments');
             var topicSelect = document.getElementById('topic_id');
             var editor = document.getElementById('body');
+            var extraFieldsWrap = document.getElementById('network-extra-fields');
+            var anydeskInput = document.getElementById('anydesk');
+            var hasUserPhone = <?php echo $hasUserPhone ? 'true' : 'false'; ?>;
+
+            var normalizeTopicText = function (value) {
+                var text = (value || '').toString().trim().toLowerCase();
+                if (text.normalize) {
+                    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                }
+                text = text.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                return text;
+            };
+
+            var isNetworkTopicSelected = function () {
+                if (!topicSelect) return false;
+                var idx = topicSelect.selectedIndex;
+                if (idx < 0) return false;
+                var option = topicSelect.options[idx];
+                var topicText = normalizeTopicText(option ? option.text : '');
+                return topicText.indexOf('redes') !== -1;
+            };
+
+            var toggleNetworkFields = function () {
+                var shouldShow = isNetworkTopicSelected();
+                if (!extraFieldsWrap) return shouldShow;
+                extraFieldsWrap.style.display = shouldShow ? '' : 'none';
+                if (anydeskInput) anydeskInput.required = shouldShow;
+                if (anydeskInput) anydeskInput.disabled = !shouldShow;
+                return shouldShow;
+            };
+
+            if (topicSelect) {
+                topicSelect.addEventListener('change', toggleNetworkFields);
+            }
+            toggleNetworkFields();
 
             var focusEditor = function () {
                 try {
@@ -1220,6 +1344,37 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                         }
                         try { topicSelect.focus(); } catch (e0) {}
                         return false;
+                    }
+
+                    if (!hasUserPhone) {
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        if (window.__showCreativePop) {
+                            window.__showCreativePop('Debes registrar tu teléfono en tu perfil antes de crear un ticket.', 'Teléfono no registrado');
+                        } else {
+                            alert('Debes registrar tu teléfono en tu perfil antes de crear un ticket.');
+                        }
+                        return false;
+                    }
+
+                    var needsNetworkFields = toggleNetworkFields();
+                    if (needsNetworkFields) {
+                        var anydeskValue = anydeskInput ? String(anydeskInput.value || '').trim() : '';
+                        if (anydeskValue === '') {
+                            if (ev && ev.preventDefault) ev.preventDefault();
+                            if (ev && ev.stopPropagation) ev.stopPropagation();
+                            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                            if (window.__showCreativePop) {
+                                window.__showCreativePop('Para el tema Redes Informática debes completar Anydesk.', 'Campo obligatorio');
+                            } else {
+                                alert('Para el tema Redes Informática debes completar Anydesk.');
+                            }
+                            try {
+                                if (anydeskInput) anydeskInput.focus();
+                            } catch (e5) {}
+                            return false;
+                        }
                     }
 
                     var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;

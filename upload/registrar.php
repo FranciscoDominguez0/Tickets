@@ -22,6 +22,12 @@ if (isset($_SESSION['user_id'])) {
 $error = '';
 $success = '';
 
+if (!function_exists('normalizePhoneDigits')) {
+    function normalizePhoneDigits($value) {
+        return preg_replace('/\D+/', '', (string)$value);
+    }
+}
+
 if ($_POST) {
     if (!validateCSRF()) {
         $error = 'Token de seguridad inválido';
@@ -31,13 +37,16 @@ if ($_POST) {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
-        $phone = '';
+        $phone_raw = trim((string)($_POST['phone'] ?? ''));
+        $phone_digits = normalizePhoneDigits($phone_raw);
 
         // Validaciones
-        if (!$firstname || !$lastname || !$email || !$password) {
-            $error = 'Nombre, apellido, email y contraseña son requeridos';
+        if (!$firstname || !$lastname || !$email || !$password || $phone_raw === '') {
+            $error = 'Nombre, apellido, email, teléfono y contraseña son requeridos';
         } elseif (!isValidEmail($email)) {
             $error = 'Email no válido';
+        } elseif (!preg_match('/^\d{7,15}$/', $phone_digits)) {
+            $error = 'El teléfono debe contener solo números y tener entre 7 y 15 dígitos.';
         } elseif (strlen($password) < 6) {
             $error = 'Contraseña debe tener al menos 6 caracteres';
         } elseif ($password !== $password_confirm) {
@@ -61,7 +70,7 @@ if ($_POST) {
                      VALUES (?, ?, ?, ?, ?, ?, "active", NOW())'
                 );
                 $company = '';
-                $stmt->bind_param('ssssss', $firstname, $lastname, $email, $password_hash, $company, $phone);
+                $stmt->bind_param('ssssss', $firstname, $lastname, $email, $password_hash, $company, $phone_digits);
 
                 if ($stmt->execute()) {
                     $success = 'Registro exitoso! Redirigiendo al login...';
@@ -196,6 +205,23 @@ $bodyStyle = $loginBg !== ''
                             </div>
 
                             <div class="form-group">
+                                <label for="phone">Teléfono</label>
+                                <input
+                                    type="tel"
+                                    id="phone"
+                                    name="phone"
+                                    placeholder="Solo números"
+                                    value="<?php echo html($_POST['phone'] ?? ''); ?>"
+                                    inputmode="numeric"
+                                    pattern="\d{7,15}"
+                                    minlength="7"
+                                    maxlength="15"
+                                    required
+                                >
+                                <small>Entre 7 y 15 dígitos numéricos.</small>
+                            </div>
+
+                            <div class="form-group">
                                 <label for="password_confirm">Confirmar Contraseña</label>
                                 <input 
                                     type="password" 
@@ -227,6 +253,17 @@ $bodyStyle = $loginBg !== ''
 
     <script>
         document.querySelector('form').addEventListener('submit', function(e) {
+            var phoneInput = this.querySelector('#phone');
+            var phoneDigits = (phoneInput && phoneInput.value ? phoneInput.value : '').replace(/\D+/g, '');
+            if (!/^\d{7,15}$/.test(phoneDigits)) {
+                e.preventDefault();
+                alert('El teléfono es obligatorio y debe tener entre 7 y 15 números.');
+                if (phoneInput) phoneInput.focus();
+                return false;
+            }
+            if (phoneInput) {
+                phoneInput.value = phoneDigits;
+            }
             const btn = this.querySelector('.btn-login');
             if (btn.disabled) {
                 e.preventDefault();

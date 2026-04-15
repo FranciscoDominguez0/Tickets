@@ -42,8 +42,7 @@ function requireLogin($type = 'user') {
         $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
         if ($empresaId > 0 && isset($mysqli) && $mysqli) {
             try {
-                $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-                $hasEmpresas = ($res && $res->num_rows > 0);
+                $hasEmpresas = dbTableExists('empresas');
                 if ($hasEmpresas) {
                     $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo FROM empresas WHERE id = ? LIMIT 1');
                     if ($q) {
@@ -116,7 +115,24 @@ function requireLogin($type = 'user') {
                 }
             }
             $fpNow = hash('sha256', 'cliente|' . $ua . '|' . $ipPrefix);
-            if (!hash_equals((string)$_SESSION['session_fp'], $fpNow)) {
+            $browser = 'unknown';
+            if (preg_match('~edg/(\d+)~i', $ua, $m)) {
+                $browser = 'edge-' . (string)$m[1];
+            } elseif (preg_match('~chrome/(\d+)~i', $ua, $m)) {
+                $browser = 'chrome-' . (string)$m[1];
+            } elseif (preg_match('~firefox/(\d+)~i', $ua, $m)) {
+                $browser = 'firefox-' . (string)$m[1];
+            } elseif (preg_match('~version/(\d+).+safari~i', $ua, $m)) {
+                $browser = 'safari-' . (string)$m[1];
+            } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
+                $browser = 'safari-' . (string)$m[1];
+            }
+            $fpNowRelaxed = hash('sha256', 'cliente|' . $browser . '|' . $ipPrefix);
+            $fpStored = (string)($_SESSION['session_fp'] ?? '');
+            $fpStoredRelaxed = (string)($_SESSION['session_fp_relaxed'] ?? '');
+            $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
+            $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
+            if (!$fpStrictOk && !$fpRelaxedOk) {
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
@@ -199,8 +215,7 @@ function requireLogin($type = 'user') {
         }
         if ($empresaId > 0 && isset($mysqli) && $mysqli) {
             try {
-                $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-                $hasEmpresas = ($res && $res->num_rows > 0);
+                $hasEmpresas = dbTableExists('empresas');
                 if ($hasEmpresas) {
                     $q = $mysqli->prepare('SELECT bloqueada, motivo_bloqueo, estado_pago, fecha_vencimiento FROM empresas WHERE id = ? LIMIT 1');
                     if ($q) {
@@ -303,7 +318,24 @@ function requireLogin($type = 'user') {
                 }
             }
             $fpNow = hash('sha256', 'agente|' . $ua . '|' . $ipPrefix);
-            if (!hash_equals((string)$_SESSION['session_fp'], $fpNow)) {
+            $browser = 'unknown';
+            if (preg_match('~edg/(\d+)~i', $ua, $m)) {
+                $browser = 'edge-' . (string)$m[1];
+            } elseif (preg_match('~chrome/(\d+)~i', $ua, $m)) {
+                $browser = 'chrome-' . (string)$m[1];
+            } elseif (preg_match('~firefox/(\d+)~i', $ua, $m)) {
+                $browser = 'firefox-' . (string)$m[1];
+            } elseif (preg_match('~version/(\d+).+safari~i', $ua, $m)) {
+                $browser = 'safari-' . (string)$m[1];
+            } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
+                $browser = 'safari-' . (string)$m[1];
+            }
+            $fpNowRelaxed = hash('sha256', 'agente|' . $browser . '|' . $ipPrefix);
+            $fpStored = (string)($_SESSION['session_fp'] ?? '');
+            $fpStoredRelaxed = (string)($_SESSION['session_fp_relaxed'] ?? '');
+            $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
+            $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
+            if (!$fpStrictOk && !$fpRelaxedOk) {
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
@@ -390,8 +422,7 @@ function syncEmpresaBillingStatus($empresaId) {
     }
 
     try {
-        $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-        $hasEmpresas = ($res && $res->num_rows > 0);
+        $hasEmpresas = dbTableExists('empresas');
         if (!$hasEmpresas) return false;
 
         $stmt = $mysqli->prepare('SELECT estado_pago, bloqueada, fecha_vencimiento FROM empresas WHERE id = ? LIMIT 1');
@@ -455,8 +486,7 @@ function syncAllEmpresasBillingStatus() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;
     try {
-        $res = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-        $hasEmpresas = ($res && $res->num_rows > 0);
+        $hasEmpresas = dbTableExists('empresas');
         if (!$hasEmpresas) return false;
 
         $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
@@ -524,12 +554,9 @@ function sendBillingDueNotifications() {
 
         if (!ensureBillingNoticeLogTable()) return false;
 
-        $resE = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-        if (!$resE || $resE->num_rows <= 0) return false;
-        $resS = $mysqli->query("SHOW TABLES LIKE 'staff'");
-        if (!$resS || $resS->num_rows <= 0) return false;
-        $resN = $mysqli->query("SHOW TABLES LIKE 'notifications'");
-        if (!$resN || $resN->num_rows <= 0) return false;
+        if (!dbTableExists('empresas')) return false;
+        if (!dbTableExists('staff')) return false;
+        if (!dbTableExists('notifications')) return false;
 
         $daysRaw = trim((string)getAppSetting('billing.notice_days', '3'));
         $daysList = [];
@@ -547,8 +574,7 @@ function sendBillingDueNotifications() {
         $msgTpl = trim((string)getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
 
         $hasStaffEmpresa = false;
-        $col = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $hasStaffEmpresa = ($col && $col->num_rows > 0);
+        $hasStaffEmpresa = dbColumnExists('staff', 'empresa_id');
         if (!$hasStaffEmpresa) return false;
 
         $in = implode(',', array_map('intval', $days));
@@ -621,6 +647,74 @@ function empresaId() {
     $eid = (int)($_SESSION['empresa_id'] ?? 1);
     if ($eid <= 0) $eid = 1;
     return $eid;
+}
+
+function dbTableExists($tableName, $ttlSeconds = 300) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $tableName = trim((string)$tableName);
+    if ($tableName === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) return false;
+    $ttlSeconds = max(5, (int)$ttlSeconds);
+
+    static $runtimeCache = [];
+    $cacheKey = 'tbl:' . strtolower($tableName);
+    $now = time();
+    if (isset($runtimeCache[$cacheKey]) && ($now - (int)$runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
+        return (bool)$runtimeCache[$cacheKey]['ok'];
+    }
+
+    if (!isset($_SESSION['_dbmeta_cache']) || !is_array($_SESSION['_dbmeta_cache'])) {
+        $_SESSION['_dbmeta_cache'] = [];
+    }
+    if (isset($_SESSION['_dbmeta_cache'][$cacheKey])) {
+        $hit = $_SESSION['_dbmeta_cache'][$cacheKey];
+        if (is_array($hit) && ($now - (int)($hit['ts'] ?? 0)) <= $ttlSeconds) {
+            $ok = (bool)($hit['ok'] ?? false);
+            $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
+            return $ok;
+        }
+    }
+
+    $res = $mysqli->query("SHOW TABLES LIKE '" . $mysqli->real_escape_string($tableName) . "'");
+    $ok = (bool)($res && $res->num_rows > 0);
+    $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
+    $_SESSION['_dbmeta_cache'][$cacheKey] = ['ts' => $now, 'ok' => $ok];
+    return $ok;
+}
+
+function dbColumnExists($tableName, $columnName, $ttlSeconds = 300) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+    $tableName = trim((string)$tableName);
+    $columnName = trim((string)$columnName);
+    if ($tableName === '' || $columnName === '') return false;
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName) || !preg_match('/^[a-zA-Z0-9_]+$/', $columnName)) return false;
+    $ttlSeconds = max(5, (int)$ttlSeconds);
+
+    static $runtimeCache = [];
+    $cacheKey = 'col:' . strtolower($tableName) . ':' . strtolower($columnName);
+    $now = time();
+    if (isset($runtimeCache[$cacheKey]) && ($now - (int)$runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
+        return (bool)$runtimeCache[$cacheKey]['ok'];
+    }
+
+    if (!isset($_SESSION['_dbmeta_cache']) || !is_array($_SESSION['_dbmeta_cache'])) {
+        $_SESSION['_dbmeta_cache'] = [];
+    }
+    if (isset($_SESSION['_dbmeta_cache'][$cacheKey])) {
+        $hit = $_SESSION['_dbmeta_cache'][$cacheKey];
+        if (is_array($hit) && ($now - (int)($hit['ts'] ?? 0)) <= $ttlSeconds) {
+            $ok = (bool)($hit['ok'] ?? false);
+            $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
+            return $ok;
+        }
+    }
+
+    $res = $mysqli->query("SHOW COLUMNS FROM `" . $mysqli->real_escape_string($tableName) . "` LIKE '" . $mysqli->real_escape_string($columnName) . "'");
+    $ok = (bool)($res && $res->num_rows > 0);
+    $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
+    $_SESSION['_dbmeta_cache'][$cacheKey] = ['ts' => $now, 'ok' => $ok];
+    return $ok;
 }
 
 // Validar CSRF
@@ -886,14 +980,12 @@ function ensureAppSettingsTable() {
     }
 
     $hasEmpresa = false;
-    $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-    $hasEmpresa = ($col && $col->num_rows > 0);
+    $hasEmpresa = dbColumnExists('app_settings', 'empresa_id');
     if (!$hasEmpresa) {
         $mysqli->query("ALTER TABLE app_settings ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
     }
 
-    $col2 = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-    $hasEmpresa2 = ($col2 && $col2->num_rows > 0);
+    $hasEmpresa2 = dbColumnExists('app_settings', 'empresa_id');
     if ($hasEmpresa2) {
         $primaryCols = [];
         $idx = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'PRIMARY'");
@@ -934,8 +1026,14 @@ function getAppSetting($key, $default = null) {
 
     static $hasEmpresa = null;
     if ($hasEmpresa === null) {
-        $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-        $hasEmpresa = ($col && $col->num_rows > 0);
+        $hasEmpresa = dbColumnExists('app_settings', 'empresa_id');
+    }
+
+    static $valueCache = [];
+    $cacheScope = $hasEmpresa ? ('e' . empresaId()) : 'global';
+    $cacheKey = $cacheScope . ':' . $key;
+    if (array_key_exists($cacheKey, $valueCache)) {
+        return $valueCache[$cacheKey];
     }
 
     if ($hasEmpresa) {
@@ -951,7 +1049,8 @@ function getAppSetting($key, $default = null) {
     if (!$stmt) return $default;
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return $row ? ($row['value'] ?? $default) : $default;
+    $valueCache[$cacheKey] = $row ? ($row['value'] ?? $default) : $default;
+    return $valueCache[$cacheKey];
 }
 
 function setAppSetting($key, $value) {
@@ -963,22 +1062,26 @@ function setAppSetting($key, $value) {
 
     static $hasEmpresa = null;
     if ($hasEmpresa === null) {
-        $col = $mysqli->query("SHOW COLUMNS FROM app_settings LIKE 'empresa_id'");
-        $hasEmpresa = ($col && $col->num_rows > 0);
+        $hasEmpresa = dbColumnExists('app_settings', 'empresa_id');
     }
 
+    static $valueCache = [];
     if ($hasEmpresa) {
         $eid = empresaId();
         $stmt = $mysqli->prepare('INSERT INTO app_settings (`empresa_id`, `key`, `value`, `updated`) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
         if (!$stmt) return false;
         $stmt->bind_param('iss', $eid, $key, $value);
-        return $stmt->execute();
+        $ok = $stmt->execute();
+        if ($ok) $valueCache['e' . $eid . ':' . $key] = $value;
+        return $ok;
     }
 
     $stmt = $mysqli->prepare('INSERT INTO app_settings (`key`, `value`, `updated`) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
     if (!$stmt) return false;
     $stmt->bind_param('ss', $key, $value);
-    return $stmt->execute();
+    $ok = $stmt->execute();
+    if ($ok) $valueCache['global:' . $key] = $value;
+    return $ok;
 }
 
 function toAppAbsoluteUrl($path) {
@@ -1116,8 +1219,7 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     $user_id = ($user_id !== null && is_numeric($user_id)) ? (int)$user_id : null;
 
     $hasEmpresa = false;
-    $col = $mysqli->query("SHOW COLUMNS FROM logs LIKE 'empresa_id'");
-    $hasEmpresa = ($col && $col->num_rows > 0);
+    $hasEmpresa = dbColumnExists('logs', 'empresa_id');
 
     if ($hasEmpresa) {
         $eid = empresaId();
@@ -1152,8 +1254,7 @@ function ensureRolePermissionsTable() {
     $ok = (bool)$mysqli->query($sql);
 
     try {
-        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
-        $hasEmpresaId = ($res && $res->num_rows > 0);
+        $hasEmpresaId = dbColumnExists('role_permissions', 'empresa_id');
         if (!$hasEmpresaId) {
             $mysqli->query("ALTER TABLE role_permissions ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
             $mysqli->query("ALTER TABLE role_permissions ADD INDEX idx_role_perm_empresa (empresa_id, role_name)");
@@ -1214,8 +1315,7 @@ function roleHasPermission($permKey) {
     $eid = empresaId();
     $hasEmpresa = false;
     try {
-        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
-        $hasEmpresa = ($res && $res->num_rows > 0);
+        $hasEmpresa = dbColumnExists('role_permissions', 'empresa_id');
     } catch (Throwable $e) {
         $hasEmpresa = false;
     }
@@ -1250,8 +1350,7 @@ function roleHasAnyPermissionPrefix($prefix) {
     $eid = empresaId();
     $hasEmpresa = false;
     try {
-        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
-        $hasEmpresa = ($res && $res->num_rows > 0);
+        $hasEmpresa = dbColumnExists('role_permissions', 'empresa_id');
     } catch (Throwable $e) {
         $hasEmpresa = false;
     }

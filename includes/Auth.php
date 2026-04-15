@@ -50,6 +50,25 @@ class Auth {
         $ipPrefix = self::sessionIpPrefix($ip);
         return hash('sha256', (string)$userType . '|' . $ua . '|' . $ipPrefix);
     }
+
+    private static function sessionFingerprintRelaxed($userType) {
+        $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
+        $browser = 'unknown';
+        if (preg_match('~edg/(\d+)~i', $ua, $m)) {
+            $browser = 'edge-' . (string)$m[1];
+        } elseif (preg_match('~chrome/(\d+)~i', $ua, $m)) {
+            $browser = 'chrome-' . (string)$m[1];
+        } elseif (preg_match('~firefox/(\d+)~i', $ua, $m)) {
+            $browser = 'firefox-' . (string)$m[1];
+        } elseif (preg_match('~version/(\d+).+safari~i', $ua, $m)) {
+            $browser = 'safari-' . (string)$m[1];
+        } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
+            $browser = 'safari-' . (string)$m[1];
+        }
+        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ipPrefix = self::sessionIpPrefix($ip);
+        return hash('sha256', (string)$userType . '|' . $browser . '|' . $ipPrefix);
+    }
     /**
      * Hash de contraseña con bcrypt
      */
@@ -219,6 +238,7 @@ class Auth {
         $_SESSION['empresa_id'] = (int)($user['empresa_id'] ?? 1);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('cliente');
+        $_SESSION['session_fp_relaxed'] = self::sessionFingerprintRelaxed('cliente');
 
         return $user;
     }
@@ -404,6 +424,7 @@ class Auth {
         $_SESSION['empresa_id'] = (int)($staff['empresa_id'] ?? 1);
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('agente');
+        $_SESSION['session_fp_relaxed'] = self::sessionFingerprintRelaxed('agente');
 
         $sid = (int)$staff['id'];
         if ($sid > 0) {
