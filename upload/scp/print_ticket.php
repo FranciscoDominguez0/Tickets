@@ -75,6 +75,19 @@ if ($userName === '') $userName = (string)($t['user_email'] ?? '');
 $staffName = trim((string)($t['staff_first'] ?? '') . ' ' . (string)($t['staff_last'] ?? ''));
 if ($staffName === '') $staffName = '— Sin asignar —';
 
+$ticketClientSignatureUrl = '';
+$ticketClientSignaturePath = trim((string)($t['client_signature'] ?? ''));
+if ($ticketClientSignaturePath !== '') {
+    $projectRoot = realpath(dirname(__DIR__, 2));
+    $sigPath = ltrim(str_replace('\\', '/', $ticketClientSignaturePath), '/');
+    if ($projectRoot !== false && str_starts_with($sigPath, 'firmas/')) {
+        $fullSigPath = $projectRoot . '/' . $sigPath;
+        if (is_file($fullSigPath)) {
+            $ticketClientSignatureUrl = toAppAbsoluteUrl($sigPath) . '?v=' . (string)@filemtime($fullSigPath);
+        }
+    }
+}
+
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
@@ -123,11 +136,19 @@ if ($staffName === '') $staffName = '— Sin asignar —';
         .tag{display:inline-flex; align-items:center; gap:6px; font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#92400e; margin-left:10px;}
 
         .footer{margin-top: 10px; color: var(--muted); font-weight:700; font-size: 12px; text-align:center;}
+        .closed-note{margin-top:12px; border:1px solid var(--line); border-radius:12px; background:#f8fafc; padding:10px 12px;}
+        .closed-note .k{font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px;}
+        .closed-note .v{white-space:pre-wrap; word-break:break-word;}
+        .sig-box{margin-top:10px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
+        .sig-title{padding:8px 12px; border-bottom:1px solid var(--line); background:#f8fafc; font-weight:800; color:#334155;}
+        .sig-body{padding:12px;}
+        .sig-img{display:block; max-width:100%; max-height:240px; width:auto; height:auto; border:1px solid #cbd5e1; border-radius:8px; background:#fff;}
 
         @media print{
             .sheet{max-width:none; margin:0; padding:0;}
             .entry{page-break-inside: avoid;}
             .summary{break-inside: avoid;}
+            .closed-note, .sig-box{page-break-inside: avoid;}
         }
     </style>
 </head>
@@ -158,8 +179,25 @@ if ($staffName === '') $staffName = '— Sin asignar —';
             <div class="kv"><div class="k">Prioridad</div><div class="v"><?php echo html((string)($t['priority_name'] ?? '')); ?></div></div>
             <div class="kv"><div class="k">Asignado</div><div class="v"><?php echo html($staffName); ?></div></div>
             <div class="kv"><div class="k">Creado</div><div class="v"><?php echo !empty($t['created']) ? html(date('d/m/Y H:i', strtotime((string)$t['created']))) : '—'; ?></div></div>
+            <div class="kv"><div class="k">Cerrado</div><div class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y H:i', strtotime((string)$t['closed']))) : '—'; ?></div></div>
         </div>
     </div>
+
+    <?php if (!empty($t['close_message'])): ?>
+        <div class="closed-note">
+            <div class="k">Motivo de cierre</div>
+            <div class="v"><?php echo nl2br(html((string)$t['close_message'])); ?></div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($ticketClientSignatureUrl !== ''): ?>
+        <div class="sig-box">
+            <div class="sig-title">Firma del cliente</div>
+            <div class="sig-body">
+                <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="sig-img">
+            </div>
+        </div>
+    <?php endif; ?>
 
     <div class="thread">
         <?php if (empty($entries)): ?>

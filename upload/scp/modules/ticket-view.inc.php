@@ -61,6 +61,19 @@ if ($backUrl === '') {
 }
 
 $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
+
+$ticketClientSignatureUrl = '';
+$ticketClientSignaturePath = trim((string)($t['client_signature'] ?? ''));
+if ($ticketClientSignaturePath !== '') {
+    $projectRoot = realpath(dirname(__DIR__, 3));
+    $sigPath = ltrim(str_replace('\\', '/', $ticketClientSignaturePath), '/');
+    if ($projectRoot !== false && str_starts_with($sigPath, 'firmas/')) {
+        $fullSigPath = $projectRoot . '/' . $sigPath;
+        if (is_file($fullSigPath)) {
+            $ticketClientSignatureUrl = toAppAbsoluteUrl($sigPath) . '?v=' . (string)@filemtime($fullSigPath);
+        }
+    }
+}
 ?>
 
 <div class="ticket-view-wrap">
@@ -106,8 +119,16 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
                         $allowed = $isClosing ? $canTicketClose : $canTicketEdit;
                         ?>
                         <li>
-                            <a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?>"
-                               <?php echo $allowed ? ('href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"') : 'href="#" tabindex="-1" aria-disabled="true"'; ?>>
+                            <a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?> <?php echo ($allowed && $isClosing) ? 'js-status-close' : ''; ?>"
+                               <?php
+                               if ($allowed && $isClosing) {
+                                   echo 'href="#" data-close-status-id="' . (int)$row['id'] . '" data-close-status-name="' . html($row['name']) . '"';
+                               } elseif ($allowed) {
+                                   echo 'href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"';
+                               } else {
+                                   echo 'href="#" tabindex="-1" aria-disabled="true"';
+                               }
+                               ?>>
                                 <?php echo html($row['name']); ?>
                             </a>
                         </li>
@@ -395,6 +416,72 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
         </div>
     </div>
 
+    <div class="modal fade" id="modalCloseChoiceScp" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header scp-close-modal-header">
+                    <h5 class="modal-title" id="modalCloseChoiceScpLabel">Cerrar Ticket #<?php echo html($t['ticket_number']); ?></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center scp-close-modal-body-choice">
+                    <p class="scp-close-modal-title">Como deseas cerrar este ticket?</p>
+                    <p class="text-muted mb-3" id="closeChoiceStatusLabelScp"></p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" id="btnCloseWithSignatureScp">Con firma del cliente</button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCloseWithoutSignatureScp">Sin firma</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCloseNoSignatureScp" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header scp-close-modal-header">
+                    <h5 class="modal-title">Cerrar sin firma</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Este ticket se cerrara sin firma del cliente.</p>
+                    <div class="alert alert-warning mb-0" style="font-size: 0.9rem;">Se enviara una notificacion interna a los agentes configurados.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmCloseNoSigScp">Cerrar ticket</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCloseWithSignatureScp" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header scp-close-modal-header">
+                    <h5 class="modal-title">Cerrar con firma</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motivo de cierre</label>
+                        <textarea id="closeMessageWithSigScp" class="form-control" rows="3" placeholder="Describe el motivo del cierre..."></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold">Firma del cliente</label>
+                        <div class="d-flex gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearSignatureScp">Limpiar firma</button>
+                        </div>
+                        <canvas id="signatureCanvasScp" width="700" height="220" class="scp-signature-canvas"></canvas>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnConfirmCloseWithSigScp">Cerrar ticket</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Resumen del ticket -->
     <div class="ticket-view-overview">
         <div>
@@ -618,6 +705,22 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
                     <?php echo !empty($ticket_closed_info['at']) ? date('d/m/y H:i', strtotime($ticket_closed_info['at'])) : ''; ?>
                 </div>
             </div>
+
+            <?php if (!empty($t['close_message'])): ?>
+                <div class="ticket-close-note">
+                    <div class="ticket-close-note-title">Motivo de cierre</div>
+                    <div class="ticket-close-note-body"><?php echo nl2br(html((string)$t['close_message'])); ?></div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($ticketClientSignatureUrl !== ''): ?>
+                <div class="ticket-signature-print-box">
+                    <div class="ticket-signature-print-title">Firma del cliente</div>
+                    <div class="ticket-signature-print-body">
+                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="ticket-signature-print-image">
+                    </div>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 
@@ -667,6 +770,14 @@ $backUrlFinal = ($backUrl !== '' ? $backUrl : 'tickets.php');
                 <strong>De:</strong> <?php echo html($staff['name'] ?? 'Agente'); ?> &lt;<?php echo html($staff['email'] ?? ''); ?>&gt;<br>
                 <strong>Destinatarios:</strong> <?php echo html($t['user_name']); ?> &lt;<?php echo html($t['user_email']); ?>&gt;
             </div>
+
+            <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
+                <div class="reply-buttons mt-3">
+                    <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
+                        <i class="bi bi-check2-circle"></i> Cerrar ticket
+                    </button>
+                </div>
+            <?php endif; ?>
         </form>
     </div>
 </div>
@@ -1000,6 +1111,217 @@ document.addEventListener('DOMContentLoaded', function() {
                 ownerSearch.value = '';
                 setOwnerSelected('', '');
                 lastOwnerQuery = '';
+            });
+        }
+    }
+
+    var ticketId = <?php echo (int)$tid; ?>;
+    var csrfToken = <?php echo json_encode($_SESSION['csrf_token'] ?? ''); ?>;
+    var closingStatusId = 0;
+    var closingStatusName = '';
+    var isClosingRequestBusy = false;
+
+    var modalChoiceEl = document.getElementById('modalCloseChoiceScp');
+    var modalNoSigEl = document.getElementById('modalCloseNoSignatureScp');
+    var modalWithSigEl = document.getElementById('modalCloseWithSignatureScp');
+    var modalChoice = (modalChoiceEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalChoiceEl) : null;
+    var modalNoSig = (modalNoSigEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalNoSigEl) : null;
+    var modalWithSig = (modalWithSigEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalWithSigEl) : null;
+
+    var closeStatusLabel = document.getElementById('closeChoiceStatusLabelScp');
+    var btnWithSig = document.getElementById('btnCloseWithSignatureScp');
+    var btnWithoutSig = document.getElementById('btnCloseWithoutSignatureScp');
+    var btnConfirmNoSig = document.getElementById('btnConfirmCloseNoSigScp');
+    var btnConfirmWithSig = document.getElementById('btnConfirmCloseWithSigScp');
+    var btnCloseTicketBottom = document.getElementById('btnCloseTicketBottom');
+
+    var canvas = document.getElementById('signatureCanvasScp');
+    var ctx = canvas ? canvas.getContext('2d') : null;
+    var drawing = false;
+    var hasDrawn = false;
+    var lastX = 0;
+    var lastY = 0;
+
+    function setBusy(isBusy) {
+        isClosingRequestBusy = isBusy;
+        if (btnConfirmNoSig) btnConfirmNoSig.disabled = isBusy;
+        if (btnConfirmWithSig) btnConfirmWithSig.disabled = isBusy;
+    }
+
+    function closeByAjax(signatureData, closeMessage) {
+        if (!closingStatusId || isClosingRequestBusy) return;
+        setBusy(true);
+        var formData = new FormData();
+        formData.append('ticket_id', String(ticketId));
+        formData.append('status_id', String(closingStatusId));
+        formData.append('close_message', closeMessage || '');
+        formData.append('signature_data', signatureData || '');
+        formData.append('csrf_token', csrfToken || '');
+
+        fetch('../../agente/close-ticket.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data && data.success) {
+                window.location.href = 'tickets.php?id=' + ticketId + '&msg=updated';
+                return;
+            }
+            setBusy(false);
+            alert('Error: ' + ((data && data.error) ? data.error : 'No se pudo cerrar el ticket'));
+        })
+        .catch(function () {
+            setBusy(false);
+            alert('Error de conexion al cerrar el ticket');
+        });
+    }
+
+    var statusCloseLinks = document.querySelectorAll('.js-status-close');
+    if (statusCloseLinks && statusCloseLinks.length) {
+        statusCloseLinks.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                closingStatusId = parseInt(this.getAttribute('data-close-status-id') || '0', 10);
+                closingStatusName = String(this.getAttribute('data-close-status-name') || '');
+                if (!closingStatusId || !modalChoice) return;
+                if (closeStatusLabel) closeStatusLabel.textContent = closingStatusName !== '' ? ('Estado de cierre: ' + closingStatusName) : '';
+                if (canvas && ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    hasDrawn = false;
+                }
+                var msgYes = document.getElementById('closeMessageWithSigScp');
+                if (msgYes) msgYes.value = '';
+                modalChoice.show();
+            });
+        });
+    }
+
+    if (btnWithSig) {
+        btnWithSig.addEventListener('click', function () {
+            if (modalChoice) modalChoice.hide();
+            if (modalWithSig) modalWithSig.show();
+        });
+    }
+    if (btnWithoutSig) {
+        btnWithoutSig.addEventListener('click', function () {
+            if (modalChoice) modalChoice.hide();
+            if (modalNoSig) modalNoSig.show();
+        });
+    }
+    if (btnConfirmNoSig) {
+        btnConfirmNoSig.addEventListener('click', function () {
+            closeByAjax('', '');
+        });
+    }
+    if (btnConfirmWithSig) {
+        btnConfirmWithSig.addEventListener('click', function () {
+            if (!canvas || !ctx || !hasDrawn) {
+                alert('Por favor dibuje la firma del cliente antes de cerrar.');
+                return;
+            }
+            var msgYes = document.getElementById('closeMessageWithSigScp');
+            closeByAjax(canvas.toDataURL('image/png'), msgYes ? msgYes.value.trim() : '');
+        });
+    }
+
+    if (btnCloseTicketBottom) {
+        btnCloseTicketBottom.addEventListener('click', function () {
+            var closeOptions = Array.prototype.slice.call(document.querySelectorAll('.js-status-close'));
+            var preferredClose = null;
+            for (var i = 0; i < closeOptions.length; i++) {
+                var statusName = String(closeOptions[i].getAttribute('data-close-status-name') || '').toLowerCase();
+                if (statusName.indexOf('cerrad') !== -1 || statusName.indexOf('closed') !== -1) {
+                    preferredClose = closeOptions[i];
+                    break;
+                }
+            }
+            if (!preferredClose && closeOptions.length > 0) {
+                preferredClose = closeOptions[0];
+            }
+            if (!preferredClose) {
+                alert('No hay un estado de cierre configurado.');
+                return;
+            }
+            closingStatusId = parseInt(preferredClose.getAttribute('data-close-status-id') || '0', 10);
+            closingStatusName = String(preferredClose.getAttribute('data-close-status-name') || '');
+            if (!closingStatusId || !modalChoice) {
+                alert('No se pudo iniciar el cierre del ticket.');
+                return;
+            }
+            if (closeStatusLabel) closeStatusLabel.textContent = closingStatusName !== '' ? ('Estado de cierre: ' + closingStatusName) : '';
+            if (canvas && ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                hasDrawn = false;
+            }
+            var msgYes = document.getElementById('closeMessageWithSigScp');
+            if (msgYes) msgYes.value = '';
+            modalChoice.show();
+        });
+    }
+
+    function getCanvasPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        if (e.touches && e.touches.length > 0) {
+            return {
+                x: (e.touches[0].clientX - rect.left) * scaleX,
+                y: (e.touches[0].clientY - rect.top) * scaleY
+            };
+        }
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    function startDraw(e) {
+        if (!canvas || !ctx) return;
+        drawing = true;
+        var pos = getCanvasPos(e);
+        lastX = pos.x;
+        lastY = pos.y;
+        e.preventDefault();
+    }
+
+    function draw(e) {
+        if (!drawing || !canvas || !ctx) return;
+        var pos = getCanvasPos(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 2.4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        lastX = pos.x;
+        lastY = pos.y;
+        hasDrawn = true;
+        e.preventDefault();
+    }
+
+    function stopDraw(e) {
+        drawing = false;
+        if (e) e.preventDefault();
+    }
+
+    if (canvas && ctx) {
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDraw);
+        canvas.addEventListener('mouseleave', stopDraw);
+        canvas.addEventListener('touchstart', startDraw, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDraw, { passive: false });
+
+        var clearBtn = document.getElementById('btnClearSignatureScp');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                hasDrawn = false;
             });
         }
     }
