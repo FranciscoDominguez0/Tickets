@@ -125,6 +125,7 @@ if ($_POST) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/sistema-tickets/publico/img/vigitec-topbar-mark.png">
     <title>Recuperar contraseña - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
 </head>
