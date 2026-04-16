@@ -50,7 +50,7 @@ if ($_POST) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/x-icon" href="/sistema-tickets/publico/img/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Login Agente - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="../publico/css/agent-login.css">
 </head>
