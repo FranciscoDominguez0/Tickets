@@ -159,13 +159,13 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
         <?php unset($_SESSION['show_agent_loading_overlay']); ?>
     <?php endif; ?>
     <!-- NAVBAR -->
-    <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
-        <div class="container-fluid">
+    <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; flex-direction: column; align-items: stretch; padding: 0;">
+        <div class="container-fluid d-flex flex-nowrap w-100 justify-content-between" style="padding-top: 8px; padding-bottom: 8px;">
             <div class="d-flex align-items-center gap-2">
-                <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
-                <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
-                    <i class="bi bi-list"></i>
+                <button class="btn scp-menu-toggle px-1" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>" style="color: rgba(255,255,255,.9);">
+                    <i class="bi bi-list" style="font-size: 1.4rem;"></i>
                 </button>
+                <span class="navbar-brand scp-brand-title m-0">Sistema de Tickets</span>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="dropdown">
@@ -218,7 +218,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
 
                 <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
                 <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
-                    <a href="settings.php?t=pages" class="scp-admin-pill scp-admin-pill-lg">Administrador</a>
+                    <a href="settings.php?t=pages" class="scp-admin-pill scp-admin-pill-lg d-none d-md-inline-flex">Administrador</a>
                 <?php endif; ?>
                 <div class="dropdown">
                     <?php
@@ -247,6 +247,14 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                     </ul>
                 </div>
             </div>
+        </div>
+        
+        <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
+        <div class="scp-mobile-status-container d-flex d-md-none px-3 py-2 w-100 align-items-center" style="border-top: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.06); margin-top: 2px;">
+            <div style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 5px rgba(16,185,129,0.5);"></div>
+            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.95); font-weight: 500;">
+                <?php echo html(ucfirst($roleName !== '' ? $roleName : 'Administrador')); ?> · En línea
+            </span>
         </div>
     </nav>
 

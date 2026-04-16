@@ -541,7 +541,7 @@ if ($ticketClientSignaturePath !== '') {
                 <label>Departamento</label>
                 <div class="value"><?php echo html($t['dept_name']); ?></div>
             </div>
-            <div class="field">
+            <div class="field d-none d-md-block">
                 <label>Creado en</label>
                 <div class="value"><?php echo $t['created'] ? date('m/d/y H:i:s', strtotime($t['created'])) : '—'; ?></div>
             </div>
@@ -553,7 +553,7 @@ if ($ticketClientSignaturePath !== '') {
                     <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?> (<?php echo (int)$t['user_id']; ?>)</a>
                 </div>
             </div>
-            <div class="field">
+            <div class="field d-none d-md-block">
                 <?php
                 $topicName = trim((string)($t['topic_name'] ?? ''));
                 $isRedesInformatica = (stripos($topicName, 'redes') !== false || stripos($topicName, 'informática') !== false || stripos($topicName, 'informatica') !== false);
@@ -566,7 +566,7 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="value">Web</div>
                 <?php endif; ?>
             </div>
-            <div class="field">
+            <div class="field d-none d-md-block">
                 <label>Tema</label>
                 <div class="value">
                     <?php
@@ -582,11 +582,11 @@ if ($ticketClientSignaturePath !== '') {
                 <label>Asignado a</label>
                 <div class="value"><?php echo html($t['staff_name']); ?></div>
             </div>
-            <div class="field">
+            <div class="field d-none d-md-block">
                 <label>Último mensaje</label>
                 <div class="value"><?php echo $t['last_message'] ? date('m/d/y H:i:s', strtotime($t['last_message'])) : '—'; ?></div>
             </div>
-            <div class="field">
+            <div class="field d-none d-md-block">
                 <label>Última respuesta</label>
                 <div class="value"><?php echo $t['last_response'] ? date('m/d/y H:i:s', strtotime($t['last_response'])) : '—'; ?></div>
             </div>
@@ -960,20 +960,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }).render();
         };
 
+        var isMobile = window.innerWidth <= 768;
+        var toolbarConfig = isMobile ? [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['insert', ['link', 'picture']],
+            ['view', ['fullscreen']]
+        ] : [
+            ['style', ['style', 'paragraph']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['fontsize', ['fontsize']],
+            ['insert', ['link', 'picture', 'myVideo', 'table', 'hr']],
+            ['view', ['codeview', 'fullscreen']],
+            ['para', ['ul', 'ol', 'paragraph']]
+        ];
+
         jQuery('#reply_body').summernote({
-            height: 260,
+            height: isMobile ? 160 : 260,
             lang: 'es-ES',
-            placeholder: 'Empezar escribiendo su respuesta aquí. Usa respuestas predefinidas del menú desplegable de arriba si lo desea.',
-            toolbar: [
-                ['style', ['style', 'paragraph']],
-                ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
-                ['fontname', ['fontname']],
-                ['color', ['color']],
-                ['fontsize', ['fontsize']],
-                ['insert', ['link', 'picture', 'myVideo', 'table', 'hr']],
-                ['view', ['codeview', 'fullscreen']],
-                ['para', ['ul', 'ol', 'paragraph']]
-            ],
+            placeholder: 'Empezar escribiendo su respuesta aquí...',
+            toolbar: toolbarConfig,
             buttons: {
                 myVideo: myVideoBtn
             },

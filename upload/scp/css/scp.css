@@ -7,7 +7,13 @@
 body {
     background: #f5f7fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding-top: 56px;
+    padding-top: 56px; /* Para PC */
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 96px; /* Taller navbar on mobile with status bar */
+    }
 }
 
  .scp-profile-toggle {
