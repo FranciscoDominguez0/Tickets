@@ -51,7 +51,6 @@ if (function_exists('finfo_open')) {
     $fi = @finfo_open(FILEINFO_MIME_TYPE);
     if ($fi) {
         $detected = @finfo_file($fi, $f['tmp_name']);
-        @finfo_close($fi);
         if (is_string($detected) && $detected !== '') {
             $mime = $detected;
         }

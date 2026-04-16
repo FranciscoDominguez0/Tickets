@@ -159,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'txt' => 'text/plain',
                 ];
-                $maxSize = $maxSize;
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $attachmentsHasEmpresa = false;
                     $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
@@ -184,7 +183,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                             $fi = @finfo_open(FILEINFO_MIME_TYPE);
                             if ($fi) {
                                 $detected = @finfo_file($fi, $files['tmp_name'][$i]);
-                                @finfo_close($fi);
                                 if (is_string($detected) && $detected !== '') $mime = $detected;
                             }
                         }
