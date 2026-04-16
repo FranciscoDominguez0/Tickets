@@ -661,7 +661,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                                 addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
                             }
 
-                            // Correo al agente
+                            // Correo al agente usando el mismo formato que la asignación manual
                             $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
                             if ($stmtE) {
                                 $stmtE->bind_param('ii', $eid, $val);
@@ -670,14 +670,36 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                                     if ($r && !empty($r['email'])) {
                                         $emailEnabled = ((string)getAppSetting('staff.' . (int)$val . '.email_ticket_assigned', '1') === '1');
                                         if ($emailEnabled) {
-                                            $to = $r['email'];
-                                            $subj = 'Ticket asignado: ' . (string)$ticket_number;
-                                            $bodyHtml = '<p>Hola ' . html(trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? ''))) . ',</p><p>Se te ha asignado el ticket <strong>' . html((string)$ticket_number) . '</strong>: ' . html($subject) . '</p><p><a href="' . html((defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid) . '">Abrir ticket</a></p>';
-                                            $bodyText = 'Hola ' . trim(($r['firstname'] ?? '') . ' ' . ($r['lastname'] ?? '')) . ",\nSe te ha asignado el ticket " . (string)$ticket_number . ": " . $subject . "\n\n" . (defined('APP_URL') ? rtrim((string)APP_URL, '/') : '') . '/upload/scp/tickets.php?id=' . (string)$new_tid;
-                                            $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                            if (!$mailOk) {
-                                                $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                                addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                            $to = trim((string)$r['email']);
+                                            if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                                $staffName = trim((string)($r['firstname'] ?? '') . ' ' . (string)($r['lastname'] ?? ''));
+                                                if ($staffName === '') $staffName = 'Agente';
+                                                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int)$new_tid;
+                                                $deptLabel = '';
+                                                foreach ($open_departments as $openDept) {
+                                                    if ((int)($openDept['id'] ?? 0) === (int)$dept_id) {
+                                                        $deptLabel = (string)($openDept['name'] ?? '');
+                                                        break;
+                                                    }
+                                                }
+                                                $subj = '[Asignación] ' . (string)$ticket_number . ' - ' . (string)$subject;
+                                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                                    . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                                    . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticket_number) . '</td></tr>'
+                                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$subject) . '</td></tr>'
+                                                    . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars($deptLabel) . '</td></tr>'
+                                                    . '</table>'
+                                                    . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                                    . '</div>';
+                                                $bodyText = 'Se te asignó un ticket: ' . (string)$ticket_number . "\n" . 'Asunto: ' . (string)$subject . "\n" . 'Ver: ' . $viewUrl;
+                                                $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                                if (!$mailOk) {
+                                                    $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                    addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                                }
                                             }
                                         }
                                     } else {
@@ -716,9 +738,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     // Use staff_departments if available, otherwise fallback to legacy dept_id
     if ($hasStaffDepartmentsTable) {
         $stmtStaff = $mysqli->prepare(
-            'SELECT DISTINCT s.id, s.firstname, s.lastname 
-             FROM staff s 
-             LEFT JOIN staff_departments sd ON sd.staff_id = s.id 
+            'SELECT DISTINCT s.id, s.firstname, s.lastname, COALESCE(NULLIF(s.dept_id, 0), ?) AS dept_id
+             FROM staff s
              WHERE s.empresa_id = ? AND s.is_active = 1 
              ORDER BY s.firstname, s.lastname'
         );
@@ -727,7 +748,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     }
     if ($stmtStaff) {
         if ($hasStaffDepartmentsTable) {
-            $stmtStaff->bind_param('i', $eid);
+            $stmtStaff->bind_param('ii', $generalDeptId, $eid);
         } else {
             $stmtStaff->bind_param('ii', $generalDeptId, $eid);
         }

@@ -729,8 +729,14 @@ ob_start();
                         <?php
                         $name = trim((string)($a['firstname'] ?? '') . ' ' . (string)($a['lastname'] ?? ''));
                         if ($name === '') $name = (string)($a['username'] ?? '');
-                        $dept = (string)($a['dept_names'] ?? '');
-                        if ($dept === '') $dept = (string)($a['dept_name'] ?? '');
+                        // Mostrar solo el departamento principal del agente.
+                        $dept = trim((string)($a['dept_name'] ?? ''));
+                        if ($dept === '') {
+                            $allDeptNames = array_values(array_filter(array_map('trim', explode(',', (string)($a['dept_names'] ?? '')))));
+                            if (!empty($allDeptNames)) {
+                                $dept = (string)$allDeptNames[0];
+                            }
+                        }
 
                         $role = (string)($a['role'] ?? '');
                         $active = (int)($a['is_active'] ?? 0) === 1;
@@ -746,9 +752,7 @@ ob_start();
                             </td>
                             <td>
                                 <?php if ($dept !== ''): ?>
-                                    <?php foreach (array_filter(array_map('trim', explode(',', $dept))) as $dn): ?>
-                                        <span class="badge bg-secondary me-1"><?php echo html($dn); ?></span>
-                                    <?php endforeach; ?>
+                                    <span class="badge bg-secondary"><?php echo html($dept); ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">Sin asignar</span>
                                 <?php endif; ?>

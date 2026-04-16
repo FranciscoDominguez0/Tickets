@@ -129,9 +129,14 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                     if ($initials === '') {
                         $initials = 'U';
                     }
+                    $staffNameDisplay = trim($staffName);
+                    if ($staffNameDisplay === '') {
+                        $staffNameDisplay = $initials;
+                    }
                     ?>
                     <button class="dropdown-toggle scp-profile-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="scp-profile-avatar" aria-hidden="true"><?php echo html($initials); ?></span>
+                        <span class="scp-profile-name"><?php echo html($staffNameDisplay); ?></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end scp-profile-menu">
                         <li class="d-md-none"><a class="dropdown-item scp-back-agents-link" href="index.php"><i class="bi bi-arrow-left"></i> Volver a Agentes</a></li>
@@ -144,16 +149,6 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
             </div>
         </div>
     </nav>
-
-    <!-- STATUS BAR -->
-    <div class="scp-status-bar">
-        <div class="container-fluid">
-            <div class="d-flex align-items-center gap-2">
-                <span class="scp-status-dot"></span>
-                <span class="scp-status-text">Admin · En línea</span>
-            </div>
-        </div>
-    </div>
 
     <!-- LAYOUT ADMINISTRADOR -->
     <div class="layout">

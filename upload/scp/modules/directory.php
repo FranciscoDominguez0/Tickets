@@ -53,11 +53,11 @@ if ($hasStaffDepartmentsTable) {
             s.is_active,
             s.created,
             s.last_login,
-            GROUP_CONCAT(DISTINCT d.name ORDER BY d.name SEPARATOR ', ') AS dept_name,
-            GROUP_CONCAT(DISTINCT d.id ORDER BY d.id SEPARATOR ',') AS dept_ids,
+            COALESCE(dp.name, MIN(d.name)) AS dept_name,
             COUNT(DISTINCT t.id) as total_tickets,
-            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
+            COUNT(DISTINCT CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN t.id END) as open_tickets
         FROM staff s
+        LEFT JOIN departments dp ON dp.id = s.dept_id
         LEFT JOIN staff_departments sd ON sd.staff_id = s.id
         LEFT JOIN departments d ON d.id = sd.dept_id
         LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
@@ -78,7 +78,7 @@ if ($hasStaffDepartmentsTable) {
             d.id as dept_id,
             d.name as dept_name,
             COUNT(DISTINCT t.id) as total_tickets,
-            SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as open_tickets
+            COUNT(DISTINCT CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN t.id END) as open_tickets
         FROM staff s
         LEFT JOIN departments d ON s.dept_id = d.id
         LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
@@ -179,14 +179,18 @@ $totalPages = $totalRows > 0 ? (int)ceil($totalRows / $perPage) : 1;
 if ($pageNum > $totalPages) $pageNum = $totalPages;
 $offset = ($pageNum - 1) * $perPage;
 
-// Agrupar para contar tickets
-$sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login, d.id, d.name";
+// Agrupar por agente (evita duplicados cuando pertenece a varios departamentos)
+if ($hasStaffDepartmentsTable) {
+    $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login";
+} else {
+    $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login, d.id, d.name";
+}
 
 // Aplicar ordenamiento
 $sortColumns = [
     'name' => 's.firstname, s.lastname',
     'email' => 's.email',
-    'dept' => 'd.name',
+    'dept' => 'dept_name',
     'role' => 's.role',
     'status' => 's.is_active',
     'created' => 's.created',
