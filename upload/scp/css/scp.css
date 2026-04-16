@@ -1091,10 +1091,27 @@ body.sidebar-collapsed .scp-footer-brand {
     .sidebar {
         transform: translateX(-100%);
         box-shadow: 0 16px 40px rgba(2, 6, 23, 0.35);
+        transition: transform .28s cubic-bezier(.4,0,.2,1);
+        z-index: 1050;
     }
 
     body.sidebar-mobile-open .sidebar {
         transform: translateX(0);
+    }
+
+    /* Overlay oscuro detrás del sidebar */
+    body.sidebar-mobile-open::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.55);
+        z-index: 1049;
+        backdrop-filter: blur(2px);
+        animation: fadeOverlay .22s ease forwards;
+    }
+    @keyframes fadeOverlay {
+        from { opacity: 0; }
+        to   { opacity: 1; }
     }
 
     .main-shell,
@@ -1104,6 +1121,10 @@ body.sidebar-collapsed .scp-footer-brand {
         margin-left: 0;
         width: 100% !important;
     }
+
+    /* Navbar móvil: compactar espacio */
+    .navbar-brand { font-size: 1.15rem; }
+    .scp-profile-name { display: none; }
 }
 
 @media (max-width: 768px) {
@@ -1111,6 +1132,8 @@ body.sidebar-collapsed .scp-footer-brand {
         margin-left: 0;
         width: 100% !important;
     }
+    /* Ajustar padding del navbar en móvil */
+    .navbar .container-fluid { padding-left: 10px; padding-right: 10px; }
 }
 
 .container-main {
