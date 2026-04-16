@@ -855,17 +855,17 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     margin: 8px 0 12px 0;
     padding-left: 36px;
     border-left: 2px solid rgba(37, 99, 235, 0.5);
-    visibility: hidden;
-    height: 0;
+    max-height: 0;
     overflow: hidden;
-    transition: height 0.2s ease-out, opacity 0.2s ease-out;
+    transition: max-height 0.25s ease-out, opacity 0.2s ease-out;
     opacity: 0;
+    pointer-events: none;
 }
 
 .sidebar-subnav.open {
-    visibility: visible;
-    height: auto;
+    max-height: 600px;
     opacity: 1;
+    pointer-events: auto;
 }
 
 .sidebar-subnav .sidebar-link {

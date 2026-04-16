@@ -43,7 +43,19 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
 // Estado inicial del sidebar: persistido por cookie, sin auto-toggle al cargar páginas.
 $sidebarCookieState = isset($_COOKIE['scp_sidebar_collapsed']) ? (string)$_COOKIE['scp_sidebar_collapsed'] : '';
 $sidebarDefaultCollapsed = ($sidebarCookieState === 'collapsed');
-$allowExpandedGroups = !$sidebarDefaultCollapsed;
+
+$collapseSidebarMenu = false;
+$menuKey = 'agent_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
+if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'agent') {
+    unset($_SESSION[$menuKey]);
+    $_SESSION['sidebar_panel_mode'] = 'agent';
+}
+if (!isset($_SESSION[$menuKey])) {
+    $_SESSION[$menuKey] = 1;
+    $collapseSidebarMenu = true;
+}
+
+$allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
 ?>
 <!DOCTYPE html>
 <html lang="es">
