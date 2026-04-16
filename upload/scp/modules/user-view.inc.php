@@ -3,9 +3,193 @@ if (!isset($viewUser) || !is_array($viewUser)) return;
 $uid = (int) $viewUser['id'];
 $statusKey = $viewUser['status'] ?? 'active';
 $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
+
+$mobileName = (string)($viewUserName ?? '');
+$mobileEmail = (string)($viewUser['email'] ?? '');
+$mobileCompany = trim((string)($viewUser['company'] ?? ''));
+$nameForInitials = trim($mobileName !== '' ? $mobileName : $mobileEmail);
+$parts = preg_split('/\s+/', $nameForInitials);
+$i1 = strtoupper((string)($parts[0][0] ?? ''));
+$i2 = '';
+if (is_array($parts) && count($parts) > 1) {
+    $i2 = strtoupper((string)($parts[1][0] ?? ''));
+} elseif (strlen($nameForInitials) > 1) {
+    $i2 = strtoupper(substr($nameForInitials, 1, 1));
+}
+$mobileInitials = trim($i1 . $i2);
+if ($mobileInitials === '') $mobileInitials = 'U';
 ?>
 
 <div class="user-view-wrap">
+    <!-- Vista móvil (solo teléfonos) -->
+    <?php $activeTab = $_GET['t'] ?? 'tickets'; ?>
+    <div class="user-view-mobile d-md-none">
+        <div class="user-view-mobile-head">
+            <a class="btn btn-light btn-sm user-view-mobile-back" href="users.php" title="Volver">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div class="user-view-mobile-ident">
+                <div class="user-view-mobile-avatar" aria-hidden="true"><?php echo html($mobileInitials); ?></div>
+                <div class="user-view-mobile-title">
+                    <div class="user-view-mobile-name"><?php echo html($mobileName !== '' ? $mobileName : $mobileEmail); ?></div>
+                    <div class="user-view-mobile-sub"><?php echo html($mobileEmail); ?></div>
+                </div>
+            </div>
+            <span class="badge user-view-mobile-status <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
+        </div>
+
+        <div class="user-view-mobile-actions">
+            <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalEditUser">
+                <i class="bi bi-pencil"></i> Editar
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
+                <i class="bi bi-person-gear"></i> Estado
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDeleteUser" title="Eliminar">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+
+        <div class="user-view-mobile-cards">
+            <div class="user-view-mobile-card">
+                <div class="uvm-row">
+                    <div class="uvm-k">Organización</div>
+                    <div class="uvm-v">
+                        <?php if ($mobileCompany !== ''): ?>
+                            <?php echo html($mobileCompany); ?>
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-2 text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">Remover</button>
+                        <?php else: ?>
+                            <button type="button" class="btn btn-link btn-sm p-0" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php if (!empty($viewUser['phone'])): ?>
+                    <div class="uvm-row">
+                        <div class="uvm-k">Teléfono</div>
+                        <div class="uvm-v"><?php echo html((string)$viewUser['phone']); ?></div>
+                    </div>
+                <?php endif; ?>
+                <div class="uvm-row">
+                    <div class="uvm-k">Creado</div>
+                    <div class="uvm-v"><?php echo $viewUser['created'] ? date('d/m/y H:i', strtotime($viewUser['created'])) : '—'; ?></div>
+                </div>
+                <div class="uvm-row">
+                    <div class="uvm-k">Actualizado</div>
+                    <div class="uvm-v"><?php echo $viewUser['updated'] ? date('d/m/y H:i', strtotime($viewUser['updated'])) : '—'; ?></div>
+                </div>
+            </div>
+
+            <div class="user-view-mobile-card">
+                <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-grid gap-2">
+                    <input type="hidden" name="do" value="send_user_reset">
+                    <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                    <input type="hidden" name="tab" value="<?php echo html((string)($activeTab ?? 'tickets')); ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <button type="submit" class="btn btn-outline-dark btn-sm">
+                        <i class="bi bi-envelope"></i> Enviar restablecer contraseña
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="user-view-mobile-tabs">
+            <a class="uvm-tab <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=tickets">
+                <i class="bi bi-ticket-perforated"></i> Tickets
+            </a>
+            <a class="uvm-tab <?php echo $activeTab === 'notes' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=notes">
+                <i class="bi bi-pin-angle"></i> Notas
+            </a>
+        </div>
+
+        <?php if ($activeTab === 'notes'): ?>
+            <div class="user-view-mobile-panel">
+                <div class="uvm-panel-head">
+                    <div class="uvm-panel-title">Notas</div>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAddUserNote">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                </div>
+                <?php if (empty($userNotes)): ?>
+                    <div class="uvm-empty">
+                        <div class="icon"><i class="bi bi-pin-angle"></i></div>
+                        <div>No hay notas para este usuario.</div>
+                    </div>
+                <?php else: ?>
+                    <div class="uvm-notes">
+                        <?php foreach ($userNotes as $n): ?>
+                            <?php
+                                $noteId = (int)($n['id'] ?? 0);
+                                $noteText = (string)($n['note'] ?? '');
+                                $noteWhen = (string)($n['updated'] ?? $n['created'] ?? '');
+                                $noteStaff = trim((string)($n['staff_name'] ?? ''));
+                            ?>
+                            <div class="uvm-note">
+                                <div class="uvm-note-body"><?php echo nl2br(html($noteText)); ?></div>
+                                <div class="uvm-note-foot">
+                                    <span><?php echo $noteStaff !== '' ? html($noteStaff) : '—'; ?></span>
+                                    <span class="dot">·</span>
+                                    <span><?php echo $noteWhen !== '' ? html(formatDate($noteWhen)) : '—'; ?></span>
+                                    <span class="spacer"></span>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#modalEditUserNote"
+                                            data-note-id="<?php echo $noteId; ?>"
+                                            data-note-text="<?php echo html($noteText); ?>">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#modalDeleteUserNote"
+                                            data-note-id="<?php echo $noteId; ?>">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <div class="user-view-mobile-panel">
+                <div class="uvm-panel-head">
+                    <div class="uvm-panel-title">Tickets</div>
+                    <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-lg"></i>
+                    </a>
+                </div>
+                <?php if (empty($userTickets)): ?>
+                    <div class="uvm-empty">
+                        <div class="icon"><i class="bi bi-inbox"></i></div>
+                        <div>Usuario no tiene ningún ticket.</div>
+                        <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm mt-2">Crear ticket</a>
+                    </div>
+                <?php else: ?>
+                    <div class="uvm-tickets">
+                        <?php foreach ($userTickets as $t): ?>
+                            <?php
+                                $ticketId = (int)($t['id'] ?? 0);
+                                $ticketHref = 'tickets.php?id=' . $ticketId . '&back=' . urlencode('users.php?id=' . (int)$uid . '&t=tickets');
+                                $ticketNum = (string)($t['ticket_number'] ?? '');
+                                $ticketSub = (string)($t['subject'] ?? '');
+                                $ticketStatus = (string)($t['status_name'] ?? '—');
+                                $ticketCreated = (string)($t['created'] ?? '');
+                            ?>
+                            <a class="uvm-ticket" href="<?php echo html($ticketHref); ?>">
+                                <div class="uvm-ticket-top">
+                                    <div class="uvm-ticket-num"><?php echo html($ticketNum); ?></div>
+                                    <div class="uvm-ticket-status"><?php echo html($ticketStatus); ?></div>
+                                </div>
+                                <div class="uvm-ticket-subject"><?php echo html($ticketSub); ?></div>
+                                <div class="uvm-ticket-foot">
+                                    <i class="bi bi-clock"></i>
+                                    <?php echo $ticketCreated !== '' ? html(formatDate($ticketCreated)) : '—'; ?>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <header class="user-view-header">
         <h1 class="user-view-title">
             <a href="users.php?id=<?php echo $uid; ?>" title="Recargar">
@@ -63,6 +247,86 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
             </div>
         </div>
     </div>
+
+    <!-- Modal: editar perfil de usuario (debe estar fuera de contenedores ocultos en móvil) -->
+    <div class="modal fade" id="modalEditUser" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="post" action="users.php?id=<?php echo $uid; ?>">
+                    <div class="modal-body">
+                        <input type="hidden" name="do" value="update_profile">
+                        <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required value="<?php echo html($viewUser['email']); ?>">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Nombre</label>
+                                    <input type="text" name="firstname" class="form-control" required value="<?php echo html($viewUser['firstname']); ?>">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Apellido</label>
+                                    <input type="text" name="lastname" class="form-control" required value="<?php echo html($viewUser['lastname']); ?>">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" name="phone" class="form-control" value="<?php echo html((string)($viewUser['phone'] ?? '')); ?>">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        function forceCloseEditModal(){
+            var el = document.getElementById('modalEditUser');
+            if (el && window.bootstrap && window.bootstrap.Modal) {
+                try {
+                    if (typeof window.bootstrap.Modal.getInstance === 'function') {
+                        var inst = window.bootstrap.Modal.getInstance(el);
+                        if (inst) inst.hide();
+                    }
+                } catch (e) {}
+            }
+
+            try {
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('padding-right');
+                document.querySelectorAll('.modal-backdrop').forEach(function(b){ b.remove(); });
+            } catch (e) {}
+
+            if (el) {
+                el.classList.remove('show');
+                el.style.display = 'none';
+                el.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        window.addEventListener('pageshow', function(ev){
+            if (ev && ev.persisted) {
+                forceCloseEditModal();
+            }
+        });
+    })();
+    </script>
 
     <div class="user-view-card">
         <div class="user-view-profile">
@@ -154,86 +418,6 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
                 </div>
             </div>
         </div>
-
-        <!-- Modal: editar perfil de usuario -->
-        <div class="modal fade" id="modalEditUser" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header border-bottom">
-                        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Editar perfil</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
-                    <form method="post" action="users.php?id=<?php echo $uid; ?>">
-                        <div class="modal-body">
-                            <input type="hidden" name="do" value="update_profile">
-                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
-                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" required value="<?php echo html($viewUser['email']); ?>">
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Nombre</label>
-                                        <input type="text" name="firstname" class="form-control" required value="<?php echo html($viewUser['firstname']); ?>">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label">Apellido</label>
-                                        <input type="text" name="lastname" class="form-control" required value="<?php echo html($viewUser['lastname']); ?>">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-0">
-                                <label class="form-label">Teléfono</label>
-                                <input type="text" name="phone" class="form-control" value="<?php echo html((string)($viewUser['phone'] ?? '')); ?>">
-                            </div>
-                        </div>
-                        <div class="modal-footer border-top">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <script>
-        (function(){
-            function forceCloseEditModal(){
-                var el = document.getElementById('modalEditUser');
-                if (el && window.bootstrap && window.bootstrap.Modal) {
-                    try {
-                        if (typeof window.bootstrap.Modal.getInstance === 'function') {
-                            var inst = window.bootstrap.Modal.getInstance(el);
-                            if (inst) inst.hide();
-                        }
-                    } catch (e) {}
-                }
-
-                try {
-                    document.body.classList.remove('modal-open');
-                    document.body.style.removeProperty('padding-right');
-                    document.querySelectorAll('.modal-backdrop').forEach(function(b){ b.remove(); });
-                } catch (e) {}
-
-                if (el) {
-                    el.classList.remove('show');
-                    el.style.display = 'none';
-                    el.setAttribute('aria-hidden', 'true');
-                }
-            }
-
-            window.addEventListener('pageshow', function(ev){
-                if (ev && ev.persisted) {
-                    forceCloseEditModal();
-                }
-            });
-        })();
-        </script>
 
 <?php $activeTab = $_GET['t'] ?? 'tickets'; ?>
         <ul class="user-view-tabs" role="tablist">

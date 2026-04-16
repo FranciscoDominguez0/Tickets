@@ -287,13 +287,114 @@ $nextOrder = $order === 'ASC' ? 'DESC' : 'ASC';
     </span>
 </div>
 
+<!-- Vista móvil (cards) -->
+<?php if (!empty($agents)): ?>
+    <div class="directory-mobile d-md-none">
+        <?php foreach ($agents as $agent): ?>
+            <?php
+            $fullName = trim((string)($agent['firstname'] ?? '') . ' ' . (string)($agent['lastname'] ?? ''));
+            if ($fullName === '') $fullName = (string)($agent['email'] ?? 'Agente');
+            $email = (string)($agent['email'] ?? '');
+            $username = (string)($agent['username'] ?? '');
+            $deptName = (string)($agent['dept_name'] ?? '');
+            $isActive = (int)($agent['is_active'] ?? 0) === 1;
+            $totalTickets = (int)($agent['total_tickets'] ?? 0);
+            $openTickets = (int)($agent['open_tickets'] ?? 0);
+            $role = (string)($agent['role'] ?? '');
+
+            $parts = preg_split('/\s+/', trim($fullName));
+            $i1 = strtoupper((string)($parts[0][0] ?? ''));
+            $i2 = '';
+            if (count($parts) > 1) {
+                $i2 = strtoupper((string)($parts[1][0] ?? ''));
+            } elseif (strlen($fullName) > 1) {
+                $i2 = strtoupper(substr($fullName, 1, 1));
+            }
+            $initials = trim($i1 . $i2);
+            if ($initials === '') $initials = 'A';
+
+            $roleBadges = [
+                'admin' => 'bg-danger',
+                'supervisor' => 'bg-warning text-dark',
+                'agent' => 'bg-info text-dark',
+            ];
+            $roleLabels = [
+                'admin' => 'Admin',
+                'supervisor' => 'Supervisor',
+                'agent' => 'Agente',
+            ];
+            $badgeClass = $roleBadges[$role] ?? 'bg-secondary';
+            $roleLabel = $roleLabels[$role] ?? ($role !== '' ? ucfirst($role) : 'Agente');
+            ?>
+            <div class="directory-card">
+                <div class="directory-card-top">
+                    <div class="directory-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
+                    <div class="directory-main">
+                        <div class="directory-name-row">
+                            <div class="directory-name"><?php echo html($fullName); ?></div>
+                            <span class="badge <?php echo html($isActive ? 'bg-success' : 'bg-secondary'); ?>">
+                                <?php echo $isActive ? 'Activo' : 'Inactivo'; ?>
+                            </span>
+                        </div>
+                        <div class="directory-sub">
+                            <?php if ($username !== ''): ?>
+                                <span class="directory-user">@<?php echo html($username); ?></span>
+                            <?php endif; ?>
+                            <?php if ($deptName !== ''): ?>
+                                <span class="directory-dot" aria-hidden="true">·</span>
+                                <span class="directory-dept"><?php echo html($deptName); ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="directory-badges">
+                            <span class="badge <?php echo html($badgeClass); ?>"><?php echo html($roleLabel); ?></span>
+                            <?php if ($openTickets > 0): ?>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    <?php echo (int)$openTickets; ?> abierto(s)
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-light text-muted border">Sin abiertos</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="directory-kpis">
+                    <div class="directory-kpi">
+                        <div class="kpi-label">Tickets</div>
+                        <div class="kpi-value"><?php echo (int)$totalTickets; ?></div>
+                    </div>
+                    <div class="directory-kpi">
+                        <div class="kpi-label">Último acceso</div>
+                        <div class="kpi-value kpi-muted"><?php echo $agent['last_login'] ? html(formatDate($agent['last_login'])) : 'Nunca'; ?></div>
+                    </div>
+                </div>
+
+                <div class="directory-actions">
+                    <?php if ($email !== ''): ?>
+                        <a class="btn btn-outline-primary btn-sm flex-grow-1" href="mailto:<?php echo html($email); ?>">
+                            <i class="bi bi-envelope"></i> Contactar
+                        </a>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" disabled>
+                            <i class="bi bi-envelope"></i> Sin correo
+                        </button>
+                    <?php endif; ?>
+                    <a class="btn btn-outline-secondary btn-sm" href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['q' => $email !== '' ? $email : $username])); ?>" title="Buscar este agente">
+                        <i class="bi bi-search"></i>
+                    </a>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
 <!-- Tabla de agentes -->
 <?php if (empty($agents)): ?>
     <div class="alert alert-info">
         <i class="bi bi-info-circle"></i> No se encontraron agentes con los criterios de búsqueda especificados.
     </div>
 <?php else: ?>
-    <div class="table-responsive" style="background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div class="table-responsive d-none d-md-block" style="background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>

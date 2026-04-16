@@ -25,7 +25,7 @@
 
     /* Gráfica redimensionada */
     #chart-container {
-        height: 250px !important; /* Más compacta en móvil */
+        height: 220px !important; /* Más compacta en móvil */
     }
     canvas#ticketsActivityChart {
         width: 100% !important;

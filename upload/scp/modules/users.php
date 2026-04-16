@@ -1203,7 +1203,77 @@ $statusBadges = [
             </p>
         </div>
     <?php else: ?>
-        <div class="table-card">
+        <div class="users-mobile-list d-md-none">
+            <?php foreach ($users as $u): ?>
+                <?php
+                $fullName = trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''));
+                if ($fullName === '') $fullName = (string)($u['email'] ?? 'Usuario');
+                $email = (string)($u['email'] ?? '');
+                $status = (string)($u['status'] ?? 'inactive');
+                $badgeClass = $statusBadges[$status] ?? 'user-status-inactive';
+                $label = $statusLabels[$status] ?? ucfirst($status);
+                $ticketCount = (int)($u['ticket_count'] ?? 0);
+                $company = trim((string)($u['company'] ?? ''));
+
+                $parts = preg_split('/\s+/', trim($fullName));
+                $i1 = strtoupper((string)($parts[0][0] ?? ''));
+                $i2 = '';
+                if (count($parts) > 1) {
+                    $i2 = strtoupper((string)($parts[1][0] ?? ''));
+                } elseif (strlen($fullName) > 1) {
+                    $i2 = strtoupper(substr($fullName, 1, 1));
+                }
+                $initials = trim($i1 . $i2);
+                if ($initials === '') $initials = 'U';
+                ?>
+                <div class="users-mobile-card">
+                    <div class="users-mobile-top">
+                        <div class="users-mobile-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
+                        <div class="users-mobile-main">
+                            <div class="users-mobile-name-row">
+                                <a class="users-mobile-name" href="users.php?id=<?php echo (int)$u['id']; ?>">
+                                    <?php echo html($fullName); ?>
+                                </a>
+                                <span class="badge <?php echo html($badgeClass); ?>" style="padding: 6px 10px; border-radius: 8px; font-weight: 500;">
+                                    <?php echo html($label); ?>
+                                </span>
+                            </div>
+                            <div class="users-mobile-email">
+                                <?php echo html($email !== '' ? $email : 'Sin correo'); ?>
+                            </div>
+                            <div class="users-mobile-meta">
+                                <span><i class="bi bi-ticket-perforated"></i> <?php echo (int)$ticketCount; ?> ticket(s)</span>
+                                <span><i class="bi bi-calendar-plus"></i> <?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '-'; ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="users-mobile-kpis">
+                        <div class="users-mobile-kpi">
+                            <div class="kpi-label">Actualizado</div>
+                            <div class="kpi-value kpi-muted"><?php echo $u['updated'] ? date('d/m/y H:i', strtotime($u['updated'])) : '-'; ?></div>
+                        </div>
+                        <div class="users-mobile-kpi">
+                            <div class="kpi-label">Organización</div>
+                            <div class="kpi-value kpi-muted"><?php echo html($company !== '' ? $company : 'Sin organización'); ?></div>
+                        </div>
+                    </div>
+
+                    <div class="users-mobile-actions">
+                        <a class="btn btn-outline-primary btn-sm flex-grow-1" href="users.php?id=<?php echo (int)$u['id']; ?>">
+                            <i class="bi bi-eye"></i> Ver usuario
+                        </a>
+                        <?php if ($email !== ''): ?>
+                            <a class="btn btn-outline-secondary btn-sm" href="mailto:<?php echo html($email); ?>" title="Enviar correo">
+                                <i class="bi bi-envelope"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="table-card d-none d-md-block">
             <form id="usersListForm" method="get" action="users.php">
                 <?php if ($search !== ''): ?>
                     <input type="hidden" name="q" value="<?php echo html($search); ?>">
