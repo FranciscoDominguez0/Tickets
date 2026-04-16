@@ -193,18 +193,6 @@ $bodyStyle = $loginBg !== ''
                             </div>
 
                             <div class="form-group">
-                                <label for="password">Contraseña</label>
-                                <input 
-                                    type="password" 
-                                    id="password" 
-                                    name="password" 
-                                    placeholder="Contraseña"
-                                    required
-                                >
-                                <small>Mínimo 6 caracteres</small>
-                            </div>
-
-                            <div class="form-group">
                                 <label for="phone">Teléfono</label>
                                 <input
                                     type="tel"
@@ -219,6 +207,18 @@ $bodyStyle = $loginBg !== ''
                                     required
                                 >
                                 <small>Entre 7 y 15 dígitos numéricos.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Contraseña</label>
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Contraseña"
+                                    required
+                                >
+                                <small>Mínimo 6 caracteres</small>
                             </div>
 
                             <div class="form-group">
