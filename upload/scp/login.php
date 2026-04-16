@@ -93,7 +93,7 @@ if ($_POST) {
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
     <?php
         $uploadRootAbs = realpath(__DIR__ . '/..');
-        $companyLogoRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+        $companyLogoRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.webp');
         $companyLogoV = 1;
         $pLogo = parse_url($companyLogoRaw, PHP_URL_PATH);
         if (is_string($pLogo) && $pLogo !== '' && is_string($uploadRootAbs) && $uploadRootAbs !== '') {

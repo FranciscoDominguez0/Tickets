@@ -1128,9 +1128,37 @@ function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
     return toAppAbsoluteUrl($fallbackRelativePath);
 }
 
-function getCompanyLogoUrl($fallbackRelativePath = 'publico/img/vigitec-logo.png') {
+function getDefaultCompanyLogoRelativePath() {
+    $candidates = [
+        'publico/img/vigitec-logo.webp',
+        'publico/img/vigitec-logo.png',
+        'publico/img/vigitec-logo.jpg',
+        'publico/img/vigitec-logo.jpeg',
+        'publico/img/vigitec-logo.gif',
+        'publico/img/vigitec-logo.svg',
+    ];
+
+    $rootAbs = realpath(__DIR__ . '/..');
+    if ($rootAbs) {
+        $rootAbs = rtrim((string)$rootAbs, '/\\');
+        foreach ($candidates as $candidate) {
+            $fs = $rootAbs . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $candidate);
+            if (is_file($fs)) {
+                return $candidate;
+            }
+        }
+    }
+
+    return $candidates[0];
+}
+
+function getCompanyLogoUrl($fallbackRelativePath = '') {
     $mode = (string)getAppSetting('company.logo_mode', '');
     $logo = (string)getAppSetting('company.logo', '');
+    $fallbackRelativePath = (string)$fallbackRelativePath;
+    if ($fallbackRelativePath === '' || preg_match('~^publico/img/vigitec-logo\.(?:png|webp|jpg|jpeg|gif|svg)$~i', $fallbackRelativePath)) {
+        $fallbackRelativePath = getDefaultCompanyLogoRelativePath();
+    }
 
     if (($mode === '' && $logo === '') && function_exists('empresaId')) {
         $eid = (int)empresaId();

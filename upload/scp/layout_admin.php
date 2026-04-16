@@ -150,7 +150,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <div class="sidebar-brand-logo">
-                    <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
+                    <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.webp'); ?>
                     <img src="<?php echo html($brandLogo); ?>" alt="Vigitec Panama" />
                 </div>
                 <span class="sidebar-brand-collapsed-mark" aria-hidden="true">//</span>

@@ -88,7 +88,7 @@ if ($_POST) {
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo $loginCssV; ?>">
 </head>
 <?php
-$brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+$brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.webp');
 $bgMode = (string)getAppSetting('login.background_mode', 'default');
 $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '') : '';
 $bodyStyle = $loginBg !== ''

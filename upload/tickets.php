@@ -744,7 +744,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <?php
         $navUserName = trim((string)($user['name'] ?? ''));
         $companyName = trim((string)getAppSetting('company.name', ''));
-        $companyLogoUrlRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+        $companyLogoUrlRaw = (string)getCompanyLogoUrl('publico/img/vigitec-logo.webp');
         $companyLogoV = 1;
         try {
             $pLogo = parse_url($companyLogoUrlRaw, PHP_URL_PATH);
