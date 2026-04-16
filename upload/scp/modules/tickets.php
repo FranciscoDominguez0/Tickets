@@ -2524,12 +2524,34 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                         <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>">
                             <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>"></td>
                             <td>
-                                <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>"><?php echo html($t['ticket_number']); ?></a>
-                                <?php if ($isNew): ?>
-                                    <span class="badge bg-danger ms-2">New</span>
-                                <?php endif; ?>
-                                <div class="ticket-subject"><?php echo html($t['subject']); ?></div>
-                                <div class="ticket-meta">Asignado: <?php echo $staffName ?: '— Sin asignar —'; ?></div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div>
+                                        <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>">#<?php echo html($t['ticket_number']); ?></a>
+                                        <?php if ($isNew): ?>
+                                            <span class="badge bg-danger ms-2">New</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="d-md-none text-muted" style="font-size:0.75rem; font-weight:700;">
+                                        <?php echo formatDate($t['updated'] ?: $t['created']); ?>
+                                    </div>
+                                </div>
+                                
+                                <div class="ticket-subject" style="margin-top: 6px;"><?php echo html($t['subject']); ?></div>
+                                
+                                <div class="d-md-none mt-2 mb-1" style="font-size:0.85rem; font-weight:700; color:#334155;">
+                                    <i class="bi bi-person-circle text-primary me-1"></i> <?php echo html($clientName); ?>
+                                </div>
+
+                                <div class="ticket-meta mt-1" style="font-size:0.8rem;">
+                                    <i class="bi bi-person-badge"></i> Asignado: <strong style="color:#0f172a;"><?php echo $staffName ?: 'Sin asignar'; ?></strong>
+                                </div>
+
+                                <!-- Chip de estado para móvil -->
+                                <div class="ticket-row-mobile-meta d-md-none mt-3" style="display: flex; gap: 8px;">
+                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>; font-size:0.75rem;">
+                                        <?php echo html($t['status_name']); ?>
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
