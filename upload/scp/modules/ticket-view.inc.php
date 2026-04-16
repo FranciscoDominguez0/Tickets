@@ -1215,6 +1215,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 closingStatusId = parseInt(this.getAttribute('data-close-status-id') || '0', 10);
                 closingStatusName = String(this.getAttribute('data-close-status-name') || '');
                 if (!closingStatusId || !modalChoice) return;
+                
+                if (closingStatusName.toLowerCase().indexOf('resuelto') !== -1 || closingStatusName.toLowerCase().indexOf('resolved') !== -1) {
+                    closeByAjax('', '');
+                    return;
+                }
+
                 if (closeStatusLabel) closeStatusLabel.textContent = closingStatusName !== '' ? ('Estado de cierre: ' + closingStatusName) : '';
                 if (canvas && ctx) {
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1279,6 +1285,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('No se pudo iniciar el cierre del ticket.');
                 return;
             }
+            
+            if (closingStatusName.toLowerCase().indexOf('resuelto') !== -1 || closingStatusName.toLowerCase().indexOf('resolved') !== -1) {
+                closeByAjax('', '');
+                return;
+            }
+
             if (closeStatusLabel) closeStatusLabel.textContent = closingStatusName !== '' ? ('Estado de cierre: ' + closingStatusName) : '';
             if (canvas && ctx) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);

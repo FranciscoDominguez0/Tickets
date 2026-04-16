@@ -1405,10 +1405,16 @@ function triggerEmailQueueWorkerAsync($limit = 30) {
         }
     }
 
-    $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '/upload/open.php');
-    $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
-    if ($baseDir === '' || $baseDir === '.') $baseDir = '/upload';
-    $workerPath = $baseDir . '/process_mail_queue.php';
+      $appUrl = defined('APP_URL') ? APP_URL : '';
+      if ($appUrl !== '') {
+          $basePath = (string)parse_url($appUrl, PHP_URL_PATH);
+          $baseDir = rtrim($basePath, '/');
+      } else {
+          $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '/upload/open.php');
+          $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+          $baseDir = preg_replace('#/(upload|agente)(/.*)?$#i', '', $baseDir);
+      }
+      $workerPath = $baseDir . '/upload/process_mail_queue.php';
     $eid = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1);
     if ($eid <= 0) $eid = 1;
     $qs = http_build_query(['token' => $token, 'limit' => $limit, 'eid' => $eid]);
