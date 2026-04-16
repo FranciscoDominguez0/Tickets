@@ -139,10 +139,10 @@ if ($ticketClientSignaturePath !== '') {
         .closed-note{margin-top:12px; border:1px solid var(--line); border-radius:12px; background:#f8fafc; padding:10px 12px;}
         .closed-note .k{font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px;}
         .closed-note .v{white-space:pre-wrap; word-break:break-word;}
-        .sig-box{margin-top:10px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff;}
-        .sig-title{padding:8px 12px; border-bottom:1px solid var(--line); background:#f8fafc; font-weight:800; color:#334155;}
-        .sig-body{padding:12px;}
-        .sig-img{display:block; max-width:100%; max-height:240px; width:auto; height:auto; border:1px solid #cbd5e1; border-radius:8px; background:#fff;}
+        .sig-box{margin-top:30px; margin-left:auto; width: 280px; page-break-inside: avoid;}
+        .sig-title{font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-weight:800; color:var(--muted); text-align:center; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px;}
+        .sig-body{text-align:center; padding: 4px;}
+        .sig-img{display:inline-block; max-width:100%; max-height:120px; width:auto; height:auto; filter: contrast(1.1) grayscale(0.5);}
 
         @media print{
             .sheet{max-width:none; margin:0; padding:0;}
@@ -183,22 +183,6 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
 
-    <?php if (!empty($t['close_message'])): ?>
-        <div class="closed-note">
-            <div class="k">Motivo de cierre</div>
-            <div class="v"><?php echo nl2br(html((string)$t['close_message'])); ?></div>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($ticketClientSignatureUrl !== ''): ?>
-        <div class="sig-box">
-            <div class="sig-title">Firma del cliente</div>
-            <div class="sig-body">
-                <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="sig-img">
-            </div>
-        </div>
-    <?php endif; ?>
-
     <div class="thread">
         <?php if (empty($entries)): ?>
             <div class="entry"><div class="who">Sin mensajes</div><div class="body">Aún no hay mensajes en el hilo.</div></div>
@@ -229,6 +213,22 @@ if ($ticketClientSignaturePath !== '') {
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+
+    <?php if (!empty($t['close_message'])): ?>
+        <div class="closed-note">
+            <div class="k">Motivo de cierre</div>
+            <div class="v"><?php echo nl2br(html((string)$t['close_message'])); ?></div>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($ticketClientSignatureUrl !== ''): ?>
+        <div class="sig-box">
+            <div class="sig-title">Firma del cliente</div>
+            <div class="sig-body">
+                <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="sig-img">
+            </div>
+        </div>
+    <?php endif; ?>
 
     <div class="footer">
         <?php echo html($companyName); ?> · <?php echo html($companyWebsite); ?>
