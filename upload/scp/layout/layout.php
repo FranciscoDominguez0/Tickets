@@ -258,6 +258,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end scp-profile-menu">
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i>Mi perfil</a></li>
+                        <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
+                            <li class="d-md-none">
+                                <a class="dropdown-item" href="settings.php?t=pages"><i class="bi bi-gear"></i>Administrador</a>
+                            </li>
+                        <?php endif; ?>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i>Desconectar</a></li>
                     </ul>
