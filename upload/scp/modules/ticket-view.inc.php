@@ -976,10 +976,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ['para', ['ul', 'ol', 'paragraph']]
         ];
 
+        var placeholderText = isMobile 
+            ? 'Empezar escribiendo su respuesta aquí...' 
+            : 'Empezar escribiendo su respuesta aquí. Usa respuestas predefinidas del menú desplegable de arriba si lo desea.';
+
         jQuery('#reply_body').summernote({
             height: isMobile ? 160 : 260,
             lang: 'es-ES',
-            placeholder: 'Empezar escribiendo su respuesta aquí...',
+            placeholder: placeholderText,
             toolbar: toolbarConfig,
             buttons: {
                 myVideo: myVideoBtn

@@ -1303,6 +1303,7 @@ tr.ticket-row.is-selected td { background: #eff6ff !important; }
     .ticket-view-actions { flex-wrap: wrap; gap: 6px; }
     .ticket-view-actions .btn-icon { width: 36px; height: 36px; border-radius: 8px; }
     .ticket-view-overview { grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px; border-radius: 12px; margin-bottom: 16px; }
+    .ticket-view-overview > div { display: contents; }
     .ticket-view-overview .field label { font-size: 0.66rem; }
     .ticket-view-overview .field .value { font-size: 0.88rem; }
     .ticket-view-tabs { padding: 0 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; flex-wrap: nowrap; border-radius: 10px 10px 0 0; }
