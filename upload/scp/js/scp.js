@@ -170,6 +170,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.addEventListener('click', function (event) {
+        // Cerrar sidebar móvil al tocar fuera
+        if (isMobile() && body.classList.contains('sidebar-mobile-open')) {
+            if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                body.classList.remove('sidebar-mobile-open');
+                closeSidebarFlyout();
+                updateToggleAria();
+                return;
+            }
+        }
+
+        // Cerrar flyout
         if (!sidebarFlyout || !sidebarFlyout.classList.contains('open')) return;
         var clickedToggle = event.target.closest('.sidebar-toggle');
         if (clickedToggle) return;

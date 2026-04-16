@@ -56,15 +56,15 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
 </head>
 <body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>" style="padding-top: 64px;">
     <!-- NAVBAR ADMINISTRADOR -->
-    <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
+    <nav class="navbar navbar-dark scp-admin-navbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001;">
         <div class="container-fluid">
             <div class="d-flex align-items-center gap-2">
-                <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
                 <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
                     <i class="bi bi-list"></i>
                 </button>
+                <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
             </div>
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
                 <div class="dropdown">
                     <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                         <i class="bi bi-bell"></i>
@@ -113,7 +113,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                     </ul>
                 </div>
 
-                <a href="index.php" class="scp-admin-pill scp-admin-pill-lg">Volver a Agentes</a>
+                <a href="index.php" class="scp-admin-pill scp-admin-pill-lg d-none d-md-inline-flex">Volver a Agentes</a>
                 <div class="dropdown">
                     <?php
                     $staffName = (string)($staff['name'] ?? '');
@@ -132,9 +132,10 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                     ?>
                     <button class="dropdown-toggle scp-profile-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="scp-profile-avatar" aria-hidden="true"><?php echo html($initials); ?></span>
-                        <span class="scp-profile-name"><?php echo html($staffName !== '' ? $staffName : 'Perfil'); ?></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end scp-profile-menu">
+                        <li class="d-md-none"><a class="dropdown-item scp-back-agents-link" href="index.php"><i class="bi bi-arrow-left"></i> Volver a Agentes</a></li>
+                        <li class="d-md-none"><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i>Mi perfil</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i>Desconectar</a></li>
@@ -143,6 +144,16 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
             </div>
         </div>
     </nav>
+
+    <!-- STATUS BAR -->
+    <div class="scp-status-bar">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center gap-2">
+                <span class="scp-status-dot"></span>
+                <span class="scp-status-text">Admin · En línea</span>
+            </div>
+        </div>
+    </div>
 
     <!-- LAYOUT ADMINISTRADOR -->
     <div class="layout">
