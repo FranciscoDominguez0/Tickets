@@ -1,2 +1,0 @@
-ALTER TABLE tickets 
-ADD COLUMN anydesk VARCHAR(50) NULL AFTER subject,

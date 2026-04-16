@@ -1,0 +1,204 @@
+/* Dashboard Premium Mobile Styles */
+@media (max-width: 768px) {
+    /* Formulario de Filtros más amigable (Cards) */
+    form[action="dashboard.php"] .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 15px !important;
+    }
+    
+    form[action="dashboard.php"] label {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin: 0 !important;
+    }
+    
+    form[action="dashboard.php"] input,
+    form[action="dashboard.php"] select,
+    form[action="dashboard.php"] button {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-top: 5px;
+        height: 44px; /* Touchable area */
+    }
+
+    /* Gráfica redimensionada */
+    #chart-container {
+        height: 250px !important; /* Más compacta en móvil */
+    }
+    canvas#ticketsActivityChart {
+        width: 100% !important;
+    }
+
+    /* Tabs elegantes */
+    #statsTabs {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+    }
+    #statsTabs .nav-item {
+        flex: 0 0 auto;
+    }
+    #statsTabs .nav-link {
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: #64748b;
+        font-weight: 600;
+        padding: 10px 15px;
+        background: transparent !important;
+    }
+    #statsTabs .nav-link.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+    }
+
+    /* Transformación de Tablas a Tarjetas (Cards Premium) */
+    .tab-content .table-responsive {
+        border: none !important;
+        background: transparent !important;
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important; 
+    }
+    
+    .tab-content table {
+        border: none;
+        background: transparent;
+        display: block;
+        width: 100%;
+    }
+    
+    .tab-content thead {
+        display: none !important; /* Ocultar cabeceras originales */
+    }
+
+    .tab-content tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .tab-content tbody tr {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-auto-rows: auto;
+        gap: 12px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        border: 1px solid #e5e7eb;
+        padding: 20px;
+        position: relative;
+    }
+
+    /* Título principal de la tarjeta (Departamento, Tema, Agente) ocupa ambas columnas */
+    .tab-content tbody tr th {
+        grid-column: span 2;
+        display: block;
+        font-size: 1.25rem;
+        color: #1e293b;
+        font-weight: 800;
+        border-bottom: 2px solid #f8fafc;
+        margin-bottom: 8px;
+        padding-bottom: 12px;
+        text-align: center !important;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+    }
+
+    /* Celdas de datos como bloques KPI */
+    .tab-content tbody tr td {
+        display: flex;
+        flex-direction: column; /* Valor arriba, etiqueta abajo */
+        justify-content: center;
+        align-items: center;
+        padding: 16px 10px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        font-size: 1.5rem; /* Número enorme */
+        line-height: 1;
+        transition: transform 0.2s;
+    }
+
+    .tab-content tbody tr td:last-child {
+        border-bottom: 1px solid #f1f5f9; /* Mantener formato base uniforme */
+    }
+
+    /* Reset order in flex so before (label) goes below the content (number) */
+    .tab-content tbody tr td {
+        display: flex;
+        flex-direction: column-reverse; 
+    }
+
+    /* Inyectar las etiquetas (labels) de cada celda usando pseudo-elementos paralelos a la estructura de las columnas */
+    .tab-content tbody tr td::before {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 8px;
+        text-align: center;
+    }
+
+    /* Identificar las columnas por su orden secuencial en cada TR (las 8 restantes después del TH) */
+    .tab-content tbody tr td:nth-child(2)::before { content: "Abierto"; }
+    .tab-content tbody tr td:nth-child(3)::before { content: "Asignado"; }
+    .tab-content tbody tr td:nth-child(4)::before { content: "Atrasado"; }
+    .tab-content tbody tr td:nth-child(5)::before { content: "Cerrado"; }
+    .tab-content tbody tr td:nth-child(6)::before { content: "Reabierto"; }
+    .tab-content tbody tr td:nth-child(7)::before { content: "Borrado"; }
+    .tab-content tbody tr td:nth-child(8)::before { content: "T. Servicio"; }
+    .tab-content tbody tr td:nth-child(9)::before { content: "T. Respuesta"; }
+
+    /* Estilos numéricos y chips */
+    .tab-content tbody tr td {
+        color: #0f172a;
+        font-weight: 800;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* Resaltar bloques KPI específicos */
+    .tab-content tbody tr td:nth-child(2) { color: #d97706; background: #fffbeb; border-color: #fef3c7; } /* Abierto */
+    .tab-content tbody tr td:nth-child(4) { color: #dc2626; background: #fef2f2; border-color: #fee2e2; } /* Atrasado */
+    .tab-content tbody tr td:nth-child(5) { color: #059669; background: #ecfdf5; border-color: #d1fae5; } /* Cerrado */
+
+    /* Filas "Sin datos" */
+    .tab-content tbody tr td[colspan="9"] {
+        grid-column: span 2;
+        display: block;
+        text-align: center;
+        padding: 30px 10px;
+        color: #9ca3af;
+        border: none;
+        background: transparent;
+        font-size: 1rem;
+    }
+    .tab-content tbody tr td[colspan="9"]::before {
+        display: none;
+    }
+
+    /* Botón de exportar a ancho completo */
+    [data-action="dashboard-export"] {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        color: #3b82f6;
+        text-decoration: none;
+        margin-top: 10px;
+    }
+}
