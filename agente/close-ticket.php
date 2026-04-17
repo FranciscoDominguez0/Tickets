@@ -10,6 +10,7 @@
 require_once '../config.php';
 require_once '../includes/helpers.php';
 require_once '../includes/Auth.php';
+require_once '../includes/Mailer.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -230,6 +231,34 @@ if ($stmt_status_name) {
 $client_name = trim((string)($ticket['user_first'] ?? '') . ' ' . (string)($ticket['user_last'] ?? ''));
 if ($client_name === '') $client_name = 'Cliente';
 $client_email = strtolower(trim((string)($ticket['user_email'] ?? '')));
+$token = hash_hmac('sha256', (string)$ticket_id, defined('SECRET_KEY') ? SECRET_KEY : 'default-secret');
+$client_pdf_url = rtrim((string)APP_URL, '/') . '/upload/ticket_pdf.php?id=' . (int)$ticket_id . '&t=' . $token;
+
+// Generar PDF internamente para adjuntar a los correos
+$pdf_bytes = null;
+try {
+    $pdf_project_root = realpath(__DIR__ . '/..');
+    if ($pdf_project_root !== false) {
+        if (!class_exists('TicketPdfGenerator')) {
+            $tpgFile = $pdf_project_root . '/includes/TicketPdfGenerator.php';
+            if (is_file($tpgFile)) require_once $tpgFile;
+        }
+        if (class_exists('TicketPdfGenerator')) {
+            $pdf_bytes = TicketPdfGenerator::generate((int)$ticket_id, $mysqli, $pdf_project_root);
+        }
+    }
+} catch (Throwable $e) {
+    $pdf_bytes = null;
+}
+
+$safe_ticket_no = preg_replace('~[^A-Za-z0-9_-]+~', '_', $ticket_no);
+$pdf_attachment = ($pdf_bytes !== null) ? [
+    [
+        'filename'    => 'Ticket_' . $safe_ticket_no . '.pdf',
+        'contentType' => 'application/pdf',
+        'content'     => $pdf_bytes,
+    ]
+] : [];
 
 if ($client_email !== '' && filter_var($client_email, FILTER_VALIDATE_EMAIL)) {
     $client_subject = '[Ticket cerrado] ' . $ticket_no . ' - ' . $ticket_subject;
@@ -238,19 +267,27 @@ if ($client_email !== '' && filter_var($client_email, FILTER_VALIDATE_EMAIL)) {
         . '<p>Hola ' . html($client_name) . ',</p>'
         . '<p>Te informamos que tu ticket <strong>' . html($ticket_no) . '</strong> fue marcado como <strong>' . html($status_label) . '</strong>.</p>'
         . '<p><strong>Asunto:</strong> ' . html($ticket_subject) . '</p>'
-        . '<p style="margin:14px 0 0;"><a href="' . html($ticket_url_user) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver ticket</a></p>'
+        . '<p style="margin:14px 0 0;"><a href="' . html($client_pdf_url) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a></p>'
         . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($company_name) . '</p>'
         . '</div>';
     $client_body_text = "Hola " . $client_name . ",\n\n"
         . "Tu ticket " . $ticket_no . " fue marcado como " . $status_label . ".\n"
         . "Asunto: " . $ticket_subject . "\n\n"
-        . "Ver ticket: " . $ticket_url_user . "\n\n"
+        . "Ver PDF: " . $client_pdf_url . "\n\n"
         . $company_name;
-    enqueueEmailJob($client_email, $client_subject, $client_body_html, $client_body_text, [
-        'empresa_id' => $eid_mail,
-        'context_type' => 'ticket_closed_client',
-        'context_id' => $ticket_id,
-    ]);
+    if (!empty($pdf_attachment)) {
+        Mailer::sendWithOptions($client_email, $client_subject, $client_body_html, $client_body_text, [
+            'attachments' => $pdf_attachment,
+        ]);
+    } elseif (function_exists('enqueueEmailJob')) {
+        enqueueEmailJob($client_email, $client_subject, $client_body_html, $client_body_text, [
+            'empresa_id'   => $eid_mail,
+            'context_type' => 'ticket_closed_client',
+            'context_id'   => $ticket_id,
+        ]);
+    } else {
+        Mailer::send($client_email, $client_subject, $client_body_html, $client_body_text);
+    }
 }
 
 $admin_recipients = [];
@@ -287,6 +324,8 @@ if (dbTableExists('notification_recipients')) {
     }
 }
 
+$admin_pdf_url = rtrim((string)APP_URL, '/') . '/upload/scp/ticket_pdf.php?id=' . (int)$ticket_id . '&t=' . $token;
+
 if (!empty($admin_recipients)) {
     $closed_with_signature = ($signature_path !== null);
     $admin_subject = '[Ticket cerrado] ' . $ticket_no . ' - ' . $ticket_subject;
@@ -299,7 +338,7 @@ if (!empty($admin_recipients)) {
         . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Estado:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($status_label) . '</td></tr>'
         . '<tr><td style="padding:6px 0;"><strong>Firma cliente:</strong></td><td style="padding:6px 0;">' . ($closed_with_signature ? 'Sí' : 'No') . '</td></tr>'
         . '</table>'
-        . '<p><a href="' . html($ticket_url_staff) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Abrir ticket</a></p>'
+        . '<p style="margin:14px 0 0;"><a href="' . html($admin_pdf_url) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a></p>'
         . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($company_name) . '</p>'
         . '</div>';
     $admin_body_text = "Ticket cerrado\n\n"
@@ -307,15 +346,23 @@ if (!empty($admin_recipients)) {
         . "Asunto: " . $ticket_subject . "\n"
         . "Estado: " . $status_label . "\n"
         . "Firma cliente: " . ($closed_with_signature ? 'Si' : 'No') . "\n\n"
-        . "Abrir ticket: " . $ticket_url_staff . "\n\n"
+        . "Ver PDF: " . $admin_pdf_url . "\n\n"
         . $company_name;
 
     foreach (array_keys($admin_recipients) as $admin_email) {
-        enqueueEmailJob($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
-            'empresa_id' => $eid_mail,
-            'context_type' => 'ticket_closed_admin',
-            'context_id' => $ticket_id,
-        ]);
+        if (!empty($pdf_attachment)) {
+            Mailer::sendWithOptions($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
+                'attachments' => $pdf_attachment,
+            ]);
+        } elseif (function_exists('enqueueEmailJob')) {
+            enqueueEmailJob($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
+                'empresa_id'   => $eid_mail,
+                'context_type' => 'ticket_closed_admin',
+                'context_id'   => $ticket_id,
+            ]);
+        } else {
+            Mailer::send($admin_email, $admin_subject, $admin_body_html, $admin_body_text);
+        }
     }
 }
 

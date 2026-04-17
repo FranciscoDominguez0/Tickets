@@ -135,13 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($size <= 0 || $size > $maxSize) continue;
                     $orig = (string)($files['name'][$i] ?? 'archivo');
                     $mime = (string)($files['type'][$i] ?? 'application/octet-stream');
-                    if (function_exists('finfo_open')) {
-                        $fi = @finfo_open(FILEINFO_MIME_TYPE);
-                        if ($fi) {
-                            $det = @finfo_file($fi, $tmp);
-                            @finfo_close($fi);
-                            if (is_string($det) && $det !== '') $mime = $det;
-                        }
+                    if (class_exists('finfo')) {
+                        $finfoObj = new finfo(FILEINFO_MIME_TYPE);
+                        $det = @$finfoObj->file($tmp);
+                        if (is_string($det) && $det !== '') $mime = $det;
                     }
                     $content = @file_get_contents($tmp);
                     if (!is_string($content) || $content === '') continue;

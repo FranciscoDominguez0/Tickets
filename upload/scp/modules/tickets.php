@@ -1019,34 +1019,66 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $ticketSubject = trim((string)($ticketView['subject'] ?? 'Ticket'));
                     if ($statusLabel === '') $statusLabel = 'Cerrado';
                     $companyName = (string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets');
-                    $ticketUrlStaff = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/scp/tickets.php?id=' . (int)$tid;
-                    $ticketUrlUser = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?id=' . (int)$tid;
+                    
+                    $token = hash_hmac('sha256', (string)$tid, defined('SECRET_KEY') ? SECRET_KEY : 'default-secret');
+                    $ticketPdfUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/scp/ticket_pdf.php?id=' . (int)$tid . '&t=' . $token;
+
+                    // Generar PDF para adjuntar al correo del cliente
+                    $pdfBytesClient = null;
+                    try {
+                        $projectRootForPdf = realpath(dirname(__DIR__, 3));
+                        if ($projectRootForPdf !== false) {
+                            if (!class_exists('TicketPdfGenerator')) {
+                                $tpgFile = $projectRootForPdf . '/includes/TicketPdfGenerator.php';
+                                if (is_file($tpgFile)) require_once $tpgFile;
+                            }
+                            if (class_exists('TicketPdfGenerator')) {
+                                $pdfBytesClient = TicketPdfGenerator::generate((int)$tid, $mysqli, $projectRootForPdf);
+                            }
+                        }
+                    } catch (Throwable $e) {
+                        $pdfBytesClient = null;
+                    }
 
                     // Correo al cliente
                     $clientName = trim((string)($ticketView['user_first'] ?? '') . ' ' . (string)($ticketView['user_last'] ?? ''));
                     if ($clientName === '') $clientName = 'Cliente';
                     $clientEmail = strtolower(trim((string)($ticketView['user_email'] ?? '')));
+                    $clientPdfUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/ticket_pdf.php?id=' . (int)$tid . '&t=' . $token;
+                    
                     if ($clientEmail !== '' && filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+                        $safeTicketNo = preg_replace('~[^A-Za-z0-9_-]+~', '_', $ticketNo);
                         $clientSubj = '[Ticket cerrado] ' . $ticketNo . ' - ' . $ticketSubject;
                         $clientBodyHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
                             . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Tu ticket fue cerrado</h2>'
                             . '<p>Hola ' . html($clientName) . ',</p>'
                             . '<p>Te informamos que tu ticket <strong>' . html($ticketNo) . '</strong> fue marcado como <strong>' . html($statusLabel) . '</strong>.</p>'
                             . '<p><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
-                            . '<p style="margin:14px 0 0;"><a href="' . html($ticketUrlUser) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver ticket</a></p>'
+                            . '<p style="margin:14px 0 0;">'
+                            . '<a href="' . html($clientPdfUrl) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a>'
+                            . '</p>'
                             . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
                             . '</div>';
                         $clientBodyText = "Hola " . $clientName . ",\n\n"
                             . "Tu ticket " . $ticketNo . " fue marcado como " . $statusLabel . ".\n"
                             . "Asunto: " . $ticketSubject . "\n\n"
-                            . "Ver ticket: " . $ticketUrlUser . "\n\n"
+                            . "Ver PDF: " . $clientPdfUrl . "\n\n"
                             . $companyName;
-                        if (function_exists('enqueueEmailJob')) {
-                            enqueueEmailJob($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, [
-                                'empresa_id' => (int)$eid,
-                                'context_type' => 'ticket_closed_client',
-                                'context_id' => (int)$tid,
+                        $clientMailOpts = [
+                            'empresa_id'   => (int)$eid,
+                            'context_type' => 'ticket_closed_client',
+                            'context_id'   => (int)$tid,
+                        ];
+                        if ($pdfBytesClient !== null) {
+                            Mailer::sendWithOptions($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, [
+                                'attachments' => [[
+                                    'filename'    => 'Ticket_' . $safeTicketNo . '.pdf',
+                                    'contentType' => 'application/pdf',
+                                    'content'     => $pdfBytesClient,
+                                ]],
                             ]);
+                        } elseif (function_exists('enqueueEmailJob')) {
+                            enqueueEmailJob($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, $clientMailOpts);
                         } else {
                             Mailer::send($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText);
                         }
@@ -1097,7 +1129,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Estado:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($statusLabel) . '</td></tr>'
                             . '<tr><td style="padding:6px 0;"><strong>Firma cliente:</strong></td><td style="padding:6px 0;">No</td></tr>'
                             . '</table>'
-                            . '<p><a href="' . html($ticketUrlStaff) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Abrir ticket</a></p>'
+                            . '<p>'
+                            . '<a href="' . html($ticketPdfUrl) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a>'
+                            . '</p>'
                             . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
                             . '</div>';
                         $adminBodyText = "Ticket cerrado\n\n"
@@ -1105,10 +1139,54 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             . "Asunto: " . $ticketSubject . "\n"
                             . "Estado: " . $statusLabel . "\n"
                             . "Firma cliente: No\n\n"
-                            . "Abrir ticket: " . $ticketUrlStaff . "\n\n"
+                            . "Ver PDF: " . $ticketPdfUrl . "\n\n"
                             . $companyName;
+
+                        $pdfAttachment = null;
+                        try {
+                            $projectRoot = realpath(dirname(__DIR__, 3));
+                            if ($projectRoot !== false) {
+                                $autoload = $projectRoot . '/vendor/autoload.php';
+                                if (is_file($autoload)) {
+                                    require_once $autoload;
+                                    if (class_exists('Dompdf\\Dompdf')) {
+                                        if (!defined('TICKET_PDF_RENDER')) {
+                                            define('TICKET_PDF_RENDER', true);
+                                        }
+                                        $_GET['id'] = (int)$tid;
+                                        ob_start();
+                                        require __DIR__ . '/../print_ticket.php';
+                                        $pdfHtml = (string)ob_get_clean();
+
+                                        $dompdf = new Dompdf\Dompdf([
+                                            'isRemoteEnabled' => true,
+                                            'isHtml5ParserEnabled' => true,
+                                        ]);
+                                        $dompdf->loadHtml($pdfHtml, 'UTF-8');
+                                        $dompdf->setPaper('A4', 'portrait');
+                                        $dompdf->render();
+                                        $pdfBin = $dompdf->output();
+                                        if (is_string($pdfBin) && $pdfBin !== '') {
+                                            $safeTicketNo = preg_replace('~[^A-Za-z0-9_-]+~', '_', (string)$ticketNo);
+                                            $pdfAttachment = [
+                                                'filename' => 'Ticket_' . $safeTicketNo . '.pdf',
+                                                'contentType' => 'application/pdf',
+                                                'content' => $pdfBin,
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (Throwable $e) {
+                            $pdfAttachment = null;
+                        }
+
                         foreach (array_keys($adminRecipients) as $adminEmail) {
-                            if (function_exists('enqueueEmailJob')) {
+                            if ($pdfAttachment !== null) {
+                                Mailer::sendWithOptions($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
+                                    'attachments' => [$pdfAttachment],
+                                ]);
+                            } elseif (function_exists('enqueueEmailJob')) {
                                 enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
                                     'empresa_id' => (int)$eid,
                                     'context_type' => 'ticket_closed_admin',
@@ -1705,13 +1783,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 $orig = (string) ($files['name'][$i] ?? 'file');
                                 $ext = strtolower((string) (pathinfo($orig, PATHINFO_EXTENSION) ?: ''));
                                 if ($ext === '' || !isset($allowedExt[$ext])) continue;
-                                if (function_exists('finfo_open') && !empty($files['tmp_name'][$i])) {
-                                    $fi = @finfo_open(FILEINFO_MIME_TYPE);
-                                    if ($fi) {
-                                        $detected = @finfo_file($fi, $files['tmp_name'][$i]);
-                                        @finfo_close($fi);
-                                        if (is_string($detected) && $detected !== '') $mime = $detected;
-                                    }
+                                if (class_exists('finfo') && !empty($files['tmp_name'][$i])) {
+                                    $finfoObj = new finfo(FILEINFO_MIME_TYPE);
+                                    $detected = @$finfoObj->file($files['tmp_name'][$i]);
+                                    if (is_string($detected) && $detected !== '') $mime = $detected;
                                 }
                                 $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
                                 $path = $uploadDir . '/' . $safeName;

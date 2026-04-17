@@ -1,14 +1,15 @@
 <?php
-require_once '../../config.php';
-require_once '../../includes/helpers.php';
-require_once '../../includes/Auth.php';
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../includes/Auth.php';
 
-if (!isset($_SESSION['staff_id'])) {
-    header('Location: login.php');
-    exit;
+if (!defined('TICKET_PDF_RENDER')) {
+    if (!isset($_SESSION['staff_id'])) {
+        header('Location: login.php');
+        exit;
+    }
+    requireLogin('agente');
 }
-
-requireLogin('agente');
 
 $tid = isset($_GET['id']) && is_numeric($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($tid <= 0) {
@@ -88,13 +89,41 @@ if ($ticketClientSignaturePath !== '') {
     }
 }
 
+if (defined('TICKET_PDF_RENDER')) {
+    $projectRoot = realpath(dirname(__DIR__, 2));
+    if ($projectRoot !== false) {
+        $logoMode = (string)getAppSetting('company.logo_mode', '');
+        $logoSetting = (string)getAppSetting('company.logo', '');
+        $logoRel = 'publico/img/vigitec-logo.png';
+        if ($logoMode === '') {
+            $logoMode = $logoSetting !== '' ? 'custom' : 'default';
+        }
+        if ($logoMode === 'custom' && $logoSetting !== '') {
+            $candidate = ltrim(str_replace('\\', '/', (string)$logoSetting), '/');
+            if ($candidate !== '' && is_file($projectRoot . '/' . $candidate)) {
+                $logoRel = $candidate;
+            }
+        }
+        $logoUrl = '/' . ltrim($logoRel, '/');
+
+        if ($ticketClientSignaturePath !== '') {
+            $sigPath = ltrim(str_replace('\\', '/', $ticketClientSignaturePath), '/');
+            if ($sigPath !== '' && is_file($projectRoot . '/' . $sigPath)) {
+                $ticketClientSignatureUrl = '/' . ltrim($sigPath, '/');
+            }
+        }
+    }
+}
+
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imprimir Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></title>
+    <?php if (!defined('TICKET_PDF_RENDER')): ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <?php endif; ?>
     <style>
         :root{
             --ink:#0f172a;
@@ -117,29 +146,30 @@ if ($ticketClientSignaturePath !== '') {
         .meta .sub{color:var(--muted); font-weight:600; margin-top:3px;}
 
         .summary{margin-top: 14px; background: var(--soft); border:1px solid var(--line); border-radius:12px; padding: 12px 14px;}
-        .summary-grid{display:grid; grid-template-columns: 1fr 1fr; gap: 10px 16px;}
-        .kv{display:flex; gap: 8px;}
-        .kv .k{min-width: 120px; color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.06em; font-size: 11px;}
-        .kv .v{font-weight:700; color:var(--ink);}
+        .summary-table{width: 100%; border-collapse: collapse;}
+        .summary-table td{padding: 5px 8px; vertical-align: top;}
+        .kv .k{color:var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:.06em; font-size: 11px; display:inline-block; width:110px;}
+        .kv .v{font-weight:700; color:var(--ink); display:inline-block;}
 
         .thread{margin-top: 14px;}
         .entry{border:1px solid var(--line); border-radius:12px; padding: 12px 14px; margin-bottom: 10px;}
         .entry.internal{border-color:#fbbf24; background:#fffbeb;}
         .entry.staff{border-color:#fed7aa; background:#fff7ed;}
         .entry.user{border-color:#bfdbfe; background:#eff6ff;}
-        .entry-head{display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; margin-bottom: 8px;}
+        .entry-head{border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 6px; margin-bottom: 8px;}
+        .entry-head-table{width:100%;}
         .who{font-weight:900;}
-        .when{color:var(--muted); font-weight:700; font-size: 12px; white-space:nowrap;}
+        .when{color:var(--muted); font-weight:700; font-size: 12px; text-align:right;}
         .body{white-space:pre-wrap; word-break:break-word; line-height:1.35;}
         .body img{max-width:100%; height:auto; display:block;}
         .body iframe{max-width:100%; width:100%;}
-        .tag{display:inline-flex; align-items:center; gap:6px; font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#92400e; margin-left:10px;}
+        .tag{font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#92400e; margin-left:10px;}
 
         .footer{margin-top: 10px; color: var(--muted); font-weight:700; font-size: 12px; text-align:center;}
         .closed-note{margin-top:12px; border:1px solid var(--line); border-radius:12px; background:#f8fafc; padding:10px 12px;}
         .closed-note .k{font-weight:900; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:4px;}
         .closed-note .v{white-space:pre-wrap; word-break:break-word;}
-        .sig-box{margin-top:30px; margin-left:auto; width: 280px; page-break-inside: avoid;}
+        .sig-box{margin-top:30px; margin-left:auto; width: 280px;}
         .sig-title{font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-weight:800; color:var(--muted); text-align:center; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px;}
         .sig-body{text-align:center; padding: 4px;}
         .sig-img{display:inline-block; max-width:100%; max-height:120px; width:auto; height:auto; filter: contrast(1.1) grayscale(0.5);}
@@ -147,40 +177,57 @@ if ($ticketClientSignaturePath !== '') {
         @media print{
             .sheet{max-width:none; margin:0; padding:0;}
             .entry{page-break-inside: avoid;}
-            .summary{break-inside: avoid;}
+            .summary{page-break-inside: avoid;}
             .closed-note, .sig-box{page-break-inside: avoid;}
         }
     </style>
 </head>
 <body>
 <div class="sheet">
-    <div class="topbar">
-        <div class="brand">
-            <?php if ($logoUrl !== ''): ?>
-                <div class="logo"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
-            <?php endif; ?>
-            <div style="min-width:0;">
-                <h1><?php echo html($companyName); ?></h1>
-                <div class="web"><?php echo html($companyWebsite); ?></div>
-            </div>
-        </div>
-        <div class="meta">
-            <div class="no">Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
-            <div class="sub"><?php echo html((string)($t['subject'] ?? '')); ?></div>
-            <div class="sub">Impreso: <?php echo date('d/m/Y H:i'); ?></div>
-        </div>
-    </div>
+    <table style="width:100%; border-bottom:2px solid #e2e8f0; padding-bottom: 12px; margin-bottom:14px;">
+        <tr>
+            <td style="vertical-align:middle;">
+                <table style="border-collapse:collapse;">
+                    <tr>
+                        <?php if ($logoUrl !== ''): ?>
+                            <td style="padding-right: 12px;">
+                                <div class="logo"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
+                            </td>
+                        <?php endif; ?>
+                        <td style="vertical-align:middle;">
+                            <h1 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; color:#0f172a;"><?php echo html($companyName); ?></h1>
+                            <div class="web" style="color:#64748b; font-weight:600; margin-top:2px;"><?php echo html($companyWebsite); ?></div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td class="meta" style="vertical-align:middle;">
+                <div class="no">Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
+                <div class="sub"><?php echo html((string)($t['subject'] ?? '')); ?></div>
+                <div class="sub">Impreso/Generado: <?php echo date('d/m/Y H:i'); ?></div>
+            </td>
+        </tr>
+    </table>
 
     <div class="summary">
-        <div class="summary-grid">
-            <div class="kv"><div class="k">Cliente</div><div class="v"><?php echo html($userName); ?> (<?php echo html((string)($t['user_email'] ?? '')); ?>)</div></div>
-            <div class="kv"><div class="k">Departamento</div><div class="v"><?php echo html((string)($t['dept_name'] ?? '')); ?></div></div>
-            <div class="kv"><div class="k">Estado</div><div class="v"><?php echo html((string)($t['status_name'] ?? '')); ?></div></div>
-            <div class="kv"><div class="k">Prioridad</div><div class="v"><?php echo html((string)($t['priority_name'] ?? '')); ?></div></div>
-            <div class="kv"><div class="k">Asignado</div><div class="v"><?php echo html($staffName); ?></div></div>
-            <div class="kv"><div class="k">Creado</div><div class="v"><?php echo !empty($t['created']) ? html(date('d/m/Y H:i', strtotime((string)$t['created']))) : '—'; ?></div></div>
-            <div class="kv"><div class="k">Cerrado</div><div class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y H:i', strtotime((string)$t['closed']))) : '—'; ?></div></div>
-        </div>
+        <table class="summary-table">
+            <tr>
+                <td class="kv"><span class="k">Cliente</span><span class="v"><?php echo html($userName); ?> (<?php echo html((string)($t['user_email'] ?? '')); ?>)</span></td>
+                <td class="kv"><span class="k">Departamento</span><span class="v"><?php echo html((string)($t['dept_name'] ?? '')); ?></span></td>
+            </tr>
+            <tr>
+                <td class="kv"><span class="k">Estado</span><span class="v"><?php echo html((string)($t['status_name'] ?? '')); ?></span></td>
+                <td class="kv"><span class="k">Prioridad</span><span class="v"><?php echo html((string)($t['priority_name'] ?? '')); ?></span></td>
+            </tr>
+            <tr>
+                <td class="kv"><span class="k">Asignado</span><span class="v"><?php echo html($staffName); ?></span></td>
+                <td class="kv"><span class="k">Creado</span><span class="v"><?php echo !empty($t['created']) ? html(date('d/m/Y H:i', strtotime((string)$t['created']))) : '—'; ?></span></td>
+            </tr>
+            <tr>
+                <td class="kv"><span class="k">Cerrado</span><span class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y H:i', strtotime((string)$t['closed']))) : '—'; ?></span></td>
+                <td></td>
+            </tr>
+        </table>
     </div>
 
     <div class="thread">
@@ -198,13 +245,19 @@ if ($ticketClientSignaturePath !== '') {
                 ?>
                 <div class="entry <?php echo html($cls); ?>">
                     <div class="entry-head">
-                        <div>
-                            <span class="who"><?php echo html($author); ?></span>
-                            <?php if ($isInternal): ?>
-                                <span class="tag"><i class="bi bi-shield-lock"></i> Nota interna</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="when"><?php echo !empty($e['created']) ? html(date('d/m/Y H:i', strtotime((string)$e['created']))) : ''; ?></div>
+                        <table class="entry-head-table" style="border-collapse:collapse; width:100%;">
+                            <tr>
+                                <td style="vertical-align:middle;">
+                                    <span class="who"><?php echo html($author); ?></span>
+                                    <?php if ($isInternal): ?>
+                                        <span class="tag"><i class="bi bi-shield-lock"></i> Nota interna</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="when" style="vertical-align:middle; width:150px; text-align:right;">
+                                    <?php echo !empty($e['created']) ? html(date('d/m/Y H:i', strtotime((string)$e['created']))) : ''; ?>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                     <div class="body"><?php
                         echo sanitizeRichText((string)($e['body'] ?? ''));
@@ -237,11 +290,13 @@ if ($ticketClientSignaturePath !== '') {
 
 <script>
     // Auto print like osTicket-style print view
+    <?php if (!defined('TICKET_PDF_RENDER')): ?>
     window.addEventListener('load', function () {
         setTimeout(function () {
             try { window.print(); } catch (e) {}
         }, 300);
     });
+    <?php endif; ?>
 </script>
 </body>
 </html>
