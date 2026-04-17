@@ -104,12 +104,47 @@ if (defined('TICKET_PDF_RENDER')) {
                 $logoRel = $candidate;
             }
         }
-        $logoUrl = '/' . ltrim($logoRel, '/');
+        
+        $logoAbsPath = $projectRoot . '/' . ltrim($logoRel, '/');
+        if (is_file($logoAbsPath)) {
+            $ext = strtolower(pathinfo($logoAbsPath, PATHINFO_EXTENSION));
+            $imageData = file_get_contents($logoAbsPath);
+            if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
+                $im = @imagecreatefromwebp($logoAbsPath);
+                if ($im !== false) {
+                    ob_start();
+                    imagepng($im);
+                    $imageData = (string)ob_get_clean();
+                    unset($im);
+                    $ext = 'png';
+                }
+            } elseif ($ext === 'jpg') {
+                $ext = 'jpeg';
+            }
+            $base64 = base64_encode($imageData);
+            $logoUrl = 'data:image/' . $ext . ';base64,' . $base64;
+        }
 
         if ($ticketClientSignaturePath !== '') {
             $sigPath = ltrim(str_replace('\\', '/', $ticketClientSignaturePath), '/');
-            if ($sigPath !== '' && is_file($projectRoot . '/' . $sigPath)) {
-                $ticketClientSignatureUrl = '/' . ltrim($sigPath, '/');
+            $sigAbsPath = $projectRoot . '/' . ltrim($sigPath, '/');
+            if ($sigPath !== '' && is_file($sigAbsPath)) {
+                $ext = strtolower(pathinfo($sigAbsPath, PATHINFO_EXTENSION));
+                $imageData = file_get_contents($sigAbsPath);
+                if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
+                    $im = @imagecreatefromwebp($sigAbsPath);
+                    if ($im !== false) {
+                        ob_start();
+                        imagepng($im);
+                        $imageData = (string)ob_get_clean();
+                        unset($im);
+                        $ext = 'png';
+                    }
+                } elseif ($ext === 'jpg') {
+                    $ext = 'jpeg';
+                }
+                $base64 = base64_encode($imageData);
+                $ticketClientSignatureUrl = 'data:image/' . $ext . ';base64,' . $base64;
             }
         }
     }
@@ -137,8 +172,8 @@ if (defined('TICKET_PDF_RENDER')) {
         .sheet{max-width: 920px; margin: 22px auto; padding: 0 18px;}
         .topbar{display:flex; align-items:center; justify-content:space-between; gap:16px; padding: 14px 0 12px; border-bottom:2px solid var(--line);}
         .brand{display:flex; align-items:center; gap:12px; min-width: 0;}
-        .logo{width:64px; height:64px; border:1px solid var(--line); border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#fff;}
-        .logo img{max-width:100%; max-height:100%; padding:10px; object-fit:contain;}
+        .logo{width:64px; height:64px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; text-align:center;}
+        .logo img{max-width:44px; max-height:44px; margin-top:10px;}
         .brand h1{font-size:16px; margin:0; font-weight:900; line-height:1.1;}
         .brand .web{color:var(--muted); font-weight:600; margin-top:2px;}
         .meta{ text-align:right; }

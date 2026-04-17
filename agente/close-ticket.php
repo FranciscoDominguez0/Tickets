@@ -234,6 +234,33 @@ $client_email = strtolower(trim((string)($ticket['user_email'] ?? '')));
 $token = hash_hmac('sha256', (string)$ticket_id, defined('SECRET_KEY') ? SECRET_KEY : 'default-secret');
 $client_pdf_url = rtrim((string)APP_URL, '/') . '/upload/ticket_pdf.php?id=' . (int)$ticket_id . '&t=' . $token;
 
+// ==========================================
+// 1. RESPUESTA INMEDIATA (AJAX CIERRE RÁPIDO)
+// ==========================================
+$response_payload = json_encode([
+    'success' => true,
+    'message' => 'Ticket cerrado correctamente',
+    'signature' => $signature_path
+]);
+
+if (ob_get_level()) {
+    ob_end_clean();
+}
+header('Connection: close');
+header('Content-Length: ' . strlen($response_payload));
+echo $response_payload;
+flush();
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+}
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}
+
+// ==========================================
+// 2. PROCESAMIENTO EN SEGUNDO PLANO (PDF/EMAIL)
+// ==========================================
+
 // Generar PDF internamente para adjuntar a los correos
 $pdf_bytes = null;
 try {
@@ -278,12 +305,6 @@ if ($client_email !== '' && filter_var($client_email, FILTER_VALIDATE_EMAIL)) {
     if (!empty($pdf_attachment)) {
         Mailer::sendWithOptions($client_email, $client_subject, $client_body_html, $client_body_text, [
             'attachments' => $pdf_attachment,
-        ]);
-    } elseif (function_exists('enqueueEmailJob')) {
-        enqueueEmailJob($client_email, $client_subject, $client_body_html, $client_body_text, [
-            'empresa_id'   => $eid_mail,
-            'context_type' => 'ticket_closed_client',
-            'context_id'   => $ticket_id,
         ]);
     } else {
         Mailer::send($client_email, $client_subject, $client_body_html, $client_body_text);
@@ -354,12 +375,6 @@ if (!empty($admin_recipients)) {
             Mailer::sendWithOptions($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
                 'attachments' => $pdf_attachment,
             ]);
-        } elseif (function_exists('enqueueEmailJob')) {
-            enqueueEmailJob($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
-                'empresa_id'   => $eid_mail,
-                'context_type' => 'ticket_closed_admin',
-                'context_id'   => $ticket_id,
-            ]);
         } else {
             Mailer::send($admin_email, $admin_subject, $admin_body_html, $admin_body_text);
         }
@@ -367,9 +382,4 @@ if (!empty($admin_recipients)) {
 }
 
 triggerEmailQueueWorkerAsync(40);
-
-echo json_encode([
-    'success' => true,
-    'message' => 'Ticket cerrado correctamente',
-    'signature' => $signature_path
-]);
+// No enviamos JSON aquí porque ya se mandó en el paso 1
