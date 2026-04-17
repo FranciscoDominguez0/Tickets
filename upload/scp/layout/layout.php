@@ -229,6 +229,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                 </li>
                             <?php endforeach; ?>
                         <?php endif; ?>
+                        <li class="scp-notif-footer">
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="scpMarkAllRead" <?php echo empty($notifItems) ? 'disabled' : ''; ?>>
+                                <i class="bi bi-check-all"></i> Marcar todas como leídas
+                            </button>
+                        </li>
                     </ul>
                 </div>
 
@@ -484,6 +489,62 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
+        // Botón "Marcar todas como leídas" en notificaciones
+        (function(){
+            var btn = document.getElementById('scpMarkAllRead');
+            if (!btn) return;
+            
+            btn.addEventListener('click', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (btn.disabled) return;
+                
+                // Limpiar UI inmediatamente
+                var badge = document.querySelector('.scp-notif-btn .badge');
+                if (badge) badge.remove();
+                
+                // Cambiar badge del botón campana
+                var bellBtn = document.querySelector('.scp-notif-btn');
+                if (bellBtn) bellBtn.classList.remove('has-new');
+                
+                // Vaciar lista y mostrar mensaje vacío
+                var menu = btn.closest('.scp-notif-menu');
+                var items = menu ? menu.querySelectorAll('li:not(:first-child):not(.scp-notif-footer)') : [];
+                items.forEach(function(item){ item.remove(); });
+                
+                // Agregar mensaje vacío
+                var emptyLi = document.createElement('li');
+                emptyLi.innerHTML = '<div class="scp-notif-empty">No tienes notificaciones nuevas.</div>';
+                if (menu) {
+                    var footer = menu.querySelector('.scp-notif-footer');
+                    if (footer) {
+                        menu.insertBefore(emptyLi, footer);
+                    } else {
+                        menu.appendChild(emptyLi);
+                    }
+                }
+                
+                // Actualizar contador en header
+                var sub = menu ? menu.querySelector('.scp-notif-sub') : null;
+                if (sub) sub.textContent = 'Sin nuevas';
+                
+                // Desactivar botón
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> ¡Listo!';
+                
+                // Enviar petición en segundo plano (sin recargar)
+                var url = window.location.pathname.replace(/\/[^\/]*$/, '') + '/notifications_mark_all_read.php';
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    }
+                }).catch(function(){});
+            });
+        })();
+
         window.addEventListener('DOMContentLoaded', function(){
             var alerts = document.querySelectorAll('.alert.alert-dismissible.fade.show:not(.d-none)');
             if (!alerts || !alerts.length) return;

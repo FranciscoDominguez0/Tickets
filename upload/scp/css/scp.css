@@ -1061,6 +1061,12 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     font-size: 0.95rem;
 }
 
+.scp-notif-footer {
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-top: 1px solid rgba(2, 6, 23, 0.06);
+}
+
 .scp-notif-item {
     display: flex;
     gap: 10px;

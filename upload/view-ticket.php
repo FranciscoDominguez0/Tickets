@@ -597,6 +597,10 @@ function humanSize($bytes) {
                         linear-gradient(135deg, #2563eb, #0ea5e9);
             color: #fff;
         }
+        .notif-dd-flex.show {
+            display: flex !important;
+            flex-direction: column;
+        }
         .notif-dd-title { font-weight: 900; letter-spacing: 0.02em; }
         .notif-dd-sub { opacity: .85; font-weight: 700; font-size: .85rem; }
         .notif-dd-count {
@@ -652,8 +656,8 @@ function humanSize($bytes) {
                     <i class="bi bi-bell"></i>
                     <span id="notifBellBadge" class="badge bg-danger ms-1" style="display:none; font-size:.7rem;">0</span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-end p-0 notif-dd" style="min-width: 380px;" aria-labelledby="notifBellBtn">
-                    <div class="p-3 notif-dd-head">
+                <div class="dropdown-menu dropdown-menu-end p-0 notif-dd notif-dd-flex" style="min-width: 380px; max-height: 420px;" aria-labelledby="notifBellBtn">
+                    <div class="p-3 notif-dd-head" style="flex-shrink: 0;">
                         <div class="d-flex align-items-center justify-content-between">
                             <div class="d-flex align-items-center gap-2">
                                 <div style="width:36px;height:36px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.22);">
@@ -667,11 +671,16 @@ function humanSize($bytes) {
                             <div id="notifBellCountPill" class="notif-dd-count" style="display:none;">0 nuevas</div>
                         </div>
                     </div>
-                    <div id="notifBellList" class="p-3" style="max-height: 360px; overflow:auto;">
+                    <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
                         <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
                             <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div>
                             <div style="color:#64748b;">Cuando el equipo responda, te aparecerá aquí.</div>
                         </div>
+                    </div>
+                    <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
+                        <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
+                            <i class="bi bi-check-all"></i> Marcar todas como leídas
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1189,6 +1198,29 @@ function humanSize($bytes) {
                     .catch(function(){ window.location.href = href; });
             } catch (e) {}
         });
+
+        // Botón "Marcar todas como leídas"
+        (function(){
+            var markAllBtn = document.getElementById('notifMarkAllRead');
+            if (!markAllBtn) return;
+            markAllBtn.addEventListener('click', function(ev){
+                ev.preventDefault();
+                ev.stopPropagation();
+                fetch('tickets.php?action=user_notifs_mark_all_read', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (data && data.ok) {
+                            setBellCount(0);
+                            renderBell([]);
+                            var list = document.getElementById('notifBellList');
+                            if (list) {
+                                list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leídas.</div></div>';
+                            }
+                        }
+                    })
+                    .catch(function(){});
+            });
+        })();
 
         poll();
         window.setInterval(poll, POLL_MS);
