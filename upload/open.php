@@ -16,6 +16,7 @@ requireLogin('cliente');
 
 $user = getCurrentUser();
 $error = '';
+$errorFields = [];
 $success = '';
 
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
@@ -234,14 +235,19 @@ if ($_POST) {
 
         if ($hasTopicsTable && $hasTopicCol && $defaultHelpTopic <= 0 && $topic_id <= 0) {
             $error = 'Debes seleccionar un tema.';
+            $errorFields['topic_id'] = true;
         } elseif (!$hasUserPhone) {
             $error = 'Debes registrar tu teléfono en tu perfil antes de crear un ticket.';
         } elseif ($requiresNetworkFields && $anydesk === '') {
             $error = 'Para temas de Redes Informática debes completar Anydesk.';
+            $errorFields['anydesk'] = true;
         } elseif (empty($subject) || $isBodyEmpty) {
             $error = 'Asunto y descripción son requeridos';
+            if (empty($subject)) $errorFields['subject'] = true;
+            if ($isBodyEmpty) $errorFields['body'] = true;
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
             $error = 'Debes escribir una descripción para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
+            $errorFields['body'] = true;
         } elseif (stripos($body, 'data:image/') !== false) {
             $error = 'Las imágenes pegadas dentro del texto no están soportadas. Adjunta la imagen usando la opción de archivos.';
         } elseif (strlen($body) > 500000) {
@@ -752,6 +758,11 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
     <style>
+        textarea.is-invalid + .note-editor {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+        }
+        
         body {
             background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1133,13 +1144,13 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
-                    <input type="text" class="form-control" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" required>
+                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" required>
                 </div>
 
                 <?php if ($hasTopics): ?>
                 <div class="mb-3">
                     <label for="topic_id" class="form-label">Tema</label>
-                    <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()" required>
+                    <select class="form-select <?php echo !empty($errorFields['topic_id']) ? 'is-invalid' : ''; ?>" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()" required>
                         <option value="">Seleccionar tema...</option>
                         <?php foreach ($topics as $topic): ?>
                             <?php
@@ -1154,7 +1165,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                 <?php else: ?>
                 <div class="mb-3">
                     <label for="dept_id" class="form-label">Departamento</label>
-                    <select class="form-select" id="dept_id" name="dept_id" required>
+                    <select class="form-select <?php echo !empty($errorFields['dept_id']) ? 'is-invalid' : ''; ?>" id="dept_id" name="dept_id" required>
                         <?php foreach ($departments as $dept): ?>
                             <option value="<?php echo $dept['id']; ?>" <?php echo ((int)($dept['id'] ?? 0) === (int)($dept_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
                         <?php endforeach; ?>
@@ -1169,13 +1180,13 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     </div>
                     <div id="network-extra-fields" class="contact-field anydesk-field">
                         <label for="anydesk" class="form-label">Anydesk</label>
-                        <input type="text" class="form-control" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
+                        <input type="text" class="form-control <?php echo !empty($errorFields['anydesk']) ? 'is-invalid' : ''; ?>" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="body" name="body" rows="8"><?php echo html($body ?? ''); ?></textarea>
+                    <textarea class="form-control <?php echo !empty($errorFields['body']) ? 'is-invalid' : ''; ?>" id="body" name="body" rows="8"><?php echo html($body ?? ''); ?></textarea>
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
@@ -1474,8 +1485,29 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             };
 
             var validateAttachmentsNeedText = function (ev) {
+                document.getElementById('subject') && document.getElementById('subject').classList.remove('is-invalid');
+                document.getElementById('topic_id') && document.getElementById('topic_id').classList.remove('is-invalid');
+                document.getElementById('anydesk') && document.getElementById('anydesk').classList.remove('is-invalid');
+                document.getElementById('body') && document.getElementById('body').classList.remove('is-invalid');
+
                 try {
+                    var inpsubject = document.getElementById('subject');
+                    if (inpsubject && String(inpsubject.value || '').trim() === '') {
+                        inpsubject.classList.add('is-invalid');
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        if (window.__showCreativePop) {
+                            window.__showCreativePop('El asunto es obligatorio.', 'Falta Asunto');
+                        } else {
+                            alert('El asunto es obligatorio.');
+                        }
+                        try { inpsubject.focus(); } catch(e) {}
+                        return false;
+                    }
+
                     if (topicSelect && String(topicSelect.value || '').trim() === '') {
+                        topicSelect.classList.add('is-invalid');
                         if (ev && ev.preventDefault) ev.preventDefault();
                         if (ev && ev.stopPropagation) ev.stopPropagation();
                         if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
@@ -1504,6 +1536,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     if (needsNetworkFields) {
                         var anydeskValue = anydeskInput ? String(anydeskInput.value || '').trim() : '';
                         if (anydeskValue === '') {
+                            if (anydeskInput) anydeskInput.classList.add('is-invalid');
                             if (ev && ev.preventDefault) ev.preventDefault();
                             if (ev && ev.stopPropagation) ev.stopPropagation();
                             if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
@@ -1533,6 +1566,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     var plain = getPlainTextFromHtml(html);
                     var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
                     if (!hasMedia && plain === '') {
+                        if (editor) editor.classList.add('is-invalid');
                         if (ev && ev.preventDefault) ev.preventDefault();
                         if (ev && ev.stopPropagation) ev.stopPropagation();
                         if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
