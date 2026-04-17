@@ -723,8 +723,20 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     $checkCol = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
     if ($checkCol && $checkCol->num_rows > 0) {
         $hasTopics = true;
-        $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1 ORDER BY ht.name');
+        $hasTopicDescCol = false;
+        $cd = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'description'");
+        if ($cd && $cd->num_rows > 0) {
+            $hasTopicDescCol = true;
+        }
+        if ($hasTopicDescCol) {
+            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id, IFNULL(ht.description, \'\') AS description FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1 ORDER BY ht.name');
+        } else {
+            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1 ORDER BY ht.name');
+        }
         while ($row = $stmt->fetch_assoc()) {
+            if (!$hasTopicDescCol) {
+                $row['description'] = '';
+            }
             $topics[] = $row;
         }
     }
@@ -1130,9 +1142,14 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     <select class="form-select" id="topic_id" name="topic_id" onchange="updateDepartmentFromTopic()" required>
                         <option value="">Seleccionar tema...</option>
                         <?php foreach ($topics as $topic): ?>
-                            <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>" <?php echo ((int)($topic['id'] ?? 0) === (int)($topic_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($topic['name']); ?></option>
+                            <?php
+                            $topicDesc = trim((string)($topic['description'] ?? ''));
+                            $topicDescAttr = htmlspecialchars($topicDesc, ENT_QUOTES, 'UTF-8');
+                            ?>
+                            <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>" data-description="<?php echo $topicDescAttr; ?>"<?php echo $topicDesc !== '' ? ' title="' . $topicDescAttr . '"' : ''; ?> <?php echo ((int)($topic['id'] ?? 0) === (int)($topic_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($topic['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <p class="form-text text-muted small mb-0 mt-1" id="topic_description_hint" style="display:none;" role="status" aria-live="polite"></p>
                 </div>
                 <?php else: ?>
                 <div class="mb-3">
@@ -1177,9 +1194,37 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         </div>
 
         <script>
+            function updateTopicHintFromSelect() {
+                var topicSelect = document.getElementById('topic_id');
+                var hint = document.getElementById('topic_description_hint');
+                if (!topicSelect) return;
+                var opt = topicSelect.options[topicSelect.selectedIndex];
+                var d = '';
+                if (opt && opt.value) {
+                    d = (opt.getAttribute('data-description') || '').trim();
+                }
+                if (hint) {
+                    if (d) {
+                        hint.textContent = d;
+                        hint.style.display = '';
+                    } else {
+                        hint.textContent = '';
+                        hint.style.display = 'none';
+                    }
+                }
+                if (d) {
+                    topicSelect.setAttribute('title', d);
+                } else {
+                    topicSelect.removeAttribute('title');
+                }
+            }
+
             function updateDepartmentFromTopic() {
                 var topicSelect = document.getElementById('topic_id');
                 var deptSelect = document.getElementById('dept_id');
+                if (topicSelect) {
+                    updateTopicHintFromSelect();
+                }
                 if (!topicSelect || !deptSelect) return;
                 
                 var selectedOption = topicSelect.options[topicSelect.selectedIndex];
@@ -1193,6 +1238,10 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
                     }
                 }
             }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                try { updateTopicHintFromSelect(); } catch (e) {}
+            });
             
         (function () {
             try {
