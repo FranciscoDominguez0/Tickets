@@ -175,8 +175,8 @@ if (defined('TICKET_PDF_RENDER')) {
         .sheet{max-width: 920px; margin: 22px auto; padding: 0 18px;}
         .topbar{display:flex; align-items:center; justify-content:space-between; gap:16px; padding: 14px 0 12px; border-bottom:2px solid var(--line);}
         .brand{display:flex; align-items:center; gap:12px; min-width: 0;}
-        .logo{width:64px; height:64px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; text-align:center;}
-        .logo img{max-width:44px; max-height:44px; margin-top:10px;}
+        .logo{text-align:left;}
+        .logo img{max-height:60px; max-width:220px; display:block;}
         .brand h1{font-size:16px; margin:0; font-weight:900; line-height:1.1;}
         .brand .web{color:var(--muted); font-weight:600; margin-top:2px;}
         .meta{ text-align:right; }
@@ -225,19 +225,13 @@ if (defined('TICKET_PDF_RENDER')) {
     <table style="width:100%; border-bottom:2px solid #e2e8f0; padding-bottom: 12px; margin-bottom:14px;">
         <tr>
             <td style="vertical-align:middle;">
-                <table style="border-collapse:collapse;">
-                    <tr>
-                        <?php if ($logoUrl !== ''): ?>
-                            <td style="padding-right: 12px;">
-                                <div class="logo"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
-                            </td>
-                        <?php endif; ?>
-                        <td style="vertical-align:middle;">
-                            <h1 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; color:#0f172a;"><?php echo html($companyName); ?></h1>
-                            <div class="web" style="color:#64748b; font-weight:600; margin-top:2px;"><?php echo html($companyWebsite); ?></div>
-                        </td>
-                    </tr>
-                </table>
+                <div style="text-align:left;">
+                    <?php if ($logoUrl !== ''): ?>
+                        <div class="logo" style="margin-bottom:6px;"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
+                    <?php endif; ?>
+                    <h1 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; color:#0f172a;"><?php echo html($companyName); ?></h1>
+                    <div class="web" style="color:#64748b; font-weight:600; margin-top:2px;"><?php echo html($companyWebsite); ?></div>
+                </div>
             </td>
             <td class="meta" style="vertical-align:middle;">
                 <div class="no">Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
