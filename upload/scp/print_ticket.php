@@ -222,21 +222,22 @@ if (defined('TICKET_PDF_RENDER')) {
 </head>
 <body>
 <div class="sheet">
-    <table style="width:100%; border-bottom:2px solid #e2e8f0; padding-bottom: 12px; margin-bottom:14px;">
+    <table style="width:100%; border-bottom:2px solid #cbd5e1; padding-bottom: 24px; margin-bottom:20px;">
         <tr>
-            <td style="vertical-align:middle;">
+            <td style="vertical-align:bottom; width:60%;">
                 <div style="text-align:left;">
                     <?php if ($logoUrl !== ''): ?>
-                        <div class="logo" style="margin-bottom:6px;"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
+                        <div class="logo" style="margin-bottom:14px;"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
                     <?php endif; ?>
-                    <h1 style="font-size:16px; margin:0; font-weight:900; line-height:1.1; color:#0f172a;"><?php echo html($companyName); ?></h1>
-                    <div class="web" style="color:#64748b; font-weight:600; margin-top:2px;"><?php echo html($companyWebsite); ?></div>
+                    <h1 style="font-size:13px; margin:0; font-weight:900; text-transform:uppercase; letter-spacing:0.06em; color:#0f172a;"><?php echo html($companyName); ?></h1>
+                    <div style="color:#2563eb; font-weight:700; margin-top:4px; font-size:11px; letter-spacing:0.02em;"><?php echo html(str_replace(['http://', 'https://'], '', $companyWebsite)); ?></div>
                 </div>
             </td>
-            <td class="meta" style="vertical-align:middle;">
-                <div class="no">Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
-                <div class="sub"><?php echo html((string)($t['subject'] ?? '')); ?></div>
-                <div class="sub">Impreso/Generado: <?php echo date('d/m/Y H:i'); ?></div>
+            <td style="vertical-align:bottom; text-align:right; width:40%;">
+                <div style="font-size:10px; text-transform:uppercase; font-weight:800; color:#64748b; letter-spacing:0.08em; margin-bottom:6px;">Documento de Ticket</div>
+                <div style="font-size:28px; font-weight:900; color:#0f172a; line-height:1; letter-spacing:-0.02em; margin-bottom:10px;"><?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
+                <div style="font-size:13px; font-weight:800; color:#334155; margin-bottom:6px;"><?php echo html((string)($t['subject'] ?? '')); ?></div>
+                <div style="font-size:11px; color:#64748b; font-weight:700;">Emitido: <?php echo date('d M Y - h:i A'); ?></div>
             </td>
         </tr>
     </table>
