@@ -1013,6 +1013,34 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $ok = $stmt->execute();
                 $msg = 'updated';
 
+                // Si cambió a En Camino (id=2), notificar al usuario
+                if ($ok && $sid === 2 && (int)($ticketView['status_id'] ?? 0) !== 2) {
+                    $toClient = trim((string)($ticketView['user_email'] ?? ''));
+                    if ($toClient !== '' && filter_var($toClient, FILTER_VALIDATE_EMAIL)) {
+                        $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                        $subjClient = '[Ticket En Camino] ' . $ticketNo;
+                        $bodyHtmlClient = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+                            . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Técnicos en camino</h2>'
+                            . '<p>Estimado usuario, los técnicos ya van en camino para atender su solicitud.</p>'
+                            . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html((string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets')) . '</p>'
+                            . '</div>';
+                        $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.";
+                        if (function_exists('enqueueEmailJob')) {
+                            enqueueEmailJob($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient, [
+                                'empresa_id' => (int)$eid,
+                                'context_type' => 'ticket_en_camino_client',
+                                'context_id' => (int)$tid,
+                            ]);
+                            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                triggerEmailQueueWorkerAsync();
+                            }
+                        } else {
+                            Mailer::send($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient);
+                        }
+                        addLog('ticket_en_camino_email', 'Notificación En Camino encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
+                    }
+                }
+
                 // Si se cierra desde cambio de estado (sin firma), notificar por correo
                 if ($ok && $isClosingStatus && empty($ticketView['closed'])) {
                     $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
@@ -1688,7 +1716,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 && $currentStatusId === $statusIdOpen
                                 && $new_status_id === $currentStatusId
                             ) {
-                                $new_status_id = $statusIdInProgress;
+                                // $new_status_id = $statusIdInProgress; // DESHABILITADO PARA QUE NO SEA AUTOMÁTICO
                             }
                         } catch (Throwable $e) {
                         }
@@ -1736,6 +1764,34 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
                         $stmtU->bind_param('iii', $new_status_id, $tid, $eid);
                         $stmtU->execute();
+                        
+                        // Si cambió a En Camino (id=2), notificar al usuario
+                        if ($new_status_id === 2 && (int)($ticketView['status_id'] ?? 0) !== 2) {
+                            $toClient = trim((string)($ticketView['user_email'] ?? ''));
+                            if ($toClient !== '' && filter_var($toClient, FILTER_VALIDATE_EMAIL)) {
+                                $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                                $subjClient = '[Ticket En Camino] ' . $ticketNo;
+                                $bodyHtmlClient = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+                                    . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Técnicos en camino</h2>'
+                                    . '<p>Estimado usuario, los técnicos ya van en camino para atender su solicitud.</p>'
+                                    . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html((string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets')) . '</p>'
+                                    . '</div>';
+                                $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.";
+                                if (function_exists('enqueueEmailJob')) {
+                                    enqueueEmailJob($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient, [
+                                        'empresa_id' => (int)$eid,
+                                        'context_type' => 'ticket_en_camino_client',
+                                        'context_id' => (int)$tid,
+                                    ]);
+                                    if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                        triggerEmailQueueWorkerAsync();
+                                    }
+                                } else {
+                                    Mailer::send($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient);
+                                }
+                                addLog('ticket_en_camino_email', 'Notificación En Camino encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
+                            }
+                        }
                         if (!$is_internal && $ticketView['staff_id'] === null) {
                             $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ? AND empresa_id = ?');
                             if ($stmtAssign) {
