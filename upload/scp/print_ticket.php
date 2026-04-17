@@ -94,7 +94,7 @@ if (defined('TICKET_PDF_RENDER')) {
     if ($projectRoot !== false) {
         $logoMode = (string)getAppSetting('company.logo_mode', '');
         $logoSetting = (string)getAppSetting('company.logo', '');
-        $logoRel = 'publico/img/vigitec-logo.png';
+        $logoRel = 'publico/img/vigitec-logo.webp';
         if ($logoMode === '') {
             $logoMode = $logoSetting !== '' ? 'custom' : 'default';
         }
@@ -103,6 +103,9 @@ if (defined('TICKET_PDF_RENDER')) {
             if ($candidate !== '' && is_file($projectRoot . '/' . $candidate)) {
                 $logoRel = $candidate;
             }
+        }
+        if (!is_file($projectRoot . '/' . ltrim($logoRel, '/')) && is_file($projectRoot . '/publico/img/vigitec-logo.png')) {
+            $logoRel = 'publico/img/vigitec-logo.png';
         }
         
         $logoAbsPath = $projectRoot . '/' . ltrim($logoRel, '/');

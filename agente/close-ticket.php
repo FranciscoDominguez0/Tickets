@@ -294,13 +294,11 @@ if ($client_email !== '' && filter_var($client_email, FILTER_VALIDATE_EMAIL)) {
         . '<p>Hola ' . html($client_name) . ',</p>'
         . '<p>Te informamos que tu ticket <strong>' . html($ticket_no) . '</strong> fue marcado como <strong>' . html($status_label) . '</strong>.</p>'
         . '<p><strong>Asunto:</strong> ' . html($ticket_subject) . '</p>'
-        . '<p style="margin:14px 0 0;"><a href="' . html($client_pdf_url) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a></p>'
         . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($company_name) . '</p>'
         . '</div>';
     $client_body_text = "Hola " . $client_name . ",\n\n"
         . "Tu ticket " . $ticket_no . " fue marcado como " . $status_label . ".\n"
         . "Asunto: " . $ticket_subject . "\n\n"
-        . "Ver PDF: " . $client_pdf_url . "\n\n"
         . $company_name;
     if (!empty($pdf_attachment)) {
         Mailer::sendWithOptions($client_email, $client_subject, $client_body_html, $client_body_text, [
@@ -359,7 +357,6 @@ if (!empty($admin_recipients)) {
         . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Estado:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($status_label) . '</td></tr>'
         . '<tr><td style="padding:6px 0;"><strong>Firma cliente:</strong></td><td style="padding:6px 0;">' . ($closed_with_signature ? 'Sí' : 'No') . '</td></tr>'
         . '</table>'
-        . '<p style="margin:14px 0 0;"><a href="' . html($admin_pdf_url) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a></p>'
         . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($company_name) . '</p>'
         . '</div>';
     $admin_body_text = "Ticket cerrado\n\n"
@@ -367,7 +364,6 @@ if (!empty($admin_recipients)) {
         . "Asunto: " . $ticket_subject . "\n"
         . "Estado: " . $status_label . "\n"
         . "Firma cliente: " . ($closed_with_signature ? 'Si' : 'No') . "\n\n"
-        . "Ver PDF: " . $admin_pdf_url . "\n\n"
         . $company_name;
 
     foreach (array_keys($admin_recipients) as $admin_email) {

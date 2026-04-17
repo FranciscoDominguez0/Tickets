@@ -1054,15 +1054,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             . '<p>Hola ' . html($clientName) . ',</p>'
                             . '<p>Te informamos que tu ticket <strong>' . html($ticketNo) . '</strong> fue marcado como <strong>' . html($statusLabel) . '</strong>.</p>'
                             . '<p><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
-                            . '<p style="margin:14px 0 0;">'
-                            . '<a href="' . html($clientPdfUrl) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a>'
-                            . '</p>'
                             . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
                             . '</div>';
                         $clientBodyText = "Hola " . $clientName . ",\n\n"
                             . "Tu ticket " . $ticketNo . " fue marcado como " . $statusLabel . ".\n"
                             . "Asunto: " . $ticketSubject . "\n\n"
-                            . "Ver PDF: " . $clientPdfUrl . "\n\n"
                             . $companyName;
                         $clientMailOpts = [
                             'empresa_id'   => (int)$eid,
@@ -1129,9 +1125,6 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Estado:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($statusLabel) . '</td></tr>'
                             . '<tr><td style="padding:6px 0;"><strong>Firma cliente:</strong></td><td style="padding:6px 0;">No</td></tr>'
                             . '</table>'
-                            . '<p>'
-                            . '<a href="' . html($ticketPdfUrl) . '" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver PDF</a>'
-                            . '</p>'
                             . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
                             . '</div>';
                         $adminBodyText = "Ticket cerrado\n\n"
@@ -1139,7 +1132,6 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             . "Asunto: " . $ticketSubject . "\n"
                             . "Estado: " . $statusLabel . "\n"
                             . "Firma cliente: No\n\n"
-                            . "Ver PDF: " . $ticketPdfUrl . "\n\n"
                             . $companyName;
 
                         $pdfAttachment = null;
