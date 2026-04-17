@@ -118,9 +118,8 @@
                             if (!area) return 'rgba(40, 167, 69, 0.08)';
                             return makeGradient(chart.ctx, area, '#28a745');
                         },
-                        fill: !isShortRange,
-                        tension: 0.38,
-                        cubicInterpolationMode: 'monotone',
+                        fill: true,
+                        tension: 0.4,
                         pointRadius: isShortRange ? 3 : 0,
                         pointHoverRadius: isShortRange ? 5 : 4,
                         pointHitRadius: 10,
@@ -140,9 +139,8 @@
                             if (!area) return 'rgba(0, 123, 255, 0.08)';
                             return makeGradient(chart.ctx, area, '#007bff');
                         },
-                        fill: !isShortRange,
-                        tension: 0.38,
-                        cubicInterpolationMode: 'monotone',
+                        fill: true,
+                        tension: 0.4,
                         pointRadius: isShortRange ? 3 : 0,
                         pointHoverRadius: isShortRange ? 5 : 4,
                         pointHitRadius: 10,
@@ -162,9 +160,8 @@
                             if (!area) return 'rgba(220, 53, 69, 0.08)';
                             return makeGradient(chart.ctx, area, '#dc3545');
                         },
-                        fill: !isShortRange,
-                        tension: 0.38,
-                        cubicInterpolationMode: 'monotone',
+                        fill: true,
+                        tension: 0.4,
                         pointRadius: isShortRange ? 3 : 0,
                         pointHoverRadius: isShortRange ? 5 : 4,
                         pointHitRadius: 10,
@@ -228,27 +225,10 @@
                             color: 'rgba(148, 163, 184, 0.25)'
                         },
                         ticks: {
-                            autoSkip: false,
+                            autoSkip: true,
                             maxTicksLimit: 10,
                             maxRotation: 45,
                             minRotation: 0,
-                            callback: function(value, index, ticks) {
-                                if (isShortRange) {
-                                    try {
-                                        if (Array.isArray(labels) && typeof labels[index] !== 'undefined') {
-                                            return String(labels[index]);
-                                        }
-                                    } catch (e) {}
-                                }
-                                try {
-                                    var r = (window.dashboardData && window.dashboardData.range) ? window.dashboardData.range : null;
-                                    var first = r && r.start_label ? String(r.start_label) : null;
-                                    var last = r && r.end_label ? String(r.end_label) : null;
-                                    if (index === 0 && first) return first;
-                                    if (index === (ticks.length - 1) && last) return last;
-                                } catch (e) {}
-                                return '';
-                            },
                             font: {
                                 size: 10
                             },

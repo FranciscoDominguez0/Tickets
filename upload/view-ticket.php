@@ -252,15 +252,28 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
     }
 
     $rel = (string) ($att['path'] ?? '');
-    $full = __DIR__ . '/' . ltrim($rel, '/');
-    if (($rel === '' || !is_file($full)) && $rel !== '') {
-        // Compatibilidad con adjuntos subidos antes del fix de ruta (guardados en upload/scp/uploads/attachments)
-        $legacy = __DIR__ . '/scp/' . ltrim($rel, '/');
-        if (is_file($legacy)) {
-            $full = $legacy;
+    
+    // Todos los posibles directorios base
+    $baseUpload = __DIR__;                 // upload/
+    $baseScp = __DIR__ . '/scp';           // upload/scp/
+    $baseRoot = dirname(__DIR__);          // sistema-tickets/
+
+    $full1 = $baseUpload . '/' . ltrim($rel, '/');
+    $full2 = $baseRoot . '/' . ltrim($rel, '/');
+    $full3 = $baseScp . '/' . ltrim($rel, '/');
+
+    $full = '';
+    if ($rel !== '') {
+        if (is_file($full1)) {
+            $full = $full1;
+        } elseif (is_file($full2)) {
+            $full = $full2;
+        } elseif (is_file($full3)) {
+            $full = $full3;
         }
     }
-    if ($rel === '' || !is_file($full)) {
+
+    if ($full === '') {
         http_response_code(404);
         exit('Archivo no encontrado');
     }

@@ -367,6 +367,30 @@ while ($cursor <= $endDate) {
     $cursor->modify('+1 day');
 }
 
+// Recortar días iniciales sin actividad para que la gráfica no se vea acumulada al final
+$firstDataIndex = -1;
+$dataCount = count($createdData);
+for ($i = 0; $i < $dataCount; $i++) {
+    if ($createdData[$i] > 0 || $closedData[$i] > 0 || $deletedData[$i] > 0) {
+        $firstDataIndex = $i;
+        break;
+    }
+}
+
+// Para que tenga "forma de montaña", necesitamos que la gráfica empiece en 0 antes de subir.
+// Dejamos 2 días de padding (ceros) antes del primer pico.
+if ($firstDataIndex > 0) {
+    $firstDataIndex = max(0, $firstDataIndex - 2);
+    
+    if ($firstDataIndex > 0) {
+        $labels = array_slice($labels, $firstDataIndex);
+        $times = array_slice($times, $firstDataIndex);
+        $createdData = array_slice($createdData, $firstDataIndex);
+        $closedData = array_slice($closedData, $firstDataIndex);
+        $deletedData = array_slice($deletedData, $firstDataIndex);
+    }
+}
+
 // Formato similar a osTicket: plots como objeto asociativo
 $plots = [
     'created' => $createdData,

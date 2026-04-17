@@ -914,16 +914,28 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 exit('Archivo no encontrado');
             }
             $rel = (string) ($att['path'] ?? '');
-            $baseUpload = dirname(__DIR__, 2); // upload/scp
-            $baseRoot = dirname(__DIR__, 3);   // upload
-            $full = $baseRoot . '/' . ltrim($rel, '/');
-            if (($rel === '' || !is_file($full)) && $rel !== '') {
-                $legacy = $baseUpload . '/' . ltrim($rel, '/');
-                if (is_file($legacy)) {
-                    $full = $legacy;
+            
+            // Determinar los diferentes directorios base posibles
+            $baseScp = dirname(__DIR__); // upload/scp
+            $baseUpload = dirname(__DIR__, 2); // upload
+            $baseRoot = dirname(__DIR__, 3);   // sistema-tickets
+            
+            $full1 = rtrim($baseUpload, '/\\') . '/' . ltrim($rel, '/'); // upload/uploads/attachments/...
+            $full2 = rtrim($baseRoot, '/\\') . '/' . ltrim($rel, '/');   // sistema-tickets/uploads/attachments/...
+            $full3 = rtrim($baseScp, '/\\') . '/' . ltrim($rel, '/');    // upload/scp/uploads/attachments/...
+            
+            $full = '';
+            if ($rel !== '') {
+                if (is_file($full1)) {
+                    $full = $full1;
+                } elseif (is_file($full2)) {
+                    $full = $full2;
+                } elseif (is_file($full3)) {
+                    $full = $full3;
                 }
             }
-            if ($rel === '' || !is_file($full)) {
+
+            if ($full === '') {
                 http_response_code(404);
                 exit('Archivo no encontrado');
             }
