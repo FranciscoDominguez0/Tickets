@@ -593,10 +593,9 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
 
-    <!-- Pestañas: Hilo del ticket / Tareas -->
+    <!-- Pestañas: Hilo del ticket -->
     <ul class="ticket-view-tabs" role="tablist">
         <li><a class="tab active" href="#thread"><i class="bi bi-chat-left-text"></i> Hilo del Ticket (<?php echo $countPublic; ?>)</a></li>
-        <li><a class="tab" href="#tasks"><i class="bi bi-check2-square"></i> Tareas</a></li>
     </ul>
 
     <div class="ticket-view-tab-content" id="thread" data-print-area="thread">
