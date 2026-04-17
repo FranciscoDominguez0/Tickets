@@ -66,7 +66,7 @@ if ($status_closed !== 5) {
     $stmt_status->execute();
     $status_row = $stmt_status->get_result()->fetch_assoc();
     $status_name = strtolower(trim((string)($status_row['name'] ?? '')));
-    if ($status_name === '' || (!str_contains($status_name, 'cerrad') && !str_contains($status_name, 'closed') && !str_contains($status_name, 'resuelt') && !str_contains($status_name, 'resolved'))) {
+    if ($status_name === '' || (!str_contains($status_name, 'cerrad') && !str_contains($status_name, 'closed'))) {
         echo json_encode(['success' => false, 'error' => 'Estado de cierre inválido']);
         exit;
     }

@@ -1212,7 +1212,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!closingStatusId || !modalChoice) return;
                 
                 if (closingStatusName.toLowerCase().indexOf('resuelto') !== -1 || closingStatusName.toLowerCase().indexOf('resolved') !== -1) {
-                    closeByAjax('', '');
+                    window.location.href = 'tickets.php?id=' + ticketId + '&action=status&status_id=' + closingStatusId;
                     return;
                 }
 
@@ -1282,7 +1282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (closingStatusName.toLowerCase().indexOf('resuelto') !== -1 || closingStatusName.toLowerCase().indexOf('resolved') !== -1) {
-                closeByAjax('', '');
+                window.location.href = 'tickets.php?id=' + ticketId + '&action=status&status_id=' + closingStatusId;
                 return;
             }
 

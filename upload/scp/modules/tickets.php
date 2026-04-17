@@ -996,7 +996,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $stRow = $stmtSt->get_result()->fetch_assoc();
                         $stName = strtolower(trim((string)($stRow['name'] ?? '')));
                         $statusLabel = trim((string)($stRow['name'] ?? ''));
-                        if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                        if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'closed'))) {
                             $isClosingStatus = true;
                         }
                     }
@@ -2510,7 +2510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                         if ($stmtSt->execute()) {
                             $stRow = $stmtSt->get_result()->fetch_assoc();
                             $stName = strtolower(trim((string)($stRow['name'] ?? '')));
-                            if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
+                            if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'closed'))) {
                                 $isClosingStatus = true;
                             }
                         }
