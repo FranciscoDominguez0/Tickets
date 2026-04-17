@@ -988,12 +988,14 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 
                 // Verificar si es un estado de cerrado
                 $isClosingStatus = false;
+                $statusLabel = '';
                 $stmtSt = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');
                 if ($stmtSt) {
                     $stmtSt->bind_param('i', $sid);
                     if ($stmtSt->execute()) {
                         $stRow = $stmtSt->get_result()->fetch_assoc();
                         $stName = strtolower(trim((string)($stRow['name'] ?? '')));
+                        $statusLabel = trim((string)($stRow['name'] ?? ''));
                         if ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved'))) {
                             $isClosingStatus = true;
                         }
@@ -1010,6 +1012,118 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $stmt->bind_param('iii', $sid, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'updated';
+
+                // Si se cierra desde cambio de estado (sin firma), notificar por correo
+                if ($ok && $isClosingStatus && empty($ticketView['closed'])) {
+                    $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                    $ticketSubject = trim((string)($ticketView['subject'] ?? 'Ticket'));
+                    if ($statusLabel === '') $statusLabel = 'Cerrado';
+                    $companyName = (string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets');
+                    $ticketUrlStaff = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/scp/tickets.php?id=' . (int)$tid;
+                    $ticketUrlUser = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?id=' . (int)$tid;
+
+                    // Correo al cliente
+                    $clientName = trim((string)($ticketView['user_first'] ?? '') . ' ' . (string)($ticketView['user_last'] ?? ''));
+                    if ($clientName === '') $clientName = 'Cliente';
+                    $clientEmail = strtolower(trim((string)($ticketView['user_email'] ?? '')));
+                    if ($clientEmail !== '' && filter_var($clientEmail, FILTER_VALIDATE_EMAIL)) {
+                        $clientSubj = '[Ticket cerrado] ' . $ticketNo . ' - ' . $ticketSubject;
+                        $clientBodyHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+                            . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Tu ticket fue cerrado</h2>'
+                            . '<p>Hola ' . html($clientName) . ',</p>'
+                            . '<p>Te informamos que tu ticket <strong>' . html($ticketNo) . '</strong> fue marcado como <strong>' . html($statusLabel) . '</strong>.</p>'
+                            . '<p><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
+                            . '<p style="margin:14px 0 0;"><a href="' . html($ticketUrlUser) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Ver ticket</a></p>'
+                            . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
+                            . '</div>';
+                        $clientBodyText = "Hola " . $clientName . ",\n\n"
+                            . "Tu ticket " . $ticketNo . " fue marcado como " . $statusLabel . ".\n"
+                            . "Asunto: " . $ticketSubject . "\n\n"
+                            . "Ver ticket: " . $ticketUrlUser . "\n\n"
+                            . $companyName;
+                        if (function_exists('enqueueEmailJob')) {
+                            enqueueEmailJob($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, [
+                                'empresa_id' => (int)$eid,
+                                'context_type' => 'ticket_closed_client',
+                                'context_id' => (int)$tid,
+                            ]);
+                        } else {
+                            Mailer::send($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText);
+                        }
+                    }
+
+                    // Correo a agentes configurados en notificaciones
+                    $adminRecipients = [];
+                    $hasRecipientsTable = $mysqli->query("SHOW TABLES LIKE 'notification_recipients'");
+                    if ($hasRecipientsTable && $hasRecipientsTable->num_rows > 0) {
+                        $staffHasEmpresa = false;
+                        try {
+                            $chk = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+                            $staffHasEmpresa = ($chk && $chk->num_rows > 0);
+                        } catch (Throwable $e) {
+                            $staffHasEmpresa = false;
+                        }
+
+                        $sqlAdmin = "SELECT s.email FROM notification_recipients nr INNER JOIN staff s ON s.id = nr.staff_id WHERE nr.empresa_id = ? AND s.is_active = 1";
+                        if ($staffHasEmpresa) {
+                            $sqlAdmin .= " AND s.empresa_id = ?";
+                        }
+                        $stmtAdmin = $mysqli->prepare($sqlAdmin);
+                        if ($stmtAdmin) {
+                            if ($staffHasEmpresa) {
+                                $stmtAdmin->bind_param('ii', $eid, $eid);
+                            } else {
+                                $stmtAdmin->bind_param('i', $eid);
+                            }
+                            if ($stmtAdmin->execute()) {
+                                $rsAdmin = $stmtAdmin->get_result();
+                                while ($rsAdmin && ($rowAdmin = $rsAdmin->fetch_assoc())) {
+                                    $em = strtolower(trim((string)($rowAdmin['email'] ?? '')));
+                                    if ($em === '' || !filter_var($em, FILTER_VALIDATE_EMAIL)) continue;
+                                    $adminRecipients[$em] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!empty($adminRecipients)) {
+                        $adminSubj = '[Ticket cerrado] ' . $ticketNo . ' - ' . $ticketSubject;
+                        $adminBodyHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+                            . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Ticket cerrado</h2>'
+                            . '<p>Un ticket fue cerrado en el sistema.</p>'
+                            . '<table style="width:100%;border-collapse:collapse;margin:10px 0 14px;">'
+                            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Número:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($ticketNo) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Asunto:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($ticketSubject) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Estado:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($statusLabel) . '</td></tr>'
+                            . '<tr><td style="padding:6px 0;"><strong>Firma cliente:</strong></td><td style="padding:6px 0;">No</td></tr>'
+                            . '</table>'
+                            . '<p><a href="' . html($ticketUrlStaff) . '" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 16px;border-radius:8px;">Abrir ticket</a></p>'
+                            . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($companyName) . '</p>'
+                            . '</div>';
+                        $adminBodyText = "Ticket cerrado\n\n"
+                            . "Numero: " . $ticketNo . "\n"
+                            . "Asunto: " . $ticketSubject . "\n"
+                            . "Estado: " . $statusLabel . "\n"
+                            . "Firma cliente: No\n\n"
+                            . "Abrir ticket: " . $ticketUrlStaff . "\n\n"
+                            . $companyName;
+                        foreach (array_keys($adminRecipients) as $adminEmail) {
+                            if (function_exists('enqueueEmailJob')) {
+                                enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
+                                    'empresa_id' => (int)$eid,
+                                    'context_type' => 'ticket_closed_admin',
+                                    'context_id' => (int)$tid,
+                                ]);
+                            } else {
+                                Mailer::send($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
+                            }
+                        }
+                    }
+
+                    if (function_exists('triggerEmailQueueWorkerAsync')) {
+                        triggerEmailQueueWorkerAsync(40);
+                    }
+                }
             } elseif ($action === 'assign') {
                 requireRolePermission('ticket.assign', 'tickets.php?id=' . $tid);
                 $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
