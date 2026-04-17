@@ -237,7 +237,12 @@ if (defined('TICKET_PDF_RENDER')) {
                 <div style="font-size:10px; text-transform:uppercase; font-weight:800; color:#64748b; letter-spacing:0.08em; margin-bottom:6px;">Documento de Ticket</div>
                 <div style="font-size:28px; font-weight:900; color:#0f172a; line-height:1; letter-spacing:-0.02em; margin-bottom:10px;"><?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
                 <div style="font-size:13px; font-weight:800; color:#334155; margin-bottom:6px;"><?php echo html((string)($t['subject'] ?? '')); ?></div>
-                <div style="font-size:11px; color:#64748b; font-weight:700;">Emitido: <?php echo date('d M Y - h:i A'); ?></div>
+                <div style="font-size:11px; color:#64748b; font-weight:700;">Emitido: <?php 
+                    $originalTz = date_default_timezone_get();
+                    date_default_timezone_set('America/Panama');
+                    echo date('d M Y - h:i A'); 
+                    date_default_timezone_set($originalTz);
+                ?></div>
             </td>
         </tr>
     </table>
@@ -307,14 +312,16 @@ if (defined('TICKET_PDF_RENDER')) {
         </div>
     <?php endif; ?>
 
-    <?php if ($ticketClientSignatureUrl !== ''): ?>
-        <div class="sig-box">
-            <div class="sig-title">Firma del cliente</div>
-            <div class="sig-body">
+    <div class="sig-box">
+        <div class="sig-title">Firma del cliente</div>
+        <div class="sig-body">
+            <?php if ($ticketClientSignatureUrl !== ''): ?>
                 <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="sig-img">
-            </div>
+            <?php else: ?>
+                <div style="padding: 20px 0; color: #94a3b8; font-size: 13px; font-weight: 700; font-style: italic; letter-spacing: 0.03em;">(No incluye firma)</div>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
+    </div>
 
     <div class="footer">
         <?php echo html($companyName); ?> · <?php echo html($companyWebsite); ?>
