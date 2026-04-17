@@ -1018,13 +1018,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $toClient = trim((string)($ticketView['user_email'] ?? ''));
                     if ($toClient !== '' && filter_var($toClient, FILTER_VALIDATE_EMAIL)) {
                         $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
-                        $subjClient = '[Ticket En Camino] ' . $ticketNo;
+                        $ticketSubject = (string)($ticketView['subject'] ?? '');
+                        $ticketTopic = (string)($ticketView['topic_name'] ?? 'General');
+                        $subjClient = '[Ticket En Camino] ' . $ticketNo . ' - ' . $ticketSubject;
+                        
                         $bodyHtmlClient = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
                             . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Técnicos en camino</h2>'
                             . '<p>Estimado usuario, los técnicos ya van en camino para atender su solicitud.</p>'
+                            . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; margin-top:14px;">'
+                            . '<p style="margin:0 0 8px;"><strong>ID del Ticket:</strong> ' . html($ticketNo) . '</p>'
+                            . '<p style="margin:0 0 8px;"><strong>Tema:</strong> ' . html($ticketTopic) . '</p>'
+                            . '<p style="margin:0;"><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
+                            . '</div>'
                             . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html((string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets')) . '</p>'
                             . '</div>';
-                        $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.";
+                        $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.\n\n"
+                            . "ID del Ticket: $ticketNo\n"
+                            . "Tema: $ticketTopic\n"
+                            . "Asunto: $ticketSubject";
                         if (function_exists('enqueueEmailJob')) {
                             enqueueEmailJob($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient, [
                                 'empresa_id' => (int)$eid,
@@ -1770,13 +1781,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             $toClient = trim((string)($ticketView['user_email'] ?? ''));
                             if ($toClient !== '' && filter_var($toClient, FILTER_VALIDATE_EMAIL)) {
                                 $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
-                                $subjClient = '[Ticket En Camino] ' . $ticketNo;
+                                $ticketSubject = (string)($ticketView['subject'] ?? '');
+                                $ticketTopic = (string)($ticketView['topic_name'] ?? 'General');
+                                $subjClient = '[Ticket En Camino] ' . $ticketNo . ' - ' . $ticketSubject;
+                                
                                 $bodyHtmlClient = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
                                     . '<h2 style="margin:0 0 10px;color:#1e3a5f;">Técnicos en camino</h2>'
                                     . '<p>Estimado usuario, los técnicos ya van en camino para atender su solicitud.</p>'
+                                    . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; margin-top:14px;">'
+                                    . '<p style="margin:0 0 8px;"><strong>ID del Ticket:</strong> ' . html($ticketNo) . '</p>'
+                                    . '<p style="margin:0 0 8px;"><strong>Tema:</strong> ' . html($ticketTopic) . '</p>'
+                                    . '<p style="margin:0;"><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
+                                    . '</div>'
                                     . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html((string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets')) . '</p>'
                                     . '</div>';
-                                $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.";
+                                $bodyTextClient = "Estimado usuario, los técnicos ya van en camino para atender su solicitud.\n\n"
+                                    . "ID del Ticket: $ticketNo\n"
+                                    . "Tema: $ticketTopic\n"
+                                    . "Asunto: $ticketSubject";
                                 if (function_exists('enqueueEmailJob')) {
                                     enqueueEmailJob($toClient, $subjClient, $bodyHtmlClient, $bodyTextClient, [
                                         'empresa_id' => (int)$eid,
