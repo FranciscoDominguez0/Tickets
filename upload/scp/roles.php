@@ -441,6 +441,80 @@ ob_start();
     </div>
 </div>
 
+<style>
+@media (max-width: 768px) {
+    #rolesMassForm .table-responsive { border: none; }
+    #rolesMassForm .table thead { display: none; }
+    #rolesMassForm .table tbody tr {
+        display: block;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 14px 16px;
+        background: #fff;
+        position: relative;
+    }
+    #rolesMassForm .table tbody td {
+        display: block;
+        padding: 4px 0;
+        border: none;
+        text-align: left !important;
+    }
+    /* Checkbox */
+    #rolesMassForm .table tbody td:nth-child(1) {
+        position: absolute; top: 18px; left: 16px; padding: 0;
+    }
+    /* Nombre y enlace */
+    #rolesMassForm .table tbody td:nth-child(2) {
+        padding-left: 32px; padding-right: 80px;
+    }
+    #rolesMassForm .table tbody td:nth-child(2) a {
+        font-size: 16px; color: #0f172a; font-weight: 800; display: block;
+    }
+    /* Estado (Badge) */
+    #rolesMassForm .table tbody td:nth-child(3) {
+        position: absolute; top: 15px; right: 16px; padding: 0;
+    }
+    /* Creado en */
+    #rolesMassForm .table tbody td:nth-child(4) {
+        font-size: 13px; padding-left: 32px; color: #64748b; margin-top: 2px;
+    }
+    #rolesMassForm .table tbody td:nth-child(4)::before {
+        content: "Creado: "; font-weight: 600;
+    }
+    /* Última actualización */
+    #rolesMassForm .table tbody td:nth-child(5) {
+        display: none;
+    }
+    
+    /* Sección métricas dividida: Agentes y Activos */
+    #rolesMassForm .table tbody td:nth-child(6),
+    #rolesMassForm .table tbody td:nth-child(7) {
+        border-top: 1px dashed #e2e8f0;
+        margin-top: 14px; 
+        padding-top: 12px; 
+        padding-bottom: 0;
+        font-size: 15px; 
+        font-weight: 700;
+        color: #0f172a; 
+        display: inline-block; 
+        width: 48%; 
+        box-sizing: border-box;
+    }
+    #rolesMassForm .table tbody td:nth-child(6)::before {
+        content: "Total Agentes"; color: #64748b; font-weight: 700;
+        display: block; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    #rolesMassForm .table tbody td:nth-child(7)::before {
+        content: "Activos"; color: #64748b; font-weight: 700;
+        display: block; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    #rolesMassForm .table tbody tr::after {
+        content: ""; display: table; clear: both;
+    }
+}
+</style>
+
 <script>
 window.addEventListener('DOMContentLoaded', function(){
     function getCheckedIds(){

@@ -646,6 +646,94 @@ ob_start();
     </div>
 </div>
 
+<style>
+@media (max-width: 768px) {
+    #deptsMassForm .table-responsive {
+        border: none;
+    }
+    #deptsMassForm .table thead {
+        display: none;
+    }
+    #deptsMassForm .table tbody tr {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 14px 16px;
+        background: #fff;
+        position: relative;
+    }
+    #deptsMassForm .table tbody td {
+        display: block;
+        padding: 4px 0;
+        border: none;
+        text-align: left !important;
+    }
+    /* Checkbox */
+    #deptsMassForm .table tbody td:nth-child(1) {
+        position: absolute;
+        top: 18px;
+        left: 16px;
+        padding: 0;
+    }
+    /* Departamento (Name & Desc) */
+    #deptsMassForm .table tbody td:nth-child(2) {
+        padding-left: 32px;
+        padding-right: 48px;
+    }
+    #deptsMassForm .table tbody td:nth-child(2) .fw-semibold {
+        font-size: 15px; color: #0f172a;
+    }
+    #deptsMassForm .table tbody td:nth-child(2) .text-muted {
+        line-height: 1.3; margin-top: 3px;
+    }
+    /* Email */
+    #deptsMassForm .table tbody td:nth-child(5) {
+        font-size: 13px;
+        padding-left: 32px;
+        word-break: break-all;
+    }
+    #deptsMassForm .table tbody td:nth-child(5)::before {
+        content: "Email: ";
+        font-weight: 600;
+        color: #64748b;
+    }
+    /* Stats & Status Divider */
+    #deptsMassForm .table tbody td:nth-child(3) {
+        border-top: 1px dashed #e2e8f0;
+        margin-top: 12px;
+        padding-top: 12px;
+        display: inline-block;
+    }
+    #deptsMassForm .table tbody td:nth-child(4),
+    #deptsMassForm .table tbody td:nth-child(6) {
+        display: inline-block;
+        font-size: 13px;
+        padding-top: 12px;
+    }
+    #deptsMassForm .table tbody td:nth-child(4)::before {
+        content: "Agentes: ";
+        color: #64748b;
+        font-weight: 500;
+        margin-left: 12px;
+    }
+    #deptsMassForm .table tbody td:nth-child(6)::before {
+        content: "Tickets: ";
+        color: #64748b;
+        font-weight: 500;
+        margin-left: 12px;
+    }
+    /* Action btn */
+    #deptsMassForm .table tbody td:nth-child(7) {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        padding: 0;
+    }
+}
+</style>
+
 <script>
 window.addEventListener('DOMContentLoaded', function(){
     function getCheckedIds(){

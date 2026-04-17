@@ -245,6 +245,80 @@ ob_start();
     </div>
 </div>
 
+<style>
+@media (max-width: 768px) {
+    .settings-card .table-responsive { border: none; }
+    .settings-card .table thead { display: none; }
+    .settings-card .table tbody tr {
+        display: block;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        background: #fff;
+    }
+    .settings-card .table tbody td {
+        display: block;
+        padding: 0;
+        border: none;
+        text-align: left !important;
+    }
+    /* 1: Staff */
+    .settings-card .table tbody td:nth-child(1) {
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+    .settings-card .table tbody td:nth-child(1) strong {
+        font-size: 15px; font-weight: 700; color: #0f172a; display: inline-block;
+    }
+    .settings-card .table tbody td:nth-child(1) .text-muted {
+        font-size: 12px; margin-left: 6px; display: inline-block;
+    }
+    /* 2: Correo */
+    .settings-card .table tbody td:nth-child(2) {
+        font-size: 13px; margin-bottom: 12px; color: #64748b;
+    }
+    /* 3 & 4: Switches Wrapper - lado a lado (Side by side) */
+    .settings-card .table tbody td:nth-child(3),
+    .settings-card .table tbody td:nth-child(4) {
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 48%;
+        background: #f8fafc;
+        padding: 10px 4px;
+        border-radius: 6px;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+        border: 1px solid #f1f5f9;
+        vertical-align: top;
+    }
+    .settings-card .table tbody td:nth-child(3) {
+        margin-right: 3%;
+    }
+    /* Labels before switches */
+    .settings-card .table tbody td:nth-child(3)::before {
+        content: "Tickets"; font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .settings-card .table tbody td:nth-child(4)::before {
+        content: "Tareas"; font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    /* Centrar visualmente los switches de Bootstrap desactivando sus offsets por defecto */
+    .settings-card .table tbody td .form-check {
+        padding-left: 0;
+        margin-bottom: 0;
+        min-height: auto;
+        display: flex;
+        justify-content: center;
+    }
+    .settings-card .table tbody td .form-check .form-check-input {
+        margin-left: 0;
+        float: none;
+    }
+}
+</style>
+
 <?php
 $content = ob_get_clean();
 require_once 'layout_admin.php';

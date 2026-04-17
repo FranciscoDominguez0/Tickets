@@ -821,6 +821,71 @@ ob_start();
     </div>
 </div>
 
+<style>
+@media (max-width: 768px) {
+    .settings-card .table-responsive { border: none; }
+    .settings-card .table thead { display: none; }
+    .settings-card .table tbody tr {
+        display: block;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        background: #fff;
+        position: relative;
+    }
+    .settings-card .table tbody td {
+        display: block;
+        padding: 0;
+        border: none;
+        text-align: left !important;
+    }
+    /* 1: Nombre */
+    .settings-card .table tbody td:nth-child(1) {
+        padding-right: 60px;
+        margin-bottom: 2px;
+        line-height: 1.2;
+    }
+    .settings-card .table tbody td:nth-child(1) strong {
+        font-size: 15px; font-weight: 700; color: #0f172a; display: inline-block;
+    }
+    .settings-card .table tbody td:nth-child(1) .text-muted {
+        font-size: 12px; margin-left: 4px; display: inline-block;
+    }
+    /* 2: Email */
+    .settings-card .table tbody td:nth-child(2) {
+        font-size: 13px; margin-bottom: 6px;
+    }
+    /* 3 & 4: Badges (Dept + Rol) - Inline */
+    .settings-card .table tbody td:nth-child(3),
+    .settings-card .table tbody td:nth-child(4) {
+        display: inline-block;
+        margin-right: 6px;
+        margin-bottom: 8px;
+    }
+    /* 5: Estado (Top Right Absolute) */
+    .settings-card .table tbody td:nth-child(5) {
+        position: absolute; top: 12px; right: 14px;
+    }
+    /* 6: Acceso */
+    .settings-card .table tbody td:nth-child(6) {
+        font-size: 11px; color: #64748b; margin-bottom: 8px;
+    }
+    .settings-card .table tbody td:nth-child(6)::before {
+        content: "Acceso: ";
+    }
+    /* 7: Acciones */
+    .settings-card .table tbody td:nth-child(7) {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 8px;
+        text-align: right !important;
+    }
+    .settings-card .table tbody td:nth-child(7) form {
+        display: inline-block;
+    }
+}
+</style>
+
 <?php if ($currentStaffRole === 'admin'): ?>
 <div class="modal fade" id="agentCreateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
