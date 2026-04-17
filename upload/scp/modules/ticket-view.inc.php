@@ -789,10 +789,6 @@ if ($ticketClientSignaturePath !== '') {
                 </button>
                 <?php endif; ?>
             </div>
-            <div class="reply-from">
-                <strong>De:</strong> <?php echo html($staff['name'] ?? 'Agente'); ?> &lt;<?php echo html($staff['email'] ?? ''); ?>&gt;<br>
-                <strong>Destinatarios:</strong> <?php echo html($t['user_name']); ?> &lt;<?php echo html($t['user_email']); ?>&gt;
-            </div>
         </form>
     </div>
 </div>

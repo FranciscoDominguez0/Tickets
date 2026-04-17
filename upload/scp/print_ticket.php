@@ -159,6 +159,7 @@ if (defined('TICKET_PDF_RENDER')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imprimir Ticket <?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></title>
+    <link rel="icon" href="<?php echo rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/'); ?>/publico/img/favicon.ico" type="image/x-icon">
     <?php if (!defined('TICKET_PDF_RENDER')): ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <?php endif; ?>

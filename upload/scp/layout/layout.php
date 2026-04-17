@@ -269,14 +269,6 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                 </div>
             </div>
         </div>
-        
-        <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
-        <div class="scp-mobile-status-container d-flex d-md-none px-3 py-2 w-100 align-items-center" style="border-top: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.06); margin-top: 2px;">
-            <div style="width: 7px; height: 7px; background-color: #10b981; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 5px rgba(16,185,129,0.5);"></div>
-            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.95); font-weight: 500;">
-                <?php echo html(ucfirst($roleName !== '' ? $roleName : 'Administrador')); ?> · En línea
-            </span>
-        </div>
     </nav>
 
     <!-- LAYOUT PRINCIPAL -->
