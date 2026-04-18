@@ -130,12 +130,123 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'saved') {
 
 ob_start();
 ?>
+<style>
+/* ── reporte_costos.php – Estilos responsivos adicionales ── */
+
+/* ── Tarjeta de material: móvil usa diseño en tarjeta ── */
+.material-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    position: relative;
+}
+.material-card .mat-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.material-card .mat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.material-card .btn-remove-row {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    color: #ef4444;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.material-card .btn-remove-row:hover:not(:disabled) {
+    background: #fee2e2;
+}
+.material-card .btn-remove-row:disabled {
+    color: #cbd5e1;
+}
+
+/* ── Precio: ancho completo en móvil ── */
+.price-input-wrap {
+    max-width: 340px;
+    width: 100%;
+}
+
+/* ── Botón guardar sticky en móvil ── */
+.form-footer-sticky {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* ── Vista de reporte completado: materiales en tarjetas en móvil ── */
+.mat-read-list { list-style: none; padding: 0; margin: 0 0 16px; }
+.mat-read-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 6px;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+.mat-read-item .mat-name { color: #0f172a; font-weight: 500; }
+.mat-read-item .mat-qty {
+    white-space: nowrap;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* ── Caja de precio completado ── */
+.price-display-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+.price-display-box .price-label { font-weight: 600; color: #64748b; font-size: 0.85rem; }
+.price-display-box .price-value { font-size: 1.3rem; font-weight: 700; color: #1e3a8a; }
+
+/* ── Botón PDF full-width en móvil ── */
+.btn-pdf-action { min-width: 200px; }
+
+@media (max-width: 576px) {
+    .material-card .mat-fields { grid-template-columns: 1fr; }
+    .price-input-wrap { max-width: 100%; }
+    .form-footer-sticky { flex-direction: column; }
+    .form-footer-sticky .btn { width: 100%; justify-content: center; }
+    .btn-pdf-action { width: 100%; }
+    .price-display-box { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
+</style>
+
 <div class="tickets-shell">
     <div class="tickets-header mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Registro de Reporte de Ticket</h1>
-                <div class="sub">Ticket #<?php echo htmlspecialchars($ticket['ticket_number']); ?> - <?php echo htmlspecialchars($ticket['subject']); ?></div>
+                <div class="sub">Ticket #<?php echo htmlspecialchars($ticket['ticket_number']); ?> — <?php echo htmlspecialchars($ticket['subject']); ?></div>
             </div>
             <div>
                 <a href="reporte_tickets.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
@@ -200,7 +311,7 @@ ob_start();
         </div>
     </div>
 
-    <!-- Formulario / Visualización del Reporte abajo -->
+    <!-- Formulario / Visualización del Reporte -->
     <div class="row">
         <div class="col-12">
             <div class="card settings-card">
@@ -211,29 +322,33 @@ ob_start();
                     <?php if (!$reportExists): ?>
                         <form method="POST" action="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>">
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-                            
+
+                            <!-- Sección materiales -->
                             <h6 class="mb-3 border-bottom pb-2 text-primary"><i class="bi bi-tools me-1"></i> Materiales Utilizados</h6>
                             <div id="materials-container">
-                                <div class="row g-2 mb-2 material-row align-items-end">
-                                    <div class="col-md-6">
-                                        <label class="form-label small text-muted">Nombre del material</label>
-                                        <input type="text" name="mat_name[]" class="form-control" placeholder="Ej: Cable LAN Cat6">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label small text-muted">Cantidad / Medida</label>
-                                        <input type="text" name="mat_qty[]" class="form-control" placeholder="Ej: 50 metros">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-outline-danger w-100 btn-remove-row" disabled><i class="bi bi-trash"></i></button>
+                                <div class="material-card material-row">
+                                    <button type="button" class="btn-remove-row" disabled title="Eliminar material"><i class="bi bi-x-lg"></i></button>
+                                    <div class="mat-fields">
+                                        <div>
+                                            <div class="mat-label">Nombre del material</div>
+                                            <input type="text" name="mat_name[]" class="form-control form-control-sm" placeholder="Ej: Cable LAN Cat6">
+                                        </div>
+                                        <div>
+                                            <div class="mat-label">Cantidad / Medida</div>
+                                            <input type="text" name="mat_qty[]" class="form-control form-control-sm" placeholder="Ej: 50 metros">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mb-4 mt-2">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-row"><i class="bi bi-plus-lg"></i> Agregar Material</button>
+                            <div class="mb-4 mt-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-row">
+                                    <i class="bi bi-plus-lg"></i> Agregar Material
+                                </button>
                             </div>
 
-                            <h6 class="mb-3 border-bottom pb-2 text-primary mt-4"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
-                            
+                            <!-- Sección detalles -->
+                            <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Descripción del trabajo realizado <span class="text-danger">*</span></label>
                                 <textarea name="work_description" class="form-control" rows="4" required placeholder="Describe las acciones tomadas para resolver el ticket..."></textarea>
@@ -244,54 +359,48 @@ ob_start();
                                 <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."></textarea>
                             </div>
 
-                            <div class="mb-4 d-flex flex-column align-items-start">
+                            <div class="mb-4">
                                 <label class="form-label fw-bold">Precio final del servicio</label>
-                                <div class="input-group" style="max-width: 300px;">
+                                <div class="input-group price-input-wrap">
                                     <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
                                     <input type="text" name="final_price" class="form-control" placeholder="Ej: 1500.00 o Revisión Gratuita">
                                 </div>
                                 <div class="form-text mt-1">Si aplica, ingresa el monto facturado o un acuerdo de costo.</div>
                             </div>
 
-                            <div class="border-top pt-3 d-flex justify-content-end">
-                                <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;"><i class="bi bi-save me-1"></i> Guardar Reporte</button>
+                            <div class="form-footer-sticky">
+                                <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+                                    <i class="bi bi-save"></i> Guardar Reporte
+                                </button>
                             </div>
                         </form>
+
                     <?php else: ?>
+                        <!-- Vista de reporte ya completado -->
                         <div class="alert alert-secondary text-dark mb-4">
-                            Este ticket ya tiene un reporte generado. Los datos no pueden modificarse.
+                            <i class="bi bi-lock me-1"></i> Este ticket ya tiene un reporte generado. Los datos no pueden modificarse.
                         </div>
 
                         <h6 class="mb-3 border-bottom pb-2 text-primary"><i class="bi bi-tools me-1"></i> Materiales Utilizados</h6>
                         <?php if (empty($materials)): ?>
                             <p class="text-muted fst-italic">No se registraron materiales.</p>
                         <?php else: ?>
-                            <div class="table-responsive mb-4">
-                                <table class="table table-sm table-bordered" style="width: 100%; max-width: 800px;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Material</th>
-                                            <th style="width: 30%;">Cantidad / Medida</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($materials as $m): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($m['material_name']); ?></td>
-                                                <td><?php echo htmlspecialchars($m['quantity']); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <ul class="mat-read-list">
+                                <?php foreach ($materials as $m): ?>
+                                    <li class="mat-read-item">
+                                        <span class="mat-name"><?php echo htmlspecialchars($m['material_name']); ?></span>
+                                        <span class="mat-qty"><?php echo htmlspecialchars($m['quantity']); ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
                         <?php endif; ?>
 
-                        <h6 class="mb-3 border-bottom pb-2 text-primary"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
+                        <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
                         <div class="mb-3 p-3 bg-light rounded border">
                             <strong class="d-block text-secondary mb-1">Descripción:</strong>
                             <?php echo nl2br(htmlspecialchars($reportData['work_description'])); ?>
                         </div>
-                        
+
                         <?php if (!empty($reportData['observations'])): ?>
                         <div class="mb-3 p-3 bg-light rounded border">
                             <strong class="d-block text-secondary mb-1">Observaciones:</strong>
@@ -299,13 +408,16 @@ ob_start();
                         </div>
                         <?php endif; ?>
 
-                        <div class="mb-3 p-3 bg-light rounded border border-info align-items-center d-inline-flex gap-2">
-                            <strong class="text-secondary mb-0">Precio Final:</strong>
-                            <span class="fs-5 fw-bold text-dark mb-0"><?php echo htmlspecialchars($reportData['final_price'] ?: 'No aplica'); ?></span>
+                        <div class="price-display-box">
+                            <span class="price-label">Precio Final del Servicio</span>
+                            <span class="price-value"><?php echo htmlspecialchars($reportData['final_price'] ?: 'No aplica'); ?></span>
                         </div>
-                        
-                        <div class="mt-4 pt-3 border-top pb-2">
-                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" target="_blank" class="btn btn-outline-danger btn-lg"><i class="bi bi-file-earmark-pdf me-2"></i> Generar / Ver PDF</a>
+
+                        <div class="mt-3 pt-2 border-top">
+                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" target="_blank"
+                               class="btn btn-danger btn-pdf-action d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-pdf"></i> Generar / Ver PDF
+                            </a>
                         </div>
                     <?php endif; ?>
                 </div>

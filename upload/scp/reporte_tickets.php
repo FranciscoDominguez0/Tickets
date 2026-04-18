@@ -74,6 +74,86 @@ if ($statusIdClosed > 0) {
 
 ob_start();
 ?>
+<style>
+/* ── reporte_tickets.php – Vista de tarjetas para móvil ── */
+.rpt-card-list { display: none; padding: 12px; gap: 12px; flex-direction: column; }
+
+.rpt-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+}
+.rpt-card:active { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+.rpt-card-accent {
+    height: 4px;
+    background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+}
+.rpt-card-accent.done {
+    background: linear-gradient(90deg, #16a34a 0%, #22d3ee 100%);
+}
+
+.rpt-card-body { padding: 14px 16px 12px; }
+
+.rpt-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+.rpt-card-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.rpt-card-num span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-right: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.rpt-card-rows { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.rpt-card-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #334155;
+}
+.rpt-card-row i { color: #64748b; width: 16px; text-align: center; flex-shrink: 0; }
+.rpt-card-row .rpt-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    font-weight: 600;
+    min-width: 70px;
+}
+.rpt-card-row .rpt-val { font-weight: 600; color: #0f172a; flex: 1; }
+
+.rpt-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    gap: 8px;
+}
+.rpt-card-footer .btn { flex: 1; justify-content: center; display: flex; align-items: center; gap: 6px; }
+
+@media (max-width: 640px) {
+    .rpt-desktop-table { display: none !important; }
+    .rpt-card-list { display: flex; }
+}
+</style>
+
 <div class="tickets-shell">
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
@@ -87,7 +167,25 @@ ob_start();
         </div>
     </div>
 
-    <div class="tickets-panel p-0">
+    <?php if (empty($tickets)): ?>
+    <div class="tickets-panel p-0 rpt-desktop-table">
+        <div class="tickets-table-wrap">
+            <table class="tickets-table table table-hover mb-0">
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No hay tickets cerrados que requieran reporte.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php else: ?>
+
+    <!-- === VISTA DESKTOP: Tabla === -->
+    <div class="tickets-panel p-0 rpt-desktop-table">
         <div class="tickets-table-wrap">
             <table class="tickets-table table table-hover mb-0">
                 <thead class="table-light">
@@ -101,50 +199,97 @@ ob_start();
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($tickets)): ?>
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                No hay tickets cerrados que requieran reporte.
+                    <?php foreach ($tickets as $t): ?>
+                        <?php 
+                        $staffName = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
+                        if ($staffName === '') $staffName = 'Sin asignar';
+                        $closedDate = !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : 'N/A';
+                        $hasReport = (int)($t['has_report'] ?? 0);
+                        ?>
+                        <tr class="ticket-row">
+                            <td class="ps-3"><a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="ticket-title"><?php echo htmlspecialchars($t['ticket_number']); ?></a></td>
+                            <td><span class="badge bg-secondary"><?php echo htmlspecialchars($t['department_name']); ?></span></td>
+                            <td><?php echo htmlspecialchars($staffName); ?></td>
+                            <td class="ticket-meta"><?php echo htmlspecialchars($closedDate); ?></td>
+                            <td>
+                                <?php if ($hasReport): ?>
+                                    <span class="badge bg-success">Completado</span>
+                                <?php else: ?>
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="reporte_costos.php?ticket_id=<?php echo (int) $t['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-circle'; ?>"></i> <?php echo $hasReport ? 'Ver' : 'Registrar'; ?>
+                                </a>
                             </td>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($tickets as $t): ?>
-                            <?php 
-                            $staffName = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
-                            if ($staffName === '') $staffName = 'Sin asignar';
-                            $closedDate = !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : 'N/A';
-                            $hasReport = (int)($t['has_report'] ?? 0);
-                            ?>
-                            <tr class="ticket-row">
-                                <td class="ps-3"><a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="ticket-title"><?php echo htmlspecialchars($t['ticket_number']); ?></a></td>
-                                <td><span class="badge bg-secondary"><?php echo htmlspecialchars($t['department_name']); ?></span></td>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="scp-avatar-sm" style="width: 28px; height: 28px; font-size: 0.8rem;"><?php echo strtoupper(substr($staffName, 0, 1)); ?></div>
-                                        <span><?php echo htmlspecialchars($staffName); ?></span>
-                                    </div>
-                                </td>
-                                <td class="ticket-meta"><?php echo htmlspecialchars($closedDate); ?></td>
-                                <td>
-                                    <?php if ($hasReport): ?>
-                                        <span class="badge bg-success">Completado</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-warning text-dark">Pendiente</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="text-end pe-3">
-                                    <a href="reporte_costos.php?ticket_id=<?php echo (int) $t['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-circle'; ?>"></i> <?php echo $hasReport ? 'Ver' : 'Registrar'; ?>
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <!-- === VISTA MÓVIL: Tarjetas === -->
+    <div class="rpt-card-list">
+        <?php foreach ($tickets as $t): ?>
+            <?php 
+            $staffName = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
+            if ($staffName === '') $staffName = 'Sin asignar';
+            $closedDate = !empty($t['closed']) ? date('d/m/Y', strtotime($t['closed'])) : 'N/A';
+            $closedTime = !empty($t['closed']) ? date('H:i', strtotime($t['closed'])) : '';
+            $hasReport = (int)($t['has_report'] ?? 0);
+            ?>
+            <div class="rpt-card">
+                <div class="rpt-card-accent <?php echo $hasReport ? 'done' : ''; ?>"></div>
+                <div class="rpt-card-body">
+                    <div class="rpt-card-top">
+                        <div>
+                            <div class="rpt-card-num">
+                                <span>#</span><?php echo htmlspecialchars($t['ticket_number']); ?>
+                            </div>
+                        </div>
+                        <?php if ($hasReport): ?>
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Completado</span>
+                        <?php else: ?>
+                            <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="rpt-card-rows">
+                        <div class="rpt-card-row">
+                            <i class="bi bi-building"></i>
+                            <span class="rpt-label">Dpto</span>
+                            <span class="rpt-val">
+                                <span class="badge bg-secondary fw-normal"><?php echo htmlspecialchars($t['department_name']); ?></span>
+                            </span>
+                        </div>
+                        <div class="rpt-card-row">
+                            <i class="bi bi-person-badge"></i>
+                            <span class="rpt-label">Técnico</span>
+                            <span class="rpt-val"><?php echo htmlspecialchars($staffName); ?></span>
+                        </div>
+                        <div class="rpt-card-row">
+                            <i class="bi bi-calendar-check"></i>
+                            <span class="rpt-label">Cierre</span>
+                            <span class="rpt-val"><?php echo htmlspecialchars($closedDate); ?> <small class="text-muted"><?php echo htmlspecialchars($closedTime); ?></small></span>
+                        </div>
+                    </div>
+
+                    <div class="rpt-card-footer">
+                        <a href="reporte_costos.php?ticket_id=<?php echo (int) $t['id']; ?>"
+                           class="btn btn-sm <?php echo $hasReport ? 'btn-success' : 'btn-primary'; ?>"
+                           style="<?php echo $hasReport ? '' : 'background: linear-gradient(135deg,#2563eb,#7c3aed); border:none;'; ?>">
+                            <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-circle'; ?>"></i>
+                            <?php echo $hasReport ? 'Ver Reporte' : 'Registrar Reporte'; ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php endif; ?>
 </div>
 <?php
 $content = ob_get_clean();
