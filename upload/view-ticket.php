@@ -188,6 +188,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                         }
 
                         $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
+                        $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : __DIR__ . '/uploads/attachments';
+                        if (!is_dir($uploadDir)) {
+                            @mkdir($uploadDir, 0755, true);
+                        }
                         $path = $uploadDir . '/' . $safeName;
                         if (move_uploaded_file($files['tmp_name'][$i], $path)) {
                             $relPath = 'uploads/attachments/' . $safeName;
@@ -261,16 +265,14 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
     $full1 = $baseUpload . '/' . ltrim($rel, '/');
     $full2 = $baseRoot . '/' . ltrim($rel, '/');
     $full3 = $baseScp . '/' . ltrim($rel, '/');
+    $fullDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/') : '';
 
     $full = '';
     if ($rel !== '') {
-        if (is_file($full1)) {
-            $full = $full1;
-        } elseif (is_file($full2)) {
-            $full = $full2;
-        } elseif (is_file($full3)) {
-            $full = $full3;
-        }
+        if ($fullDir !== '' && is_file($fullDir)) $full = $fullDir;
+        elseif (is_file($full1)) $full = $full1;
+        elseif (is_file($full2)) $full = $full2;
+        elseif (is_file($full3)) $full = $full3;
     }
 
     if ($full === '') {

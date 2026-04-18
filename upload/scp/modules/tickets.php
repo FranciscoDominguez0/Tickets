@@ -921,12 +921,14 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $baseRoot = dirname(__DIR__, 3);   // sistema-tickets
             
             $full1 = rtrim($baseUpload, '/\\') . '/' . ltrim($rel, '/'); // upload/uploads/attachments/...
-            $full2 = rtrim($baseRoot, '/\\') . '/' . ltrim($rel, '/');   // sistema-tickets/uploads/attachments/...
-            $full3 = rtrim($baseScp, '/\\') . '/' . ltrim($rel, '/');    // upload/scp/uploads/attachments/...
-            
             $full = '';
+            // El principal y definitivo directorio donde están ahora (upload/uploads/attachments/)
+            $fullDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/') : '';
+
             if ($rel !== '') {
-                if (is_file($full1)) {
+                if ($fullDir !== '' && is_file($fullDir)) {
+                    $full = $fullDir;
+                } elseif (is_file($full1)) {
                     $full = $full1;
                 } elseif (is_file($full2)) {
                     $full = $full2;
@@ -1914,7 +1916,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             }
                         }
                         // Adjuntos: guardar archivos y registrar en BD
-                        $uploadDir = dirname(__DIR__, 3) . '/uploads/attachments';
+                        $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : dirname(__DIR__, 3) . '/uploads/attachments';
                         if (!is_dir($uploadDir)) {
                             @mkdir($uploadDir, 0755, true);
                         }

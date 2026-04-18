@@ -541,6 +541,10 @@ if ($_POST) {
                         }
 
                         $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
+                        $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : __DIR__ . '/uploads/attachments';
+                        if (!is_dir($uploadDir)) {
+                            @mkdir($uploadDir, 0755, true);
+                        }
                         $path = $uploadDir . '/' . $safeName;
                         if (move_uploaded_file($files['tmp_name'][$i], $path)) {
                             $relPath = 'uploads/attachments/' . $safeName;

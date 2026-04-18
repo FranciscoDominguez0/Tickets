@@ -122,6 +122,9 @@ if (isset($_SESSION['user_login_time'])) {
         exit;
     } else {
         $_SESSION['user_login_time'] = time();
-    }
 }
+}
+
+// Directorio global de adjuntos
+define('ATTACHMENTS_DIR', __DIR__ . '/upload/uploads/attachments');
 ?>

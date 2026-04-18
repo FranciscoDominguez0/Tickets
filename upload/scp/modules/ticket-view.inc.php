@@ -796,6 +796,33 @@ if ($ticketClientSignaturePath !== '') {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+<div class="modal fade" id="vigitecImageInsertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Insertar Imagen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="vigitecImageInsertFile" class="form-label">Subir archivo de imagen</label>
+                    <input type="file" class="form-control" id="vigitecImageInsertFile" accept="image/png, image/jpeg, image/gif, image/webp">
+                </div>
+                <div class="text-center my-2 text-muted small">Ó</div>
+                <div class="mb-3">
+                    <label for="vigitecImageInsertUrl" class="form-label">Desde URL web</label>
+                    <input type="url" class="form-control" id="vigitecImageInsertUrl" placeholder="https://ejemplo.com/imagen.jpg">
+                </div>
+                <div class="form-text mt-2 text-primary" style="font-size:0.85rem;"><i class="bi bi-info-circle"></i> Archivos grandes pueden tardar en subir. Tamaño máximo ~5MB.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="vigitecImageInsertConfirm">Insertar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="videoInsertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -897,12 +924,31 @@ document.addEventListener('DOMContentLoaded', function() {
             videoModal = new bootstrap.Modal(videoModalEl);
         }
 
+        var imageModalEl = document.getElementById('vigitecImageInsertModal');
+        var imageFileEl = document.getElementById('vigitecImageInsertFile');
+        var imageUrlEl = document.getElementById('vigitecImageInsertUrl');
+        var imageConfirmEl = document.getElementById('vigitecImageInsertConfirm');
+        var imageModal = null;
+        var onImageSubmit = null;
+        if (imageModalEl && window.bootstrap && bootstrap.Modal) {
+            imageModal = new bootstrap.Modal(imageModalEl);
+        }
+
         function openVideoModal(cb) {
             onVideoSubmit = cb;
             if (!videoModal || !videoUrlEl) return;
             videoUrlEl.value = '';
             videoModal.show();
             setTimeout(function () { try { videoUrlEl.focus(); } catch (e) {} }, 100);
+        }
+
+        function openImageModal(cb) {
+            onImageSubmit = cb;
+            if (!imageModal || !imageFileEl) return;
+            imageFileEl.value = '';
+            if (imageUrlEl) imageUrlEl.value = '';
+            imageModal.show();
+            setTimeout(function () { try { imageFileEl.focus(); } catch (e) {} }, 100);
         }
 
         if (videoConfirmEl) {
@@ -914,11 +960,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 try { onVideoSubmit(v); } catch (e2) {}
             });
         }
+        if (imageConfirmEl) {
+            imageConfirmEl.addEventListener('click', function () {
+                if (!onImageSubmit || !imageFileEl) return;
+                var f = imageFileEl.files && imageFileEl.files[0] ? imageFileEl.files[0] : null;
+                var url = imageUrlEl ? (imageUrlEl.value || '').trim() : '';
+                if (!f && !url) return;
+                try { imageModal && imageModal.hide(); } catch (e) {}
+                try { onImageSubmit(f || url); } catch (e2) {}
+            });
+        }
         if (videoUrlEl) {
             videoUrlEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     videoConfirmEl && videoConfirmEl.click();
+                }
+            });
+        }
+        if (imageFileEl) {
+            imageFileEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    imageConfirmEl && imageConfirmEl.click();
+                }
+            });
+        }
+        if (imageUrlEl) {
+            imageUrlEl.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    imageConfirmEl && imageConfirmEl.click();
                 }
             });
         }
@@ -955,10 +1027,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }).render();
         };
 
+        var myImageBtn = function () {
+            var ui = jQuery.summernote.ui;
+            return ui.button({
+                contents: '<i class="note-icon-picture"></i>',
+                tooltip: 'Insertar imagen',
+                click: function () {
+                    openImageModal(function (fileOrUrl) {
+                        if (!fileOrUrl) return;
+                        if (typeof fileOrUrl === 'string') {
+                            jQuery('#reply_body').summernote('insertImage', fileOrUrl);
+                            return;
+                        }
+                        var file = fileOrUrl;
+                        var data = new FormData();
+                        data.append('file', file);
+                        data.append('csrf_token', <?php echo json_encode((string)($_SESSION['csrf_token'] ?? '')); ?>);
+                        fetch('../editor_image_upload.php', {
+                            method: 'POST',
+                            body: data,
+                            credentials: 'same-origin'
+                        })
+                        .then(function (r) { return r.json(); })
+                        .then(function (json) {
+                            if (!json || !json.ok || !json.url) throw new Error((json && json.error) ? json.error : 'Upload failed');
+                            jQuery('#reply_body').summernote('insertImage', json.url);
+                        })
+                        .catch(function (err) {
+                            alert('No se pudo subir la imagen. Intenta con otra o usa Adjuntar archivos.');
+                            try { console.error(err); } catch (e) {}
+                        });
+                    });
+                }
+            }).render();
+        };
+
         var isMobile = window.innerWidth <= 768;
         var toolbarConfig = isMobile ? [
             ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['insert', ['link', 'picture']],
+            ['insert', ['link', 'myImage']],
             ['view', ['fullscreen']]
         ] : [
             ['style', ['style', 'paragraph']],
@@ -966,7 +1073,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ['fontname', ['fontname']],
             ['color', ['color']],
             ['fontsize', ['fontsize']],
-            ['insert', ['link', 'picture', 'myVideo', 'table', 'hr']],
+            ['insert', ['link', 'myImage', 'myVideo', 'table', 'hr']],
             ['view', ['codeview', 'fullscreen']],
             ['para', ['ul', 'ol', 'paragraph']]
         ];
@@ -981,7 +1088,8 @@ document.addEventListener('DOMContentLoaded', function() {
             placeholder: placeholderText,
             toolbar: toolbarConfig,
             buttons: {
-                myVideo: myVideoBtn
+                myVideo: myVideoBtn,
+                myImage: myImageBtn
             },
             fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Helvetica', 'Impact', 'Tahoma', 'Times New Roman', 'Verdana'],
             fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '24', '36']

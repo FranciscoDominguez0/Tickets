@@ -2,8 +2,11 @@
 require_once '../config.php';
 require_once '../includes/helpers.php';
 
-requireLogin('cliente');
-
+if (empty($_SESSION['user_id']) && empty($_SESSION['staff_id'])) {
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'No authorized session']);
+    exit;
+}
 header('Content-Type: application/json; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
 
