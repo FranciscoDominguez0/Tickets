@@ -44,6 +44,12 @@ if (empty($ticket['closed'])) {
     die("El ticket no está cerrado, no se puede realizar el reporte.");
 }
 
+// Marcar como visto → quitar badge NEW en la lista
+if (!isset($_SESSION['rpt_visto'])) {
+    $_SESSION['rpt_visto'] = [];
+}
+$_SESSION['rpt_visto'][$ticketId] = true;
+
 // 2. Verificar si ya existe un reporte
 $reportExists = false;
 $reportData = null;
