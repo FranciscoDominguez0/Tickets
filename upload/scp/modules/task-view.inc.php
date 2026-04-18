@@ -149,7 +149,8 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
     <div class="row justify-content-center">
         <!-- Información de la tarea -->
         <div class="col-12">
-            <div class="card detail-accent status-<?php echo html($taskView['status']); ?>">
+            <!-- VISTA PC -->
+            <div class="card detail-accent status-<?php echo html($taskView['status']); ?> d-none d-md-block">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Detalles de la Tarea</h5>
                 </div>
@@ -221,6 +222,75 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                                 <em class="text-muted">Sin descripción</em>
                             <?php endif; ?>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VISTA MÓVIL PENSADA ESTILO APP -->
+            <div class="d-md-none" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <div class="user-view-mobile-card">
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-activity"></i> Estado</span>
+                        <span class="uvm-v">
+                            <span class="badge bg-<?php echo html((string)($status_colors[$taskView['status']] ?? 'secondary')); ?>" style="padding: 6px 10px; border-radius: 6px;">
+                                <?php echo html((string)($status_labels[$taskView['status']] ?? '')); ?>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-flag"></i> Prioridad</span>
+                        <span class="uvm-v">
+                            <span class="badge bg-<?php echo html((string)($priority_colors[$taskView['priority']] ?? 'secondary')); ?>" style="padding: 6px 10px; border-radius: 6px;">
+                                <?php echo html((string)($priority_labels[$taskView['priority']] ?? '')); ?>
+                            </span>
+                        </span>
+                    </div>
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-person"></i> Asignado a</span>
+                        <span class="uvm-v"><?php echo html($taskView['assigned_name'] ?: 'Sin asignar'); ?></span>
+                    </div>
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-person-badge"></i> Creado por</span>
+                        <span class="uvm-v"><?php echo html($taskView['created_name']); ?></span>
+                    </div>
+                </div>
+
+                <div class="user-view-mobile-card">
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-calendar-plus"></i> Creación</span>
+                        <span class="uvm-v"><?php echo date('d/m/y H:i', strtotime($taskView['created'])); ?></span>
+                    </div>
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-calendar-check"></i> Act.</span>
+                        <span class="uvm-v"><?php echo date('d/m/y H:i', strtotime($taskView['updated'])); ?></span>
+                    </div>
+                    <?php if ($taskView['due_date']): ?>
+                    <div class="uvm-row">
+                        <span class="uvm-k"><i class="bi bi-calendar-x"></i> Límite</span>
+                        <span class="uvm-v">
+                            <?php
+                            $due_date = strtotime($taskView['due_date']);
+                            $is_overdue = $due_date < time() && $taskView['status'] !== 'completed';
+                            ?>
+                            <span class="<?php echo $is_overdue ? 'text-danger fw-bold' : ''; ?>">
+                                <?php echo date('d/m/y H:i', $due_date); ?>
+                            </span>
+                            <?php if ($is_overdue): ?>
+                                <span class="badge bg-danger ms-1" style="font-size:0.65rem;">VENCIDA</span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="user-view-mobile-card">
+                    <div class="uvm-k mb-2" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;"><i class="bi bi-card-text"></i> Descripción</div>
+                    <div class="uvm-v" style="font-weight: 500; font-size: 0.95rem; line-height: 1.5; padding-top: 4px; overflow-wrap: anywhere;">
+                        <?php if ($taskView['description']): ?>
+                            <?php echo nl2br(html($taskView['description'])); ?>
+                        <?php else: ?>
+                            <em class="text-muted">Sin descripción detallada enviada para esta tarea.</em>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
