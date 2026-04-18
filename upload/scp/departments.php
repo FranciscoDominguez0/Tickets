@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string)($_POST['name'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $requiresReport = isset($_POST['requires_report']) ? 1 : 0;
 
         if ($name === '') {
             $_SESSION['flash_error'] = 'El nombre del departamento es requerido.';
@@ -88,9 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($deptHasEmpresa) {
-            $stmt = $mysqli->prepare('INSERT INTO departments (empresa_id, name, description, is_active, created) VALUES (?, ?, ?, ?, NOW())');
+            $stmt = $mysqli->prepare('INSERT INTO departments (empresa_id, name, description, is_active, requires_report, created) VALUES (?, ?, ?, ?, ?, NOW())');
         } else {
-            $stmt = $mysqli->prepare('INSERT INTO departments (name, description, is_active, created) VALUES (?, ?, ?, NOW())');
+            $stmt = $mysqli->prepare('INSERT INTO departments (name, description, is_active, requires_report, created) VALUES (?, ?, ?, ?, NOW())');
         }
         if (!$stmt) {
             $_SESSION['flash_error'] = 'No se pudo crear el departamento.';
@@ -99,9 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $descParam = $description !== '' ? $description : null;
         if ($deptHasEmpresa) {
-            $stmt->bind_param('issi', $eid, $name, $descParam, $isActive);
+            $stmt->bind_param('issii', $eid, $name, $descParam, $isActive, $requiresReport);
         } else {
-            $stmt->bind_param('ssi', $name, $descParam, $isActive);
+            $stmt->bind_param('ssii', $name, $descParam, $isActive, $requiresReport);
         }
         try {
             if ($stmt->execute()) {
@@ -125,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = trim((string)($_POST['name'] ?? ''));
         $description = trim((string)($_POST['description'] ?? ''));
         $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $requiresReport = isset($_POST['requires_report']) ? 1 : 0;
 
         if ($id <= 0) {
             $_SESSION['flash_error'] = 'ID inválido.';
@@ -138,9 +140,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($deptHasEmpresa) {
-            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ? WHERE id = ? AND empresa_id = ?');
+            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ?, requires_report = ? WHERE id = ? AND empresa_id = ?');
         } else {
-            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ? WHERE id = ?');
+            $stmt = $mysqli->prepare('UPDATE departments SET name = ?, description = ?, is_active = ?, requires_report = ? WHERE id = ?');
         }
         if (!$stmt) {
             $_SESSION['flash_error'] = 'No se pudo actualizar el departamento.';
@@ -149,9 +151,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $descParam = $description !== '' ? $description : null;
         if ($deptHasEmpresa) {
-            $stmt->bind_param('ssiii', $name, $descParam, $isActive, $id, $eid);
+            $stmt->bind_param('ssiiii', $name, $descParam, $isActive, $requiresReport, $id, $eid);
         } else {
-            $stmt->bind_param('ssii', $name, $descParam, $isActive, $id);
+            $stmt->bind_param('ssiii', $name, $descParam, $isActive, $requiresReport, $id);
         }
         try {
             if ($stmt->execute()) {
@@ -338,6 +340,7 @@ $sql = "
         d.name,
         d.description,
         d.is_active,
+        d.requires_report,
         ea.id AS email_id,
         ea.email AS dept_email,
         ea.name AS dept_email_name,
@@ -390,7 +393,7 @@ $sql .= "
 if ($deptHasEmpresa) {
     $sql .= "    WHERE d.empresa_id = " . (int)$eid . "\n";
 }
-$sql .= "    GROUP BY d.id, d.name, d.description, d.is_active, ea.id, ea.email, ea.name
+$sql .= "    GROUP BY d.id, d.name, d.description, d.is_active, d.requires_report, ea.id, ea.email, ea.name
     ORDER BY d.name
 ";
 $res = $mysqli->query($sql);
@@ -541,6 +544,7 @@ ob_start();
                                                     data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
                                                     data-description="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"
                                                     data-is-active="<?php echo $active ? '1' : '0'; ?>"
+                                                    data-requires-report="<?php echo (int)($d['requires_report'] ?? 0) === 1 ? '1' : '0'; ?>"
                                                     data-bs-toggle="modal" data-bs-target="#editDeptModal">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
@@ -580,6 +584,10 @@ ob_start();
                         <input class="form-check-input" type="checkbox" name="is_active" id="createDeptIsActive" checked>
                         <label class="form-check-label" for="createDeptIsActive">Activo</label>
                     </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="requires_report" id="createDeptRequiresReport" value="1">
+                        <label class="form-check-label" for="createDeptRequiresReport">Requiere reporte (Ej. Instalaciones)</label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -613,6 +621,10 @@ ob_start();
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="is_active" id="dept_edit_is_active" checked>
                         <label class="form-check-label" for="dept_edit_is_active">Activo</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="requires_report" id="dept_edit_requires_report" value="1">
+                        <label class="form-check-label" for="dept_edit_requires_report">Requiere reporte (Ej. Instalaciones)</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -828,14 +840,17 @@ window.addEventListener('DOMContentLoaded', function(){
             var name = btn.getAttribute('data-name') || '';
             var desc = btn.getAttribute('data-description') || '';
             var active = (btn.getAttribute('data-is-active') || '0') === '1';
+            var reqRep = (btn.getAttribute('data-requires-report') || '0') === '1';
             var idEl = document.getElementById('dept_edit_id');
             var nameEl = document.getElementById('dept_edit_name');
             var descEl = document.getElementById('dept_edit_description');
             var actEl = document.getElementById('dept_edit_is_active');
+            var repEl = document.getElementById('dept_edit_requires_report');
             if (idEl) idEl.value = id;
             if (nameEl) nameEl.value = name;
             if (descEl) descEl.value = desc;
             if (actEl) actEl.checked = active;
+            if (repEl) repEl.checked = reqRep;
         });
     });
 });
