@@ -991,7 +991,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -1421,6 +1421,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $stmt->bind_param('iii', $uid, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'owner';
+            } elseif ($action === 'priority_update' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['priority_id']) && is_numeric($_POST['priority_id'])) {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
+                $pid = (int) $_POST['priority_id'];
+                $stmt = $mysqli->prepare("UPDATE tickets SET priority_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                $stmt->bind_param('iii', $pid, $tid, $eid);
+                $ok = $stmt->execute();
+                $msg = 'priority_updated';
             } elseif ($action === 'block_email' && ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['confirm']) && $_GET['confirm'] === '1')) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $email = $ticketView['user_email'] ?? '';

@@ -415,6 +415,35 @@ if ($ticketClientSignaturePath !== '') {
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="modalPriority" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                    <input type="hidden" name="action" value="priority_update">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <div class="modal-header"><h5 class="modal-title">Cambiar Prioridad</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">Nueva prioridad</label>
+                        <select name="priority_id" class="form-select" required>
+                            <?php
+                            $stmtP = $mysqli->prepare("SELECT id, name FROM priorities ORDER BY level");
+                            $prioritiesResult = null;
+                            if ($stmtP) {
+                                $stmtP->execute();
+                                $prioritiesResult = $stmtP->get_result();
+                            }
+                            while ($prioritiesResult && $p = $prioritiesResult->fetch_assoc()):
+                            ?>
+                                <option value="<?php echo (int)$p['id']; ?>" <?php echo (int)$p['id'] === (int)($t['priority_id'] ?? 0) ? 'selected' : ''; ?>><?php echo html($p['name']); ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Cambiar Prioridad</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal 1: Elegir tipo de cierre -->
     <div class="modal fade" id="modalCloseChoiceScp" tabindex="-1" aria-hidden="true">
@@ -535,7 +564,15 @@ if ($ticketClientSignaturePath !== '') {
             </div>
             <div class="field">
                 <label>Prioridad</label>
-                <div class="value"><?php echo html($t['priority_name']); ?></div>
+                <div class="value">
+                    <?php if ($canTicketEdit): ?>
+                        <a href="#" style="text-decoration: none; border-bottom: 1px dashed currentColor; color: inherit;" data-bs-toggle="modal" data-bs-target="#modalPriority" title="Cambiar prioridad">
+                            <?php echo html($t['priority_name']); ?>
+                        </a>
+                    <?php else: ?>
+                        <?php echo html($t['priority_name']); ?>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="field">
                 <label>Departamento</label>
