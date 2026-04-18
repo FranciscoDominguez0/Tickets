@@ -76,7 +76,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
     <link rel="stylesheet" href="css/users.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/users.css'); ?>">
     <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
+    <?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes'])): ?>
     <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
@@ -336,17 +336,51 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                             </li>
                         </ul>
                     </li>
-                    <li>
-                        <a href="tickets.php" class="sidebar-link <?php echo $currentRoute === 'tickets' ? 'active' : ''; ?>">
+                    <li class="sidebar-group">
+                        <?php
+                        $isTicketsRoute = in_array($currentRoute, ['tickets', 'reportes']);
+                        $expandTickets = ($isTicketsRoute && $allowExpandedGroups);
+                        ?>
+                        <button type="button"
+                                class="sidebar-link sidebar-toggle <?php echo $expandTickets ? 'active expanded' : ''; ?>"
+                                data-subnav="tickets-subnav" aria-controls="tickets-subnav" aria-expanded="<?php echo $expandTickets ? 'true' : 'false'; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
-                                    <path d="M8 8H16" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
-                                    <path d="M8 13H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <rect x="4" y="4" width="16" height="16" rx="2" stroke="<?php echo $expandTickets ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8"/>
+                                    <path d="M8 8H16" stroke="<?php echo $expandTickets ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
+                                    <path d="M8 13H13" stroke="<?php echo $expandTickets ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Tickets
-                        </a>
+                            <span class="arrow">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandTickets ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <ul id="tickets-subnav" class="sidebar-subnav <?php echo $expandTickets ? 'open' : ''; ?>">
+                            <li>
+                                <a href="tickets.php" class="sidebar-link <?php echo $currentRoute === 'tickets' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="2" y="4" width="20" height="16" rx="2" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M7 9H17M7 14H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    Detalles
+                                </a>
+                            </li>
+                            <li>
+                                <a href="reporte_tickets.php" class="sidebar-link <?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 19v-4m4 4v-8m4 8v-6m4 6v-10" stroke="<?php echo $currentRoute === 'reportes' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    Reportes
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="sidebar-group">
                         <?php
