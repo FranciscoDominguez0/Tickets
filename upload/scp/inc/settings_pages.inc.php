@@ -157,7 +157,7 @@ $company_logo_mode = (string)getAppSetting('company.logo_mode', $company_logo !=
 if (!in_array($company_logo_mode, ['default', 'custom'], true)) {
     $company_logo_mode = 'default';
 }
-$default_company_logo = (string)getCompanyLogoUrl();
+$default_company_logo = (string)toAppAbsoluteUrl('publico/img/vigitec-logo.webp');
 $login_background = (string)getAppSetting('login.background', '');
 $login_bg_mode = (string)getAppSetting('login.background_mode', $login_background !== '' ? 'custom' : 'default');
 if (!in_array($login_bg_mode, ['default', 'custom'], true)) {
