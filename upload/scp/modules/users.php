@@ -1242,20 +1242,15 @@ $statusBadges = [
                                 <?php echo html($email !== '' ? $email : 'Sin correo'); ?>
                             </div>
                             <div class="users-mobile-meta">
-                                <span><i class="bi bi-ticket-perforated"></i> <?php echo (int)$ticketCount; ?> ticket(s)</span>
+                                <?php if ($ticketCount > 0): ?>
+                                <span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1e40af;font-size:0.72rem;font-weight:700;padding:2px 8px;border-radius:20px;">
+                                    <i class="bi bi-ticket-perforated"></i> <?php echo $ticketCount; ?> ticket<?php echo $ticketCount !== 1 ? 's' : ''; ?>
+                                </span>
+                                <?php else: ?>
+                                <span class="text-muted" style="font-size:0.78rem;"><i class="bi bi-ticket-perforated"></i> Sin tickets</span>
+                                <?php endif; ?>
                                 <span><i class="bi bi-calendar-plus"></i> <?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '-'; ?></span>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="users-mobile-kpis">
-                        <div class="users-mobile-kpi">
-                            <div class="kpi-label">Actualizado</div>
-                            <div class="kpi-value kpi-muted"><?php echo $u['updated'] ? date('d/m/y H:i', strtotime($u['updated'])) : '-'; ?></div>
-                        </div>
-                        <div class="users-mobile-kpi">
-                            <div class="kpi-label">Organización</div>
-                            <div class="kpi-value kpi-muted"><?php echo html($company !== '' ? $company : 'Sin organización'); ?></div>
                         </div>
                     </div>
 
