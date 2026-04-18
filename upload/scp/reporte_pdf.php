@@ -50,6 +50,52 @@ while ($m = $resM->fetch_assoc()) {
     $materials[] = $m;
 }
 
+// Obtener settings de empresa
+$companyName = trim((string)getAppSetting('company.name', ''));
+if ($companyName === '') $companyName = (string)APP_NAME;
+$companyWebsite = trim((string)getAppSetting('company.website', ''));
+if ($companyWebsite === '') $companyWebsite = (string)APP_URL;
+
+$logoUrl = '';
+$projectRoot = realpath(dirname(__DIR__, 2));
+if ($projectRoot !== false) {
+    $logoMode = (string)getAppSetting('company.logo_mode', '');
+    $logoSetting = (string)getAppSetting('company.logo', '');
+    $logoRel = 'publico/img/vigitec-logo.webp';
+    if ($logoMode === '') {
+        $logoMode = $logoSetting !== '' ? 'custom' : 'default';
+    }
+    if ($logoMode === 'custom' && $logoSetting !== '') {
+        $candidate = ltrim(str_replace('\\', '/', (string)$logoSetting), '/');
+        if ($candidate !== '' && is_file($projectRoot . '/' . $candidate)) {
+            $logoRel = $candidate;
+        }
+    }
+    if (!is_file($projectRoot . '/' . ltrim($logoRel, '/')) && is_file($projectRoot . '/publico/img/vigitec-logo.png')) {
+        $logoRel = 'publico/img/vigitec-logo.png';
+    }
+    
+    $logoAbsPath = $projectRoot . '/' . ltrim($logoRel, '/');
+    if (is_file($logoAbsPath)) {
+        $ext = strtolower(pathinfo($logoAbsPath, PATHINFO_EXTENSION));
+        $imageData = file_get_contents($logoAbsPath);
+        if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
+            $im = @imagecreatefromwebp($logoAbsPath);
+            if ($im !== false) {
+                ob_start();
+                imagepng($im);
+                $imageData = (string)ob_get_clean();
+                unset($im);
+                $ext = 'png';
+            }
+        } elseif ($ext === 'jpg') {
+            $ext = 'jpeg';
+        }
+        $base64 = base64_encode($imageData);
+        $logoUrl = 'data:image/' . $ext . ';base64,' . $base64;
+    }
+}
+
 // Format logic
 $ticketNo = htmlspecialchars($report['ticket_number']);
 $deptName = htmlspecialchars($report['department_name']);
@@ -60,9 +106,11 @@ $clientName = $clientName !== '' ? htmlspecialchars($clientName) : htmlspecialch
 $closeDate = htmlspecialchars(date('d/m/Y H:i', strtotime($report['closed'])));
 
 $workDesc = nl2br(htmlspecialchars($report['work_description']));
-$obs = !empty($report['observations']) ? nl2br(htmlspecialchars($report['observations'])) : '<em>Ninguna observación.</em>';
+$obs = !empty($report['observations']) ? nl2br(htmlspecialchars($report['observations'])) : '— Ninguna observación extra. —';
 $price = !empty($report['final_price']) ? htmlspecialchars($report['final_price']) : 'N/A';
-$appName = htmlspecialchars(APP_NAME);
+$appName = htmlspecialchars($companyName); // Use dynamic company name
+$webSafe = htmlspecialchars(str_replace(['http://', 'https://'], '', $companyWebsite));
+$nowDate = date('d M Y - h:i A');
 
 // 3. Render HTML
 $html = <<<HTML
@@ -72,146 +120,146 @@ $html = <<<HTML
     <meta charset="UTF-8">
     <title>Reporte de Servicio #{$ticketNo}</title>
     <style>
-        body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            font-size: 13px;
-            line-height: 1.5;
+        :root{
+            --ink:#0f172a;
+            --muted:#64748b;
+            --line:#e2e8f0;
+            --paper:#ffffff;
+            --soft:#f8fafc;
+            --brand:#2563eb;
         }
-        .header {
-            width: 100%;
-            border-bottom: 2px solid #1d4ed8;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .header td { vertical-align: bottom; }
-        .title {
-            color: #1d4ed8;
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-        }
-        .subtitle {
-            color: #64748b;
+        html,body{background:var(--paper); color:var(--ink); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size:13px; margin:0; padding:0;}
+        .sheet{padding: 30px; margin: 0;}
+        
+        .logo img { max-height: 50px; max-width: 220px; }
+        
+        .summary{margin-top: 20px; margin-bottom: 25px; background: var(--soft); border:1px solid var(--line); border-radius:10px; padding: 12px 14px;}
+        .summary-table{width: 100%; border-collapse: collapse;}
+        .summary-table td{padding: 6px 8px; vertical-align: top;}
+        .kv .k{color:var(--muted); font-weight:bold; text-transform:uppercase; letter-spacing:1px; font-size: 10px; display:inline-block; width:110px;}
+        .kv .v{font-weight:bold; color:var(--ink); display:inline-block; font-size: 12px;}
+
+        h3.section-title {
+            color: #1e293b;
             font-size: 12px;
-            margin: 0;
-        }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .info-table th {
-            text-align: left; background-color: #f8fafc; color: #475569;
-            padding: 6px 10px; font-size: 11px; text-transform: uppercase; border: 1px solid #e2e8f0; width: 25%;
-        }
-        .info-table td {
-            padding: 6px 10px; border: 1px solid #e2e8f0; width: 25%; color: #0f172a; font-weight: bold;
-        }
-        
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #1d4ed8;
-            border-bottom: 1px solid #e2e8f0;
-            padding-bottom: 4px;
-            margin-top: 25px;
-            margin-bottom: 10px;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 15px;
+            margin-bottom: 15px;
         }
 
-        .content-box {
-            padding: 10px 15px;
-            background-color: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
+        .box {
+            border: 1px solid #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: #ffffff;
+            margin-bottom: 20px;
             color: #334155;
-            min-height: 40px;
+            line-height: 1.6;
         }
 
-        .materials-table th {
-            background-color: #f1f5f9; padding: 8px 10px;
-            text-align: left; font-size: 12px; border: 1px solid #cbd5e1;
-        }
-        .materials-table td {
-            padding: 8px 10px; border: 1px solid #cbd5e1; font-size: 13px;
-        }
+        .materials-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .materials-table th { background: #f1f5f9; padding: 8px; font-size: 11px; text-transform: uppercase; color: #475569; border: 1px solid #cbd5e1; text-align: left; }
+        .materials-table td { padding: 8px; border: 1px solid #cbd5e1; font-size: 13px; color: #1e293b; }
 
+        .price-wrapper {
+            margin-top: 15px;
+            text-align: right;
+        }
         .price-box {
-            float: right; width: 40%;
-            background-color: #eff6ff;
+            display: inline-block;
+            background: #eff6ff;
             border: 1px solid #bfdbfe;
-            padding: 10px; margin-top: 10px;
-            font-size: 18px; text-align: right; font-weight: bold; color: #1e3a8a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3a8a;
         }
-        .clear { clear: both; }
 
         .signatures {
             width: 100%;
-            margin-top: 80px;
+            margin-top: 70px;
         }
         .signatures td {
             width: 50%;
             text-align: center;
             vertical-align: top;
+            padding: 0 20px;
         }
         .sig-line {
-            width: 70%; margin: 0 auto;
             border-top: 1px solid #64748b;
-            padding-top: 5px;
+            padding-top: 6px;
             font-weight: bold;
             color: #334155;
+            font-size: 12px;
         }
-        .sig-sub { font-size: 11px; font-weight: normal; color: #94a3b8; }
-        
+        .sig-sub { font-size: 10px; font-weight: normal; color: #94a3b8; text-transform: uppercase; }
+
         .footer {
-            position: fixed; bottom: -20px; left: 0; right: 0;
-            font-size: 10px; color: #cbd5e1; text-align: center;
+            position: fixed; bottom: -15px; left: 0; right: 0;
+            font-size: 10px; color: #94a3b8; text-align: center;
             border-top: 1px solid #f1f5f9; padding-top: 10px;
         }
     </style>
 </head>
 <body>
+    <div class="sheet">
+        <!-- HEADER -->
+        <table style="width:100%; border-bottom:2px solid #cbd5e1; padding-bottom: 20px;">
+            <tr>
+                <td style="vertical-align:bottom; width:60%;">
+                    <div style="text-align:left;">
+HTML;
 
-    <table class="header">
-        <tr>
-            <td style="width: 50%;">
-                <h1 class="title">REPORTE DE SERVICIO</h1>
-                <p class="subtitle">Evidencia de trabajo concluido</p>
-            </td>
-            <td style="width: 50%; text-align: right;">
-                <h2 style="margin: 0; color: #0f172a;">{$appName}</h2>
-                <p style="margin: 0; color: #64748b; font-size: 12px;">Fecha de impresión: {date('d/m/Y')}</p>
-            </td>
-        </tr>
-    </table>
+if ($logoUrl !== '') {
+    $html .= '<div class="logo" style="margin-bottom:12px;"><img src="' . htmlspecialchars($logoUrl) . '" alt="' . $appName . '"></div>';
+}
 
-    <table class="info-table">
-        <tr>
-            <th>Ticket #</th><td>{$ticketNo}</td>
-            <th>Técnico Asignado</th><td>{$staffName}</td>
-        </tr>
-        <tr>
-            <th>Departamento</th><td>{$deptName}</td>
-            <th>Fecha de Cierre</th><td>{$closeDate}</td>
-        </tr>
-        <tr>
-            <th>Cliente</th><td colspan="3">{$clientName}</td>
-        </tr>
-    </table>
+$html .= <<<HTML
+                        <h1 style="font-size:13px; margin:0; font-weight:bold; text-transform:uppercase; letter-spacing:0.06em; color:#0f172a;">{$appName}</h1>
+                        <div style="color:#2563eb; font-weight:bold; margin-top:4px; font-size:11px; letter-spacing:0.02em;">{$webSafe}</div>
+                    </div>
+                </td>
+                <td style="vertical-align:bottom; text-align:right; width:40%;">
+                    <div style="font-size:10px; text-transform:uppercase; font-weight:bold; color:#64748b; letter-spacing:1px; margin-bottom:6px;">Reporte de Cierre de Servicio</div>
+                    <div style="font-size:28px; font-weight:bold; color:#0f172a; line-height:1; margin-bottom:10px;">#{$ticketNo}</div>
+                    <div style="font-size:11px; color:#64748b; font-weight:bold;">Impreso: {$nowDate}</div>
+                </td>
+            </tr>
+        </table>
 
-    <div class="section-title">Trabajo Realizado</div>
-    <div class="content-box">
-        {$workDesc}
-    </div>
+        <!-- RESUMEN -->
+        <div class="summary">
+            <table class="summary-table">
+                <tr>
+                    <td class="kv"><span class="k">Cliente (Dueño)</span><span class="v">{$clientName}</span></td>
+                    <td class="kv"><span class="k">Departamento</span><span class="v">{$deptName}</span></td>
+                </tr>
+                <tr>
+                    <td class="kv"><span class="k">Técnico Asignado</span><span class="v">{$staffName}</span></td>
+                    <td class="kv"><span class="k">Fecha de Cierre</span><span class="v">{$closeDate}</span></td>
+                </tr>
+            </table>
+        </div>
 
-    <div class="section-title">Materiales y Refacciones Utilizadas</div>
+        <!-- DETALLES DEL TRABAJO -->
+        <h3 class="section-title">Trabajo Realizado</h3>
+        <div class="box">
+            {$workDesc}
+        </div>
+
+        <!-- MATERIALES -->
+        <h3 class="section-title">Materiales y Refacciones Utilizadas</h3>
 HTML;
 
 if (empty($materials)) {
-    $html .= '<p style="color: #64748b; font-style: italic;">No se registraron materiales para este servicio.</p>';
+    $html .= '<div class="box" style="color:#64748b; font-style:italic;">No se registraron materiales para este servicio.</div>';
 } else {
     $html .= '<table class="materials-table">
-                <thead><tr><th>Nombre/Descripción del Material</th><th style="width:30%;">Cantidad / Medida</th></tr></thead>
+                <thead><tr><th>Nombre o Descripción del Material</th><th style="width:30%;">Cantidad / Medida</th></tr></thead>
                 <tbody>';
     foreach ($materials as $m) {
         $html .= '<tr>
@@ -223,35 +271,42 @@ if (empty($materials)) {
 }
 
 $html .= <<<HTML
-    <div class="section-title" style="margin-top: 15px;">Observaciones Adicionales</div>
-    <div class="content-box" style="margin-bottom: 20px;">
-        {$obs}
-    </div>
+        <!-- OBSERVACIONES -->
+        <h3 class="section-title">Observaciones Adicionales</h3>
+        <div class="box" style="margin-bottom: 10px;">
+            {$obs}
+        </div>
 
-    <div class="price-box">
-        Total del Servicio: {$price}
-    </div>
-    <div class="clear"></div>
+        <!-- PRECIO -->
+        <div class="price-wrapper">
+            <div class="price-box">Total del Servicio: {$price}</div>
+        </div>
 
-    <table class="signatures">
-        <tr>
-            <td>
-                <div class="sig-line">
-                    Firma del Técnico<br>
-                    <span class="sig-sub">{$staffName}</span>
-                </div>
-            </td>
-            <td>
-                <div class="sig-line">
-                    Firma de Conformidad del Cliente<br>
-                    <span class="sig-sub">{$clientName}</span>
-                </div>
-            </td>
-        </tr>
-    </table>
+        <!-- FIRMAS -->
+        <table class="signatures">
+            <tr>
+                <td>
+                    <div class="sig-line">
+                        {$staffName}<br>
+                        <span class="sig-sub">Firma del Técnico</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="sig-line">
+                        {$clientName}<br>
+                        <span class="sig-sub">Firma de Conformidad del Cliente</span>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <br>
+        <br>
 
-    <div class="footer">
-        Generado por {$appName} - Documento de uso interno
+        <!-- FOOTER -->
+        <div class="footer">
+            Generado automáticamente por {$appName} — Evidencia de Servicio Concluido
+        </div>
     </div>
 </body>
 </html>

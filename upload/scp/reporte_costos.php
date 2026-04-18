@@ -21,12 +21,14 @@ if ($ticketId <= 0) {
 }
 
 // 1. Obtener datos del ticket para validar
-$stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.closed, t.dept_id,
+$stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.closed, t.dept_id, t.user_id,
                                  d.name as department_name, d.requires_report,
-                                 s.firstname as staff_first, s.lastname as staff_last
+                                 s.firstname as staff_first, s.lastname as staff_last,
+                                 u.firstname as user_first, u.lastname as user_last, u.email as user_email
                           FROM tickets t
                           JOIN departments d ON t.dept_id = d.id
                           LEFT JOIN staff s ON t.staff_id = s.id
+                          LEFT JOIN users u ON t.user_id = u.id
                           WHERE t.id = ? AND t.empresa_id = ?");
 $stmt->bind_param('ii', $ticketId, $eid);
 $stmt->execute();
@@ -154,17 +156,56 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php 
+    $clientName = trim(($ticket['user_first'] ?? '') . ' ' . ($ticket['user_last'] ?? ''));
+    $clientName = $clientName !== '' ? $clientName : ($ticket['user_email'] ?? 'Usuario Web');
+    $staffName = trim(($ticket['staff_first'] ?? '') . ' ' . ($ticket['staff_last'] ?? ''));
+    $staffName = $staffName !== '' ? $staffName : 'Sin asignar';
+    $closedDate = !empty($ticket['closed']) ? date('d/m/Y H:i', strtotime($ticket['closed'])) : 'N/A';
+    ?>
+
+    <!-- Sección de Información General Arriba -->
+    <div class="ticket-view-overview mb-4">
+        <div class="field">
+            <label>Número de Ticket</label>
+            <div class="value fs-5">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></div>
+        </div>
+        <div class="field">
+            <label>Cliente (Dueño)</label>
+            <div class="value mt-1"><?php echo htmlspecialchars($clientName); ?></div>
+        </div>
+        <div class="field">
+            <label>Departamento</label>
+            <div class="value mt-1"><span class="badge bg-secondary"><?php echo htmlspecialchars($ticket['department_name']); ?></span></div>
+        </div>
+        <div class="field">
+            <label>Técnico Asignado</label>
+            <div class="value mt-1 text-primary fw-bold">
+                <i class="bi bi-person-badge"></i> <?php echo htmlspecialchars($staffName); ?>
+            </div>
+        </div>
+        <div class="field">
+            <label>Fecha de Cierre</label>
+            <div class="value mt-1 text-muted"><?php echo htmlspecialchars($closedDate); ?></div>
+        </div>
+        <div class="field">
+            <label>Estado del Reporte</label>
+            <div class="value mt-1">
+                <?php if ($reportExists): ?>
+                    <span class="badge bg-success">Completado</span>
+                <?php else: ?>
+                    <span class="badge bg-warning text-dark">Pendiente</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario / Visualización del Reporte abajo -->
     <div class="row">
-        <!-- Panel Izquierdo: Formulario -->
-        <div class="col-lg-8 mb-4">
+        <div class="col-12">
             <div class="card settings-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <strong><i class="bi bi-card-text me-2"></i> Datos del Reporte</strong>
-                    <?php if ($reportExists): ?>
-                        <span class="badge bg-success">Completado</span>
-                    <?php else: ?>
-                        <span class="badge bg-warning text-dark">Pendiente</span>
-                    <?php endif; ?>
                 </div>
                 <div class="card-body">
                     <?php if (!$reportExists): ?>
@@ -203,13 +244,13 @@ ob_start();
                                 <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."></textarea>
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-4 d-flex flex-column align-items-start">
                                 <label class="form-label fw-bold">Precio final del servicio</label>
                                 <div class="input-group" style="max-width: 300px;">
                                     <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
                                     <input type="text" name="final_price" class="form-control" placeholder="Ej: 1500.00 o Revisión Gratuita">
                                 </div>
-                                <div class="form-text">Si aplica, ingresa el monto facturado o un acuerdo de costo.</div>
+                                <div class="form-text mt-1">Si aplica, ingresa el monto facturado o un acuerdo de costo.</div>
                             </div>
 
                             <div class="border-top pt-3 d-flex justify-content-end">
@@ -226,7 +267,7 @@ ob_start();
                             <p class="text-muted fst-italic">No se registraron materiales.</p>
                         <?php else: ?>
                             <div class="table-responsive mb-4">
-                                <table class="table table-sm table-bordered">
+                                <table class="table table-sm table-bordered" style="width: 100%; max-width: 800px;">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Material</th>
@@ -258,49 +299,15 @@ ob_start();
                         </div>
                         <?php endif; ?>
 
-                        <div class="mb-3 p-3 bg-light rounded border border-info align-items-center d-inline-block">
-                            <strong class="text-secondary">Precio Final:</strong>
-                            <span class="fs-5 ms-2 fw-bold text-dark"><?php echo htmlspecialchars($reportData['final_price'] ?: 'No aplica'); ?></span>
+                        <div class="mb-3 p-3 bg-light rounded border border-info align-items-center d-inline-flex gap-2">
+                            <strong class="text-secondary mb-0">Precio Final:</strong>
+                            <span class="fs-5 fw-bold text-dark mb-0"><?php echo htmlspecialchars($reportData['final_price'] ?: 'No aplica'); ?></span>
                         </div>
                         
-                        <div class="mt-4 pt-3 border-top">
+                        <div class="mt-4 pt-3 border-top pb-2">
                             <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" target="_blank" class="btn btn-outline-danger btn-lg"><i class="bi bi-file-earmark-pdf me-2"></i> Generar / Ver PDF</a>
                         </div>
                     <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- Panel Derecho: Info ticket -->
-        <div class="col-lg-4">
-            <div class="card settings-card">
-                <div class="card-header bg-light">
-                    <strong>Resumen del Ticket</strong>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-hash"></i> Número</span>
-                            <strong class="text-dark"><?php echo htmlspecialchars($ticket['ticket_number']); ?></strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <span class="text-muted"><i class="bi bi-building"></i> Departamento</span>
-                            <span class="badge bg-secondary"><?php echo htmlspecialchars($ticket['department_name']); ?></span>
-                        </li>
-                        <li class="list-group-item px-0">
-                            <span class="text-muted d-block mb-1"><i class="bi bi-person-badge"></i> Técnico asignado</span>
-                            <strong class="text-dark">
-                                <?php 
-                                $sName = trim(($ticket['staff_first'] ?? '') . ' ' . ($ticket['staff_last'] ?? ''));
-                                echo $sName !== '' ? htmlspecialchars($sName) : 'Sin asignar';
-                                ?>
-                            </strong>
-                        </li>
-                        <li class="list-group-item px-0">
-                            <span class="text-muted d-block mb-1"><i class="bi bi-calendar-check"></i> Fecha de cierre</span>
-                            <strong class="text-dark"><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($ticket['closed']))); ?></strong>
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>
