@@ -216,6 +216,8 @@ if ($ticketClientSignaturePath !== '') {
                 <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
             <?php endif; ?>
 
+            <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
+
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
