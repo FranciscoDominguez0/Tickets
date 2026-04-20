@@ -2107,6 +2107,22 @@ $filterKey = $_GET['filter'] ?? 'open';
 if (!isset($filters[$filterKey])) $filterKey = 'open';
 $query = trim($_GET['q'] ?? '');
 
+// Filtro de fechas (aplica a todos los filtros)
+$defaultDateFrom = date('Y-m-01'); // Primer día del mes actual
+$defaultDateTo   = date('Y-m-d');  // Hoy
+// Columna de fecha a filtrar: t.closed para cerrados, t.created para el resto
+$dateCol = ($filterKey === 'closed') ? 't.closed' : 't.created';
+if (isset($_GET['date_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_from'])) {
+    $dateFrom = $_GET['date_from'];
+} else {
+    $dateFrom = $defaultDateFrom;
+}
+if (isset($_GET['date_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_to'])) {
+    $dateTo = $_GET['date_to'];
+} else {
+    $dateTo = $defaultDateTo;
+}
+
 // Filtro por tema (help topic) - opcional según esquema
 $topicFilterAvailable = false;
 $topicOptions = [];
@@ -2206,6 +2222,17 @@ if ($query !== '') {
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
+}
+// Filtro por rango de fechas (aplica sobre la columna de fecha correspondiente al filtro)
+if ($dateFrom !== '') {
+    $whereClauses[] = $dateCol . ' >= ?';
+    $types .= 's';
+    $params[] = $dateFrom . ' 00:00:00';
+}
+if ($dateTo !== '') {
+    $whereClauses[] = $dateCol . ' <= ?';
+    $types .= 's';
+    $params[] = $dateTo . ' 23:59:59';
 }
 $whereSql = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
@@ -2760,18 +2787,17 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
         $canBulkDelete = roleHasPermission('ticket.delete');
         $bulkStatusLocked = !$canBulkEdit && !$canBulkClose;
         ?>
-        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>" data-general-dept-id="<?php echo (int)$generalDeptId; ?>">
-            <div class="tickets-toolbar">
-                <div class="tickets-actions">
-                <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-all">Seleccionar</button>
-                <button type="button" class="btn btn-action btn-sm" data-action="tickets-select-none">Ninguno</button>
 
+        <!-- Nueva barra de acciones contextuales (se muestra al seleccionar tickets) -->
+        <div id="selectionActionBar" class="tickets-selection-bar">
+            <div class="selection-info">
+                <span class="count-badge" id="selectedCountBadge">0</span>
+                <span id="selectedCountText">tickets seleccionados</span>
+            </div>
+            <div class="bulk-actions">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-action btn-sm btn-icon" title="<?php echo $canBulkAssign ? 'Asignar' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? '' : 'disabled'; ?>>
-                        <i class="bi bi-person"></i>
-                    </button>
-                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" <?php echo $canBulkAssign ? '' : 'disabled'; ?>>
-                        <span class="visually-hidden">Toggle Dropdown</span>
+                    <button type="button" class="btn btn-bulk" title="<?php echo $canBulkAssign ? 'Asignar a...' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? 'data-bs-toggle="dropdown"' : 'disabled'; ?>>
+                        <i class="bi bi-person-fill"></i> Asignar
                     </button>
                     <ul class="dropdown-menu" id="bulkAssignMenu">
                         <li id="bulkAssignEmptyItem" class="d-none"><span class="dropdown-item-text text-muted" style="font-weight:700;">Debes seleccionar un ticket</span></li>
@@ -2785,11 +2811,8 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn btn-action btn-sm btn-icon" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar/cerrar' : 'Cambiar estado'; ?>" <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>>
-                        <i class="bi bi-flag"></i>
-                    </button>
-                    <button type="button" class="btn btn-action btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>>
-                        <span class="visually-hidden">Toggle Dropdown</span>
+                    <button type="button" class="btn btn-bulk" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar estado' : 'Cambiar estado a...'; ?>" <?php echo $bulkStatusLocked ? 'disabled' : 'data-bs-toggle="dropdown"'; ?>>
+                        <i class="bi bi-flag-fill"></i> Estado
                     </button>
                     <ul class="dropdown-menu">
                         <?php foreach ($statusOptions as $st): ?>
@@ -2798,20 +2821,13 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-danger-soft btn-sm" data-action="tickets-bulk-delete" title="<?php echo $canBulkDelete ? 'Eliminar' : 'Sin permiso para eliminar'; ?>" <?php echo $canBulkDelete ? '' : 'disabled'; ?>><i class="bi bi-trash"></i> Eliminar</button>
-                </div>
-
-                <div class="text-muted" style="font-size: 0.85rem; font-weight: 700;">
-                    <?php if ($totalTickets > 0): ?>
-                        Mostrando <?php echo (int)$offset + 1; ?>-<?php echo min((int)$offset + $perPage, $totalTickets); ?> de <?php echo $totalTickets; ?> resultados
-                    <?php else: ?>
-                        0 resultados
-                    <?php endif; ?>
-                </div>
+                <button type="button" class="btn btn-bulk btn-bulk-danger" data-action="tickets-bulk-delete" title="<?php echo $canBulkDelete ? 'Eliminar permanentemente' : 'Sin permiso para eliminar'; ?>" <?php echo $canBulkDelete ? '' : 'disabled'; ?>>
+                    <i class="bi bi-trash-fill"></i> Eliminar
+                </button>
             </div>
         </div>
 
-        <div class="tickets-panel">
+        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>" data-general-dept-id="<?php echo (int)$generalDeptId; ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-filters">
                     <div class="dropdown filter-dd">
@@ -2838,12 +2854,49 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                             <?php endforeach; ?>
                         </select>
                     <?php endif; ?>
+
+                    <div id="ticketDateRange" style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:4px 8px; height:32px;">
+                        <i class="bi bi-calendar3" style="color:#64748b; font-size:0.8rem; flex-shrink:0;"></i>
+                        <input type="date" id="dateFromInput" value="<?php echo html($dateFrom); ?>" title="Desde"
+                               style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                        <span style="color:#cbd5e1; font-size:0.75rem; flex-shrink:0;">→</span>
+                        <input type="date" id="dateToInput" value="<?php echo html($dateTo); ?>" title="Hasta"
+                               style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                        <button type="button" id="applyDateRange"
+                                style="display:inline-flex; align-items:center; gap:3px; background:#2563eb; color:#fff; border:none; border-radius:6px; padding:2px 10px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                            <i class="bi bi-check-lg"></i> Aplicar
+                        </button>
+                        <?php if ($dateFrom !== $defaultDateFrom || $dateTo !== $defaultDateTo): ?>
+                        <a href="tickets.php?filter=<?php echo html($filterKey); ?><?php echo $query !== '' ? '&q='.urlencode($query) : ''; ?>"
+                           title="Restablecer al mes actual" style="color:#94a3b8; font-size:0.9rem; flex-shrink:0; line-height:1;">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                    <script>
+                    (function(){
+                        var btn = document.getElementById('applyDateRange');
+                        if (!btn) return;
+                        btn.addEventListener('click', function(){
+                            var from = document.getElementById('dateFromInput').value;
+                            var to   = document.getElementById('dateToInput').value;
+                            var url  = new URL(window.location.href);
+                            url.searchParams.delete('p');
+                            if (from) url.searchParams.set('date_from', from); else url.searchParams.delete('date_from');
+                            if (to)   url.searchParams.set('date_to',   to);   else url.searchParams.delete('date_to');
+                            window.location.href = url.toString();
+                        });
+                        ['dateFromInput','dateToInput'].forEach(function(id){
+                            var el = document.getElementById(id);
+                            if (el) el.addEventListener('keydown', function(e){ if (e.key==='Enter') btn.click(); });
+                        });
+                    })();
+                    </script>
                 </div>
                 <div class="tickets-search">
                     <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                        <input type="text" id="ticketSearchInput" class="form-control" placeholder="Buscar" value="<?php echo html($query); ?>">
-                        <button type="button" class="btn btn-action btn-sm" data-action="tickets-search">Buscar</button>
+                        <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
+                        <input type="text" id="ticketSearchInput" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" placeholder="Buscar ticket y presione Enter..." value="<?php echo html($query); ?>">
                     </div>
                 </div>
             </div>
@@ -2983,6 +3036,8 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
     $basePageParams = ['filter' => $filterKey];
     if ($query !== '') $basePageParams['q'] = $query;
     if ($topicFilterAvailable && $selectedTopicId > 0) $basePageParams['topic_id'] = (int)$selectedTopicId;
+    if ($dateFrom !== '') $basePageParams['date_from'] = $dateFrom;
+    if ($dateTo   !== '') $basePageParams['date_to']   = $dateTo;
     $prevUrl = '';
     $nextUrl = '';
     if ($page > 1) {

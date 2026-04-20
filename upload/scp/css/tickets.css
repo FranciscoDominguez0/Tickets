@@ -993,11 +993,84 @@ tr.ticket-row.is-selected td {
 }
 
 .tickets-search {
-    min-width: 280px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
 }
 
 .tickets-search input {
     border-radius: 10px;
+}
+
+/* Barra de selección contextual (Bulk actions) */
+.tickets-selection-bar {
+    display: none; /* No ocupa espacio cuando está oculta */
+    background: #fff;
+    color: #1e293b;
+    padding: 10px 18px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(2, 6, 23, 0.08);
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.tickets-selection-bar.show {
+    display: flex; /* Aparece y empuja el contenido hacia abajo */
+}
+
+.tickets-selection-bar .selection-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.tickets-selection-bar .selection-info .count-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(51, 65, 85, 0.1);
+}
+
+.tickets-selection-bar .bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tickets-selection-bar .btn-bulk {
+    background: #fff;
+    border: 1px solid rgba(2, 6, 23, 0.10);
+    color: #0f172a;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.tickets-selection-bar .btn-bulk:hover {
+    background: #f8fafc;
+    border-color: rgba(2, 6, 23, 0.2);
+}
+
+.tickets-selection-bar .btn-bulk-danger {
+    background: #fff;
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
+
+.tickets-selection-bar .btn-bulk-danger:hover {
+    background: #fef2f2;
+    border-color: #dc2626;
 }
 
 .tickets-table-wrap {
@@ -1670,6 +1743,7 @@ tr.ticket-row.is-selected td {
         padding: 0 12px;
         overflow-x: auto;
     }
+
 
     .ticket-view-tab-content {
         padding: 16px;

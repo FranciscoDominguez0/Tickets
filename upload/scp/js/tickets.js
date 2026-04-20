@@ -425,12 +425,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function toggleAllTickets(state) {
-      var checks = document.querySelectorAll('.ticket-check');
-      checks.forEach(function (c) {
+      document.querySelectorAll('.ticket-check').forEach(function (c) {
         c.checked = !!state;
       });
       var all = document.getElementById('check_all');
       if (all) all.checked = !!state;
+      updateSelectionActionBar();
+    }
+
+    function updateSelectionActionBar() {
+      var bar = document.getElementById('selectionActionBar');
+      var badge = document.getElementById('selectedCountBadge');
+      var text = document.getElementById('selectedCountText');
+      if (!bar) return;
+
+      var count = selectedTicketCount();
+      if (count > 0) {
+        if (badge) badge.textContent = count;
+        if (text) text.textContent = count === 1 ? 'ticket seleccionado' : 'tickets seleccionados';
+        bar.classList.add('show');
+      } else {
+        bar.classList.remove('show');
+      }
     }
 
     function applyTicketSearch() {
@@ -562,8 +578,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('input.ticket-check').forEach(function (c) {
       c.addEventListener('change', function () {
         filterBulkAssignMenu();
+        updateSelectionActionBar();
       });
     });
+
+    // Inicializar estado de la barra en carga
+    updateSelectionActionBar();
 
     // Acciones masivas
     document.querySelectorAll('[data-action="tickets-bulk-delete"]').forEach(function (btn) {
