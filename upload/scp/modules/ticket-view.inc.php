@@ -215,7 +215,7 @@ if ($ticketClientSignaturePath !== '') {
             <?php if ($canTicketTransfer): ?>
                 <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
             <?php endif; ?>
-            <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
+
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -558,8 +558,11 @@ if ($ticketClientSignaturePath !== '') {
         <div>
             <div class="field">
                 <label>Estado</label>
-                <div class="value">
+                <div class="value" style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
                     <span class="badge-status" style="background: <?php echo html($t['status_color'] ?? '#e2e8f0'); ?>; color: #0f172a;"><?php echo html($t['status_name']); ?></span>
+                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #bbf7d0; color: #15803d; display:inline-flex; align-items:center; gap:4px; text-decoration:none; cursor:pointer;" title="Ver reporte de facturación"><i class="bi bi-receipt"></i> Facturado</a>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="field">

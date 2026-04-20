@@ -835,7 +835,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
          s.firstname AS staff_first, s.lastname AS staff_last, s.email AS staff_email,
          d.name AS dept_name, ts.name AS status_name, ts.color AS status_color,
-         p.name AS priority_name, p.color AS priority_color"
+         p.name AS priority_name, p.color AS priority_color,
+         (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
+         tr.final_price AS report_final_price"
          . $topicSelect .
         " FROM tickets t
          JOIN users u ON t.user_id = u.id
@@ -844,6 +846,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         " JOIN departments d ON t.dept_id = d.id
          JOIN ticket_status ts ON t.status_id = ts.id
          JOIN priorities p ON t.priority_id = p.id
+         LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id
          WHERE t.id = ? AND t.empresa_id = ?"
     );
     $stmt->bind_param('ii', $tid, $eid);
@@ -2268,12 +2271,14 @@ $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated
                ts.name AS status_name, ts.color AS status_color,
                p.name AS priority_name, p.color AS priority_color,
                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
-               s.firstname AS staff_first, s.lastname AS staff_last
+               s.firstname AS staff_first, s.lastname AS staff_last,
+               (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report
         FROM tickets t
         JOIN users u ON t.user_id = u.id
         LEFT JOIN staff s ON t.staff_id = s.id
         JOIN ticket_status ts ON t.status_id = ts.id
         JOIN priorities p ON t.priority_id = p.id
+        LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id
         $whereSql
         ORDER BY t.updated DESC
         LIMIT ?, ?";
@@ -2928,16 +2933,28 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                                 </div>
 
                                 <!-- Chip de estado para móvil -->
-                                <div class="ticket-row-mobile-meta d-md-none mt-3" style="display: flex; gap: 8px;">
+                                <div class="ticket-row-mobile-meta d-md-none mt-3" style="display: flex; gap: 8px; flex-wrap: wrap;">
                                     <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>; font-size:0.75rem;">
                                         <?php echo html($t['status_name']); ?>
                                     </span>
+                                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                                    <span class="chip chip-status" style="background: #16a34a22; color: #16a34a; font-size:0.75rem;">
+                                        <i class="bi bi-receipt"></i> Facturado
+                                    </span>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td>
-                                <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
-                                    <?php echo html($t['status_name']); ?>
-                                </span>
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
+                                        <?php echo html($t['status_name']); ?>
+                                    </span>
+                                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                                    <span class="chip chip-status" style="background: #16a34a22; color: #16a34a; white-space:nowrap;">
+                                        <i class="bi bi-receipt"></i> Facturado
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td>
                                 <span class="chip chip-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">

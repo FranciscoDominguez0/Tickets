@@ -63,13 +63,6 @@ if ($resR && $resR->num_rows > 0) {
     $reportExists = true;
     $reportData = $resR->fetch_assoc();
 
-    $matStmt = $mysqli->prepare("SELECT * FROM ticket_report_materials WHERE report_id = ? ORDER BY id ASC");
-    $matStmt->bind_param('i', $reportData['id']);
-    $matStmt->execute();
-    $resM = $matStmt->get_result();
-    while ($m = $resM->fetch_assoc()) {
-        $materials[] = $m;
-    }
 }
 
 // 3. Procesar formulario si se envió (y no existe reporte)
@@ -84,8 +77,6 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $obs = trim((string)($_POST['observations'] ?? ''));
         $price = trim((string)($_POST['final_price'] ?? ''));
         
-        $matNames = $_POST['mat_name'] ?? [];
-        $matQtys = $_POST['mat_qty'] ?? [];
 
         if ($desc === '') {
             $errors[] = 'La descripción del trabajo es obligatoria.';
@@ -104,19 +95,6 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $reportId = $mysqli->insert_id;
 
-                // Insert materials
-                if (is_array($matNames)) {
-                    $sqlM = "INSERT INTO ticket_report_materials (report_id, material_name, quantity) VALUES (?, ?, ?)";
-                    $inM = $mysqli->prepare($sqlM);
-                    foreach ($matNames as $k => $mname) {
-                        $mname = trim((string)$mname);
-                        $mqty = trim((string)($matQtys[$k] ?? ''));
-                        if ($mname !== '' && $mqty !== '') {
-                            $inM->bind_param('iss', $reportId, $mname, $mqty);
-                            $inM->execute();
-                        }
-                    }
-                }
 
                 $mysqli->commit();
                 // Redirigir para limpiar POST
@@ -329,29 +307,6 @@ ob_start();
                         <form method="POST" action="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>">
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
-                            <!-- Sección materiales -->
-                            <h6 class="mb-3 border-bottom pb-2 text-primary"><i class="bi bi-tools me-1"></i> Materiales Utilizados</h6>
-                            <div id="materials-container">
-                                <div class="material-card material-row">
-                                    <button type="button" class="btn-remove-row" disabled title="Eliminar material"><i class="bi bi-x-lg"></i></button>
-                                    <div class="mat-fields">
-                                        <div>
-                                            <div class="mat-label">Nombre del material</div>
-                                            <input type="text" name="mat_name[]" class="form-control form-control-sm" placeholder="Ej: Cable LAN Cat6">
-                                        </div>
-                                        <div>
-                                            <div class="mat-label">Cantidad / Medida</div>
-                                            <input type="text" name="mat_qty[]" class="form-control form-control-sm" placeholder="Ej: 50 metros">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-4 mt-1">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-row">
-                                    <i class="bi bi-plus-lg"></i> Agregar Material
-                                </button>
-                            </div>
-
                             <!-- Sección detalles -->
                             <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
 
@@ -387,20 +342,6 @@ ob_start();
                             <i class="bi bi-lock me-1"></i> Este ticket ya tiene un reporte generado. Los datos no pueden modificarse.
                         </div>
 
-                        <h6 class="mb-3 border-bottom pb-2 text-primary"><i class="bi bi-tools me-1"></i> Materiales Utilizados</h6>
-                        <?php if (empty($materials)): ?>
-                            <p class="text-muted fst-italic">No se registraron materiales.</p>
-                        <?php else: ?>
-                            <ul class="mat-read-list">
-                                <?php foreach ($materials as $m): ?>
-                                    <li class="mat-read-item">
-                                        <span class="mat-name"><?php echo htmlspecialchars($m['material_name']); ?></span>
-                                        <span class="mat-qty"><?php echo htmlspecialchars($m['quantity']); ?></span>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-
                         <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
                         <div class="mb-3 p-3 bg-light rounded border">
                             <strong class="d-block text-secondary mb-1">Descripción:</strong>
@@ -419,12 +360,6 @@ ob_start();
                             <span class="price-value"><?php echo htmlspecialchars($reportData['final_price'] ?: 'No aplica'); ?></span>
                         </div>
 
-                        <div class="mt-3 pt-2 border-top">
-                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" target="_blank"
-                               class="btn btn-danger btn-pdf-action d-inline-flex align-items-center gap-2">
-                                <i class="bi bi-file-earmark-pdf"></i> Generar / Ver PDF
-                            </a>
-                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -432,49 +367,6 @@ ob_start();
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('materials-container');
-    const btnAdd = document.getElementById('btn-add-row');
-
-    if (!container || !btnAdd) return;
-
-    // Helper to update trash buttons (disable if only 1 row)
-    function updateTrashButtons() {
-        const rows = container.querySelectorAll('.material-row');
-        const buttons = container.querySelectorAll('.btn-remove-row');
-        buttons.forEach(btn => {
-            btn.disabled = rows.length <= 1;
-        });
-    }
-
-    // Add new row
-    btnAdd.addEventListener('click', function() {
-        const firstRow = container.querySelector('.material-row');
-        if (!firstRow) return;
-        const newRow = firstRow.cloneNode(true);
-        // Clear inputs
-        const inputs = newRow.querySelectorAll('input');
-        inputs.forEach(input => input.value = '');
-        container.appendChild(newRow);
-        updateTrashButtons();
-    });
-
-    // Delegated event for removing row
-    container.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-remove-row')) {
-            const rowCount = container.querySelectorAll('.material-row').length;
-            if (rowCount > 1) {
-                const row = e.target.closest('.material-row');
-                row.remove();
-                updateTrashButtons();
-            }
-        }
-    });
-
-    updateTrashButtons();
-});
-</script>
 
 <?php
 $content = ob_get_clean();

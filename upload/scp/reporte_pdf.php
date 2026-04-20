@@ -40,15 +40,6 @@ if (!$report) {
     die("Reporte no encontrado o no pertenece a esta empresa.");
 }
 
-// 2. Obtener los materiales
-$materials = [];
-$matStmt = $mysqli->prepare("SELECT material_name, quantity FROM ticket_report_materials WHERE report_id = ? ORDER BY id ASC");
-$matStmt->bind_param('i', $reportId);
-$matStmt->execute();
-$resM = $matStmt->get_result();
-while ($m = $resM->fetch_assoc()) {
-    $materials[] = $m;
-}
 
 // Obtener settings de empresa
 $companyName = trim((string)getAppSetting('company.name', ''));
@@ -251,25 +242,7 @@ $html .= <<<HTML
             {$workDesc}
         </div>
 
-        <!-- MATERIALES -->
-        <h3 class="section-title">Materiales y Refacciones Utilizadas</h3>
 HTML;
-
-if (empty($materials)) {
-    $html .= '<div class="box" style="color:#64748b; font-style:italic;">No se registraron materiales para este servicio.</div>';
-} else {
-    $html .= '<table class="materials-table">
-                <thead><tr><th>Nombre o Descripción del Material</th><th style="width:30%;">Cantidad / Medida</th></tr></thead>
-                <tbody>';
-    foreach ($materials as $m) {
-        $html .= '<tr>
-                    <td>' . htmlspecialchars($m['material_name']) . '</td>
-                    <td>' . htmlspecialchars($m['quantity']) . '</td>
-                  </tr>';
-    }
-    $html .= '</tbody></table>';
-}
-
 $html .= <<<HTML
         <!-- OBSERVACIONES -->
         <h3 class="section-title">Observaciones Adicionales</h3>
