@@ -125,6 +125,12 @@ if ($sid > 0) {
 ob_start();
 ?>
 <style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
 /* ── reporte_tickets.php – Vista de tarjetas para móvil ── */
 .rpt-card-list { display: none; padding: 12px; gap: 12px; flex-direction: column; }
 
@@ -203,6 +209,102 @@ ob_start();
     .rpt-card-list { display: flex; }
 }
 
+/* ── Buscador y Filtros Profesional ── */
+.filter-bar {
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    border: 1px solid #f1f5f9;
+}
+.search-input-group {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    width: 100%;
+}
+.search-input-group:focus-within {
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+.search-input-group input {
+    border: none;
+    background: transparent;
+    padding: 8px 0;
+    font-size: 0.95rem;
+    width: 100%;
+}
+.search-input-group input:focus { outline: none; }
+
+.btn-action {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+/* ── Tabla Profesional ── */
+.rpt-desktop-table {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    border: 1px solid #f1f5f9;
+}
+.tickets-table thead { background: #f8fafc; }
+.tickets-table th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #475569;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.tickets-table td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f8fafc;
+    font-size: 0.92rem;
+    color: #1e293b;
+}
+.ticket-row:hover td { background: #f8fbff; }
+
+.ticket-id-badge {
+    font-weight: 800;
+    color: #0f172a;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.ticket-id-badge:hover { color: #2563eb; }
+
+.modern-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.badge-pending { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.badge-done { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.badge-dept { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
 /* ── Badge NEW ── */
 .badge-new {
     display: inline-flex;
@@ -212,16 +314,8 @@ ob_start();
     color: #fff;
     font-size: 0.62rem;
     font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 20px;
-    vertical-align: middle;
-    animation: pulse-new 2s ease-in-out infinite;
-}
-@keyframes pulse-new {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.55; }
 }
 </style>
 
@@ -238,29 +332,30 @@ ob_start();
         </div>
     </div>
 
-    <!-- Barra de búsqueda -->
-    <div class="tickets-panel p-3" style="border-radius:0; border-bottom:1px solid #f1f5f9;">
-        <form method="GET" action="" class="d-flex gap-2 flex-wrap align-items-center">
-            <div class="input-group" style="max-width:420px; flex:1 1 200px;">
-                <span class="input-group-text bg-white border-end-0">
+    <!-- === Barra de Filtros === -->
+    <div class="filter-bar">
+        <form method="GET" action="" class="row g-3 align-items-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="search-input-group">
                     <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" name="q" class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por # ticket, departamento o cliente..."
-                       value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
-                <?php if ($search !== ''): ?>
-                    <a href="reporte_tickets.php" class="btn btn-outline-secondary" title="Limpiar búsqueda">
-                        <i class="bi bi-x-lg"></i>
-                    </a>
-                <?php endif; ?>
+                    <input type="text" name="q" placeholder="Buscar por # ticket, departamento o cliente..."
+                           value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
+                    <?php if ($search !== ''): ?>
+                        <a href="reporte_tickets.php" class="text-muted"><i class="bi bi-x-circle-fill"></i></a>
+                    <?php endif; ?>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-sm px-3" style="background:#2563eb; border:none;">
-                <i class="bi bi-funnel me-1"></i> Filtrar
-            </button>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-action" style="background:var(--primary-gradient); border:none;">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
             <?php if ($search !== ''): ?>
-                <span class="text-muted small">
-                    <?php echo $totalTickets; ?> resultado<?php echo $totalTickets !== 1 ? 's' : ''; ?> para &ldquo;<strong><?php echo htmlspecialchars($search); ?></strong>&rdquo;
-                </span>
+                <div class="col-auto">
+                    <span class="text-muted small">
+                        <?php echo $totalTickets; ?> resultado<?php echo $totalTickets !== 1 ? 's' : ''; ?>
+                    </span>
+                </div>
             <?php endif; ?>
         </form>
     </div>
@@ -283,17 +378,17 @@ ob_start();
     <?php else: ?>
 
     <!-- === VISTA DESKTOP: Tabla === -->
-    <div class="tickets-panel p-0 rpt-desktop-table">
-        <div class="tickets-table-wrap">
+    <div class="rpt-desktop-table">
+        <div class="table-responsive">
             <table class="tickets-table table table-hover mb-0">
-                <thead class="table-light">
+                <thead>
                     <tr>
-                        <th class="ps-3 border-bottom-0"># Ticket</th>
-                        <th class="border-bottom-0">Departamento</th>
-                        <th class="border-bottom-0">Técnico asignado</th>
-                        <th class="border-bottom-0">Fecha de cierre</th>
-                        <th class="border-bottom-0">Estado del reporte</th>
-                        <th class="text-end pe-3 border-bottom-0">Acciones</th>
+                        <th># Ticket</th>
+                        <th>Departamento</th>
+                        <th>Técnico</th>
+                        <th>Fecha Cierre</th>
+                        <th>Estado Reporte</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -306,23 +401,28 @@ ob_start();
                         $isNew = !$hasReport && !in_array((int)$t['id'], $seenIds);
                     ?>
                         <tr class="ticket-row">
-                            <td class="ps-3">
-                                <a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="ticket-title"><?php echo htmlspecialchars($t['ticket_number']); ?></a>
-                                <?php if ($isNew): ?><span class="badge-new ms-1"><i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> NEW</span><?php endif; ?>
+                            <td class="ps-4">
+                                <a href="tickets.php?id=<?php echo (int) $t['id']; ?>" class="ticket-id-badge">
+                                    <i class="bi bi-hash text-muted"></i><?php echo htmlspecialchars($t['ticket_number']); ?>
+                                </a>
+                                <?php if ($isNew): ?><span class="badge-new ms-2">NEW</span><?php endif; ?>
                             </td>
-                            <td><span class="badge bg-secondary"><?php echo htmlspecialchars($t['department_name']); ?></span></td>
-                            <td><?php echo htmlspecialchars($staffName); ?></td>
-                            <td class="ticket-meta"><?php echo htmlspecialchars($closedDate); ?></td>
+                            <td><span class="modern-badge badge-dept"><i class="bi bi-building"></i> <?php echo htmlspecialchars($t['department_name']); ?></span></td>
+                            <td class="fw-600"><?php echo htmlspecialchars($staffName); ?></td>
+                            <td class="text-muted small"><?php echo htmlspecialchars($closedDate); ?></td>
                             <td>
                                 <?php if ($hasReport): ?>
-                                    <span class="badge bg-success">Completado</span>
+                                    <span class="modern-badge badge-done"><i class="bi bi-check-circle-fill"></i> Completado</span>
                                 <?php else: ?>
-                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                    <span class="modern-badge badge-pending"><i class="bi bi-exclamation-circle"></i> Pendiente</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end pe-3">
-                                <a href="reporte_costos.php?ticket_id=<?php echo (int) $t['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-circle'; ?>"></i> <?php echo $hasReport ? 'Ver' : 'Registrar'; ?>
+                            <td class="text-end pe-4">
+                                <a href="reporte_costos.php?ticket_id=<?php echo (int) $t['id']; ?>" 
+                                   class="btn btn-action <?php echo $hasReport ? 'btn-outline-primary' : 'btn-primary'; ?>"
+                                   style="<?php echo $hasReport ? '' : 'background:var(--primary-gradient); border:none;'; ?>">
+                                    <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-lg'; ?>"></i> 
+                                    <?php echo $hasReport ? 'Ver' : 'Reportar'; ?>
                                 </a>
                             </td>
                         </tr>
