@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var inflight = null;
       var currentId = null;
       var hoverTimer = null;
+      var hideTimer = null;
 
       function setLoading(loading) {
         if (loadingEl) loadingEl.classList.toggle('d-none', !loading);
@@ -52,37 +53,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tr) tr.classList.add('is-selected');
       }
 
-      function positionPopup(anchorEl) {
-        try {
-          if (!anchorEl || !anchorEl.getBoundingClientRect) return;
-          var r = anchorEl.getBoundingClientRect();
-          var viewportW = window.innerWidth || document.documentElement.clientWidth || 1200;
-          var viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
-          var pad = 10;
-          var popW = 520;
-          var popH = 420;
-          try {
-            var measured = pop.getBoundingClientRect();
-            if (measured && measured.width) popW = Math.max(320, Math.min(620, measured.width));
-            if (measured && measured.height) popH = Math.max(220, Math.min(520, measured.height));
-          } catch (e2) {}
-
-          var top = Math.round(r.top);
-          var left = Math.round(r.right + 12);
-
-          if (left + popW + pad > viewportW) {
-            left = Math.round(r.left - popW - 12);
-          }
-          if (left < pad) left = pad;
-
-          if (top + popH + pad > viewportH) {
-            top = Math.round(viewportH - popH - pad);
-          }
-          if (top < pad) top = pad;
-
-          pop.style.top = top + 'px';
-          pop.style.left = left + 'px';
-        } catch (e) {}
+      function delayHide() {
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(function() {
+          closePopup();
+        }, 400);
       }
 
       function formatWhen(whenStr) {
@@ -196,9 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         hoverTimer = setTimeout(function () {
           if (!isDesktop()) return;
+          if (hideTimer) clearTimeout(hideTimer);
           markSelected(ticketId);
           loadPreview(ticketId);
-        }, 80);
+        }, 350);
       }
 
       function cancelSchedule() {
@@ -218,9 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var tid = (a.getAttribute('data-ticket-id') || '').toString();
         if (!tid) return;
 
-        // Mostrar rápido con loading para que el usuario vea que está funcionando
-        showPopup();
-        setLoading(true);
+        if (hideTimer) clearTimeout(hideTimer);
+        if (currentId === tid && !pop.classList.contains('d-none')) {
+          cancelSchedule();
+          return;
+        }
+
         schedule(tid, a);
       });
 
@@ -230,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
         if (!a) return;
         cancelSchedule();
-        // No cerrar aquí: permite mover el mouse al popup
+        delayHide();
       });
 
       table.addEventListener('focusin', function (ev) {
@@ -241,8 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!a) return;
         var tid = (a.getAttribute('data-ticket-id') || '').toString();
         if (!tid) return;
-        showPopup();
-        setLoading(true);
+        if (hideTimer) clearTimeout(hideTimer);
         schedule(tid, a);
       });
 
@@ -252,15 +230,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
         if (!a) return;
         cancelSchedule();
+        delayHide();
       });
 
       // Mantener abierto si el mouse está dentro del popup
       pop.addEventListener('mouseenter', function () {
         cancelSchedule();
+        if (hideTimer) clearTimeout(hideTimer);
+      });
+      pop.addEventListener('mouseleave', function () {
+        delayHide();
       });
 
       function closePopup() {
         cancelSchedule();
+        if (hideTimer) clearTimeout(hideTimer);
         hidePopup();
         currentId = null;
         clearSelected();
