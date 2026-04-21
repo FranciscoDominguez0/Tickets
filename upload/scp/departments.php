@@ -586,7 +586,7 @@ ob_start();
                     </div>
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" name="requires_report" id="createDeptRequiresReport" value="1">
-                        <label class="form-check-label" for="createDeptRequiresReport">Requiere reporte (Ej. Instalaciones)</label>
+                        <label class="form-check-label" for="createDeptRequiresReport">Requiere reporte</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -624,7 +624,7 @@ ob_start();
                     </div>
                     <div class="form-check mt-2">
                         <input class="form-check-input" type="checkbox" name="requires_report" id="dept_edit_requires_report" value="1">
-                        <label class="form-check-label" for="dept_edit_requires_report">Requiere reporte (Ej. Instalaciones)</label>
+                        <label class="form-check-label" for="dept_edit_requires_report">Requiere reporte</label>
                     </div>
                 </div>
                 <div class="modal-footer">

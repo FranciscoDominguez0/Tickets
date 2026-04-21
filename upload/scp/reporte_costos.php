@@ -322,9 +322,8 @@ ob_start();
                                 <label class="form-label fw-bold">Precio final del servicio</label>
                                 <div class="input-group price-input-wrap">
                                     <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                                    <input type="text" name="final_price" class="form-control" placeholder="Ej: 1500.00 o Revisión Gratuita">
+                                    <input type="text" name="final_price" class="form-control" placeholder="Ej: 20.00">
                                 </div>
-                                <div class="form-text mt-1">Si aplica, ingresa el monto facturado o un acuerdo de costo.</div>
                             </div>
 
                             <div class="form-footer-sticky">
