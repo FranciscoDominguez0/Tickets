@@ -1,0 +1,297 @@
+<?php
+/**
+ * Vigitec — Reporte Profesional de Servicios (.xlsx)
+ * Diseño Premium con Logo Profesional.
+ */
+
+require_once '../../config.php';
+require_once '../../includes/helpers.php';
+require_once '../../includes/Auth.php';
+require_once '../../vendor/autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+
+// ── Autenticación ──────────────────────────────────────────────────────────
+if (!isset($_SESSION['staff_id'])) { die("Acceso denegado."); }
+requireLogin('agente');
+$eid = empresaId();
+
+// ── Procesamiento de Filtros ───────────────────────────────────────────────
+$month  = trim((string)($_GET['month'] ?? date('Y-m')));
+$search = trim((string)($_GET['q']     ?? ''));
+$statusIdClosed = getClosedStatusId($mysqli);
+
+$data = fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search);
+$fullMonthName = getSpanishMonthName($month);
+
+// ── Generación de Excel ────────────────────────────────────────────────────
+generatePremiumExcel($data, $month, $fullMonthName);
+
+// ── Funciones Auxiliares ───────────────────────────────────────────────────
+
+function getClosedStatusId($mysqli) {
+    $rsSt = $mysqli->query('SELECT id, name FROM ticket_status');
+    if ($rsSt) {
+        while ($st = $rsSt->fetch_assoc()) {
+            $sname = strtolower(trim((string)($st['name'] ?? '')));
+            if ($sname !== '' && (str_contains($sname, 'cerrad') || str_contains($sname, 'closed'))) {
+                return (int)$st['id'];
+            }
+        }
+    }
+    return 0;
+}
+
+function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
+    $searchLike = '%' . $search . '%';
+    $searchWhere = $search !== ''
+        ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
+        : '';
+
+    $sql = "SELECT t.ticket_number, d.name AS department,
+                   CONCAT(s.firstname,' ',s.lastname) AS staff_name,
+                   t.closed, r.final_price, r.work_description
+            FROM tickets t
+            JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
+            JOIN ticket_reports r ON r.ticket_id = t.id
+            LEFT JOIN staff s ON t.staff_id = s.id
+            LEFT JOIN users u ON t.user_id = u.id
+            WHERE t.empresa_id = ?
+              AND t.status_id = ?
+              AND DATE_FORMAT(t.closed,'%Y-%m') = ?
+              {$searchWhere}
+            ORDER BY t.closed DESC";
+
+    $stmt = $mysqli->prepare($sql);
+    if ($search !== '') {
+        $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+    } else {
+        $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    
+    $rows = [];
+    while ($row = $res->fetch_assoc()) { $rows[] = $row; }
+    return $rows;
+}
+
+function getSpanishMonthName($month) {
+    $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
+    return str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($month.'-01')));
+}
+
+function generatePremiumExcel($rows, $monthKey, $monthName) {
+    $spreadsheet = new Spreadsheet();
+    $ws = $spreadsheet->getActiveSheet();
+    $ws->setTitle('Reporte Detallado');
+    
+    // Paleta de colores Vigitec
+    $c = [
+        'primary'    => '0A2463', // Azul Marino Profundo
+        'secondary'  => '247BA0', // Azul Océano
+        'accent'     => 'FB3640', // Rojo Vigitec (para énfasis)
+        'gold'       => 'D4AF37', // Dorado para bordes de lujo
+        'white'      => 'FFFFFF',
+        'light_bg'   => 'F8F9FA',
+        'border'     => 'CED4DA',
+        'text'       => '212529'
+    ];
+
+    // Configuración de página
+    $ws->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+    $ws->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
+    $ws->setShowGridlines(false);
+
+    // Ancho de columnas
+    $ws->getColumnDimension('A')->setWidth(16); // Ticket #
+    $ws->getColumnDimension('B')->setWidth(26); // Departamento
+    $ws->getColumnDimension('C')->setWidth(28); // Técnico
+    $ws->getColumnDimension('D')->setWidth(22); // Fecha/Hora
+    $ws->getColumnDimension('E')->setWidth(20); // Precio
+    $ws->getColumnDimension('F')->setWidth(70); // Descripción
+
+    // ── LOGO Y CABECERA ────────────────────────────────────────────────────
+    
+    // Altura de cabeceras
+    $ws->getRowDimension(1)->setRowHeight(40);
+    $ws->getRowDimension(2)->setRowHeight(40);
+    $ws->getRowDimension(3)->setRowHeight(30);
+
+    // Intentar insertar logo si existe
+    $logoPath = '../../publico/img/vigitec-logo.webp';
+    if (file_exists($logoPath)) {
+        try {
+            $drawing = new Drawing();
+            $drawing->setName('Logo Vigitec');
+            $drawing->setDescription('Logo');
+            $drawing->setPath($logoPath);
+            $drawing->setHeight(70); // Ajustar altura
+            $drawing->setCoordinates('A1');
+            $drawing->setOffsetX(10);
+            $drawing->setOffsetY(5);
+            $drawing->setWorksheet($ws);
+        } catch (\Exception $e) {
+            // Si falla la carga del logo por formato, ignorar y seguir con texto
+        }
+    }
+
+    // Título Principal
+    $ws->mergeCells('B1:F2');
+    $ws->setCellValue('B1', "VIGITEC — SISTEMA INTEGRAL DE TICKETS\nREPORTE DE SERVICIOS Y FACTURACIÓN");
+    $ws->getStyle('B1')->getAlignment()->setWrapText(true);
+    $ws->getStyle('B1')->applyFromArray([
+        'font' => ['bold'=>true,'size'=>20,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
+    ]);
+
+    // Color de fondo para A1:A2
+    $ws->getStyle('A1:A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF'.$c['primary']);
+
+    // Subheader con Información de Periodo
+    $ws->mergeCells('A3:F3');
+    $ws->setCellValue('A3', "PERIODO: " . mb_strtoupper($monthName, 'UTF-8') . " | GENERADO: " . date('d/m/Y H:i'));
+    $ws->getStyle('A3')->applyFromArray([
+        'font' => ['bold'=>true,'size'=>11,'color'=>['argb'=>'FF'.$c['primary']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FFFFE6E6']],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
+        'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_MEDIUM,'color'=>['argb'=>'FF'.$c['primary']]]]
+    ]);
+
+    // Cabeceras de Tabla
+    $ws->getRowDimension(5)->setRowHeight(35);
+    $headers = [
+        'A5'=>'TICKET #', 
+        'B5'=>'DEPARTAMENTO', 
+        'C5'=>'TÉCNICO RESPONSABLE', 
+        'D5'=>'FECHA/HORA CIERRE', 
+        'E5'=>'PRECIO FINAL', 
+        'F5'=>'DESCRIPCIÓN DEL TRABAJO'
+    ];
+    foreach($headers as $cell => $val) { $ws->setCellValue($cell, $val); }
+    
+    $ws->getStyle('A5:F5')->applyFromArray([
+        'font' => ['bold'=>true,'size'=>11,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
+        'borders' => ['allBorders'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFFFFFFF']]]
+    ]);
+
+    // Datos
+    $startRow = 6;
+    $currentRow = $startRow;
+    $totalAmount = 0.0;
+
+    foreach ($rows as $row) {
+        $price = (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', (string)$row['final_price']));
+        $totalAmount += $price;
+
+        $ws->getRowDimension($currentRow)->setRowHeight(40);
+        $ws->setCellValue("A$currentRow", " " . $row['ticket_number']);
+        $ws->setCellValue("B$currentRow", $row['department']);
+        $ws->setCellValue("C$currentRow", mb_strtoupper((string)$row['staff_name'], 'UTF-8'));
+        $ws->setCellValue("D$currentRow", date('d/m/Y H:i', strtotime((string)$row['closed'])));
+        $ws->setCellValue("E$currentRow", $price);
+        $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+        $ws->setCellValue("F$currentRow", trim(preg_replace('/\s+/', ' ', (string)$row['work_description'])));
+
+        $fill = ($currentRow % 2 === 0) ? 'FFF8F9FA' : 'FFFFFFFF';
+        $ws->getStyle("A$currentRow:F$currentRow")->applyFromArray([
+            'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>$fill]],
+            'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
+            'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
+        ]);
+        
+        $ws->getStyle("A$currentRow")->getFont()->setBold(true)->getColor()->setARGB('FF'.$c['secondary']);
+        $ws->getStyle("F$currentRow")->getAlignment()->setWrapText(true);
+        $currentRow++;
+    }
+
+    // Fila de Total
+    $ws->getRowDimension($currentRow)->setRowHeight(35);
+    $ws->mergeCells("A$currentRow:D$currentRow");
+    $ws->setCellValue("A$currentRow", 'SUMATORIA TOTAL DEL PERIODO ');
+    $ws->setCellValue("E$currentRow", $totalAmount);
+    $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+    
+    $ws->getStyle("A$currentRow:E$currentRow")->applyFromArray([
+        'font' => ['bold'=>true,'size'=>12,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
+        'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
+    ]);
+    $ws->getStyle("A$currentRow")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+    // Repetir cabeceras al imprimir
+    $ws->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 5);
+
+    // Segunda Hoja: Análisis por Área
+    setupAnalysisSheet($spreadsheet, $rows, $monthName, $c);
+
+    $spreadsheet->setActiveSheetIndex(0);
+
+    $filename = "reporte_vigitec_usd_{$monthKey}.xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+
+function setupAnalysisSheet($spreadsheet, $rows, $monthName, $c) {
+    $ws = $spreadsheet->createSheet();
+    $ws->setTitle('Análisis por Área');
+    $ws->setShowGridlines(false);
+
+    $ws->getColumnDimension('A')->setWidth(40);
+    $ws->getColumnDimension('B')->setWidth(20);
+    $ws->getColumnDimension('C')->setWidth(25);
+
+    $ws->mergeCells('A1:C1');
+    $ws->setCellValue('A1', 'ESTADÍSTICAS POR DEPARTAMENTO — ' . mb_strtoupper($monthName, 'UTF-8'));
+    $ws->getStyle('A1')->applyFromArray([
+        'font' => ['bold'=>true,'size'=>14,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
+    ]);
+
+    $ws->getRowDimension(3)->setRowHeight(25);
+    $ws->setCellValue('A3', 'DEPARTAMENTO');
+    $ws->setCellValue('B3', 'N° SERVICIOS');
+    $ws->setCellValue('C3', 'TOTAL FACTURADO (USD)');
+    $ws->getStyle('A3:C3')->applyFromArray([
+        'font' => ['bold'=>true,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER],
+    ]);
+
+    $stats = [];
+    foreach ($rows as $r) {
+        $d = $r['department'];
+        $p = (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', (string)$r['final_price']));
+        if (!isset($stats[$d])) $stats[$d] = ['count'=>0, 'total'=>0.0];
+        $stats[$d]['count']++;
+        $stats[$d]['total'] += $p;
+    }
+
+    $rowNum = 4;
+    foreach ($stats as $name => $val) {
+        $ws->setCellValue("A$rowNum", $name);
+        $ws->setCellValue("B$rowNum", $val['count']);
+        $ws->setCellValue("C$rowNum", $val['total']);
+        $ws->getStyle("C$rowNum")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+        
+        $ws->getStyle("A$rowNum:C$rowNum")->applyFromArray([
+            'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFDDDDDD']]],
+            'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER]
+        ]);
+        $rowNum++;
+    }
+}

@@ -39,6 +39,9 @@ if ($rsSt) {
 $search = trim((string)($_GET['q'] ?? ''));
 $searchLike = '%' . $search . '%';
 
+// Filtro por Mes (Default: Mes actual)
+$monthFilter = trim((string)($_GET['month'] ?? date('Y-m')));
+
 // Paginación
 $perPage = 10;
 $page = max(1, (int)($_GET['page'] ?? 1));
@@ -53,19 +56,21 @@ if ($statusIdClosed > 0) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
+    $monthWhere = " AND DATE_FORMAT(t.closed, '%Y-%m') = ?";
+
     // COUNT total
     $countJoin = $search !== '' ? ' LEFT JOIN users u ON t.user_id = u.id' : '';
     $countQuery = "SELECT COUNT(*) as total
                    FROM tickets t
                    JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
                    {$countJoin}
-                   WHERE t.empresa_id = ? AND t.status_id = ? {$searchWhere}";
+                   WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}";
     $cStmt = $mysqli->prepare($countQuery);
     if ($cStmt) {
         if ($search !== '') {
-            $cStmt->bind_param('iissss', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike);
+            $cStmt->bind_param('iisssss', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike);
         } else {
-            $cStmt->bind_param('ii', $eid, $statusIdClosed);
+            $cStmt->bind_param('iis', $eid, $statusIdClosed, $monthFilter);
         }
         $cStmt->execute();
         $totalTickets = (int)($cStmt->get_result()->fetch_assoc()['total'] ?? 0);
@@ -89,16 +94,16 @@ if ($statusIdClosed > 0) {
               LEFT JOIN staff s ON t.staff_id = s.id
               {$dataJoin}
               {$reportJoin}
-              WHERE t.empresa_id = ? AND t.status_id = ? {$searchWhere}
+              WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}
               ORDER BY t.closed DESC, t.id DESC
               LIMIT ? OFFSET ?";
 
     $stmt = $mysqli->prepare($query);
     if ($stmt) {
         if ($search !== '') {
-            $stmt->bind_param('iissssii', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
+            $stmt->bind_param('iissssii', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
         } else {
-            $stmt->bind_param('iiii', $eid, $statusIdClosed, $perPage, $offset);
+            $stmt->bind_param('iisii', $eid, $statusIdClosed, $monthFilter, $perPage, $offset);
         }
         $stmt->execute();
         $res = $stmt->get_result();
@@ -335,20 +340,41 @@ ob_start();
     <!-- === Barra de Filtros === -->
     <div class="filter-bar">
         <form method="GET" action="" class="row g-3 align-items-center">
-            <div class="col-lg-5 col-md-7">
+            <div class="col-lg-4 col-md-6">
                 <div class="search-input-group">
                     <i class="bi bi-search text-muted"></i>
-                    <input type="text" name="q" placeholder="Buscar por # ticket, departamento o cliente..."
+                    <input type="text" name="q" placeholder="Buscar por # ticket, depto, cliente..."
                            value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
                     <?php if ($search !== ''): ?>
-                        <a href="reporte_tickets.php" class="text-muted"><i class="bi bi-x-circle-fill"></i></a>
+                        <a href="?month=<?php echo urlencode($monthFilter); ?>" class="text-muted"><i class="bi bi-x-circle-fill"></i></a>
                     <?php endif; ?>
                 </div>
+            </div>
+            <div class="col-auto">
+                <select name="month" class="filter-select" onchange="this.form.submit()" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 12px; font-size: 0.9rem; font-weight: 600; color: #475569; cursor: pointer; outline: none;">
+                    <?php 
+                    // Generar lista de los últimos 12 meses
+                    for ($i = 0; $i < 12; $i++) {
+                        $mDate = date('Y-m', strtotime("-$i months"));
+                        $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
+                        $mLabel = str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($mDate . '-01')));
+
+                        $selected = ($mDate === $monthFilter) ? 'selected' : '';
+                        echo "<option value=\"$mDate\" $selected>$mLabel</option>";
+                    }
+                    ?>
+                </select>
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-action" style="background:var(--primary-gradient); border:none;">
                     <i class="bi bi-funnel"></i> Filtrar
                 </button>
+            </div>
+            <div class="col-auto ms-auto d-flex gap-2">
+                <a href="export_reports_csv.php?month=<?php echo urlencode($monthFilter); ?>&q=<?php echo urlencode($search); ?>" 
+                   class="btn btn-outline-success btn-action border-success">
+                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel (.xlsx)
+                </a>
             </div>
             <?php if ($search !== ''): ?>
                 <div class="col-auto">
@@ -499,10 +525,14 @@ ob_start();
 
     <?php if ($totalPages > 1): ?>
     <!-- Paginación -->
-    <?php $qParam = $search !== '' ? '&q=' . urlencode($search) : ''; ?>
+    <?php 
+    $qParam = $search !== '' ? '&q=' . urlencode($search) : ''; 
+    $mParam = '&month=' . urlencode($monthFilter);
+    $allParams = $mParam . $qParam;
+    ?>
     <nav class="d-flex justify-content-center align-items-center gap-2 py-3 px-3" style="flex-wrap: wrap;">
         <?php if ($page > 1): ?>
-            <a href="?page=<?php echo $page - 1; ?><?php echo $qParam; ?>" class="btn btn-sm btn-outline-secondary">
+            <a href="?page=<?php echo $page - 1; ?><?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-chevron-left"></i> Anterior
             </a>
         <?php else: ?>
@@ -514,11 +544,11 @@ ob_start();
         $start = max(1, $page - $range);
         $end   = min($totalPages, $page + $range);
         if ($start > 1): ?>
-            <a href="?page=1<?php echo $qParam; ?>" class="btn btn-sm btn-outline-secondary">1</a>
+            <a href="?page=1<?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary">1</a>
             <?php if ($start > 2): ?><span class="text-muted small px-1">&hellip;</span><?php endif; ?>
         <?php endif;
         for ($i = $start; $i <= $end; $i++): ?>
-            <a href="?page=<?php echo $i; ?><?php echo $qParam; ?>"
+            <a href="?page=<?php echo $i; ?><?php echo $allParams; ?>"
                class="btn btn-sm <?php echo $i === $page ? 'btn-primary' : 'btn-outline-secondary'; ?>"
                <?php echo $i === $page ? 'style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;"' : ''; ?>>
                 <?php echo $i; ?>
@@ -526,11 +556,11 @@ ob_start();
         <?php endfor;
         if ($end < $totalPages): ?>
             <?php if ($end < $totalPages - 1): ?><span class="text-muted small px-1">&hellip;</span><?php endif; ?>
-            <a href="?page=<?php echo $totalPages; ?><?php echo $qParam; ?>" class="btn btn-sm btn-outline-secondary"><?php echo $totalPages; ?></a>
+            <a href="?page=<?php echo $totalPages; ?><?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary"><?php echo $totalPages; ?></a>
         <?php endif; ?>
 
         <?php if ($page < $totalPages): ?>
-            <a href="?page=<?php echo $page + 1; ?><?php echo $qParam; ?>" class="btn btn-sm btn-outline-secondary">
+            <a href="?page=<?php echo $page + 1; ?><?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary">
                 Siguiente <i class="bi bi-chevron-right"></i>
             </a>
         <?php else: ?>

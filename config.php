@@ -56,7 +56,7 @@ if (!empty($_SERVER['HTTP_HOST'])) {
 }
 
 define('APP_URL', $__appUrl);
-define('TIMEZONE', 'America/Mexico_City');
+define('TIMEZONE', 'America/Bogota');
 
 // ============================================================================
 // CORREO (notificaciones a agentes)
