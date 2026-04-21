@@ -77,6 +77,182 @@ if ($ticketClientSignaturePath !== '') {
 ?>
 
 <div class="ticket-view-wrap">
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'closed_report'): ?>
+        <style>
+            @keyframes tvAnnounceIn {
+                from { opacity: 0; transform: translate(-50%, -20px); }
+                to   { opacity: 1; transform: translate(-50%,   0px); }
+            }
+            #tv-invoice-toast {
+                position: fixed;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                top: 76px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 9998;
+                width: min(460px, 94vw);
+                animation: tvAnnounceIn 0.4s cubic-bezier(.22,1,.36,1) both;
+                pointer-events: auto;
+            }
+            #tv-invoice-toast .tvt-inner {
+                background: #ffffff;
+                border-radius: 16px;
+                border: 1px solid #dbeafe;
+                box-shadow: 0 12px 44px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.06);
+                overflow: hidden;
+            }
+            #tv-invoice-toast .tvt-stripe {
+                height: 4px;
+                background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+            }
+            #tv-invoice-toast .tvt-body {
+                padding: 18px 20px 16px;
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+            }
+            #tv-invoice-toast .tvt-icon-wrap {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                border-radius: 12px;
+                background: #eff6ff;
+                border: 1px solid #bfdbfe;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #tv-invoice-toast .tvt-content { flex: 1; min-width: 0; }
+            #tv-invoice-toast .tvt-label {
+                font-size: 0.7rem;
+                font-weight: 800;
+                letter-spacing: 0.09em;
+                text-transform: uppercase;
+                color: #2563eb;
+                margin: 0 0 3px;
+            }
+            #tv-invoice-toast .tvt-title {
+                font-weight: 800;
+                font-size: 0.95rem;
+                color: #0f172a;
+                margin: 0 0 5px;
+                line-height: 1.25;
+            }
+            #tv-invoice-toast .tvt-desc {
+                color: #475569;
+                font-size: 0.855rem;
+                margin: 0 0 14px;
+                line-height: 1.5;
+            }
+            #tv-invoice-toast .tvt-desc strong { color: #1e40af; font-weight: 700; }
+            #tv-invoice-toast .tvt-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+            #tv-invoice-toast .tvt-btn-primary {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                background: #2563eb;
+                color: #ffffff;
+                font-size: 0.82rem;
+                font-weight: 700;
+                padding: 8px 18px;
+                border-radius: 999px;
+                text-decoration: none;
+                border: none;
+                cursor: pointer;
+                transition: background 0.18s;
+                line-height: 1;
+            }
+            #tv-invoice-toast .tvt-btn-primary:hover { background: #1d4ed8; color: #fff; }
+            #tv-invoice-toast .tvt-btn-dismiss {
+                display: inline-flex;
+                align-items: center;
+                background: transparent;
+                color: #64748b;
+                font-size: 0.82rem;
+                font-weight: 600;
+                padding: 8px 12px;
+                border-radius: 999px;
+                border: 1px solid #e2e8f0;
+                cursor: pointer;
+                transition: border-color 0.15s, color 0.15s;
+                line-height: 1;
+            }
+            #tv-invoice-toast .tvt-btn-dismiss:hover { border-color: #cbd5e1; color: #334155; }
+            #tv-invoice-toast .tvt-close {
+                background: none;
+                border: none;
+                color: #94a3b8;
+                cursor: pointer;
+                padding: 2px;
+                line-height: 1;
+                align-self: flex-start;
+                transition: color 0.15s;
+            }
+            #tv-invoice-toast .tvt-close:hover { color: #475569; }
+            #tv-invoice-toast .tvt-progress {
+                height: 3px;
+                background: #f1f5f9;
+                position: relative;
+                overflow: hidden;
+            }
+            #tv-invoice-toast .tvt-progress-fill {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(90deg, #1d4ed8, #0ea5e9);
+                transform-origin: left;
+                animation: tvProgressShrink 12s linear forwards;
+            }
+            @keyframes tvProgressShrink {
+                from { transform: scaleX(1); }
+                to   { transform: scaleX(0); }
+            }
+        </style>
+
+        <div id="tv-invoice-toast" role="alert" aria-live="assertive">
+            <div class="tvt-inner">
+                <div class="tvt-stripe"></div>
+                <div class="tvt-body">
+                    <div class="tvt-icon-wrap">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 12L11 14L15 10" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5 5H14L19 10V19H5V5Z" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="tvt-content">
+                        <p class="tvt-label">Acción requerida</p>
+                        <p class="tvt-title">Ticket cerrado</p>
+                        <p class="tvt-desc">Registra el <strong>reporte de costos</strong> antes de continuar.</p>
+                        <div class="tvt-actions">
+                            <a href="reporte_costos.php?ticket_id=<?php echo (int)$tid; ?>" class="tvt-btn-primary">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+                                </svg>
+                                Registrar ahora
+                            </a>
+                            <button class="tvt-btn-dismiss" onclick="tvDismissToast()">Más tarde</button>
+                        </div>
+                    </div>
+                    <button class="tvt-close" onclick="tvDismissToast()" title="Cerrar" aria-label="Cerrar aviso">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="tvt-progress"><div class="tvt-progress-fill"></div></div>
+            </div>
+        </div>
+        <script>
+            function tvDismissToast() {
+                var el = document.getElementById('tv-invoice-toast');
+                if (!el) return;
+                el.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateX(-50%) translateY(-12px)';
+                setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 380);
+            }
+            setTimeout(tvDismissToast, 12000);
+        </script>
+    <?php endif; ?>
     <div id="assign-loading" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 2000;">
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 220px; text-align:center;">
             <div class="spinner-border text-primary" role="status" style="width:2.25rem; height:2.25rem;"></div>
@@ -1340,7 +1516,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data && data.success) {
-                window.location.href = 'tickets.php?id=' + ticketId + '&msg=updated';
+                var requiresReport = <?php echo (int)($t['requires_report'] ?? 0); ?>;
+                var finalMsg = 'updated';
+                if (requiresReport === 1) {
+                    finalMsg = 'closed_report';
+                }
+                window.location.href = 'tickets.php?id=' + ticketId + '&msg=' + finalMsg;
                 return;
             }
             setBusy(false);

@@ -834,7 +834,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $stmt = $mysqli->prepare(
         "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
          s.firstname AS staff_first, s.lastname AS staff_last, s.email AS staff_email,
-         d.name AS dept_name, ts.name AS status_name, ts.color AS status_color,
+         d.name AS dept_name, d.requires_report, ts.name AS status_name, ts.color AS status_color,
          p.name AS priority_name, p.color AS priority_color,
          (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
          tr.final_price AS report_final_price"
@@ -1742,6 +1742,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 exit;
             }
             if ($ok && $msg && !in_array($action, ['delete', 'merge'], true)) {
+                if ($msg === 'updated' && $isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1) {
+                    $msg = 'closed_report';
+                }
                 header('Location: tickets.php?id=' . $tid . '&msg=' . $msg);
                 exit;
             }
@@ -2007,7 +2010,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
 
                         $reply_success = true;
-                        header('Location: tickets.php?id=' . $tid . '&msg=reply_sent');
+                        $msgFinal = 'reply_sent';
+                        if ($isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1) {
+                            $msgFinal = 'closed_report';
+                        }
+                        header('Location: tickets.php?id=' . $tid . '&msg=' . $msgFinal);
                         exit;
                     }
                     $reply_errors[] = 'Error al guardar la respuesta.';
