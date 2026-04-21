@@ -110,6 +110,18 @@ if ($statusIdClosed > 0) {
     $totalPages = 1;
 }
 
+// Obtener IDs de tickets vistos por este staff (para persistencia del badge NEW)
+$seenIds = [];
+$sid = (int)($_SESSION['staff_id'] ?? 0);
+if ($sid > 0) {
+    $resSeen = $mysqli->query("SELECT ticket_id FROM staff_reports_seen WHERE staff_id = $sid");
+    if ($resSeen) {
+        while ($rs = $resSeen->fetch_assoc()) {
+            $seenIds[] = (int)$rs['ticket_id'];
+        }
+    }
+}
+
 ob_start();
 ?>
 <style>
@@ -291,7 +303,7 @@ ob_start();
                         if ($staffName === '') $staffName = 'Sin asignar';
                         $closedDate = !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : 'N/A';
                         $hasReport = (int)($t['has_report'] ?? 0);
-                        $isNew = !isset($_SESSION['rpt_visto'][(int)$t['id']]);
+                        $isNew = !$hasReport && !in_array((int)$t['id'], $seenIds);
                     ?>
                         <tr class="ticket-row">
                             <td class="ps-3">
@@ -329,7 +341,7 @@ ob_start();
             $closedDate = !empty($t['closed']) ? date('d/m/Y', strtotime($t['closed'])) : 'N/A';
             $closedTime = !empty($t['closed']) ? date('H:i', strtotime($t['closed'])) : '';
             $hasReport = (int)($t['has_report'] ?? 0);
-            $isNew = !isset($_SESSION['rpt_visto'][(int)$t['id']]);
+            $isNew = !$hasReport && !in_array((int)$t['id'], $seenIds);
             ?>
             <div class="rpt-card">
                 <div class="rpt-card-accent <?php echo $hasReport ? 'done' : ''; ?>"></div>

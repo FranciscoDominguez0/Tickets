@@ -44,11 +44,9 @@ if (empty($ticket['closed'])) {
     die("El ticket no está cerrado, no se puede realizar el reporte.");
 }
 
-// Marcar como visto → quitar badge NEW en la lista
-if (!isset($_SESSION['rpt_visto'])) {
-    $_SESSION['rpt_visto'] = [];
-}
-$_SESSION['rpt_visto'][$ticketId] = true;
+// Marcar como visto → quitar badge NEW en la lista (Persistente en DB)
+$sid = (int)$_SESSION['staff_id'];
+$mysqli->query("INSERT IGNORE INTO staff_reports_seen (staff_id, ticket_id) VALUES ($sid, $ticketId)");
 
 // 2. Verificar si ya existe un reporte
 $reportExists = false;
