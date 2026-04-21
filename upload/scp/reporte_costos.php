@@ -228,7 +228,7 @@ ob_start();
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Registro de Reporte de Ticket</h1>
-                <div class="sub">Ticket #<?php echo htmlspecialchars($ticket['ticket_number']); ?> — <?php echo htmlspecialchars($ticket['subject']); ?></div>
+                <div class="sub">Ticket <a href="tickets.php?id=<?php echo $ticketId; ?>" style="color: inherit; text-decoration: underline;">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a> — <?php echo htmlspecialchars($ticket['subject']); ?></div>
             </div>
             <div>
                 <a href="reporte_tickets.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
@@ -261,7 +261,7 @@ ob_start();
     <div class="ticket-view-overview mb-4">
         <div class="field">
             <label>Número de Ticket</label>
-            <div class="value fs-5">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></div>
+            <div class="value fs-5"><a href="tickets.php?id=<?php echo $ticketId; ?>" class="text-decoration-none">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a></div>
         </div>
         <div class="field">
             <label>Cliente (Dueño)</label>
