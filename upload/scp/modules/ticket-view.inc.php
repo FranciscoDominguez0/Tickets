@@ -79,180 +79,170 @@ if ($ticketClientSignaturePath !== '') {
 <div class="ticket-view-wrap">
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'closed_report'): ?>
         <style>
-            @keyframes tvAnnounceIn {
-                from { opacity: 0; transform: translate(-50%, -20px); }
-                to   { opacity: 1; transform: translate(-50%,   0px); }
+            @keyframes tvIn {
+                from { opacity: 0; transform: translate(-50%, -16px); }
+                to   { opacity: 1; transform: translate(-50%, 0); }
             }
-            #tv-invoice-toast {
+            #tv-billing-toast {
                 position: fixed;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                top: 76px;
+                top: 74px;
                 left: 50%;
                 transform: translateX(-50%);
-                z-index: 9998;
-                width: min(460px, 94vw);
-                animation: tvAnnounceIn 0.4s cubic-bezier(.22,1,.36,1) both;
+                z-index: 9999;
+                width: min(520px, 96vw);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                animation: tvIn 0.38s cubic-bezier(.22, 1, .36, 1) both;
                 pointer-events: auto;
             }
-            #tv-invoice-toast .tvt-inner {
-                background: #ffffff;
-                border-radius: 16px;
-                border: 1px solid #dbeafe;
-                box-shadow: 0 12px 44px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.06);
+            #tv-billing-toast .tvb-card {
+                background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+                border-radius: 10px;
+                box-shadow: 0 12px 40px rgba(29, 78, 216, 0.35), 0 2px 8px rgba(0, 0, 0, 0.14);
                 overflow: hidden;
             }
-            #tv-invoice-toast .tvt-stripe {
-                height: 4px;
-                background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
-            }
-            #tv-invoice-toast .tvt-body {
-                padding: 18px 20px 16px;
+            #tv-billing-toast .tvb-row {
                 display: flex;
+                align-items: center;
                 gap: 14px;
-                align-items: flex-start;
+                padding: 14px 16px;
             }
-            #tv-invoice-toast .tvt-icon-wrap {
-                width: 44px;
-                height: 44px;
-                min-width: 44px;
-                border-radius: 12px;
-                background: #eff6ff;
-                border: 1px solid #bfdbfe;
+            #tv-billing-toast .tvb-dot {
+                width: 8px;
+                height: 8px;
+                min-width: 8px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+            }
+            #tv-billing-toast .tvb-text {
+                flex: 1;
+                min-width: 0;
+            }
+            #tv-billing-toast .tvb-ticket-ref {
+                display: inline-block;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.7);
+                margin-bottom: 2px;
+            }
+            #tv-billing-toast .tvb-msg {
+                font-size: 0.88rem;
+                font-weight: 600;
+                color: rgba(255, 255, 255, 0.92);
+                line-height: 1.3;
+                margin: 0;
+            }
+            #tv-billing-toast .tvb-msg strong {
+                color: #ffffff;
+                font-weight: 800;
+            }
+            #tv-billing-toast .tvb-actions {
                 display: flex;
                 align-items: center;
-                justify-content: center;
+                gap: 8px;
+                flex-shrink: 0;
             }
-            #tv-invoice-toast .tvt-content { flex: 1; min-width: 0; }
-            #tv-invoice-toast .tvt-label {
-                font-size: 0.7rem;
-                font-weight: 800;
-                letter-spacing: 0.09em;
-                text-transform: uppercase;
-                color: #2563eb;
-                margin: 0 0 3px;
-            }
-            #tv-invoice-toast .tvt-title {
-                font-weight: 800;
-                font-size: 0.95rem;
-                color: #0f172a;
-                margin: 0 0 5px;
-                line-height: 1.25;
-            }
-            #tv-invoice-toast .tvt-desc {
-                color: #475569;
-                font-size: 0.855rem;
-                margin: 0 0 14px;
-                line-height: 1.5;
-            }
-            #tv-invoice-toast .tvt-desc strong { color: #1e40af; font-weight: 700; }
-            #tv-invoice-toast .tvt-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-            #tv-invoice-toast .tvt-btn-primary {
+            #tv-billing-toast .tvb-btn {
                 display: inline-flex;
                 align-items: center;
-                gap: 7px;
-                background: #2563eb;
-                color: #ffffff;
-                font-size: 0.82rem;
+                gap: 6px;
+                background: rgba(255, 255, 255, 0.18);
+                color: #fff;
+                font-size: 0.78rem;
                 font-weight: 700;
-                padding: 8px 18px;
-                border-radius: 999px;
+                padding: 6px 14px;
+                border-radius: 6px;
                 text-decoration: none;
-                border: none;
+                border: 1px solid rgba(255, 255, 255, 0.28);
                 cursor: pointer;
-                transition: background 0.18s;
-                line-height: 1;
+                transition: background 0.15s;
+                white-space: nowrap;
+                letter-spacing: 0.01em;
             }
-            #tv-invoice-toast .tvt-btn-primary:hover { background: #1d4ed8; color: #fff; }
-            #tv-invoice-toast .tvt-btn-dismiss {
-                display: inline-flex;
-                align-items: center;
-                background: transparent;
-                color: #64748b;
-                font-size: 0.82rem;
-                font-weight: 600;
-                padding: 8px 12px;
-                border-radius: 999px;
-                border: 1px solid #e2e8f0;
-                cursor: pointer;
-                transition: border-color 0.15s, color 0.15s;
-                line-height: 1;
-            }
-            #tv-invoice-toast .tvt-btn-dismiss:hover { border-color: #cbd5e1; color: #334155; }
-            #tv-invoice-toast .tvt-close {
+            #tv-billing-toast .tvb-btn:hover { background: rgba(255, 255, 255, 0.28); color: #fff; }
+            #tv-billing-toast .tvb-dismiss {
                 background: none;
                 border: none;
-                color: #94a3b8;
+                color: rgba(255, 255, 255, 0.55);
                 cursor: pointer;
-                padding: 2px;
+                padding: 4px;
                 line-height: 1;
-                align-self: flex-start;
+                display: flex;
+                align-items: center;
                 transition: color 0.15s;
             }
-            #tv-invoice-toast .tvt-close:hover { color: #475569; }
-            #tv-invoice-toast .tvt-progress {
-                height: 3px;
-                background: #f1f5f9;
+            #tv-billing-toast .tvb-dismiss:hover { color: rgba(255, 255, 255, 0.9); }
+            #tv-billing-toast .tvb-bar {
+                height: 2px;
+                background: rgba(255, 255, 255, 0.12);
                 position: relative;
                 overflow: hidden;
             }
-            #tv-invoice-toast .tvt-progress-fill {
+            #tv-billing-toast .tvb-bar-fill {
                 position: absolute;
                 inset: 0;
-                background: linear-gradient(90deg, #1d4ed8, #0ea5e9);
+                background: rgba(255, 255, 255, 0.5);
                 transform-origin: left;
-                animation: tvProgressShrink 12s linear forwards;
+                animation: tvBarShrink 12s linear forwards;
             }
-            @keyframes tvProgressShrink {
+            @keyframes tvBarShrink {
                 from { transform: scaleX(1); }
                 to   { transform: scaleX(0); }
             }
+            @media (max-width: 520px) {
+                #tv-billing-toast .tvb-row {
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                #tv-billing-toast .tvb-text {
+                    flex: 1 1 100%;
+                }
+                #tv-billing-toast .tvb-actions {
+                    margin-left: 22px;
+                }
+            }
         </style>
 
-        <div id="tv-invoice-toast" role="alert" aria-live="assertive">
-            <div class="tvt-inner">
-                <div class="tvt-stripe"></div>
-                <div class="tvt-body">
-                    <div class="tvt-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 12L11 14L15 10" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M5 5H14L19 10V19H5V5Z" stroke="#2563eb" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+        <div id="tv-billing-toast" role="alert" aria-live="assertive">
+            <div class="tvb-card">
+                <div class="tvb-row">
+                    <div class="tvb-dot"></div>
+                    <div class="tvb-text">
+                        <span class="tvb-ticket-ref">Ticket #<?php echo html($t['ticket_number'] ?? $tid); ?></span>
+                        <p class="tvb-msg">Cerrado — <strong>registra el reporte de costos</strong></p>
                     </div>
-                    <div class="tvt-content">
-                        <p class="tvt-label">Acción requerida</p>
-                        <p class="tvt-title">Ticket cerrado</p>
-                        <p class="tvt-desc">Registra el <strong>reporte de costos</strong> antes de continuar.</p>
-                        <div class="tvt-actions">
-                            <a href="reporte_costos.php?ticket_id=<?php echo (int)$tid; ?>" class="tvt-btn-primary">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
-                                </svg>
-                                Registrar ahora
-                            </a>
-                            <button class="tvt-btn-dismiss" onclick="tvDismissToast()">Más tarde</button>
-                        </div>
+                    <div class="tvb-actions">
+                        <a href="reporte_costos.php?ticket_id=<?php echo (int)$tid; ?>" class="tvb-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+                            </svg>
+                            Registrar
+                        </a>
+                        <button class="tvb-dismiss" onclick="tvBillingDismiss()" title="Cerrar" aria-label="Cerrar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
                     </div>
-                    <button class="tvt-close" onclick="tvDismissToast()" title="Cerrar" aria-label="Cerrar aviso">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
                 </div>
-                <div class="tvt-progress"><div class="tvt-progress-fill"></div></div>
+                <div class="tvb-bar"><div class="tvb-bar-fill"></div></div>
             </div>
         </div>
         <script>
-            function tvDismissToast() {
-                var el = document.getElementById('tv-invoice-toast');
+            function tvBillingDismiss() {
+                var el = document.getElementById('tv-billing-toast');
                 if (!el) return;
-                el.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+                el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 el.style.opacity = '0';
-                el.style.transform = 'translateX(-50%) translateY(-12px)';
-                setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 380);
+                el.style.transform = 'translateX(-50%) translateY(-10px)';
+                setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 320);
             }
-            setTimeout(tvDismissToast, 12000);
+            setTimeout(tvBillingDismiss, 12000);
         </script>
     <?php endif; ?>
+
     <div id="assign-loading" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 2000;">
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 220px; text-align:center;">
             <div class="spinner-border text-primary" role="status" style="width:2.25rem; height:2.25rem;"></div>

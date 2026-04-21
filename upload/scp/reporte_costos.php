@@ -227,8 +227,7 @@ ob_start();
     <div class="tickets-header mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Registro de Reporte de Ticket</h1>
-                <div class="sub">Ticket <a href="tickets.php?id=<?php echo $ticketId; ?>" style="color: inherit; text-decoration: underline;">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a> — <?php echo htmlspecialchars($ticket['subject']); ?></div>
+                <h1>Reporte de Costos</h1>
             </div>
             <div>
                 <a href="reporte_tickets.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>

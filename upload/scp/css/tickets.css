@@ -893,7 +893,7 @@ tr.ticket-row.is-selected td {
     background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
     color: #fff;
     border-radius: 10px;
-    padding: 16px 18px;
+    padding: 26px 18px;
     margin-bottom: 16px;
     box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
 }
