@@ -541,9 +541,23 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 }
 
 if ($viewUser) {
-    $stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.created, s.name as status_name FROM tickets t LEFT JOIN ticket_status s ON s.id = t.status_id WHERE t.empresa_id = ? AND t.user_id = ? ORDER BY t.created DESC");
     $uid2 = (int)($viewUser['id'] ?? 0);
-    $stmt->bind_param('ii', $eid, $uid2);
+
+    // Contar tickets del usuario para paginación
+    $stmtCountT = $mysqli->prepare("SELECT COUNT(id) AS total FROM tickets WHERE empresa_id = ? AND user_id = ?");
+    $stmtCountT->bind_param('ii', $eid, $uid2);
+    $stmtCountT->execute();
+    $userTicketTotal = (int) $stmtCountT->get_result()->fetch_assoc()['total'];
+
+    $perPageLimit = 10;
+    $tp = max(1, (int)($_GET['tp'] ?? 1));
+    $tTotalPages = $userTicketTotal ? (int)ceil($userTicketTotal / $perPageLimit) : 1;
+    $tp = min($tp, max(1, $tTotalPages));
+    $tOffset = ($tp - 1) * $perPageLimit;
+
+    // Obtener los tickets paginados
+    $stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.created, s.name as status_name FROM tickets t LEFT JOIN ticket_status s ON s.id = t.status_id WHERE t.empresa_id = ? AND t.user_id = ? ORDER BY t.created DESC LIMIT ? OFFSET ?");
+    $stmt->bind_param('iiii', $eid, $uid2, $perPageLimit, $tOffset);
     $stmt->execute();
     $userTickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 

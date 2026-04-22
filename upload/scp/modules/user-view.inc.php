@@ -460,6 +460,28 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                <?php if (isset($tTotalPages) && $tTotalPages > 1): ?>
+                    <div class="table-footer-bar" style="border-top: none; padding: 15px;">
+                        <div class="showing-text">
+                            Mostrando <?php echo $userTicketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $userTicketTotal); ?> de <?php echo $userTicketTotal; ?>
+                        </div>
+                        <div class="pagination-wrap">
+                            <?php if ($tp > 1): ?>
+                                <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
+                            <?php endif; ?>
+                            <?php for ($i = max(1, $tp - 2); $i <= min($tTotalPages, $tp + 2); $i++): ?>
+                                <?php if ($i === $tp): ?>
+                                    <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
+                                <?php else: ?>
+                                    <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
+                                <?php endif; ?>
+                            <?php endfor; ?>
+                            <?php if ($tp < $tTotalPages): ?>
+                                <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
                 <p class="mt-3 mb-0">
                     <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Crear un nuevo Ticket</a>
                 </p>

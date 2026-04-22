@@ -214,10 +214,26 @@ if (!empty($_GET['org'])) {
     $orgInfo['website'] = $orgInfo['website'] ?? '';
     $orgInfo['notes'] = $orgInfo['notes'] ?? '';
 
-    $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email, phone, status, created FROM users WHERE empresa_id = ? AND company = ? ORDER BY firstname, lastname");
-    $stmt->bind_param('is', $eid, $orgName);
+    $perPageLimit = 10;
+
+    // Paginación para Usuarios
+    $up = max(1, (int)($_GET['up'] ?? 1));
+    $userTotal = (int)($orgInfo['user_count'] ?? 0);
+    $uTotalPages = $userTotal ? (int)ceil($userTotal / $perPageLimit) : 1;
+    $up = min($up, max(1, $uTotalPages));
+    $uOffset = ($up - 1) * $perPageLimit;
+
+    $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email, phone, status, created FROM users WHERE empresa_id = ? AND company = ? ORDER BY firstname, lastname LIMIT ? OFFSET ?");
+    $stmt->bind_param('isii', $eid, $orgName, $perPageLimit, $uOffset);
     $stmt->execute();
     $orgUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    // Paginación para Tickets
+    $tp = max(1, (int)($_GET['tp'] ?? 1));
+    $ticketTotal = (int)($orgInfo['ticket_count'] ?? 0);
+    $tTotalPages = $ticketTotal ? (int)ceil($ticketTotal / $perPageLimit) : 1;
+    $tp = min($tp, max(1, $tTotalPages));
+    $tOffset = ($tp - 1) * $perPageLimit;
 
     $tickets = [];
     $stmt = $mysqli->prepare("
@@ -229,9 +245,9 @@ if (!empty($_GET['org'])) {
         JOIN priorities p ON t.priority_id = p.id
         WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
         ORDER BY t.created DESC
-        LIMIT 100
+        LIMIT ? OFFSET ?
     ");
-    $stmt->bind_param('iis', $eid, $eid, $orgName);
+    $stmt->bind_param('iisii', $eid, $eid, $orgName, $perPageLimit, $tOffset);
     $stmt->execute();
     $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -243,6 +259,215 @@ if (!empty($_GET['org'])) {
     $ticketsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/tickets.php');
     ?>
     <style>
+    /* Estilos Premium para Desktop - Vista Organización */
+    @media (min-width: 769px) {
+        .org-detail-container .user-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+        .org-detail-container .user-view-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0;
+        }
+        
+        /* Stats Cards Desktop */
+        .org-detail-container .org-stat-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .org-detail-container .org-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+            border-color: #bfdbfe;
+        }
+        .org-detail-container .org-stat-icon {
+            font-size: 1.6rem;
+            color: #2563eb;
+            background: #eff6ff;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .org-detail-container .org-stat-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .org-detail-container .org-stat-value {
+            font-size: clamp(0.9rem, 1.25vw + 0.1rem, 1.3rem);
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            word-break: break-word; /* Permite salto si no cabe */
+        }
+        .org-detail-container .org-stat-label {
+            font-size: clamp(0.65rem, 0.8vw, 0.75rem);
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+            line-height: 1.2;
+        }
+
+        /* Tabla Premium para Tickets y Usuarios */
+        .org-detail-container .table-responsive {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            padding: 0;
+            overflow: hidden;
+        }
+        .org-detail-container .user-view-tickets-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0;
+        }
+        .org-detail-container .user-view-tickets-table thead th {
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 16px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            text-align: left;
+        }
+        .org-detail-container .user-view-tickets-table tbody tr {
+            transition: background 0.2s;
+        }
+        .org-detail-container .user-view-tickets-table tbody tr:hover {
+            background: #f8fafc;
+        }
+        .org-detail-container .user-view-tickets-table tbody td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+        .org-detail-container .user-view-tickets-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .org-detail-container .user-view-tickets-table tbody td a {
+            color: #2563eb;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .org-detail-container .user-view-tickets-table tbody td a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Detalles de Perfil de la Empresa */
+        .org-detail-container .user-view-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            margin-bottom: 30px;
+            padding: 24px;
+        }
+        .org-detail-container .user-view-profile {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+        }
+        .org-detail-container .user-view-avatar {
+            font-size: 3.5rem;
+            color: #3b82f6;
+            background: #eff6ff;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            flex-shrink: 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
+        }
+        .org-detail-container .user-view-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+        .org-detail-container .user-view-detail {
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            text-align: left;
+        }
+        .org-detail-container .user-view-detail label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+        .org-detail-container .user-view-detail .value {
+            font-size: 1rem;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        /* Nav Tabs Desktop */
+        .org-detail-container .user-view-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 24px;
+            padding-bottom: 0;
+        }
+        .org-detail-container .user-view-tabs .tab {
+            padding: 12px 24px;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+            font-size: 0.95rem;
+        }
+        .org-detail-container .user-view-tabs .tab:hover {
+            color: #2563eb;
+            background: #f8fafc;
+            border-radius: 8px 8px 0 0;
+        }
+        .org-detail-container .user-view-tabs .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+            background: transparent;
+        }
+    }
+
     /* Corrección y Estilo Profesional en Móviles */
     @media (max-width: 768px) {
         .org-detail-container .user-view-header,
@@ -609,26 +834,61 @@ if (!empty($_GET['org'])) {
                             <table class="user-view-tickets-table">
                                 <thead>
                                     <tr>
-                                        <th>Nombre</th>
-                                        <th>Email</th>
-                                        <th class="org-hide-mobile">Teléfono</th>
+                                        <th>Usuario</th>
                                         <th>Estado</th>
-                                        <th class="org-hide-mobile">Creado</th>
+                                        <th class="org-hide-mobile">Fecha de Registro</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($orgUsers as $u): ?>
                                         <tr>
-                                            <td class="primary-field" data-label="Nombre"><a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?></a></td>
-                                            <td data-label="Email"><?php echo html($u['email']); ?></td>
-                                            <td class="org-hide-mobile" data-label="Teléfono"><?php echo html($u['phone'] ?? '—'); ?></td>
-                                            <td data-label="Estado"><span class="user-view-status-badge <?php echo html($u['status']); ?>"><?php echo $u['status'] === 'active' ? 'Activo' : ($u['status'] === 'inactive' ? 'Inactivo' : 'Bloqueado'); ?></span></td>
-                                            <td class="org-hide-mobile" data-label="Creado"><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '—'; ?></td>
+                                            <td class="primary-field" data-label="Usuario">
+                                                <a href="users.php?id=<?php echo (int)$u['id']; ?>" style="display:block; font-weight:700; color:#0f172a; text-decoration:none; margin-bottom:2px;">
+                                                    <?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?>
+                                                </a>
+                                                <span style="font-size: 0.85rem; color: #64748b;">
+                                                    <i class="bi bi-envelope" style="margin-right:4px;"></i><?php echo html($u['email']); ?>
+                                                    <?php if(!empty($u['phone'])): ?>
+                                                        <span class="ms-2"><i class="bi bi-telephone ms-1" style="margin-right:2px;"></i><?php echo html($u['phone']); ?></span>
+                                                    <?php endif; ?>
+                                                </span>
+                                            </td>
+                                            <td data-label="Estado" style="vertical-align: middle;">
+                                                <span class="user-view-status-badge <?php echo html($u['status']); ?>">
+                                                    <?php echo $u['status'] === 'active' ? 'Activo' : ($u['status'] === 'inactive' ? 'Inactivo' : 'Bloqueado'); ?>
+                                                </span>
+                                            </td>
+                                            <td class="org-hide-mobile" data-label="Fecha" style="vertical-align: middle; color: #475569;">
+                                                <i class="bi bi-calendar3" style="margin-right: 5px; color:#94a3b8;"></i>
+                                                <?php echo $u['created'] ? date('d/m/Y', strtotime($u['created'])) : '—'; ?>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
+                        <?php if ($uTotalPages > 1): ?>
+                            <div class="table-footer-bar" style="border-top: none; padding: 15px;">
+                                <div class="showing-text">
+                                    Mostrando <?php echo $userTotal ? ($uOffset + 1) : 0; ?> – <?php echo min($uOffset + $perPageLimit, $userTotal); ?> de <?php echo $userTotal; ?>
+                                </div>
+                                <div class="pagination-wrap">
+                                    <?php if ($up > 1): ?>
+                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $up - 1, 'tp' => $tp]); ?>"><i class="bi bi-chevron-left"></i></a>
+                                    <?php endif; ?>
+                                    <?php for ($i = max(1, $up - 2); $i <= min($uTotalPages, $up + 2); $i++): ?>
+                                        <?php if ($i === $up): ?>
+                                            <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
+                                        <?php else: ?>
+                                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $i, 'tp' => $tp]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
+                                        <?php endif; ?>
+                                    <?php endfor; ?>
+                                    <?php if ($up < $uTotalPages): ?>
+                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $up + 1, 'tp' => $tp]); ?>"><i class="bi bi-chevron-right"></i></a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <div class="tab-pane fade <?php echo $activeTab === 'tickets' ? 'show active' : ''; ?> user-view-tab-content" id="org-tickets">
@@ -642,32 +902,67 @@ if (!empty($_GET['org'])) {
                             <table class="user-view-tickets-table">
                                 <thead>
                                     <tr>
-                                        <th>Número</th>
-                                        <th>Asunto</th>
-                                        <th>Departamento</th>
-                                        <th>Estado</th>
-                                        <th class="org-hide-mobile">Prioridad</th>
-                                        <th class="org-hide-mobile">Creado</th>
+                                        <th>Detalle del Ticket</th>
+                                        <th>Estado / Prioridad</th>
+                                        <th class="org-hide-mobile">Departamento</th>
+                                        <th class="org-hide-mobile">Apertura</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($tickets as $tkt): ?>
                                         <tr>
-                                            <td data-label="Número">
-                                                <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>">
-                                                    <?php echo html($tkt['ticket_number']); ?>
+                                            <td data-label="Detalle" class="primary-field">
+                                                <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>" style="display:block; font-weight:800; font-size: 1rem; color:#2563eb; text-decoration:none; margin-bottom:2px;">
+                                                    <i class="bi bi-ticket-detailed" style="margin-right:4px; opacity:0.8;"></i>#<?php echo html($tkt['ticket_number']); ?>
                                                 </a>
+                                                <span style="color:#475569; font-size:0.95rem; font-weight:500;">
+                                                    <?php echo html($tkt['subject']); ?>
+                                                </span>
                                             </td>
-                                            <td class="primary-field" data-label="Asunto"><?php echo html($tkt['subject']); ?></td>
-                                            <td data-label="Departamento"><?php echo html($tkt['dept_name'] ?? '—'); ?></td>
-                                            <td data-label="Estado"><?php echo html($tkt['status_name'] ?? '—'); ?></td>
-                                            <td class="org-hide-mobile" data-label="Prioridad"><?php echo html($tkt['priority_name'] ?? '—'); ?></td>
-                                            <td class="org-hide-mobile" data-label="Creado"><?php echo $tkt['created'] ? date('d/m/y H:i', strtotime($tkt['created'])) : '—'; ?></td>
+                                            <td data-label="Estado/Prioridad" style="vertical-align: middle;">
+                                                <span class="user-view-status-badge" style="background:#f1f5f9; color:#334155; font-weight:700; padding:6px 12px; border-radius:8px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border:1px solid #e2e8f0;">
+                                                    <?php echo html($tkt['status_name'] ?? '—'); ?>
+                                                </span>
+                                                <div style="font-size:0.8rem; color:#64748b; margin-top:6px; font-weight:600;">
+                                                    <i class="bi bi-flag-fill" style="margin-right:4px; color:#cbd5e1;"></i><?php echo html($tkt['priority_name'] ?? '—'); ?>
+                                                </div>
+                                            </td>
+                                            <td class="org-hide-mobile" data-label="Departamento" style="vertical-align: middle; color:#334155; font-weight:500;">
+                                                <i class="bi bi-diagram-3" style="color:#94a3b8; margin-right:5px;"></i>
+                                                <?php echo html($tkt['dept_name'] ?? '—'); ?>
+                                            </td>
+                                            <td class="org-hide-mobile" data-label="Apertura" style="vertical-align: middle; color:#64748b; font-size:0.9rem;">
+                                                <i class="bi bi-clock" style="color:#cbd5e1; margin-right:5px;"></i>
+                                                <?php echo $tkt['created'] ? date('d/m/Y', strtotime($tkt['created'])) : '—'; ?> <br>
+                                                <span style="font-size:0.75rem; margin-left:18px;"><?php echo $tkt['created'] ? date('H:i', strtotime($tkt['created'])) : ''; ?></span>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
+                        <?php if ($tTotalPages > 1): ?>
+                            <div class="table-footer-bar" style="border-top: none; padding: 15px;">
+                                <div class="showing-text">
+                                    Mostrando <?php echo $ticketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $ticketTotal); ?> de <?php echo $ticketTotal; ?>
+                                </div>
+                                <div class="pagination-wrap">
+                                    <?php if ($tp > 1): ?>
+                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
+                                    <?php endif; ?>
+                                    <?php for ($i = max(1, $tp - 2); $i <= min($tTotalPages, $tp + 2); $i++): ?>
+                                        <?php if ($i === $tp): ?>
+                                            <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
+                                        <?php else: ?>
+                                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
+                                        <?php endif; ?>
+                                    <?php endfor; ?>
+                                    <?php if ($tp < $tTotalPages): ?>
+                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
