@@ -2915,15 +2915,14 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
 
     <div class="tickets-table-wrap">
         <table class="table table-hover tickets-table mb-0" id="ticketsTable">
-            <thead class="table-light">
+            <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
-                    <th class="check-cell"><input type="checkbox" class="form-check-input" id="check_all"></th>
-                    <th>Ticket</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th class="d-none d-lg-table-cell">Cliente</th>
-                    <th class="d-none d-md-table-cell">Actualizado</th>
-                    <th></th>
+                    <th class="check-cell" style="width: 44px; text-align: center; vertical-align: middle;"><input type="checkbox" class="form-check-input" id="check_all"></th>
+                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 0;">Asunto del Ticket</th>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Cliente</th>
+                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Última Actividad</th>
+                    <th style="width: 80px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;"></th>
                 </tr>
             </thead>
             <tbody>
@@ -2971,70 +2970,80 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                             }
                             $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
                         ?>
-                        <tr class="ticket-row" data-ticket-id="<?php echo (int)$t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>">
-                            <td class="check-cell"><input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>"></td>
-                            <td>
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div>
-                                        <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>">#<?php echo html($t['ticket_number']); ?></a>
-                                        <?php if ($isNew): ?>
-                                            <span class="badge bg-danger ms-2">New</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="d-md-none text-muted" style="font-size:0.75rem; font-weight:700;">
+                        <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" data-ticket-id="<?php echo (int)$t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>" onclick="if(!event.target.closest('.check-cell') && !event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo html($ticketHref); ?>';">
+                            <td class="check-cell" style="vertical-align: middle; text-align: center; width: 44px;">
+                                <input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>" style="cursor: pointer; width: 1.1em; height: 1.1em;">
+                            </td>
+                            <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
+                                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #2563eb; text-decoration: none;">
+                                        <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
+                                    </a>
+                                    <?php if ($isNew): ?>
+                                        <span class="badge" style="background:#ef4444; color: #fff; font-size: 0.65rem; padding: 4px 6px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">Nuevo</span>
+                                    <?php endif; ?>
+                                    <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
                                         <?php echo formatDate($t['updated'] ?: $t['created']); ?>
                                     </div>
                                 </div>
-                                
-                                <div class="ticket-subject" style="margin-top: 6px;"><?php echo html(function_exists('cleanPlainText') ? cleanPlainText((string)($t['subject'] ?? '')) : (string)($t['subject'] ?? '')); ?></div>
-                                
-                                <div class="d-md-none mt-2 mb-1" style="font-size:0.85rem; font-weight:700; color:#334155;">
-                                    <i class="bi bi-person-circle text-primary me-1"></i> <?php echo html($clientName); ?>
+                                <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+                                    <?php echo html(function_exists('cleanPlainText') ? cleanPlainText((string)($t['subject'] ?? '')) : (string)($t['subject'] ?? '')); ?>
                                 </div>
-
-                                <div class="ticket-meta mt-1" style="font-size:0.8rem;">
-                                    <i class="bi bi-person-badge"></i> Asignado: <strong style="color:#0f172a;"><?php echo $staffName ?: 'Sin asignar'; ?></strong>
+                                <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
+                                    <span style="display:inline-flex; align-items:center; gap:5px;">
+                                        <i class="bi bi-headset" style="color:#94a3b8;"></i> Asignado a: <strong style="color: #475569; font-weight:600;"><?php echo $staffName ?: 'Sin asignar'; ?></strong>
+                                    </span>
                                 </div>
-
-                                <!-- Chip de estado para móvil -->
-                                <div class="ticket-row-mobile-meta d-md-none mt-3" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>; font-size:0.75rem;">
-                                        <?php echo html($t['status_name']); ?>
+                                
+                                <!-- Mobile Info -->
+                                <div class="d-md-none mt-3" style="display:flex; gap:8px; flex-direction:column;">
+                                    <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
+                                        <i class="bi bi-person-fill" style="color:#cbd5e1;"></i> <strong><?php echo html($clientName); ?></strong>
+                                    </div>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
+                                        <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                            <?php echo html($t['status_name']); ?>
+                                        </span>
+                                        <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                                        <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                            <i class="bi bi-receipt"></i> Facturado
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($clientName); ?></span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                                <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
+                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
+                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo html($t['status_name']); ?>
                                     </span>
                                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                    <span class="chip chip-status" style="background: #16a34a22; color: #16a34a; font-size:0.75rem;">
+                                    <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                         <i class="bi bi-receipt"></i> Facturado
                                     </span>
                                     <?php endif; ?>
                                 </div>
                             </td>
-                            <td>
-                                <div style="display:flex; flex-direction:column; gap:4px;">
-                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>22; color: <?php echo html($statusColor); ?>;">
-                                        <?php echo html($t['status_name']); ?>
-                                    </span>
-                                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                    <span class="chip chip-status" style="background: #16a34a22; color: #16a34a; white-space:nowrap;">
-                                        <i class="bi bi-receipt"></i> Facturado
-                                    </span>
-                                    <?php endif; ?>
+                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                <div style="color:#64748b; font-size: 0.85rem; font-weight: 600; display:flex; align-items:center; gap:6px;">
+                                    <i class="bi bi-clock-history" style="color:#94a3b8; font-size: 1rem;"></i> 
+                                    <span><?php echo formatDate($t['updated'] ?: $t['created']); ?></span>
                                 </div>
                             </td>
-                            <td>
-                                <span class="chip chip-priority" style="background: <?php echo html($priorityColor); ?>22; color: <?php echo html($priorityColor); ?>;">
-                                    <?php echo html($t['priority_name']); ?>
-                                </span>
-                            </td>
-                            <td class="d-none d-lg-table-cell">
-                                <div class="ticket-meta" style="color:#475569; font-weight:600;">
-                                    <?php echo html($clientName); ?>
-                                </div>
-                            </td>
-                            <td class="d-none d-md-table-cell">
-                                <div class="ticket-meta"><?php echo formatDate($t['updated'] ?: $t['created']); ?></div>
-                            </td>
-                            <td>
-                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm btn-outline-primary">Ver</a>
+                            <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
+                                <button type="button" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
