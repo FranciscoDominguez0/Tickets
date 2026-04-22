@@ -161,57 +161,144 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'saved') {
 ob_start();
 ?>
 <style>
-/* ── reporte_costos.php – Estilos responsivos adicionales ── */
+/* ═══════════════════════════════════════════════════════════════
+   reporte_costos.php – Mobile-First Responsive Styles
+   ═══════════════════════════════════════════════════════════════ */
 
-/* ── Tarjeta de material: móvil usa diseño en tarjeta ── */
-.material-card {
-    background: #f8fafc;
+/* ── Base / Mobile First ── */
+.tickets-shell { padding: 0.5rem; }
+.tickets-header h1 { font-size: 1.25rem; }
+
+/* Overview: mobile-only cards; desktop uses original tickets.css */
+@media (max-width: 767px) {
+    .ticket-view-overview {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+    }
+    .ticket-view-overview .field {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        margin-bottom: 0;
+    }
+    .ticket-view-overview label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: #94a3b8;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .ticket-view-overview .value {
+        font-size: 0.9rem;
+        color: #0f172a;
+        font-weight: 600;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+}
+
+/* Cards */
+.settings-card {
+    border-radius: 14px;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.settings-card .card-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.9rem;
     padding: 12px 14px;
-    margin-bottom: 10px;
-    position: relative;
 }
-.material-card .mat-fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-.material-card .mat-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-.material-card .btn-remove-row {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    border: none;
-    background: none;
-    color: #ef4444;
-    font-size: 1rem;
-    line-height: 1;
-    padding: 2px 5px;
-    border-radius: 6px;
-    transition: background 0.15s;
-}
-.material-card .btn-remove-row:hover:not(:disabled) {
-    background: #fee2e2;
-}
-.material-card .btn-remove-row:disabled {
-    color: #cbd5e1;
+.settings-card .card-body { padding: 14px; }
+
+/* Section titles */
+h6.border-bottom {
+    font-size: 0.85rem;
+    padding-bottom: 8px;
+    margin-top: 18px;
 }
 
-/* ── Precio: ancho completo en móvil ── */
-.price-input-wrap {
-    max-width: 340px;
-    width: 100%;
+/* ── Items table: card list on mobile ── */
+.items-table-wrap { margin-bottom: 12px; }
+.items-table-wrap .table { margin-bottom: 0; }
+.items-table-wrap .table tfoot td { border-top: 2px solid #cbd5e1; }
+.items-table-wrap .table tfoot tr.table-primary td { background: #eff6ff !important; }
+
+/* Mobile cards for dynamic rows */
+@media (max-width: 576px) {
+    .items-table-wrap .table thead,
+    .items-table-wrap .table tfoot { display: none; }
+
+    .items-table-wrap .table tbody tr {
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+    .items-table-wrap .table tbody td {
+        display: block;
+        border: none;
+        padding: 0;
+        width: 100% !important;
+    }
+    .items-table-wrap .table tbody td[data-label]::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .items-table-wrap .table tbody td:last-child {
+        text-align: right;
+        margin-top: 2px;
+    }
+    .items-table-wrap .table tbody input.form-control {
+        font-size: 1rem; /* prevent zoom on iOS */
+        padding: 10px 12px;
+        height: auto;
+    }
+
+    /* Show total as a sticky bar on mobile */
+    .mobile-total-bar {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        bottom: 8px;
+        background: #1e3a8a;
+        color: #fff;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.05rem;
+        box-shadow: 0 4px 12px rgba(30,58,138,0.25);
+        margin-top: 8px;
+        z-index: 10;
+    }
+}
+@media (min-width: 577px) {
+    .mobile-total-bar { display: none !important; }
 }
 
-/* ── Botón guardar sticky en móvil ── */
+/* ── Footer buttons ── */
 .form-footer-sticky {
     display: flex;
     justify-content: flex-end;
@@ -219,32 +306,46 @@ ob_start();
     padding-top: 16px;
     border-top: 1px solid #e2e8f0;
 }
+@media (max-width: 576px) {
+    .form-footer-sticky { flex-direction: column; }
+    .form-footer-sticky .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+        font-size: 1rem;
+    }
+    .btn-pdf-action { width: 100%; padding: 12px; }
+}
 
-/* ── Vista de reporte completado: materiales en tarjetas en móvil ── */
+/* ── Alerts ── */
+.alert { border-radius: 12px; font-size: 0.9rem; }
+
+/* ── Read-only list (completed report) ── */
 .mat-read-list { list-style: none; padding: 0; margin: 0 0 16px; }
 .mat-read-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     border: 1px solid #e2e8f0;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     gap: 10px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    background: #f8fafc;
 }
 .mat-read-item .mat-name { color: #0f172a; font-weight: 500; }
 .mat-read-item .mat-qty {
     white-space: nowrap;
     background: #f1f5f9;
     color: #475569;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: 20px;
 }
 
-/* ── Caja de precio completado ── */
+/* ── Price display (completed) ── */
 .price-display-box {
     display: flex;
     align-items: center;
@@ -257,48 +358,14 @@ ob_start();
 }
 .price-display-box .price-label { font-weight: 600; color: #64748b; font-size: 0.85rem; }
 .price-display-box .price-value { font-size: 1.3rem; font-weight: 700; color: #1e3a8a; }
-
-/* ── Botón PDF full-width en móvil ── */
-.btn-pdf-action { min-width: 200px; }
-
-/* ── Tabla de items ── */
-.items-table-wrap { margin-bottom: 12px; }
-.items-table-wrap .table { margin-bottom: 0; }
-.items-table-wrap .table tfoot td { border-top: 2px solid #cbd5e1; }
-.items-table-wrap .table tfoot tr.table-primary td { background: #eff6ff !important; }
-
 @media (max-width: 576px) {
-    .material-card .mat-fields { grid-template-columns: 1fr; }
-    .price-input-wrap { max-width: 100%; }
-    .form-footer-sticky { flex-direction: column; }
-    .form-footer-sticky .btn { width: 100%; justify-content: center; }
-    .btn-pdf-action { width: 100%; }
     .price-display-box { flex-direction: column; align-items: flex-start; gap: 4px; }
-    .items-table-wrap .table thead { display: none; }
-    .items-table-wrap .table tbody tr {
-        display: block;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 10px 12px;
-        margin-bottom: 8px;
-    }
-    .items-table-wrap .table tbody td {
-        display: block;
-        border: none;
-        padding: 4px 0;
-    }
-    .items-table-wrap .table tbody td:before {
-        content: attr(data-label);
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #64748b;
-        font-weight: 600;
-        display: block;
-        margin-bottom: 2px;
-    }
-    .items-table-wrap .table tbody td:last-child { text-align: right; margin-top: 4px; }
+}
+
+/* ── Desktop enhancements ── */
+@media (min-width: 768px) {
+    .tickets-shell { padding: 1rem; }
+    .tickets-header h1 { font-size: 1.5rem; }
 }
 </style>
 
@@ -372,7 +439,7 @@ ob_start();
     </div>
 
     <!-- Formulario / Visualización del Reporte -->
-    <div class="row">
+    <div class="row g-3">
         <div class="col-12">
             <div class="card settings-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -384,7 +451,7 @@ ob_start();
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
                             <!-- Sección detalles -->
-                            <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
+                            <h6 class="mb-3 border-bottom pb-2 text-primary mt-2"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Trabajos realizados <span class="text-danger">*</span></label>
@@ -407,14 +474,19 @@ ob_start();
                                             </tr>
                                         </tfoot>
                                     </table>
+                                    <!-- Mobile-only total bar -->
+                                    <div class="mobile-total-bar" id="mobileTotalBar">
+                                        <span>Total</span>
+                                        <span id="mobileTotalDisplay">$0.00</span>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddItem">
+                                <button type="button" class="btn btn-outline-primary btn-sm w-100 w-md-auto mt-2" id="btnAddItem">
                                     <i class="bi bi-plus-circle"></i> Agregar ítem
                                 </button>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-bold">Observaciones adicionales <span class="text-muted fw-normal">(Opcional)</span></label>
+                                <label class="form-label fw-bold">Observaciones <span class="text-muted fw-normal">(Opcional)</span></label>
                                 <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."></textarea>
                             </div>
 
@@ -442,6 +514,8 @@ ob_start();
                                     total += price;
                                 });
                                 document.getElementById('totalDisplay').textContent = formatMoney(total);
+                                const mobileTotal = document.getElementById('mobileTotalDisplay');
+                                if (mobileTotal) mobileTotal.textContent = formatMoney(total);
                             }
 
                             function addRow(desc, price) {
@@ -493,7 +567,7 @@ ob_start();
 
                     <?php else: ?>
                         <!-- Vista de reporte ya completado -->
-                        <div class="alert alert-secondary text-dark mb-4">
+                        <div class="alert alert-secondary text-dark mb-3">
                             <i class="bi bi-lock me-1"></i> Este ticket ya tiene un reporte generado. Los datos no pueden modificarse.
                         </div>
 
@@ -505,7 +579,23 @@ ob_start();
                         <?php endif; ?>
 
                         <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalle de Trabajos Realizados</h6>
-                        <div class="items-table-wrap">
+
+                        <!-- Mobile card list -->
+                        <div class="d-block d-md-none">
+                            <?php foreach ($reportItems as $it): ?>
+                            <div class="mat-read-item">
+                                <span class="mat-name"><?php echo htmlspecialchars($it['description']); ?></span>
+                                <span class="mat-qty">$<?php echo number_format((float)$it['price'], 2); ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                            <div class="price-display-box">
+                                <span class="price-label">Total del Servicio</span>
+                                <span class="price-value">$<?php echo number_format($total, 2); ?></span>
+                            </div>
+                        </div>
+
+                        <!-- Desktop table -->
+                        <div class="d-none d-md-block items-table-wrap">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
                                     <tr>
@@ -530,8 +620,8 @@ ob_start();
                             </table>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-3">
-                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" target="_blank" class="btn btn-outline-primary btn-sm btn-pdf-action">
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-2 mt-3">
+                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-outline-primary btn-sm btn-pdf-action">
                                 <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
                             </a>
                         </div>
