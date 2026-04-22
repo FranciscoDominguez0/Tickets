@@ -242,6 +242,237 @@ if (!empty($_GET['org'])) {
     $backToOrgTickets = 'orgs.php?org=' . urlencode($orgName) . '&t=tickets';
     $ticketsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/tickets.php');
     ?>
+    <style>
+    /* Corrección y Estilo Profesional en Móviles */
+    @media (max-width: 768px) {
+        .org-detail-container .user-view-header,
+        .org-detail-container .user-view-card,
+        .org-detail-container .user-view-tabs {
+            display: block !important;
+        }
+        
+        /* Solo mostrar el contenido de los tabs si es la pestaña activa, 
+           así evitamos el enorme espacio en blanco fantasma de la inactiva */
+        .org-detail-container .user-view-tab-content.active {
+            display: block !important;
+        }
+        .org-detail-container .user-view-tabs {
+            display: flex !important;
+        }
+
+        /* Ocultar columnas secundarias para limpieza visual */
+        .org-hide-mobile {
+            display: none !important;
+        }
+
+        /* Cabecera, Título y Acciones */
+        .org-detail-container .user-view-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .org-detail-container .user-view-actions {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .org-detail-container .user-view-actions .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 10px;
+            font-weight: 600;
+        }
+        
+        /* Contenedor del Perfil de Empresa */
+        .org-detail-container .user-view-card {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .org-detail-container .user-view-profile {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 15px !important;
+        }
+        .org-detail-container .user-view-avatar {
+            margin: 0 auto !important;
+            width: 60px !important;
+            height: 60px !important;
+            font-size: 2rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Campos del Perfil (Name, Address, Phone...) */
+        .org-detail-container .user-view-details {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            width: 100% !important;
+            margin-left: 0 !important; /* Quitar cualquier margen desktop */
+        }
+        .org-detail-container .user-view-detail {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: #fff;
+            padding: 16px 14px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            width: 100%;
+        }
+        .org-detail-container .user-view-detail label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+        .org-detail-container .user-view-detail .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .org-detail-container .user-view-detail .value a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* Tarjetas de Estadísticas (Stats Cards) - Grid 2x2 */
+        .org-detail-container .row.g-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 0 0 24px 0 !important;
+            padding: 0;
+        }
+        .org-detail-container .row.g-4 > .col-md-3 {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .org-detail-container .org-stat-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 18px 10px;
+            height: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+        .org-detail-container .org-stat-card:active {
+            transform: scale(0.97);
+        }
+        .org-detail-container .org-stat-icon {
+            font-size: 1.5rem;
+            color: #2563eb;
+            margin-bottom: 10px;
+            background: #eff6ff;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        .org-detail-container .org-stat-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+        .org-detail-container .org-stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* Tabs */
+        .org-detail-container .user-view-tabs {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .org-detail-container .user-view-tabs .tab {
+            flex: 1 1 calc(50% - 8px);
+            margin: 0;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        /* Tablas tipo Tarjetas Profesionales */
+        .org-detail-container .user-view-tickets-table thead {
+            display: none;
+        }
+        .org-detail-container .user-view-tickets-table tbody tr {
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #2563eb;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            padding: 16px 12px 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            align-items: center; /* Centramos tarjetas globalmente */
+        }
+        
+        .org-detail-container .user-view-tickets-table tbody td {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed #f1f5f9;
+            width: 100%;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        .org-detail-container .user-view-tickets-table tbody td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .org-detail-container .user-view-tickets-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        
+        /* Destacar el campo principal (ej: Nombre o Número/Asunto) */
+        .org-detail-container .user-view-tickets-table tbody td.primary-field {
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 4px;
+        }
+        .org-detail-container .user-view-tickets-table tbody td.primary-field::before {
+            display: none; /* Ocultar "label" del título principal para que sea limpio */
+        }
+        .org-detail-container .user-view-tickets-table tbody td.primary-field a {
+            color: #0f172a;
+            text-decoration: none;
+        }
+    }
+    </style>
     <div class="org-detail-container">
         <?php if ($action_msg): ?>
             <div class="alert alert-<?php echo $action_type; ?> alert-dismissible fade show" role="alert">
@@ -380,19 +611,19 @@ if (!empty($_GET['org'])) {
                                     <tr>
                                         <th>Nombre</th>
                                         <th>Email</th>
-                                        <th>Teléfono</th>
+                                        <th class="org-hide-mobile">Teléfono</th>
                                         <th>Estado</th>
-                                        <th>Creado</th>
+                                        <th class="org-hide-mobile">Creado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($orgUsers as $u): ?>
                                         <tr>
-                                            <td><a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?></a></td>
-                                            <td><?php echo html($u['email']); ?></td>
-                                            <td><?php echo html($u['phone'] ?? '—'); ?></td>
-                                            <td><span class="user-view-status-badge <?php echo html($u['status']); ?>"><?php echo $u['status'] === 'active' ? 'Activo' : ($u['status'] === 'inactive' ? 'Inactivo' : 'Bloqueado'); ?></span></td>
-                                            <td><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '—'; ?></td>
+                                            <td class="primary-field" data-label="Nombre"><a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?></a></td>
+                                            <td data-label="Email"><?php echo html($u['email']); ?></td>
+                                            <td class="org-hide-mobile" data-label="Teléfono"><?php echo html($u['phone'] ?? '—'); ?></td>
+                                            <td data-label="Estado"><span class="user-view-status-badge <?php echo html($u['status']); ?>"><?php echo $u['status'] === 'active' ? 'Activo' : ($u['status'] === 'inactive' ? 'Inactivo' : 'Bloqueado'); ?></span></td>
+                                            <td class="org-hide-mobile" data-label="Creado"><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '—'; ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -415,23 +646,23 @@ if (!empty($_GET['org'])) {
                                         <th>Asunto</th>
                                         <th>Departamento</th>
                                         <th>Estado</th>
-                                        <th>Prioridad</th>
-                                        <th>Creado</th>
+                                        <th class="org-hide-mobile">Prioridad</th>
+                                        <th class="org-hide-mobile">Creado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($tickets as $tkt): ?>
                                         <tr>
-                                            <td>
+                                            <td data-label="Número">
                                                 <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>">
                                                     <?php echo html($tkt['ticket_number']); ?>
                                                 </a>
                                             </td>
-                                            <td><?php echo html($tkt['subject']); ?></td>
-                                            <td><?php echo html($tkt['dept_name'] ?? '—'); ?></td>
-                                            <td><?php echo html($tkt['status_name'] ?? '—'); ?></td>
-                                            <td><?php echo html($tkt['priority_name'] ?? '—'); ?></td>
-                                            <td><?php echo $tkt['created'] ? date('d/m/y H:i', strtotime($tkt['created'])) : '—'; ?></td>
+                                            <td class="primary-field" data-label="Asunto"><?php echo html($tkt['subject']); ?></td>
+                                            <td data-label="Departamento"><?php echo html($tkt['dept_name'] ?? '—'); ?></td>
+                                            <td data-label="Estado"><?php echo html($tkt['status_name'] ?? '—'); ?></td>
+                                            <td class="org-hide-mobile" data-label="Prioridad"><?php echo html($tkt['priority_name'] ?? '—'); ?></td>
+                                            <td class="org-hide-mobile" data-label="Creado"><?php echo $tkt['created'] ? date('d/m/y H:i', strtotime($tkt['created'])) : '—'; ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
