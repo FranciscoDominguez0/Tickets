@@ -819,7 +819,7 @@ if ($ticketClientSignaturePath !== '') {
             </div>
             <div class="tph-right">
                 <div class="tph-ticket">Ticket <?php echo html($t['ticket_number']); ?></div>
-                <div class="tph-subject"><?php echo html((string)($t['subject'] ?? '')); ?></div>
+                <div class="tph-subject"><?php echo html(function_exists('cleanPlainText') ? cleanPlainText((string)($t['subject'] ?? '')) : (string)($t['subject'] ?? '')); ?></div>
                 <div class="tph-meta">
                     <?php echo html((string)($t['user_name'] ?? '')); ?> · <?php echo html((string)($t['user_email'] ?? '')); ?>
                 </div>

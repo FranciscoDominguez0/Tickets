@@ -736,10 +736,31 @@ function html($text) {
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Limpia texto plano que pueda contener entidades HTML residuales del editor
+ * (ej: asunto del ticket con &nbsp; insertado por teclado móvil).
+ * Decodifica entidades HTML, elimina tags, y retorna texto seguro para re-escapar.
+ */
+function cleanPlainText(string $text): string {
+    // Decodificar entidades HTML (incluye &nbsp; → espacio normal)
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Eliminar cualquier etiqueta HTML residual
+    $text = strip_tags($text);
+    // Normalizar espacios múltiples y espacios no rompibles (\xc2\xa0)
+    $text = str_replace("\xc2\xa0", ' ', $text);
+    $text = preg_replace('/\s{2,}/', ' ', $text) ?? $text;
+    return trim($text);
+}
+
 function sanitizeRichText($inputHtml) {
     $inputHtml = (string)$inputHtml;
     if ($inputHtml === '') return '';
-    if (stripos($inputHtml, '<') === false) return nl2br(html($inputHtml));
+    if (stripos($inputHtml, '<') === false) {
+        // Decodificar entidades HTML literales (ej: &nbsp; insertado por teclado móvil/editor)
+        // antes de re-escapar, para que no aparezcan como texto "&nbsp;" en pantalla.
+        $decoded = html_entity_decode($inputHtml, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return nl2br(html($decoded));
+    }
 
     // Allowed tags and attributes
     $allowed = [
@@ -899,9 +920,27 @@ function sanitizeRichText($inputHtml) {
     };
 
     $walker($doc);
-    $out = $doc->saveHTML();
-    $out = preg_replace('~^<\?xml[^>]*>~i', '', (string)$out);
-    return (string)$out;
+
+    // saveHTML() puede devolver un documento HTML completo con <html><body> en algunos entornos.
+    // Extraemos solo el contenido del <body> si existe, o usamos saveHTML nodo a nodo.
+    $out = '';
+    $body = $doc->getElementsByTagName('body')->item(0);
+    if ($body) {
+        foreach ($body->childNodes as $child) {
+            $out .= $doc->saveHTML($child);
+        }
+    } else {
+        $out = $doc->saveHTML();
+        // Eliminar la declaración xml y posibles wrappers html/body
+        $out = preg_replace('~^<\?xml[^>]*>~i', '', (string)$out);
+        $out = preg_replace('~^<!DOCTYPE[^>]*>~i', '', $out);
+        $out = preg_replace('~<html[^>]*>|</html>|<body[^>]*>|</body>|<head[^>]*>.*?</head>~is', '', $out);
+    }
+
+    // DOMDocument::saveHTML convierte &nbsp; (\xc2\xa0) a &#160; — restaurar a &nbsp; para renderizado correcto
+    $out = str_replace(['&#160;', "\xc2\xa0"], '&nbsp;', (string)$out);
+
+    return trim((string)$out);
 }
 
 // Formatear fecha

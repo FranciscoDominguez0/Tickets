@@ -101,7 +101,7 @@ if ($statusIdClosed > 0) {
     $stmt = $mysqli->prepare($query);
     if ($stmt) {
         if ($search !== '') {
-            $stmt->bind_param('iissssii', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
+            $stmt->bind_param('iisssssii', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
         } else {
             $stmt->bind_param('iisii', $eid, $statusIdClosed, $monthFilter, $perPage, $offset);
         }

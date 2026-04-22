@@ -401,6 +401,10 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
         } else {
             $user_id = isset($_POST['user_id']) && is_numeric($_POST['user_id']) ? (int) $_POST['user_id'] : 0;
             $subject = trim($_POST['subject'] ?? '');
+            // Limpiar entidades HTML en el asunto (teclados móviles pueden insertar &nbsp; literales)
+            if (function_exists('cleanPlainText')) {
+                $subject = cleanPlainText($subject);
+            }
             $body = trim($_POST['body'] ?? '');
             $dept_id = isset($_POST['dept_id']) && is_numeric($_POST['dept_id']) ? (int) $_POST['dept_id'] : 0;
             $priority_id = isset($_POST['priority_id']) && is_numeric($_POST['priority_id']) ? (int) $_POST['priority_id'] : 2;
@@ -2982,7 +2986,7 @@ if (!$hasStaffDepartmentsTable && !empty($ticketView)) {
                                     </div>
                                 </div>
                                 
-                                <div class="ticket-subject" style="margin-top: 6px;"><?php echo html($t['subject']); ?></div>
+                                <div class="ticket-subject" style="margin-top: 6px;"><?php echo html(function_exists('cleanPlainText') ? cleanPlainText((string)($t['subject'] ?? '')) : (string)($t['subject'] ?? '')); ?></div>
                                 
                                 <div class="d-md-none mt-2 mb-1" style="font-size:0.85rem; font-weight:700; color:#334155;">
                                     <i class="bi bi-person-circle text-primary me-1"></i> <?php echo html($clientName); ?>
