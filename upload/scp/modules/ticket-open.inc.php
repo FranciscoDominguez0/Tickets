@@ -13,11 +13,220 @@ $open_user_query = $open_user_query ?? '';
 $open_user_results = $open_user_results ?? [];
 $open_hasTopics = $open_hasTopics ?? false;
 $open_topics = $open_topics ?? [];
+
+$userName = '';
+$userEmail = '';
+if ($preUser) {
+    $userName = trim($preUser['firstname'] . ' ' . $preUser['lastname']);
+    $userEmail = $preUser['email'];
+}
+
+$parts = preg_split('/\s+/', trim($userName));
+$i1 = strtoupper((string)($parts[0][0] ?? ''));
+$i2 = '';
+if (count($parts) > 1) {
+    $i2 = strtoupper((string)($parts[1][0] ?? ''));
+} elseif (strlen($userName) > 1) {
+    $i2 = strtoupper(substr($userName, 1, 1));
+}
+$initials = trim($i1 . $i2);
+if ($initials === '') $initials = 'U';
+$avatarColors = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+$avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 ?>
 
-<div class="ticket-open-wrap">
-    <a href="users.php<?php echo $selected_uid ? '?id=' . $selected_uid : ''; ?>" class="btn-back"><i class="bi bi-arrow-left"></i> Volver</a>
-    <h1>Abrir un nuevo Ticket</h1>
+<style>
+/* ── ticket-open.inc.php – Modern Professional Design ── */
+.open-ticket-shell { max-width: 880px; margin: 0 auto; }
+
+.open-ticket-shell .tickets-header {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 24px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.15);
+}
+.open-ticket-shell .tickets-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+.open-ticket-shell .tickets-header .sub {
+    margin-top: 4px;
+    opacity: 0.92;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Section cards */
+.open-section {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    position: relative;
+}
+.open-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #2563eb, #3b82f6);
+    border-radius: 14px 0 0 14px;
+}
+.open-section .section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #475569;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.open-section .section-title i {
+    color: #2563eb;
+    font-size: 1rem;
+}
+
+/* User card */
+.user-select-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+.user-select-card .user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: <?php echo html($avatarColor); ?>;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.user-select-card .user-info {
+    flex: 1;
+    min-width: 0;
+}
+.user-select-card .user-name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+.user-select-card .user-email {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+.user-select-card .btn-change {
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 6px 14px;
+}
+
+/* Form inputs */
+.open-section .form-label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.88rem;
+    margin-bottom: 6px;
+}
+.open-section .form-label .required {
+    color: #dc2626;
+}
+.open-section .form-select,
+.open-section .form-control {
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.92rem;
+    padding: 10px 14px;
+}
+.open-section .form-select:focus,
+.open-section .form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* Actions */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding-top: 8px;
+}
+.form-actions .btn-submit {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.form-actions .btn-submit:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+.form-actions .btn-cancel {
+    background: #fff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.form-actions .btn-cancel:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .open-section { padding: 16px; }
+    .user-select-card { flex-wrap: wrap; }
+    .form-actions { flex-direction: column; align-items: stretch; }
+    .form-actions .btn-submit,
+    .form-actions .btn-cancel { width: 100%; justify-content: center; }
+}
+</style>
+
+<div class="tickets-shell open-ticket-shell">
+    <div class="tickets-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1>Abrir nuevo Ticket</h1>
+                <div class="sub">Crea un ticket de soporte para un cliente</div>
+            </div>
+            <a href="tickets.php<?php echo $selected_uid ? '?id=' . $selected_uid : ''; ?>" class="btn-new" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.30); color: #fff; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
 
     <?php if (!empty($open_errors)): ?>
         <div class="alert alert-danger alert-dismissible fade show">
@@ -32,37 +241,38 @@ $open_topics = $open_topics ?? [];
         <input type="hidden" name="user_id" value="<?php echo $selected_uid ? (int)$selected_uid : ''; ?>">
         <input type="hidden" name="dept_id" id="open_dept_id" value="<?php echo (int)$selected_dept_id; ?>">
 
-        <!-- Usuarios y colaboradores -->
-        <div class="ticket-open-section">
-            <div class="section-title">Usuarios y colaboradores</div>
-            <div class="mb-3">
-                <label class="form-label">Usuario: <span class="required">*</span></label>
-                <div class="ticket-open-user-display">
-                    <span class="user-text" id="open_user_display">
-                        <?php
-                        if ($preUser) {
-                            echo html(trim($preUser['firstname'] . ' ' . $preUser['lastname']) . ' <' . $preUser['email'] . '>');
-                        }
-                        if (!$selected_uid) echo '<span class="text-muted">Seleccione un usuario</span>';
-                        ?>
-                    </span>
-                    <button type="button" class="btn btn-outline-secondary btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch">Cambiar</button>
-                </div>
-            </div>
+        <!-- Cliente -->
+        <div class="open-section">
+            <div class="section-title"><i class="bi bi-person"></i> Cliente</div>
             <div class="mb-0">
-                <label class="form-label">Aviso de Ticket:</label>
-                <select class="form-select form-control" disabled style="max-width: 280px;">
-                    <option>Alertar a todos</option>
-                </select>
+                <label class="form-label">Usuario solicitante <span class="required">*</span></label>
+                <div class="user-select-card">
+                    <div class="user-avatar" id="open_user_avatar"><?php echo html($initials); ?></div>
+                    <div class="user-info" id="open_user_display">
+                        <?php if ($preUser): ?>
+                            <div class="user-name"><?php echo html($userName); ?></div>
+                            <div class="user-email"><?php echo html($userEmail); ?></div>
+                        <?php else: ?>
+                            <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un usuario</div>
+                        <?php endif; ?>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Información y opciones del Ticket -->
-        <div class="ticket-open-section">
-            <div class="section-title">Información y opciones del Ticket</div>
+        <!-- Información del Ticket -->
+        <div class="open-section">
+            <div class="section-title"><i class="bi bi-ticket-perforated"></i> Información del Ticket</div>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Fuente del Ticket:</label>
+                    <label class="form-label">Asunto <span class="required">*</span></label>
+                    <input type="text" name="subject" class="form-control" placeholder="Describe brevemente el problema" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Fuente:</label>
                     <select class="form-select" name="source" id="open_source">
                         <option value="web">Web</option>
                         <option value="phone">Teléfono</option>
@@ -97,25 +307,27 @@ $open_topics = $open_topics ?? [];
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12">
-                    <label class="form-label">Asunto: <span class="required">*</span></label>
-                    <input type="text" name="subject" class="form-control" placeholder="Asunto del ticket" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
+                <div class="col-md-6">
+                    <label class="form-label">Aviso de Ticket:</label>
+                    <select class="form-select" disabled>
+                        <option>Alertar a todos</option>
+                    </select>
                 </div>
             </div>
         </div>
 
         <!-- Respuesta inicial -->
-        <div class="ticket-open-section">
-            <div class="section-title">Respuesta</div>
-            <p class="text-muted small mb-2">Respuesta inicial para el ticket (opcional).</p>
-            <div class="mb-3">
-                <textarea name="body" id="open_body" class="form-control" placeholder="Respuesta inicial para el ticket" rows="6"></textarea>
+        <div class="open-section">
+            <div class="section-title"><i class="bi bi-chat-left-text"></i> Respuesta inicial</div>
+            <p class="text-muted small mb-2">Describe el problema o deja una nota inicial (opcional).</p>
+            <div class="mb-0">
+                <textarea name="body" id="open_body" class="form-control" placeholder="Escribe aquí los detalles del ticket..." rows="5"></textarea>
             </div>
         </div>
 
-        <div class="d-flex gap-2 align-items-center">
-            <button type="submit" class="btn btn-submit"><i class="bi bi-plus-lg me-1"></i> Abrir Ticket</button>
-            <a href="tickets.php" class="btn btn-secondary">Cancelar</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-submit"><i class="bi bi-plus-lg"></i> Abrir Ticket</button>
+            <a href="tickets.php" class="btn btn-cancel"><i class="bi bi-x-lg"></i> Cancelar</a>
         </div>
     </form>
 </div>
@@ -182,51 +394,58 @@ $open_topics = $open_topics ?? [];
   })();
 </script>
 
-<!-- Modal: Buscar usuario (sin listar todos) -->
+<!-- Modal: Buscar usuario -->
 <div class="modal fade" id="modalUserSearch" tabindex="-1" aria-labelledby="modalUserSearchLabel" aria-hidden="true" data-open-default="<?php echo $open_user_query !== '' ? '1' : '0'; ?>">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalUserSearchLabel">Buscar o seleccionar un usuario</h5>
+    <div class="modal-content" style="border-radius: 16px; border: 1px solid #e2e8f0;">
+      <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
+        <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-primary"></i>Buscar usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
-        <div class="alert alert-info py-2 mb-3">Buscar usuarios por email, teléfono o nombre.</div>
+        <div class="alert alert-info py-2 mb-3" style="border-radius: 10px; font-size: 0.9rem;">
+            <i class="bi bi-info-circle me-1"></i> Busca usuarios por email, teléfono o nombre.
+        </div>
 
         <form method="get" action="tickets.php" class="mb-3">
           <input type="hidden" name="a" value="open">
           <div class="input-group">
-            <input type="text" class="form-control" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>">
-            <button class="btn btn-primary" type="submit">Buscar</button>
+            <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>">
+            <button class="btn btn-primary" type="submit" style="border-radius: 0 10px 10px 0; margin-left: 6px; background: linear-gradient(135deg,#2563eb,#1d4ed8); border: none;">Buscar</button>
           </div>
         </form>
 
         <?php if ($open_user_query !== '' && empty($open_user_results)): ?>
-          <div class="text-muted">No se encontraron usuarios con ese criterio.</div>
+          <div class="text-muted text-center py-3"><i class="bi bi-inbox" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No se encontraron usuarios.</div>
         <?php endif; ?>
 
         <?php if (!empty($open_user_results)): ?>
-          <div class="list-group">
-            <?php foreach ($open_user_results as $u): ?>
-              <div class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <strong><?php echo html(trim($u['firstname'] . ' ' . $u['lastname'])); ?></strong>
-                  &lt;<?php echo html($u['email']); ?>&gt;
-                  <?php if (!empty($u['phone'])): ?>
-                    <span class="text-muted ms-2"><?php echo html($u['phone']); ?></span>
-                  <?php endif; ?>
+          <div class="list-group" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+            <?php foreach ($open_user_results as $u):
+                $uParts = preg_split('/\s+/', trim($u['firstname'] . ' ' . $u['lastname']));
+                $ui1 = strtoupper((string)($uParts[0][0] ?? ''));
+                $ui2 = count($uParts) > 1 ? strtoupper((string)($uParts[1][0] ?? '')) : (strlen(trim($u['firstname'] . ' ' . $u['lastname'])) > 1 ? strtoupper(substr(trim($u['firstname'] . ' ' . $u['lastname']), 1, 1)) : '');
+                $uInitials = trim($ui1 . $ui2) ?: 'U';
+                $uColor = $avatarColors[($u['id'] ?? 0) % count($avatarColors)];
+            ?>
+              <div class="list-group-item d-flex justify-content-between align-items-center" style="border: none; border-bottom: 1px solid #f1f5f9; padding: 12px 16px;">
+                <div class="d-flex align-items-center gap-3">
+                  <div style="width: 36px; height: 36px; border-radius: 50%; background: <?php echo html($uColor); ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;"><?php echo html($uInitials); ?></div>
+                  <div>
+                    <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;"><?php echo html(trim($u['firstname'] . ' ' . $u['lastname'])); ?></div>
+                    <div style="font-size: 0.82rem; color: #64748b;"><?php echo html($u['email']); ?><?php if (!empty($u['phone'])): ?> · <?php echo html($u['phone']); ?><?php endif; ?></div>
+                  </div>
                 </div>
-                <a class="btn btn-sm btn-outline-primary" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
+                <a class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-weight: 600;" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
               </div>
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      <div class="modal-footer" style="border-top: 1px solid #f1f5f9;">
+        <button type="button" class="btn btn-secondary" style="border-radius: 10px;" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
-  </div>
-</div>
   </div>
 </div>
