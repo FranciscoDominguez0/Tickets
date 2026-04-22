@@ -131,11 +131,13 @@
             }
         }
 
-        function activate(tabKey) {
+        function activate(tabKey, preventScroll) {
             const targetSel = tabKey === 'tickets' ? '#org-tickets' : '#org-users';
 
-            const beforeTop = getTabsTop();
-            stabilizeScroll(beforeTop, function () {
+            // Comportamiento de estabilización de scroll (solo al hacer click en tabs, no al cargar)
+            const beforeTop = preventScroll ? null : getTabsTop();
+            
+            function doToggle() {
                 links.forEach(function (a) {
                     try {
                         const href = (a.getAttribute('href') || '').toString();
@@ -152,7 +154,13 @@
                     p.classList.toggle('show', isTarget);
                     p.classList.toggle('active', isTarget);
                 });
-            });
+            }
+
+            if (preventScroll) {
+                doToggle();
+            } else {
+                stabilizeScroll(beforeTop, doToggle);
+            }
         }
 
         function getTabFromUrl(href) {
@@ -165,8 +173,8 @@
             }
         }
 
-        // Activar según URL actual (por si se entra directo con ?t=tickets)
-        activate(getTabFromUrl(window.location.href));
+        // Activar según URL actual (AL CARGAR LA PÁGINA) -> Pasamos true para evitar que baje el scroll
+        activate(getTabFromUrl(window.location.href), true);
 
         links.forEach(function (a) {
             a.addEventListener('click', function (e) {
@@ -174,7 +182,7 @@
                 if (!href) return;
                 const tabKey = getTabFromUrl(href);
                 e.preventDefault();
-                activate(tabKey);
+                activate(tabKey, false); // Permitir estabilizar scroll al clickear
                 try {
                     const u = new URL(href, window.location.href);
                     u.hash = '';
