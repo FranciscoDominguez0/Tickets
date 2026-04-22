@@ -979,7 +979,7 @@ if ($ticketClientSignaturePath !== '') {
             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
             <div class="mb-3">
                 <label class="form-label fw-bold">Respuesta</label>
-                <textarea name="body" id="reply_body" class="form-control" placeholder="Empezar escribiendo su respuesta aquí. Usa respuestas predefinidas del menú desplegable de arriba si lo desea."></textarea>
+                <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
             </div>
             <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
                 <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
@@ -1288,7 +1288,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var placeholderText = isMobile 
             ? 'Empezar escribiendo su respuesta aquí...' 
-            : 'Empezar escribiendo su respuesta aquí. Usa respuestas predefinidas del menú desplegable de arriba si lo desea.';
+            : 'Escribe tu respuesta aquí...';
 
         jQuery('#reply_body').summernote({
             height: isMobile ? 160 : 260,

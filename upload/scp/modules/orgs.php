@@ -278,6 +278,58 @@ if (!empty($_GET['org'])) {
             gap: 12px;
             margin: 0;
         }
+        .org-detail-container .btn-edit-premium {
+            background-color: transparent;
+            color: #3b82f6;
+            border: 2px solid #bfdbfe;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 99px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.05);
+        }
+        .org-detail-container .btn-edit-premium:hover {
+            background-color: #eff6ff;
+            border-color: #93c5fd;
+            color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .org-detail-container .btn-delete-premium {
+            background-color: transparent;
+            color: #ef4444;
+            border: 2px solid #fecaca;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 99px;
+            transition: all 0.3s ease;
+        }
+        .org-detail-container .btn-delete-premium:hover {
+            background-color: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+            transform: translateY(-1px);
+        }
+        .org-detail-container .org-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 99px;
+            transition: all 0.2s ease;
+        }
+        .org-detail-container .org-back-link:hover {
+            color: #0f172a;
+            background: #e2e8f0;
+        }
         
         /* Stats Cards Desktop */
         .org-detail-container .org-stat-card {
@@ -724,12 +776,12 @@ if (!empty($_GET['org'])) {
                     <?php echo html($orgInfo['name']); ?>
                 </h1>
             </div>
-            <div class="user-view-actions">
-                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editOrgModal">
-                    <i class="bi bi-pencil"></i> Editar
+            <div class="user-view-actions" style="display:flex; gap:10px;">
+                <button type="button" class="btn btn-edit-premium" data-bs-toggle="modal" data-bs-target="#editOrgModal">
+                    <i class="bi bi-pencil-square" style="margin-right:4px;"></i> Editar
                 </button>
-                <button type="button" class="btn btn-danger btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
-                    <i class="bi bi-trash"></i> Eliminar organización
+                <button type="button" class="btn btn-delete-premium btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
+                    <i class="bi bi-trash3" style="margin-right:4px;"></i> Eliminar organización
                 </button>
             </div>
         </div>
