@@ -40,6 +40,26 @@ if (!$report) {
     die("Reporte no encontrado o no pertenece a esta empresa.");
 }
 
+// ── Obtener items del reporte ──────────────────────────────────────────────
+$reportItems = [];
+$total = 0.00;
+
+$hasItemsTable = dbTableExists('ticket_report_items');
+if ($hasItemsTable) {
+    $itStmt = $mysqli->prepare("SELECT description, price FROM ticket_report_items WHERE report_id = ? ORDER BY id ASC");
+    $itStmt->bind_param('i', $reportId);
+    $itStmt->execute();
+    $itRes = $itStmt->get_result();
+    while ($it = $itRes->fetch_assoc()) {
+        $reportItems[] = $it;
+        $total += (float)$it['price'];
+    }
+}
+
+if (count($reportItems) === 0) {
+    // Compatibilidad legacy: usar final_price como total si no hay items
+    $total = (float) preg_replace('/[^0-9.]/', '', str_replace(',', '.', (string)($report['final_price'] ?? '0')));
+}
 
 // Obtener settings de empresa
 $companyName = trim((string)getAppSetting('company.name', ''));
@@ -98,10 +118,27 @@ $closeDate = htmlspecialchars(date('d/m/Y H:i', strtotime($report['closed'])));
 
 $workDesc = nl2br(htmlspecialchars($report['work_description']));
 $obs = !empty($report['observations']) ? nl2br(htmlspecialchars($report['observations'])) : '— Ninguna observación extra. —';
-$price = !empty($report['final_price']) ? htmlspecialchars($report['final_price']) : 'N/A';
-$appName = htmlspecialchars($companyName); // Use dynamic company name
+$appName = htmlspecialchars($companyName);
 $webSafe = htmlspecialchars(str_replace(['http://', 'https://'], '', $companyWebsite));
 $nowDate = date('d M Y - h:i A');
+
+// Construir HTML de items
+$itemsHtml = '';
+if (count($reportItems) > 0) {
+    $itemsHtml .= '<table class="materials-table"><thead><tr><th>Descripción</th><th style="text-align:right; width:120px;">Precio</th></tr></thead><tbody>';
+    foreach ($reportItems as $it) {
+        $itemsHtml .= '<tr><td>' . htmlspecialchars($it['description']) . '</td><td style="text-align:right;">$' . number_format((float)$it['price'], 2) . '</td></tr>';
+    }
+    $itemsHtml .= '</tbody></table>';
+    $itemsHtml .= '<div class="price-wrapper">';
+    $itemsHtml .= '<div class="price-box">Total del Servicio: $' . number_format($total, 2) . '</div>';
+    $itemsHtml .= '</div>';
+} else {
+    // Legacy fallback
+    $price = !empty($report['final_price']) ? htmlspecialchars($report['final_price']) : 'N/A';
+    $itemsHtml .= '<div class="box">' . $workDesc . '</div>';
+    $itemsHtml .= '<div class="price-wrapper"><div class="price-box">Total del Servicio: ' . $price . '</div></div>';
+}
 
 // 3. Render HTML
 $html = <<<HTML
@@ -237,10 +274,8 @@ $html .= <<<HTML
         </div>
 
         <!-- DETALLES DEL TRABAJO -->
-        <h3 class="section-title">Trabajo Realizado</h3>
-        <div class="box">
-            {$workDesc}
-        </div>
+        <h3 class="section-title">Detalle de Trabajos Realizados</h3>
+        {$itemsHtml}
 
 HTML;
 $html .= <<<HTML
@@ -248,11 +283,6 @@ $html .= <<<HTML
         <h3 class="section-title">Observaciones Adicionales</h3>
         <div class="box" style="margin-bottom: 10px;">
             {$obs}
-        </div>
-
-        <!-- PRECIO -->
-        <div class="price-wrapper">
-            <div class="price-box">Total del Servicio: {$price}</div>
         </div>
 
         <!-- FIRMAS -->

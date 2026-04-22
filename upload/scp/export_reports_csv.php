@@ -27,10 +27,11 @@ $search = trim((string)($_GET['q']     ?? ''));
 $statusIdClosed = getClosedStatusId($mysqli);
 
 $data = fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search);
+$itemData = fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search);
 $fullMonthName = getSpanishMonthName($month);
 
 // ── Generación de Excel ────────────────────────────────────────────────────
-generatePremiumExcel($data, $month, $fullMonthName);
+generatePremiumExcel($data, $itemData, $month, $fullMonthName);
 
 // ── Funciones Auxiliares ───────────────────────────────────────────────────
 
@@ -75,7 +76,40 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
     }
     $stmt->execute();
     $res = $stmt->get_result();
-    
+
+    $rows = [];
+    while ($row = $res->fetch_assoc()) { $rows[] = $row; }
+    return $rows;
+}
+
+function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
+    $searchLike = '%' . $search . '%';
+    $searchWhere = $search !== ''
+        ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
+        : '';
+
+    $sql = "SELECT t.ticket_number, i.description, i.price
+            FROM ticket_report_items i
+            JOIN ticket_reports r ON i.report_id = r.id
+            JOIN tickets t ON r.ticket_id = t.id
+            JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
+            LEFT JOIN staff s ON t.staff_id = s.id
+            LEFT JOIN users u ON t.user_id = u.id
+            WHERE t.empresa_id = ?
+              AND t.status_id = ?
+              AND DATE_FORMAT(t.closed,'%Y-%m') = ?
+              {$searchWhere}
+            ORDER BY t.closed DESC, i.id ASC";
+
+    $stmt = $mysqli->prepare($sql);
+    if ($search !== '') {
+        $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+    } else {
+        $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+
     $rows = [];
     while ($row = $res->fetch_assoc()) { $rows[] = $row; }
     return $rows;
@@ -86,17 +120,17 @@ function getSpanishMonthName($month) {
     return str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($month.'-01')));
 }
 
-function generatePremiumExcel($rows, $monthKey, $monthName) {
+function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $spreadsheet = new Spreadsheet();
     $ws = $spreadsheet->getActiveSheet();
     $ws->setTitle('Reporte Detallado');
-    
+
     // Paleta de colores Vigitec
     $c = [
-        'primary'    => '0A2463', // Azul Marino Profundo
-        'secondary'  => '247BA0', // Azul Océano
-        'accent'     => 'FB3640', // Rojo Vigitec (para énfasis)
-        'gold'       => 'D4AF37', // Dorado para bordes de lujo
+        'primary'    => '0A2463',
+        'secondary'  => '247BA0',
+        'accent'     => 'FB3640',
+        'gold'       => 'D4AF37',
         'white'      => 'FFFFFF',
         'light_bg'   => 'F8F9FA',
         'border'     => 'CED4DA',
@@ -117,8 +151,6 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
     $ws->getColumnDimension('F')->setWidth(70); // Descripción
 
     // ── LOGO Y CABECERA ────────────────────────────────────────────────────
-    
-    // Altura de cabeceras
     $ws->getRowDimension(1)->setRowHeight(40);
     $ws->getRowDimension(2)->setRowHeight(40);
     $ws->getRowDimension(3)->setRowHeight(30);
@@ -131,7 +163,7 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
             $drawing->setName('Logo Vigitec');
             $drawing->setDescription('Logo');
             $drawing->setPath($logoPath);
-            $drawing->setHeight(70); // Ajustar altura
+            $drawing->setHeight(70);
             $drawing->setCoordinates('A1');
             $drawing->setOffsetX(10);
             $drawing->setOffsetY(5);
@@ -167,15 +199,15 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
     // Cabeceras de Tabla
     $ws->getRowDimension(5)->setRowHeight(35);
     $headers = [
-        'A5'=>'TICKET #', 
-        'B5'=>'DEPARTAMENTO', 
-        'C5'=>'TÉCNICO RESPONSABLE', 
-        'D5'=>'FECHA/HORA CIERRE', 
-        'E5'=>'PRECIO FINAL', 
+        'A5'=>'TICKET #',
+        'B5'=>'DEPARTAMENTO',
+        'C5'=>'TÉCNICO RESPONSABLE',
+        'D5'=>'FECHA/HORA CIERRE',
+        'E5'=>'PRECIO FINAL',
         'F5'=>'DESCRIPCIÓN DEL TRABAJO'
     ];
     foreach($headers as $cell => $val) { $ws->setCellValue($cell, $val); }
-    
+
     $ws->getStyle('A5:F5')->applyFromArray([
         'font' => ['bold'=>true,'size'=>11,'color'=>['argb'=>'FF'.$c['white']]],
         'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
@@ -207,7 +239,7 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
             'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
             'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
         ]);
-        
+
         $ws->getStyle("A$currentRow")->getFont()->setBold(true)->getColor()->setARGB('FF'.$c['secondary']);
         $ws->getStyle("F$currentRow")->getAlignment()->setWrapText(true);
         $currentRow++;
@@ -219,7 +251,7 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
     $ws->setCellValue("A$currentRow", 'SUMATORIA TOTAL DEL PERIODO ');
     $ws->setCellValue("E$currentRow", $totalAmount);
     $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
-    
+
     $ws->getStyle("A$currentRow:E$currentRow")->applyFromArray([
         'font' => ['bold'=>true,'size'=>12,'color'=>['argb'=>'FF'.$c['white']]],
         'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
@@ -232,6 +264,9 @@ function generatePremiumExcel($rows, $monthKey, $monthName) {
 
     // Segunda Hoja: Análisis por Área
     setupAnalysisSheet($spreadsheet, $rows, $monthName, $c);
+
+    // Tercera Hoja: Detalle por Item
+    setupDetailSheet($spreadsheet, $itemRows, $monthName, $c);
 
     $spreadsheet->setActiveSheetIndex(0);
 
@@ -287,11 +322,73 @@ function setupAnalysisSheet($spreadsheet, $rows, $monthName, $c) {
         $ws->setCellValue("B$rowNum", $val['count']);
         $ws->setCellValue("C$rowNum", $val['total']);
         $ws->getStyle("C$rowNum")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
-        
+
         $ws->getStyle("A$rowNum:C$rowNum")->applyFromArray([
             'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFDDDDDD']]],
             'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER]
         ]);
         $rowNum++;
     }
+}
+
+function setupDetailSheet($spreadsheet, $itemRows, $monthName, $c) {
+    $ws = $spreadsheet->createSheet();
+    $ws->setTitle('Detalle por Item');
+    $ws->setShowGridlines(false);
+
+    $ws->getColumnDimension('A')->setWidth(18);
+    $ws->getColumnDimension('B')->setWidth(60);
+    $ws->getColumnDimension('C')->setWidth(18);
+
+    $ws->mergeCells('A1:C1');
+    $ws->setCellValue('A1', 'DETALLE DE TRABAJOS REALIZADOS — ' . mb_strtoupper($monthName, 'UTF-8'));
+    $ws->getStyle('A1')->applyFromArray([
+        'font' => ['bold'=>true,'size'=>14,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
+    ]);
+
+    $ws->getRowDimension(3)->setRowHeight(25);
+    $ws->setCellValue('A3', 'TICKET #');
+    $ws->setCellValue('B3', 'DESCRIPCIÓN DEL TRABAJO');
+    $ws->setCellValue('C3', 'PRECIO (USD)');
+    $ws->getStyle('A3:C3')->applyFromArray([
+        'font' => ['bold'=>true,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
+        'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER],
+    ]);
+
+    $rowNum = 4;
+    $sumTotal = 0.0;
+    foreach ($itemRows as $r) {
+        $price = (float)($r['price'] ?? 0);
+        $sumTotal += $price;
+
+        $ws->setCellValue("A$rowNum", $r['ticket_number']);
+        $ws->setCellValue("B$rowNum", $r['description']);
+        $ws->setCellValue("C$rowNum", $price);
+        $ws->getStyle("C$rowNum")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+
+        $fill = ($rowNum % 2 === 0) ? 'FFF8F9FA' : 'FFFFFFFF';
+        $ws->getStyle("A$rowNum:C$rowNum")->applyFromArray([
+            'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>$fill]],
+            'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
+            'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
+        ]);
+        $rowNum++;
+    }
+
+    // Fila de suma total
+    $ws->getRowDimension($rowNum)->setRowHeight(30);
+    $ws->mergeCells("A$rowNum:B$rowNum");
+    $ws->setCellValue("A$rowNum", 'TOTAL DE TRABAJOS REALIZADOS');
+    $ws->setCellValue("C$rowNum", $sumTotal);
+    $ws->getStyle("C$rowNum")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+
+    $ws->getStyle("A$rowNum:C$rowNum")->applyFromArray([
+        'font' => ['bold'=>true,'size'=>12,'color'=>['argb'=>'FF'.$c['white']]],
+        'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
+        'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
+    ]);
+    $ws->getStyle("A$rowNum")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 }
