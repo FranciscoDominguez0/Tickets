@@ -8,7 +8,7 @@ $deptFilter = isset($_GET['did']) && is_numeric($_GET['did']) ? (int)$_GET['did'
 $sort = strtolower($_GET['sort'] ?? 'name');
 $order = strtoupper($_GET['order'] ?? 'ASC');
 $pageNum = max(1, (int)($_GET['p'] ?? 1));
-$perPage = 10;
+$perPage = 20;
 
 $eid = empresaId();
 
@@ -30,7 +30,6 @@ if (!in_array($order, $validOrders)) {
 }
 
 // Construir query base
-// Check if staff_departments table exists
 $hasStaffDepartmentsTable = false;
 if (isset($mysqli) && $mysqli) {
     try {
@@ -61,7 +60,7 @@ if ($hasStaffDepartmentsTable) {
         LEFT JOIN staff_departments sd ON sd.staff_id = s.id
         LEFT JOIN departments d ON d.id = sd.dept_id
         LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
-        WHERE s.empresa_id = ?
+        WHERE s.empresa_id = ? AND s.role != 'superadmin'
     ";
 } else {
     $sql = "
@@ -82,7 +81,7 @@ if ($hasStaffDepartmentsTable) {
         FROM staff s
         LEFT JOIN departments d ON s.dept_id = d.id
         LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
-        WHERE s.empresa_id = ?
+        WHERE s.empresa_id = ? AND s.role != 'superadmin'
     ";
 }
 
@@ -94,20 +93,17 @@ $params[] = $eid;
 // Aplicar filtro de búsqueda
 if ($search) {
     if (is_numeric($search)) {
-        // Búsqueda por ID
         $sql .= " AND s.id = ?";
         $params[] = (int)$search;
         $types .= 'i';
     } elseif (strpos($search, '@') !== false && filter_var($search, FILTER_VALIDATE_EMAIL)) {
-        // Búsqueda por email exacto
         $sql .= " AND s.email = ?";
         $params[] = $search;
         $types .= 's';
     } else {
-        // Búsqueda por nombre, apellido o email (parcial)
         $sql .= " AND (
-            s.firstname LIKE ? OR 
-            s.lastname LIKE ? OR 
+            s.firstname LIKE ? OR
+            s.lastname LIKE ? OR
             s.email LIKE ? OR
             s.username LIKE ?
         )";
@@ -133,8 +129,8 @@ if ($deptFilter > 0) {
     }
 }
 
-// Conteo total (para paginación) - mismo filtro pero sin JOIN/GROUP BY
-$countSql = "SELECT COUNT(*) AS total FROM staff s WHERE s.empresa_id = ?";
+// Conteo total
+$countSql = "SELECT COUNT(*) AS total FROM staff s WHERE s.empresa_id = ? AND s.role != 'superadmin'";
 $countParams = [$eid];
 $countTypes = 'i';
 if ($search) {
@@ -179,14 +175,14 @@ $totalPages = $totalRows > 0 ? (int)ceil($totalRows / $perPage) : 1;
 if ($pageNum > $totalPages) $pageNum = $totalPages;
 $offset = ($pageNum - 1) * $perPage;
 
-// Agrupar por agente (evita duplicados cuando pertenece a varios departamentos)
+// Agrupar
 if ($hasStaffDepartmentsTable) {
     $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login";
 } else {
     $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login, d.id, d.name";
 }
 
-// Aplicar ordenamiento
+// Ordenamiento
 $sortColumns = [
     'name' => 's.firstname, s.lastname',
     'email' => 's.email',
@@ -196,17 +192,14 @@ $sortColumns = [
     'created' => 's.created',
     'last_login' => 's.last_login'
 ];
-
 $orderBy = $sortColumns[$sort] ?? 's.firstname, s.lastname';
 $sql .= " ORDER BY $orderBy $order";
 
-// Paginación
 $sql .= " LIMIT ? OFFSET ?";
 $params[] = $perPage;
 $params[] = $offset;
 $types .= 'ii';
 
-// Ejecutar query
 $stmt = $mysqli->prepare($sql);
 if ($stmt) {
     if (!empty($params) && !empty($types)) {
@@ -220,7 +213,7 @@ while ($row = $result->fetch_assoc()) {
     $agents[] = $row;
 }
 
-// Obtener lista de departamentos para el filtro
+// Lista de departamentos
 $deptSql = "SELECT id, name FROM departments WHERE is_active = 1";
 $deptTypes = '';
 $deptParams = [];
@@ -242,6 +235,13 @@ while ($dept = $deptResult->fetch_assoc()) {
     $departments[] = $dept;
 }
 
+// Helper badges
+$roleBadges = [
+    'admin' => ['bg' => 'bg-danger', 'label' => 'Admin'],
+    'supervisor' => ['bg' => 'bg-warning text-dark', 'label' => 'Supervisor'],
+    'agent' => ['bg' => 'bg-info text-dark', 'label' => 'Agente'],
+];
+
 // Generar URL para ordenamiento
 $baseUrl = 'directory.php?';
 $queryParams = [];
@@ -250,313 +250,382 @@ if ($deptFilter) $queryParams['did'] = $deptFilter;
 $currentSort = $sort;
 $currentOrder = $order;
 $nextOrder = $order === 'ASC' ? 'DESC' : 'ASC';
+
+$sortIcons = [];
+foreach ($validSorts as $sKey) {
+    $sortIcons[$sKey] = 'bi-arrow-down-up';
+    if ($currentSort === $sKey) {
+        $sortIcons[$sKey] = $currentOrder === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down';
+    }
+}
+
+function sortLink($field, $label, $queryParams, $currentSort, $nextOrder) {
+    $params = array_merge($queryParams, ['sort' => $field, 'order' => ($currentSort === $field ? $nextOrder : 'ASC')]);
+    return '<a href="directory.php?' . http_build_query($params) . '" class="text-decoration-none" style="color:inherit;">' . $label . '</a>';
+}
+
+$showStart = ($totalRows > 0) ? ($offset + 1) : 0;
+$showEnd = min($offset + count($agents), $totalRows);
+
+$basePaging = $queryParams;
+$basePaging['sort'] = $currentSort;
+$basePaging['order'] = $currentOrder;
 ?>
 
-<!-- Formulario de búsqueda y filtros -->
-<div class="mb-4">
-    <form method="GET" action="directory.php" class="d-flex align-items-center gap-3 flex-wrap" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <div class="flex-grow-1" style="min-width: 200px;">
-            <input type="text" 
-                   name="q" 
-                   class="form-control form-control-sm" 
-                   placeholder="Buscar por nombre, email o username..." 
-                   value="<?php echo html($search); ?>">
-        </div>
-        <div style="min-width: 200px;">
-            <select name="did" class="form-select form-select-sm">
-                <option value="0">Todos los departamentos</option>
-                <?php foreach ($departments as $dept): ?>
-                    <option value="<?php echo $dept['id']; ?>" <?php echo $deptFilter == $dept['id'] ? 'selected' : ''; ?>>
-                        <?php echo html($dept['name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div>
-            <button type="submit" class="btn btn-primary btn-sm">
-                <i class="bi bi-search"></i> Buscar
-            </button>
-            <?php if ($search || $deptFilter): ?>
-                <a href="directory.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
-            <?php endif; ?>
-        </div>
-    </form>
-</div>
+<style>
+/* ── Header azul difuminado profesional ── */
+.tickets-shell .tickets-header {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 28px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.15);
+}
+.tickets-shell .tickets-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+.tickets-shell .tickets-header .sub {
+    margin-top: 6px;
+    opacity: 0.92;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
 
-<!-- Título -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Directorio de Agentes</h2>
-    <span class="text-muted">
-        <?php echo (int)$totalRows; ?> agente(s) encontrado(s)
-    </span>
-</div>
+/* ── Toolbar responsive ── */
+@media (max-width: 576px) {
+    .tickets-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .tickets-filters,
+    .tickets-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: auto !important;
+    }
+    .tickets-filters .form-select {
+        width: 100%;
+    }
+}
 
-<!-- Vista móvil (cards) -->
-<?php if (!empty($agents)): ?>
-    <div class="directory-mobile d-md-none">
-        <?php foreach ($agents as $agent): ?>
-            <?php
-            $fullName = trim((string)($agent['firstname'] ?? '') . ' ' . (string)($agent['lastname'] ?? ''));
-            if ($fullName === '') $fullName = (string)($agent['email'] ?? 'Agente');
-            $email = (string)($agent['email'] ?? '');
-            $username = (string)($agent['username'] ?? '');
-            $deptName = (string)($agent['dept_name'] ?? '');
-            $isActive = (int)($agent['is_active'] ?? 0) === 1;
-            $totalTickets = (int)($agent['total_tickets'] ?? 0);
-            $openTickets = (int)($agent['open_tickets'] ?? 0);
-            $role = (string)($agent['role'] ?? '');
+/* ── Mobile table cards ── */
+@media (max-width: 767px) {
+    #agentsTable thead { display: none; }
+    #agentsTable tbody tr {
+        display: block;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    #agentsTable tbody td {
+        display: block;
+        border: none;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    #agentsTable tbody td:last-child {
+        text-align: right;
+        margin-top: 10px;
+    }
+    .agent-mobile-meta {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+    .agent-mobile-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #2563eb;
+        text-decoration: none;
+    }
+}
+@media (min-width: 768px) {
+    .agent-mobile-meta { display: none !important; }
+    .agent-mobile-action { display: none !important; }
+}
+</style>
 
-            $parts = preg_split('/\s+/', trim($fullName));
-            $i1 = strtoupper((string)($parts[0][0] ?? ''));
-            $i2 = '';
-            if (count($parts) > 1) {
-                $i2 = strtoupper((string)($parts[1][0] ?? ''));
-            } elseif (strlen($fullName) > 1) {
-                $i2 = strtoupper(substr($fullName, 1, 1));
-            }
-            $initials = trim($i1 . $i2);
-            if ($initials === '') $initials = 'A';
-
-            $roleBadges = [
-                'admin' => 'bg-danger',
-                'supervisor' => 'bg-warning text-dark',
-                'agent' => 'bg-info text-dark',
-            ];
-            $roleLabels = [
-                'admin' => 'Admin',
-                'supervisor' => 'Supervisor',
-                'agent' => 'Agente',
-            ];
-            $badgeClass = $roleBadges[$role] ?? 'bg-secondary';
-            $roleLabel = $roleLabels[$role] ?? ($role !== '' ? ucfirst($role) : 'Agente');
-            ?>
-            <div class="directory-card">
-                <div class="directory-card-top">
-                    <div class="directory-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
-                    <div class="directory-main">
-                        <div class="directory-name-row">
-                            <div class="directory-name"><?php echo html($fullName); ?></div>
-                            <span class="badge <?php echo html($isActive ? 'bg-success' : 'bg-secondary'); ?>">
-                                <?php echo $isActive ? 'Activo' : 'Inactivo'; ?>
-                            </span>
-                        </div>
-                        <div class="directory-sub">
-                            <?php if ($username !== ''): ?>
-                                <span class="directory-user">@<?php echo html($username); ?></span>
-                            <?php endif; ?>
-                            <?php if ($deptName !== ''): ?>
-                                <span class="directory-dot" aria-hidden="true">·</span>
-                                <span class="directory-dept"><?php echo html($deptName); ?></span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="directory-badges">
-                            <span class="badge <?php echo html($badgeClass); ?>"><?php echo html($roleLabel); ?></span>
-                            <?php if ($openTickets > 0): ?>
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                                    <?php echo (int)$openTickets; ?> abierto(s)
-                                </span>
-                            <?php else: ?>
-                                <span class="badge bg-light text-muted border">Sin abiertos</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="directory-kpis">
-                    <div class="directory-kpi">
-                        <div class="kpi-label">Tickets</div>
-                        <div class="kpi-value"><?php echo (int)$totalTickets; ?></div>
-                    </div>
-                    <div class="directory-kpi">
-                        <div class="kpi-label">Último acceso</div>
-                        <div class="kpi-value kpi-muted"><?php echo $agent['last_login'] ? html(formatDate($agent['last_login'])) : 'Nunca'; ?></div>
-                    </div>
-                </div>
-
-                <div class="directory-actions">
-                    <?php if ($email !== ''): ?>
-                        <a class="btn btn-outline-primary btn-sm flex-grow-1" href="mailto:<?php echo html($email); ?>">
-                            <i class="bi bi-envelope"></i> Contactar
-                        </a>
-                    <?php else: ?>
-                        <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" disabled>
-                            <i class="bi bi-envelope"></i> Sin correo
-                        </button>
-                    <?php endif; ?>
-                    <a class="btn btn-outline-secondary btn-sm" href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['q' => $email !== '' ? $email : $username])); ?>" title="Buscar este agente">
-                        <i class="bi bi-search"></i>
-                    </a>
-                </div>
+<div class="tickets-shell">
+    <div class="tickets-header">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h1>Directorio de Agentes</h1>
+                <div class="sub"><?php echo (int)$totalRows; ?> agente<?php echo $totalRows !== 1 ? 's' : ''; ?> encontrado<?php echo $totalRows !== 1 ? 's' : ''; ?></div>
             </div>
-        <?php endforeach; ?>
+        </div>
     </div>
-<?php endif; ?>
 
-<!-- Tabla de agentes -->
-<?php if (empty($agents)): ?>
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> No se encontraron agentes con los criterios de búsqueda especificados.
+    <!-- Toolbar: filtros y búsqueda -->
+    <div class="tickets-panel" style="margin-bottom: 16px;">
+        <div class="tickets-toolbar">
+            <div class="tickets-filters">
+                <select name="did" class="form-select form-select-sm" id="deptSelect" style="min-width: 200px; font-weight: 600; color: #475569;">
+                    <option value="0">Todos los departamentos</option>
+                    <?php foreach ($departments as $dept): ?>
+                        <option value="<?php echo $dept['id']; ?>" <?php echo $deptFilter == $dept['id'] ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="tickets-search">
+                <form method="GET" action="" class="input-group">
+                    <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" style="border-left: none; border-radius: 0;" placeholder="Buscar nombre, email o username..." value="<?php echo html($search); ?>" autocomplete="off">
+                    <?php if ($deptFilter > 0): ?><input type="hidden" name="did" value="<?php echo (int)$deptFilter; ?>"><?php endif; ?>
+                    <?php if ($currentSort !== 'name' || $currentOrder !== 'ASC'): ?>
+                        <input type="hidden" name="sort" value="<?php echo html($currentSort); ?>">
+                        <input type="hidden" name="order" value="<?php echo html($currentOrder); ?>">
+                    <?php endif; ?>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0 10px 10px 0; background: linear-gradient(135deg,#2563eb,#1d4ed8); border: none;"><i class="bi bi-search"></i></button>
+                    <?php if ($search !== '' || $deptFilter > 0): ?>
+                        <a href="directory.php" class="btn btn-outline-secondary" style="margin-left: 6px; border-radius: 10px;"><i class="bi bi-x-lg"></i></a>
+                    <?php endif; ?>
+                </form>
+            </div>
+        </div>
     </div>
-<?php else: ?>
-    <div class="table-responsive d-none d-md-block" style="background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
+
+    <!-- Lista de agentes -->
+    <div class="tickets-table-wrap">
+        <table class="table table-hover tickets-table mb-0" id="agentsTable">
+            <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
-                    <th width="20%">
-                        <a href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => 'name', 'order' => $currentSort === 'name' ? $nextOrder : 'ASC'])); ?>" 
-                           class="text-decoration-none text-dark">
-                            Nombre
-                            <?php if ($currentSort === 'name'): ?>
-                                <i class="bi bi-arrow-<?php echo $currentOrder === 'ASC' ? 'up' : 'down'; ?>"></i>
-                            <?php endif; ?>
-                        </a>
+                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">
+                        <?php echo sortLink('name', 'Agente', $queryParams, $currentSort, $nextOrder); ?>
+                        <?php if ($currentSort === 'name'): ?> <i class="bi <?php echo $currentOrder === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down'; ?>" style="font-size:0.7rem; color:#2563eb;"></i><?php endif; ?>
                     </th>
-                    <th width="20%">
-                        <a href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => 'email', 'order' => $currentSort === 'email' ? $nextOrder : 'ASC'])); ?>" 
-                           class="text-decoration-none text-dark">
-                            Email
-                            <?php if ($currentSort === 'email'): ?>
-                                <i class="bi bi-arrow-<?php echo $currentOrder === 'ASC' ? 'up' : 'down'; ?>"></i>
-                            <?php endif; ?>
-                        </a>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <?php echo sortLink('dept', 'Departamento', $queryParams, $currentSort, $nextOrder); ?>
+                        <?php if ($currentSort === 'dept'): ?> <i class="bi <?php echo $currentOrder === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down'; ?>" style="font-size:0.7rem; color:#2563eb;"></i><?php endif; ?>
                     </th>
-                    <th width="15%">
-                        <a href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => 'dept', 'order' => $currentSort === 'dept' ? $nextOrder : 'ASC'])); ?>" 
-                           class="text-decoration-none text-dark">
-                            Departamento
-                            <?php if ($currentSort === 'dept'): ?>
-                                <i class="bi bi-arrow-<?php echo $currentOrder === 'ASC' ? 'up' : 'down'; ?>"></i>
-                            <?php endif; ?>
-                        </a>
+                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <?php echo sortLink('role', 'Rol', $queryParams, $currentSort, $nextOrder); ?>
+                        <?php if ($currentSort === 'role'): ?> <i class="bi <?php echo $currentOrder === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down'; ?>" style="font-size:0.7rem; color:#2563eb;"></i><?php endif; ?>
                     </th>
-                    <th width="10%">
-                        <a href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => 'role', 'order' => $currentSort === 'role' ? $nextOrder : 'ASC'])); ?>" 
-                           class="text-decoration-none text-dark">
-                            Rol
-                            <?php if ($currentSort === 'role'): ?>
-                                <i class="bi bi-arrow-<?php echo $currentOrder === 'ASC' ? 'up' : 'down'; ?>"></i>
-                            <?php endif; ?>
-                        </a>
+                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Tickets</th>
+                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <?php echo sortLink('last_login', 'Último acceso', $queryParams, $currentSort, $nextOrder); ?>
+                        <?php if ($currentSort === 'last_login'): ?> <i class="bi <?php echo $currentOrder === 'ASC' ? 'bi-arrow-up' : 'bi-arrow-down'; ?>" style="font-size:0.7rem; color:#2563eb;"></i><?php endif; ?>
                     </th>
-                    <th width="10%" class="text-center">Estado</th>
-                    <th width="10%" class="text-center">Tickets</th>
-                    <th width="15%">
-                        <a href="directory.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => 'last_login', 'order' => $currentSort === 'last_login' ? $nextOrder : 'DESC'])); ?>" 
-                           class="text-decoration-none text-dark">
-                            Último acceso
-                            <?php if ($currentSort === 'last_login'): ?>
-                                <i class="bi bi-arrow-<?php echo $currentOrder === 'ASC' ? 'up' : 'down'; ?>"></i>
-                            <?php endif; ?>
-                        </a>
-                    </th>
+                    <th style="width: 50px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-right: 20px;"></th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($agents as $agent): ?>
+                <?php if (empty($agents)): ?>
                     <tr>
-                        <td>
-                            <strong><?php echo html($agent['firstname'] . ' ' . $agent['lastname']); ?></strong>
-                            <br>
-                            <small class="text-muted">@<?php echo html($agent['username']); ?></small>
-                        </td>
-                        <td>
-                            <a href="mailto:<?php echo html($agent['email']); ?>" class="text-decoration-none">
-                                <?php echo html($agent['email']); ?>
-                            </a>
-                        </td>
-                        <td>
-                            <?php if ($agent['dept_name']): ?>
-                                <span class="badge bg-secondary"><?php echo html($agent['dept_name']); ?></span>
-                            <?php else: ?>
-                                <span class="text-muted">Sin asignar</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php
-                            $roleBadges = [
-                                'admin' => 'bg-danger',
-                                'supervisor' => 'bg-warning',
-                                'agent' => 'bg-info'
-                            ];
-                            $roleLabels = [
-                                'admin' => 'Admin',
-                                'supervisor' => 'Supervisor',
-                                'agent' => 'Agente'
-                            ];
-                            $badgeClass = $roleBadges[$agent['role']] ?? 'bg-secondary';
-                            $roleLabel = $roleLabels[$agent['role']] ?? ucfirst($agent['role']);
-                            ?>
-                            <span class="badge <?php echo $badgeClass; ?>"><?php echo $roleLabel; ?></span>
-                        </td>
-                        <td class="text-center">
-                            <?php if ($agent['is_active']): ?>
-                                <span class="badge bg-success">Activo</span>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">Inactivo</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center">
-                            <div>
-                                <strong><?php echo (int)$agent['total_tickets']; ?></strong>
-                                <?php if ($agent['open_tickets'] > 0): ?>
-                                    <br>
-                                    <small class="text-danger">
-                                        <i class="bi bi-circle-fill" style="font-size: 0.6em;"></i>
-                                        <?php echo (int)$agent['open_tickets']; ?> abierto(s)
-                                    </small>
-                                <?php endif; ?>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="bi bi-people" style="font-size: 2rem; opacity: 0.6;"></i>
+                                <div class="mt-2">No se encontraron agentes.</div>
                             </div>
                         </td>
-                        <td>
-                            <?php if ($agent['last_login']): ?>
-                                <?php echo formatDate($agent['last_login']); ?>
-                            <?php else: ?>
-                                <span class="text-muted">Nunca</span>
-                            <?php endif; ?>
-                        </td>
                     </tr>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($agents as $agent): ?>
+                        <?php
+                        $fullName = trim((string)($agent['firstname'] ?? '') . ' ' . (string)($agent['lastname'] ?? ''));
+                        if ($fullName === '') $fullName = (string)($agent['email'] ?? 'Agente');
+                        $email = (string)($agent['email'] ?? '');
+                        $username = (string)($agent['username'] ?? '');
+                        $deptName = (string)($agent['dept_name'] ?? '');
+                        $isActive = (int)($agent['is_active'] ?? 0) === 1;
+                        $totalTickets = (int)($agent['total_tickets'] ?? 0);
+                        $openTickets = (int)($agent['open_tickets'] ?? 0);
+                        $role = (string)($agent['role'] ?? '');
+
+                        $parts = preg_split('/\s+/', trim($fullName));
+                        $i1 = strtoupper((string)($parts[0][0] ?? ''));
+                        $i2 = '';
+                        if (count($parts) > 1) {
+                            $i2 = strtoupper((string)($parts[1][0] ?? ''));
+                        } elseif (strlen($fullName) > 1) {
+                            $i2 = strtoupper(substr($fullName, 1, 1));
+                        }
+                        $initials = trim($i1 . $i2);
+                        if ($initials === '') $initials = 'A';
+
+                        $roleInfo = $roleBadges[$role] ?? ['bg' => 'bg-secondary', 'label' => ($role !== '' ? ucfirst($role) : 'Agente')];
+                        $avatarColors = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+                        $avatarColor = $avatarColors[($agent['id'] ?? 0) % count($avatarColors)];
+                        ?>
+                        <tr class="ticket-row" style="background: #fff; cursor: default; transition: all 0.2s;">
+                            <td style="vertical-align: middle; padding: 16px 12px 16px 20px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 40px; height: 40px; border-radius: 50%; background: <?php echo html($avatarColor); ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.02em;">
+                                        <?php echo html($initials); ?>
+                                    </div>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;"><?php echo html($fullName); ?></div>
+                                        <div style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 4px; margin-top: 2px; flex-wrap: wrap;">
+                                            <span>@<?php echo html($username); ?></span>
+                                            <?php if ($email !== ''): ?>
+                                                <span style="color:#cbd5e1;">·</span>
+                                                <a href="mailto:<?php echo html($email); ?>" style="color:#2563eb; text-decoration:none;" onclick="event.stopPropagation();"><?php echo html($email); ?></a>
+                                            <?php endif; ?>
+                                        </div>
+                                        <!-- Mobile card meta -->
+                                        <div class="agent-mobile-meta">
+                                            <?php if ($deptName !== ''): ?>
+                                                <span class="chip" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-building"></i> <?php echo html($deptName); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="chip <?php echo html($roleInfo['bg']); ?>" style="font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <?php echo html($roleInfo['label']); ?>
+                                            </span>
+                                            <?php if ($isActive): ?>
+                                                <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">Activo</span>
+                                            <?php else: ?>
+                                                <span class="chip" style="background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">Inactivo</span>
+                                            <?php endif; ?>
+                                            <?php if ($totalTickets > 0): ?>
+                                                <span class="chip" style="background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-ticket-perforated"></i> <?php echo $totalTickets; ?>
+                                                    <?php if ($openTickets > 0): ?><span style="color:#ef4444;">(<?php echo $openTickets; ?>)</span><?php endif; ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="chip" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <i class="bi bi-clock"></i> <?php echo $agent['last_login'] ? html(formatDate($agent['last_login'])) : 'Nunca'; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                <?php if ($deptName !== ''): ?>
+                                    <span class="chip" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                        <i class="bi bi-building" style="margin-right: 4px;"></i><?php echo html($deptName); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted" style="font-size: 0.85rem;">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                                <span class="badge <?php echo html($roleInfo['bg']); ?>" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 8px;">
+                                    <?php echo html($roleInfo['label']); ?>
+                                </span>
+                            </td>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                                <?php if ($isActive): ?>
+                                    <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                        <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>Activo
+                                    </span>
+                                <?php else: ?>
+                                    <span class="chip" style="background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                        <i class="bi bi-x-circle" style="margin-right: 4px;"></i>Inactivo
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-weight: 700; color: #1e293b; font-size: 0.9rem;"><?php echo (int)$totalTickets; ?> total</span>
+                                    <?php if ($openTickets > 0): ?>
+                                        <span style="font-size: 0.8rem; color: #ef4444; font-weight: 600;">
+                                            <i class="bi bi-circle-fill" style="font-size: 0.5rem; vertical-align: middle;"></i> <?php echo (int)$openTickets; ?> abierto(s)
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.8rem; color: #94a3b8;">Sin abiertos</span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle; color: #64748b; font-size: 0.85rem; font-weight: 600;">
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <i class="bi bi-clock-history" style="color:#94a3b8; font-size: 1rem;"></i>
+                                    <?php echo $agent['last_login'] ? html(formatDate($agent['last_login'])) : 'Nunca'; ?>
+                                </div>
+                            </td>
+                            <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
+                                <?php if ($email !== ''): ?>
+                                    <a href="mailto:<?php echo html($email); ?>" class="btn btn-sm d-none d-md-inline-block" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'" title="Contactar">
+                                        <i class="bi bi-envelope"></i>
+                                    </a>
+                                    <a href="mailto:<?php echo html($email); ?>" class="agent-mobile-action" title="Contactar">
+                                        <i class="bi bi-envelope-fill"></i>
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 
-    <?php
-    $basePaging = $queryParams;
-    $basePaging['sort'] = $currentSort;
-    $basePaging['order'] = $currentOrder;
-
-    $prevUrl = '';
-    $nextUrl = '';
-    if ($pageNum > 1) {
-        $prevParams = $basePaging;
-        $prevParams['p'] = $pageNum - 1;
-        $prevUrl = 'directory.php?' . http_build_query($prevParams);
-    }
-    if ($pageNum < $totalPages) {
-        $nextParams = $basePaging;
-        $nextParams['p'] = $pageNum + 1;
-        $nextUrl = 'directory.php?' . http_build_query($nextParams);
-    }
-    $showStart = ($totalRows > 0) ? ($offset + 1) : 0;
-    $showEnd = min($offset + count($agents), $totalRows);
-    ?>
+    <!-- Paginación -->
+    <?php if ($totalPages > 1): ?>
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
-        <div class="text-muted" style="font-size:.9rem;">
+        <div class="text-muted" style="font-size:0.9rem;">
             Mostrando <?php echo (int)$showStart; ?>-<?php echo (int)$showEnd; ?> de <?php echo (int)$totalRows; ?>
             · Página <?php echo (int)$pageNum; ?> de <?php echo (int)$totalPages; ?>
         </div>
         <div class="d-flex gap-2">
-            <?php if ($prevUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>"><i class="bi bi-chevron-left"></i> Anterior</a>
+            <?php if ($pageNum > 1): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="directory.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $pageNum - 1])); ?>">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </a>
             <?php else: ?>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
+                <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
             <?php endif; ?>
-            <?php if ($nextUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">Siguiente <i class="bi bi-chevron-right"></i></a>
+
+            <?php
+            $range = 2;
+            $start = max(1, $pageNum - $range);
+            $end   = min($totalPages, $pageNum + $range);
+            ?>
+            <div class="d-none d-sm-flex gap-1">
+                <?php if ($start > 1): ?>
+                    <a href="directory.php?<?php echo http_build_query(array_merge($basePaging, ['p' => 1])); ?>" class="btn btn-sm btn-outline-secondary">1</a>
+                    <?php if ($start > 2): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
+                <?php endif; ?>
+                <?php for ($i = $start; $i <= $end; $i++): ?>
+                    <a href="directory.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $i])); ?>"
+                       class="btn btn-sm <?php echo $i === $pageNum ? 'btn-primary' : 'btn-outline-secondary'; ?>"
+                       <?php echo $i === $pageNum ? 'style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;"' : ''; ?>>
+                        <?php echo $i; ?>
+                    </a>
+                <?php endfor; ?>
+                <?php if ($end < $totalPages): ?>
+                    <?php if ($end < $totalPages - 1): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
+                    <a href="directory.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $totalPages])); ?>" class="btn btn-sm btn-outline-secondary"><?php echo $totalPages; ?></a>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($pageNum < $totalPages): ?>
+                <a class="btn btn-outline-secondary btn-sm" href="directory.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $pageNum + 1])); ?>">
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </a>
             <?php else: ?>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
+                <button class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
             <?php endif; ?>
         </div>
     </div>
-<?php endif; ?>
+    <?php endif; ?>
+</div>
 
+<script>
+(function() {
+    document.getElementById('deptSelect').addEventListener('change', function() {
+        var url = new URL(window.location.href);
+        if (this.value === '0') {
+            url.searchParams.delete('did');
+        } else {
+            url.searchParams.set('did', this.value);
+        }
+        url.searchParams.delete('p');
+        window.location.href = url.toString();
+    });
+})();
+</script>
