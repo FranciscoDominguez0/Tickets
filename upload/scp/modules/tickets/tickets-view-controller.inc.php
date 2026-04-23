@@ -121,24 +121,28 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $rel = (string) ($att['path'] ?? '');
             
             // Determinar los diferentes directorios base posibles
-            $baseScp = dirname(__DIR__, 2); // upload/scp
-            $baseUpload = dirname(__DIR__, 3); // upload
-            $baseRoot = dirname(__DIR__, 4);   // sistema-tickets
-            
-            $full1 = rtrim($baseUpload, '/\\') . '/' . ltrim($rel, '/'); // upload/uploads/attachments/...
-            $full = '';
-            // El principal y definitivo directorio donde están ahora (upload/uploads/attachments/)
-            $fullDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/') : '';
+            $baseUpload = dirname(__DIR__, 3); // upload/
+            $baseRoot   = dirname(__DIR__, 4); // sistema-tickets/
 
+            // Rutas candidatas en orden de preferencia
+            $full = '';
             if ($rel !== '') {
-                if ($fullDir !== '' && is_file($fullDir)) {
-                    $full = $fullDir;
-                } elseif (is_file($full1)) {
-                    $full = $full1;
-                } elseif (is_file($full2)) {
-                    $full = $full2;
-                } elseif (is_file($full3)) {
-                    $full = $full3;
+                // 1. Usando ATTACHMENTS_DIR (ruta absoluta configurada)
+                $fullDir = defined('ATTACHMENTS_DIR')
+                    ? rtrim(ATTACHMENTS_DIR, '/\\') . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/\\')
+                    : '';
+                // 2. Ruta relativa al directorio upload/
+                $full1 = rtrim($baseUpload, '/\\') . '/' . ltrim($rel, '/\\');
+                // 3. Ruta relativa a la raíz del proyecto
+                $full2 = rtrim($baseRoot, '/\\') . '/' . ltrim($rel, '/\\');
+                // 4. Ruta absoluta tal cual la guardó la BD
+                $full3 = $rel;
+
+                foreach ([$fullDir, $full1, $full2, $full3] as $candidate) {
+                    if ($candidate !== '' && is_file($candidate)) {
+                        $full = $candidate;
+                        break;
+                    }
                 }
             }
 

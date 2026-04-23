@@ -142,13 +142,13 @@ $has_closed_at_col = dbColumnExists('tickets', 'closed_at');
 $has_closed_legacy_col = dbColumnExists('tickets', 'closed');
 
 if (!$has_signature_col) {
-    $mysqli->query('ALTER TABLE tickets ADD COLUMN client_signature VARCHAR(255) NULL');
+    @$mysqli->query('ALTER TABLE tickets ADD COLUMN client_signature VARCHAR(255) NULL');
 }
 if (!$has_message_col) {
-    $mysqli->query('ALTER TABLE tickets ADD COLUMN close_message TEXT NULL');
+    @$mysqli->query('ALTER TABLE tickets ADD COLUMN close_message TEXT NULL');
 }
 if (!$has_closed_at_col) {
-    $mysqli->query('ALTER TABLE tickets ADD COLUMN closed_at DATETIME NULL');
+    @$mysqli->query('ALTER TABLE tickets ADD COLUMN closed_at DATETIME NULL');
 }
 
 $legacy_closed_set = $has_closed_legacy_col ? ', closed = NOW()' : '';
@@ -190,21 +190,38 @@ if ($signature_path === null) {
         $stmt_nr->bind_param('i', $eid);
         $stmt_nr->execute();
         $recipients = $stmt_nr->get_result()->fetch_all(MYSQLI_ASSOC);
-
         $hasNotif = dbTableExists('notifications');
         if ($hasNotif && !empty($recipients)) {
-            $stmt_notif = $mysqli->prepare(
-                'INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at)
-                 VALUES (?, ?, ?, ?, 0, NOW())'
-            );
-            $notif_msg = 'Ticket #' . $ticket['ticket_number'] . ' cerrado sin firma del cliente.';
-            $notif_type = 'ticket_closed';
+            $hasNotifEmpresa = dbColumnExists('notifications', 'empresa_id');
+            $eid = empresaId();
 
-            foreach ($recipients as $rec) {
-                $sid = (int)$rec['staff_id'];
-                if ($sid === (int)$_SESSION['staff_id']) continue;
-                $stmt_notif->bind_param('issi', $sid, $notif_msg, $notif_type, $ticket_id);
-                $stmt_notif->execute();
+            if ($hasNotifEmpresa) {
+                $stmt_notif = $mysqli->prepare(
+                    'INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at)
+                     VALUES (?, ?, ?, ?, ?, 0, NOW())'
+                );
+            } else {
+                $stmt_notif = $mysqli->prepare(
+                    'INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at)
+                     VALUES (?, ?, ?, ?, 0, NOW())'
+                );
+            }
+
+            if ($stmt_notif) {
+                $notif_msg = 'Ticket #' . $ticket['ticket_number'] . ' cerrado sin firma del cliente.';
+                $notif_type = 'ticket_closed';
+
+                foreach ($recipients as $rec) {
+                    $sid = (int)$rec['staff_id'];
+                    if ($sid === (int)$_SESSION['staff_id']) continue;
+
+                    if ($hasNotifEmpresa) {
+                        $stmt_notif->bind_param('iissi', $eid, $sid, $notif_msg, $notif_type, $ticket_id);
+                    } else {
+                        $stmt_notif->bind_param('issi', $sid, $notif_msg, $notif_type, $ticket_id);
+                    }
+                    $stmt_notif->execute();
+                }
             }
         }
     }

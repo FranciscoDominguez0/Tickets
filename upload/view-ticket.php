@@ -256,23 +256,31 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
     }
 
     $rel = (string) ($att['path'] ?? '');
-    
-    // Todos los posibles directorios base
-    $baseUpload = __DIR__;                 // upload/
-    $baseScp = __DIR__ . '/scp';           // upload/scp/
-    $baseRoot = dirname(__DIR__);          // sistema-tickets/
 
-    $full1 = $baseUpload . '/' . ltrim($rel, '/');
-    $full2 = $baseRoot . '/' . ltrim($rel, '/');
-    $full3 = $baseScp . '/' . ltrim($rel, '/');
-    $fullDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/') : '';
+    // Directorios base posibles
+    $baseUpload = __DIR__;        // upload/
+    $baseRoot   = dirname(__DIR__); // sistema-tickets/
 
+    // Rutas candidatas en orden de preferencia
     $full = '';
     if ($rel !== '') {
-        if ($fullDir !== '' && is_file($fullDir)) $full = $fullDir;
-        elseif (is_file($full1)) $full = $full1;
-        elseif (is_file($full2)) $full = $full2;
-        elseif (is_file($full3)) $full = $full3;
+        // 1. ATTACHMENTS_DIR configurado en config.php (upload/uploads/attachments)
+        $fullDir = defined('ATTACHMENTS_DIR')
+            ? rtrim(ATTACHMENTS_DIR, '/\\') . '/' . ltrim(str_replace('uploads/attachments/', '', $rel), '/\\')
+            : '';
+        // 2. Relativo a upload/ → upload/uploads/attachments/...
+        $full1 = rtrim($baseUpload, '/\\') . '/' . ltrim($rel, '/\\');
+        // 3. Relativo a la raíz → sistema-tickets/uploads/attachments/... (archivos guardados en ubicación antigua)
+        $full2 = rtrim($baseRoot, '/\\') . '/' . ltrim($rel, '/\\');
+        // 4. La ruta tal cual está en la BD (por si es absoluta)
+        $full3 = $rel;
+
+        foreach ([$fullDir, $full1, $full2, $full3] as $candidate) {
+            if ($candidate !== '' && is_file($candidate)) {
+                $full = $candidate;
+                break;
+            }
+        }
     }
 
     if ($full === '') {

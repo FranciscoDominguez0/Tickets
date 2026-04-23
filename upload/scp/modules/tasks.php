@@ -76,7 +76,7 @@ if (isset($mysqli) && $mysqli) {
 if ($hasStaffDepartmentsTable) {
     // New model: staff can belong to multiple departments
     $stmtAgents = $mysqli->prepare(
-        "SELECT DISTINCT s.id, CONCAT(s.firstname, ' ', s.lastname) AS name, sd.dept_id 
+        "SELECT DISTINCT s.id, CONCAT(s.firstname, ' ', s.lastname) AS name, sd.dept_id, s.firstname, s.lastname
          FROM staff s 
          JOIN staff_departments sd ON sd.staff_id = s.id 
          WHERE s.empresa_id = ? AND s.is_active = 1 AND s.role = 'agent' 

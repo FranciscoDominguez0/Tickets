@@ -53,11 +53,13 @@ $tblCheck = $mysqli->query("SHOW TABLES LIKE 'ticket_report_items'");
 if (!$tblCheck || $tblCheck->num_rows === 0) {
     $mysqli->query("CREATE TABLE `ticket_report_items` (
         `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+        `empresa_id` int(11) NOT NULL DEFAULT 1,
         `report_id` int(11) unsigned NOT NULL,
         `description` text NOT NULL,
         `price` decimal(10,2) NOT NULL DEFAULT 0.00,
         `created_at` datetime NOT NULL DEFAULT current_timestamp(),
         PRIMARY KEY (`id`),
+        KEY `idx_empresa_id` (`empresa_id`),
         KEY `idx_report_id` (`report_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
@@ -68,8 +70,8 @@ $reportData = null;
 $reportItems = [];
 $total = 0.00;
 
-$chkStmt = $mysqli->prepare("SELECT * FROM ticket_reports WHERE ticket_id = ?");
-$chkStmt->bind_param('i', $ticketId);
+$chkStmt = $mysqli->prepare("SELECT * FROM ticket_reports WHERE ticket_id = ? AND empresa_id = ?");
+$chkStmt->bind_param('ii', $ticketId, $eid);
 $chkStmt->execute();
 $resR = $chkStmt->get_result();
 if ($resR && $resR->num_rows > 0) {
@@ -126,19 +128,20 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $mysqli->begin_transaction();
             try {
                 // Insert report
-                $sqlR = "INSERT INTO ticket_reports (ticket_id, work_description, observations, final_price, created_by, created_at)
-                         VALUES (?, ?, ?, ?, ?, NOW())";
+                $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?, NOW())";
                 $inR = $mysqli->prepare($sqlR);
                 $sid = (int)$_SESSION['staff_id'];
-                $inR->bind_param('isssi', $ticketId, $workDescConcat, $obs, $totalStr, $sid);
+                $eid = empresaId();
+                $inR->bind_param('iisssi', $eid, $ticketId, $workDescConcat, $obs, $totalStr, $sid);
                 $inR->execute();
 
                 $reportId = $mysqli->insert_id;
 
                 // Insert items
-                $insItem = $mysqli->prepare("INSERT INTO ticket_report_items (report_id, description, price) VALUES (?, ?, ?)");
+                $insItem = $mysqli->prepare("INSERT INTO ticket_report_items (empresa_id, report_id, description, price) VALUES (?, ?, ?, ?)");
                 foreach ($items as $it) {
-                    $insItem->bind_param('isd', $reportId, $it['desc'], $it['price']);
+                    $insItem->bind_param('iisd', $eid, $reportId, $it['desc'], $it['price']);
                     $insItem->execute();
                 }
 

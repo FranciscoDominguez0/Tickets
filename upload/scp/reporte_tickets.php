@@ -129,6 +129,80 @@ if ($sid > 0) {
 ob_start();
 ?>
 
+<style>
+/* ── Vista móvil: cards ── */
+.rpt-card-list { display: none; padding: 0; gap: 10px; flex-direction: column; }
+.rpt-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+}
+.rpt-card:active { box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+.rpt-card-accent {
+    height: 4px;
+    background: linear-gradient(90deg, #f59e0b 0%, #ea580c 100%);
+}
+.rpt-card-accent.done {
+    background: linear-gradient(90deg, #16a34a 0%, #22d3ee 100%);
+}
+.rpt-card-body { padding: 14px 16px 12px; }
+.rpt-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+.rpt-card-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.rpt-card-num span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-right: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.rpt-card-rows { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+.rpt-card-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #334155;
+}
+.rpt-card-row i { color: #64748b; width: 16px; text-align: center; flex-shrink: 0; }
+.rpt-card-row .rpt-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    font-weight: 600;
+    min-width: 70px;
+}
+.rpt-card-row .rpt-val { font-weight: 600; color: #0f172a; flex: 1; }
+.rpt-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+    gap: 8px;
+}
+.rpt-card-footer .btn { flex: 1; justify-content: center; display: flex; align-items: center; gap: 6px; }
+
+@media (max-width: 767px) {
+    .rpt-desktop-table { display: none !important; }
+    .rpt-card-list { display: flex; }
+}
+</style>
+
 <div class="tickets-shell">
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
@@ -173,7 +247,7 @@ ob_start();
 
     <!-- Lista de tickets -->
     <div class="tickets-table-wrap">
-        <table class="table table-hover tickets-table mb-0" id="ticketsTable">
+        <table class="table table-hover tickets-table rpt-desktop-table mb-0" id="ticketsTable">
             <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
                     <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Ticket</th>
@@ -282,6 +356,73 @@ ob_start();
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+
+    <!-- Vista móvil: cards -->
+    <div class="rpt-card-list">
+        <?php if (empty($tickets)): ?>
+            <div class="empty-state" style="padding: 40px 20px; text-align:center;">
+                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.6;"></i>
+                <div class="mt-2">No hay tickets cerrados que requieran reporte.</div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($tickets as $t): ?>
+            <?php
+                $staffName   = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
+                if ($staffName === '') $staffName = 'Sin asignar';
+                $closedDateShort = !empty($t['closed']) ? date('d/m/Y', strtotime($t['closed'])) : 'N/A';
+                $hasReport   = (int)($t['has_report'] ?? 0);
+                $isNew       = !$hasReport && !in_array((int)$t['id'], $seenIds);
+                $reportUrl   = 'reporte_costos.php?ticket_id=' . (int)$t['id'];
+                $viewUrl     = 'tickets.php?id=' . (int)$t['id'];
+            ?>
+            <div class="rpt-card">
+                <div class="rpt-card-accent <?php echo $hasReport ? 'done' : ''; ?>"></div>
+                <div class="rpt-card-body">
+                    <div class="rpt-card-top">
+                        <div class="rpt-card-num">
+                            <span>#</span><?php echo html($t['ticket_number']); ?>
+                            <?php if ($isNew): ?>
+                                <span class="badge ms-1" style="background:#ef4444; color:#fff; font-size:0.6rem; padding:3px 6px; letter-spacing:0.05em; text-transform:uppercase; border-radius:5px;">NEW</span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;"><?php echo html($closedDateShort); ?></div>
+                    </div>
+                    <div style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:10px; line-height:1.35;">
+                        <?php echo html((string)($t['subject'] ?? '')); ?>
+                    </div>
+                    <div class="rpt-card-rows">
+                        <div class="rpt-card-row">
+                            <i class="bi bi-building"></i>
+                            <span class="rpt-label">Depto.</span>
+                            <span class="rpt-val"><?php echo html($t['department_name']); ?></span>
+                        </div>
+                        <div class="rpt-card-row">
+                            <i class="bi bi-headset"></i>
+                            <span class="rpt-label">Agente</span>
+                            <span class="rpt-val"><?php echo html($staffName); ?></span>
+                        </div>
+                        <div class="rpt-card-row">
+                            <i class="bi bi-circle-fill" style="font-size:0.5rem; color:<?php echo $hasReport ? '#16a34a' : '#f59e0b'; ?>;"></i>
+                            <span class="rpt-label">Reporte</span>
+                            <span class="rpt-val" style="color:<?php echo $hasReport ? '#16a34a' : '#92400e'; ?>;">
+                                <?php echo $hasReport ? 'Completado' : 'Pendiente'; ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="rpt-card-footer">
+                        <a href="<?php echo $viewUrl; ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px; font-weight:600;">
+                            <i class="bi bi-ticket-detailed"></i> Ver Ticket
+                        </a>
+                        <a href="<?php echo $reportUrl; ?>" class="btn btn-sm <?php echo $hasReport ? 'btn-outline-primary' : 'btn-primary'; ?>" style="border-radius:8px; font-weight:600; <?php echo $hasReport ? '' : 'background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;'; ?>">
+                            <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-lg'; ?>"></i>
+                            <?php echo $hasReport ? 'Ver Reporte' : 'Reportar'; ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Paginación -->
