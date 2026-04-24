@@ -439,6 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var filter = getFilterKey();
       var topicSel = document.getElementById('ticketTopicSelect');
       var topicId = (topicSel && topicSel.value ? topicSel.value : '').toString().trim();
+
       var params = new URLSearchParams();
       if (filter !== '') params.set('filter', filter);
       if (q !== '') params.set('q', q);

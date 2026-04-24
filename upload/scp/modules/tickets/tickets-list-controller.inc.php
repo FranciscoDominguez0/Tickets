@@ -34,6 +34,9 @@ $selectedTopicId = isset($_GET['topic_id']) && is_numeric($_GET['topic_id']) ? (
 $selectedTopicName = '';
 $countSelectedTopic = 0;
 
+$selectedStaffId = isset($_GET['staff_id']) && is_numeric($_GET['staff_id']) ? (int)$_GET['staff_id'] : 0;
+$selectedStaffName = '';
+
 $hasTopicsTable = false;
 $hasTopicCol = false;
 $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
@@ -89,7 +92,6 @@ if ($stmtCu) {
     $stmtCu->bind_param('i', $eid);
     if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
 }
-$countMine = 0;
 if (!empty($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
     $stmtCm = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id = ? AND closed IS NULL');
@@ -120,8 +122,9 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
 }
 if ($query !== '') {
     $like = '%' . $query . '%';
-    $whereClauses[] = '(t.ticket_number LIKE ? OR t.subject LIKE ? OR u.email LIKE ? OR CONCAT(u.firstname, " ", u.lastname) LIKE ?)';
-    $types .= 'ssss';
+    $whereClauses[] = '(t.ticket_number LIKE ? OR t.subject LIKE ? OR u.email LIKE ? OR CONCAT(u.firstname, " ", u.lastname) LIKE ? OR CONCAT(s.firstname, " ", s.lastname) LIKE ?)';
+    $types .= 'sssss';
+    $params[] = $like;
     $params[] = $like;
     $params[] = $like;
     $params[] = $like;
@@ -150,6 +153,7 @@ $totalTickets = 0;
 $sqlTotal = "SELECT COUNT(*) AS c
         FROM tickets t
         JOIN users u ON t.user_id = u.id
+        LEFT JOIN staff s ON t.staff_id = s.id
         $whereSql";
 if ($types !== '') {
     $stmtTotal = $mysqli->prepare($sqlTotal);
@@ -179,6 +183,7 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
     $sqlCnt = "SELECT COUNT(*) AS c\n"
         . "FROM tickets t\n"
         . "JOIN users u ON t.user_id = u.id\n"
+        . "LEFT JOIN staff s ON t.staff_id = s.id\n"
         . "$whereSql";
     if ($types !== '') {
         $stmtCnt = $mysqli->prepare($sqlCnt);
@@ -619,7 +624,14 @@ if ($stmtStaffTb) {
         $r = $stmtStaffTb->get_result();
     }
 }
-if ($r) while ($row = $r->fetch_assoc()) $staffOptions[] = $row;
+if ($r) {
+    while ($row = $r->fetch_assoc()) {
+        $staffOptions[] = $row;
+        if ($selectedStaffId > 0 && (int)($row['id'] ?? 0) === $selectedStaffId) {
+            $selectedStaffName = trim($row['firstname'] . ' ' . $row['lastname']);
+        }
+    }
+}
 $statusOptions = [];
 $r = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY id");
 if ($r) while ($row = $r->fetch_assoc()) $statusOptions[] = $row;
