@@ -1115,12 +1115,12 @@ if ($ticketClientSignaturePath !== '') {
     border-radius: 12px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     padding: 8px;
-    max-width: 400px;
+    max-width: 350px;
     animation: attFadeIn 0.2s ease-out;
 }
 .att-image-preview-container img {
     max-width: 100%;
-    max-height: 400px;
+    max-height: 350px;
     display: block;
     border-radius: 8px;
     object-fit: contain;
@@ -1646,18 +1646,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (type === 'pdf') {
                 var iframe = document.createElement('iframe');
                 iframe.src = url + '#toolbar=0&navpanes=0&scrollbar=1'; // Habilitar scrollbar
-                iframe.style.width = '600px';
-                iframe.style.height = '450px';
+                iframe.style.width = '500px';
+                iframe.style.height = '380px';
                 iframe.style.border = 'none';
                 iframe.style.borderRadius = '8px';
-                previewContainer.style.maxWidth = '620px';
+                previewContainer.style.maxWidth = '520px';
                 previewContainer.appendChild(iframe);
             } else if (type === 'docx') {
                 var loader = document.createElement('div');
                 loader.className = 'preview-loading';
                 loader.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2"></div> Cargando documento...';
                 previewContainer.appendChild(loader);
-                previewContainer.style.width = '450px';
+                previewContainer.style.width = '380px';
 
                 fetch(url)
                     .then(function(r) { return r.arrayBuffer(); })
