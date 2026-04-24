@@ -203,6 +203,7 @@ $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated
                p.name AS priority_name, p.color AS priority_color,
                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
                s.firstname AS staff_first, s.lastname AS staff_last,
+               tr.billing_status,
                (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report
         FROM tickets t
         JOIN users u ON t.user_id = u.id

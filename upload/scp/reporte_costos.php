@@ -128,8 +128,8 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
             $mysqli->begin_transaction();
             try {
                 // Insert report
-                $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, created_at)
-                         VALUES (?, ?, ?, ?, ?, ?, NOW())";
+                $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, billing_status, created_at)
+                         VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())";
                 $inR = $mysqli->prepare($sqlR);
                 $sid = (int)$_SESSION['staff_id'];
                 $eid = empresaId();
@@ -433,9 +433,13 @@ h6.border-bottom {
             <label>Estado del Reporte</label>
             <div class="value mt-1">
                 <?php if ($reportExists): ?>
-                    <span class="badge bg-success">Completado</span>
+                    <?php if (($reportData['billing_status'] ?? 'pending') === 'confirmed'): ?>
+                        <span class="badge bg-success">Facturado</span>
+                    <?php else: ?>
+                        <span class="badge bg-warning text-dark">Pendiente Facturación</span>
+                    <?php endif; ?>
                 <?php else: ?>
-                    <span class="badge bg-warning text-dark">Pendiente</span>
+                    <span class="badge bg-secondary">Sin Reporte</span>
                 <?php endif; ?>
             </div>
         </div>

@@ -1,6 +1,14 @@
 <?php
 // Módulo: Solicitudes (tickets) — Bootstrap compartido
 // a=open: abrir nuevo ticket (uid= preselecciona usuario). id=X: vista detallada.
+// ── Migraciones de Facturación ──────────────────────────────────────────────
+if (isset($mysqli) && $mysqli) {
+    // Asegurar columna billing_status en ticket_reports
+    $colCheck = $mysqli->query("SHOW COLUMNS FROM ticket_reports LIKE 'billing_status'");
+    if (!$colCheck || $colCheck->num_rows === 0) {
+        $mysqli->query("ALTER TABLE ticket_reports ADD COLUMN billing_status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending' AFTER final_price");
+    }
+}
 
 $ticketView = null;
 $reply_errors = [];

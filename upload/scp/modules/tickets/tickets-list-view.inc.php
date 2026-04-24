@@ -267,9 +267,15 @@
                                             <?php echo html($t['status_name']); ?>
                                         </span>
                                         <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                        <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
-                                            <i class="bi bi-receipt"></i> Facturado
-                                        </span>
+                                            <?php if (($t['billing_status'] ?? 'pending') === 'confirmed'): ?>
+                                                <span class="chip" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-patch-check-fill"></i> Facturado
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="chip" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-clock-history"></i> Pendiente Facturación
+                                                </span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -290,9 +296,15 @@
                                         <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo html($t['status_name']); ?>
                                     </span>
                                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                    <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
-                                        <i class="bi bi-receipt"></i> Facturado
-                                    </span>
+                                        <?php if (($t['billing_status'] ?? 'pending') === 'confirmed'): ?>
+                                            <span class="chip" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                                <i class="bi bi-patch-check-fill"></i> Facturado
+                                            </span>
+<?php else: ?>
+                                            <span class="chip" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                                <i class="bi bi-clock-history"></i> Pendiente Facturación
+                                            </span>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                             </td>

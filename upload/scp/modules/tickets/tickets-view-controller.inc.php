@@ -38,9 +38,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
          s.firstname AS staff_first, s.lastname AS staff_last, s.email AS staff_email,
          d.name AS dept_name, d.requires_report, ts.name AS status_name, ts.color AS status_color,
          p.name AS priority_name, p.color AS priority_color,
-         (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
-         tr.final_price AS report_final_price"
-         . $topicSelect .
+          (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
+          tr.billing_status,
+          tr.final_price AS report_final_price"
+          . $topicSelect .
         " FROM tickets t
          JOIN users u ON t.user_id = u.id
          LEFT JOIN staff s ON t.staff_id = s.id"
@@ -55,6 +56,19 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $stmt->execute();
     $res = $stmt->get_result();
     $ticketView = $res ? $res->fetch_assoc() : null;
+
+    // Acción: Confirmar facturación (solo admin)
+    if ($ticketView && isset($_GET['action']) && $_GET['action'] === 'confirm_billing') {
+        if (getCurrentStaffRoleName() === 'admin') {
+            $stmtConf = $mysqli->prepare("UPDATE ticket_reports SET billing_status = 'confirmed' WHERE ticket_id = ? AND empresa_id = ?");
+            $stmtConf->bind_param('ii', $tid, $eid);
+            if ($stmtConf->execute()) {
+                addLog('billing_confirmed', 'Facturación confirmada por admin', 'ticket', $tid, 'staff', (int)($_SESSION['staff_id'] ?? 0));
+                header("Location: tickets.php?id=$tid&msg=billing_confirmed");
+                exit;
+            }
+        }
+    }
 
     if ($ticketView) {
         $sidForSeen = (int)($_SESSION['staff_id'] ?? 0);
