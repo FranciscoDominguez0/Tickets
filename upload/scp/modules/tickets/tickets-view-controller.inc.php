@@ -981,8 +981,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 error_log('[tickets] reply POST scp/modules/tickets.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' tid=' . (string)$tid . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' internal=' . ($is_internal ? '1' : '0'));
                 $new_status_id = isset($_POST['status_id']) && is_numeric($_POST['status_id']) ? (int) $_POST['status_id'] : (int) $ticketView['status_id'];
                 $signature_mode = trim($_POST['signature'] ?? 'none');
-                if ($body === '') {
-                    $reply_errors[] = 'El mensaje no puede estar vacío.';
+                $hasAttachments = !empty($_FILES['attachments']['name'][0]);
+                if ($body === '' && !$hasAttachments) {
+                    $reply_errors[] = 'El mensaje no puede estar vacío (o debe adjuntar al menos un archivo).';
                 } else {
                     $staff_id = (int) ($_SESSION['staff_id'] ?? 0);
 
@@ -1162,7 +1163,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                             'txt' => 'text/plain',
                         ];
-                        $maxSize = 10 * 1024 * 1024; // 10 MB
+                        $maxSize = 25 * 1024 * 1024; // Aumentado a 25 MB para soportar PDFs más grandes
                         if (!empty($_FILES['attachments']['name'][0])) {
                             $files = $_FILES['attachments'];
                             $n = is_array($files['name']) ? count($files['name']) : 1;
@@ -1188,9 +1189,14 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 if (move_uploaded_file($files['tmp_name'][$i], $path)) {
                                     $relPath = 'uploads/attachments/' . $safeName;
                                     $hash = @hash_file('sha256', $path) ?: '';
-                                    $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-                                    $stmtA->bind_param('isssiss', $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
-                                    $stmtA->execute();
+                                    // Incluimos empresa_id para mantener integridad multi-tenant
+                                    $stmtA = $mysqli->prepare("INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                                    $stmtA->bind_param('iisssiss', $eid, $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                                    if (!$stmtA->execute()) {
+                                        error_log("[tickets] Error al insertar adjunto en BD: " . $stmtA->error);
+                                    }
+                                } else {
+                                    error_log("[tickets] No se pudo mover el archivo subido a: " . $path);
                                 }
                             }
                         }

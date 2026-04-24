@@ -520,6 +520,78 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         &copy; VigitecPanama
     </div>
 
+    <!-- Notificación Emergente Personalizada -->
+    <style>
+        .scp-custom-notif {
+            position: fixed;
+            top: 75px; /* Debajo del header */
+            right: -450px;
+            width: 340px;
+            background: #1e293b;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 16px;
+            z-index: 3000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .scp-custom-notif.active {
+            right: 20px;
+        }
+        .scp-custom-notif .n-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+        .scp-custom-notif .n-title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .scp-custom-notif .n-msg {
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .scp-custom-notif .n-btn {
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white; }
+        .scp-custom-notif .n-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            padding: 0 4px;
+        }
+    </style>
+    <div id="customPopNotif" class="scp-custom-notif">
+        <div class="n-header">
+            <span class="n-title"><i class="bi bi-lightning-charge-fill"></i> Actualización</span>
+            <button class="n-close" onclick="document.getElementById('customPopNotif').classList.remove('active')">&times;</button>
+        </div>
+        <div id="customPopMsg" class="n-msg"></div>
+        <a id="customPopLink" href="#" class="n-btn">Ver solicitud</a>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
@@ -623,6 +695,112 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
     <script src="js/orgs.js"></script>
     <?php endif; ?>
+    <?php
+    $maxLoadedId = 0;
+    if (isset($notifItems) && is_array($notifItems) && !empty($notifItems)) {
+        $maxLoadedId = max(array_column($notifItems, 'id'));
+    }
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var lastNotifId = <?php echo (int)$maxLoadedId; ?>;
+            var pollInterval = 6000; // 6 segundos
+            var popEl = document.getElementById('customPopNotif');
+
+            console.log('Sistema de notificaciones iniciado. ID base:', lastNotifId);
+
+            function updateBellBadge(count) {
+                var btn = document.querySelector('.scp-notif-btn');
+                var sub = document.querySelector('.scp-notif-sub');
+                if (!btn) return;
+
+                if (count > 0) {
+                    btn.classList.add('has-new');
+                    var badge = btn.querySelector('.badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                        btn.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                    if (sub) sub.textContent = count + ' nueva(s)';
+                } else {
+                    btn.classList.remove('has-new');
+                    var badge = btn.querySelector('.badge');
+                    if (badge) badge.remove();
+                    if (sub) sub.textContent = 'Sin nuevas';
+                }
+            }
+
+            function showNotificationToast(n) {
+                if (!popEl) return;
+                var msgEl = document.getElementById('customPopMsg');
+                var linkEl = document.getElementById('customPopLink');
+
+                if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
+                if (linkEl) linkEl.href = 'notification_read.php?id=' + n.id;
+
+                popEl.classList.add('active');
+                
+                // Auto ocultar después de 12 segundos
+                window.setTimeout(function() {
+                    popEl.classList.remove('active');
+                }, 12000);
+
+                // Notificación de escritorio
+                if ("Notification" in window && Notification.permission === "granted") {
+                    try {
+                        var nDesk = new Notification("Tickets - " + (n.message || "Nueva notificación"), {
+                            icon: '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico'
+                        });
+                        nDesk.onclick = function() { window.focus(); window.location.href = 'notification_read.php?id=' + n.id; };
+                    } catch(e) {}
+                }
+
+                // Sonido
+                try {
+                    var audio = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_7833324f9c.mp3'); 
+                    audio.volume = 0.3;
+                    audio.play().catch(function(){});
+                } catch(e) {}
+            }
+
+            // Solicitar permiso para notificaciones de escritorio
+            if ("Notification" in window && Notification.permission === "default") {
+                document.addEventListener('click', function() {
+                    Notification.requestPermission();
+                }, { once: true });
+            }
+
+            function pollNotifications() {
+                var url = 'notifications_poll.php?last_id=' + lastNotifId + '&_t=' + Date.now();
+                fetch(url)
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (data.ok) {
+                            if (data.notifications && data.notifications.length > 0) {
+                                console.log('Nuevas notificaciones encontradas:', data.notifications.length);
+                                data.notifications.forEach(function(n) {
+                                    showNotificationToast(n);
+                                    if (n.id > lastNotifId) lastNotifId = n.id;
+                                });
+                            }
+                            updateBellBadge(data.total_unread);
+                        } else {
+                            console.warn('Polling respondió con error:', data.error);
+                        }
+                    })
+                    .catch(function(e){ 
+                        console.error('Error en el polling de notificaciones:', e); 
+                    });
+            }
+
+            if (<?php echo isset($_SESSION['staff_id']) ? 'true' : 'false'; ?>) {
+                window.setTimeout(pollNotifications, 5000);
+                window.setInterval(pollNotifications, pollInterval);
+            }
+        });
+    </script>
 </body>
 </html>
 
