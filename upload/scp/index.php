@@ -8,14 +8,21 @@ require_once '../../config.php';
 require_once '../../includes/helpers.php';
 require_once '../../includes/Auth.php';
 
-// Si no está logueado, redirigir al login
-if (!isset($_SESSION['staff_id'])) {
+// Si no está logueado, redirigir al login (excepto para páginas públicas/ocultas como créditos)
+$page = $_GET['page'] ?? 'dashboard';
+if (!isset($_SESSION['staff_id']) && $page !== 'credits') {
     header('Location: login.php');
     exit;
 }
 
-requireLogin('agente');
-$staff = getCurrentUser();
+// Solo requerir login de agente si no es la página de créditos
+if ($page !== 'credits') {
+    requireLogin('agente');
+    $staff = getCurrentUser();
+} else {
+    // Para la página de créditos permitimos acceso público o sesión parcial
+    $staff = isset($_SESSION['staff_id']) ? getCurrentUser() : ['name' => 'Invitado', 'role' => 'public'];
+}
 
 // Mapa de rutas lógicas -> módulos
 $routes = [
@@ -29,6 +36,7 @@ $routes = [
     'profile'   => 'profile.php',     // Mi perfil
     'orgs'      => 'orgs.php',        // Organizaciones
     'notifications' => 'notifications.php', // Notificaciones (preferencias de correo)
+    'credits'   => 'credits.php',     // Créditos y autoría
 ];
 
 // Página por defecto

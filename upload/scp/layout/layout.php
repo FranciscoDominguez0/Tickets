@@ -175,7 +175,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         <?php unset($_SESSION['show_agent_loading_overlay']); ?>
     <?php endif; ?>
     <!-- NAVBAR -->
-    <nav class="navbar navbar-dark" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; flex-direction: column; align-items: stretch; padding: 0;">
+    <nav class="navbar navbar-dark <?php echo !isset($_SESSION['staff_id']) ? 'd-none' : ''; ?>" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; flex-direction: column; align-items: stretch; padding: 0;">
         <div class="container-fluid d-flex flex-nowrap w-100 justify-content-between" style="padding-top: 8px; padding-bottom: 8px;">
             <div class="d-flex align-items-center gap-2">
                 <button class="btn scp-menu-toggle px-1" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>" style="color: rgba(255,255,255,.9);">
@@ -277,9 +277,9 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     </nav>
 
     <!-- LAYOUT PRINCIPAL -->
-    <div class="layout">
+    <div class="layout <?php echo !isset($_SESSION['staff_id']) ? 'p-0 m-0' : ''; ?>" style="<?php echo !isset($_SESSION['staff_id']) ? 'padding-left:0 !important; margin-top:0 !important;' : ''; ?>">
         <!-- SIDEBAR LATERAL -->
-        <aside class="sidebar">
+        <aside class="sidebar <?php echo !isset($_SESSION['staff_id']) ? 'd-none' : ''; ?>">
             <div class="sidebar-logo">
                 <span class="icon sidebar-brand-logo">
                     <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.webp'); ?>
@@ -489,8 +489,8 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         <div id="scpSidebarFlyout" class="sidebar-flyout" aria-hidden="true"></div>
 
         <!-- ZONA PRINCIPAL (contenido dinámico) -->
-        <main class="main-shell">
-            <div class="container-main">
+        <main class="main-shell <?php echo !isset($_SESSION['staff_id']) ? 'p-0 m-0 w-100' : ''; ?>" style="<?php echo !isset($_SESSION['staff_id']) ? 'margin-left:0 !important; width:100% !important;' : ''; ?>">
+            <div class="container-main <?php echo !isset($_SESSION['staff_id']) ? 'p-0 m-0 mw-100' : ''; ?>">
                 <?php if ((int)($_SESSION['read_only'] ?? 0) === 1): ?>
                     <?php $roMsg = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.'); ?>
                     <div class="alert alert-warning" role="alert" data-alert-static="1">
