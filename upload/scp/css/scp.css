@@ -1598,6 +1598,24 @@ body.sidebar-collapsed .scp-footer-brand {
     }
     /* Ajustar padding del navbar en móvil */
     .navbar .container-fluid { padding-left: 10px; padding-right: 10px; }
+
+    /* Ajustes solicitados para Perfil y Campanita en móvil */
+    .scp-notif-toggle {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    .scp-notif-toggle i {
+        font-size: 1.2rem !important;
+    }
+    .scp-profile-toggle {
+        padding: 4px 14px !important;
+        min-height: 44px;
+    }
+    .scp-profile-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 14px !important;
+    }
 }
 
 .container-main {
