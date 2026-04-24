@@ -309,7 +309,7 @@ if ($_POST) {
                 return 'TKT-' . date('Ymd') . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
             };
 
-            $generateTicketNumberFromSequence = function ($sequenceId) use ($mysqli) {
+            $generateTicketNumberFromSequence = function ($sequenceId) use ($mysqli, $eid) {
                 $sequenceId = (int)$sequenceId;
                 if ($sequenceId <= 0) return null;
 
@@ -317,12 +317,12 @@ if ($_POST) {
                 if (!$chkSeq || $chkSeq->num_rows === 0) return null;
 
                 $mysqli->query('START TRANSACTION');
-                $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? FOR UPDATE');
+                $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? AND empresa_id = ? FOR UPDATE');
                 if (!$stmtSeq) {
                     $mysqli->query('ROLLBACK');
                     return null;
                 }
-                $stmtSeq->bind_param('i', $sequenceId);
+                $stmtSeq->bind_param('ii', $sequenceId, $eid);
                 $stmtSeq->execute();
                 $seqData = $stmtSeq->get_result()->fetch_assoc();
                 if (!$seqData) {
@@ -444,6 +444,11 @@ if ($_POST) {
             
             if ($stmt->execute()) {
                 $ticket_id = $mysqli->insert_id;
+                // Notificación interna si el estado inicial es relevante
+                if ($defaultStatusId === 2 || $defaultStatusId === 3) {
+                    $statusName = ($defaultStatusId === 2) ? 'En Camino' : 'En Proceso';
+                    notifyStatusChangeToAdminRecipients($ticket_id, $statusName);
+                }
 
                 $hasAnydeskCol = false;
                 $colAnydesk = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'anydesk'");

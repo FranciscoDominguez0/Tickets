@@ -487,6 +487,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                     call_user_func_array([$stmt, 'bind_param'], $params);
                     if ($stmt->execute()) {
                         $postSuccess = 'Estado actualizado.';
+                        // Notificaciones internas si es un estado relevante
+                        if ($statusId === 2 || $statusId === 3) {
+                            $statusName = ($statusId === 2) ? 'En Camino' : 'En Proceso';
+                            foreach ($ticketIds as $tidBulk) {
+                                notifyStatusChangeToAdminRecipients($tidBulk, $statusName);
+                            }
+                        }
                     } else {
                         $postErrors[] = 'Error al cambiar el estado.';
                     }

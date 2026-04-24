@@ -34,5 +34,10 @@ if ($stmt) {
     }
 }
 
+// Limpiar cache de notificaciones en sesión
+$cacheKey = 'notif_cache_' . $staffId;
+$cacheTsKey = 'notif_cache_ts_' . $staffId;
+unset($_SESSION[$cacheKey], $_SESSION[$cacheTsKey]);
+
 echo json_encode(['ok' => true, 'deleted' => $deleted]);
 exit;

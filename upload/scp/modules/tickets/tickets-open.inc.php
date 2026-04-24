@@ -2,6 +2,7 @@
 // Abrir nuevo ticket (tickets.php?a=open&uid=X)
 if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) {
     $open_uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
+    $eid = empresaId();
     $open_errors = [];
     $preSelectedUser = null;
 
@@ -140,7 +141,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             }
 
             if (empty($open_errors)) {
-                $generateTicketNumberFromFormat = function ($format) use ($mysqli) {
+                $generateTicketNumberFromFormat = function ($format) use ($mysqli, $eid) {
                     $format = trim((string)$format);
                     if ($format === '') $format = '######';
 
@@ -171,7 +172,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     return 'TKT-' . date('Ymd') . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT);
                 };
 
-                $generateTicketNumberFromSequence = function ($sequenceId) use ($mysqli) {
+                $generateTicketNumberFromSequence = function ($sequenceId) use ($mysqli, $eid) {
                     $sequenceId = (int)$sequenceId;
                     if ($sequenceId <= 0) return null;
 
@@ -179,12 +180,12 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     if (!$chkSeq || $chkSeq->num_rows === 0) return null;
 
                     $mysqli->query('START TRANSACTION');
-                    $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? FOR UPDATE');
+                    $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? AND empresa_id = ? FOR UPDATE');
                     if (!$stmtSeq) {
                         $mysqli->query('ROLLBACK');
                         return null;
                     }
-                    $stmtSeq->bind_param('i', $sequenceId);
+                    $stmtSeq->bind_param('ii', $sequenceId, $eid);
                     $stmtSeq->execute();
                     $seqData = $stmtSeq->get_result()->fetch_assoc();
                     if (!$seqData) {
@@ -245,6 +246,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 }
                 if ($stmt->execute()) {
                     $new_tid = (int) $mysqli->insert_id;
+                    // Notificación interna si el estado inicial es relevante
+                    if ($defaultStatusId === 2 || $defaultStatusId === 3) {
+                        $statusName = ($defaultStatusId === 2) ? 'En Camino' : 'En Proceso';
+                        notifyStatusChangeToAdminRecipients($new_tid, $statusName);
+                    }
                     if ($threadsHasEmpresa) {
                         $stmtThread = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
                     } else {

@@ -1308,6 +1308,59 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     return $stmt->execute();
 }
 
+/**
+ * Notifica a los agentes configurados en "Destinatarios de notificaciones" (emailsettings.php)
+ * sobre un cambio de estado importante (En Camino, En Proceso, etc.) vía campana.
+ */
+function notifyStatusChangeToAdminRecipients($tid, $statusName) {
+    global $mysqli;
+    $eid = empresaId();
+    $tid = (int)$tid;
+    
+    // Obtener info básica del ticket
+    $stmtT = $mysqli->prepare("SELECT ticket_number, subject FROM tickets WHERE id = ? AND empresa_id = ?");
+    if (!$stmtT) return;
+    $stmtT->bind_param('ii', $tid, $eid);
+    $stmtT->execute();
+    $tRes = $stmtT->get_result();
+    $tRow = $tRes ? $tRes->fetch_assoc() : null;
+    if (!$tRow) return;
+    
+    $tNo = (string)($tRow['ticket_number'] ?? ('#' . $tid));
+    $tSub = (string)($tRow['subject'] ?? '');
+    // Mensaje simplificado: Ticket #123456 en camino
+    $message = "Ticket #$tNo " . mb_strtolower($statusName);
+    $type = 'ticket_assigned'; // Redirige a tickets.php?id=X
+    
+    // Obtener destinatarios configurados
+    $recipients = [];
+    $stmtR = $mysqli->prepare("SELECT staff_id FROM notification_recipients WHERE empresa_id = ?");
+    if ($stmtR) {
+        $stmtR->bind_param('i', $eid);
+        if ($stmtR->execute()) {
+            $resR = $stmtR->get_result();
+            while ($r = $resR->fetch_assoc()) {
+                $sid = (int)($r['staff_id'] ?? 0);
+                if ($sid > 0) $recipients[] = $sid;
+            }
+        }
+    }
+    
+    if (empty($recipients)) return;
+    
+    // Evitar duplicados en la misma ejecución
+    $recipients = array_unique($recipients);
+    
+    // Insertar notificaciones
+    $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
+    if ($stmtN) {
+        foreach ($recipients as $sid) {
+            $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
+            $stmtN->execute();
+        }
+    }
+}
+
 function ensureEmailQueueTable() {
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) return false;

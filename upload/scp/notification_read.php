@@ -32,12 +32,17 @@ if ($stmt) {
     }
 }
 
-// Eliminar notificación (según lo solicitado)
+// Eliminar notificación
 $stmtD = $mysqli->prepare('DELETE FROM notifications WHERE id = ? AND staff_id = ?');
 if ($stmtD) {
     $stmtD->bind_param('ii', $notifId, $staffId);
     $stmtD->execute();
 }
+
+// Limpiar cache de notificaciones para que desaparezca de inmediato en el layout
+$cacheKey = 'notif_cache_' . $staffId;
+$cacheTsKey = 'notif_cache_ts_' . $staffId;
+unset($_SESSION[$cacheKey], $_SESSION[$cacheTsKey]);
 
 if ($relatedId !== null && $relatedId > 0) {
     if ($type === 'task_assigned') {

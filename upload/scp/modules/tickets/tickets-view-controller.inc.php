@@ -279,6 +279,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
                         addLog('ticket_en_camino_email', 'Notificación En Camino encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
                     }
+                    // Notificación interna (campana) a destinatarios configurados
+                    notifyStatusChangeToAdminRecipients($tid, 'En Camino');
                 }
 
                 // Si cambió a En Proceso (id=3), notificar al usuario
@@ -319,6 +321,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
                         addLog('ticket_en_proceso_email', 'Notificación En Proceso encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
                     }
+                    // Notificación interna (campana) a destinatarios configurados
+                    notifyStatusChangeToAdminRecipients($tid, 'En Proceso');
                 }
 
                 // Si se cierra desde cambio de estado (sin firma), notificar por correo
@@ -1092,6 +1096,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 }
                                 addLog('ticket_en_camino_email', 'Notificación En Camino encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
                             }
+                            notifyStatusChangeToAdminRecipients($tid, 'En Camino');
                         }
 
                         // Si cambió a En Proceso (id=3), notificar al usuario
@@ -1132,6 +1137,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 }
                                 addLog('ticket_en_proceso_email', 'Notificación En Proceso encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
                             }
+                            notifyStatusChangeToAdminRecipients($tid, 'En Proceso');
                         }
                         if (!$is_internal && $ticketView['staff_id'] === null) {
                             $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ? AND empresa_id = ?');
