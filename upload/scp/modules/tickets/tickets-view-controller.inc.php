@@ -153,9 +153,15 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
             $filename = (string) ($att['original_filename'] ?? 'archivo');
             $mime = (string) ($att['mimetype'] ?? 'application/octet-stream');
+            $isInline = isset($_GET['inline']) && $_GET['inline'] == '1';
+
             header('Content-Type: ' . $mime);
             header('Content-Length: ' . (string) filesize($full));
-            header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+            if ($isInline) {
+                header('Content-Disposition: inline; filename="' . str_replace('"', '', $filename) . '"');
+            } else {
+                header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+            }
             header('X-Content-Type-Options: nosniff');
             readfile($full);
             exit;

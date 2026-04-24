@@ -922,10 +922,30 @@ if ($ticketClientSignaturePath !== '') {
                             <?php if (!empty($attachmentsByEntry[$eid])): ?>
                                 <div class="att-list">
                                     <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
+                                        <?php
+                                            $mime = strtolower((string)($a['mimetype'] ?? ''));
+                                            $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                            $isImage = str_starts_with($mime, 'image/');
+                                            $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
+                                            $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                            
+                                            $type = 'unknown';
+                                            if ($isImage) $type = 'image';
+                                            elseif ($isPdf) $type = 'pdf';
+                                            elseif ($isDocx) $type = 'docx';
+
+                                            $previewUrl = "tickets.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                        ?>
                                         <div class="att-item">
                                             <div>
                                                 <i class="bi bi-paperclip"></i>
-                                                <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>"><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
+                                                <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>" 
+                                                   <?php if ($type !== 'unknown'): ?>
+                                                   class="att-preview-trigger" 
+                                                   data-preview-url="<?php echo html($previewUrl); ?>"
+                                                   data-preview-type="<?php echo $type; ?>"
+                                                   <?php endif; ?>
+                                                ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
                                             </div>
                                             <div class="size"><?php echo isset($a['size']) ? number_format((int)$a['size'] / 1024, 0) . ' KB' : ''; ?></div>
                                         </div>
@@ -1083,7 +1103,55 @@ if ($ticketClientSignaturePath !== '') {
 
 .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
 .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+
+/* Image Preview Styles */
+.att-image-preview-container {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: auto; /* Permite interactuar con el contenido (scroll) */
+    display: none;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    max-width: 400px;
+    animation: attFadeIn 0.2s ease-out;
+}
+.att-image-preview-container img {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+    border-radius: 8px;
+    object-fit: contain;
+}
+@keyframes attFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+.att-image-preview-container .preview-content-docx {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+    background: #fdfdfd;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.att-image-preview-container .preview-loading {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+}
+.att-image-preview-container .preview-error {
+    padding: 15px;
+    color: #ef4444;
+    font-size: 12px;
+    text-align: center;
+}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var staffHasSignature = <?php echo !empty($staff_has_signature) ? 'true' : 'false'; ?>;
@@ -1549,7 +1617,119 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Image Preview Logic
+    (function() {
+        var previewContainer = document.createElement('div');
+        previewContainer.className = 'att-image-preview-container';
+        document.body.appendChild(previewContainer);
+
+        var triggers = document.querySelectorAll('.att-preview-trigger');
+        var hideTimeout = null;
+        var activeUrl = '';
+
+        function showPreview(el, e) {
+            clearTimeout(hideTimeout);
+            var url = el.getAttribute('data-preview-url');
+            var type = el.getAttribute('data-preview-type');
+            if (!url) return;
+            
+            if (activeUrl === url && previewContainer.style.display === 'block') return;
+
+            activeUrl = url;
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'block';
+            
+            if (type === 'image') {
+                var img = document.createElement('img');
+                img.src = url;
+                previewContainer.appendChild(img);
+            } else if (type === 'pdf') {
+                var iframe = document.createElement('iframe');
+                iframe.src = url + '#toolbar=0&navpanes=0&scrollbar=1'; // Habilitar scrollbar
+                iframe.style.width = '600px';
+                iframe.style.height = '450px';
+                iframe.style.border = 'none';
+                iframe.style.borderRadius = '8px';
+                previewContainer.style.maxWidth = '620px';
+                previewContainer.appendChild(iframe);
+            } else if (type === 'docx') {
+                var loader = document.createElement('div');
+                loader.className = 'preview-loading';
+                loader.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2"></div> Cargando documento...';
+                previewContainer.appendChild(loader);
+                previewContainer.style.width = '450px';
+
+                fetch(url)
+                    .then(function(r) { return r.arrayBuffer(); })
+                    .then(function(arrayBuffer) {
+                        if (activeUrl !== url) return;
+                        return mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+                    })
+                    .then(function(result) {
+                        if (activeUrl !== url || !result) return;
+                        previewContainer.innerHTML = '<div class="preview-content-docx">' + result.value + '</div>';
+                    })
+                    .catch(function(err) {
+                        if (activeUrl !== url) return;
+                        previewContainer.innerHTML = '<div class="preview-error"><i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.</div>';
+                    });
+            }
+            
+            updatePosition(e);
+        }
+
+        function hidePreview() {
+            hideTimeout = setTimeout(function() {
+                previewContainer.style.display = 'none';
+                previewContainer.innerHTML = '';
+                previewContainer.style.maxWidth = '400px';
+                previewContainer.style.width = '';
+                activeUrl = '';
+            }, 250);
+        }
+
+        triggers.forEach(function(el) {
+            el.addEventListener('mouseenter', function(e) {
+                showPreview(el, e);
+            });
+
+            el.addEventListener('mouseleave', function() {
+                hidePreview();
+            });
+        });
+
+        previewContainer.addEventListener('mouseenter', function() {
+            clearTimeout(hideTimeout);
+        });
+
+        previewContainer.addEventListener('mouseleave', function() {
+            hidePreview();
+        });
+
+        function updatePosition(e) {
+            var x = e.clientX + 15;
+            var y = e.clientY + 10;
+            
+            // Boundary checks
+            var winW = window.innerWidth;
+            var winH = window.innerHeight;
+            
+            // Forzar reflow para obtener dimensiones reales
+            var preW = previewContainer.offsetWidth || 400;
+            var preH = previewContainer.offsetHeight || 300;
+
+            if (x + preW > winW) x = e.clientX - preW - 15;
+            if (y + preH > winH) y = winH - preH - 20; // Ajuste para que no se pegue abajo
+            if (y < 10) y = 10;
+            if (x < 10) x = 10;
+
+            previewContainer.style.left = x + 'px';
+            previewContainer.style.top = y + 'px';
+        }
+    })();
+
     if (btnWithSig) {
+
         btnWithSig.addEventListener('click', function () {
             if (modalChoice) modalChoice.hide();
             if (modalWithSig) modalWithSig.show();
