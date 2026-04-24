@@ -290,9 +290,15 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
 
     $filename = (string) ($att['original_filename'] ?? 'archivo');
     $mime = (string) ($att['mimetype'] ?? 'application/octet-stream');
+    $isInline = isset($_GET['inline']) && $_GET['inline'] == '1';
+
     header('Content-Type: ' . $mime);
     header('Content-Length: ' . (string) filesize($full));
-    header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+    if ($isInline) {
+        header('Content-Disposition: inline; filename="' . str_replace('"', '', $filename) . '"');
+    } else {
+        header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
+    }
     header('X-Content-Type-Options: nosniff');
     readfile($full);
     exit;
@@ -653,6 +659,106 @@ function humanSize($bytes) {
             .note-editor .note-editable img { max-width: 340px !important; }
             .note-editor .note-editable iframe { max-width: 520px !important; }
         }
+
+        /* Image Preview Styles */
+        .att-image-preview-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            pointer-events: auto;
+            display: none;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            max-width: min(90vw, 520px);
+            animation: attFadeIn 0.2s ease-out forwards;
+        }
+        @media (max-width: 768px) {
+            .att-image-preview-container {
+                margin-top: -20px; /* Leave space for bottom button */
+            }
+        }
+        .att-image-preview-container img {
+            max-width: 100%;
+            max-height: 450px;
+            display: block;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        @keyframes attFadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .att-image-preview-container .preview-content-docx {
+            padding: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #334155;
+            background: #fdfdfd;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .att-image-preview-container .preview-loading {
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+        }
+        .att-image-preview-container .preview-error {
+            padding: 15px;
+            color: #ef4444;
+            font-size: 12px;
+            text-align: center;
+        }
+        .att-preview-close {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 30px;
+            height: 30px;
+            background: #1e293b;
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0;
+            line-height: 1;
+        }
+        @media (max-width: 768px) {
+            .att-preview-close { display: flex; }
+            .att-image-preview-container {
+                width: 94vw !important;
+                max-width: 94vw !important;
+                padding: 6px;
+            }
+            .att-image-preview-container img {
+                max-height: 70vh;
+            }
+        }
+
+        .preview-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f7ff;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            border: 1px solid #bae6fd;
+        }
+        .preview-hint i { font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -768,7 +874,13 @@ function humanSize($bytes) {
 
             <div class="body">
             <div class="thread">
-                <h5 class="mb-3">Hilo del ticket</h5>
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <h5 class="mb-0">Hilo del ticket</h5>
+                    <div class="preview-hint">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>Tip: <span class="d-none d-md-inline">Pasa el ratón</span><span class="d-md-none">Deja presionado</span> sobre una imagen para verla</span>
+                    </div>
+                </div>
 
                 <?php if (empty($entries)): ?>
                     <div class="text-muted">Aún no hay mensajes.</div>
@@ -810,10 +922,33 @@ function humanSize($bytes) {
                                     <?php if (!empty($attachmentsByEntry[$eid])): ?>
                                         <div class="att-list">
                                             <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
+                                                <?php
+                                                    $mime = strtolower((string)($a['mimetype'] ?? ''));
+                                                    $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                                    $isImage = str_starts_with($mime, 'image/');
+                                                    $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
+                                                    $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                                    
+                                                    $type = 'unknown';
+                                                    if ($isImage) $type = 'image';
+                                                    elseif ($isPdf) $type = 'pdf';
+                                                    elseif ($isDocx) $type = 'docx';
+
+                                                    $previewUrl = "view-ticket.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                                ?>
                                                 <div class="att-item">
                                                     <div>
                                                         <i class="bi bi-paperclip"></i>
-                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>"><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
+                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>"
+                                                           <?php if ($type !== 'unknown'): ?>
+                                                           class="att-preview-trigger"
+                                                           data-preview-url="<?php echo html($previewUrl); ?>"
+                                                           data-preview-type="<?php echo $type; ?>"
+                                                           <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                           data-mobile-inline="1"
+                                                           <?php endif; ?>
+                                                           <?php endif; ?>
+                                                        ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
                                                     </div>
                                                     <div class="size"><?php echo humanSize($a['size'] ?? 0); ?></div>
                                                 </div>
@@ -1481,6 +1616,138 @@ function humanSize($bytes) {
             } catch (e2) {}
         });
     });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+    // Image Preview Logic
+    (function() {
+        var previewContainer = document.createElement('div');
+        previewContainer.className = 'att-image-preview-container';
+        
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'att-preview-close';
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        closeBtn.type = 'button';
+        closeBtn.onclick = function(e) {
+            e.stopPropagation();
+            previewContainer.style.display = 'none';
+            activeUrl = '';
+        };
+        previewContainer.appendChild(closeBtn);
+
+        document.body.appendChild(previewContainer);
+
+        var triggers = document.querySelectorAll('.att-preview-trigger');
+        var hideTimeout = null;
+        var activeUrl = '';
+        var isMobile = window.innerWidth <= 768;
+
+        function showPreview(el, e) {
+            clearTimeout(hideTimeout);
+            var url = el.getAttribute('data-preview-url');
+            var type = el.getAttribute('data-preview-type');
+            if (!url) return;
+            
+            if (activeUrl === url && previewContainer.style.display === 'block') return;
+
+            activeUrl = url;
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(closeBtn);
+            previewContainer.style.display = 'block';
+            
+            if (type === 'image') {
+                var img = document.createElement('img');
+                img.src = url;
+                previewContainer.appendChild(img);
+            } else if (type === 'pdf') {
+                var iframe = document.createElement('iframe');
+                iframe.src = url + '#toolbar=0&navpanes=0&scrollbar=1';
+                iframe.style.width = isMobile ? '100%' : '500px';
+                iframe.style.height = isMobile ? '60vh' : '380px';
+                iframe.style.border = 'none';
+                iframe.style.borderRadius = '8px';
+                if (!isMobile) previewContainer.style.maxWidth = '520px';
+                previewContainer.appendChild(iframe);
+            } else if (type === 'docx') {
+                var loader = document.createElement('div');
+                loader.className = 'preview-loading';
+                loader.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2"></div> Cargando documento...';
+                previewContainer.appendChild(loader);
+                previewContainer.style.width = isMobile ? '100%' : '380px';
+
+                fetch(url)
+                    .then(function(r) { return r.arrayBuffer(); })
+                    .then(function(arrayBuffer) {
+                        if (activeUrl !== url) return;
+                        return mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+                    })
+                    .then(function(result) {
+                        if (activeUrl !== url || !result) return;
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var content = document.createElement('div');
+                        content.className = 'preview-content-docx';
+                        content.innerHTML = result.value;
+                        previewContainer.appendChild(content);
+                    })
+                    .catch(function(err) {
+                        if (activeUrl !== url) return;
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var error = document.createElement('div');
+                        error.className = 'preview-error';
+                        error.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.';
+                        previewContainer.appendChild(error);
+                    });
+            }
+        }
+
+        function hidePreview() {
+            if (isMobile) return;
+            hideTimeout = setTimeout(function() {
+                previewContainer.style.display = 'none';
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(closeBtn);
+                previewContainer.style.maxWidth = '400px';
+                previewContainer.style.width = '';
+                activeUrl = '';
+            }, 250);
+        }
+
+        triggers.forEach(function(el) {
+            el.addEventListener('mouseenter', function(e) {
+                if (!isMobile) showPreview(el, e);
+            });
+
+            el.addEventListener('mouseleave', function() {
+                if (!isMobile) hidePreview();
+            });
+
+            var pressTimer;
+            el.addEventListener('touchstart', function(e) {
+                pressTimer = window.setTimeout(function() {
+                    showPreview(el, e);
+                    if (navigator.vibrate) navigator.vibrate(40);
+                }, 600);
+            }, {passive: true});
+
+            el.addEventListener('touchend', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
+
+            el.addEventListener('touchmove', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
+        });
+
+        previewContainer.addEventListener('mouseenter', function() {
+            if (!isMobile) clearTimeout(hideTimeout);
+        });
+
+        previewContainer.addEventListener('mouseleave', function() {
+            if (!isMobile) hidePreview();
+        });
+    })();
 </script>
 </body>
 </html>

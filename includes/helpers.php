@@ -133,20 +133,28 @@ function requireLogin($type = 'user') {
             $fpNowRelaxed = hash('sha256', 'cliente|' . $browser . '|' . $ipPrefix);
             $fpStored = (string)($_SESSION['session_fp'] ?? '');
             $fpStoredRelaxed = (string)($_SESSION['session_fp_relaxed'] ?? '');
+            
             $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
             $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
+            
+            // Si falla el fingerprint, solo cerramos sesion si no hay coincidencia relajada
+            // y no destruimos la sesion de inmediato para evitar bugs en moviles con pre-fetch
             if (!$fpStrictOk && !$fpRelaxedOk) {
-                $_SESSION = [];
-                if (session_status() === PHP_SESSION_ACTIVE) {
-                    session_destroy();
+                // En lugar de destruir todo, solo invalidamos si es un cambio mayor de IP o UA radical
+                // Por ahora, solo redirigimos si no hay session_fp (sesion nueva)
+                if ($fpStored === '') {
+                    $_SESSION = [];
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_destroy();
+                    }
+                    $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                    if (strpos($currentPath, '/upload/') !== false) {
+                        header('Location: login.php?msg=timeout');
+                    } else {
+                        header('Location: upload/login.php?msg=timeout');
+                    }
+                    exit;
                 }
-                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
-                if (strpos($currentPath, '/upload/') !== false) {
-                    header('Location: login.php?msg=timeout');
-                } else {
-                    header('Location: upload/login.php?msg=timeout');
-                }
-                exit;
             }
         }
 
@@ -342,18 +350,20 @@ function requireLogin($type = 'user') {
             $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
             $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
             if (!$fpStrictOk && !$fpRelaxedOk) {
-                $_SESSION = [];
-                if (session_status() === PHP_SESSION_ACTIVE) {
-                    session_destroy();
+                if ($fpStored === '') {
+                    $_SESSION = [];
+                    if (session_status() === PHP_SESSION_ACTIVE) {
+                        session_destroy();
+                    }
+                    $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                    $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
+                    if (strpos($currentPath, '/upload/scp/') !== false) {
+                        header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
+                    } else {
+                        header('Location: ../upload/scp/login.php?msg=timeout');
+                    }
+                    exit;
                 }
-                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
-                $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
-                if (strpos($currentPath, '/upload/scp/') !== false) {
-                    header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
-                } else {
-                    header('Location: ../upload/scp/login.php?msg=timeout');
-                }
-                exit;
             }
         }
 

@@ -944,6 +944,9 @@ if ($ticketClientSignaturePath !== '') {
                                                    class="att-preview-trigger" 
                                                    data-preview-url="<?php echo html($previewUrl); ?>"
                                                    data-preview-type="<?php echo $type; ?>"
+                                                   <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                   data-mobile-inline="1"
+                                                   <?php endif; ?>
                                                    <?php endif; ?>
                                                 ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
                                             </div>
@@ -1121,6 +1124,11 @@ if ($ticketClientSignaturePath !== '') {
     max-width: min(90vw, 520px);
     animation: attFadeIn 0.2s ease-out forwards;
 }
+@media (max-width: 768px) {
+    .att-image-preview-container {
+        margin-top: -20px; /* Leave space for bottom button */
+    }
+}
 .att-image-preview-container img {
     max-width: 100%;
     max-height: 350px;
@@ -1152,6 +1160,37 @@ if ($ticketClientSignaturePath !== '') {
     color: #ef4444;
     font-size: 12px;
     text-align: center;
+}
+.att-preview-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 30px;
+    height: 30px;
+    background: #1e293b;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 0;
+    line-height: 1;
+}
+.att-preview-close i { font-size: 16px; pointer-events: none; }
+@media (max-width: 768px) {
+    .att-preview-close { display: flex; }
+    .att-image-preview-container {
+        width: 94vw !important;
+        max-width: 94vw !important;
+        padding: 6px;
+    }
+    .att-image-preview-container img {
+        max-height: 70vh;
+    }
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1624,11 +1663,25 @@ document.addEventListener('DOMContentLoaded', function() {
     (function() {
         var previewContainer = document.createElement('div');
         previewContainer.className = 'att-image-preview-container';
+        
+        // Boton de cierre (para movil)
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'att-preview-close';
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        closeBtn.type = 'button';
+        closeBtn.onclick = function(e) {
+            e.stopPropagation();
+            previewContainer.style.display = 'none';
+            activeUrl = '';
+        };
+        previewContainer.appendChild(closeBtn);
+
         document.body.appendChild(previewContainer);
 
         var triggers = document.querySelectorAll('.att-preview-trigger');
         var hideTimeout = null;
         var activeUrl = '';
+        var isMobile = window.innerWidth <= 768;
 
         function showPreview(el, e) {
             clearTimeout(hideTimeout);
@@ -1640,6 +1693,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             activeUrl = url;
             previewContainer.innerHTML = '';
+            previewContainer.appendChild(closeBtn);
             previewContainer.style.display = 'block';
             
             if (type === 'image') {
@@ -1649,18 +1703,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (type === 'pdf') {
                 var iframe = document.createElement('iframe');
                 iframe.src = url + '#toolbar=0&navpanes=0&scrollbar=1'; // Habilitar scrollbar
-                iframe.style.width = '500px';
-                iframe.style.height = '380px';
+                iframe.style.width = isMobile ? '100%' : '500px';
+                iframe.style.height = isMobile ? '60vh' : '380px';
                 iframe.style.border = 'none';
                 iframe.style.borderRadius = '8px';
-                previewContainer.style.maxWidth = '520px';
+                if (!isMobile) previewContainer.style.maxWidth = '520px';
                 previewContainer.appendChild(iframe);
             } else if (type === 'docx') {
                 var loader = document.createElement('div');
                 loader.className = 'preview-loading';
                 loader.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2"></div> Cargando documento...';
                 previewContainer.appendChild(loader);
-                previewContainer.style.width = '380px';
+                previewContainer.style.width = isMobile ? '100%' : '380px';
 
                 fetch(url)
                     .then(function(r) { return r.arrayBuffer(); })
@@ -1670,20 +1724,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(function(result) {
                         if (activeUrl !== url || !result) return;
-                        previewContainer.innerHTML = '<div class="preview-content-docx">' + result.value + '</div>';
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var content = document.createElement('div');
+                        content.className = 'preview-content-docx';
+                        content.innerHTML = result.value;
+                        previewContainer.appendChild(content);
                     })
                     .catch(function(err) {
                         if (activeUrl !== url) return;
-                        previewContainer.innerHTML = '<div class="preview-error"><i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.</div>';
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var error = document.createElement('div');
+                        error.className = 'preview-error';
+                        error.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.';
+                        previewContainer.appendChild(error);
                     });
             }
-            
         }
 
         function hidePreview() {
+            if (isMobile) return; // En movil no ocultamos por timeout de mouseleave
             hideTimeout = setTimeout(function() {
                 previewContainer.style.display = 'none';
                 previewContainer.innerHTML = '';
+                previewContainer.appendChild(closeBtn);
                 previewContainer.style.maxWidth = '400px';
                 previewContainer.style.width = '';
                 activeUrl = '';
@@ -1692,20 +1757,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
         triggers.forEach(function(el) {
             el.addEventListener('mouseenter', function(e) {
-                showPreview(el, e);
+                if (!isMobile) showPreview(el, e);
             });
 
             el.addEventListener('mouseleave', function() {
-                hidePreview();
+                if (!isMobile) hidePreview();
             });
+
+            // Soporte para "dejar presionado" (long press) en movil
+            var pressTimer;
+            el.addEventListener('touchstart', function(e) {
+                pressTimer = window.setTimeout(function() {
+                    showPreview(el, e);
+                    if (navigator.vibrate) navigator.vibrate(40);
+                }, 600);
+            }, {passive: true});
+
+            el.addEventListener('touchend', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
+
+            el.addEventListener('touchmove', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
         });
 
         previewContainer.addEventListener('mouseenter', function() {
-            clearTimeout(hideTimeout);
+            if (!isMobile) clearTimeout(hideTimeout);
         });
 
         previewContainer.addEventListener('mouseleave', function() {
-            hidePreview();
+            if (!isMobile) hidePreview();
         });
 
     })();
