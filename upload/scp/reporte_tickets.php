@@ -43,7 +43,7 @@ $searchLike = '%' . $search . '%';
 $monthFilter = trim((string)($_GET['month'] ?? date('Y-m')));
 
 // Paginación
-$perPage = 20;
+$perPage = 10;
 $page = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $perPage;
 $totalTickets = 0;

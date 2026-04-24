@@ -114,6 +114,9 @@ function requireLogin($type = 'user') {
                     $ipPrefix = implode('.', array_slice($parts, 0, 3));
                 }
             }
+            $bindIp = (string)getAppSetting('users.bind_session_ip', '0') === '1';
+            $ipPrefix = $bindIp ? $ipPrefix : 'no-ip';
+            
             $fpNow = hash('sha256', 'cliente|' . $ua . '|' . $ipPrefix);
             $browser = 'unknown';
             if (preg_match('~edg/(\d+)~i', $ua, $m)) {
@@ -317,6 +320,9 @@ function requireLogin($type = 'user') {
                     $ipPrefix = implode('.', array_slice($parts, 0, 3));
                 }
             }
+            $bindIp = (string)getAppSetting('agents.bind_session_ip', '0') === '1';
+            $ipPrefix = $bindIp ? $ipPrefix : 'no-ip';
+
             $fpNow = hash('sha256', 'agente|' . $ua . '|' . $ipPrefix);
             $browser = 'unknown';
             if (preg_match('~edg/(\d+)~i', $ua, $m)) {

@@ -2134,4 +2134,84 @@ tr.ticket-row.is-selected td {
         position: relative;
         z-index: 2;
     }
+}
+
+/* Optimización móvil para la vista de detalle de ticket */
+@media (max-width: 576px) {
+    .ticket-view-wrap {
+        padding: 0 2px;
+    }
+    .ticket-view-header {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+    .ticket-view-title {
+        font-size: 1.3rem;
+    }
+    .ticket-view-overview {
+        padding: 10px;
+        gap: 8px 12px;
+        grid-template-columns: 1fr 1fr; /* Dos columnas para aprovechar el ancho */
+        margin-bottom: 16px;
+    }
+    .ticket-view-overview .field {
+        margin-bottom: 0; /* Eliminar margen para usar espacio hacia abajo */
+    }
+    .ticket-view-overview .field label {
+        font-size: 0.65rem;
+        margin-bottom: 2px;
+    }
+    .ticket-view-overview .field .value {
+        font-size: 0.85rem;
+    }
+    .ticket-view-tab-content {
+        padding: 10px 8px;
+        margin-bottom: 16px;
+    }
+    .ticket-view-entry {
+        margin-bottom: 12px;
+    }
+    .ticket-view-entry .entry-row {
+        gap: 6px;
+    }
+    .ticket-view-entry .entry-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    .ticket-view-entry .entry-avatar-inner {
+        font-size: 0.7rem;
+    }
+    .ticket-view-entry .entry-content {
+        padding: 8px 10px;
+    }
+    .ticket-view-entry .entry-meta {
+        font-size: 0.72rem;
+        margin-bottom: 4px;
+        gap: 4px;
+    }
+    .ticket-view-entry .entry-body {
+        font-size: 0.86rem;
+        line-height: 1.4;
+    }
+    .ticket-view-entry .entry-footer {
+        display: none;
+    }
+    .ticket-view-reply {
+        padding: 14px;
+    }
+    .ticket-view-reply .reply-buttons {
+        gap: 8px;
+    }
+    .ticket-view-reply .btn-reply {
+        padding: 8px 14px;
+        font-size: 0.88rem;
+    }
+    .att-list {
+        margin-top: 6px;
+        gap: 4px;
+    }
+    .att-item {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+    }
 }

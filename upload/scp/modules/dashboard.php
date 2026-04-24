@@ -545,9 +545,41 @@ while ($row = $res->fetch_assoc()) {
 }
 ?>
 
+<style>
+    @media (max-width: 576px) {
+        .dashboard-period-form {
+            padding: 10px !important;
+            gap: 10px !important;
+        }
+        .dashboard-period-form label {
+            font-size: 0.78rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0 !important;
+        }
+        .dashboard-period-form input, 
+        .dashboard-period-form select {
+            width: 140px !important;
+            font-size: 0.85rem !important;
+            padding: 4px 8px !important;
+        }
+        .dashboard-period-form button {
+            width: 100%;
+            padding: 6px !important;
+            font-size: 0.85rem !important;
+            margin-top: 5px;
+        }
+        .dashboard-period-form strong {
+            font-weight: 600;
+        }
+    }
+</style>
+
 <!-- Formulario de selección de período -->
 <form method="post" action="dashboard.php" class="mb-4">
-    <div class="d-flex align-items-center gap-3 flex-wrap" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div class="d-flex align-items-center gap-3 flex-wrap dashboard-period-form" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         <label class="mb-0">
             <strong>Reporte del Período:</strong>
             <input type="date" 

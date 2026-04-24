@@ -47,7 +47,10 @@ class Auth {
     private static function sessionFingerprint($userType) {
         $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
         $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-        $ipPrefix = self::sessionIpPrefix($ip);
+        
+        $bindIp = (string)getAppSetting(($userType === 'agente' ? 'agents' : 'users') . '.bind_session_ip', '0') === '1';
+        $ipPrefix = $bindIp ? self::sessionIpPrefix($ip) : 'no-ip';
+        
         return hash('sha256', (string)$userType . '|' . $ua . '|' . $ipPrefix);
     }
 
@@ -66,7 +69,10 @@ class Auth {
             $browser = 'safari-' . (string)$m[1];
         }
         $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-        $ipPrefix = self::sessionIpPrefix($ip);
+        
+        $bindIp = (string)getAppSetting(($userType === 'agente' ? 'agents' : 'users') . '.bind_session_ip', '0') === '1';
+        $ipPrefix = $bindIp ? self::sessionIpPrefix($ip) : 'no-ip';
+        
         return hash('sha256', (string)$userType . '|' . $browser . '|' . $ipPrefix);
     }
     /**
