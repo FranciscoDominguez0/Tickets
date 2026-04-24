@@ -1107,16 +1107,19 @@ if ($ticketClientSignaturePath !== '') {
 /* Image Preview Styles */
 .att-image-preview-container {
     position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 10000;
-    pointer-events: auto; /* Permite interactuar con el contenido (scroll) */
+    pointer-events: auto;
     display: none;
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     padding: 8px;
-    max-width: 350px;
-    animation: attFadeIn 0.2s ease-out;
+    max-width: min(90vw, 520px);
+    animation: attFadeIn 0.2s ease-out forwards;
 }
 .att-image-preview-container img {
     max-width: 100%;
@@ -1126,8 +1129,8 @@ if ($ticketClientSignaturePath !== '') {
     object-fit: contain;
 }
 @keyframes attFadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 .att-image-preview-container .preview-content-docx {
     padding: 15px;
@@ -1675,7 +1678,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
             
-            updatePosition(e);
         }
 
         function hidePreview() {
@@ -1706,26 +1708,6 @@ document.addEventListener('DOMContentLoaded', function() {
             hidePreview();
         });
 
-        function updatePosition(e) {
-            var x = e.clientX + 15;
-            var y = e.clientY + 10;
-            
-            // Boundary checks
-            var winW = window.innerWidth;
-            var winH = window.innerHeight;
-            
-            // Forzar reflow para obtener dimensiones reales
-            var preW = previewContainer.offsetWidth || 400;
-            var preH = previewContainer.offsetHeight || 300;
-
-            if (x + preW > winW) x = e.clientX - preW - 15;
-            if (y + preH > winH) y = winH - preH - 20; // Ajuste para que no se pegue abajo
-            if (y < 10) y = 10;
-            if (x < 10) x = 10;
-
-            previewContainer.style.left = x + 'px';
-            previewContainer.style.top = y + 'px';
-        }
     })();
 
     if (btnWithSig) {
