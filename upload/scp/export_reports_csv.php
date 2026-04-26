@@ -1,8 +1,13 @@
 <?php
+ob_start();
 /**
  * Vigitec — Reporte Profesional de Servicios (.xlsx)
  * Diseño Premium con Logo Profesional.
  */
+
+// Desactivar visualización de errores para evitar que corrompan el Excel
+error_reporting(0);
+ini_set('display_errors', 0);
 
 require_once '../../config.php';
 require_once '../../includes/helpers.php';
@@ -17,7 +22,10 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 // ── Autenticación ──────────────────────────────────────────────────────────
-if (!isset($_SESSION['staff_id'])) { die("Acceso denegado."); }
+if (!isset($_SESSION['staff_id'])) { 
+    if (ob_get_length()) ob_end_clean();
+    die("Acceso denegado."); 
+}
 requireLogin('agente');
 $eid = empresaId();
 
@@ -271,9 +279,14 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $spreadsheet->setActiveSheetIndex(0);
 
     $filename = "reporte_vigitec_usd_{$monthKey}.xlsx";
+
+    // Limpiar cualquier salida previa para evitar corrupción
+    if (ob_get_length()) ob_end_clean();
+
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
+    header('Pragma: public');
 
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');

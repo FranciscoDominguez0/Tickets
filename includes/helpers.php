@@ -1751,4 +1751,3 @@ function requireRolePermission($permKey, $redirectUrl = null) {
     header('Location: ' . $fallback);
     exit;
 }
-?>

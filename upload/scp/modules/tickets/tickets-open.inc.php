@@ -179,38 +179,53 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
                     if (!$chkSeq || $chkSeq->num_rows === 0) return null;
 
-                    $mysqli->query('START TRANSACTION');
-                    $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? AND empresa_id = ? FOR UPDATE');
-                    if (!$stmtSeq) {
-                        $mysqli->query('ROLLBACK');
-                        return null;
-                    }
-                    $stmtSeq->bind_param('ii', $sequenceId, $eid);
-                    $stmtSeq->execute();
-                    $seqData = $stmtSeq->get_result()->fetch_assoc();
-                    if (!$seqData) {
-                        $mysqli->query('ROLLBACK');
-                        return null;
+                    // Intentar hasta 50 veces encontrar un número no duplicado
+                    for ($attempt = 0; $attempt < 50; $attempt++) {
+                        $mysqli->query('START TRANSACTION');
+                        $stmtSeq = $mysqli->prepare('SELECT next, increment, padding FROM sequences WHERE id = ? AND empresa_id = ? FOR UPDATE');
+                        if (!$stmtSeq) {
+                            $mysqli->query('ROLLBACK');
+                            return null;
+                        }
+                        $stmtSeq->bind_param('ii', $sequenceId, $eid);
+                        $stmtSeq->execute();
+                        $seqData = $stmtSeq->get_result()->fetch_assoc();
+                        if (!$seqData) {
+                            $mysqli->query('ROLLBACK');
+                            return null;
+                        }
+
+                        $current = (int)($seqData['next'] ?? 1);
+                        $increment = (int)($seqData['increment'] ?? 1);
+                        $padding = (int)($seqData['padding'] ?? 0);
+                        $next = $current + $increment;
+
+                        $stmtUpd = $mysqli->prepare('UPDATE sequences SET next = ?, updated = NOW() WHERE id = ?');
+                        if (!$stmtUpd) {
+                            $mysqli->query('ROLLBACK');
+                            return null;
+                        }
+                        $stmtUpd->bind_param('ii', $next, $sequenceId);
+                        $stmtUpd->execute();
+                        $mysqli->query('COMMIT');
+
+                        $num = ($padding > 0) ? str_pad((string)$current, $padding, '0', STR_PAD_LEFT) : (string)$current;
+
+                        // Verificar si ya existe un ticket con este número (evitar Duplicate Entry fatal)
+                        $stmtChk = $mysqli->prepare('SELECT 1 FROM tickets WHERE ticket_number = ? LIMIT 1');
+                        if ($stmtChk) {
+                            $stmtChk->bind_param('s', $num);
+                            $stmtChk->execute();
+                            if (!$stmtChk->get_result()->fetch_assoc()) {
+                                return $num;
+                            }
+                            // Si existe, el bucle continúa y vuelve a incrementar la secuencia
+                        } else {
+                            return $num;
+                        }
                     }
 
-                    $current = (int)($seqData['next'] ?? 1);
-                    $increment = (int)($seqData['increment'] ?? 1);
-                    $padding = (int)($seqData['padding'] ?? 0);
-                    $next = $current + $increment;
-
-                    $stmtUpd = $mysqli->prepare('UPDATE sequences SET next = ?, updated = NOW() WHERE id = ?');
-                    if (!$stmtUpd) {
-                        $mysqli->query('ROLLBACK');
-                        return null;
-                    }
-                    $stmtUpd->bind_param('ii', $next, $sequenceId);
-                    $stmtUpd->execute();
-                    $mysqli->query('COMMIT');
-
-                    if ($padding > 0) {
-                        return str_pad((string)$current, $padding, '0', STR_PAD_LEFT);
-                    }
-                    return (string)$current;
+                    return null;
                 };
 
                 $ticketSequenceId = (string)getAppSetting('tickets.ticket_sequence_id', '0');

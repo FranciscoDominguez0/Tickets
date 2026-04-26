@@ -4,7 +4,7 @@
  */
 
 // Verificar que la extensión mysqli esté habilitada
-if (!extension_loaded('mysqli')) {
+if (!function_exists('mysqli_connect')) {
     die('❌ Error: La extensión mysqli de PHP no está habilitada.<br><br>' .
         'Para habilitarla en Windows:<br>' .
         '1. Abre el archivo php.ini<br>' .
@@ -125,6 +125,4 @@ if (isset($_SESSION['user_login_time'])) {
 }
 }
 
-// Directorio global de adjuntos
 define('ATTACHMENTS_DIR', __DIR__ . '/upload/uploads/attachments');
-?>
