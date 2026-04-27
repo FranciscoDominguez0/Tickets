@@ -64,6 +64,10 @@ if ($userPhone === '' && (int)($_SESSION['user_id'] ?? 0) > 0) {
 }
 $hasUserPhone = ($userPhone !== '');
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    $error = 'Los archivos seleccionados son demasiado pesados. Por favor, intenta subir imágenes más pequeñas o menos archivos.';
+}
+
 if ($_POST) {
     if (!validateCSRF()) {
         $error = 'Token de seguridad inválido';
@@ -1379,6 +1383,42 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             }
 
             input.addEventListener('change', updateList);
+
+            var form = document.getElementById('open-ticket-form');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    if (!input.files || input.files.length === 0) return;
+                    
+                    var totalSize = 0;
+                    var maxFileMb = <?php echo (int)($ticketMaxFileMb ?? 10); ?>;
+                    var maxPostMb = 100; // Un poco menos que el post_max_size de 128M para seguridad
+                    var maxFileBytes = maxFileMb * 1024 * 1024;
+                    var maxPostBytes = maxPostMb * 1024 * 1024;
+                    
+                    for (var i = 0; i < input.files.length; i++) {
+                        var f = input.files[i];
+                        totalSize += f.size;
+                        
+                        if (f.size > maxFileBytes) {
+                            e.preventDefault();
+                            var msg = 'El archivo "<strong>' + f.name + '</strong>" es demasiado pesado (' + humanSize(f.size) + '). El límite por archivo es de ' + maxFileMb + ' MB.';
+                            window.__showCreativePop && window.__showCreativePop(msg, 'Imagen muy pesada');
+                            return false;
+                        }
+                    }
+                    
+                    if (totalSize > maxPostBytes) {
+                        e.preventDefault();
+                        var msgTotal = 'El total de los archivos adjuntos (' + humanSize(totalSize) + ') excede el límite permitido de ' + maxPostMb + ' MB. Por favor, sube archivos más pequeños o menos cantidad.';
+                        window.__showCreativePop && window.__showCreativePop(msgTotal, 'Límite excedido');
+                        return false;
+                    }
+
+                    // Mostrar overlay de carga si pasa la validación
+                    var loading = document.getElementById('open-ticket-loading');
+                    if (loading) loading.classList.remove('d-none');
+                });
+            }
         })();
 
         (function () {

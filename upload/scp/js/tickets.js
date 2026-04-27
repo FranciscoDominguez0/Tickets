@@ -121,12 +121,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isInternal) cls += ' internal';
                     else if (isStaff) cls += ' staff';
                     else cls += ' user';
+                    var attHtml = '';
+                    if (e.attachments && Array.isArray(e.attachments) && e.attachments.length > 0) {
+                      var imagesHtml = '';
+                      e.attachments.forEach(function(att) {
+                        if (att.is_image && att.url) {
+                          imagesHtml += '<img src="' + escapeHtml(att.url) + '" style="max-width:100%; max-height:160px; border-radius:8px; border:1px solid #e2e8f0; margin-right:8px; margin-top:10px; object-fit:contain; background:#f8fafc;" alt="adjunto">';
+                        }
+                      });
+                      if (imagesHtml) {
+                        attHtml = '<div class="th-attachments">' + imagesHtml + '</div>';
+                      }
+                    }
+
                     html += '<div class="th-item ' + cls + '">'
                       + '<div class="th-head">'
                       + '<span class="th-author">' + escapeHtml(author) + '</span>'
                       + (when ? '<span class="th-when">' + escapeHtml(formatWhen(when)) + '</span>' : '')
                       + '</div>'
-                      + '<div class="th-body">' + escapeHtml(text) + '</div>'
+                      + '<div class="th-body">' + escapeHtml(text) + attHtml + '</div>'
                       + '</div>';
                   } catch (err) {}
                 });
@@ -700,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   }
-  if (input && zone && list) {
+    if (input && zone && list) {
     input.addEventListener('change', updateList);
     zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
@@ -712,6 +725,32 @@ document.addEventListener('DOMContentLoaded', function() {
         updateList();
       }
     });
+
+    // Validación de tamaño al enviar
+    var form = input.closest('form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        if (!input.files || input.files.length === 0) return;
+        var totalSize = 0;
+        var maxFileMb = 32; // Límite razonable por archivo
+        var maxPostMb = 100; // Límite total (post_max_size es 128M)
+        
+        for (var i = 0; i < input.files.length; i++) {
+          var f = input.files[i];
+          totalSize += f.size;
+          if (f.size > (maxFileMb * 1024 * 1024)) {
+            e.preventDefault();
+            alert('El archivo "' + f.name + '" es muy pesado (' + (f.size/(1024*1024)).toFixed(2) + ' MB). El límite es de ' + maxFileMb + ' MB.');
+            return false;
+          }
+        }
+        if (totalSize > (maxPostMb * 1024 * 1024)) {
+          e.preventDefault();
+          alert('El total de archivos (' + (totalSize/(1024*1024)).toFixed(2) + ' MB) excede el límite de ' + maxPostMb + ' MB.');
+          return false;
+        }
+      });
+    }
   }
   var btnReset = document.getElementById('btn-reset');
   if (btnReset) {
