@@ -146,7 +146,40 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
                         'is_internal' => (int)($e['is_internal'] ?? 0),
                         'is_staff' => $isStaff ? 1 : 0,
                         'text' => $text,
+                        'attachments' => []
                     ];
+                }
+
+                if (!empty($entriesOut)) {
+                    $entryIds = array_column($entriesOut, 'id');
+                    $placeholders = implode(',', array_fill(0, count($entryIds), '?'));
+                    $stmtA = $mysqli->prepare(
+                        "SELECT id, thread_entry_id, original_filename, mimetype, size \n"
+                        . "FROM attachments \n"
+                        . "WHERE thread_entry_id IN ($placeholders) ORDER BY id"
+                    );
+                    if ($stmtA) {
+                        $types = str_repeat('i', count($entryIds));
+                        $stmtA->bind_param($types, ...$entryIds);
+                        if ($stmtA->execute()) {
+                            $resA = $stmtA->get_result();
+                            while ($resA && ($att = $resA->fetch_assoc())) {
+                                $isImage = strpos($att['mimetype'], 'image/') === 0;
+                                foreach ($entriesOut as &$eo) {
+                                    if ($eo['id'] === (int)$att['thread_entry_id']) {
+                                        $eo['attachments'][] = [
+                                            'id' => (int)$att['id'],
+                                            'filename' => (string)$att['original_filename'],
+                                            'is_image' => $isImage,
+                                            'url' => 'tickets.php?id=' . $tid . '&download=' . (int)$att['id']
+                                        ];
+                                        break;
+                                    }
+                                }
+                                unset($eo);
+                            }
+                        }
+                    }
                 }
 
                 if (!empty($raw)) {
