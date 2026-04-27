@@ -58,20 +58,7 @@ if (!empty($_SERVER['HTTP_HOST'])) {
 define('APP_URL', $__appUrl);
 define('TIMEZONE', 'America/Bogota');
 
-// ============================================================================
-// CORREO (notificaciones a agentes)
-// ============================================================================
-// Remitente de las notificaciones (Gmail suele exigir que coincida con SMTP_USER)
-define('MAIL_FROM', 'dominguezf225@gmail.com');
-define('MAIL_FROM_NAME', APP_NAME);
-define('ADMIN_NOTIFY_EMAIL', 'cuenta9fran@gmail.com');
-define('SEND_CLIENT_UPDATE_EMAIL', false);
-// SMTP Gmail (contraseña de aplicación, sin espacios)
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 465);
-define('SMTP_USER', 'dominguezf225@gmail.com');
-define('SMTP_PASS', 'uzlewbhpmzgzsbad');
-define('SMTP_SECURE', 'ssl');
+
 
 // ============================================================================
 // SEGURIDAD
@@ -85,8 +72,20 @@ define('SESSION_LIFETIME', 86400); // 24 horas
 // ============================================================================
 date_default_timezone_set(TIMEZONE);
 
-// Iniciar sesión
+// Configuración segura de cookies de sesión
 if (session_status() === PHP_SESSION_NONE) {
+    // Determinar si estamos usando HTTPS
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
+    
+    session_set_cookie_params([
+        'lifetime' => defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 86400,
+        'path' => '/',
+        'domain' => $_SERVER['HTTP_HOST'] ?? '',
+        'secure' => $isSecure, // Solo por HTTPS si está disponible
+        'httponly' => true,    // Inaccesible para JavaScript (Previene XSS)
+        'samesite' => 'Lax'    // Previene CSRF ('Strict' o 'Lax')
+    ]);
+
     session_start();
 }
 

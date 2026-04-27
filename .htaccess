@@ -1,0 +1,22 @@
+<IfModule mod_headers.c>
+    # 1. HSTS (Strict-Transport-Security)
+    # Obliga al navegador a usar SIEMPRE HTTPS. Solo activar si tu sitio tiene certificado SSL/TLS.
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+    # 2. X-Content-Type-Options
+    # Previene el "MIME sniffing", bloqueando que el navegador intente adivinar el tipo de archivo. Evita ataques XSS.
+    Header always set X-Content-Type-Options "nosniff"
+
+    # 3. Referrer-Policy
+    # Controla cuánta información se envía en la cabecera Referer al navegar a otros sitios.
+    # strict-origin-when-cross-origin: Envía ruta completa a tu mismo sitio, pero solo el dominio base a externos.
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # 4. X-Frame-Options
+    # Protege contra Clickjacking evitando que el sitio sea incrustado en iframes maliciosos.
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # 5. Content-Security-Policy (CSP) Básico y Seguro
+    # NOTA: En tu código veo que usas CDNs (jsdelivr, jquery) e imágenes/audios externos (Pixabay).
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; media-src 'self' https://cdn.pixabay.com; connect-src 'self'"
+</IfModule>

@@ -769,7 +769,7 @@ if ($ticketClientSignaturePath !== '') {
             <div class="field">
                 <label>Usuario</label>
                 <div class="value">
-                    <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?> (<?php echo (int)$t['user_id']; ?>)</a>
+                    <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?></a>
                 </div>
             </div>
             <div class="field d-none d-md-block">
