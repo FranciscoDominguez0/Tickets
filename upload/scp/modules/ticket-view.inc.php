@@ -211,14 +211,14 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="tvb-dot"></div>
                     <div class="tvb-text">
                         <span class="tvb-ticket-ref">Ticket #<?php echo html($t['ticket_number'] ?? $tid); ?></span>
-                        <p class="tvb-msg">Cerrado — <strong>registra el reporte de costos</strong></p>
+                        <p class="tvb-msg">Cerrado — <strong>recuerde reportar la facturación</strong></p>
                     </div>
                     <div class="tvb-actions">
                         <a href="reporte_costos.php?ticket_id=<?php echo (int)$tid; ?>" class="tvb-btn">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
                             </svg>
-                            Registrar
+                            Facturar
                         </a>
                         <button class="tvb-dismiss" onclick="tvBillingDismiss()" title="Cerrar" aria-label="Cerrar">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1955,7 +1955,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="modal-body" style="padding: 26px; background: #fff;">
                 <p style="color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 0;">
-                    ¿Estás seguro de que deseas marcar este ticket como <strong style="color: #0f172a;">facturado</strong>? Esta acción confirmará el reporte de costos de forma permanente.
+                    ¿Estás seguro de que deseas marcar este ticket como <strong style="color: #0f172a;">facturado</strong>? Esta acción confirmará el proceso de facturación de forma permanente.
                 </p>
             </div>
             <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 20px 26px; gap: 12px; background: #f8fafc;">
