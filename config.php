@@ -1,40 +1,28 @@
 <?php
 /**
- * CONFIGURACIÓN DEL SISTEMA DE TICKETS
+ * Configuration File
+ * Ticket Management System
  */
 
-// Verificar que la extensión mysqli esté habilitada
 if (!function_exists('mysqli_connect')) {
-    die('❌ Error: La extensión mysqli de PHP no está habilitada.<br><br>' .
-        'Para habilitarla en Windows:<br>' .
-        '1. Abre el archivo php.ini<br>' .
-        '2. Busca la línea: ;extension=mysqli<br>' .
-        '3. Quita el punto y coma (;) al inicio: extension=mysqli<br>' .
-        '4. Guarda el archivo y reinicia tu servidor web (Apache/Nginx)<br><br>' .
-        'Ubicación común del php.ini: ' . php_ini_loaded_file());
+    die('Configuration Error: PHP mysqli extension is required. Please check: ' . php_ini_loaded_file());
 }
 
-// ============================================================================
-// BASE DE DATOS
-// ============================================================================
+// Database Configuration
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
 define('DB_USER', 'root');
 define('DB_PASS', '12345678');
-// IMPORTANTE: usar el nombre REAL de la BD
-// El usuario indicó que la base se llama "tickets_db"
 define('DB_NAME', 'tickets_db');
 
-// ============================================================================
-// APLICACIÓN
-// ============================================================================
+// Application Configuration
 define('APP_NAME', 'Sistema de Tickets');
+define('TIMEZONE', 'America/Bogota');
 
 $__appUrl = 'http://localhost/sistema-tickets';
 if (!empty($_SERVER['HTTP_HOST'])) {
     $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = (string)$_SERVER['HTTP_HOST'];
-
     $docRoot = (string)($_SERVER['DOCUMENT_ROOT'] ?? '');
     $docRootReal = $docRoot !== '' ? realpath($docRoot) : false;
     $projectReal = realpath(__DIR__);
@@ -54,58 +42,48 @@ if (!empty($_SERVER['HTTP_HOST'])) {
         $__appUrl = $scheme . '://' . $host;
     }
 }
-
 define('APP_URL', $__appUrl);
-define('TIMEZONE', 'America/Bogota');
+define('ATTACHMENTS_DIR', __DIR__ . '/upload/uploads/attachments');
 
-
-
-// ============================================================================
-// SEGURIDAD
-// ============================================================================
+// Security Configuration
 define('SECRET_KEY', 'cambia-esto-en-produccion-con-algo-largo-y-aleatorio-2025');
-define('CSRF_TIMEOUT', 3600); // 1 hora
-define('SESSION_LIFETIME', 86400); // 24 horas
+define('CSRF_TIMEOUT', 3600);
+define('SESSION_LIFETIME', 86400);
 
-// ============================================================================
-// INICIALIZAR
-// ============================================================================
+// Initialization
 date_default_timezone_set(TIMEZONE);
 
-// Configuración segura de cookies de sesión
 if (session_status() === PHP_SESSION_NONE) {
-    // Determinar si estamos usando HTTPS
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443;
     
     session_set_cookie_params([
         'lifetime' => defined('SESSION_LIFETIME') ? SESSION_LIFETIME : 86400,
         'path' => '/',
         'domain' => $_SERVER['HTTP_HOST'] ?? '',
-        'secure' => $isSecure, // Solo por HTTPS si está disponible
-        'httponly' => true,    // Inaccesible para JavaScript (Previene XSS)
-        'samesite' => 'Lax'    // Previene CSRF ('Strict' o 'Lax')
+        'secure' => $isSecure,
+        'httponly' => true,
+        'samesite' => 'Lax'
     ]);
 
     session_start();
 }
 
-// CSRF token en sesión
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Conexión a base de datos
+// Database Connection
 try {
     $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
     if ($mysqli->connect_error) {
-        throw new Exception('Error de conexión: ' . $mysqli->connect_error);
+        throw new Exception('Connection failed: ' . $mysqli->connect_error);
     }
     $mysqli->set_charset('utf8mb4');
 } catch (Exception $e) {
-    die('❌ Error de base de datos: ' . $e->getMessage());
+    die('Database Error: ' . $e->getMessage());
 }
 
-// Autoload de clases
+// Autoloader
 spl_autoload_register(function($class) {
     $file = __DIR__ . '/includes/' . $class . '.php';
     if (file_exists($file)) {
@@ -113,7 +91,7 @@ spl_autoload_register(function($class) {
     }
 });
 
-// Validar sesión expirada
+// Session Timeout Validation
 if (isset($_SESSION['user_login_time'])) {
     if (time() - $_SESSION['user_login_time'] > SESSION_LIFETIME) {
         session_destroy();
@@ -121,7 +99,5 @@ if (isset($_SESSION['user_login_time'])) {
         exit;
     } else {
         $_SESSION['user_login_time'] = time();
+    }
 }
-}
-
-define('ATTACHMENTS_DIR', __DIR__ . '/upload/uploads/attachments');
