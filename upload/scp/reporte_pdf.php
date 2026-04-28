@@ -346,4 +346,5 @@ $dompdf->setPaper('A4', 'portrait');
 $filename = "Reporte_Ticket_{$ticketNo}.pdf";
 
 // Output al navegador
-$dompdf->stream($filename, ["Attachment" => false]);
+setcookie('fileDownloadToken', 'true', time() + 300, '/');
+$dompdf->stream($filename, ["Attachment" => true]);

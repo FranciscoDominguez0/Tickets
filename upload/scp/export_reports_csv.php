@@ -241,16 +241,18 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
         $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
         $ws->setCellValue("F$currentRow", trim(preg_replace('/\s+/', ' ', (string)$row['work_description'])));
 
-        $fill = ($currentRow % 2 === 0) ? 'FFF8F9FA' : 'FFFFFFFF';
-        $ws->getStyle("A$currentRow:F$currentRow")->applyFromArray([
-            'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>$fill]],
-            'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
-            'borders' => ['bottom'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
-        ]);
-
-        $ws->getStyle("A$currentRow")->getFont()->setBold(true)->getColor()->setARGB('FF'.$c['secondary']);
-        $ws->getStyle("F$currentRow")->getAlignment()->setWrapText(true);
         $currentRow++;
+    }
+
+    // Aplicar estilos a todo el rango a la vez (Optimización de velocidad)
+    if ($currentRow > $startRow) {
+        $lastRow = $currentRow - 1;
+        $ws->getStyle("A$startRow:F$lastRow")->applyFromArray([
+            'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
+        ]);
+        $ws->getStyle("A$startRow:A$lastRow")->getFont()->setBold(true)->getColor()->setARGB('FF'.$c['secondary']);
+        $ws->getStyle("F$startRow:F$lastRow")->getAlignment()->setWrapText(true);
     }
 
     // Fila de Total
@@ -287,6 +289,7 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     header('Content-Disposition: attachment; filename="' . $filename . '"');
     header('Cache-Control: max-age=0');
     header('Pragma: public');
+    setcookie('fileDownloadToken', 'true', time() + 300, '/');
 
     $writer = new Xlsx($spreadsheet);
     $writer->save('php://output');

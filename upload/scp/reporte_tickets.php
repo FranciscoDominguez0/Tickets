@@ -482,12 +482,87 @@ ob_start();
 
 <script>
 (function() {
-    document.getElementById('monthSelect').addEventListener('change', function() {
-        var url = new URL(window.location.href);
-        url.searchParams.set('month', this.value);
-        url.searchParams.delete('page');
-        window.location.href = url.toString();
-    });
+    const monthSelect = document.getElementById('monthSelect');
+    if (monthSelect) {
+        monthSelect.addEventListener('change', function() {
+            var url = new URL(window.location.href);
+            url.searchParams.set('month', this.value);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    }
+
+    const exportBtn = document.querySelector('a[href^="export_reports_csv.php"]');
+    if(exportBtn) {
+        exportBtn.addEventListener('click', function(e) {
+            showLoadingOverlay('Generando Excel, por favor espere...');
+        });
+    }
+
+    function showLoadingOverlay(message) {
+        if (document.getElementById('downloadLoadingOverlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'downloadLoadingOverlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        overlay.style.display = 'flex';
+        overlay.style.flexDirection = 'column';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.zIndex = '9999';
+        overlay.style.color = '#fff';
+        overlay.style.backdropFilter = 'blur(3px)';
+        overlay.style.transition = 'opacity 0.3s ease';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-border text-light mb-3';
+        spinner.style.width = '3rem';
+        spinner.style.height = '3rem';
+        spinner.setAttribute('role', 'status');
+
+        const text = document.createElement('h4');
+        text.textContent = message || 'Generando archivo...';
+        text.style.fontWeight = '600';
+        text.style.textShadow = '0 2px 4px rgba(0,0,0,0.5)';
+
+        const subtext = document.createElement('div');
+        subtext.textContent = 'Esto puede demorar unos segundos.';
+        subtext.style.opacity = '0.8';
+
+        overlay.appendChild(spinner);
+        overlay.appendChild(text);
+        overlay.appendChild(subtext);
+        document.body.appendChild(overlay);
+
+        // Clear token cookie before starting
+        document.cookie = "fileDownloadToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+        // Polling para detectar cuando la descarga finalice (cookie)
+        const tokenCheck = setInterval(() => {
+            if (document.cookie.includes('fileDownloadToken=true')) {
+                clearInterval(tokenCheck);
+                // Clean up cookie
+                document.cookie = "fileDownloadToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                if(document.body.contains(overlay)) {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 300);
+                }
+            }
+        }, 500);
+
+        // Fallback after 60 seconds just in case it fails
+        setTimeout(() => {
+            clearInterval(tokenCheck);
+            if(document.body.contains(overlay)) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 300);
+            }
+        }, 60000);
+    }
 })();
 </script>
 
