@@ -211,14 +211,14 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="tvb-dot"></div>
                     <div class="tvb-text">
                         <span class="tvb-ticket-ref">Ticket #<?php echo html($t['ticket_number'] ?? $tid); ?></span>
-                        <p class="tvb-msg">Cerrado — <strong>recuerde reportar la facturación</strong></p>
+                        <p class="tvb-msg">Cerrado — <strong>recuerde realizar el reporte de servicio</strong></p>
                     </div>
                     <div class="tvb-actions">
                         <a href="reporte_costos.php?ticket_id=<?php echo (int)$tid; ?>" class="tvb-btn">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
                             </svg>
-                            Facturar
+                            Reportar
                         </a>
                         <button class="tvb-dismiss" onclick="tvBillingDismiss()" title="Cerrar" aria-label="Cerrar">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -729,18 +729,24 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="value" style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
                     <span class="badge-status" style="background: <?php echo html($t['status_color'] ?? '#e2e8f0'); ?>; color: #0f172a;"><?php echo html($t['status_name']); ?></span>
                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                        <?php if (($t['billing_status'] ?? 'pending') === 'confirmed'): ?>
-                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver reporte de facturación"><i class="bi bi-patch-check-fill"></i> Facturado</a>
-                        <?php else: ?>
-                            <div style="display:flex; flex-direction:column; gap:4px; margin-top: 4px;">
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver reporte pendiente"><i class="bi bi-clock-history"></i> Pendiente Facturación</a>
-                                <?php if (getCurrentStaffRoleName() === 'admin'): ?>
-                                    <button type="button" class="btn btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling" style="background: #15803d; color: #ffffff !important; font-size: 0.75rem; border-radius: 8px; font-weight: 700; border: none; box-shadow: 0 4px 10px rgba(21, 128, 61, 0.2); display: inline-flex; align-items: center; gap: 6px; justify-content: center; padding: 6px 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='#166534'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#15803d'; this.style.transform='translateY(0)';">
-                                        <i class="bi bi-check2-circle"></i> Confirmar Facturación
-                                    </button>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                    <?php 
+                    $bstatus = $t['billing_status'] ?? 'pending';
+                    if ($bstatus === 'confirmed'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver reporte de facturación"><i class="bi bi-patch-check-fill"></i> Facturado</a>
+                    <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver reporte de visita técnica"><i class="bi bi-geo-alt-fill"></i> Visita Técnica</a>
+                    <?php elseif ($bstatus === 'cotizacion'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver cotización"><i class="bi bi-file-earmark-text-fill"></i> Cotización</a>
+                    <?php else: ?>
+                        <div style="display:flex; flex-direction:column; gap:4px; margin-top: 4px;">
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;" title="Ver reporte pendiente"><i class="bi bi-clock-history"></i> Pendiente Facturación</a>
+                            <?php if (getCurrentStaffRoleName() === 'admin'): ?>
+                                <button type="button" class="btn btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling" style="background: #15803d; color: #ffffff !important; font-size: 0.75rem; border-radius: 8px; font-weight: 700; border: none; box-shadow: 0 4px 10px rgba(21, 128, 61, 0.2); display: inline-flex; align-items: center; gap: 6px; justify-content: center; padding: 6px 12px; transition: transform 0.2s, background 0.2s;" onmouseover="this.style.background='#166534'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#15803d'; this.style.transform='translateY(0)';">
+                                    <i class="bi bi-check2-circle"></i> Confirmar Facturación
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>

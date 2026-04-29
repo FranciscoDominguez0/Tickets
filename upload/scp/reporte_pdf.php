@@ -138,6 +138,13 @@ $clientName = trim(($report['cl_first'] ?? '') . ' ' . ($report['cl_last'] ?? ''
 $clientName = $clientName !== '' ? htmlspecialchars($clientName) : htmlspecialchars($report['cl_email'] ?? 'Usuario Web');
 $closeDate = htmlspecialchars(date('d/m/Y H:i', strtotime($report['closed'])));
 
+$bstatus = $report['billing_status'] ?? 'pending';
+$statusLabel = 'Pendiente Facturación';
+if ($bstatus === 'confirmed') $statusLabel = 'Facturado';
+elseif ($bstatus === 'visita_tecnica') $statusLabel = 'Visita Técnica';
+elseif ($bstatus === 'cotizacion') $statusLabel = 'Cotización';
+$statusLabel = htmlspecialchars($statusLabel);
+
 $workDesc = nl2br(htmlspecialchars($report['work_description']));
 $obs = !empty($report['observations']) ? nl2br(htmlspecialchars($report['observations'])) : '— Ninguna observación extra. —';
 $appName = htmlspecialchars($companyName);
@@ -315,6 +322,10 @@ $html .= <<<HTML
                 <tr>
                     <td class="kv"><span class="k">Técnico Asignado</span><span class="v">{$staffName}</span></td>
                     <td class="kv"><span class="k">Fecha de Cierre</span><span class="v">{$closeDate}</span></td>
+                </tr>
+                <tr>
+                    <td class="kv"><span class="k">Tipo de Reporte</span><span class="v">{$statusLabel}</span></td>
+                    <td class="kv"></td>
                 </tr>
             </table>
         </div>

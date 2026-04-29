@@ -82,12 +82,14 @@ if ($statusIdClosed > 0) {
     $dataJoin = ' LEFT JOIN users u ON t.user_id = u.id';
     $reportJoin = $hasReportsTable ? ' LEFT JOIN ticket_reports r ON r.ticket_id = t.id' : '';
     $reportSelect = $hasReportsTable ? 'IF(r.id IS NOT NULL, 1, 0)' : '0';
+    $statusSelect = $hasReportsTable ? ', r.billing_status' : ', NULL as billing_status';
 
     $query = "SELECT t.id, t.ticket_number, t.subject, t.closed, t.staff_id,
                      d.name as department_name,
                      s.firstname as staff_first, s.lastname as staff_last,
                      u.firstname as user_first, u.lastname as user_last,
                      {$reportSelect} as has_report
+                     {$statusSelect}
               FROM tickets t
               JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
               LEFT JOIN staff s ON t.staff_id = s.id
@@ -307,9 +309,17 @@ ob_start();
                                     </div>
                                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
                                         <?php if ($hasReport): ?>
-                                            <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
-                                                <i class="bi bi-check-circle-fill"></i> Completado
-                                            </span>
+                                            <?php 
+                                            $bstatus = $t['billing_status'] ?? 'pending';
+                                            if ($bstatus !== 'pending'): ?>
+                                                <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-check-all"></i> Facturado
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-check-circle-fill"></i> Completado
+                                                </span>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <span class="chip" style="background: #f59e0b15; color: #92400e; border: 1px solid #f59e0b33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                                 <i class="bi bi-exclamation-circle"></i> Pendiente
@@ -326,9 +336,17 @@ ob_start();
                             <td style="vertical-align: middle;">
                                 <div class="d-none d-md-flex flex-column gap-2 align-items-start">
                                     <?php if ($hasReport): ?>
-                                        <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
-                                            <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>Completado
-                                        </span>
+                                        <?php 
+                                        $bstatus = $t['billing_status'] ?? 'pending';
+                                        if ($bstatus !== 'pending'): ?>
+                                            <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                                <i class="bi bi-check-all" style="margin-right: 4px;"></i>Facturado
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                                <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>Completado
+                                            </span>
+                                        <?php endif; ?>
                                     <?php else: ?>
                                         <span class="chip" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
                                             <i class="bi bi-exclamation-circle" style="margin-right: 4px;"></i>Pendiente
@@ -403,10 +421,18 @@ ob_start();
                             <span class="rpt-val"><?php echo html($staffName); ?></span>
                         </div>
                         <div class="rpt-card-row">
-                            <i class="bi bi-circle-fill" style="font-size:0.5rem; color:<?php echo $hasReport ? '#16a34a' : '#f59e0b'; ?>;"></i>
+                            <i class="bi bi-circle-fill" style="font-size:0.5rem; color:<?php 
+                                $bstatus = $t['billing_status'] ?? 'pending';
+                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion') ? '#16a34a' : '#f59e0b'; 
+                            ?>;"></i>
                             <span class="rpt-label">Reporte</span>
-                            <span class="rpt-val" style="color:<?php echo $hasReport ? '#16a34a' : '#92400e'; ?>;">
-                                <?php echo $hasReport ? 'Completado' : 'Pendiente'; ?>
+                            <span class="rpt-val" style="color:<?php 
+                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion') ? '#16a34a' : '#92400e'; 
+                            ?>;">
+                                <?php 
+                                if ($bstatus !== 'pending') echo 'Facturado';
+                                else echo $hasReport ? 'Completado' : 'Pendiente'; 
+                                ?>
                             </span>
                         </div>
                     </div>

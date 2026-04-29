@@ -116,6 +116,10 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             $total = array_sum(array_column($items, 'price'));
+            $reportType = trim((string)($_POST['report_type'] ?? 'pending'));
+            if (!in_array($reportType, ['pending', 'visita_tecnica', 'cotizacion'])) {
+                $reportType = 'pending';
+            }
 
             // Concatenar descripciones para compatibilidad con columnas existentes
             $workDescLines = [];
@@ -129,11 +133,11 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Insert report
                 $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, billing_status, created_at)
-                         VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())";
+                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
                 $inR = $mysqli->prepare($sqlR);
                 $sid = (int)$_SESSION['staff_id'];
                 $eid = empresaId();
-                $inR->bind_param('iisssi', $eid, $ticketId, $workDescConcat, $obs, $totalStr, $sid);
+                $inR->bind_param('iisssss', $eid, $ticketId, $workDescConcat, $obs, $totalStr, $sid, $reportType);
                 $inR->execute();
 
                 $reportId = $mysqli->insert_id;
@@ -365,6 +369,29 @@ h6.border-bottom {
     .price-display-box { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 
+/* ── Custom options (radios) ── */
+.custom-option {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+    background: #fff;
+    min-width: 200px;
+}
+.custom-option:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+.custom-option input:checked + label .fw-bold {
+    color: #2563eb;
+}
+.custom-option:has(input:checked) {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
 /* ── Desktop enhancements ── */
 @media (min-width: 768px) {
     .tickets-shell { padding: 1rem; }
@@ -442,11 +469,18 @@ h6.border-bottom {
             <label>Estado del Reporte</label>
             <div class="value mt-1">
                 <?php if ($reportExists): ?>
-                    <?php if (($reportData['billing_status'] ?? 'pending') === 'confirmed'): ?>
-                        <span class="badge bg-success">Facturado</span>
-                    <?php else: ?>
-                        <span class="badge bg-warning text-dark">Pendiente Facturación</span>
-                    <?php endif; ?>
+                    <?php 
+                    $status = $reportData['billing_status'] ?? 'pending';
+                    if ($status === 'confirmed') {
+                        echo '<span class="badge bg-success"><i class="bi bi-check-all"></i> Facturado</span>';
+                    } elseif ($status === 'visita_tecnica') {
+                        echo '<span class="badge bg-info text-dark"><i class="bi bi-geo-alt"></i> Visita Técnica</span>';
+                    } elseif ($status === 'cotizacion') {
+                        echo '<span class="badge bg-primary"><i class="bi bi-file-earmark-text"></i> Cotización</span>';
+                    } else {
+                        echo '<span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pendiente Facturación</span>';
+                    }
+                    ?>
                 <?php else: ?>
                     <span class="badge bg-secondary">Sin Reporte</span>
                 <?php endif; ?>
@@ -504,6 +538,33 @@ h6.border-bottom {
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Observaciones <span class="text-muted fw-normal">(Opcional)</span></label>
                                 <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Acción / Tipo de Reporte</label>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check custom-option">
+                                        <input class="form-check-input" type="radio" name="report_type" id="typePending" value="pending" checked>
+                                        <label class="form-check-label" for="typePending">
+                                            <span class="d-block fw-bold">Pendiente Facturación</span>
+                                            <span class="text-muted small">Se marcará para facturar después.</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-check custom-option">
+                                        <input class="form-check-input" type="radio" name="report_type" id="typeVisita" value="visita_tecnica">
+                                        <label class="form-check-label" for="typeVisita">
+                                            <span class="d-block fw-bold">Visita Técnica</span>
+                                            <span class="text-muted small">Reportar como una visita sin factura pendiente.</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-check custom-option">
+                                        <input class="form-check-input" type="radio" name="report_type" id="typeCotizacion" value="cotizacion">
+                                        <label class="form-check-label" for="typeCotizacion">
+                                            <span class="d-block fw-bold">Cotización</span>
+                                            <span class="text-muted small">Reportar como una cotización realizada.</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="form-footer-sticky">
