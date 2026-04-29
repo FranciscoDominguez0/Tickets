@@ -500,23 +500,60 @@ document.addEventListener('DOMContentLoaded', function() {
       if (action === 'bulk_delete') {
         btn.classList.remove('btn-primary');
         btn.classList.add('btn-danger');
-        btn.textContent = 'Eliminar';
+        btn.textContent = isStaffAgent ? 'Enviar Solicitudes' : 'Eliminar';
+        
+        if (isStaffAgent) {
+          text += '<div class="mt-3"><label class="form-label fw-bold">Motivo de la solicitud de borrado:</label>'
+                + '<textarea id="bulkDeleteReason" class="form-control" rows="3" placeholder="Describe por qué deseas borrar estos tickets..." required></textarea></div>';
+          // Convertimos el texto a HTML para que renderice el textarea
+          if (textEl) {
+              textEl.innerHTML = text;
+              text = ''; // Limpiamos para que no se sobreescriba abajo
+          }
+        }
       }
 
+      if (text !== '' && textEl) textEl.textContent = text;
+      
+      var modalEl = document.getElementById('bulkConfirmModal');
+      var btn = document.getElementById('bulkConfirmBtn');
+      if (!modalEl || !btn) return;
+
       btn.onclick = function () {
+        var reason = '';
+        if (action === 'bulk_delete' && isStaffAgent) {
+            var reasonEl = document.getElementById('bulkDeleteReason');
+            reason = (reasonEl ? reasonEl.value : '').trim();
+            if (!reason) {
+                alert('Por favor, indica un motivo para el borrado.');
+                return;
+            }
+        }
+
         var overlay = document.getElementById('bulkLoadingOverlay');
         var overlayText = document.getElementById('bulkLoadingText');
         if (overlay && overlayText) {
           if (action === 'bulk_assign') overlayText.textContent = 'Asignando tickets…';
           else if (action === 'bulk_status') overlayText.textContent = 'Cambiando estado…';
-          else if (action === 'bulk_delete') overlayText.textContent = 'Eliminando tickets…';
+          else if (action === 'bulk_delete') overlayText.textContent = isStaffAgent ? 'Enviando solicitudes…' : 'Eliminando tickets…';
           else overlayText.textContent = 'Procesando…';
           overlay.classList.remove('d-none');
         }
+
         var doEl = document.getElementById('bulk_do');
         var confirmEl = document.getElementById('bulk_confirm');
         var form = document.getElementById('bulkForm');
-        if (doEl) doEl.value = action;
+        
+        // Agregar motivo al form si es necesario
+        if (reason) {
+            var reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'bulk_delete_reason';
+            reasonInput.value = reason;
+            form.appendChild(reasonInput);
+        }
+
+        if (doEl) doEl.value = (action === 'bulk_delete' && isStaffAgent) ? 'bulk_delete_request' : action;
         if (confirmEl) confirmEl.value = action === 'bulk_delete' ? '1' : '0';
         if (form) form.submit();
       };

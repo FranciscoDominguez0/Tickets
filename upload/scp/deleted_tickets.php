@@ -137,22 +137,19 @@ ob_start();
                                     <?php else: ?>
                                         <span class="text-muted small">---</span>
                                     <?php endif; ?>
-                                </td>
-                                <td class="pe-4 text-end">
+                                                                <td class="pe-4 text-end">
                                     <?php if ($s === 'pending'): ?>
                                         <div class="btn-group btn-group-sm shadow-sm">
-                                            <form method="post" onsubmit="return confirm('¿Aprobar y borrar el ticket permanentemente?');" class="d-inline">
-                                                <?php csrfField(); ?>
-                                                <input type="hidden" name="action" value="approve_delete">
-                                                <input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>">
-                                                <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i></button>
-                                            </form>
-                                            <form method="post" onsubmit="return confirm('¿Rechazar esta solicitud?');" class="d-inline">
-                                                <?php csrfField(); ?>
-                                                <input type="hidden" name="action" value="reject_delete">
-                                                <input type="hidden" name="id" value="<?php echo (int)$r['id']; ?>">
-                                                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i></button>
-                                            </form>
+                                            <button type="button" class="btn btn-success" 
+                                                    onclick="openResolveModal('approve_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')"
+                                                    title="Aprobar borrado">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="openResolveModal('reject_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')"
+                                                    title="Rechazar solicitud">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
                                         </div>
                                     <?php else: ?>
                                         <i class="bi bi-check2-all text-muted"></i>
@@ -169,12 +166,94 @@ ob_start();
     </div>
 </div>
 
+<!-- Modal de Resolución -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" class="modal-content border-0 shadow-lg">
+            <?php csrfField(); ?>
+            <input type="hidden" name="id" id="modalId">
+            <input type="hidden" name="action" id="modalAction">
+            
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Resolver Solicitud</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-4">
+                <div class="text-center mb-4 d-none" id="modalIconApprove">
+                    <div class="display-1 text-success"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+                <div class="text-center mb-4 d-none" id="modalIconReject">
+                    <div class="display-1 text-danger"><i class="bi bi-x-circle-fill"></i></div>
+                </div>
+                
+                <p class="text-center fs-5 mb-0" id="modalBodyText"></p>
+                <p class="text-center text-muted small mt-2" id="modalTicketText"></p>
+                
+                <div class="alert alert-danger mt-4 mb-0 d-none" id="modalWarning">
+                    <div class="d-flex gap-2">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>
+                            <strong>¡Atención!</strong> Esta acción eliminará el ticket y todos sus mensajes permanentemente de la base de datos.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn px-4 fw-bold" id="modalSubmitBtn">Confirmar Acción</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openResolveModal(action, id, ticketNum) {
+    const modalEl = document.getElementById('resolveModal');
+    const modal = new bootstrap.Modal(modalEl);
+    
+    document.getElementById('modalId').value = id;
+    document.getElementById('modalAction').value = action;
+    document.getElementById('modalTicketText').textContent = 'Ticket #' + ticketNum;
+    
+    const titleEl = document.getElementById('modalTitle');
+    const bodyEl = document.getElementById('modalBodyText');
+    const btnEl = document.getElementById('modalSubmitBtn');
+    const warningEl = document.getElementById('modalWarning');
+    const iconApprove = document.getElementById('modalIconApprove');
+    const iconReject = document.getElementById('modalIconReject');
+    
+    // Resetear
+    iconApprove.classList.add('d-none');
+    iconReject.classList.add('d-none');
+    warningEl.classList.add('d-none');
+    
+    if (action === 'approve_delete') {
+        titleEl.textContent = 'Aprobar Eliminación';
+        bodyEl.textContent = '¿Estás seguro de aprobar el borrado definitivo?';
+        btnEl.className = 'btn btn-success px-4 fw-bold';
+        btnEl.textContent = 'Aprobar y Borrar';
+        warningEl.classList.remove('d-none');
+        iconApprove.classList.remove('d-none');
+    } else {
+        titleEl.textContent = 'Rechazar Solicitud';
+        bodyEl.textContent = '¿Deseas rechazar esta solicitud de borrado?';
+        btnEl.className = 'btn btn-danger px-4 fw-bold';
+        btnEl.textContent = 'Rechazar Solicitud';
+        iconReject.classList.remove('d-none');
+    }
+    
+    modal.show();
+}
+</script>
+
 <style>
 .avatar-circle-sm {
     width: 24px; height: 24px; background: #e2e8f0; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #475569;
 }
 .x-small { font-size: 0.7rem; }
+.display-1 { font-size: 4.5rem; line-height: 1; }
+</style>
 </style>
 <?php
 $content = ob_get_clean();

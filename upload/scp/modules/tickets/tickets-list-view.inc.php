@@ -1,4 +1,5 @@
 <div class="tickets-shell">
+    <script>var isStaffAgent = <?php echo $isAgent ? 'true' : 'false'; ?>;</script>
     <?php if (isset($_GET['id']) && !$ticketView): ?>
         <div class="alert alert-warning">Ticket no encontrado.</div>
     <?php endif; ?>

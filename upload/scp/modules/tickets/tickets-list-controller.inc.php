@@ -538,57 +538,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                         $postErrors[] = 'Error al cambiar el estado.';
                     }
                 }
-            } elseif ($_POST['do'] === 'bulk_delete') {
-                if (!isset($_POST['confirm']) || $_POST['confirm'] !== '1') {
-                    $postErrors[] = 'Confirmación requerida.';
+            } elseif ($_POST['do'] === 'bulk_delete' || $_POST['do'] === 'bulk_delete_request') {
+                $isRequest = ($_POST['do'] === 'bulk_delete_request' || $isAgent);
+                
+                if ($isRequest) {
+                    // --- LÓGICA DE SOLICITUD DE BORRADO (PARA AGENTES) ---
+                    $reason = trim($_POST['bulk_delete_reason'] ?? '');
+                    if (!$reason && $isAgent) {
+                        $postErrors[] = 'Indique un motivo para el borrado.';
+                    } else {
+                        try {
+                            if (!$reason) $reason = 'Borrado masivo solicitado.';
+                            $stmtGet = $mysqli->prepare("SELECT id, ticket_number, subject FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)");
+                            $typesGet = 'i' . $typesIds;
+                            $paramsGet = [&$typesGet, &$eid];
+                            foreach ($ticketIds as $k => $v) { $paramsGet[] = &$ticketIds[$k]; }
+                            call_user_func_array([$stmtGet, 'bind_param'], $paramsGet);
+                            if ($stmtGet->execute()) {
+                                $resGet = $stmtGet->get_result();
+                                $stmtIns = $mysqli->prepare("INSERT INTO ticket_deletion_requests (ticket_id, empresa_id, ticket_number, ticket_subject, requested_by, reason, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                                while ($row = $resGet->fetch_assoc()) {
+                                    $tid = $row['id'];
+                                    $tnum = $row['ticket_number'];
+                                    $tsub = $row['subject'];
+                                    $stmtIns->bind_param('iissis', $tid, $eid, $tnum, $tsub, $_SESSION['staff_id'], $reason);
+                                    $stmtIns->execute();
+                                }
+                                $postSuccess = 'Solicitudes de borrado enviadas correctamente. Los tickets permanecerán visibles hasta que sean aprobados.';
+                            }
+                        } catch (Throwable $e) {
+                            $postErrors[] = 'Error al enviar las solicitudes.';
+                        }
+                    }
                 } else {
-                    $mysqli->begin_transaction();
-                    try {
-                        // Eliminar entradas/hilos si existen
-                        $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
-                        $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
-                        $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
-                        $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
-                        if ($threadsOk && $entriesOk) {
-                            $sqlDelEntries = "DELETE te\n"
-                                . "FROM thread_entries te\n"
-                                . "JOIN threads th ON th.id = te.thread_id\n"
-                                . "JOIN tickets t ON t.id = th.ticket_id\n"
-                                . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
-                            $stmt = $mysqli->prepare($sqlDelEntries);
-                            $typesDel = 'i' . $typesIds;
-                            $params = [&$typesDel, &$eid];
+                    // --- LÓGICA DE BORRADO DIRECTO (ADMIN / SUPERVISOR) ---
+                    if (!isset($_POST['confirm']) || $_POST['confirm'] !== '1') {
+                        $postErrors[] = 'Confirmación requerida.';
+                    } else {
+                        $mysqli->begin_transaction();
+                        try {
+                            // LOG: Registrar el borrado masivo en el historial antes de eliminar definitivamente
+                            try {
+                                $stmtGet = $mysqli->prepare("SELECT id, ticket_number, subject FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)");
+                                $typesGet = 'i' . $typesIds;
+                                $paramsGet = [&$typesGet, &$eid];
+                                foreach ($ticketIds as $k => $v) { $paramsGet[] = &$ticketIds[$k]; }
+                                call_user_func_array([$stmtGet, 'bind_param'], $paramsGet);
+                                if ($stmtGet->execute()) {
+                                    $resGet = $stmtGet->get_result();
+                                    $stmtInsLog = $mysqli->prepare("INSERT INTO ticket_deletion_requests (ticket_id, empresa_id, ticket_number, ticket_subject, requested_by, reason, status, resolved_at, resolved_by) VALUES (?, ?, ?, ?, ?, ?, 'approved', NOW(), ?)");
+                                    $bulkReason = 'Borrado masivo directo por administrador';
+                                    while ($rowLog = $resGet->fetch_assoc()) {
+                                        $tidLog = $rowLog['id'];
+                                        $tnumLog = $rowLog['ticket_number'];
+                                        $tsubLog = $rowLog['subject'];
+                                        $stmtInsLog->bind_param('iissisi', $tidLog, $eid, $tnumLog, $tsubLog, $_SESSION['staff_id'], $bulkReason, $_SESSION['staff_id']);
+                                        $stmtInsLog->execute();
+                                    }
+                                }
+                            } catch (Throwable $eLog) { /* No bloqueante */ }
+
+                            // Eliminar entradas/hilos si existen
+                            $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
+                            $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
+                            $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
+                            $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
+                            if ($threadsOk && $entriesOk) {
+                                $sqlDelEntries = "DELETE te\n"
+                                    . "FROM thread_entries te\n"
+                                    . "JOIN threads th ON th.id = te.thread_id\n"
+                                    . "JOIN tickets t ON t.id = th.ticket_id\n"
+                                    . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
+                                $stmt = $mysqli->prepare($sqlDelEntries);
+                                $typesDel = 'i' . $typesIds;
+                                $params = [&$typesDel, &$eid];
+                                foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                                call_user_func_array([$stmt, 'bind_param'], $params);
+                                $stmt->execute();
+
+                                $sqlDelThreads = "DELETE th\n"
+                                    . "FROM threads th\n"
+                                    . "JOIN tickets t ON t.id = th.ticket_id\n"
+                                    . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
+                                $stmt = $mysqli->prepare($sqlDelThreads);
+                                $typesDel = 'i' . $typesIds;
+                                $params = [&$typesDel, &$eid];
+                                foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
+                                call_user_func_array([$stmt, 'bind_param'], $params);
+                                $stmt->execute();
+                            }
+
+                            $sqlDelTickets = "DELETE FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)";
+                            $stmt = $mysqli->prepare($sqlDelTickets);
+                            $typesDelT = 'i' . $typesIds;
+                            $params = [&$typesDelT, &$eid];
                             foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
                             call_user_func_array([$stmt, 'bind_param'], $params);
-                            $stmt->execute();
-
-                            $sqlDelThreads = "DELETE th\n"
-                                . "FROM threads th\n"
-                                . "JOIN tickets t ON t.id = th.ticket_id\n"
-                                . "WHERE t.empresa_id = ? AND th.ticket_id IN ($placeholders)";
-                            $stmt = $mysqli->prepare($sqlDelThreads);
-                            $typesDel = 'i' . $typesIds;
-                            $params = [&$typesDel, &$eid];
-                            foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
-                            call_user_func_array([$stmt, 'bind_param'], $params);
-                            $stmt->execute();
+                            if ($stmt->execute()) {
+                                $mysqli->commit();
+                                $postSuccess = 'Tickets eliminados correctamente.';
+                            } else {
+                                throw new Exception('No se pudo eliminar.');
+                            }
+                        } catch (Throwable $e) {
+                            $mysqli->rollback();
+                            $postErrors[] = 'Error al eliminar tickets.';
                         }
-
-                        $sqlDelTickets = "DELETE FROM tickets WHERE empresa_id = ? AND id IN ($placeholders)";
-                        $stmt = $mysqli->prepare($sqlDelTickets);
-                        $typesDelT = 'i' . $typesIds;
-                        $params = [&$typesDelT, &$eid];
-                        foreach ($ticketIds as $k => $v) { $params[] = &$ticketIds[$k]; }
-                        call_user_func_array([$stmt, 'bind_param'], $params);
-                        if ($stmt->execute()) {
-                            $mysqli->commit();
-                            $postSuccess = 'Tickets eliminados.';
-                        } else {
-                            throw new Exception('No se pudo eliminar.');
-                        }
-                    } catch (Throwable $e) {
-                        $mysqli->rollback();
-                        $postErrors[] = 'Error al eliminar tickets.';
                     }
                 }
             }
