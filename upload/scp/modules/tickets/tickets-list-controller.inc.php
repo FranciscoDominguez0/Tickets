@@ -7,12 +7,14 @@ $filters = [
     'unassigned' => ['label' => 'Sin asignar', 'where' => 't.staff_id IS NULL'],
     'all' => ['label' => 'Todos', 'where' => '1=1'],
 ];
-$filterKey = $_GET['filter'] ?? 'open';
+$filterKey = $_GET['filter'] ?? null;
 $isAgent = (getCurrentStaffRoleName() === 'agent');
-if ($isAgent) {
+if ($filterKey === null && $isAgent) {
     $filterKey = 'mine';
 }
-if (!isset($filters[$filterKey])) $filterKey = 'open';
+if ($filterKey === null || !isset($filters[$filterKey])) {
+    $filterKey = 'open';
+}
 $query = trim($_GET['q'] ?? '');
 
 // Filtro de fechas (aplica a todos los filtros)
@@ -82,14 +84,14 @@ $countOpen = 0;
 $countClosed = 0;
 $countUnassigned = 0;
 $sqlCo = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NULL';
-if ($isAgent) $sqlCo .= ' AND staff_id = ' . (int)$_SESSION['staff_id'];
+// if ($isAgent) $sqlCo .= ' AND staff_id = ' . (int)$_SESSION['staff_id']; // Removido para que el agente vea el total global
 $stmtCo = $mysqli->prepare($sqlCo);
 if ($stmtCo) {
     $stmtCo->bind_param('i', $eid);
     if ($stmtCo->execute()) $countOpen = (int)($stmtCo->get_result()->fetch_assoc()['c'] ?? 0);
 }
 $sqlCc = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL';
-if ($isAgent) $sqlCc .= ' AND staff_id = ' . (int)$_SESSION['staff_id'];
+// if ($isAgent) $sqlCc .= ' AND staff_id = ' . (int)$_SESSION['staff_id']; // Removido para que el agente vea el total global
 $stmtCc = $mysqli->prepare($sqlCc);
 if ($stmtCc) {
     $stmtCc->bind_param('i', $eid);

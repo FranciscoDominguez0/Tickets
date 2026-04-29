@@ -570,15 +570,37 @@ if ($ticketClientSignaturePath !== '') {
     <div class="modal fade" id="modalDelete" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
+                <?php 
+                $roleName = function_exists('getCurrentStaffRoleName') ? getCurrentStaffRoleName() : ($staff['role'] ?? '');
+                $isAdmin = in_array($roleName, ['admin', 'supervisor'], true);
+                ?>
                 <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
-                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="action" value="<?php echo $isAdmin ? 'delete' : 'delete_request'; ?>">
                     <input type="hidden" name="confirm" value="1">
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                    <div class="modal-header"><h5 class="modal-title">Borrar Ticket</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                    <div class="modal-body">
-                        <p class="text-danger">¿Eliminar este ticket y todo su historial? Esta acción no se puede deshacer.</p>
+                    <div class="modal-header">
+                        <h5 class="modal-title"><?php echo $isAdmin ? 'Borrar Ticket' : 'Solicitar Borrado'; ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Borrar Ticket</button></div>
+                    <div class="modal-body">
+                        <?php if (!$isAdmin): ?>
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Como agente, tu solicitud debe ser aprobada por un administrador.
+                            </div>
+                        <?php else: ?>
+                            <p class="text-danger">¿Eliminar este ticket y todo su historial? Esta acción no se puede deshacer.</p>
+                        <?php endif; ?>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Motivo del borrado</label>
+                            <textarea name="delete_reason" class="form-control" rows="3" required placeholder="Escribe el motivo aquí..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger"><?php echo $isAdmin ? 'Borrar permanentemente' : 'Enviar Solicitud'; ?></button>
+                    </div>
                 </form>
             </div>
         </div>

@@ -33,7 +33,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Tickets</h1>
-                <div class="sub"><?php if ($isAgent): ?>Mis tickets abiertos: <strong><?php echo $countOpen; ?></strong><?php else: ?>Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php endif; ?><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
                 <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
@@ -109,16 +109,12 @@
                             <?php echo html($filters[$filterKey]['label']); ?>
                         </button>
                         <ul class="dropdown-menu">
-                            <?php if ($isAgent): ?>
-                                <li><a class="dropdown-item active" href="tickets.php?filter=mine">Mis tickets</a></li>
-                            <?php else: ?>
-                                <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
-                                <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
-                                <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
-                                <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
-                                <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
-                                <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
-                            <?php endif; ?>
+                            <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
                         </ul>
                     </div>
 

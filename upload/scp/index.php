@@ -68,3 +68,4 @@ $content = ob_get_clean();
 
 // Renderizar layout principal (header + sidebar + shell)
 require __DIR__ . '/layout/layout.php';
+?>

@@ -228,6 +228,17 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                             <span class="icon"><i class="bi bi-list-check"></i></span>
                             Temas
                         </a>
+                        <a href="deleted_tickets.php" class="sidebar-link <?php echo ($currentRoute === 'deleted_tickets') ? 'active' : ''; ?>">
+                            <span class="icon"><i class="bi bi-trash-fill"></i></span>
+                            Tickets Borrados
+                            <?php 
+                            $eid = empresaId();
+                            $resDelCount = $mysqli->query("SELECT COUNT(*) as total FROM ticket_deletion_requests WHERE empresa_id = $eid AND status = 'pending'");
+                            $pendingDelCount = $resDelCount ? $resDelCount->fetch_assoc()['total'] : 0;
+                            if ($pendingDelCount > 0): ?>
+                                <span class="badge bg-danger ms-auto" style="font-size: 0.7rem;"><?php echo $pendingDelCount; ?></span>
+                            <?php endif; ?>
+                        </a>
                         <?php
                         $emailTab = isset($emailTab) ? (string)$emailTab : '';
                         $isEmailRoute = ($currentRoute === 'emails');

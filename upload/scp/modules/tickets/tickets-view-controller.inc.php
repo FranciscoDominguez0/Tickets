@@ -907,6 +907,22 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $ok = $stmt->execute();
                     $msg = 'collab_removed';
                 }
+            } elseif ($action === 'delete_request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                requireRolePermission('ticket.delete', 'tickets.php?id=' . $tid);
+                $reason = trim($_POST['delete_reason'] ?? '');
+                if (empty($reason)) {
+                    $_SESSION['flash_error'] = 'Debe especificar un motivo para el borrado.';
+                } else {
+                    $stmtDel = $mysqli->prepare("INSERT INTO ticket_deletion_requests (ticket_id, empresa_id, ticket_number, ticket_subject, requested_by, reason, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
+                    $stmtDel->bind_param('iissis', $tid, $eid, $ticketView['ticket_number'], $ticketView['subject'], $_SESSION['staff_id'], $reason);
+                    if ($stmtDel->execute()) {
+                        $_SESSION['flash_msg'] = 'Solicitud de borrado enviada correctamente. El administrador revisará su petición.';
+                    } else {
+                        $_SESSION['flash_error'] = 'Error al enviar la solicitud.';
+                    }
+                }
+                header('Location: tickets.php?id=' . $tid);
+                exit;
             } elseif ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Borrar ticket (desde modal)
                 requireRolePermission('ticket.delete', 'tickets.php?id=' . $tid);
@@ -957,6 +973,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     if (!$deleted) {
                         throw new Exception('No se pudo eliminar el ticket.');
                     }
+
+                    // Registrar el borrado administrativo para historial
+                    $reason = trim($_POST['delete_reason'] ?? 'Sin motivo especificado (Admin)');
+                    $stmtLog = $mysqli->prepare("INSERT INTO ticket_deletion_requests (ticket_id, empresa_id, ticket_number, ticket_subject, requested_by, reason, status, resolved_at, resolved_by) VALUES (?, ?, ?, ?, ?, ?, 'approved', NOW(), ?)");
+                    $stmtLog->bind_param('iissisi', $tid, $eid, $ticketView['ticket_number'], $ticketView['subject'], $_SESSION['staff_id'], $reason, $_SESSION['staff_id']);
+                    $stmtLog->execute();
 
                     if (method_exists($mysqli, 'commit')) {
                         $mysqli->commit();
