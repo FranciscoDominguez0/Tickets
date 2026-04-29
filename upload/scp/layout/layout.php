@@ -312,7 +312,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
                         <?php 
-                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory']);
+                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory','mapa']);
                         $expandPanel = ($isPanelRoute && $allowExpandedGroups);
                         ?>
                         <button type="button"
@@ -408,17 +408,6 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                         </svg>
                                     </span>
                                     Reportes
-                                </a>
-                            </li>
-                            <li>
-                                <a href="mapa.php" class="sidebar-link <?php echo ($currentRoute ?? '') === 'mapa' ? 'active' : ''; ?>">
-                                    <span class="icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="12" cy="11" r="3" stroke="<?php echo ($currentRoute ?? '') === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
-                                            <path d="M17.6 16.6L12 22L6.4 16.6C4.6 14.8 4 13 4 11C4 6.5 7.5 3 12 3C16.5 3 20 6.5 20 11C20 13 19.4 14.8 17.6 16.6Z" stroke="<?php echo ($currentRoute ?? '') === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linejoin="round"/>
-                                        </svg>
-                                    </span>
-                                    Mapa de Agentes
                                 </a>
                             </li>
                         </ul>
