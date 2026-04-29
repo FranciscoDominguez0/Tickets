@@ -40,6 +40,25 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     }
 }
 
+// Verificar si el agente tiene tickets "En camino" para habilitar tracking
+$hasEnCamino = false;
+if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
+    // Asegurar tabla staff_locations con UNIQUE KEY para el staff_id
+    $mysqli->query("CREATE TABLE IF NOT EXISTS staff_locations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        staff_id INT NOT NULL,
+        lat DECIMAL(10, 8) NOT NULL,
+        lng DECIMAL(11, 8) NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_staff (staff_id),
+        KEY idx_updated (updated_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Buscamos tickets abiertos asignados a este staff con status_id = 2 (En Camino)
+    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = " . (int)$_SESSION['staff_id'] . " AND status_id = 2 AND closed IS NULL LIMIT 1");
+    $hasEnCamino = ($resEc && $resEc->num_rows > 0);
+}
+
 // Estado inicial del sidebar: persistido por cookie, sin auto-toggle al cargar páginas.
 $sidebarCookieState = isset($_COOKIE['scp_sidebar_collapsed']) ? (string)$_COOKIE['scp_sidebar_collapsed'] : '';
 $sidebarDefaultCollapsed = ($sidebarCookieState === 'collapsed');
@@ -334,6 +353,17 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                     Directorio del agente
                                 </a>
                             </li>
+                            <li>
+                                <a href="mapa.php" class="sidebar-link <?php echo $currentRoute === 'mapa' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" stroke="<?php echo $currentRoute === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <circle cx="12" cy="9" r="2.5" stroke="<?php echo $currentRoute === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                        </svg>
+                                    </span>
+                                    Mapa de agentes
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     <li class="sidebar-group">
@@ -378,6 +408,17 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                         </svg>
                                     </span>
                                     Reportes
+                                </a>
+                            </li>
+                            <li>
+                                <a href="mapa.php" class="sidebar-link <?php echo ($currentRoute ?? '') === 'mapa' ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="12" cy="11" r="3" stroke="<?php echo ($currentRoute ?? '') === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M17.6 16.6L12 22L6.4 16.6C4.6 14.8 4 13 4 11C4 6.5 7.5 3 12 3C16.5 3 20 6.5 20 11C20 13 19.4 14.8 17.6 16.6Z" stroke="<?php echo ($currentRoute ?? '') === 'mapa' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    Mapa de Agentes
                                 </a>
                             </li>
                         </ul>
@@ -841,6 +882,40 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
             }
         });
     </script>
+    <?php if ($hasEnCamino): ?>
+    <script>
+    (function() {
+        var lastUpdate = 0;
+        function sendLocation(pos) {
+            var now = Date.now();
+            if (now - lastUpdate < 10000) return; // Evitar spam, max cada 10s
+            lastUpdate = now;
+
+            var fd = new FormData();
+            fd.append('lat', pos.coords.latitude);
+            fd.append('lng', pos.coords.longitude);
+            fd.append('csrf_token', '<?php echo $_SESSION['csrf_token'] ?? ''; ?>');
+            
+            fetch('ajax_location.php?action=update', {
+                method: 'POST',
+                body: fd
+            }).then(r => r.json()).then(data => {
+                if (data.ok) console.log('Ubicación actualizada');
+            }).catch(e => console.error('Error enviando ubicación:', e));
+        }
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(sendLocation, function(e) {
+                console.warn('Error en geolocalización:', e.message);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 30000,
+                timeout: 27000
+            });
+        }
+    })();
+    </script>
+    <?php endif; ?>
 </body>
 </html>
 

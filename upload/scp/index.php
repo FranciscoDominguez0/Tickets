@@ -36,6 +36,7 @@ $routes = [
     'profile'   => 'profile.php',     // Mi perfil
     'orgs'      => 'orgs.php',        // Organizaciones
     'notifications' => 'notifications.php', // Notificaciones (preferencias de correo)
+    'mapa'      => 'mapa-view.inc.php',   // Mapa de agentes en tiempo real
     'credits'   => 'credits.php',     // Créditos y autoría
 ];
 
@@ -51,6 +52,12 @@ if ($page === 'statistics') {
     unset($qs['page']);
     $to = 'statics.php' . (!empty($qs) ? ('?' . http_build_query($qs)) : '');
     header('Location: ' . $to);
+    exit;
+}
+
+// El mapa es una página standalone con su propio layout
+if ($page === 'mapa') {
+    header('Location: mapa.php');
     exit;
 }
 
