@@ -232,6 +232,23 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     .form-actions .btn-submit,
     .form-actions .btn-cancel { width: 100%; justify-content: center; }
 }
+
+/* Loading state for double-submit prevention */
+.btn-submit.processing {
+    pointer-events: none;
+    opacity: 0.8;
+}
+.loading-overlay-form {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.6);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    backdrop-filter: blur(2px);
+}
 </style>
 
 <div class="tickets-shell open-ticket-shell">
@@ -345,7 +362,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-submit"><i class="bi bi-plus-lg"></i> Abrir Ticket</button>
+            <button type="submit" class="btn btn-submit" id="btnSubmitTicket"><i class="bi bi-plus-lg"></i> <span>Abrir Ticket</span></button>
             <a href="tickets.php" class="btn btn-cancel"><i class="bi bi-x-lg"></i> Cancelar</a>
         </div>
     </form>
@@ -410,6 +427,40 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 
     syncDeptFromTopic();
     applyStaffFilter();
+
+    // Prevención de doble envío
+    var form = document.getElementById('form-open-ticket');
+    var btnSubmit = document.getElementById('btnSubmitTicket');
+    if (form && btnSubmit) {
+      form.addEventListener('submit', function (e) {
+        if (form.getAttribute('data-submitting') === '1') {
+          e.preventDefault();
+          return false;
+        }
+
+        form.setAttribute('data-submitting', '1');
+        btnSubmit.classList.add('processing');
+        btnSubmit.disabled = true;
+        
+        var span = btnSubmit.querySelector('span');
+        var icon = btnSubmit.querySelector('i');
+        if (span) span.textContent = 'Procesando...';
+        if (icon) {
+          icon.className = 'spinner-border spinner-border-sm me-1';
+          icon.style.width = '1rem';
+          icon.style.height = '1rem';
+        }
+
+        // Crear overlay de carga en las secciones principales para indicar bloqueo
+        var sections = form.querySelectorAll('.open-section');
+        sections.forEach(function(sec) {
+          var overlay = document.createElement('div');
+          overlay.className = 'loading-overlay-form';
+          overlay.innerHTML = '<div class="spinner-grow text-primary" role="status" style="width:1.5rem; height:1.5rem;"></div>';
+          sec.appendChild(overlay);
+        });
+      });
+    }
   })();
 </script>
 
