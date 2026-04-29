@@ -1328,16 +1328,44 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 $sigHtml = $sigText !== '' ? '<br><br>' . nl2br(html($sigText)) : '';
 
                                 $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/tickets.php?id=' . (int) $tid;
-                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
-                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Actualización de su ticket</h2>'
-                                    . '<p style="color:#64748b; margin: 0 0 12px;">Ticket: <strong>' . html($ticketNo) . '</strong></p>'
-                                    . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px;">' . $msgHtml . $sigHtml . '</div>'
-                                    . '<p style="margin: 14px 0 0;"><a href="' . html($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
-                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . html(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
-                                    . '</div>';
+                                $bodyHtml = '
+<div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+    <h2 style="color: #2c3e50;">Actualización de su ticket</h2>
+    <p>Se ha registrado una nueva respuesta en su solicitud de soporte.</p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; width: 100px;"><strong>Ticket:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#' . htmlspecialchars($ticketNo) . '</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Asunto:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars((string)($ticketView['subject'] ?? 'Ticket')) . '</td>
+        </tr>
+    </table>
+
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 20px 0; line-height: 1.6;">
+        ' . $msgHtml . $sigHtml . '
+    </div>
+
+    <p style="margin: 25px 0;">
+        <a href="' . htmlspecialchars($viewUrl) . '" style="display: inline-block; background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: 600;">
+            Ver conversación completa
+        </a>
+    </p>
+
+    <p style="color: #7f8c8d; font-size: 12px; margin-top: 30px;">
+        ' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '
+    </p>
+</div>';
 
                                 $bodyText = strip_tags($body) . ($sigText !== '' ? "\n\n" . $sigText : '');
-                                Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                if (function_exists('enqueueEmailJob')) {
+                                    enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'ticket_id' => $tid]);
+                                    triggerEmailQueueWorkerAsync(20);
+                                } else {
+                                    Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                }
                             }
                         }
 
