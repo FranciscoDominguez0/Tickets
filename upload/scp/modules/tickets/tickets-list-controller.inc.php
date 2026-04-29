@@ -97,14 +97,10 @@ if ($stmtCc) {
     $stmtCc->bind_param('i', $eid);
     if ($stmtCc->execute()) $countClosed = (int)($stmtCc->get_result()->fetch_assoc()['c'] ?? 0);
 }
-if ($isAgent) {
-    $countUnassigned = 0;
-} else {
-    $stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
-    if ($stmtCu) {
-        $stmtCu->bind_param('i', $eid);
-        if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
-    }
+$stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
+if ($stmtCu) {
+    $stmtCu->bind_param('i', $eid);
+    if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
 }
 if (!empty($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
@@ -290,25 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
         }
         $ticketIds = array_values(array_unique(array_filter($ticketIds, fn($v) => $v > 0)));
 
-        if ($isAgent && !empty($ticketIds)) {
-            $placeholdersCheck = implode(',', array_fill(0, count($ticketIds), '?'));
-            $stmtCheck = $mysqli->prepare("SELECT id FROM tickets WHERE empresa_id = ? AND staff_id = ? AND id IN ($placeholdersCheck)");
-            $typesCheck = 'ii' . str_repeat('i', count($ticketIds));
-            $sid = (int)($_SESSION['staff_id'] ?? 0);
-            $paramsCheck = [&$typesCheck, &$eid, &$sid];
-            foreach ($ticketIds as $k => $v) { $paramsCheck[] = &$ticketIds[$k]; }
-            call_user_func_array([$stmtCheck, 'bind_param'], $paramsCheck);
-            $stmtCheck->execute();
-            $resCheck = $stmtCheck->get_result();
-            $validIds = [];
-            while ($row = $resCheck->fetch_assoc()) {
-                $validIds[] = (int)$row['id'];
-            }
-            $ticketIds = $validIds;
-            if (empty($ticketIds)) {
-                $postErrors[] = 'No tienes permisos sobre los tickets seleccionados.';
-            }
-        }
+
 
         if (empty($ticketIds)) {
             $postErrors[] = 'Seleccione al menos un ticket.';
