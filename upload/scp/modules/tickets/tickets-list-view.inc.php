@@ -33,7 +33,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Tickets</h1>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
+                <div class="sub"><?php if ($isAgent): ?>Mis tickets abiertos: <strong><?php echo $countOpen; ?></strong><?php else: ?>Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php endif; ?><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
                 <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
@@ -109,12 +109,16 @@
                             <?php echo html($filters[$filterKey]['label']); ?>
                         </button>
                         <ul class="dropdown-menu">
-                            <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
+                            <?php if ($isAgent): ?>
+                                <li><a class="dropdown-item active" href="tickets.php?filter=mine">Mis tickets</a></li>
+                            <?php else: ?>
+                                <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
+                            <?php endif; ?>
                         </ul>
                     </div>
 
@@ -262,6 +266,11 @@
                                     <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
                                         <i class="bi bi-person-fill" style="color:#cbd5e1;"></i> <strong><?php echo html($clientName); ?></strong>
                                     </div>
+                                    <?php if (!empty($t['user_company'])): ?>
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: -4px; margin-left: 20px;">
+                                            <i class="bi bi-building" style="font-size: 0.7rem;"></i> <?php echo html($t['user_company']); ?>
+                                        </div>
+                                    <?php endif; ?>
                                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
                                         <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                             <?php echo html($t['status_name']); ?>
@@ -287,6 +296,11 @@
                                     </div>
                                     <div style="display:flex; flex-direction:column;">
                                         <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($clientName); ?></span>
+                                        <?php if (!empty($t['user_company'])): ?>
+                                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                                <i class="bi bi-building" style="font-size: 0.7rem;"></i> <?php echo html($t['user_company']); ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </td>

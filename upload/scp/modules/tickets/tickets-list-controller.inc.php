@@ -8,6 +8,10 @@ $filters = [
     'all' => ['label' => 'Todos', 'where' => '1=1'],
 ];
 $filterKey = $_GET['filter'] ?? 'open';
+$isAgent = (getCurrentStaffRoleName() === 'agent');
+if ($isAgent) {
+    $filterKey = 'mine';
+}
 if (!isset($filters[$filterKey])) $filterKey = 'open';
 $query = trim($_GET['q'] ?? '');
 
@@ -77,20 +81,28 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
 $countOpen = 0;
 $countClosed = 0;
 $countUnassigned = 0;
-$stmtCo = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NULL');
+$sqlCo = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NULL';
+if ($isAgent) $sqlCo .= ' AND staff_id = ' . (int)$_SESSION['staff_id'];
+$stmtCo = $mysqli->prepare($sqlCo);
 if ($stmtCo) {
     $stmtCo->bind_param('i', $eid);
     if ($stmtCo->execute()) $countOpen = (int)($stmtCo->get_result()->fetch_assoc()['c'] ?? 0);
 }
-$stmtCc = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL');
+$sqlCc = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL';
+if ($isAgent) $sqlCc .= ' AND staff_id = ' . (int)$_SESSION['staff_id'];
+$stmtCc = $mysqli->prepare($sqlCc);
 if ($stmtCc) {
     $stmtCc->bind_param('i', $eid);
     if ($stmtCc->execute()) $countClosed = (int)($stmtCc->get_result()->fetch_assoc()['c'] ?? 0);
 }
-$stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
-if ($stmtCu) {
-    $stmtCu->bind_param('i', $eid);
-    if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
+if ($isAgent) {
+    $countUnassigned = 0;
+} else {
+    $stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
+    if ($stmtCu) {
+        $stmtCu->bind_param('i', $eid);
+        if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
+    }
 }
 if (!empty($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
@@ -206,7 +218,7 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
 $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated, t.closed,
                ts.name AS status_name, ts.color AS status_color,
                p.name AS priority_name, p.color AS priority_color,
-               u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
+               u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email, u.company AS user_company,
                s.firstname AS staff_first, s.lastname AS staff_last,
                tr.billing_status,
                (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report
@@ -275,6 +287,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
             if (is_numeric($id)) $ticketIds[] = (int) $id;
         }
         $ticketIds = array_values(array_unique(array_filter($ticketIds, fn($v) => $v > 0)));
+
+        if ($isAgent && !empty($ticketIds)) {
+            $placeholdersCheck = implode(',', array_fill(0, count($ticketIds), '?'));
+            $stmtCheck = $mysqli->prepare("SELECT id FROM tickets WHERE empresa_id = ? AND staff_id = ? AND id IN ($placeholdersCheck)");
+            $typesCheck = 'ii' . str_repeat('i', count($ticketIds));
+            $sid = (int)($_SESSION['staff_id'] ?? 0);
+            $paramsCheck = [&$typesCheck, &$eid, &$sid];
+            foreach ($ticketIds as $k => $v) { $paramsCheck[] = &$ticketIds[$k]; }
+            call_user_func_array([$stmtCheck, 'bind_param'], $paramsCheck);
+            $stmtCheck->execute();
+            $resCheck = $stmtCheck->get_result();
+            $validIds = [];
+            while ($row = $resCheck->fetch_assoc()) {
+                $validIds[] = (int)$row['id'];
+            }
+            $ticketIds = $validIds;
+            if (empty($ticketIds)) {
+                $postErrors[] = 'No tienes permisos sobre los tickets seleccionados.';
+            }
+        }
 
         if (empty($ticketIds)) {
             $postErrors[] = 'Seleccione al menos un ticket.';

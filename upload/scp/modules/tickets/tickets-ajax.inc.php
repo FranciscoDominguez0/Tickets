@@ -64,14 +64,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         exit;
     }
 
-    $stmt = $mysqli->prepare(
-        "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
+    $sql = "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
         . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email\n"
         . "FROM tickets t\n"
         . "JOIN users u ON u.id = t.user_id\n"
-        . "WHERE t.id = ? AND t.empresa_id = ?\n"
-        . "LIMIT 1"
-    );
+        . "WHERE t.id = ? AND t.empresa_id = ?";
+    if (getCurrentStaffRoleName() === 'agent') {
+        $sql .= " AND t.staff_id = " . (int)$_SESSION['staff_id'];
+    }
+    $sql .= " LIMIT 1";
+
+    $stmt = $mysqli->prepare($sql);
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(['ok' => false, 'error' => 'DB error']);

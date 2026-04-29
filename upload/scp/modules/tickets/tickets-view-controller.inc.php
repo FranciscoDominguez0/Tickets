@@ -57,6 +57,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $res = $stmt->get_result();
     $ticketView = $res ? $res->fetch_assoc() : null;
 
+    // Protección para agentes: solo pueden ver sus propios tickets
+    if ($ticketView && getCurrentStaffRoleName() === 'agent') {
+        if ((int)($ticketView['staff_id'] ?? 0) !== (int)($_SESSION['staff_id'] ?? 0)) {
+            $ticketView = null; // Bloquear acceso
+        }
+    }
+
     // Acción: Confirmar facturación (solo admin)
     if ($ticketView && isset($_GET['action']) && $_GET['action'] === 'confirm_billing') {
         if (getCurrentStaffRoleName() === 'admin') {
