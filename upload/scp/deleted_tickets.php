@@ -166,41 +166,46 @@ ob_start();
     </div>
 </div>
 
-<!-- Modal de Resolución -->
+<!-- Modal de Resolución (Estilo Corporativo Premium) -->
 <div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="post" class="modal-content border-0 shadow-lg">
+        <form method="post" class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 16px; background: #ffffff;">
             <?php csrfField(); ?>
             <input type="hidden" name="id" id="modalId">
             <input type="hidden" name="action" id="modalAction">
             
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">Resolver Solicitud</h5>
+            <div class="modal-header border-bottom py-3 px-4" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="modalIconBox" style="width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: all 0.3s ease;">
+                        <i class="bi bi-shield-check" id="modalMainIcon"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalTitle" style="color: #0f172a; font-size: 1.1rem; font-weight: 700;">Resolver Solicitud</h5>
+                        <div class="text-muted small fw-semibold" id="modalTicketText" style="font-weight: 600;">Ticket #000000</div>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body py-4">
-                <div class="text-center mb-4 d-none" id="modalIconApprove">
-                    <div class="display-1 text-success"><i class="bi bi-check-circle-fill"></i></div>
-                </div>
-                <div class="text-center mb-4 d-none" id="modalIconReject">
-                    <div class="display-1 text-danger"><i class="bi bi-x-circle-fill"></i></div>
-                </div>
+
+            <div class="modal-body p-4 pt-4 text-center">
+                <h4 class="fw-bold text-dark mb-2" id="modalBodyText" style="font-size: 1.2rem; font-weight: 700;">¿Deseas continuar?</h4>
+                <p class="text-secondary px-2 mb-0" style="font-size: 0.92rem; color: #64748b;">Esta acción es definitiva y quedará registrada en el historial de auditoría de la empresa.</p>
                 
-                <p class="text-center fs-5 mb-0" id="modalBodyText"></p>
-                <p class="text-center text-muted small mt-2" id="modalTicketText"></p>
-                
-                <div class="alert alert-danger mt-4 mb-0 d-none" id="modalWarning">
-                    <div class="d-flex gap-2">
-                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                        <div>
-                            <strong>¡Atención!</strong> Esta acción eliminará el ticket y todos sus mensajes permanentemente de la base de datos.
+                <div class="alert mt-4 mb-0 d-none" id="modalWarning" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; text-align: left;">
+                    <div class="d-flex gap-3 align-items-center">
+                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; flex-shrink: 0;">
+                            <i class="bi bi-exclamation-triangle-fill" style="font-size: 0.85rem;"></i>
+                        </div>
+                        <div class="small text-danger fw-bold" style="font-weight: 700; line-height: 1.3;">
+                            Los datos del ticket y todos sus mensajes serán eliminados permanentemente.
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer border-top-0 pt-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn px-4 fw-bold" id="modalSubmitBtn">Confirmar Acción</button>
+
+            <div class="modal-footer border-top-0 p-4 pt-0 justify-content-center pb-5">
+                <button type="button" class="btn btn-outline-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 0.88rem; font-weight: 700; border-color: #e2e8f0; color: #64748b;">Cancelar</button>
+                <button type="submit" class="btn px-4 py-2 shadow-sm text-white" id="modalSubmitBtn" style="border-radius: 10px; font-size: 0.88rem; font-weight: 700; border: none;">Confirmar Acción</button>
             </div>
         </form>
     </div>
@@ -219,27 +224,27 @@ function openResolveModal(action, id, ticketNum) {
     const bodyEl = document.getElementById('modalBodyText');
     const btnEl = document.getElementById('modalSubmitBtn');
     const warningEl = document.getElementById('modalWarning');
-    const iconApprove = document.getElementById('modalIconApprove');
-    const iconReject = document.getElementById('modalIconReject');
-    
-    // Resetear
-    iconApprove.classList.add('d-none');
-    iconReject.classList.add('d-none');
-    warningEl.classList.add('d-none');
+    const iconBox = document.getElementById('modalIconBox');
+    const mainIcon = document.getElementById('modalMainIcon');
     
     if (action === 'approve_delete') {
-        titleEl.textContent = 'Aprobar Eliminación';
-        bodyEl.textContent = '¿Estás seguro de aprobar el borrado definitivo?';
-        btnEl.className = 'btn btn-success px-4 fw-bold';
+        iconBox.style.background = 'rgba(16, 185, 129, 0.12)';
+        iconBox.style.color = '#059669';
+        mainIcon.className = 'bi bi-trash-fill';
+        titleEl.textContent = 'Aprobar Borrado';
+        bodyEl.textContent = '¿Aprobar eliminación permanente?';
+        btnEl.style.background = '#059669';
         btnEl.textContent = 'Aprobar y Borrar';
         warningEl.classList.remove('d-none');
-        iconApprove.classList.remove('d-none');
     } else {
+        iconBox.style.background = 'rgba(239, 68, 68, 0.12)';
+        iconBox.style.color = '#dc2626';
+        mainIcon.className = 'bi bi-x-circle-fill';
         titleEl.textContent = 'Rechazar Solicitud';
-        bodyEl.textContent = '¿Deseas rechazar esta solicitud de borrado?';
-        btnEl.className = 'btn btn-danger px-4 fw-bold';
+        bodyEl.textContent = '¿Rechazar petición de borrado?';
+        btnEl.style.background = '#dc2626';
         btnEl.textContent = 'Rechazar Solicitud';
-        iconReject.classList.remove('d-none');
+        warningEl.classList.add('d-none');
     }
     
     modal.show();
@@ -247,13 +252,12 @@ function openResolveModal(action, id, ticketNum) {
 </script>
 
 <style>
+.modal-backdrop.show { opacity: 0.45; background-color: #0f172a; }
 .avatar-circle-sm {
-    width: 24px; height: 24px; background: #e2e8f0; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #475569;
+    width: 28px; height: 28px; background: #f1f5f9; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #475569;
 }
-.x-small { font-size: 0.7rem; }
-.display-1 { font-size: 4.5rem; line-height: 1; }
-</style>
+.x-small { font-size: 0.72rem; }
 </style>
 <?php
 $content = ob_get_clean();
