@@ -272,7 +272,6 @@ if ($ticketClientSignaturePath !== '') {
 
         <div class="ticket-view-actions">
             <a href="<?php echo html($backUrlFinal); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
-            <a href="users.php?id=<?php echo (int)$t['user_id']; ?>" class="btn-icon" title="Guardar"><i class="bi bi-save"></i></a>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>><i class="bi bi-flag"></i></button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -400,8 +399,63 @@ if ($ticketClientSignaturePath !== '') {
                     <li><a class="dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-trash me-2"></i>Borrar Ticket</a></li>
                 </ul>
             </div>
+            <?php if ($canTicketClose && empty($t['closed'])): ?>
+                <button type="button" class="btn-icon <?php echo !empty($t['signature_requested']) ? 'text-warning' : ''; ?>" 
+                        title="<?php echo !empty($t['signature_requested']) ? 'Firma ya solicitada' : 'Solicitar firma del cliente'; ?>"
+                        data-bs-toggle="modal" data-bs-target="#modalRequestSignature">
+                    <i class="bi <?php echo !empty($t['signature_requested']) ? 'bi-envelope-check' : 'bi-pen-fill'; ?>"></i>
+                </button>
+            <?php endif; ?>
         </div>
     </header>
+
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'sig_requested'): ?>
+        <div class="alert alert-success mx-4 mt-3 alert-dismissible fade show" id="signatureSuccessAlert" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> Solicitud de firma enviada correctamente al cliente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <script>
+            setTimeout(function() {
+                var alertEl = document.getElementById('signatureSuccessAlert');
+                if (alertEl) {
+                    var bsAlert = new bootstrap.Alert(alertEl);
+                    bsAlert.close();
+                }
+            }, 5000);
+        </script>
+    <?php endif; ?>
+
+    <!-- Modal: Solicitar Firma -->
+    <div class="modal fade" id="modalRequestSignature" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+                <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
+                    <h5 class="modal-title" style="font-weight: 700; color: #0f172a;">Solicitud de Firma</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 30px 24px; text-align: center;">
+                    <div style="width: 64px; height: 64px; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px;">
+                        <i class="bi bi-envelope-paper-fill"></i>
+                    </div>
+                    <h4 style="font-weight: 800; color: #1e293b; margin-bottom: 12px; letter-spacing: -0.02em;">¿Enviar solicitud por correo?</h4>
+                    <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin-bottom: 0;">
+                        Se enviará un correo electrónico a <strong><?php echo html($t['user_email']); ?></strong> con un enlace seguro para que el cliente pueda firmar y cerrar este ticket remotamente.
+                    </p>
+                    <?php if (!empty($t['signature_requested'])): ?>
+                        <div class="alert alert-warning mt-3 mb-0" style="font-size: 13px; border-radius: 10px;">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> Ya se envió una solicitud anteriormente. Si continúas, se generará un nuevo token.
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 16px 24px; background: #f8fafc; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; padding: 10px 20px; color: #64748b; border: 1px solid #e2e8f0;">Cancelar</button>
+                    <a href="tickets.php?id=<?php echo $tid; ?>&action=request_signature" class="btn btn-primary" style="border-radius: 10px; font-weight: 600; padding: 10px 24px; background: #2563eb; border: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                        Enviar Solicitud
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modales: Propietario, Transferir, Unir, Vinculados, Colaboradores, Bloquear, Borrar -->
     <div class="modal fade" id="modalOwner" tabindex="-1">

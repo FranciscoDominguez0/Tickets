@@ -67,7 +67,13 @@ if ($_POST) {
             $_SESSION['user_login_time'] = time();
             $_SESSION['user_last_activity'] = time();
             $_SESSION['user_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-            header('Location: tickets.php');
+            
+            $return = trim((string)($_GET['return'] ?? ''));
+            if ($return !== '' && strpos($return, 'login.php') === false && strpos($return, 'logout.php') === false) {
+                header('Location: ' . $return);
+            } else {
+                header('Location: tickets.php');
+            }
             exit;
         }
 

@@ -8,6 +8,24 @@ require_once '../config.php';
 require_once '../includes/helpers.php';
 
 requireLogin('cliente');
+$uid = (int)$_SESSION['user_id'];
+$eid = (int)empresaId();
+
+// Cargar info del usuario
+$user = null;
+$stmtU = $mysqli->prepare("SELECT firstname, lastname, email FROM users WHERE id = ? AND empresa_id = ?");
+if ($stmtU) {
+    $stmtU->bind_param('ii', $uid, $eid);
+    $stmtU->execute();
+    $resU = $stmtU->get_result();
+    if ($rU = $resU->fetch_assoc()) {
+        $user = $rU;
+        $user['name'] = trim($rU['firstname'] . ' ' . $rU['lastname']) ?: 'Usuario';
+    }
+}
+if (!$user) {
+    $user = ['name' => 'Usuario', 'email' => ''];
+}
 
 $user = getCurrentUser();
 $uid = (int) ($_SESSION['user_id'] ?? 0);
@@ -22,7 +40,7 @@ if ($tid <= 0) {
 
 // Cargar ticket y validar pertenencia
 $stmt = $mysqli->prepare(
-    "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id,\n"
+    "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
     . "       d.name AS dept_name\n"
@@ -39,6 +57,13 @@ $t = $stmt->get_result()->fetch_assoc();
 if (!$t) {
     header('Location: tickets.php');
     exit;
+}
+
+// Validar token de firma (si viene en la URL)
+$isSignatureLink = false;
+$sigToken = trim((string)($_GET['s'] ?? ''));
+if ($sigToken !== '' && !empty($t['signature_token']) && $sigToken === $t['signature_token'] && empty($t['closed'])) {
+    $isSignatureLink = true;
 }
 
 // Thread id
@@ -1762,5 +1787,177 @@ function humanSize($bytes) {
         });
     })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Modal de Firma Digital (Cliente) -->
+<?php if ($isSignatureLink): ?>
+<div class="modal fade" id="modalClientSignature" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 40px 100px rgba(0,0,0,0.4); overflow: hidden; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0b1220, #2563eb); color: #fff; border: none; padding: 28px 32px; position: relative; overflow: hidden;">
+                <!-- Decoración abstracta -->
+                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; filter: blur(40px);"></div>
+                
+                <h5 class="modal-title" style="font-weight: 800; display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; letter-spacing: -0.02em; font-size: 1.25rem;">
+                    <div style="width: 42px; height: 42px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+                        <i class="bi bi-vector-pen" style="font-size: 1.2rem; color: #fbbf24;"></i>
+                    </div>
+                    Validación de Servicio
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.8;"></button>
+            </div>
+            <div class="modal-body" style="padding: 32px; background: transparent;">
+                <div style="margin-bottom: 24px; border-left: 4px solid #2563eb; padding-left: 16px;">
+                    <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+                        Estimado(a) <strong style="color: #0f172a;"><?php echo html($navUserName); ?></strong>,
+                    </p>
+                    <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 4px 0 0;">
+                        Para finalizar formalmente el ticket <strong style="color: #2563eb;">#<?php echo html($t['ticket_number']); ?></strong>, requerimos su firma de conformidad digital.
+                    </p>
+                </div>
+                
+
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <label class="form-label" style="font-weight: 700; color: #0f172a; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Firme en el recuadro:</label>
+                    <button type="button" id="btnClearSignatureClient" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-weight: 700; color: #ef4444; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+                        <i class="bi bi-arrow-counterclockwise" style="font-size: 1rem;"></i> Limpiar lienzo
+                    </button>
+                </div>
+                <div style="border: 2px dashed #cbd5e1; border-radius: 20px; background: #fff; overflow: hidden; position: relative; transition: border-color 0.3s; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);">
+                    <canvas id="clientSignatureCanvas" width="600" height="260" style="width: 100%; height: auto; cursor: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 style=%22fill:black%22><path d=%22M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z%22/></svg>'), auto; display: block; touch-action: none;"></canvas>
+                    <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #94a3b8; font-size: 0.75rem; pointer-events: none; opacity: 0.6; font-style: italic;">
+                        Utilice su mouse o pantalla táctil para firmar
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="background: rgba(248, 250, 252, 0.8); border-top: 1px solid #f1f5f9; padding: 24px 32px; gap: 16px;">
+                <button type="button" class="btn" data-bs-dismiss="modal" style="background: transparent; color: #94a3b8; font-weight: 700; border-radius: 16px; padding: 12px 24px; border: 1px solid #e2e8f0; font-size: 0.95rem;">Cerrar</button>
+                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="background: #2563eb; color: #fff; font-weight: 800; border-radius: 16px; padding: 12px 36px; border: none; box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); font-size: 0.95rem; transition: all 0.3s ease;">
+                    <span class="d-flex align-items-center gap-2">
+                        Finalizar y Cerrar <i class="bi bi-arrow-right"></i>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var modalEl = document.getElementById('modalClientSignature');
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    var canvas = document.getElementById('clientSignatureCanvas');
+    var ctx = canvas.getContext('2d');
+    var drawing = false;
+    var hasDrawn = false;
+    var lastX = 0, lastY = 0;
+
+    function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        if (e.touches && e.touches.length > 0) {
+            return {
+                x: (e.touches[0].clientX - rect.left) * scaleX,
+                y: (e.touches[0].clientY - rect.top) * scaleY
+            };
+        }
+        return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
+        };
+    }
+
+    canvas.addEventListener('mousedown', function(e) {
+        drawing = true;
+        var pos = getPos(e);
+        lastX = pos.x; lastY = pos.y;
+    });
+    canvas.addEventListener('mousemove', function(e) {
+        if (!drawing) return;
+        var pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        lastX = pos.x; lastY = pos.y;
+        hasDrawn = true;
+    });
+    canvas.addEventListener('mouseup', function() { drawing = false; });
+    canvas.addEventListener('mouseleave', function() { drawing = false; });
+    
+    // Touch support
+    canvas.addEventListener('touchstart', function(e) {
+        drawing = true;
+        var pos = getPos(e);
+        lastX = pos.x; lastY = pos.y;
+        e.preventDefault();
+    }, {passive: false});
+    canvas.addEventListener('touchmove', function(e) {
+        if (!drawing) return;
+        var pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        lastX = pos.x; lastY = pos.y;
+        hasDrawn = true;
+        e.preventDefault();
+    }, {passive: false});
+    canvas.addEventListener('touchend', function() { drawing = false; });
+
+    document.getElementById('btnClearSignatureClient').addEventListener('click', function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+    });
+
+    document.getElementById('btnConfirmClientSign').addEventListener('click', function() {
+        if (!hasDrawn) {
+            alert('Por favor, firme antes de continuar.');
+            return;
+        }
+
+        var btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
+
+        var formData = new FormData();
+        formData.append('ticket_id', '<?php echo $tid; ?>');
+        formData.append('token', '<?php echo $sigToken; ?>');
+        formData.append('close_message', '');
+        formData.append('signature_data', canvas.toDataURL('image/png'));
+
+        fetch('client-sign-ticket.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = 'tickets.php?msg=signed';
+            } else {
+                alert('Error: ' + data.error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> Aceptar y Cerrar';
+            }
+        })
+        .catch(err => {
+            alert('Error de conexión al procesar la firma.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i> Aceptar y Cerrar';
+        });
+    });
+});
+</script>
+<?php endif; ?>
+
 </body>
 </html>

@@ -208,6 +208,10 @@ if (!empty($_SESSION['new_ticket_id'])) {
     unset($_SESSION['new_ticket_id']);
 }
 
+if (isset($_GET['msg']) && $_GET['msg'] === 'signed') {
+    $flashMsg = 'Ticket firmado y cerrado correctamente. ¡Gracias!';
+}
+
 $filter = $_GET['filter'] ?? 'open';
 if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');

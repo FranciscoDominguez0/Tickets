@@ -30,10 +30,14 @@ function requireLogin($type = 'user') {
     if ($type === 'cliente' && !isset($_SESSION['user_id'])) {
         // Detectar si estamos en upload/ o en otro lugar
         $currentPath = $_SERVER['PHP_SELF'];
+        $queryString = $_SERVER['QUERY_STRING'] ?? '';
+        $returnUrl = basename($currentPath) . ($queryString !== '' ? '?' . $queryString : '');
+        $returnParam = ($returnUrl !== '' && $returnUrl !== 'login.php') ? '?return=' . urlencode($returnUrl) : '';
+
         if (strpos($currentPath, '/upload/') !== false) {
-            header('Location: login.php');
+            header('Location: login.php' . $returnParam);
         } else {
-            header('Location: upload/login.php');
+            header('Location: upload/login.php' . $returnParam);
         }
         exit;
     }
