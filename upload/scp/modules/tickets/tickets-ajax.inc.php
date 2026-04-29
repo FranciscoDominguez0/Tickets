@@ -69,9 +69,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         . "FROM tickets t\n"
         . "JOIN users u ON u.id = t.user_id\n"
         . "WHERE t.id = ? AND t.empresa_id = ?";
-    if (getCurrentStaffRoleName() === 'agent') {
-        $sql .= " AND t.staff_id = " . (int)$_SESSION['staff_id'];
-    }
+    // Si es agente, permitimos ver cualquier ticket de la empresa (consistente con el listado)
+    // Se elimina la restricción de t.staff_id = session.staff_id que causaba el error 404
     $sql .= " LIMIT 1";
 
     $stmt = $mysqli->prepare($sql);
