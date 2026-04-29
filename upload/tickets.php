@@ -605,6 +605,19 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             overflow: hidden;
             box-shadow: 0 22px 55px rgba(15, 23, 42, 0.22);
         }
+        @media (max-width: 576px) {
+            .notif-dd {
+                position: fixed !important;
+                top: 60px !important;
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
+                width: 320px !important;
+                min-width: unset !important;
+                max-width: 90vw !important;
+                margin-top: 0 !important;
+            }
+        }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
                         linear-gradient(135deg, #2563eb, #0ea5e9);

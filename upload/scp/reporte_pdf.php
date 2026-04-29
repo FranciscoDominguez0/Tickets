@@ -19,10 +19,16 @@ if ($reportId <= 0) {
 }
 $eid = empresaId();
 
+$has_client_sig = dbColumnExists('tickets', 'client_signature');
+$has_staff_sig = dbColumnExists('staff', 'signature');
+
+$clientSigCol = $has_client_sig ? ', t.client_signature' : '';
+$staffSigCol = $has_staff_sig ? ', s.signature as staff_signature' : '';
+
 // 1. Obtener la información del reporte y del ticket asociado
-$sql = "SELECT r.*, t.ticket_number, t.subject, t.closed, 
+$sql = "SELECT r.*, t.ticket_number, t.subject, t.closed {$clientSigCol},
                d.name as department_name,
-               s.firstname as st_first, s.lastname as st_last,
+               s.firstname as st_first, s.lastname as st_last {$staffSigCol},
                c.firstname as cl_first, c.lastname as cl_last, c.email as cl_email
         FROM ticket_reports r
         JOIN tickets t ON r.ticket_id = t.id
@@ -138,6 +144,29 @@ $appName = htmlspecialchars($companyName);
 $webSafe = htmlspecialchars(str_replace(['http://', 'https://'], '', $companyWebsite));
 $nowDate = date('d M Y - h:i A');
 
+// Firmas HTML
+$clientSignatureHtml = '';
+$staffSignatureHtml = '';
+
+if ($has_client_sig && !empty($report['client_signature'])) {
+    $clientSigPath = $projectRoot . '/' . $report['client_signature'];
+    if (is_file($clientSigPath)) {
+        $sigData = file_get_contents($clientSigPath);
+        $base64Sig = base64_encode($sigData);
+        $clientSignatureHtml = '<img src="data:image/png;base64,' . $base64Sig . '" style="max-height: 80px; max-width: 200px; display: block; margin: 0 auto; padding-bottom: 5px;">';
+    }
+}
+
+if ($has_staff_sig && !empty($report['staff_signature'])) {
+    $staffSigText = $report['staff_signature'];
+    if (preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $staffSigText)) {
+        $staffSignatureHtml = '<img src="' . $staffSigText . '" style="max-height: 80px; max-width: 200px; display: block; margin: 0 auto; padding-bottom: 5px;">';
+    } else {
+        // Assume text signature or old style
+        $staffSignatureHtml = '<div style="font-family: \'Brush Script MT\', cursive; font-size: 24px; padding-bottom: 5px; color: #334155;">' . htmlspecialchars($staffSigText) . '</div>';
+    }
+}
+
 // Construir HTML de items
 $itemsHtml = '';
 if (count($reportItems) > 0) {
@@ -163,6 +192,7 @@ $html = <<<HTML
 <head>
     <meta charset="UTF-8">
     <title>Reporte de Servicio #{$ticketNo}</title>
+    <link rel="icon" href="{$companyWebsite}/publico/img/favicon.ico" type="image/x-icon">
     <style>
         :root{
             --ink:#0f172a;
@@ -305,12 +335,18 @@ $html .= <<<HTML
         <table class="signatures">
             <tr>
                 <td>
+                    <div style="height: 90px; vertical-align: bottom; display: block; text-align: center;">
+                        {$staffSignatureHtml}
+                    </div>
                     <div class="sig-line">
                         {$staffName}<br>
                         <span class="sig-sub">Firma del Técnico</span>
                     </div>
                 </td>
                 <td>
+                    <div style="height: 90px; vertical-align: bottom; display: block; text-align: center;">
+                        {$clientSignatureHtml}
+                    </div>
                     <div class="sig-line">
                         {$clientName}<br>
                         <span class="sig-sub">Firma de Conformidad del Cliente</span>

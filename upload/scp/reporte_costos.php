@@ -376,7 +376,7 @@ h6.border-bottom {
     <div class="tickets-header mb-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Reporte de Costos</h1>
+                <h1>Facturación</h1>
             </div>
             <div>
                 <a href="reporte_tickets.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
@@ -392,9 +392,18 @@ h6.border-bottom {
         </div>
     <?php endif; ?>
     <?php if ($successMsg): ?>
-        <div class="alert alert-success mt-2 mb-3">
+        <div class="alert alert-success mt-2 mb-3" id="autoDismissAlert" style="transition: opacity 0.5s ease;">
             <i class="bi bi-check-circle me-1"></i> <?php echo htmlspecialchars($successMsg); ?>
         </div>
+        <script>
+            setTimeout(function() {
+                var alert = document.getElementById('autoDismissAlert');
+                if (alert) {
+                    alert.style.opacity = '0';
+                    setTimeout(function() { alert.remove(); }, 500);
+                }
+            }, 3500);
+        </script>
     <?php endif; ?>
 
     <?php
