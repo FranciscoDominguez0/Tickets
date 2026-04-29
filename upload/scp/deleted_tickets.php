@@ -71,6 +71,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     exit;
 }
 
+// --- AJAX: VER HILO DEL TICKET ---
+if ($action === 'view_thread' && $id > 0) {
+    $stmtT = $mysqli->prepare("
+        SELECT te.body, te.created, te.is_internal, 
+               CONCAT(s.firstname, ' ', s.lastname) as staff_name, 
+               CONCAT(u.firstname, ' ', u.lastname) as user_name, te.staff_id
+        FROM thread_entries te
+        JOIN threads t ON te.thread_id = t.id
+        LEFT JOIN staff s ON te.staff_id = s.id
+        LEFT JOIN users u ON te.user_id = u.id
+        WHERE t.ticket_id = (SELECT ticket_id FROM ticket_deletion_requests WHERE id = ? AND empresa_id = ?)
+        ORDER BY te.created ASC
+    ");
+    $stmtT->bind_param('ii', $id, $eid);
+    $stmtT->execute();
+    $resT = $stmtT->get_result();
+    
+    if ($resT && $resT->num_rows > 0) {
+        while ($e = $resT->fetch_assoc()) {
+            $isStaff = (int)$e['staff_id'] > 0;
+            $isInternal = (int)$e['is_internal'] === 1;
+            $name = trim($isStaff ? $e['staff_name'] : $e['user_name']) ?: 'Sistema';
+            
+            $typeLabel = $isInternal ? 'Nota Interna' : ($isStaff ? 'Respuesta' : 'Mensaje');
+            $bgColor = $isInternal ? '#fffbeb' : ($isStaff ? '#f8fafc' : '#ffffff');
+            $borderColor = $isInternal ? '#fde68a' : ($isStaff ? '#e2e8f0' : '#cbd5e1');
+            $icon = $isInternal ? 'bi-journal-text text-warning' : ($isStaff ? 'bi-person-badge text-primary' : 'bi-person text-success');
+            
+            echo "
+            <div class='mb-3 p-3 rounded-3 shadow-sm border' style='background: $bgColor; border-color: $borderColor !important;'>
+                <div class='d-flex justify-content-between align-items-center mb-2 border-bottom pb-2' style='border-color: rgba(0,0,0,0.05) !important;'>
+                    <span class='small fw-bold text-dark'><i class='bi $icon me-1'></i>" . html($name) . "</span>
+                    <span class='text-muted' style='font-size: 0.7rem; font-weight: 600;'>$typeLabel &bull; " . formatDate($e['created']) . "</span>
+                </div>
+                <div class='thread-body small text-secondary' style='line-height: 1.5;'>" . (function_exists('sanitizeRichText') ? sanitizeRichText($e['body']) : $e['body']) . "</div>
+            </div>";
+        }
+    } else {
+        echo "<div class='text-center py-4 text-muted'><i class='bi bi-chat-left-dots fs-2 d-block mb-2 opacity-50'></i>No hay mensajes registrados en este ticket.</div>";
+    }
+    exit;
+}
+
 $sql = "SELECT r.*, CONCAT(s.firstname, ' ', s.lastname) as requester_name, CONCAT(v.firstname, ' ', v.lastname) as resolver_name 
         FROM ticket_deletion_requests r 
         LEFT JOIN staff s ON r.requested_by = s.id 
@@ -119,7 +162,9 @@ ob_start();
                         <?php while ($r = $res->fetch_assoc()): ?>
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold" style="color: #2563eb;">#<?php echo html($r['ticket_number']); ?></div>
+                                    <a href="javascript:void(0)" onclick="viewTicketThread(<?php echo $r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="ticket-link d-block">
+                                        <div class="fw-bold" style="color: #2563eb;">#<?php echo html($r['ticket_number']); ?></div>
+                                    </a>
                                     <div class="small text-muted text-truncate" style="max-width: 180px; font-weight: 600;"><?php echo html($r['ticket_subject']); ?></div>
                                     <div class="x-small text-muted"><?php echo formatDate($r['created_at']); ?></div>
                                 </td>
@@ -250,6 +295,39 @@ ob_start();
     </div>
 </div>
 
+<!-- Modal de Hilo del Ticket -->
+<div class="modal fade" id="threadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-white border-bottom py-3 px-4" style="border-bottom: 1px solid #e2e8f0 !important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 rounded-3" style="background: #eff6ff; color: #2563eb; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-chat-dots-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold" style="color: #0f172a; font-weight: 700; margin-bottom: 0;">Conversación del Ticket</h5>
+                        <p class="text-muted small mb-0" style="font-weight: 600;">Auditoría previa &bull; #<span id="threadTicketNum"></span></p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light px-4 py-4" style="background: #f8fafc !important;">
+                <div id="threadBodyWrap">
+                    <div id="threadContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;"></div>
+                            <p class="mt-2 text-muted small fw-bold">Recuperando mensajes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top py-3 px-4" style="border-top: 1px solid #e2e8f0 !important;">
+                <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal" style="border-radius: 10px; padding: 8px 24px; font-size: 0.9rem; border-color: #e2e8f0; color: #64748b;">Cerrar Vista</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function openResolveModal(action, id, ticketNum) {
     const modalEl = document.getElementById('resolveModal');
@@ -288,6 +366,28 @@ function openResolveModal(action, id, ticketNum) {
     
     modal.show();
 }
+
+function viewTicketThread(id, ticketNum) {
+    const modalEl = document.getElementById('threadModal');
+    const modal = new bootstrap.Modal(modalEl);
+    document.getElementById('threadTicketNum').textContent = ticketNum;
+    document.getElementById('threadContent').innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted small fw-bold">Cargando conversación...</p>
+        </div>`;
+    
+    modal.show();
+    
+    fetch('deleted_tickets.php?action=view_thread&id=' + id)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('threadContent').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('threadContent').innerHTML = '<div class="alert alert-danger">Error al cargar el hilo de conversación.</div>';
+        });
+}
 </script>
 
 <style>
@@ -297,6 +397,14 @@ function openResolveModal(action, id, ticketNum) {
     display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #475569;
 }
 .x-small { font-size: 0.72rem; }
+
+.ticket-link { text-decoration: none; transition: all 0.2s ease; border-radius: 6px; padding: 2px 4px; margin-left: -4px; display: inline-block; }
+.ticket-link:hover { background: #eff6ff; color: #1e40af !important; text-decoration: none !important; }
+
+#threadBodyWrap { max-height: 550px; overflow-y: auto; padding-right: 12px; }
+#threadBodyWrap::-webkit-scrollbar { width: 6px; }
+#threadBodyWrap::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+#threadBodyWrap::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
 </style>
 <?php
 $content = ob_get_clean();
