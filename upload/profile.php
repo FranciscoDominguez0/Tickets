@@ -39,12 +39,13 @@ if ($_POST) {
         $email = trim($_POST['email'] ?? '');
         $company = trim($_POST['company'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
 
         if (empty($firstname) || empty($lastname) || empty($email)) {
             $error = 'Nombre, apellido y email son requeridos';
         } else {
-            $stmt = $mysqli->prepare('UPDATE users SET firstname = ?, lastname = ?, email = ?, company = ?, phone = ? WHERE id = ? AND empresa_id = ?');
-            $stmt->bind_param('sssssii', $firstname, $lastname, $email, $company, $phone, $uid, $eid);
+            $stmt = $mysqli->prepare('UPDATE users SET firstname = ?, lastname = ?, email = ?, company = ?, phone = ?, address = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+            $stmt->bind_param('ssssssii', $firstname, $lastname, $email, $company, $phone, $address, $uid, $eid);
             
             if ($stmt->execute()) {
                 $_SESSION['user_name'] = $firstname . ' ' . $lastname;
@@ -55,6 +56,7 @@ if ($_POST) {
                 $userData['email'] = $email;
                 $userData['company'] = $company;
                 $userData['phone'] = $phone;
+                $userData['address'] = $address;
             } else {
                 error_log('[profile] update failed: ' . (string)$mysqli->error);
                 $error = 'Error al actualizar. Intenta nuevamente.';
@@ -461,6 +463,11 @@ if ($_POST) {
                         <div class="mb-2">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" value="<?php echo html($userData['email'] ?? ''); ?>" required>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="address" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="address" name="address" value="<?php echo html($userData['address'] ?? ''); ?>">
                         </div>
 
                         <div class="row g-3 mb-2">

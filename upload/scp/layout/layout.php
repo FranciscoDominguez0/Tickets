@@ -193,7 +193,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                             </span>
                         <?php endif; ?>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end scp-notif-menu">
+                    <ul class="dropdown-menu dropdown-menu-end scp-notif-menu" id="scpNotifList">
                         <li>
                             <div class="scp-notif-head">
                                 <div class="scp-notif-title">Notificaciones</div>
@@ -201,7 +201,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                             </div>
                         </li>
                         <?php if (empty($notifItems)): ?>
-                            <li><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
+                            <li id="scpNotifEmptyRow"><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
                         <?php else: ?>
                             <?php foreach ($notifItems as $n): ?>
                                 <?php
@@ -732,6 +732,45 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                 }
             }
 
+            function addNotificationToDropdown(n) {
+                var list = document.getElementById('scpNotifList');
+                var empty = document.getElementById('scpNotifEmptyRow');
+                if (!list) return;
+
+                if (empty) empty.style.display = 'none';
+                
+                var btnMark = document.getElementById('scpMarkAllRead');
+                if (btnMark) btnMark.disabled = false;
+
+                var li = document.createElement('li');
+                li.className = 'new-notif-dynamic';
+                
+                var icon = 'bi-info-circle';
+                var accent = 'general';
+                if (n.type === 'ticket_assigned') { icon = 'bi-ticket-perforated'; accent = 'ticket'; }
+                else if (n.type === 'task_assigned') { icon = 'bi-check2-square'; accent = 'task'; }
+
+                li.innerHTML = `
+                    <a class="dropdown-item scp-notif-item" href="notification_read.php?id=${n.id}">
+                        <div class="scp-notif-icon ${accent}">
+                            <i class="bi ${icon}"></i>
+                        </div>
+                        <div class="scp-notif-body">
+                            <div class="scp-notif-msg">${n.message}</div>
+                            <div class="scp-notif-time">Justo ahora</div>
+                        </div>
+                    </a>
+                `;
+
+                // Insertar después del header (que es el primer li)
+                var headerLi = list.querySelector('li:first-child');
+                if (headerLi && headerLi.nextSibling) {
+                    list.insertBefore(li, headerLi.nextSibling);
+                } else {
+                    list.appendChild(li);
+                }
+            }
+
             function showNotificationToast(n) {
                 if (!popEl) return;
                 var msgEl = document.getElementById('customPopMsg');
@@ -782,6 +821,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                 console.log('Nuevas notificaciones encontradas:', data.notifications.length);
                                 data.notifications.forEach(function(n) {
                                     showNotificationToast(n);
+                                    addNotificationToDropdown(n);
                                     if (n.id > lastNotifId) lastNotifId = n.id;
                                 });
                             }

@@ -38,11 +38,12 @@ if ($_POST) {
         $password = $_POST['password'] ?? '';
         $password_confirm = $_POST['password_confirm'] ?? '';
         $phone_raw = trim((string)($_POST['phone'] ?? ''));
+        $address = trim($_POST['address'] ?? '');
         $phone_digits = normalizePhoneDigits($phone_raw);
 
         // Validaciones
-        if (!$firstname || !$lastname || !$email || !$password || $phone_raw === '') {
-            $error = 'Nombre, apellido, email, teléfono y contraseña son requeridos';
+        if (!$firstname || !$lastname || !$email || !$password || $phone_raw === '' || !$address) {
+            $error = 'Nombre, apellido, email, dirección, teléfono y contraseña son requeridos';
         } elseif (!isValidEmail($email)) {
             $error = 'Email no válido';
         } elseif (!preg_match('/^\d{7,15}$/', $phone_digits)) {
@@ -66,11 +67,11 @@ if ($_POST) {
 
                 // Insertar usuario
                 $stmt = $mysqli->prepare(
-                    'INSERT INTO users (firstname, lastname, email, password, company, phone, status, created)
-                     VALUES (?, ?, ?, ?, ?, ?, "active", NOW())'
+                    'INSERT INTO users (firstname, lastname, email, address, password, company, phone, status, created)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, "active", NOW())'
                 );
                 $company = '';
-                $stmt->bind_param('ssssss', $firstname, $lastname, $email, $password_hash, $company, $phone_digits);
+                $stmt->bind_param('sssssss', $firstname, $lastname, $email, $address, $password_hash, $company, $phone_digits);
 
                 if ($stmt->execute()) {
                     $success = 'Registro exitoso! Redirigiendo al login...';
@@ -188,6 +189,18 @@ $bodyStyle = $loginBg !== ''
                                     name="email" 
                                     placeholder="tu@email.com"
                                     value="<?php echo html($_POST['email'] ?? ''); ?>"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Dirección</label>
+                                <input 
+                                    type="text" 
+                                    id="address" 
+                                    name="address" 
+                                    placeholder="Tu dirección completa"
+                                    value="<?php echo html($_POST['address'] ?? ''); ?>"
                                     required
                                 >
                             </div>

@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             return [$firstname, $lastname];
         };
 
-        $createUser = function ($email, $name, $phone) use ($mysqli, $usersHasPhone, $makePassword, $parseName, $eid, &$imported, &$skipped, &$failed) {
+        $createUser = function ($email, $name, $phone, $address = '') use ($mysqli, $usersHasPhone, $makePassword, $parseName, $eid, &$imported, &$skipped, &$failed) {
             $email = trim((string)$email);
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $failed++;
@@ -112,19 +112,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             if ($usersHasPhone) {
                 $phoneVal = trim((string)$phone);
                 $phoneVal = $phoneVal !== '' ? $phoneVal : null;
-                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
                 if (!$stmtI) {
                     $failed++;
                     return;
                 }
-                $stmtI->bind_param('issssss', $eid, $email, $hash, $firstname, $lastname, $phoneVal, $status);
+                $stmtI->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $phoneVal, $status);
             } else {
-                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
                 if (!$stmtI) {
                     $failed++;
                     return;
                 }
-                $stmtI->bind_param('isssss', $eid, $email, $hash, $firstname, $lastname, $status);
+                $stmtI->bind_param('issssss', $eid, $email, $address, $hash, $firstname, $lastname, $status);
             }
 
             if ($stmtI->execute()) {
@@ -165,7 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                         if ($email === '' && isset($row[0])) $email = (string)$row[0];
                         if ($name === '' && isset($row[1])) $name = (string)$row[1];
 
-                        $createUser($email, $name, $phone);
+                        $address = '';
+                        if (isset($map['address'])) $address = (string)($row[$map['address']] ?? '');
+
+                        $createUser($email, $name, $phone, $address);
                     }
                     fclose($fh);
                 }
@@ -181,16 +184,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                     $a = (string)$parts[0];
                     $b = (string)$parts[1];
                     if (filter_var($b, FILTER_VALIDATE_EMAIL)) {
-                        $createUser($b, $a, '');
+                        $createUser($b, $a, '', '');
                     } elseif (filter_var($a, FILTER_VALIDATE_EMAIL)) {
-                        $createUser($a, $b, '');
+                        $createUser($a, $b, '', '');
                     } else {
                         $failed++;
                     }
                 } else {
                     // si viene solo email
                     if (filter_var($line, FILTER_VALIDATE_EMAIL)) {
-                        $createUser($line, '', '');
+                        $createUser($line, '', '', '');
                     } else {
                         $failed++;
                     }
@@ -214,8 +217,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {
     $add_errors = [];
     $email      = trim($_POST['email'] ?? '');
-    $firstname  = trim($_POST['firstname'] ?? '');
     $lastname   = trim($_POST['lastname'] ?? '');
+    $address    = trim($_POST['address'] ?? '');
     $company    = '';
     $password   = $_POST['password'] ?? '';
     $password2  = $_POST['password2'] ?? '';
@@ -225,6 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $add_errors[] = 'Email no válido.';
     if (!$firstname) $add_errors[] = 'El nombre es obligatorio.';
     if (!$lastname) $add_errors[] = 'El apellido es obligatorio.';
+    if (!$address) $add_errors[] = 'La dirección es obligatoria.';
     if (strlen($password) < 6) $add_errors[] = 'La contraseña debe tener al menos 6 caracteres.';
     elseif ($password !== $password2) $add_errors[] = 'Las contraseñas no coinciden.';
 
@@ -239,8 +243,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
     if (empty($add_errors)) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('issssss', $eid, $email, $hash, $firstname, $lastname, $company, $status);
+        $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, address, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $company, $status);
         if ($stmt->execute()) {
             header('Location: users.php?added=1');
             exit;
@@ -323,6 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $firstname = trim($_POST['firstname'] ?? '');
         $lastname = trim($_POST['lastname'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
 
         $edit_errors = [];
         if ($email === '') {
@@ -332,6 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
         if ($firstname === '') $edit_errors[] = 'El nombre es obligatorio.';
         if ($lastname === '') $edit_errors[] = 'El apellido es obligatorio.';
+        if ($address === '') $edit_errors[] = 'La dirección es obligatoria.';
 
         if (empty($edit_errors)) {
             $stmtE = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND email = ? AND id <> ? LIMIT 1');
@@ -348,18 +354,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         if (empty($edit_errors)) {
             if ($usersHasPhone) {
                 $phoneVal = $phone !== '' ? $phone : null;
-                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, phone = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, phone = ?, address = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('ssssii', $email, $firstname, $lastname, $phoneVal, $user_id, $eid);
+                    $stmtU->bind_param('sssssii', $email, $firstname, $lastname, $phoneVal, $address, $user_id, $eid);
                     if ($stmtU->execute()) {
                         header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
                     }
                 }
             } else {
-                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmtU = $mysqli->prepare('UPDATE users SET email = ?, firstname = ?, lastname = ?, address = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('sssii', $email, $firstname, $lastname, $user_id, $eid);
+                    $stmtU->bind_param('ssssii', $email, $firstname, $lastname, $address, $user_id, $eid);
                     if ($stmtU->execute()) {
                         header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
@@ -531,9 +537,9 @@ $viewUser = null;
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $uid = (int) $_GET['id'];
     if ($usersHasPhone) {
-        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
     } else {
-        $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
     }
     $stmt->bind_param('ii', $uid, $eid);
     $stmt->execute();
@@ -1429,6 +1435,10 @@ $statusBadges = [
                                 <label for="add-lastname" class="form-label">Apellido <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-lastname" name="lastname" required placeholder="Apellido" value="<?php echo html($_POST['lastname'] ?? ''); ?>">
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="add-address" class="form-label">Dirección <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="add-address" name="address" required placeholder="Dirección completa" value="<?php echo html($_POST['address'] ?? ''); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="add-password" class="form-label">Contraseña <span class="text-danger">*</span></label>

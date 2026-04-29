@@ -280,9 +280,13 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-0">
+                        <div class="mb-3">
                             <label class="form-label">Teléfono</label>
                             <input type="text" name="phone" class="form-control" value="<?php echo html((string)($viewUser['phone'] ?? '')); ?>">
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Dirección <span class="text-danger">*</span></label>
+                            <input type="text" name="address" class="form-control" value="<?php echo html((string)($viewUser['address'] ?? '')); ?>" required>
                         </div>
                     </div>
                     <div class="modal-footer border-top">
@@ -389,6 +393,10 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 <div class="user-view-detail">
                     <label>Email</label>
                     <div class="value"><?php echo html($viewUser['email']); ?></div>
+                </div>
+                <div class="user-view-detail">
+                    <label>Dirección</label>
+                    <div class="value"><?php echo html($viewUser['address'] ?? '—'); ?></div>
                 </div>
                 <div class="user-view-detail">
                     <label>Organización</label>
