@@ -88,41 +88,34 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     
                     $emailSubject = 'Firma requerida: Ticket #' . $ticketNo . ' - ' . $subject;
                     $emailBodyHtml = '
-<div style="font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f9fc; padding: 40px 20px; color: #334155;">
-    <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-        <div style="border-top: 4px solid #2563eb; padding: 30px 35px;">
-            <h2 style="margin: 0 0 15px; color: #1e293b; font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Solicitud de Firma Digital</h2>
-            <p style="margin: 0 0 20px; line-height: 1.6; font-size: 15px;">Hola <strong>' . htmlspecialchars($clientName) . '</strong>,</p>
-            <p style="margin: 0 0 20px; line-height: 1.6; font-size: 15px;">Se ha completado la atención de su ticket y requerimos su firma de conformidad para proceder con el cierre formal.</p>
-            
-            <div style="background-color: #f8fafc; border-radius: 8px; padding: 18px; margin-bottom: 25px; border-left: 4px solid #cbd5e1;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 4px 0; font-size: 13px; color: #64748b; width: 100px;">Ticket:</td>
-                        <td style="padding: 4px 0; font-size: 14px; color: #1e293b; font-weight: 600;">#' . htmlspecialchars($ticketNo) . '</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Asunto:</td>
-                        <td style="padding: 4px 0; font-size: 14px; color: #1e293b;">' . htmlspecialchars($subject) . '</td>
-                    </tr>
-                </table>
-            </div>
+<div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+    <h2 style="color: #2c3e50;">Solicitud de firma digital</h2>
+    <p>Se ha completado la atención de su ticket y requerimos su firma de conformidad para proceder con el cierre formal.</p>
+    
+    <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; width: 100px;"><strong>Número:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#' . htmlspecialchars($ticketNo) . '</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Asunto:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($subject) . '</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Cliente:</strong></td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">' . htmlspecialchars($clientName) . '</td>
+        </tr>
+    </table>
 
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="' . htmlspecialchars($signUrl) . '" style="background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block;">
-                    Firmar de Conformidad
-                </a>
-            </div>
+    <p style="margin: 25px 0;">
+        <a href="' . htmlspecialchars($signUrl) . '" style="display: inline-block; background: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: 600;">
+            Firmar de conformidad
+        </a>
+    </p>
 
-            <p style="margin: 25px 0 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
-                Si tiene problemas con el botón, copie este enlace:<br>
-                <a href="' . htmlspecialchars($signUrl) . '" style="color: #2563eb; text-decoration: none;">' . htmlspecialchars($signUrl) . '</a>
-            </p>
-        </div>
-        <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #f1f5f9;">
-            <p style="margin: 0; color: #64748b; font-size: 12px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>
-        </div>
-    </div>
+    <p style="color: #7f8c8d; font-size: 12px; margin-top: 30px;">
+        ' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '
+    </p>
 </div>';
                     
                     $emailBodyText = "Hola $clientName,\n\nRequerimos su firma de conformidad para el ticket #$ticketNo.\n\nFirme aquí: $signUrl\n\nAtentamente,\n" . APP_NAME;

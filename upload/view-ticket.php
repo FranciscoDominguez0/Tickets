@@ -1794,25 +1794,25 @@ function humanSize($bytes) {
 <div class="modal fade" id="modalClientSignature" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 40px 100px rgba(0,0,0,0.4); overflow: hidden; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #0b1220, #2563eb); color: #fff; border: none; padding: 28px 32px; position: relative; overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: #fff; border: none; padding: 28px 32px; position: relative; overflow: hidden;">
                 <!-- Decoración abstracta -->
-                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(245, 158, 11, 0.15); border-radius: 50%; filter: blur(40px);"></div>
+                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; filter: blur(40px);"></div>
                 
-                <h5 class="modal-title" style="font-weight: 800; display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; letter-spacing: -0.02em; font-size: 1.25rem;">
-                    <div style="width: 42px; height: 42px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-                        <i class="bi bi-vector-pen" style="font-size: 1.2rem; color: #fbbf24;"></i>
+                <h5 class="modal-title" style="font-weight: 800; display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; letter-spacing: -0.01em; font-size: 1.25rem;">
+                    <div style="width: 42px; height: 42px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+                        <i class="bi bi-vector-pen" style="font-size: 1.2rem; color: #fff;"></i>
                     </div>
-                    Validación de Servicio
+                    Confirmación de Servicio
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.8;"></button>
             </div>
             <div class="modal-body" style="padding: 32px; background: transparent;">
-                <div style="margin-bottom: 24px; border-left: 4px solid #2563eb; padding-left: 16px;">
+                <div style="margin-bottom: 24px; border-left: 4px solid #3498db; padding-left: 16px;">
                     <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 0;">
                         Estimado(a) <strong style="color: #0f172a;"><?php echo html($navUserName); ?></strong>,
                     </p>
                     <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 4px 0 0;">
-                        Para finalizar formalmente el ticket <strong style="color: #2563eb;">#<?php echo html($t['ticket_number']); ?></strong>, requerimos su firma de conformidad digital.
+                        Para finalizar formalmente el ticket <strong style="color: #3498db;">#<?php echo html($t['ticket_number']); ?></strong>, requerimos su firma de conformidad digital.
                     </p>
                 </div>
                 
@@ -1832,7 +1832,7 @@ function humanSize($bytes) {
             </div>
             <div class="modal-footer" style="background: rgba(248, 250, 252, 0.8); border-top: 1px solid #f1f5f9; padding: 24px 32px; gap: 16px;">
                 <button type="button" class="btn" data-bs-dismiss="modal" style="background: transparent; color: #94a3b8; font-weight: 700; border-radius: 16px; padding: 12px 24px; border: 1px solid #e2e8f0; font-size: 0.95rem;">Cerrar</button>
-                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="background: #2563eb; color: #fff; font-weight: 800; border-radius: 16px; padding: 12px 36px; border: none; box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); font-size: 0.95rem; transition: all 0.3s ease;">
+                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="background: #3498db; color: #fff; font-weight: 800; border-radius: 16px; padding: 12px 36px; border: none; box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3); font-size: 0.95rem; transition: all 0.3s ease;">
                     <span class="d-flex align-items-center gap-2">
                         Finalizar y Cerrar <i class="bi bi-arrow-right"></i>
                     </span>
