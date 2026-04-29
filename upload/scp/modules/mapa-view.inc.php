@@ -115,6 +115,46 @@ if (!isset($_SESSION['staff_id'])) exit;
         border-radius: 50%;
         background: #10b981;
     }
+
+    .map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    /* Responsividad */
+    @media (max-width: 991px) {
+        .map-wrapper {
+            display: block; /* Simplificar a block en móvil */
+            height: auto;
+            min-height: 0 !important;
+        }
+        .agent-sidebar {
+            width: 100% !important;
+            height: 300px !important;
+            margin-bottom: 20px;
+        }
+        .map-container {
+            width: 100% !important;
+            height: 450px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .map-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start !important;
+            margin-bottom: 20px;
+        }
+        .map-container {
+            height: 400px !important;
+        }
+        .agent-sidebar {
+            height: 250px !important;
+        }
+    }
 </style>
 
 <div class="map-header">
@@ -265,6 +305,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Polling cada 8 segundos
     fetchLocations();
     setInterval(fetchLocations, 8000);
+
+    // Asegurar que el mapa se redibuje si el contenedor cambia (útil en móvil)
+    setTimeout(function() {
+        map.invalidateSize();
+    }, 500);
 
     document.getElementById('refresh-map').addEventListener('click', function() {
         var btn = this;
