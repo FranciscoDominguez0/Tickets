@@ -1004,7 +1004,7 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
         #open-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.46);z-index:2000;backdrop-filter: blur(10px);padding:18px}
-        #open-loading-overlay .box{background:rgba(255,255,255,0.92);border:1px solid rgba(226,232,240,0.92);border-radius:22px;padding:18px 20px;min-width:320px;max-width:560px;width:100%;box-shadow:0 30px 90px rgba(15,23,42,.30);backdrop-filter: blur(10px);animation: openLoadingIn .14s ease-out}
+        #open-loading-overlay .box{background:rgba(255,255,255,0.92);border:1px solid rgba(226,232,240,0.92);border-radius:22px;padding:18px 20px;width:360px;max-width:90vw;box-shadow:0 30px 90px rgba(15,23,42,.30);backdrop-filter: blur(10px);animation: openLoadingIn .14s ease-out}
         #open-loading-overlay .spinner-border{width:2.25rem;height:2.25rem}
         #open-loading-overlay .progress{border-radius:999px;overflow:hidden;background:rgba(148,163,184,0.25)}
         #open-loading-overlay .progress-bar{background:linear-gradient(90deg,#2563eb,#60a5fa);width:100%}
