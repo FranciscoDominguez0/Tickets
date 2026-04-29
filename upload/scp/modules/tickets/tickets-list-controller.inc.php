@@ -8,8 +8,10 @@ $filters = [
     'all' => ['label' => 'Todos', 'where' => '1=1'],
 ];
 $filterKey = $_GET['filter'] ?? null;
-$isAgent = (getCurrentStaffRoleName() === 'agent');
-if ($filterKey === null && $isAgent) {
+$role = getCurrentStaffRoleName();
+$isAgent = ($role === 'agent');
+$isSupervisor = ($role === 'supervisor');
+if ($filterKey === null && ($isAgent || $isSupervisor)) {
     $filterKey = 'mine';
 }
 if ($filterKey === null || !isset($filters[$filterKey])) {
