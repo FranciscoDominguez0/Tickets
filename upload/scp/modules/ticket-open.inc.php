@@ -37,7 +37,26 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 
 <style>
 /* ── ticket-open.inc.php – Modern Professional Design ── */
-.open-ticket-shell { max-width: 880px; margin: 0 auto; }
+@keyframes fadeInUpProfessional {
+    0% { opacity: 0; transform: translateY(22px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fadeInHeader {
+    0%  { opacity: 0; transform: translateY(-10px); }
+    100%{ opacity: 1; transform: translateY(0); }
+}
+.open-ticket-shell { 
+    max-width: 880px; 
+    margin: 0 auto;
+}
+.open-ticket-shell .tickets-header {
+    animation: fadeInHeader 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.open-ticket-shell .open-section:nth-child(1) { animation: fadeInUpProfessional 0.45s 0.10s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
+.open-ticket-shell .open-section:nth-child(2) { animation: fadeInUpProfessional 0.45s 0.20s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
+.open-ticket-shell .open-section:nth-child(3) { animation: fadeInUpProfessional 0.45s 0.30s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
+.open-ticket-shell .open-section:nth-child(4) { animation: fadeInUpProfessional 0.45s 0.38s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
+.open-ticket-shell .form-actions { animation: fadeInUpProfessional 0.4s 0.44s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
 
 .open-ticket-shell .tickets-header {
     background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);

@@ -755,8 +755,21 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         @media (max-width: 576px) {
             .container-main { padding: 0 12px; margin: 18px auto; }
             .shell { max-width: 100%; }
-            .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-            .tabs a { white-space: nowrap; }
+            .tabs { 
+                padding: 0 4px; 
+                display: flex; 
+                justify-content: space-between; 
+                overflow: hidden;
+            }
+            .tabs a { 
+                padding: 12px 2px; 
+                flex: 1; 
+                justify-content: center; 
+                font-size: 0.82rem; 
+                gap: 4px; 
+                white-space: nowrap; 
+            }
+            .tabs .count { padding: 2px 5px; font-size: 0.72rem; }
             .tickets-table { padding: 0 12px 12px; }
         }
     </style>

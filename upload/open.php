@@ -863,9 +863,25 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
             padding: 0 20px;
         }
 
+        @keyframes fadeInUpProfessional {
+            0% { opacity: 0; transform: translateY(22px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes fadeInHeader {
+            0%  { opacity: 0; transform: translateY(-10px); }
+            100%{ opacity: 1; transform: translateY(0); }
+        }
         .shell {
             max-width: 980px;
             margin: 0 auto;
+        }
+        /* Staggered page entry animations */
+        .page-header {
+            animation: fadeInHeader 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .form-card {
+            animation: fadeInUpProfessional 0.45s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+            opacity: 0;
         }
 
         .panel-soft {
@@ -1024,6 +1040,77 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         .notif-item { border: 1px solid rgba(226,232,240,0.95); background: #fff; transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
         .notif-item:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(15, 23, 42, 0.10); background: #f1f5f9; }
         .notif-item + .notif-item { margin-top: 10px; }
+
+        /* ── Submit Loading Overlay ── */
+        #open-loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(11, 18, 32, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+        #open-loading-overlay.active {
+            display: flex;
+            animation: overlayFadeIn 0.25s ease both;
+        }
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        #open-loading-overlay .box {
+            background: rgba(255,255,255,0.96);
+            border-radius: 24px;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.28);
+            padding: 40px 48px;
+            text-align: center;
+            min-width: 280px;
+            max-width: 90vw;
+            animation: boxPop 0.35s 0.1s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes boxPop {
+            0%  { opacity:0; transform: scale(0.88) translateY(16px); }
+            100%{ opacity:1; transform: scale(1) translateY(0); }
+        }
+        #open-loading-overlay .icon-ring {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            box-shadow: 0 8px 24px rgba(37,99,235,0.35);
+            animation: pulseSoft 1.6s ease-in-out infinite;
+        }
+        @keyframes pulseSoft {
+            0%,100%{ box-shadow: 0 8px 24px rgba(37,99,235,0.35); }
+            50%    { box-shadow: 0 8px 36px rgba(37,99,235,0.55); }
+        }
+        #open-loading-overlay .box h5 {
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+        #open-loading-overlay .box p {
+            color: #64748b;
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+        }
+        #open-loading-overlay .progress {
+            height: 6px;
+            border-radius: 99px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+        #open-loading-overlay .progress-bar {
+            background: linear-gradient(90deg, #2563eb, #0ea5e9);
+        }
     </style>
 </head>
 <body>
@@ -1666,14 +1753,14 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         (function(){
             function showLoading(){
                 var overlay = document.getElementById('open-loading-overlay');
-                if (overlay) overlay.style.display = 'flex';
+                if (overlay) overlay.classList.add('active');
                 var btn = document.getElementById('open-ticket-submit');
                 if (btn) btn.disabled = true;
             }
 
             function hideLoading(){
                 var overlay = document.getElementById('open-loading-overlay');
-                if (overlay) overlay.style.display = 'none';
+                if (overlay) overlay.classList.remove('active');
                 var btn = document.getElementById('open-ticket-submit');
                 if (btn) btn.disabled = false;
             }
@@ -1684,7 +1771,14 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
 
                 form.addEventListener('submit', function(ev){
                     if (ev.defaultPrevented) return;
+                    // Si ya está en proceso de envío real, dejarlo pasar
+                    if (form.dataset.submitting === '1') return;
+                    ev.preventDefault();
                     showLoading();
+                    setTimeout(function(){
+                        form.dataset.submitting = '1';
+                        form.submit();
+                    }, 1000);
                 });
 
                 window.addEventListener('pageshow', function(ev){
