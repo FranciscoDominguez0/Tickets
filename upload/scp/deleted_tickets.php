@@ -19,6 +19,17 @@ $eid = empresaId();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 $id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
 
+// --- PAGINACIÓN ---
+$limit = 10;
+$page = isset($_GET['p']) && is_numeric($_GET['p']) ? (int)$_GET['p'] : 1;
+if ($page < 1) $page = 1;
+$offset = ($page - 1) * $limit;
+
+// Contar total para paginación
+$totalRes = $mysqli->query("SELECT COUNT(*) as c FROM ticket_deletion_requests WHERE empresa_id = $eid");
+$totalCount = $totalRes ? (int)($totalRes->fetch_assoc()['c'] ?? 0) : 0;
+$totalPages = ceil($totalCount / $limit);
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
     if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
         $_SESSION['flash_error'] = 'Token de seguridad inválido.';
@@ -56,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $id > 0) {
             }
         }
     }
-    header('Location: deleted_tickets.php');
+    header('Location: deleted_tickets.php?p=' . $page);
     exit;
 }
 
@@ -65,7 +76,8 @@ $sql = "SELECT r.*, CONCAT(s.firstname, ' ', s.lastname) as requester_name, CONC
         LEFT JOIN staff s ON r.requested_by = s.id 
         LEFT JOIN staff v ON r.resolved_by = v.id 
         WHERE r.empresa_id = $eid 
-        ORDER BY r.created_at DESC";
+        ORDER BY r.created_at DESC
+        LIMIT $limit OFFSET $offset";
 $res = $mysqli->query($sql);
 
 ob_start();
@@ -86,20 +98,20 @@ ob_start();
     <div class="card-header bg-white py-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center">
             <strong><i class="bi bi-list-ul me-2"></i>Registros de eliminación</strong>
-            <span class="badge bg-light text-dark"><?php echo $res->num_rows; ?> entradas</span>
+            <span class="badge bg-light text-dark" style="font-weight: 700; border: 1px solid #e2e8f0;"><?php echo $totalCount; ?> entradas</span>
         </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead class="table-light" style="background: #f8fafc;">
                     <tr>
-                        <th class="ps-4">Ticket</th>
-                        <th>Solicitado por</th>
-                        <th>Motivo</th>
-                        <th>Estado</th>
-                        <th>Resolución</th>
-                        <th class="pe-4 text-end">Acciones</th>
+                        <th class="ps-4" style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Ticket</th>
+                        <th style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Solicitado por</th>
+                        <th style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Motivo</th>
+                        <th style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Estado</th>
+                        <th style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Resolución</th>
+                        <th class="pe-4 text-end" style="font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -107,63 +119,90 @@ ob_start();
                         <?php while ($r = $res->fetch_assoc()): ?>
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold text-primary">#<?php echo html($r['ticket_number']); ?></div>
-                                    <div class="small text-muted text-truncate" style="max-width: 200px;"><?php echo html($r['ticket_subject']); ?></div>
+                                    <div class="fw-bold" style="color: #2563eb;">#<?php echo html($r['ticket_number']); ?></div>
+                                    <div class="small text-muted text-truncate" style="max-width: 180px; font-weight: 600;"><?php echo html($r['ticket_subject']); ?></div>
                                     <div class="x-small text-muted"><?php echo formatDate($r['created_at']); ?></div>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="avatar-circle-sm"><?php echo strtoupper(substr($r['requester_name'] ?? '?', 0, 1)); ?></div>
-                                        <span class="small fw-semibold"><?php echo html($r['requester_name']); ?></span>
+                                        <span class="small fw-bold" style="color: #334155;"><?php echo html($r['requester_name']); ?></span>
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="small text-wrap" style="max-width: 250px;"><?php echo html($r['reason']); ?></div>
+                                    <div class="small text-wrap" style="max-width: 220px; font-weight: 500; color: #475569;"><?php echo html($r['reason']); ?></div>
                                 </td>
                                 <td>
                                     <?php 
                                     $s = $r['status'];
-                                    if ($s === 'pending') echo '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pendiente</span>';
-                                    elseif ($s === 'approved') echo '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aprobado</span>';
-                                    else echo '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Rechazado</span>';
+                                    if ($s === 'pending') echo '<span class="badge" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-weight: 700;"><i class="bi bi-clock me-1"></i>Pendiente</span>';
+                                    elseif ($s === 'approved') echo '<span class="badge" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 700;"><i class="bi bi-check-circle me-1"></i>Aprobado</span>';
+                                    else echo '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-weight: 700;"><i class="bi bi-x-circle me-1"></i>Rechazado</span>';
                                     ?>
                                 </td>
                                 <td>
                                     <?php if ($r['resolved_at']): ?>
                                         <div class="small">
-                                            <div class="fw-bold"><?php echo html($r['resolver_name'] ?: 'Admin'); ?></div>
-                                            <div class="text-muted"><?php echo formatDate($r['resolved_at']); ?></div>
+                                            <div class="fw-bold" style="color: #334155;"><?php echo html($r['resolver_name'] ?: 'Admin'); ?></div>
+                                            <div class="text-muted x-small"><?php echo formatDate($r['resolved_at']); ?></div>
                                         </div>
                                     <?php else: ?>
                                         <span class="text-muted small">---</span>
                                     <?php endif; ?>
-                                                                <td class="pe-4 text-end">
+                                </td>
+                                <td class="pe-4 text-end">
                                     <?php if ($s === 'pending'): ?>
                                         <div class="btn-group btn-group-sm shadow-sm">
                                             <button type="button" class="btn btn-success" 
                                                     onclick="openResolveModal('approve_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')"
-                                                    title="Aprobar borrado">
+                                                    title="Aprobar borrado" style="background: #059669; border: none;">
                                                 <i class="bi bi-check-lg"></i>
                                             </button>
                                             <button type="button" class="btn btn-outline-danger" 
                                                     onclick="openResolveModal('reject_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')"
-                                                    title="Rechazar solicitud">
+                                                    title="Rechazar solicitud" style="border-color: #e2e8f0; color: #dc2626;">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </div>
                                     <?php else: ?>
-                                        <i class="bi bi-check2-all text-muted"></i>
+                                        <i class="bi bi-check2-all text-muted opacity-50"></i>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="6" class="text-center py-5 text-muted">No hay solicitudes registradas.</td></tr>
+                        <tr><td colspan="6" class="text-center py-5 text-muted fw-semibold">No hay solicitudes registradas.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
+    <?php if ($totalPages > 1): ?>
+    <div class="card-footer bg-white py-3 border-top" style="border-top: 1px solid #f1f5f9 !important;">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
+                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page - 1; ?>" style="background: #f8fafc; color: #64748b;">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                        <a class="page-link border-0 rounded-3 fw-bold" href="?p=<?php echo $i; ?>" 
+                           style="<?php echo ($i == $page) ? 'background: #2563eb; color: white;' : 'background: #f8fafc; color: #64748b;'; ?>">
+                            <?php echo $i; ?>
+                        </a>
+                    </li>
+                <?php endfor; ?>
+                <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
+                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page + 1; ?>" style="background: #f8fafc; color: #64748b;">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <?php endif; ?>
 </div>
 
 <!-- Modal de Resolución (Estilo Corporativo Premium) -->
