@@ -510,7 +510,9 @@ function viewTicketThread(id, ticketNum) {
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
     }
     .table tbody td {
+        display: block;
         border: none !important;
+        padding: 0 !important;
     }
 }
 </style>

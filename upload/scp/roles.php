@@ -395,17 +395,70 @@ ob_start();
                                         $agentsActive = (int)($r['agents_active'] ?? 0);
                                         ?>
                                         <tr>
-                                            <td><input type="checkbox" name="ids[]" value="<?php echo $rid; ?>" class="form-check-input role-checkbox"></td>
-                                            <td class="fw-semibold">
+                                            <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                            <td class="d-md-none p-0">
+                                                <div style="padding: 16px; background: #ffffff; position: relative;">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <input type="checkbox" name="ids[]" value="<?php echo $rid; ?>" class="form-check-input role-checkbox m-0 shadow-sm" style="width: 1.25rem; height: 1.25rem;">
+                                                            <?php if ($enabled): ?>
+                                                            <span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
+                                                            <?php else: ?>
+                                                            <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <a href="role_permissions.php?role=<?php echo urlencode($name); ?>" class="btn btn-sm btn-light border-0" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;" title="Permisos">
+                                                            <i class="bi bi-chevron-right text-secondary"></i>
+                                                        </a>
+                                                    </div>
+
+                                                    <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.2;">
+                                                        <a class="text-decoration-none" href="role_permissions.php?role=<?php echo urlencode($name); ?>" style="color: inherit;">
+                                                            <?php echo html($name); ?>
+                                                        </a>
+                                                    </div>
+                                                    
+                                                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 12px;">
+                                                        <i class="bi bi-calendar3 me-1 text-muted"></i> Creado: <?php echo date('d M Y', strtotime($created)); ?>
+                                                    </div>
+
+                                                    <div class="row g-2 mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                        <div class="col-6">
+                                                            <div style="background: #f8fafc; border-radius: 8px; padding: 8px 12px;">
+                                                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                                    Total Agentes
+                                                                </div>
+                                                                <div style="font-size: 1rem; color: #0f172a; font-weight: 800;">
+                                                                    <?php echo (int)$agentsCount; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div style="background: #f8fafc; border-radius: 8px; padding: 8px 12px;">
+                                                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                                    Agentes Activos
+                                                                </div>
+                                                                <div style="font-size: 1rem; color: #16a34a; font-weight: 800;">
+                                                                    <?php echo (int)$agentsActive; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <!-- VISTA ESCRITORIO -->
+                                            <td class="d-none d-md-table-cell"><input type="checkbox" name="ids[]" value="<?php echo $rid; ?>" class="form-check-input role-checkbox"></td>
+                                            <td class="fw-semibold d-none d-md-table-cell">
                                                 <a class="text-decoration-none" href="role_permissions.php?role=<?php echo urlencode($name); ?>" title="Permisos">
                                                     <?php echo html($name); ?>
                                                 </a>
                                             </td>
-                                            <td><?php if ($enabled): ?><span class="badge bg-success">Activo</span><?php else: ?><span class="badge bg-secondary">Inactivo</span><?php endif; ?></td>
-                                            <td><?php echo html(formatDate($created)); ?></td>
-                                            <td><?php echo html(formatDate($updated)); ?></td>
-                                            <td class="text-center"><?php echo (int)$agentsCount; ?></td>
-                                            <td class="text-center"><?php echo (int)$agentsActive; ?></td>
+                                            <td class="d-none d-md-table-cell"><?php if ($enabled): ?><span class="badge bg-success">Activo</span><?php else: ?><span class="badge bg-secondary">Inactivo</span><?php endif; ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html(formatDate($created)); ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html(formatDate($updated)); ?></td>
+                                            <td class="text-center d-none d-md-table-cell"><?php echo (int)$agentsCount; ?></td>
+                                            <td class="text-center d-none d-md-table-cell"><?php echo (int)$agentsActive; ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -442,75 +495,28 @@ ob_start();
 </div>
 
 <style>
+/* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
-    #rolesMassForm .table-responsive { border: none; }
-    #rolesMassForm .table thead { display: none; }
+    #rolesMassForm .table-responsive { border: none !important; overflow: visible !important; }
+    #rolesMassForm .table { background: transparent !important; }
+    #rolesMassForm .table thead { display: none !important; }
     #rolesMassForm .table tbody tr {
-        display: block;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        margin-bottom: 12px;
-        padding: 14px 16px;
-        background: #fff;
-        position: relative;
+        display: block !important;
+        margin-bottom: 1rem !important;
+        background: #fff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        overflow: hidden !important;
     }
-    #rolesMassForm .table tbody td {
-        display: block;
-        padding: 4px 0;
-        border: none;
-        text-align: left !important;
+    #rolesMassForm .table tbody td.d-md-none {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
     }
-    /* Checkbox */
-    #rolesMassForm .table tbody td:nth-child(1) {
-        position: absolute; top: 18px; left: 16px; padding: 0;
-    }
-    /* Nombre y enlace */
-    #rolesMassForm .table tbody td:nth-child(2) {
-        padding-left: 32px; padding-right: 80px;
-    }
-    #rolesMassForm .table tbody td:nth-child(2) a {
-        font-size: 16px; color: #0f172a; font-weight: 800; display: block;
-    }
-    /* Estado (Badge) */
-    #rolesMassForm .table tbody td:nth-child(3) {
-        position: absolute; top: 15px; right: 16px; padding: 0;
-    }
-    /* Creado en */
-    #rolesMassForm .table tbody td:nth-child(4) {
-        font-size: 13px; padding-left: 32px; color: #64748b; margin-top: 2px;
-    }
-    #rolesMassForm .table tbody td:nth-child(4)::before {
-        content: "Creado: "; font-weight: 600;
-    }
-    /* Última actualización */
-    #rolesMassForm .table tbody td:nth-child(5) {
-        display: none;
-    }
-    
-    /* Sección métricas dividida: Agentes y Activos */
-    #rolesMassForm .table tbody td:nth-child(6),
-    #rolesMassForm .table tbody td:nth-child(7) {
-        border-top: 1px dashed #e2e8f0;
-        margin-top: 14px; 
-        padding-top: 12px; 
-        padding-bottom: 0;
-        font-size: 15px; 
-        font-weight: 700;
-        color: #0f172a; 
-        display: inline-block; 
-        width: 48%; 
-        box-sizing: border-box;
-    }
-    #rolesMassForm .table tbody td:nth-child(6)::before {
-        content: "Total Agentes"; color: #64748b; font-weight: 700;
-        display: block; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    #rolesMassForm .table tbody td:nth-child(7)::before {
-        content: "Activos"; color: #64748b; font-weight: 700;
-        display: block; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    #rolesMassForm .table tbody tr::after {
-        content: ""; display: table; clear: both;
+    #rolesMassForm .table tbody td.d-none {
+        display: none !important;
     }
 }
 </style>

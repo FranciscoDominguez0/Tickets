@@ -509,8 +509,63 @@ ob_start();
                                 <?php else: ?>
                                     <?php foreach ($emails as $e): ?>
                                         <tr>
-                                            <td><input type="checkbox" name="ids[]" value="<?php echo (int)$e['id']; ?>" class="form-check-input email-checkbox"></td>
-                                            <td>
+                                            <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                            <td class="d-md-none p-0">
+                                                <div style="padding: 16px; background: #ffffff; position: relative;">
+                                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <input type="checkbox" name="ids[]" value="<?php echo (int)$e['id']; ?>" class="form-check-input email-checkbox m-0 shadow-sm" style="width: 1.25rem; height: 1.25rem;">
+                                                            <?php if ((int)$e['is_default'] === 1): ?>
+                                                            <span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-star-fill me-1"></i>Por defecto</span>
+                                                            <?php else: ?>
+                                                            <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;">Opcional</span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+
+                                                    <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.2;">
+                                                        <a href="email.php?id=<?php echo (int)$e['id']; ?>" class="text-decoration-none" style="color: inherit;">
+                                                            <?php echo html((string)$e['name'] ?: 'Sin nombre'); ?>
+                                                        </a>
+                                                    </div>
+                                                    <div style="font-size: 0.85rem; color: #475569; margin-bottom: 14px; font-weight: 500;">
+                                                        <?php echo html((string)$e['email']); ?>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <div style="font-size: 0.8rem; color: #334155; font-weight: 600;">
+                                                            <i class="bi bi-bar-chart-steps me-1 text-muted"></i> Prioridad: <span class="fw-bold"><?php echo html((string)($e['priority'] ?: 'Normal')); ?></span>
+                                                        </div>
+                                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                                            <i class="bi bi-clock me-1 text-muted"></i> <?php echo date('d M, Y', strtotime($e['updated'] ?? $e['created'] ?? null)); ?>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between align-items-center mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                        <div class="d-flex align-items-center">
+                                                            <div style="font-size: 0.75rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px;">
+                                                                Dpto:
+                                                            </div>
+                                                            <?php if ($e['dept_name']): ?>
+                                                            <span style="background: rgba(37,99,235,0.08); color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
+                                                                <i class="bi bi-building me-1"></i><?php echo html((string)$e['dept_name']); ?>
+                                                            </span>
+                                                            <?php else: ?>
+                                                            <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
+                                                                Global
+                                                            </span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <a href="email.php?id=<?php echo (int)$e['id']; ?>" class="btn btn-sm" style="color: #2563eb; background: rgba(37,99,235,0.08); border-radius: 8px; font-weight: 800; font-size: 0.75rem; padding: 4px 12px;">
+                                                            Editar <i class="bi bi-chevron-right ms-1"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <!-- VISTA ESCRITORIO -->
+                                            <td class="d-none d-md-table-cell"><input type="checkbox" name="ids[]" value="<?php echo (int)$e['id']; ?>" class="form-check-input email-checkbox"></td>
+                                            <td class="d-none d-md-table-cell">
                                                 <a href="email.php?id=<?php echo (int)$e['id']; ?>" class="fw-semibold text-decoration-none">
                                                     <?php echo html((string)$e['name'] ?: (string)$e['email']); ?>
                                                     &lt;<?php echo html((string)$e['email']); ?>&gt;
@@ -519,10 +574,10 @@ ob_start();
                                                     <span class="badge bg-success ms-2">Por defecto</span>
                                                 <?php endif; ?>
                                             </td>
-                                            <td><?php echo html((string)($e['priority'] ?: 'Normal')); ?></td>
-                                            <td><?php echo html((string)($e['dept_name'] ?: '')); ?></td>
-                                            <td><?php echo html(formatDate($e['created'] ?? null)); ?></td>
-                                            <td><?php echo html(formatDate($e['updated'] ?? null)); ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html((string)($e['priority'] ?: 'Normal')); ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html((string)($e['dept_name'] ?: '')); ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html(formatDate($e['created'] ?? null)); ?></td>
+                                            <td class="d-none d-md-table-cell"><?php echo html(formatDate($e['updated'] ?? null)); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -708,6 +763,35 @@ window.addEventListener('DOMContentLoaded', function(){
     }
 });
 </script>
+
+<style>
+/* Responsive Table -> Cards for Mobile */
+@media (max-width: 768px) {
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card .table-responsive { border: none !important; overflow: visible !important; }
+    .settings-card .table { background: transparent !important; }
+    .settings-card .table thead { display: none !important; }
+    .settings-card .table tbody tr {
+        display: block !important;
+        margin-bottom: 1rem !important;
+        background: #fff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        overflow: hidden !important;
+    }
+    .settings-card .table tbody td.d-md-none {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+    .settings-card .table tbody td.d-none {
+        display: none !important;
+    }
+}
+</style>
 
 <?php
 $content = ob_get_clean();

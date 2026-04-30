@@ -743,42 +743,135 @@ ob_start();
                         $last = $a['last_login'] ?? null;
                         ?>
                         <tr>
-                            <td>
+                            <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                            <td class="d-md-none p-0">
+                                <div style="padding: 16px; background: #ffffff; position: relative;">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <?php if ($active): ?>
+                                            <span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
+                                            <?php else: ?>
+                                            <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($currentStaffRole === 'admin'): ?>
+                                        <div class="dropdown">
+                                            <button type="button" class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                                                <i class="bi bi-three-dots-vertical text-secondary"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border: 1px solid #e2e8f0; border-top-right-radius: 0;">
+                                                <li>
+                                                    <a class="dropdown-item py-2 fw-semibold agent-edit-btn" href="#"
+                                                        data-id="<?php echo (int)$a['id']; ?>"
+                                                        data-firstname="<?php echo htmlspecialchars((string)($a['firstname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-lastname="<?php echo htmlspecialchars((string)($a['lastname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-email="<?php echo htmlspecialchars((string)($a['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-username="<?php echo htmlspecialchars((string)($a['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-role="<?php echo htmlspecialchars((string)($a['role'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-dept-ids="<?php echo htmlspecialchars((string)($a['dept_ids'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-is-active="<?php echo $active ? '1' : '0'; ?>"
+                                                        data-bs-toggle="modal" data-bs-target="#agentEditModal">
+                                                        <i class="bi bi-pencil me-2 text-primary"></i> Editar Agente
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <form method="post" action="staff.php" class="d-inline w-100 m-0 p-0">
+                                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                                        <input type="hidden" name="do" value="send_reset">
+                                                        <input type="hidden" name="id" value="<?php echo (int)$a['id']; ?>">
+                                                        <button type="submit" class="dropdown-item py-2 fw-semibold">
+                                                            <i class="bi bi-envelope me-2 text-info"></i> Enviar reseteo
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item py-2 text-danger fw-bold agent-delete-btn" href="#"
+                                                        data-id="<?php echo (int)$a['id']; ?>"
+                                                        data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-bs-toggle="modal" data-bs-target="#agentDeleteModal">
+                                                        <i class="bi bi-trash me-2"></i> Eliminar
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; line-height: 1.2;">
+                                        <?php echo html($name); ?>
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600;">
+                                        @<?php echo html((string)($a['username'] ?? '')); ?>
+                                    </div>
+                                    
+                                    <div style="font-size: 0.9rem; color: #475569; margin-bottom: 12px; font-weight: 500;">
+                                        <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>"><?php echo html((string)($a['email'] ?? '')); ?></a>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div style="font-size: 0.8rem; color: #334155; font-weight: 600;">
+                                            <i class="bi bi-shield-lock me-1 text-muted"></i> Rol: <span class="fw-bold text-primary"><?php echo html($role ?: '—'); ?></span>
+                                        </div>
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+                                            <i class="bi bi-clock-history me-1 text-muted"></i> <?php echo $last ? date('d M, Y', strtotime($last)) : 'Nunca'; ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px;">
+                                            Dpto:
+                                        </div>
+                                        <?php if ($dept !== ''): ?>
+                                        <span style="background: rgba(37,99,235,0.08); color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
+                                            <i class="bi bi-building me-1"></i><?php echo html($dept); ?>
+                                        </span>
+                                        <?php else: ?>
+                                        <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
+                                            Sin asignar
+                                        </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- VISTA ESCRITORIO -->
+                            <td class="d-none d-md-table-cell">
                                 <strong><?php echo html($name); ?></strong><br>
                                 <small class="text-muted">@<?php echo html((string)($a['username'] ?? '')); ?></small>
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>"><?php echo html((string)($a['email'] ?? '')); ?></a>
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <?php if ($dept !== ''): ?>
                                     <span class="badge bg-secondary"><?php echo html($dept); ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">Sin asignar</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <?php if ($role !== ''): ?>
                                     <span class="badge bg-info text-dark"><?php echo html($role); ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center">
+                            <td class="text-center d-none d-md-table-cell">
                                 <?php if ($active): ?>
                                     <span class="badge bg-success">Activo</span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Inactivo</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="d-none d-md-table-cell">
                                 <?php if ($last): ?>
                                     <?php echo html(formatDate($last)); ?>
                                 <?php else: ?>
                                     <span class="text-muted">Nunca</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end d-none d-md-table-cell">
                                 <?php if ($currentStaffRole === 'admin'): ?>
                                     <button type="button" class="btn btn-sm btn-outline-primary agent-edit-btn"
                                         data-id="<?php echo (int)$a['id']; ?>"
@@ -822,66 +915,30 @@ ob_start();
 </div>
 
 <style>
+/* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
-    .settings-card .table-responsive { border: none; }
-    .settings-card .table thead { display: none; }
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card .table-responsive { border: none !important; overflow: visible !important; }
+    .settings-card .table { background: transparent !important; }
+    .settings-card .table thead { display: none !important; }
     .settings-card .table tbody tr {
-        display: block;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        padding: 12px 14px;
-        background: #fff;
-        position: relative;
+        display: block !important;
+        margin-bottom: 1rem !important;
+        background: #fff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        overflow: hidden !important;
     }
-    .settings-card .table tbody td {
-        display: block;
-        padding: 0;
-        border: none;
-        text-align: left !important;
+    .settings-card .table tbody td.d-md-none {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
     }
-    /* 1: Nombre */
-    .settings-card .table tbody td:nth-child(1) {
-        padding-right: 60px;
-        margin-bottom: 2px;
-        line-height: 1.2;
-    }
-    .settings-card .table tbody td:nth-child(1) strong {
-        font-size: 15px; font-weight: 700; color: #0f172a; display: inline-block;
-    }
-    .settings-card .table tbody td:nth-child(1) .text-muted {
-        font-size: 12px; margin-left: 4px; display: inline-block;
-    }
-    /* 2: Email */
-    .settings-card .table tbody td:nth-child(2) {
-        font-size: 13px; margin-bottom: 6px;
-    }
-    /* 3 & 4: Badges (Dept + Rol) - Inline */
-    .settings-card .table tbody td:nth-child(3),
-    .settings-card .table tbody td:nth-child(4) {
-        display: inline-block;
-        margin-right: 6px;
-        margin-bottom: 8px;
-    }
-    /* 5: Estado (Top Right Absolute) */
-    .settings-card .table tbody td:nth-child(5) {
-        position: absolute; top: 12px; right: 14px;
-    }
-    /* 6: Acceso */
-    .settings-card .table tbody td:nth-child(6) {
-        font-size: 11px; color: #64748b; margin-bottom: 8px;
-    }
-    .settings-card .table tbody td:nth-child(6)::before {
-        content: "Acceso: ";
-    }
-    /* 7: Acciones */
-    .settings-card .table tbody td:nth-child(7) {
-        border-top: 1px solid #f1f5f9;
-        padding-top: 8px;
-        text-align: right !important;
-    }
-    .settings-card .table tbody td:nth-child(7) form {
-        display: inline-block;
+    .settings-card .table tbody td.d-none {
+        display: none !important;
     }
 }
 </style>

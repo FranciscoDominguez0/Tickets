@@ -402,30 +402,103 @@ ob_start();
                             <tbody>
                                 <?php foreach ($topics as $topic): ?>
                                 <tr>
-                                    <td>
+                                    <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                    <td class="d-md-none p-0">
+                                        <div style="padding: 16px; background: #ffffff; position: relative;">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <input type="checkbox" name="ids[]" value="<?php echo $topic['id']; ?>" class="form-check-input topic-checkbox m-0 shadow-sm" style="width: 1.25rem; height: 1.25rem;">
+                                                    <?php if ($topic['is_active']): ?>
+                                                    <span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
+                                                    <?php else: ?>
+                                                    <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="dropdown">
+                                                    <button type="button" class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
+                                                        <i class="bi bi-three-dots-vertical text-secondary"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-radius: 12px; border: 1px solid #e2e8f0; border-top-right-radius: 0;">
+                                                        <li>
+                                                            <a class="dropdown-item py-2 fw-semibold" href="helptopics.php?id=<?php echo $topic['id']; ?>">
+                                                                <i class="bi bi-pencil me-2 text-primary"></i> Editar Tema
+                                                            </a>
+                                                        </li>
+                                                        <?php if ($topic['is_active']): ?>
+                                                        <li>
+                                                            <a class="dropdown-item py-2 fw-semibold" href="#" onclick="massAction('disable', [<?php echo $topic['id']; ?>])">
+                                                                <i class="bi bi-pause-circle me-2 text-warning"></i> Deshabilitar
+                                                            </a>
+                                                        </li>
+                                                        <?php else: ?>
+                                                        <li>
+                                                            <a class="dropdown-item py-2 fw-semibold" href="#" onclick="massAction('enable', [<?php echo $topic['id']; ?>])">
+                                                                <i class="bi bi-play-circle me-2 text-success"></i> Habilitar
+                                                            </a>
+                                                        </li>
+                                                        <?php endif; ?>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <a class="dropdown-item py-2 text-danger fw-bold js-delete-topic" href="javascript:void(0)" data-id="<?php echo $topic['id']; ?>" data-name="<?php echo htmlspecialchars($topic['name']); ?>">
+                                                                <i class="bi bi-trash me-2"></i> Eliminar
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; line-height: 1.3;">
+                                                <?php echo html($topic['name']); ?>
+                                            </div>
+                                            
+                                            <?php if ($topic['description']): ?>
+                                            <div style="font-size: 0.85rem; color: #475569; margin-bottom: 12px; line-height: 1.4;">
+                                                <?php echo html(substr($topic['description'], 0, 100)) . (strlen($topic['description']) > 100 ? '...' : ''); ?>
+                                            </div>
+                                            <?php endif; ?>
+
+                                            <div class="d-flex align-items-center mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                <div style="font-size: 0.75rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px;">
+                                                    Dpto:
+                                                </div>
+                                                <?php if ($topic['dept_name']): ?>
+                                                <span style="background: rgba(37,99,235,0.08); color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem;">
+                                                    <i class="bi bi-building me-1"></i><?php echo html($topic['dept_name']); ?>
+                                                </span>
+                                                <?php else: ?>
+                                                <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.75rem;">
+                                                    Sin asignar
+                                                </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- VISTA ESCRITORIO -->
+                                    <td class="d-none d-md-table-cell">
                                         <input type="checkbox" name="ids[]" value="<?php echo $topic['id']; ?>" class="form-check-input topic-checkbox">
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         <div class="fw-semibold"><?php echo html($topic['name']); ?></div>
                                         <?php if ($topic['description']): ?>
                                         <div class="text-muted small"><?php echo html(substr($topic['description'], 0, 80)) . '...'; ?></div>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         <?php if ($topic['dept_name']): ?>
                                         <span class="badge bg-light text-dark"><?php echo html($topic['dept_name']); ?></span>
                                         <?php else: ?>
                                         <span class="text-muted">Sin asignar</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         <?php if ($topic['is_active']): ?>
                                         <span class="badge bg-success">Activo</span>
                                         <?php else: ?>
                                         <span class="badge bg-secondary">Inactivo</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td class="d-none d-md-table-cell">
                                         <div class="btn-group btn-group-sm" role="group">
                                             <a href="helptopics.php?id=<?php echo $topic['id']; ?>" 
                                                class="btn btn-outline-primary" title="Editar">
@@ -436,7 +509,7 @@ ob_start();
                                                         data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="bi bi-three-dots"></i>
                                                 </button>
-                                                <ul class="dropdown-menu">
+                                                <ul class="dropdown-menu dropdown-menu-end">
                                                     <?php if ($topic['is_active']): ?>
                                                     <li>
                                                         <a class="dropdown-item" href="#" onclick="massAction('disable', [<?php echo $topic['id']; ?>])">
@@ -685,6 +758,36 @@ ob_start();
 </div>
 
 <script src="js/helptopics_page.js?v=<?php echo (int)@filemtime(__DIR__ . '/js/helptopics_page.js'); ?>"></script>
+
+<style>
+/* Responsive Table -> Cards for Mobile */
+@media (max-width: 768px) {
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card .table-responsive { border: none !important; overflow: visible !important; }
+    .settings-card .table { background: transparent !important; }
+    .settings-card .table thead { display: none !important; }
+    .settings-card .table tbody tr {
+        display: block !important;
+        margin-bottom: 1rem !important;
+        background: #fff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        overflow: hidden !important;
+    }
+    .settings-card .table tbody td.d-md-none {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+    .settings-card .table tbody td.d-none {
+        display: none !important;
+    }
+    .border-top.p-3.bg-light { border-radius: 12px; margin-top: 1rem; }
+}
+</style>
 
 <?php
 $content = ob_get_clean();

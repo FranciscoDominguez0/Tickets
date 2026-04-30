@@ -286,17 +286,54 @@ ob_start();
                             $popBodyB64 = base64_encode($popoverBody);
                             ?>
                             <tr>
-                                <td class="text-center"><input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>"></td>
-                                <td>
+                                <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                <td class="d-md-none p-0">
+                                    <div style="padding: 14px; background: #ffffff; position: relative;">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input class="form-check-input row-check m-0 shadow-sm" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                                                <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    <?php echo date('d M Y, H:i', strtotime($r['created'])); ?>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <?php 
+                                                if ($lvl === 'Error') echo '<span style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fecaca;"><i class="bi bi-x-octagon me-1"></i>Error</span>';
+                                                elseif ($lvl === 'Warning') echo '<span style="background: #fffbeb; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fde68a;"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
+                                                else echo '<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-info-circle me-1"></i>Info</span>';
+                                                ?>
+                                            </div>
+                                        </div>
+
+                                        <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; line-height: 1.4;">
+                                            <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: inherit;">
+                                                <?php echo html($title); ?>
+                                            </a>
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-between mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                            <div style="font-size: 0.75rem; color: #475569; font-family: monospace; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                                                <i class="bi bi-hdd-network me-1"></i><?php echo html($r['ip_address'] ?: '-'); ?>
+                                            </div>
+                                            <a href="#" class="log-pop btn btn-sm" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: #2563eb; background: rgba(37,99,235,0.08); border-radius: 8px; font-weight: 800; font-size: 0.75rem; padding: 4px 12px; transition: background 0.2s;">
+                                                Detalles <i class="bi bi-chevron-right ms-1"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- VISTA ESCRITORIO -->
+                                <td class="text-center d-none d-md-table-cell"><input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>"></td>
+                                <td class="d-none d-md-table-cell">
                                     <a href="#" class="log-pop" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="text-decoration:none; display:block;">
                                         <div class="text-truncate" style="max-width: 720px;" title="<?php echo html($title); ?>">
                                             <?php echo html($title); ?>
                                         </div>
                                     </a>
                                 </td>
-                                <td class="<?php echo $lvlClass; ?>"><?php echo html($lvl); ?></td>
-                                <td style="white-space:nowrap;"><?php echo html(formatDate($r['created'])); ?></td>
-                                <td style="white-space:nowrap;"><code><?php echo html($r['ip_address'] ?: '-'); ?></code></td>
+                                <td class="<?php echo $lvlClass; ?> d-none d-md-table-cell"><?php echo html($lvl); ?></td>
+                                <td style="white-space:nowrap;" class="d-none d-md-table-cell"><?php echo html(formatDate($r['created'])); ?></td>
+                                <td style="white-space:nowrap;" class="d-none d-md-table-cell"><code><?php echo html($r['ip_address'] ?: '-'); ?></code></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -377,7 +414,33 @@ ob_start();
         }
     });
 })();
+})();
 </script>
+
+<style>
+/* Responsive Table -> Cards for Mobile */
+@media (max-width: 768px) {
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card .table-responsive { border: none !important; overflow: visible; }
+    .settings-card .table { background: transparent; }
+    .settings-card .table thead { display: none; }
+    .settings-card .table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+    .settings-card .table tbody td {
+        display: block;
+        border: none !important;
+        padding: 0 !important;
+    }
+}
+</style>
 
 <?php
 $content = ob_get_clean();

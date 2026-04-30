@@ -213,19 +213,70 @@ ob_start();
                                 <?php endif; ?>
                                 <?php foreach ($agents as $a): ?>
                                     <tr>
-                                        <td>
+                                        <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                        <td class="d-md-none p-0">
+                                            <div style="padding: 16px; background: #ffffff;">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
+                                                            <?php echo strtoupper(substr($a['name'] !== '' ? $a['name'] : 'U', 0, 1)); ?>
+                                                        </div>
+                                                        <div style="line-height: 1.2;">
+                                                            <div style="font-weight: 800; color: #0f172a; font-size: 1.05rem;">
+                                                                <?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?>
+                                                            </div>
+                                                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">
+                                                                <?php echo html($a['email']); ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <?php if (($a['role'] ?? '') !== ''): ?>
+                                                        <span style="background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                            <?php echo html((string)$a['role']); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+
+                                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+                                                    <div style="color: #64748b; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;">
+                                                        Avisos por Correo
+                                                    </div>
+                                                    
+                                                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px dashed #cbd5e1;">
+                                                        <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
+                                                            <i class="bi bi-ticket-detailed me-2" style="color: #2563eb;"></i>Nuevos Tickets
+                                                        </div>
+                                                        <div class="form-check form-switch m-0" style="padding-left: 0;">
+                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
+                                                            <i class="bi bi-list-check me-2" style="color: #10b981;"></i>Nuevas Tareas
+                                                        </div>
+                                                        <div class="form-check form-switch m-0" style="padding-left: 0;">
+                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- VISTA ESCRITORIO -->
+                                        <td class="d-none d-md-table-cell">
                                             <strong><?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?></strong>
                                             <?php if (($a['role'] ?? '') !== ''): ?>
                                                 <div class="text-muted small"><?php echo html((string)$a['role']); ?></div>
                                             <?php endif; ?>
                                         </td>
-                                        <td><?php echo html($a['email']); ?></td>
-                                        <td>
+                                        <td class="d-none d-md-table-cell"><?php echo html($a['email']); ?></td>
+                                        <td class="d-none d-md-table-cell">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?>>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td class="d-none d-md-table-cell">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?>>
                                             </div>
@@ -246,75 +297,25 @@ ob_start();
 </div>
 
 <style>
+/* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
-    .settings-card .table-responsive { border: none; }
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card .table-responsive { border: none !important; overflow: visible; }
+    .settings-card .table { background: transparent; }
     .settings-card .table thead { display: none; }
     .settings-card .table tbody tr {
         display: block;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        padding: 12px 14px;
+        margin-bottom: 1rem;
         background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
     }
     .settings-card .table tbody td {
-        display: block;
-        padding: 0;
-        border: none;
-        text-align: left !important;
-    }
-    /* 1: Staff */
-    .settings-card .table tbody td:nth-child(1) {
-        margin-bottom: 2px;
-        line-height: 1.2;
-    }
-    .settings-card .table tbody td:nth-child(1) strong {
-        font-size: 15px; font-weight: 700; color: #0f172a; display: inline-block;
-    }
-    .settings-card .table tbody td:nth-child(1) .text-muted {
-        font-size: 12px; margin-left: 6px; display: inline-block;
-    }
-    /* 2: Correo */
-    .settings-card .table tbody td:nth-child(2) {
-        font-size: 13px; margin-bottom: 12px; color: #64748b;
-    }
-    /* 3 & 4: Switches Wrapper - lado a lado (Side by side) */
-    .settings-card .table tbody td:nth-child(3),
-    .settings-card .table tbody td:nth-child(4) {
-        display: inline-flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 48%;
-        background: #f8fafc;
-        padding: 10px 4px;
-        border-radius: 6px;
-        box-sizing: border-box;
-        margin-bottom: 8px;
-        border: 1px solid #f1f5f9;
-        vertical-align: top;
-    }
-    .settings-card .table tbody td:nth-child(3) {
-        margin-right: 3%;
-    }
-    /* Labels before switches */
-    .settings-card .table tbody td:nth-child(3)::before {
-        content: "Tickets"; font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    .settings-card .table tbody td:nth-child(4)::before {
-        content: "Tareas"; font-size: 10px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    /* Centrar visualmente los switches de Bootstrap desactivando sus offsets por defecto */
-    .settings-card .table tbody td .form-check {
-        padding-left: 0;
-        margin-bottom: 0;
-        min-height: auto;
-        display: flex;
-        justify-content: center;
-    }
-    .settings-card .table tbody td .form-check .form-check-input {
-        margin-left: 0;
-        float: none;
+        border: none !important;
+        padding: 0 !important;
     }
 }
 </style>
