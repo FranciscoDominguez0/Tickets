@@ -8,210 +8,374 @@
 if (!isset($_SESSION['staff_id'])) exit;
 ?>
 
-<!-- Leaflet CSS (Usando jsDelivr porque unpkg está bloqueado por CSP) -->
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
-    .map-wrapper {
-        position: relative;
-        height: calc(100vh - 180px);
-        min-height: 600px;
-        display: flex;
-        gap: 20px;
+    /* Estilos del Hero Principal (Adaptado de stats-hero) */
+    .map-hero {
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        border-radius: 14px;
+        padding: 1.5rem 2rem;
+        color: #fff;
+        box-shadow: 0 14px 32px rgba(37, 99, 235, 0.28);
+        margin-bottom: 16px;
     }
-    .map-container {
-        flex: 1;
-        height: 100%;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-        border: 1px solid rgba(226, 232, 240, 0.8);
-        position: relative;
+    .map-hero-title {
+        font-size: 1.45rem;
+        font-weight: 700;
+        margin: 0;
+        color: #fff;
     }
-    #map {
-        height: 100%;
-        width: 100%;
-        z-index: 1;
+    .map-hero-sub {
+        margin: .2rem 0 0;
+        color: rgba(255, 255, 255, .9);
+        font-size: .95rem;
+        font-weight: 600;
     }
-    .agent-sidebar {
-        width: 320px;
-        background: rgba(255, 255, 255, 0.95);
+    .map-hero-icon {
+        width: 52px;
+        height: 52px;
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        border-radius: 14px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.45rem;
+        box-shadow: 0 4px 14px rgba(2, 6, 23, .2);
+        border: 1px solid rgba(255, 255, 255, .22);
+    }
+    .btn-refresh-map {
+        background: rgba(255, 255, 255, 0.15);
         backdrop-filter: blur(10px);
-        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+    }
+    .btn-refresh-map:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+    }
+
+    /* Layout del Mapa */
+    .map-wrapper {
+        display: flex;
+        gap: 24px;
+        height: calc(100vh - 280px);
+        min-height: 650px;
+    }
+
+    .map-sidebar {
+        width: 340px;
+        background: white;
+        border-radius: 24px;
         border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
         display: flex;
         flex-direction: column;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
         overflow: hidden;
     }
+
     .sidebar-header {
-        padding: 20px;
+        padding: 24px;
         border-bottom: 1px solid #f1f5f9;
-        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
+
     .sidebar-header h4 {
         margin: 0;
         font-size: 1.1rem;
         font-weight: 800;
         color: #0f172a;
     }
+
+    .agent-badge {
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
     .agent-list {
         flex: 1;
         overflow-y: auto;
-        padding: 10px;
-    }
-    .agent-item {
         padding: 12px;
-        border-radius: 12px;
-        margin-bottom: 8px;
-        transition: all 0.2s ease;
+    }
+
+    .agent-item {
+        padding: 16px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
         border: 1px solid transparent;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
     }
+
     .agent-item:hover {
-        background: #f1f5f9;
+        background: #f8fafc;
         border-color: #e2e8f0;
+        transform: scale(1.02);
     }
+
     .agent-item.active {
-        background: #eff6ff;
+        background: #f0f7ff;
         border-color: #bfdbfe;
     }
+
+    .agent-avatar-container {
+        position: relative;
+    }
+
     .agent-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: #2563eb;
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 1.1rem;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        font-weight: 800;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
+
+    .status-indicator {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 14px;
+        height: 14px;
+        background: #10b981;
+        border: 3px solid white;
+        border-radius: 50%;
+    }
+
     .agent-info {
         flex: 1;
         min-width: 0;
     }
-    .agent-info .name {
+
+    .agent-name {
         font-weight: 700;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: #1e293b;
         margin-bottom: 2px;
+        display: block;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .agent-info .ticket {
-        font-size: 0.75rem;
+
+    .agent-sub {
+        font-size: 0.8rem;
         color: #64748b;
-    }
-    .agent-status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #10b981;
+        font-weight: 500;
     }
 
-    .map-header {
+    .map-container-outer {
+        flex: 1;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        position: relative;
+        background: #f8fafc;
+    }
+
+    #map {
+        height: 100%;
+        width: 100%;
+        z-index: 1;
+    }
+
+    /* Custom Leaflet Tooltip & Popup */
+    .leaflet-popup-content-wrapper {
+        border-radius: 16px;
+        padding: 5px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .agent-popup {
+        padding: 10px;
+        min-width: 180px;
+    }
+    .agent-popup h5 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .popup-stat {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
+        margin-bottom: 4px;
+        font-size: 0.85rem;
     }
+    .popup-label { color: #64748b; font-weight: 500; }
+    .popup-value { color: #1e293b; font-weight: 700; }
+
+    /* Marcador Personalizado */
+    .custom-marker {
+        position: relative;
+    }
+    .marker-pulse {
+        width: 32px;
+        height: 32px;
+        background: rgba(37, 99, 235, 0.2);
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -16px 0 0 -16px;
+        animation: pulse 2s infinite;
+    }
+    .marker-core {
+        width: 22px;
+        height: 22px;
+        background: #2563eb;
+        border: 3px solid white;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -11px 0 0 -11px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 2;
+    }
+    .marker-label-pro {
+        position: absolute;
+        top: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2563eb;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        border: 1px solid white;
+    }
+    .marker-label-pro::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        margin-left: -4px;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid #0f172a;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(2.5); opacity: 0; }
+    }
+
+    .spin { animation: fa-spin 1s infinite linear; }
+    @keyframes fa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* Responsividad */
-    @media (max-width: 991px) {
-        .map-wrapper {
-            display: block; /* Simplificar a block en móvil */
-            height: auto;
-            min-height: 0 !important;
-        }
-        .agent-sidebar {
-            width: 100% !important;
-            height: 300px !important;
-            margin-bottom: 20px;
-        }
-        .map-container {
-            width: 100% !important;
-            height: 450px !important;
-        }
+    @media (max-width: 1100px) {
+        .map-wrapper { flex-direction: column; height: auto; min-height: 0; }
+        .map-sidebar { width: 100%; height: 350px; }
+        .map-container-outer { height: 500px; }
     }
 
-    @media (max-width: 576px) {
-        .map-header {
-            flex-direction: column;
-            gap: 15px;
-            align-items: flex-start !important;
-            margin-bottom: 20px;
-        }
-        .map-container {
-            height: 400px !important;
-        }
-        .agent-sidebar {
-            height: 250px !important;
-        }
+    @media (max-width: 600px) {
+        .map-hero { padding: 25px 20px; border-radius: 18px; }
+        .map-hero h1 { font-size: 1.4rem; }
+        .map-container-outer { height: 400px; }
     }
 </style>
 
-<div class="map-header">
-    <div>
-        <h1 class="h3 mb-0" style="font-weight:800; color:#0f172a;">Monitoreo en Vivo</h1>
-        <p class="text-muted small mb-0">Seguimiento de técnicos en terreno</p>
+<div class="map-hero d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <span class="map-hero-icon"><i class="bi bi-geo-alt-fill"></i></span>
+        <div>
+            <h3 class="map-hero-title">Rastreo de Agentes</h3>
+            <div class="map-hero-sub">Seguimiento estratégico de agentes en terreno en tiempo real.</div>
+        </div>
     </div>
-    <div class="map-stats">
-        <button id="refresh-map" class="btn btn-sm btn-light border" style="border-radius: 10px; padding: 6px 12px;">
-            <i class="bi bi-arrow-clockwise"></i> Actualizar
+    <div class="map-hero-actions d-flex align-items-center">
+        <button id="refresh-map" class="btn btn-refresh-map">
+            <i class="bi bi-arrow-clockwise"></i> <span>Sincronizar</span>
         </button>
     </div>
 </div>
 
 <div class="map-wrapper">
-    <div class="agent-sidebar">
+    <aside class="map-sidebar">
         <div class="sidebar-header">
-            <h4>Técnicos Activos (<span id="active-agents-count">0</span>)</h4>
+            <h4>Agentes Activos</h4>
+            <span class="agent-badge" id="active-agents-count">0</span>
         </div>
         <div id="agent-list" class="agent-list">
-            <!-- Cargando... -->
             <div class="text-center py-5 text-muted">
-                <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
-                <div class="small">Buscando técnicos...</div>
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div class="small fw-bold">Buscando técnicos...</div>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <div class="map-container">
+    <div class="map-container-outer">
         <div id="map"></div>
     </div>
 </div>
 
-<!-- Leaflet JS (Usando jsDelivr porque unpkg está bloqueado por CSP) -->
+<!-- Leaflet JS -->
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar mapa (centrado por defecto, se ajustará con los marcadores)
-    var map = L.map('map').setView([0, 0], 2);
+    // Inicializar mapa
+    var map = L.map('map', {
+        zoomControl: false // Quitamos los controles por defecto para ponerlos más estéticos
+    }).setView([0, 0], 2);
 
-    // Si no hay agentes, mostrar un mensaje o intentar centrar en la empresa si existiera
-    var noAgentsMsg = L.control({position: 'topright'});
-    noAgentsMsg.onAdd = function(map) {
-        var div = L.DomUtil.create('div', 'stat-pill bg-warning text-dark border-warning d-none');
-        div.id = 'no-agents-alert';
-        div.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No hay agentes "En camino" actualmente';
-        return div;
-    };
-    noAgentsMsg.addTo(map);
+    // Agregar control de zoom en una posición más limpia
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+    // Tiles estándar de OpenStreetMap para mejor visibilidad de calles y terreno
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
     }).addTo(map);
 
     var markers = {};
     var agentGroup = L.featureGroup().addTo(map);
+
+    // Alerta de no agentes
+    var noAgentsMsg = L.control({position: 'topright'});
+    noAgentsMsg.onAdd = function(map) {
+        var div = L.DomUtil.create('div', 'alert alert-info py-2 px-3 m-3 border-0 shadow-sm d-none');
+        div.id = 'no-agents-alert';
+        div.style.borderRadius = '12px';
+        div.style.background = 'rgba(15, 23, 42, 0.9)';
+        div.style.color = 'white';
+        div.style.backdropFilter = 'blur(10px)';
+        div.innerHTML = '<i class="bi bi-info-circle-fill me-2 text-info"></i> No hay técnicos en camino';
+        return div;
+    };
+    noAgentsMsg.addTo(map);
 
     function fetchLocations() {
         fetch('ajax_location.php?action=get_locations')
@@ -232,7 +396,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (locations.length === 0) {
             if (alertEl) alertEl.classList.remove('d-none');
-            sidebarList.innerHTML = '<div class="text-center py-5 text-muted small">No hay técnicos activos</div>';
+            sidebarList.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="mb-3"><i class="bi bi-geo-alt text-muted" style="font-size: 2rem; opacity: 0.3;"></i></div>
+                    <div class="text-muted small fw-bold">Sin actividad reportada</div>
+                </div>`;
         } else {
             if (alertEl) alertEl.classList.add('d-none');
             sidebarList.innerHTML = '';
@@ -251,13 +419,19 @@ document.addEventListener('DOMContentLoaded', function() {
         locations.forEach(loc => {
             var popupContent = `
                 <div class="agent-popup">
-                    <h5 style="margin:0 0 5px; font-size:1rem; font-weight:700;">${loc.name}</h5>
-                    <p style="margin:2px 0; font-size:0.85rem;"><strong>Ticket:</strong> #${loc.ticket_number}</p>
-                    <p style="margin:2px 0; font-size:0.85rem;"><strong>Estado:</strong> <span class="badge" style="background:#dcfce7; color:#166534; padding:3px 8px; border-radius:4px;">${loc.status}</span></p>
-                    <p class="small text-muted" style="margin-top:8px; font-size:0.75rem;">
-                        <i class="bi bi-clock"></i> act: ${new Date(loc.updated).toLocaleTimeString()}
-                    </p>
-                    <a href="tickets.php?id=${loc.ticket_id}" class="btn btn-primary btn-sm w-100 mt-2 text-white" style="font-size:0.75rem;">Ver ticket</a>
+                    <h5>${loc.name}</h5>
+                    <div class="popup-stat">
+                        <span class="popup-label">Ticket:</span>
+                        <span class="popup-value">#${loc.ticket_number}</span>
+                    </div>
+                    <div class="popup-stat">
+                        <span class="popup-label">Estado:</span>
+                        <span class="badge" style="background:#dcfce7; color:#166534; border-radius:6px; font-weight:700;">${loc.status}</span>
+                    </div>
+                    <hr style="margin: 10px 0; border-top: 1px solid #f1f5f9;">
+                    <a href="tickets.php?id=${loc.ticket_id}" class="btn btn-primary btn-sm w-100 text-white fw-bold py-2" style="border-radius: 10px; font-size: 0.8rem;">
+                        <i class="bi bi-eye-fill"></i> Ver Detalles
+                    </a>
                 </div>
             `;
 
@@ -266,10 +440,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 markers[loc.staff_id].getPopup().setContent(popupContent);
             } else {
                 var customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div class="marker-pin" style="width:30px; height:30px; border-radius:50% 50% 50% 0; background:#2563eb; position:absolute; transform:rotate(-45deg); left:50%; top:50%; margin:-15px 0 0 -15px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.3);"><div style="width:14px; height:14px; background:#fff; border-radius:50%;"></div></div><div class="marker-label" style="position:absolute; bottom:-25px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.8); color:white; padding:2px 8px; border-radius:4px; font-size:0.7rem; font-weight:600; white-space:nowrap;">${loc.name.split(' ')[0]}</div>`,
-                    iconSize: [30, 42],
-                    iconAnchor: [15, 42]
+                    className: 'custom-marker',
+                    html: `
+                        <div class="marker-pulse" style="background: rgba(37, 99, 235, 0.4);"></div>
+                        <div class="marker-core" style="background: #2563eb; width: 22px; height: 22px; margin: -11px 0 0 -11px;"></div>
+                        <div class="marker-label-pro" style="background: #2563eb; border: 1px solid white; top: -35px;">${loc.name.split(' ')[0]}</div>
+                    `,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
                 });
 
                 var marker = L.marker([loc.lat, loc.lng], {icon: customIcon}).bindPopup(popupContent);
@@ -281,16 +459,25 @@ document.addEventListener('DOMContentLoaded', function() {
             var item = document.createElement('div');
             item.className = 'agent-item';
             item.onclick = () => {
-                map.flyTo([loc.lat, loc.lng], 16);
+                map.flyTo([loc.lat, loc.lng], 17, { duration: 1.5 });
                 markers[loc.staff_id].openPopup();
+                
+                // Marcar como activo en el sidebar
+                document.querySelectorAll('.agent-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
             };
+            
+            var initial = loc.name.charAt(0).toUpperCase();
+            
             item.innerHTML = `
-                <div class="agent-avatar">${loc.name.charAt(0).toUpperCase()}</div>
-                <div class="agent-info">
-                    <div class="name">${loc.name}</div>
-                    <div class="ticket">#${loc.ticket_number} - ${loc.status}</div>
+                <div class="agent-avatar-container">
+                    <div class="agent-avatar">${initial}</div>
+                    <div class="status-indicator"></div>
                 </div>
-                <div class="agent-status-dot"></div>
+                <div class="agent-info">
+                    <span class="agent-name">${loc.name}</span>
+                    <span class="agent-sub">Ticket #${loc.ticket_number} &bull; ${loc.status}</span>
+                </div>
             `;
             sidebarList.appendChild(item);
         });
@@ -306,20 +493,26 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchLocations();
     setInterval(fetchLocations, 8000);
 
-    // Asegurar que el mapa se redibuje si el contenedor cambia (útil en móvil)
-    setTimeout(function() {
-        map.invalidateSize();
-    }, 500);
-
+    // Botón Actualizar
     document.getElementById('refresh-map').addEventListener('click', function() {
         var btn = this;
+        var icon = btn.querySelector('i');
+        var text = btn.querySelector('span');
+        
         btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i>';
+        icon.classList.add('spin');
+        text.textContent = 'Actualizando...';
+        
         fetchLocations();
+        
         setTimeout(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar';
-        }, 1000);
+            icon.classList.remove('spin');
+            text.textContent = 'Sincronizar';
+        }, 1200);
     });
+
+    // Ajustar tamaño del mapa tras carga inicial
+    setTimeout(() => map.invalidateSize(), 500);
 });
 </script>

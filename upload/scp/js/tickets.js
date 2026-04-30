@@ -450,13 +450,13 @@ document.addEventListener('DOMContentLoaded', function() {
       var input = document.getElementById('ticketSearchInput');
       var q = (input && input.value ? input.value : '').toString().trim();
       var filter = getFilterKey();
-      var topicSel = document.getElementById('ticketTopicSelect');
-      var topicId = (topicSel && topicSel.value ? topicSel.value : '').toString().trim();
+      var deptSel = document.getElementById('ticketDeptSelect');
+      var deptId = (deptSel && deptSel.value ? deptSel.value : '').toString().trim();
 
       var params = new URLSearchParams();
       if (filter !== '') params.set('filter', filter);
       if (q !== '') params.set('q', q);
-      if (topicId !== '' && topicId !== '0') params.set('topic_id', topicId);
+      if (deptId !== '' && deptId !== '0') params.set('dept_id', deptId);
       window.location.href = 'tickets.php?' + params.toString();
     }
 
@@ -582,9 +582,9 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    var topicSelect = document.getElementById('ticketTopicSelect');
-    if (topicSelect) {
-      topicSelect.addEventListener('change', function () {
+    var deptSelect = document.getElementById('ticketDeptSelect');
+    if (deptSelect) {
+      deptSelect.addEventListener('change', function () {
         applyTicketSearch();
       });
     }

@@ -34,7 +34,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1>Tickets</h1>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($topicFilterAvailable && $selectedTopicId > 0): ?> · Tema: <strong><?php echo html($selectedTopicName ?: ('#' . (int)$selectedTopicId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedTopic; ?></strong>)<?php endif; ?></div>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
                 <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
@@ -48,7 +48,7 @@
         <input type="hidden" name="confirm" id="bulk_confirm" value="0">
         <input type="hidden" name="current_filter" value="<?php echo html($filterKey); ?>">
         <input type="hidden" name="current_q" value="<?php echo html($query); ?>">
-        <input type="hidden" name="current_topic_id" value="<?php echo (int)$selectedTopicId; ?>">
+        <input type="hidden" name="current_dept_id" value="<?php echo (int)$selectedDeptId; ?>">
         <input type="hidden" name="bulk_staff_id" id="bulk_staff_id" value="">
         <input type="hidden" name="bulk_status_id" id="bulk_status_id" value="">
         <input type="hidden" id="bulk_staff_label" value="">
@@ -110,21 +110,21 @@
                             <?php echo html($filters[$filterKey]['label']); ?>
                         </button>
                         <ul class="dropdown-menu">
-                            <?php $topicParam = ($topicFilterAvailable && $selectedTopicId > 0) ? ('&topic_id=' . (int)$selectedTopicId) : ''; ?>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Abiertos</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Sin asignar</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Asignados a mí</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Cerrados</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $topicParam; ?>">Todos</a></li>
+                            <?php $deptParam = ($deptFilterAvailable && $selectedDeptId > 0) ? ('&dept_id=' . (int)$selectedDeptId) : ''; ?>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Abiertos</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Sin asignar</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Asignados a mí</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Cerrados</a></li>
+                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Todos</a></li>
                         </ul>
                     </div>
 
-                    <?php if ($topicFilterAvailable): ?>
-                        <select class="form-select form-select-sm" id="ticketTopicSelect" aria-label="Filtrar por tema">
-                            <option value="0">Todos los temas</option>
-                            <?php foreach ($topicOptions as $tp): ?>
-                                <?php $tpId = (int)($tp['id'] ?? 0); ?>
-                                <option value="<?php echo $tpId; ?>" <?php echo $tpId === (int)$selectedTopicId ? 'selected' : ''; ?>><?php echo html((string)($tp['name'] ?? '')); ?></option>
+                    <?php if ($deptFilterAvailable): ?>
+                        <select class="form-select form-select-sm" id="ticketDeptSelect" aria-label="Filtrar por departamento">
+                            <option value="0">Todos los deptos</option>
+                            <?php foreach ($deptOptions as $dp): ?>
+                                <?php $dpId = (int)($dp['id'] ?? 0); ?>
+                                <option value="<?php echo $dpId; ?>" <?php echo $dpId === (int)$selectedDeptId ? 'selected' : ''; ?>><?php echo html((string)($dp['name'] ?? '')); ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php endif; ?>
@@ -344,7 +344,7 @@
     <?php
     $basePageParams = ['filter' => $filterKey];
     if ($query !== '') $basePageParams['q'] = $query;
-    if ($topicFilterAvailable && $selectedTopicId > 0) $basePageParams['topic_id'] = (int)$selectedTopicId;
+    if ($deptFilterAvailable && $selectedDeptId > 0) $basePageParams['dept_id'] = (int)$selectedDeptId;
     if ($dateFrom !== '') $basePageParams['date_from'] = $dateFrom;
     if ($dateTo   !== '') $basePageParams['date_to']   = $dateTo;
     $prevUrl = '';

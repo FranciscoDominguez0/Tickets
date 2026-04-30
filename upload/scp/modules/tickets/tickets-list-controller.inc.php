@@ -35,48 +35,38 @@ if (isset($_GET['date_to']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_t
     $dateTo = $defaultDateTo;
 }
 
-// Filtro por tema (help topic) - opcional según esquema
-$topicFilterAvailable = false;
-$topicOptions = [];
-$selectedTopicId = isset($_GET['topic_id']) && is_numeric($_GET['topic_id']) ? (int)$_GET['topic_id'] : 0;
-$selectedTopicName = '';
-$countSelectedTopic = 0;
+// Filtro por departamento (antes tema)
+$deptFilterAvailable = true;
+$deptOptions = [];
+$selectedDeptId = isset($_GET['dept_id']) && is_numeric($_GET['dept_id']) ? (int)$_GET['dept_id'] : 0;
+$selectedDeptName = '';
+$countSelectedDept = 0;
 
 $selectedStaffId = isset($_GET['staff_id']) && is_numeric($_GET['staff_id']) ? (int)$_GET['staff_id'] : 0;
 $selectedStaffName = '';
 
-$hasTopicsTable = false;
-$hasTopicCol = false;
-$t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-if ($t && $t->num_rows > 0) $hasTopicsTable = true;
-$c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-if ($c && $c->num_rows > 0) $hasTopicCol = true;
-
-if ($hasTopicsTable && $hasTopicCol) {
-    $topicFilterAvailable = true;
-    $stmtTp = $mysqli->prepare('SELECT id, name FROM help_topics WHERE empresa_id = ? AND is_active = 1 ORDER BY name');
-    if ($stmtTp) {
-        $stmtTp->bind_param('i', $eid);
-        if ($stmtTp->execute()) {
-            $r = $stmtTp->get_result();
-            if ($r) {
-                while ($row = $r->fetch_assoc()) {
-                    $topicOptions[] = $row;
-                    if ($selectedTopicId > 0 && (int)($row['id'] ?? 0) === $selectedTopicId) {
-                        $selectedTopicName = (string)($row['name'] ?? '');
-                    }
+$stmtDp = $mysqli->prepare('SELECT id, name FROM departments WHERE empresa_id = ? ORDER BY name');
+if ($stmtDp) {
+    $stmtDp->bind_param('i', $eid);
+    if ($stmtDp->execute()) {
+        $r = $stmtDp->get_result();
+        if ($r) {
+            while ($row = $r->fetch_assoc()) {
+                $deptOptions[] = $row;
+                if ($selectedDeptId > 0 && (int)($row['id'] ?? 0) === $selectedDeptId) {
+                    $selectedDeptName = (string)($row['name'] ?? '');
                 }
             }
         }
     }
 }
 
-if ($topicFilterAvailable && $selectedTopicId > 0) {
-    $stmtTc = $mysqli->prepare('SELECT COUNT(*) AS c FROM tickets WHERE empresa_id = ? AND topic_id = ?');
-    if ($stmtTc) {
-        $stmtTc->bind_param('ii', $eid, $selectedTopicId);
-        if ($stmtTc->execute()) {
-            $countSelectedTopic = (int)($stmtTc->get_result()->fetch_assoc()['c'] ?? 0);
+if ($deptFilterAvailable && $selectedDeptId > 0) {
+    $stmtDc = $mysqli->prepare('SELECT COUNT(*) AS c FROM tickets WHERE empresa_id = ? AND dept_id = ?');
+    if ($stmtDc) {
+        $stmtDc->bind_param('ii', $eid, $selectedDeptId);
+        if ($stmtDc->execute()) {
+            $countSelectedDept = (int)($stmtDc->get_result()->fetch_assoc()['c'] ?? 0);
         }
     }
 }
@@ -127,10 +117,10 @@ if ($filterKey === 'mine') {
 } elseif ($filterKey !== 'all') {
     $whereClauses[] = $filters[$filterKey]['where'];
 }
-if ($topicFilterAvailable && $selectedTopicId > 0) {
-    $whereClauses[] = 't.topic_id = ?';
+if ($deptFilterAvailable && $selectedDeptId > 0) {
+    $whereClauses[] = 't.dept_id = ?';
     $types .= 'i';
-    $params[] = $selectedTopicId;
+    $params[] = $selectedDeptId;
 }
 if ($query !== '') {
     $like = '%' . $query . '%';
@@ -190,8 +180,8 @@ if ($page > $totalPages) {
     $offset = ($page - 1) * $perPage;
 }
 
-// Conteo del tema seleccionado dentro de la vista actual (sin LIMIT)
-if ($topicFilterAvailable && $selectedTopicId > 0) {
+// Conteo del departamento seleccionado dentro de la vista actual (sin LIMIT)
+if ($deptFilterAvailable && $selectedDeptId > 0) {
     $sqlCnt = "SELECT COUNT(*) AS c\n"
         . "FROM tickets t\n"
         . "JOIN users u ON t.user_id = u.id\n"
@@ -204,13 +194,13 @@ if ($topicFilterAvailable && $selectedTopicId > 0) {
             foreach ($params as $k => $v) { $bindCnt[] = &$params[$k]; }
             call_user_func_array([$stmtCnt, 'bind_param'], $bindCnt);
             if ($stmtCnt->execute()) {
-                $countSelectedTopic = (int)($stmtCnt->get_result()->fetch_assoc()['c'] ?? 0);
+                $countSelectedDept = (int)($stmtCnt->get_result()->fetch_assoc()['c'] ?? 0);
             }
         }
     } else {
         $rc = $mysqli->query($sqlCnt);
         if ($rc) {
-            $countSelectedTopic = (int)($rc->fetch_assoc()['c'] ?? 0);
+            $countSelectedDept = (int)($rc->fetch_assoc()['c'] ?? 0);
         }
     }
 }
@@ -639,10 +629,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
     }
     $redirFilter = isset($_POST['current_filter']) ? (string) $_POST['current_filter'] : (string) ($filterKey ?? 'open');
     $redirQ = isset($_POST['current_q']) ? trim((string) $_POST['current_q']) : '';
-    $redirTopicId = isset($_POST['current_topic_id']) && is_numeric($_POST['current_topic_id']) ? (int) $_POST['current_topic_id'] : $selectedTopicId;
+    $redirDeptId = isset($_POST['current_dept_id']) && is_numeric($_POST['current_dept_id']) ? (int) $_POST['current_dept_id'] : $selectedDeptId;
     $redirParams = ['filter' => $redirFilter];
     if ($redirQ !== '') $redirParams['q'] = $redirQ;
-    if ($redirTopicId > 0) $redirParams['topic_id'] = $redirTopicId;
+    if ($redirDeptId > 0) $redirParams['dept_id'] = $redirDeptId;
     header('Location: tickets.php?' . http_build_query($redirParams));
     exit;
 }
