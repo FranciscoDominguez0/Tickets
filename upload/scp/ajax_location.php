@@ -63,7 +63,7 @@ if ($action === 'update') {
 }
 
 if ($action === 'get_locations') {
-    // Solo agentes con tickets "En camino" en la última hora
+    // Solo agentes con tickets "En camino"
     // Usamos una consulta compatible con only_full_group_by
     $query = "
         SELECT 
@@ -85,7 +85,6 @@ if ($action === 'get_locations') {
         ) t_active ON t_active.staff_id = s.id
         JOIN tickets t ON t.id = t_active.max_ticket_id
         JOIN ticket_status ts ON t.status_id = ts.id
-        WHERE sl.updated_at > (NOW() - INTERVAL 1 HOUR)
     ";
     
     $stmt = $mysqli->prepare($query);
