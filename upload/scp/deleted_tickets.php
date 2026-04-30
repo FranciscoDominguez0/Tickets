@@ -161,31 +161,119 @@ ob_start();
                     <?php if ($res && $res->num_rows > 0): ?>
                         <?php while ($r = $res->fetch_assoc()): ?>
                             <tr>
-                                <td class="ps-4">
+                                <!-- VISTA MÓVIL (Tarjeta Premium) -->
+                                <td class="d-md-none p-0">
+                                    <div style="padding: 16px; background: #ffffff;">
+                                        <!-- Header -->
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                                    <i class="bi bi-trash3"></i>
+                                                </div>
+                                                <div style="line-height: 1.2;">
+                                                    <a href="javascript:void(0)" onclick="viewTicketThread(<?php echo $r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="text-decoration-none" style="font-weight: 800; color: #0f172a; font-size: 1.1rem; display: block;">
+                                                        #<?php echo html($r['ticket_number']); ?>
+                                                    </a>
+                                                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                        <?php echo date('d M Y, H:i', strtotime($r['created_at'])); ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <?php 
+                                                $s = $r['status'];
+                                                if ($s === 'pending') echo '<span style="background: #fffbeb; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #fde68a;"><i class="bi bi-clock me-1"></i>Pendiente</span>';
+                                                elseif ($s === 'approved') echo '<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</span>';
+                                                else echo '<span style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #fecaca;"><i class="bi bi-x-circle-fill me-1"></i>Rechazado</span>';
+                                                ?>
+                                            </div>
+                                        </div>
+
+                                        <!-- Asunto -->
+                                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 14px; line-height: 1.4;">
+                                            <?php echo html($r['ticket_subject']); ?>
+                                        </div>
+
+                                        <!-- Bloque Solicitante y Motivo -->
+                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+                                            <div class="d-flex align-items-center gap-2 mb-3 pb-2" style="border-bottom: 1px dashed #cbd5e1;">
+                                                <div class="avatar-circle-sm" style="width: 22px; height: 22px; font-size: 10px; background: #e2e8f0; color: #334155;">
+                                                    <?php echo strtoupper(substr($r['requester_name'] ?? '?', 0, 1)); ?>
+                                                </div>
+                                                <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">
+                                                    Solicitado por <span style="color: #0f172a; font-weight: 700;"><?php echo html($r['requester_name']); ?></span>
+                                                </span>
+                                            </div>
+                                            <div style="font-size: 0.85rem; color: #334155; font-weight: 500; line-height: 1.5;">
+                                                <div style="color: #94a3b8; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                                                    Motivo de Eliminación
+                                                </div>
+                                                <?php echo html($r['reason']); ?>
+                                            </div>
+                                        </div>
+
+                                        <!-- Footer: Resolución y Botones -->
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div style="display: flex; flex-direction: column;">
+                                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                    Resuelto por
+                                                </span>
+                                                <?php if ($r['resolved_at']): ?>
+                                                    <span style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">
+                                                        <i class="bi bi-shield-check text-success me-1"></i><?php echo html($r['resolver_name'] ?: 'Admin'); ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1;">
+                                                        Pendiente de acción
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                            
+                                            <div>
+                                                <?php if ($s === 'pending'): ?>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" onclick="openResolveModal('reject_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" style="background: #ffffff; border: 1px solid #fca5a5; color: #dc2626; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
+                                                            <i class="bi bi-x-lg" style="font-size: 1.1rem; font-weight: bold;"></i>
+                                                        </button>
+                                                        <button type="button" onclick="openResolveModal('approve_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" style="background: #10b981; border: none; color: #ffffff; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">
+                                                            <i class="bi bi-check-lg" style="font-size: 1.4rem; font-weight: bold;"></i>
+                                                        </button>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;">
+                                                        <i class="bi bi-check2-all" style="font-size: 1.5rem;"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- VISTA ESCRITORIO (Tabla normal) -->
+                                <td class="ps-4 d-none d-md-table-cell">
                                     <a href="javascript:void(0)" onclick="viewTicketThread(<?php echo $r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="ticket-link d-block">
                                         <div class="fw-bold" style="color: #2563eb;">#<?php echo html($r['ticket_number']); ?></div>
                                     </a>
                                     <div class="small text-muted text-truncate" style="max-width: 180px; font-weight: 600;"><?php echo html($r['ticket_subject']); ?></div>
                                     <div class="x-small text-muted"><?php echo formatDate($r['created_at']); ?></div>
                                 </td>
-                                <td>
+                                <td class="d-none d-md-table-cell">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="avatar-circle-sm"><?php echo strtoupper(substr($r['requester_name'] ?? '?', 0, 1)); ?></div>
                                         <span class="small fw-bold" style="color: #334155;"><?php echo html($r['requester_name']); ?></span>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="small text-wrap" style="max-width: 220px; font-weight: 500; color: #475569;"><?php echo html($r['reason']); ?></div>
+                                <td class="d-none d-md-table-cell">
+                                    <div class="small text-wrap" style="max-width: 100%; font-weight: 500; color: #475569;"><?php echo html($r['reason']); ?></div>
                                 </td>
-                                <td>
+                                <td class="d-none d-md-table-cell">
                                     <?php 
-                                    $s = $r['status'];
                                     if ($s === 'pending') echo '<span class="badge" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-weight: 700;"><i class="bi bi-clock me-1"></i>Pendiente</span>';
                                     elseif ($s === 'approved') echo '<span class="badge" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 700;"><i class="bi bi-check-circle me-1"></i>Aprobado</span>';
                                     else echo '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-weight: 700;"><i class="bi bi-x-circle me-1"></i>Rechazado</span>';
                                     ?>
                                 </td>
-                                <td>
+                                <td class="d-none d-md-table-cell">
                                     <?php if ($r['resolved_at']): ?>
                                         <div class="small">
                                             <div class="fw-bold" style="color: #334155;"><?php echo html($r['resolver_name'] ?: 'Admin'); ?></div>
@@ -195,7 +283,7 @@ ob_start();
                                         <span class="text-muted small">---</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="pe-4 text-end">
+                                <td class="pe-4 text-end d-none d-md-table-cell">
                                     <?php if ($s === 'pending'): ?>
                                         <div class="btn-group btn-group-sm shadow-sm">
                                             <button type="button" class="btn btn-success" 
@@ -405,6 +493,26 @@ function viewTicketThread(id, ticketNum) {
 #threadBodyWrap::-webkit-scrollbar { width: 6px; }
 #threadBodyWrap::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 #threadBodyWrap::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+/* Responsive Table -> Cards for Mobile */
+@media (max-width: 768px) {
+    .settings-card { background: transparent !important; box-shadow: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .table-responsive { border: none !important; overflow: visible; }
+    .table { background: transparent; }
+    .table thead { display: none; }
+    .table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .table tbody td {
+        border: none !important;
+    }
+}
 </style>
 <?php
 $content = ob_get_clean();
