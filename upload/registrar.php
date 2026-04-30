@@ -112,6 +112,13 @@ if ($_POST) {
         .map-btn:hover { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
         .map-btn i { color: #2563eb; }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+
         @media (max-width: 760px) {
             .login-panel { padding: 22px !important; }
             .form-grid { grid-template-columns: 1fr !important; }
@@ -217,6 +224,9 @@ $bodyStyle = $loginBg !== ''
                                     <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                                     Ubicación lista para registrarse.
                                 </div>
+                                <div id="mapErrorText" style="display:none; color:#dc2626; font-size:13px; margin-top:6px; font-weight:600;">
+                                    Este campo es obligatorio.
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -309,7 +319,6 @@ $bodyStyle = $loginBg !== ''
                 <button type="button" id="btnCancelMap" style="padding:10px 18px; border-radius:8px; border:1px solid #cbd5e1; background:#fff; color:#475569; font-weight:600; font-size:14px; cursor:pointer; transition: background 0.2s;">Cancelar</button>
                 <button type="button" id="btnConfirmMap" style="padding:10px 18px; border-radius:8px; border:none; background:#2563eb; color:#fff; font-weight:600; font-size:14px; cursor:pointer; transition: background 0.2s; box-shadow: 0 2px 4px rgba(37,99,235,0.3);">Guardar ubicación</button>
             </div>
-        </div>
     </div>
 
     <script>
@@ -321,7 +330,20 @@ $bodyStyle = $loginBg !== ''
 
             if (!latInput || !lngInput || !addressInput) {
                 e.preventDefault();
-                alert('Debes fijar tu ubicación en el mapa antes de registrarte.');
+                var btnMap = document.getElementById('btnOpenMap');
+                var errTxt = document.getElementById('mapErrorText');
+                
+                // Estilo rojo de error al botón
+                btnMap.style.borderColor = '#ef4444';
+                btnMap.style.backgroundColor = '#fef2f2';
+                btnMap.style.color = '#b91c1c';
+                errTxt.style.display = 'block';
+                
+                // Sacudida
+                btnMap.classList.remove('shake-anim');
+                void btnMap.offsetWidth; // Trigger reflow
+                btnMap.classList.add('shake-anim');
+                
                 return false;
             }
 
@@ -499,7 +521,13 @@ $bodyStyle = $loginBg !== ''
             btnConfirmMap.addEventListener('click', function() {
                 latInput.value = currentLat.toFixed(8);
                 lngInput.value = currentLng.toFixed(8);
+                
+                // Ocultar error si existía y mostrar check verde
+                var errTxt = document.getElementById('mapErrorText');
+                if(errTxt) errTxt.style.display = 'none';
                 statusText.style.display = 'flex';
+                
+                btnOpenMap.style.color = '#166534';
                 btnOpenMap.style.background = '#f0fdf4';
                 btnOpenMap.style.borderColor = '#bbf7d0';
                 closeMap();

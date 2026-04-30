@@ -854,19 +854,48 @@ if ($ticketClientSignaturePath !== '') {
                     <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?></a>
                 </div>
             </div>
-            <?php if (!empty($t['user_address'])): ?>
+            <?php if (!empty($t['user_address']) || (!empty($t['user_latitude']) && !empty($t['user_longitude']))): ?>
             <div class="field">
                 <label>Ubicación</label>
                 <div class="value">
-                    <?php 
-                        $mapQuery = !empty($t['user_latitude']) && !empty($t['user_longitude']) 
-                            ? $t['user_latitude'] . ',' . $t['user_longitude'] 
-                            : $t['user_address'];
+                    <?php
+                        $hasCoords = !empty($t['user_latitude']) && !empty($t['user_longitude']);
+                        $lat = $hasCoords ? (float)$t['user_latitude'] : null;
+                        $lng = $hasCoords ? (float)$t['user_longitude'] : null;
+
+                        if ($hasCoords) {
+                            $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                            $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                        } else {
+                            $wazeApp = 'waze://?q=' . urlencode($t['user_address']) . '&navigate=yes';
+                            $wazeWeb = 'https://waze.com/ul?q=' . urlencode($t['user_address']) . '&navigate=yes';
+                        }
                     ?>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo urlencode($mapQuery); ?>" target="_blank" class="badge bg-primary text-white" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; margin-bottom: 4px;">
-                        <i class="bi bi-geo-alt-fill"></i> Ir (Mapa Web)
-                    </a>
-                    <div class="small text-muted" style="font-size:0.8rem; line-height: 1.2; word-break: break-word;"><?php echo html($t['user_address']); ?></div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                        <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')"
+                           style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; background:#00aaff; color:#fff; box-shadow:0 2px 6px rgba(0,170,255,0.3);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 6.63C19.27 3.1 15.93.5 12 .5 6.48.5 2 5 2 10.5c0 2.4.87 4.6 2.3 6.3l-.3 3.7 3.7-1.2c1.3.6 2.7.9 4.3.9 5.52 0 10-4.48 10-10 0-1.34-.27-2.63-.76-3.77zM12 19.5c-1.4 0-2.76-.3-4-.85L4.5 19.5l.85-3.5C3.9 14.6 3 12.65 3 10.5 3 5.53 7.03 1.5 12 1.5c4.41 0 8.12 2.95 9.34 7.02.42 1.2.66 2.47.66 3.98 0 4.97-4.03 9-9 9z"/></svg>
+                            Abrir en Waze
+                        </a>
+                    </div>
+                    <script>
+                        function abrirWazeInteligente(e, appUrl, webUrl) {
+                            e.preventDefault();
+                            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                            
+                            if (isMobile) {
+                                // Intenta abrir el esquema de la aplicación
+                                window.location.href = appUrl;
+                                // Fallback a la web si no funciona después de 1 segundo
+                                setTimeout(function() {
+                                    window.location.href = webUrl;
+                                }, 1000);
+                            } else {
+                                // En PC abre directo la web en pestaña nueva
+                                window.open(webUrl, '_blank');
+                            }
+                        }
+                    </script>
                 </div>
             </div>
             <?php endif; ?>
