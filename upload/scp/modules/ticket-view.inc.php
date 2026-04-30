@@ -854,6 +854,22 @@ if ($ticketClientSignaturePath !== '') {
                     <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?></a>
                 </div>
             </div>
+            <?php if (!empty($t['user_address'])): ?>
+            <div class="field">
+                <label>Ubicación</label>
+                <div class="value">
+                    <?php 
+                        $mapQuery = !empty($t['user_latitude']) && !empty($t['user_longitude']) 
+                            ? $t['user_latitude'] . ',' . $t['user_longitude'] 
+                            : $t['user_address'];
+                    ?>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=<?php echo urlencode($mapQuery); ?>" target="_blank" class="badge bg-primary text-white" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; margin-bottom: 4px;">
+                        <i class="bi bi-geo-alt-fill"></i> Ir (Mapa Web)
+                    </a>
+                    <div class="small text-muted" style="font-size:0.8rem; line-height: 1.2; word-break: break-word;"><?php echo html($t['user_address']); ?></div>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="field d-none d-md-block">
                 <?php
                 $topicName = trim((string)($t['topic_name'] ?? ''));

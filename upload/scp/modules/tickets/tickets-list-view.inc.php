@@ -60,6 +60,11 @@
         $canBulkClose = roleHasPermission('ticket.close');
         $canBulkDelete = roleHasPermission('ticket.delete');
         $bulkStatusLocked = !$canBulkEdit && !$canBulkClose;
+
+        $canBulkDeleteOrRequest = $canBulkDelete || $isAgent;
+        $bulkDeleteTitle = $canBulkDelete ? 'Eliminar permanentemente' : ($isAgent ? 'Solicitar borrado masivo' : 'Sin permiso para eliminar');
+        $bulkDeleteIcon = $canBulkDelete ? 'bi-trash-fill' : 'bi-trash';
+        $bulkDeleteText = $canBulkDelete ? 'Eliminar' : 'Solicitar Borrado';
         ?>
 
         <!-- Nueva barra de acciones contextuales (se muestra al seleccionar tickets) -->
@@ -95,8 +100,8 @@
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-bulk btn-bulk-danger" data-action="tickets-bulk-delete" title="<?php echo $canBulkDelete ? 'Eliminar permanentemente' : 'Sin permiso para eliminar'; ?>" <?php echo $canBulkDelete ? '' : 'disabled'; ?>>
-                    <i class="bi bi-trash-fill"></i> Eliminar
+                <button type="button" class="btn btn-bulk btn-bulk-danger" data-action="tickets-bulk-delete" title="<?php echo $bulkDeleteTitle; ?>" <?php echo $canBulkDeleteOrRequest ? '' : 'disabled'; ?>>
+                    <i class="bi <?php echo $bulkDeleteIcon; ?>"></i> <?php echo $bulkDeleteText; ?>
                 </button>
             </div>
         </div>

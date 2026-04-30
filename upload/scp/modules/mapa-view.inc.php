@@ -71,12 +71,13 @@ if (!isset($_SESSION['staff_id'])) exit;
     .map-wrapper {
         display: flex;
         gap: 24px;
-        height: calc(100vh - 280px);
-        min-height: 650px;
+        height: calc(100vh - 260px);
+        min-height: 600px;
     }
 
     .map-sidebar {
-        width: 340px;
+        width: 320px;
+        flex-shrink: 0;
         background: white;
         border-radius: 24px;
         border: 1px solid rgba(226, 232, 240, 0.8);
@@ -87,7 +88,7 @@ if (!isset($_SESSION['staff_id'])) exit;
     }
 
     .sidebar-header {
-        padding: 24px;
+        padding: 20px 24px;
         border-bottom: 1px solid #f1f5f9;
         display: flex;
         justify-content: space-between;
@@ -198,13 +199,18 @@ if (!isset($_SESSION['staff_id'])) exit;
         border: 1px solid rgba(226, 232, 240, 0.8);
         position: relative;
         background: #f8fafc;
+        min-height: 400px;
     }
 
     #map {
-        height: 100%;
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
         width: 100%;
+        height: 100%;
         z-index: 1;
     }
+
+    /* Tabs para móvil - ELIMINADOS: layout vertical directo */
 
     /* Custom Leaflet Tooltip & Popup */
     .leaflet-popup-content-wrapper {
@@ -232,37 +238,30 @@ if (!isset($_SESSION['staff_id'])) exit;
     .popup-value { color: #1e293b; font-weight: 700; }
 
     /* Marcador Personalizado */
-    .custom-marker {
-        position: relative;
-    }
+    .custom-marker { position: relative; }
     .marker-pulse {
-        width: 32px;
-        height: 32px;
+        width: 32px; height: 32px;
         background: rgba(37, 99, 235, 0.2);
         border-radius: 50%;
         position: absolute;
-        top: 50%;
-        left: 50%;
+        top: 50%; left: 50%;
         margin: -16px 0 0 -16px;
         animation: pulse 2s infinite;
     }
     .marker-core {
-        width: 22px;
-        height: 22px;
+        width: 22px; height: 22px;
         background: #2563eb;
         border: 3px solid white;
         border-radius: 50%;
         position: absolute;
-        top: 50%;
-        left: 50%;
+        top: 50%; left: 50%;
         margin: -11px 0 0 -11px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         z-index: 2;
     }
     .marker-label-pro {
         position: absolute;
-        top: -35px;
-        left: 50%;
+        top: -35px; left: 50%;
         transform: translateX(-50%);
         background: #2563eb;
         color: white;
@@ -277,8 +276,7 @@ if (!isset($_SESSION['staff_id'])) exit;
     .marker-label-pro::after {
         content: '';
         position: absolute;
-        bottom: -4px;
-        left: 50%;
+        bottom: -4px; left: 50%;
         margin-left: -4px;
         border-left: 4px solid transparent;
         border-right: 4px solid transparent;
@@ -289,21 +287,38 @@ if (!isset($_SESSION['staff_id'])) exit;
         0% { transform: scale(1); opacity: 1; }
         100% { transform: scale(2.5); opacity: 0; }
     }
-
     .spin { animation: fa-spin 1s infinite linear; }
     @keyframes fa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* Responsividad */
+    /* Responsividad Tablet */
     @media (max-width: 1100px) {
-        .map-wrapper { flex-direction: column; height: auto; min-height: 0; }
-        .map-sidebar { width: 100%; height: 350px; }
-        .map-container-outer { height: 500px; }
+        .map-wrapper { gap: 16px; }
+        .map-sidebar { width: 280px; }
     }
 
-    @media (max-width: 600px) {
-        .map-hero { padding: 25px 20px; border-radius: 18px; }
-        .map-hero h1 { font-size: 1.4rem; }
-        .map-container-outer { height: 400px; }
+    /* Responsividad Móvil: todo en una columna, sin tabs */
+    @media (max-width: 768px) {
+        .map-wrapper {
+            flex-direction: column;
+            height: auto;
+            min-height: 0;
+            gap: 12px;
+        }
+        .map-sidebar {
+            width: 100%;
+            height: auto;
+            max-height: 220px;
+            border-radius: 16px;
+            flex-shrink: 0;
+        }
+        .map-container-outer {
+            height: 55vh !important;
+            min-height: 320px;
+            border-radius: 16px;
+        }
+        .map-hero { padding: 20px 16px; border-radius: 16px; }
+        .map-hero-title { font-size: 1.2rem; }
+        .map-hero-sub { font-size: 0.85rem; }
     }
 </style>
 
@@ -323,7 +338,7 @@ if (!isset($_SESSION['staff_id'])) exit;
 </div>
 
 <div class="map-wrapper">
-    <aside class="map-sidebar">
+    <aside class="map-sidebar" id="mapSidebar">
         <div class="sidebar-header">
             <h4>Agentes Activos</h4>
             <span class="agent-badge" id="active-agents-count">0</span>
@@ -336,7 +351,7 @@ if (!isset($_SESSION['staff_id'])) exit;
         </div>
     </aside>
 
-    <div class="map-container-outer">
+    <div class="map-container-outer" id="mapContainerOuter">
         <div id="map"></div>
     </div>
 </div>
@@ -459,9 +474,22 @@ document.addEventListener('DOMContentLoaded', function() {
             var item = document.createElement('div');
             item.className = 'agent-item';
             item.onclick = () => {
-                map.flyTo([loc.lat, loc.lng], 17, { duration: 1.5 });
-                markers[loc.staff_id].openPopup();
-                
+                var isMobile = window.innerWidth <= 768;
+
+                if (isMobile) {
+                    // En móvil: primero desplazar al mapa sin animación y luego centrar
+                    map.setView([loc.lat, loc.lng], 16);
+                    markers[loc.staff_id].openPopup();
+                    // Scroll suave al contenedor del mapa
+                    var mapEl = document.getElementById('mapContainerOuter');
+                    if (mapEl) {
+                        mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                } else {
+                    map.flyTo([loc.lat, loc.lng], 17, { duration: 1.5 });
+                    markers[loc.staff_id].openPopup();
+                }
+
                 // Marcar como activo en el sidebar
                 document.querySelectorAll('.agent-item').forEach(el => el.classList.remove('active'));
                 item.classList.add('active');
@@ -513,6 +541,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Ajustar tamaño del mapa tras carga inicial
-    setTimeout(() => map.invalidateSize(), 500);
+    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 400);
+    setTimeout(() => map.invalidateSize(), 900);
 });
 </script>

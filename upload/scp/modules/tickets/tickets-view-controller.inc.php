@@ -34,7 +34,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         : "";
 
     $stmt = $mysqli->prepare(
-        "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,
+        "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email, u.address AS user_address, u.latitude AS user_latitude, u.longitude AS user_longitude,
          s.firstname AS staff_first, s.lastname AS staff_last, s.email AS staff_email,
          d.name AS dept_name, d.requires_report, ts.name AS status_name, ts.color AS status_color,
          p.name AS priority_name, p.color AS priority_color,
