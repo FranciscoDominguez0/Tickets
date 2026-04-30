@@ -88,11 +88,12 @@ if ($resR && $resR->num_rows > 0) {
     }
 }
 
-// 3. Procesar formulario si se envió (y no existe reporte)
+// 3. Procesar formulario si se envió (y no existe reporte o estamos editando)
 $errors = [];
 $successMsg = '';
+$isEditMode = (isset($_GET['action']) && $_GET['action'] === 'edit' && $reportExists);
 
-if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ((!$reportExists || $isEditMode) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !Auth::validateCSRF($_POST['csrf_token'])) {
         $errors[] = 'Token de seguridad inválido. Recarga la página.';
     } else {
@@ -131,16 +132,30 @@ if (!$reportExists && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $mysqli->begin_transaction();
             try {
-                // Insert report
-                $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, billing_status, created_at)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
-                $inR = $mysqli->prepare($sqlR);
-                $sid = (int)$_SESSION['staff_id'];
-                $eid = empresaId();
-                $inR->bind_param('iisssss', $eid, $ticketId, $workDescConcat, $obs, $totalStr, $sid, $reportType);
-                $inR->execute();
+                if ($isEditMode) {
+                    // Update report
+                    $sqlR = "UPDATE ticket_reports SET work_description = ?, observations = ?, final_price = ?, billing_status = ? WHERE id = ? AND empresa_id = ?";
+                    $updR = $mysqli->prepare($sqlR);
+                    $updR->bind_param('ssssii', $workDescConcat, $obs, $totalStr, $reportType, $reportData['id'], $eid);
+                    $updR->execute();
 
-                $reportId = $mysqli->insert_id;
+                    $reportId = $reportData['id'];
+
+                    // Delete old items
+                    $delItems = $mysqli->prepare("DELETE FROM ticket_report_items WHERE report_id = ? AND empresa_id = ?");
+                    $delItems->bind_param('ii', $reportId, $eid);
+                    $delItems->execute();
+                } else {
+                    // Insert report
+                    $sqlR = "INSERT INTO ticket_reports (empresa_id, ticket_id, work_description, observations, final_price, created_by, billing_status, created_at)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+                    $inR = $mysqli->prepare($sqlR);
+                    $sid = (int)$_SESSION['staff_id'];
+                    $inR->bind_param('iisssss', $eid, $ticketId, $workDescConcat, $obs, $totalStr, $sid, $reportType);
+                    $inR->execute();
+
+                    $reportId = $mysqli->insert_id;
+                }
 
                 // Insert items
                 $insItem = $mysqli->prepare("INSERT INTO ticket_report_items (empresa_id, report_id, description, price) VALUES (?, ?, ?, ?)");
@@ -496,8 +511,19 @@ h6.border-bottom {
                     <strong><i class="bi bi-card-text me-2"></i> Datos del Reporte</strong>
                 </div>
                 <div class="card-body">
-                    <?php if (!$reportExists): ?>
-                        <form method="POST" action="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>" id="reportForm">
+                    <?php if (!$reportExists || $isEditMode): ?>
+                        <?php 
+                        $defaultObs = '';
+                        $defaultType = 'pending';
+                        if ($isEditMode) {
+                            $defaultObs = $reportData['observations'] ?? '';
+                            $defaultType = $reportData['billing_status'] ?? 'pending';
+                        } else if (isset($_POST['observations'])) {
+                            $defaultObs = $_POST['observations'];
+                            $defaultType = $_POST['report_type'] ?? 'pending';
+                        }
+                        ?>
+                        <form method="POST" action="reporte_costos.php?ticket_id=<?php echo $ticketId; ?><?php echo $isEditMode ? '&action=edit' : ''; ?>" id="reportForm">
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
                             <!-- Sección detalles -->
@@ -537,28 +563,28 @@ h6.border-bottom {
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Observaciones <span class="text-muted fw-normal">(Opcional)</span></label>
-                                <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."></textarea>
+                                <textarea name="observations" class="form-control" rows="2" placeholder="Cualquier nota extra relevante..."><?php echo htmlspecialchars($defaultObs); ?></textarea>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label fw-bold">Acción / Tipo de Reporte</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <div class="form-check custom-option">
-                                        <input class="form-check-input" type="radio" name="report_type" id="typePending" value="pending" checked>
+                                        <input class="form-check-input" type="radio" name="report_type" id="typePending" value="pending" <?php echo $defaultType === 'pending' ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="typePending">
                                             <span class="d-block fw-bold">Pendiente Facturación</span>
                                             <span class="text-muted small">Se marcará para facturar después.</span>
                                         </label>
                                     </div>
                                     <div class="form-check custom-option">
-                                        <input class="form-check-input" type="radio" name="report_type" id="typeVisita" value="visita_tecnica">
+                                        <input class="form-check-input" type="radio" name="report_type" id="typeVisita" value="visita_tecnica" <?php echo $defaultType === 'visita_tecnica' ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="typeVisita">
                                             <span class="d-block fw-bold">Visita Técnica</span>
                                             <span class="text-muted small">Reportar como una visita sin factura pendiente.</span>
                                         </label>
                                     </div>
                                     <div class="form-check custom-option">
-                                        <input class="form-check-input" type="radio" name="report_type" id="typeCotizacion" value="cotizacion">
+                                        <input class="form-check-input" type="radio" name="report_type" id="typeCotizacion" value="cotizacion" <?php echo $defaultType === 'cotizacion' ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="typeCotizacion">
                                             <span class="d-block fw-bold">Cotización</span>
                                             <span class="text-muted small">Reportar como una cotización realizada.</span>
@@ -622,8 +648,14 @@ h6.border-bottom {
                                 addRow();
                             });
 
-                            // Inicializar con una fila
-                            addRow();
+                            <?php if ($isEditMode && !empty($reportItems)): ?>
+                                <?php foreach ($reportItems as $it): ?>
+                                    addRow(<?php echo json_encode($it['description']); ?>, <?php echo json_encode($it['price']); ?>);
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                // Inicializar con una fila
+                                addRow();
+                            <?php endif; ?>
 
                             // Validación antes de enviar
                             document.getElementById('reportForm').addEventListener('submit', function(e) {
@@ -645,7 +677,7 @@ h6.border-bottom {
                     <?php else: ?>
                         <!-- Vista de reporte ya completado -->
                         <div class="alert alert-secondary text-dark mb-3">
-                            <i class="bi bi-lock me-1"></i> Este ticket ya tiene un reporte generado. Los datos no pueden modificarse.
+                            <i class="bi bi-info-circle me-1"></i> Este ticket ya tiene un reporte generado. Puedes editarlo o descargar el PDF.
                         </div>
 
                         <?php if (!empty($reportData['observations'])): ?>
@@ -698,6 +730,9 @@ h6.border-bottom {
                         </div>
 
                         <div class="d-flex flex-column flex-md-row justify-content-end gap-2 mt-3">
+                            <a href="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>&action=edit" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil"></i> Editar Reporte
+                            </a>
                             <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-outline-primary btn-sm btn-pdf-action">
                                 <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
                             </a>
