@@ -1792,50 +1792,47 @@ function humanSize($bytes) {
 <!-- Modal de Firma Digital (Cliente) -->
 <?php if ($isSignatureLink): ?>
 <div class="modal fade" id="modalClientSignature" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 40px 100px rgba(0,0,0,0.4); overflow: hidden; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(20px);">
-            <div class="modal-header" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: #fff; border: none; padding: 28px 32px; position: relative; overflow: hidden;">
-                <!-- Decoración abstracta -->
-                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; filter: blur(40px);"></div>
-                
-                <h5 class="modal-title" style="font-weight: 800; display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; letter-spacing: -0.01em; font-size: 1.25rem;">
-                    <div style="width: 42px; height: 42px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-                        <i class="bi bi-vector-pen" style="font-size: 1.2rem; color: #fff;"></i>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0" style="border-radius: 24px; box-shadow: 0 25px 80px rgba(15, 23, 42, 0.15); overflow: hidden; background: #ffffff;">
+            
+            <div class="modal-header border-0" style="padding: 24px 32px 16px;">
+                <div class="d-flex align-items-center gap-3 w-100">
+                    <div style="width: 46px; height: 46px; border-radius: 14px; background: rgba(37, 99, 235, 0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+                        <i class="bi bi-pen-fill" style="font-size: 1.3rem;"></i>
                     </div>
-                    Confirmación de Servicio
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.8;"></button>
+                    <div class="flex-grow-1">
+                        <h4 class="modal-title mb-0" style="font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Firma de Conformidad</h4>
+                        <div style="color: #64748b; font-size: 0.9rem; font-weight: 600;">Ticket #<?php echo html($t['ticket_number']); ?></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: #f1f5f9; border-radius: 50%; padding: 12px; margin: 0;"></button>
+                </div>
             </div>
-            <div class="modal-body" style="padding: 32px; background: transparent;">
-                <div style="margin-bottom: 24px; border-left: 4px solid #3498db; padding-left: 16px;">
-                    <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 0;">
-                        Estimado(a) <strong style="color: #0f172a;"><?php echo html($navUserName); ?></strong>,
-                    </p>
-                    <p style="color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 4px 0 0;">
-                        Para finalizar formalmente el ticket <strong style="color: #3498db;">#<?php echo html($t['ticket_number']); ?></strong>, requerimos su firma de conformidad digital.
+
+            <div class="modal-body" style="padding: 16px 32px 24px;">
+                <div style="background: #f8fafc; border-radius: 16px; padding: 16px 20px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
+                    <p style="color: #334155; font-size: 0.95rem; line-height: 1.5; margin: 0; font-weight: 500;">
+                        Hola <strong style="color: #0f172a; font-weight: 700;"><?php echo html($navUserName); ?></strong>, para dar por solucionado tu requerimiento, te pedimos por favor dibujar tu firma a continuación. <span class="d-md-none text-primary" style="font-weight: 600;"><i class="bi bi-phone-landscape"></i> Gira tu dispositivo para mayor comodidad.</span>
                     </p>
                 </div>
                 
-
-                <div class="mb-2 d-flex justify-content-between align-items-center">
-                    <label class="form-label" style="font-weight: 700; color: #0f172a; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Firme en el recuadro:</label>
-                    <button type="button" id="btnClearSignatureClient" class="btn btn-link btn-sm p-0 text-decoration-none" style="font-weight: 700; color: #ef4444; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
-                        <i class="bi bi-arrow-counterclockwise" style="font-size: 1rem;"></i> Limpiar lienzo
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div style="font-weight: 800; color: #0f172a; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Lienzo de firma</div>
+                    <button type="button" id="btnClearSignatureClient" class="btn btn-sm" style="font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.1); border-radius: 8px; padding: 4px 12px; display: flex; align-items: center; gap: 6px; border: none; transition: background 0.2s;">
+                        <i class="bi bi-eraser-fill"></i> Limpiar
                     </button>
                 </div>
-                <div style="border: 2px dashed #cbd5e1; border-radius: 20px; background: #fff; overflow: hidden; position: relative; transition: border-color 0.3s; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);">
-                    <canvas id="clientSignatureCanvas" width="600" height="260" style="width: 100%; height: auto; cursor: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 style=%22fill:black%22><path d=%22M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z%22/></svg>'), auto; display: block; touch-action: none;"></canvas>
-                    <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #94a3b8; font-size: 0.75rem; pointer-events: none; opacity: 0.6; font-style: italic;">
-                        Utilice su mouse o pantalla táctil para firmar
+                <div style="border: 2px dashed #cbd5e1; border-radius: 20px; background: #fafafa; overflow: hidden; position: relative; transition: all 0.2s ease; height: 230px; width: 100%; touch-action: none;">
+                    <canvas id="clientSignatureCanvas" style="width: 100%; height: 100%; cursor: crosshair; touch-action: none; display: block;"></canvas>
+                    <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #94a3b8; font-size: 0.8rem; pointer-events: none; opacity: 0.6; font-weight: 600;">
+                        Dibuja tu firma en este espacio
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="background: rgba(248, 250, 252, 0.8); border-top: 1px solid #f1f5f9; padding: 24px 32px; gap: 16px;">
-                <button type="button" class="btn" data-bs-dismiss="modal" style="background: transparent; color: #94a3b8; font-weight: 700; border-radius: 16px; padding: 12px 24px; border: 1px solid #e2e8f0; font-size: 0.95rem;">Cerrar</button>
-                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="background: #3498db; color: #fff; font-weight: 800; border-radius: 16px; padding: 12px 36px; border: none; box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3); font-size: 0.95rem; transition: all 0.3s ease;">
-                    <span class="d-flex align-items-center gap-2">
-                        Finalizar y Cerrar <i class="bi bi-arrow-right"></i>
-                    </span>
+
+            <div class="modal-footer border-0" style="background: #f8fafc; padding: 20px 32px; gap: 12px; border-top: 1px solid #e2e8f0 !important;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-weight: 700; border-radius: 12px; padding: 10px 24px; color: #475569; border: 1px solid #e2e8f0; background: #ffffff;">Cancelar</button>
+                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="font-weight: 800; border-radius: 12px; padding: 10px 28px; background: #2563eb; border: none; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    Finalizar Ticket <i class="bi bi-check2-circle" style="font-size: 1.15rem;"></i>
                 </button>
             </div>
         </div>
@@ -1845,74 +1842,89 @@ function humanSize($bytes) {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var modalEl = document.getElementById('modalClientSignature');
+    if (!modalEl) return;
+    
     var modal = new bootstrap.Modal(modalEl);
     modal.show();
 
     var canvas = document.getElementById('clientSignatureCanvas');
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d', { willReadFrequently: true });
     var drawing = false;
     var hasDrawn = false;
     var lastX = 0, lastY = 0;
 
+    function resizeCanvas() {
+        var rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000';
+    }
+
+    modalEl.addEventListener('shown.bs.modal', function () {
+        resizeCanvas();
+    });
+
+    window.addEventListener('resize', function() {
+        if (hasDrawn) {
+            var data = canvas.toDataURL();
+            resizeCanvas();
+            var img = new Image();
+            img.onload = function() { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+            img.src = data;
+        } else {
+            resizeCanvas();
+        }
+    });
+
     function getPos(e) {
         var rect = canvas.getBoundingClientRect();
-        var scaleX = canvas.width / rect.width;
-        var scaleY = canvas.height / rect.height;
-        if (e.touches && e.touches.length > 0) {
-            return {
-                x: (e.touches[0].clientX - rect.left) * scaleX,
-                y: (e.touches[0].clientY - rect.top) * scaleY
-            };
-        }
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        var clientY = e.touches ? e.touches[0].clientY : e.clientY;
         return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
+            x: clientX - rect.left,
+            y: clientY - rect.top
         };
     }
 
-    canvas.addEventListener('mousedown', function(e) {
+    function startDraw(e) {
+        e.preventDefault();
         drawing = true;
         var pos = getPos(e);
-        lastX = pos.x; lastY = pos.y;
-    });
-    canvas.addEventListener('mousemove', function(e) {
+        lastX = pos.x; 
+        lastY = pos.y;
+    }
+
+    function draw(e) {
         if (!drawing) return;
+        e.preventDefault();
         var pos = getPos(e);
+        
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
         ctx.stroke();
-        lastX = pos.x; lastY = pos.y;
+        
+        lastX = pos.x; 
+        lastY = pos.y;
         hasDrawn = true;
-    });
-    canvas.addEventListener('mouseup', function() { drawing = false; });
-    canvas.addEventListener('mouseleave', function() { drawing = false; });
+    }
+
+    function stopDraw() {
+        drawing = false;
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
     
-    // Touch support
-    canvas.addEventListener('touchstart', function(e) {
-        drawing = true;
-        var pos = getPos(e);
-        lastX = pos.x; lastY = pos.y;
-        e.preventDefault();
-    }, {passive: false});
-    canvas.addEventListener('touchmove', function(e) {
-        if (!drawing) return;
-        var pos = getPos(e);
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        lastX = pos.x; lastY = pos.y;
-        hasDrawn = true;
-        e.preventDefault();
-    }, {passive: false});
-    canvas.addEventListener('touchend', function() { drawing = false; });
+    canvas.addEventListener('touchstart', startDraw, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchcancel', stopDraw);
 
     document.getElementById('btnClearSignatureClient').addEventListener('click', function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);

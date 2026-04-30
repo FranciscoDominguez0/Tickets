@@ -63,12 +63,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     if ($ticketView && isset($_GET['action']) && $_GET['action'] === 'request_signature') {
         if (roleHasPermission('ticket.close')) {
             // Asegurar que las columnas existan
-            if (!dbColumnExists('tickets', 'signature_token')) {
-                $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_token VARCHAR(64) NULL");
-            }
-            if (!dbColumnExists('tickets', 'signature_requested')) {
-                $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_requested TINYINT(1) DEFAULT 0");
-            }
+            try {
+                if (!dbColumnExists('tickets', 'signature_token')) {
+                    $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_token VARCHAR(64) NULL");
+                }
+            } catch (Throwable $e) {}
+            
+            try {
+                if (!dbColumnExists('tickets', 'signature_requested')) {
+                    $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_requested TINYINT(1) DEFAULT 0");
+                }
+            } catch (Throwable $e) {}
 
             $token = bin2hex(random_bytes(16));
             $stmtUpd = $mysqli->prepare("UPDATE tickets SET signature_requested = 1, signature_token = ? WHERE id = ? AND empresa_id = ?");

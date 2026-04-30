@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS `staff_locations` (
 
 -- Migración para el sistema de firma remota de clientes
 ALTER TABLE `tickets` 
-    ADD COLUMN IF NOT EXISTS `signature_token` VARCHAR(64) DEFAULT NULL,
-    ADD COLUMN IF NOT EXISTS `signature_requested` TINYINT(1) DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS `client_signature` VARCHAR(255) DEFAULT NULL,
-    ADD COLUMN IF NOT EXISTS `close_message` TEXT DEFAULT NULL,
-    ADD COLUMN IF NOT EXISTS `closed_at` DATETIME DEFAULT NULL;
+    ADD COLUMN `signature_token` VARCHAR(64) DEFAULT NULL,
+    ADD COLUMN `signature_requested` TINYINT(1) DEFAULT 0,
+    ADD COLUMN `client_signature` VARCHAR(255) DEFAULT NULL,
+    ADD COLUMN `close_message` TEXT DEFAULT NULL,
+    ADD COLUMN `closed_at` DATETIME DEFAULT NULL;
 
 -- Índices recomendados para optimizar la búsqueda por token
-CREATE INDEX IF NOT EXISTS `idx_signature_token` ON `tickets` (`signature_token`);
+CREATE INDEX `idx_signature_token` ON `tickets` (`signature_token`);
 
 ALTER TABLE `users` 
 ADD COLUMN `latitude` DECIMAL(10,8) NULL DEFAULT NULL AFTER `address`,
