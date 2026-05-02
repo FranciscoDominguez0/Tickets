@@ -55,14 +55,24 @@ if ($statusIdClosed > 0) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
-    $monthWhere = " AND DATE_FORMAT(t.closed, '%Y-%m') = ?";
+    // REGLA DE ARRASTRE:
+    // El filtro de mes SOLO aplica a tickets que tengan reporte finalizado
+    // (billing_status IN 'confirmed','visita_tecnica','cotizacion').
+    // Los cerrados sin reporte o con reporte 'pending' aparecen SIEMPRE.
+    $finalizedStatuses = "('confirmed','visita_tecnica','cotizacion')";
+    $reportJoinCount   = $hasReportsTable ? ' LEFT JOIN ticket_reports r ON r.ticket_id = t.id' : '';
+    // Condición: (no es finalizado) OR (es finalizado Y el mes de cierre coincide)
+    $monthWhere = $hasReportsTable
+        ? " AND (r.billing_status NOT IN $finalizedStatuses OR r.billing_status IS NULL OR DATE_FORMAT(t.closed, '%Y-%m') = ?)"
+        : " AND DATE_FORMAT(t.closed, '%Y-%m') = ?";
 
     // COUNT total
-    $countJoin = $search !== '' ? ' LEFT JOIN users u ON t.user_id = u.id' : '';
+    $countJoin = ' LEFT JOIN users u ON t.user_id = u.id';
     $countQuery = "SELECT COUNT(*) as total
                    FROM tickets t
                    JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
                    {$countJoin}
+                   {$reportJoinCount}
                    WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}";
     $cStmt = $mysqli->prepare($countQuery);
     if ($cStmt) {

@@ -19,11 +19,15 @@ if ($filterKey === null || !isset($filters[$filterKey])) {
 }
 $query = trim($_GET['q'] ?? '');
 
-// Filtro de fechas (aplica a todos los filtros)
+// Filtro de fechas
+// REGLA: El filtro de rango de fechas SOLO aplica a tickets que estén
+// cerrados (t.closed IS NOT NULL) Y facturados (billing_status = 'confirmed').
+// El resto de tickets (abiertos, pendientes, en camino, etc.) siempre aparecen
+// independientemente del rango seleccionado ("arrastre de mes").
 $defaultDateFrom = date('Y-m-01'); // Primer día del mes actual
 $defaultDateTo   = date('Y-m-d');  // Hoy
-// Columna de fecha a filtrar: t.closed para cerrados, t.created para el resto
-$dateCol = ($filterKey === 'closed') ? 't.closed' : 't.created';
+// Columna de fecha a filtrar para tickets cerrados+facturados
+$dateCol = 't.closed';
 if (isset($_GET['date_from']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['date_from'])) {
     $dateFrom = $_GET['date_from'];
 } else {
@@ -132,16 +136,33 @@ if ($query !== '') {
     $params[] = $like;
     $params[] = $like;
 }
-// Filtro por rango de fechas (aplica sobre la columna de fecha correspondiente al filtro)
-if ($dateFrom !== '') {
-    $whereClauses[] = $dateCol . ' >= ?';
-    $types .= 's';
-    $params[] = $dateFrom . ' 00:00:00';
-}
-if ($dateTo !== '') {
-    $whereClauses[] = $dateCol . ' <= ?';
-    $types .= 's';
-    $params[] = $dateTo . ' 23:59:59';
+// Filtro por rango de fechas:
+// SOLO restringe tickets CERRADOS (t.closed IS NOT NULL) Y FACTURADOS
+// (tr.billing_status = 'confirmed', via LEFT JOIN ya existente en el SELECT).
+// El resto SIEMPRE aparecen sin importar el rango ("arrastre de mes"):
+//   - Abiertos/pendientes/en camino: t.closed IS NULL
+//   - Cerrados sin reporte: tr.billing_status IS NULL
+//   - Cerrados con reporte pendiente: tr.billing_status = 'pending'
+if ($dateFrom !== '' || $dateTo !== '') {
+    // tr proviene del LEFT JOIN ticket_reports tr del SELECT principal.
+    // Si no hay reporte, tr.billing_status es NULL (nunca = 'confirmed').
+    // Estados finalizados: facturado, visita técnica, cotización.
+    // Estos tickets cerrados quedan restringidos al mes de cierre (no se arrastran).
+    $closedAndBilled = "(t.closed IS NOT NULL AND tr.billing_status IN ('confirmed', 'visita_tecnica', 'cotizacion'))";
+    if ($dateFrom !== '' && $dateTo !== '') {
+        $whereClauses[] = "(NOT $closedAndBilled OR ($dateCol >= ? AND $dateCol <= ?))";
+        $types .= 'ss';
+        $params[] = $dateFrom . ' 00:00:00';
+        $params[] = $dateTo . ' 23:59:59';
+    } elseif ($dateFrom !== '') {
+        $whereClauses[] = "(NOT $closedAndBilled OR $dateCol >= ?)";
+        $types .= 's';
+        $params[] = $dateFrom . ' 00:00:00';
+    } elseif ($dateTo !== '') {
+        $whereClauses[] = "(NOT $closedAndBilled OR $dateCol <= ?)";
+        $types .= 's';
+        $params[] = $dateTo . ' 23:59:59';
+    }
 }
 $whereSql = $whereClauses ? 'WHERE ' . implode(' AND ', $whereClauses) : '';
 
@@ -156,6 +177,7 @@ $sqlTotal = "SELECT COUNT(*) AS c
         FROM tickets t
         JOIN users u ON t.user_id = u.id
         LEFT JOIN staff s ON t.staff_id = s.id
+        LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id
         $whereSql";
 if ($types !== '') {
     $stmtTotal = $mysqli->prepare($sqlTotal);
@@ -186,6 +208,7 @@ if ($deptFilterAvailable && $selectedDeptId > 0) {
         . "FROM tickets t\n"
         . "JOIN users u ON t.user_id = u.id\n"
         . "LEFT JOIN staff s ON t.staff_id = s.id\n"
+        . "LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id\n"
         . "$whereSql";
     if ($types !== '') {
         $stmtCnt = $mysqli->prepare($sqlCnt);
