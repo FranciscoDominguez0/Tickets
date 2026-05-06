@@ -13,6 +13,9 @@ $open_user_query = $open_user_query ?? '';
 $open_user_results = $open_user_results ?? [];
 $open_hasTopics = $open_hasTopics ?? false;
 $open_topics = $open_topics ?? [];
+$walkinDefaultUserId = isset($walkinDefaultUserId) ? (int)$walkinDefaultUserId : 0;
+$walkinDefaultUser = $walkinDefaultUser ?? null;
+$walkinSelected = ($walkinDefaultUserId > 0 && $selected_uid > 0 && $selected_uid === $walkinDefaultUserId);
 
 $userName = '';
 $userEmail = '';
@@ -276,6 +279,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
         <input type="hidden" name="user_id" value="<?php echo $selected_uid ? (int)$selected_uid : ''; ?>">
         <input type="hidden" name="dept_id" id="open_dept_id" value="<?php echo (int)$selected_dept_id; ?>">
+        <input type="hidden" name="walkin_default_user_id" id="walkin_default_user_id" value="<?php echo (int)$walkinDefaultUserId; ?>">
 
         <!-- Cliente -->
         <div class="open-section">
@@ -295,6 +299,27 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
                     <button type="button" class="btn btn-outline-primary btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch">
                         <i class="bi bi-search"></i> Buscar
                     </button>
+                </div>
+
+                <?php if ($walkinDefaultUserId > 0 && $walkinDefaultUser): ?>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn_walkin_user" data-user-id="<?php echo (int)$walkinDefaultUserId; ?>" data-user-name="<?php echo html(trim((string)($walkinDefaultUser['firstname'] ?? '') . ' ' . (string)($walkinDefaultUser['lastname'] ?? ''))); ?>" data-user-email="<?php echo html((string)($walkinDefaultUser['email'] ?? '')); ?>" style="border-radius: 10px; font-weight: 700;">
+                            Usar cliente no recurrente
+                        </button>
+                    </div>
+                <?php endif; ?>
+
+                <div class="mt-3" id="walkin_fields" style="display: <?php echo $walkinSelected ? 'block' : 'none'; ?>;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono del cliente <span class="required">*</span></label>
+                            <input type="text" name="walkin_phone" class="form-control" value="<?php echo html($_POST['walkin_phone'] ?? ''); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dirección del cliente <span class="required">*</span></label>
+                            <input type="text" name="walkin_address" class="form-control" value="<?php echo html($_POST['walkin_address'] ?? ''); ?>">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -431,6 +456,44 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     // Prevención de doble envío
     var form = document.getElementById('form-open-ticket');
     var btnSubmit = document.getElementById('btnSubmitTicket');
+    var btnWalkin = document.getElementById('btn_walkin_user');
+    var walkinFields = document.getElementById('walkin_fields');
+    var walkinDefaultUserId = document.getElementById('walkin_default_user_id');
+    var userIdInput = form ? form.querySelector('input[name="user_id"]') : null;
+    var userDisplay = document.getElementById('open_user_display');
+    var userAvatar = document.getElementById('open_user_avatar');
+
+    var makeInitials = function (name) {
+      name = (name || '').trim();
+      if (!name) return 'U';
+      var parts = name.split(/\s+/).filter(Boolean);
+      var i1 = (parts[0] || '').charAt(0).toUpperCase();
+      var i2 = '';
+      if (parts.length > 1) i2 = (parts[1] || '').charAt(0).toUpperCase();
+      else if (name.length > 1) i2 = name.charAt(1).toUpperCase();
+      return (i1 + i2).trim() || 'U';
+    };
+
+    var showWalkin = function (show) {
+      if (!walkinFields) return;
+      walkinFields.style.display = show ? 'block' : 'none';
+    };
+
+    if (btnWalkin && userIdInput && userDisplay && userAvatar) {
+      btnWalkin.addEventListener('click', function () {
+        var uid = (btnWalkin.getAttribute('data-user-id') || '').toString();
+        var nm = (btnWalkin.getAttribute('data-user-name') || '').toString();
+        var em = (btnWalkin.getAttribute('data-user-email') || '').toString();
+
+        userIdInput.value = uid;
+        userDisplay.innerHTML = '<div class="user-name">' + nm.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+          + '<div class="user-email">' + em.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+        userAvatar.textContent = makeInitials(nm);
+
+        var defaultId = walkinDefaultUserId ? (walkinDefaultUserId.value || '').toString() : '';
+        showWalkin(uid !== '' && defaultId !== '' && uid === defaultId);
+      });
+    }
     if (form && btnSubmit) {
       form.addEventListener('submit', function (e) {
         if (form.getAttribute('data-submitting') === '1') {

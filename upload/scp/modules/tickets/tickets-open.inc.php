@@ -6,9 +6,23 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     $open_errors = [];
     $preSelectedUser = null;
 
+    $walkinDefaultUserId = (int)getAppSetting('tickets.walkin_default_user_id', '0');
+    $walkinDefaultUser = null;
+
     if (!roleHasPermission('ticket.create')) {
         $open_errors[] = 'No tienes permisos para crear tickets.';
     }
+
+    if ($walkinDefaultUserId > 0) {
+        $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE empresa_id = ? AND id = ? LIMIT 1");
+        if ($stmt) {
+            $stmt->bind_param('ii', $eid, $walkinDefaultUserId);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $walkinDefaultUser = $res ? $res->fetch_assoc() : null;
+        }
+    }
+
     if ($open_uid > 0) {
         $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email FROM users WHERE empresa_id = ? AND id = ? LIMIT 1");
         if ($stmt) {
@@ -39,6 +53,15 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             if ($staff_id === 0) $staff_id = null;
             $topic_id = isset($_POST['topic_id']) && is_numeric($_POST['topic_id']) ? (int) $_POST['topic_id'] : 0;
 
+            $walkin_phone = trim((string)($_POST['walkin_phone'] ?? ''));
+            $walkin_address = trim((string)($_POST['walkin_address'] ?? ''));
+            if (function_exists('cleanPlainText')) {
+                $walkin_phone = cleanPlainText($walkin_phone);
+                $walkin_address = cleanPlainText($walkin_address);
+            }
+
+            $isWalkin = ($walkinDefaultUserId > 0 && $user_id === $walkinDefaultUserId);
+
             $open_hasTopics = false;
             $open_topicsCount = 0;
             $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
@@ -56,59 +79,15 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 }
             }
 
-            // Si se seleccionó un tema, el departamento se toma del tema (si es válido)
-            if ($topic_id > 0) {
-                $stmtTopicDept = $mysqli->prepare('SELECT dept_id FROM help_topics WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                if ($stmtTopicDept) {
-                    $stmtTopicDept->bind_param('ii', $eid, $topic_id);
-                    if ($stmtTopicDept->execute()) {
-                        $tr = $stmtTopicDept->get_result()->fetch_assoc();
-                        $deptFromTopic = (int) ($tr['dept_id'] ?? 0);
-                        if ($deptFromTopic > 0) {
-                            $dept_id = $deptFromTopic;
-                        }
-                    }
-                }
-            }
-
-            // Si no se determinó dept, usar General (fallback) para evitar errores en el alta.
-            if ($dept_id <= 0 && $generalDeptId > 0) {
-                $dept_id = $generalDeptId;
-            }
-
-            // Asignación automática por departamento (si no se eligió agente)
-            if ($staff_id === null && $dept_id > 0) {
-                $hasDeptDefaultStaff = false;
-                $chkCol = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
-                if ($chkCol && $chkCol->num_rows > 0) $hasDeptDefaultStaff = true;
-
-                if ($hasDeptDefaultStaff) {
-                    $defaultStaffId = 0;
-                    $stmtDef = $mysqli->prepare('SELECT default_staff_id FROM departments WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                    if ($stmtDef) {
-                        $stmtDef->bind_param('ii', $eid, $dept_id);
-                        if ($stmtDef->execute()) {
-                            $defaultStaffId = (int)($stmtDef->get_result()->fetch_assoc()['default_staff_id'] ?? 0);
-                        }
-                    }
-
-                    if ($defaultStaffId > 0) {
-                        $allowed = $staffBelongsToDept((int)$defaultStaffId, (int)$dept_id, (int)$generalDeptId);
-                        if ($allowed) {
-                            $staff_id = $defaultStaffId;
-                            // Forzar que se ejecute el bloque de notificación más abajo (simula asignación manual)
-                            $forceNotifyDeptDefault = true;
-                        } else {
-                            addLog('ticket_dept_default_not_allowed', 'El agente por defecto no pertenece al departamento', 'ticket', null, 'staff', $defaultStaffId);
-                        }
-                    }
-                }
-            }
-
             if ($user_id <= 0) $open_errors[] = 'Seleccione un usuario.';
             if ($subject === '') $open_errors[] = 'El asunto es obligatorio.';
             if ($open_hasTopics && $open_topicsCount > 0 && $topic_id <= 0) $open_errors[] = 'Seleccione un tema.';
             if ($dept_id <= 0) $open_errors[] = 'No se pudo determinar el departamento del ticket.';
+
+            if ($isWalkin) {
+                if ($walkin_phone === '') $open_errors[] = 'El teléfono del cliente es obligatorio.';
+                if ($walkin_address === '') $open_errors[] = 'La dirección del cliente es obligatoria.';
+            }
 
             $maxOpenTicketsSetting = (int)getAppSetting('tickets.max_open_tickets', '0');
             if ($maxOpenTicketsSetting > 0 && $user_id > 0) {
@@ -242,133 +221,156 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                 error_log('[tickets] INSERT tickets via scp/modules/tickets.php open uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' user_id=' . (string)$user_id . ' dept_id=' . (string)$dept_id);
                 $hasTopicCol = false;
                 $hasTopicsTable = false;
+                $hasWalkinPhoneCol = false;
+                $hasWalkinAddressCol = false;
                 $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
                 if ($c && $c->num_rows > 0) $hasTopicCol = true;
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'walkin_phone'");
+                if ($c && $c->num_rows > 0) $hasWalkinPhoneCol = true;
+                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'walkin_address'");
+                if ($c && $c->num_rows > 0) $hasWalkinAddressCol = true;
                 $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
                 if ($t && $t->num_rows > 0) $hasTopicsTable = true;
 
                 $defaultStatusId = (int)getAppSetting('tickets.default_ticket_status_id', '1');
                 if ($defaultStatusId <= 0) $defaultStatusId = 1;
 
-                if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (status_id), i (priority_id), s (subject)
-                    $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
-                } else {
-                    $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                    // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (status_id), i (priority_id), s (subject)
-                    $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject);
+                if ($isWalkin && (!$hasWalkinPhoneCol || !$hasWalkinAddressCol)) {
+                    $open_errors[] = 'Faltan columnas para guardar teléfono/dirección del cliente no recurrente (walk-in). Ejecute el ALTER TABLE correspondiente.';
                 }
-                if ($stmt->execute()) {
-                    $new_tid = (int) $mysqli->insert_id;
-                    // Notificación interna si el estado inicial es relevante
-                    if ($defaultStatusId === 2 || $defaultStatusId === 3) {
-                        $statusName = ($defaultStatusId === 2) ? 'En Camino' : 'En Proceso';
-                        notifyStatusChangeToAdminRecipients($new_tid, $statusName);
-                    }
-                    if ($threadsHasEmpresa) {
-                        $stmtThread = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
+
+                if (empty($open_errors)) {
+                    if ($hasTopicCol && $hasTopicsTable && $topic_id > 0) {
+                        if ($isWalkin && $hasWalkinPhoneCol && $hasWalkinAddressCol) {
+                            $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, walkin_phone, walkin_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                            $stmt->bind_param('isiiiiiisss', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject, $walkin_phone, $walkin_address);
+                        } else {
+                            $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, topic_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                            // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (topic_id), i (status_id), i (priority_id), s (subject)
+                            $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $topic_id, $defaultStatusId, $priority_id, $subject);
+                        }
                     } else {
-                        $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
+                        if ($isWalkin && $hasWalkinPhoneCol && $hasWalkinAddressCol) {
+                            $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, walkin_phone, walkin_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                            $stmt->bind_param('isiiiiiisss', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject, $walkin_phone, $walkin_address);
+                        } else {
+                            $stmt = $mysqli->prepare("INSERT INTO tickets (empresa_id, ticket_number, user_id, staff_id, dept_id, status_id, priority_id, subject, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                            // tipos: s (ticket_number), i (user_id), i (staff_id), i (dept_id), i (status_id), i (priority_id), s (subject)
+                            $stmt->bind_param('isiiiiiis', $eid, $ticket_number, $user_id, $staff_id, $dept_id, $defaultStatusId, $priority_id, $subject);
+                        }
                     }
-                    if ($stmtThread) {
+
+                    if ($stmt && $stmt->execute()) {
+                        $new_tid = (int) $mysqli->insert_id;
+                        // Notificación interna si el estado inicial es relevante
+                        if ($defaultStatusId === 2 || $defaultStatusId === 3) {
+                            $statusName = ($defaultStatusId === 2) ? 'En Camino' : 'En Proceso';
+                            notifyStatusChangeToAdminRecipients($new_tid, $statusName);
+                        }
                         if ($threadsHasEmpresa) {
-                            $stmtThread->bind_param('ii', $eid, $new_tid);
+                            $stmtThread = $mysqli->prepare('INSERT INTO threads (empresa_id, ticket_id, created) VALUES (?, ?, NOW())');
                         } else {
-                            $stmtThread->bind_param('i', $new_tid);
+                            $stmtThread = $mysqli->prepare('INSERT INTO threads (ticket_id, created) VALUES (?, NOW())');
                         }
-                        $stmtThread->execute();
-                    }
-                    $thread_id = (int) $mysqli->insert_id;
-                    if ($body !== '') {
-                        $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
-                        if ($entriesHasEmpresa) {
-                            $stmtE = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, 0, NOW())");
-                            $stmtE->bind_param('iiis', $eid, $thread_id, $staff_id_entry, $body);
-                        } else {
-                            $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
-                            $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
-                        }
-                        $stmtE->execute();
-                    }
-
-                    // Notificación + correo al agente asignado (si se creó con asignación o por departamento por defecto)
-                    if (($staff_id !== null && (int)$staff_id > 0) || ($forceNotifyDeptDefault ?? false)) {
-                        $val = (int) ($staff_id ?? 0);
-                        if ($forceNotifyDeptDefault && $val <= 0) $val = (int)($defaultStaffId ?? 0);
-                        if ($val <= 0) {
-                            // No se puede notificar, omitir
-                        } else {
-                            addLog('ticket_assigned', 'Asignación inicial en creación de ticket' . ($forceNotifyDeptDefault ? ' (dept default)' : ''), 'ticket', $new_tid, 'staff', $val);
-
-                            // Notificación en BD
-                            $message = 'Se te asignó el ticket ' . (string)$ticket_number . ': ' . (string)$subject;
-                            $type = 'ticket_assigned';
-                            $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
-                            if ($stmtN) {
-                                $stmtN->bind_param('issi', $val, $message, $type, $new_tid);
-                                $stmtN->execute();
+                        if ($stmtThread) {
+                            if ($threadsHasEmpresa) {
+                                $stmtThread->bind_param('ii', $eid, $new_tid);
                             } else {
-                                addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
+                                $stmtThread->bind_param('i', $new_tid);
                             }
+                            $stmtThread->execute();
+                        }
+                        $thread_id = (int) $mysqli->insert_id;
+                        if ($body !== '') {
+                            $staff_id_entry = (int) ($_SESSION['staff_id'] ?? 0);
+                            if ($entriesHasEmpresa) {
+                                $stmtE = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, 0, NOW())");
+                                $stmtE->bind_param('iiis', $eid, $thread_id, $staff_id_entry, $body);
+                            } else {
+                                $stmtE = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
+                                $stmtE->bind_param('iis', $thread_id, $staff_id_entry, $body);
+                            }
+                            $stmtE->execute();
+                        }
 
-                            // Correo al agente usando el mismo formato que la asignación manual
-                            $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
-                            if ($stmtE) {
-                                $stmtE->bind_param('ii', $eid, $val);
-                                if ($stmtE->execute()) {
-                                    $r = $stmtE->get_result()->fetch_assoc();
-                                    if ($r && !empty($r['email'])) {
-                                        $emailEnabled = ((string)getAppSetting('staff.' . (int)$val . '.email_ticket_assigned', '1') === '1');
-                                        if ($emailEnabled) {
-                                            $to = trim((string)$r['email']);
-                                            if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
-                                                $staffName = trim((string)($r['firstname'] ?? '') . ' ' . (string)($r['lastname'] ?? ''));
-                                                if ($staffName === '') $staffName = 'Agente';
-                                                $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int)$new_tid;
-                                                $deptLabel = '';
-                                                foreach ($open_departments as $openDept) {
-                                                    if ((int)($openDept['id'] ?? 0) === (int)$dept_id) {
-                                                        $deptLabel = (string)($openDept['name'] ?? '');
-                                                        break;
+                        // Notificación + correo al agente asignado (si se creó con asignación o por departamento por defecto)
+                        if (($staff_id !== null && (int)$staff_id > 0) || ($forceNotifyDeptDefault ?? false)) {
+                            $val = (int) ($staff_id ?? 0);
+                            if ($forceNotifyDeptDefault && $val <= 0) $val = (int)($defaultStaffId ?? 0);
+                            if ($val <= 0) {
+                                // No se puede notificar, omitir
+                            } else {
+                                addLog('ticket_assigned', 'Asignación inicial en creación de ticket' . ($forceNotifyDeptDefault ? ' (dept default)' : ''), 'ticket', $new_tid, 'staff', $val);
+
+                                // Notificación en BD
+                                $message = 'Se te asignó el ticket ' . (string)$ticket_number . ': ' . (string)$subject;
+                                $type = 'ticket_assigned';
+                                $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                                if ($stmtN) {
+                                    $stmtN->bind_param('issi', $val, $message, $type, $new_tid);
+                                    $stmtN->execute();
+                                } else {
+                                    addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
+                                }
+
+                                // Correo al agente usando el mismo formato que la asignación manual
+                                $stmtE = $mysqli->prepare('SELECT firstname, lastname, email FROM staff WHERE empresa_id = ? AND id = ? AND is_active = 1 LIMIT 1');
+                                if ($stmtE) {
+                                    $stmtE->bind_param('ii', $eid, $val);
+                                    if ($stmtE->execute()) {
+                                        $r = $stmtE->get_result()->fetch_assoc();
+                                        if ($r && !empty($r['email'])) {
+                                            $emailEnabled = ((string)getAppSetting('staff.' . (int)$val . '.email_ticket_assigned', '1') === '1');
+                                            if ($emailEnabled) {
+                                                $to = trim((string)$r['email']);
+                                                if (filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                                                    $staffName = trim((string)($r['firstname'] ?? '') . ' ' . (string)($r['lastname'] ?? ''));
+                                                    if ($staffName === '') $staffName = 'Agente';
+                                                    $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tickets.php?id=' . (int)$new_tid;
+                                                    $deptLabel = '';
+                                                    foreach ($open_departments as $openDept) {
+                                                        if ((int)($openDept['id'] ?? 0) === (int)$dept_id) {
+                                                            $deptLabel = (string)($openDept['name'] ?? '');
+                                                            break;
+                                                        }
+                                                    }
+                                                    $subj = '[Asignación] ' . (string)$ticket_number . ' - ' . (string)$subject;
+                                                    $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                                        . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
+                                                        . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
+                                                        . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticket_number) . '</td></tr>'
+                                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$subject) . '</td></tr>'
+                                                        . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars($deptLabel) . '</td></tr>'
+                                                        . '</table>'
+                                                        . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
+                                                        . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                                        . '</div>';
+                                                    $bodyText = 'Se te asignó un ticket: ' . (string)$ticket_number . "\n" . 'Asunto: ' . (string)$subject . "\n" . 'Ver: ' . $viewUrl;
+                                                    $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                                    if (!$mailOk) {
+                                                        $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                        addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
                                                     }
                                                 }
-                                                $subj = '[Asignación] ' . (string)$ticket_number . ' - ' . (string)$subject;
-                                                $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
-                                                    . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó un ticket</h2>'
-                                                    . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó el siguiente ticket:</p>'
-                                                    . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
-                                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticket_number) . '</td></tr>'
-                                                    . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$subject) . '</td></tr>'
-                                                    . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars($deptLabel) . '</td></tr>'
-                                                    . '</table>'
-                                                    . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver ticket</a></p>'
-                                                    . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
-                                                    . '</div>';
-                                                $bodyText = 'Se te asignó un ticket: ' . (string)$ticket_number . "\n" . 'Asunto: ' . (string)$subject . "\n" . 'Ver: ' . $viewUrl;
-                                                $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                                if (!$mailOk) {
-                                                    $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                                    addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
-                                                }
                                             }
+                                        } else {
+                                            addLog('ticket_assign_email_missing', 'Agente sin email válido', 'ticket', $new_tid, 'staff', $val);
                                         }
                                     } else {
-                                        addLog('ticket_assign_email_missing', 'Agente sin email válido', 'ticket', $new_tid, 'staff', $val);
+                                        addLog('ticket_assign_email_lookup_failed', 'No se pudo ejecutar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
                                     }
                                 } else {
-                                    addLog('ticket_assign_email_lookup_failed', 'No se pudo ejecutar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
+                                    addLog('ticket_assign_email_lookup_failed', 'No se pudo preparar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
                                 }
-                            } else {
-                                addLog('ticket_assign_email_lookup_failed', 'No se pudo preparar SELECT staff(email)', 'ticket', $new_tid, 'staff', $val);
                             }
                         }
-                    }
 
-                    header('Location: tickets.php?id=' . $new_tid . '&msg=created');
-                    exit;
+                        header('Location: tickets.php?id=' . $new_tid . '&msg=created');
+                        exit;
+                    }
+                    $open_errors[] = 'Error al crear el ticket.';
                 }
-                $open_errors[] = 'Error al crear el ticket.';
             }
         }
     }

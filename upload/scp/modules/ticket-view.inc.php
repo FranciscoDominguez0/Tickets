@@ -848,18 +848,40 @@ if ($ticketClientSignaturePath !== '') {
             </div>
         </div>
         <div>
+            <?php
+            $isWalkinTicket = (!empty($t['walkin_phone']) || !empty($t['walkin_address']));
+            ?>
+
+            <?php if (!$isWalkinTicket): ?>
             <div class="field">
                 <label>Usuario</label>
                 <div class="value">
                     <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?></a>
                 </div>
             </div>
+            <?php endif; ?>
+
+            <?php if ($isWalkinTicket): ?>
+            <div class="field">
+                <label>Cliente no recurrente</label>
+                <div class="value">
+                    <?php if (!empty($t['walkin_phone'])): ?>
+                        <div><strong>Tel:</strong> <?php echo html((string)$t['walkin_phone']); ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($t['walkin_address'])): ?>
+                        <div><strong>Dir:</strong> <?php echo html((string)$t['walkin_address']); ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (!empty($t['user_address']) || (!empty($t['user_latitude']) && !empty($t['user_longitude']))): ?>
             <div class="field">
                 <label>Ubicación</label>
                 <div class="value">
                     <?php
-                        $hasCoords = !empty($t['user_latitude']) && !empty($t['user_longitude']);
+                        $addrForNav = ($isWalkinTicket && !empty($t['walkin_address'])) ? (string)$t['walkin_address'] : (string)($t['user_address'] ?? '');
+                        $hasCoords = (!$isWalkinTicket) && !empty($t['user_latitude']) && !empty($t['user_longitude']);
                         $lat = $hasCoords ? (float)$t['user_latitude'] : null;
                         $lng = $hasCoords ? (float)$t['user_longitude'] : null;
 
@@ -867,8 +889,8 @@ if ($ticketClientSignaturePath !== '') {
                             $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
                             $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
                         } else {
-                            $wazeApp = 'waze://?q=' . urlencode($t['user_address']) . '&navigate=yes';
-                            $wazeWeb = 'https://waze.com/ul?q=' . urlencode($t['user_address']) . '&navigate=yes';
+                            $wazeApp = 'waze://?q=' . urlencode($addrForNav) . '&navigate=yes';
+                            $wazeWeb = 'https://waze.com/ul?q=' . urlencode($addrForNav) . '&navigate=yes';
                         }
                     ?>
                     <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
@@ -907,7 +929,7 @@ if ($ticketClientSignaturePath !== '') {
                 <?php if ($isRedesInformatica): ?>
                     <label>AnyDesk</label>
                     <div class="value"><?php echo html($t['anydesk'] ?? '—'); ?></div>
-                <?php else: ?>
+                <?php elseif (!$isWalkinTicket): ?>
                     <label>Fuente</label>
                     <div class="value">Web</div>
                 <?php endif; ?>
