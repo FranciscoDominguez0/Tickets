@@ -256,12 +256,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                     Correos
                                 </a>
                             </li>
-                            <li>
-                                <a href="emailsettings.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'settings') ? 'active' : ''; ?>">
-                                    <span class="icon"><i class="bi bi-gear"></i></span>
-                                    Configuración
-                                </a>
-                            </li>
+
                             <li>
                                 <a href="banlist.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'banlist') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-slash-circle"></i></span>
