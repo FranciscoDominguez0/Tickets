@@ -572,22 +572,33 @@ ob_start();
                                             </div>
                                         </td>
 
-                                        <!-- VISTA ESCRITORIO -->
-                                        <td class="d-none d-md-table-cell">
-                                            <strong><?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?></strong>
-                                            <?php if (($a['role'] ?? '') !== ''): ?>
-                                                <div class="text-muted small"><?php echo html((string)$a['role']); ?></div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td class="d-none d-md-table-cell"><?php echo html($a['email']); ?></td>
-                                        <td class="d-none d-md-table-cell">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?>>
+                                        <!-- VISTA ESCRITORIO (Premium) -->
+                                        <td class="d-none d-md-table-cell align-middle" style="padding: 16px;">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex-shrink: 0;">
+                                                    <?php echo strtoupper(substr($a['name'] !== '' ? $a['name'] : 'U', 0, 1)); ?>
+                                                </div>
+                                                <div style="line-height: 1.2;">
+                                                    <div style="font-weight: 800; color: #0f172a; font-size: 1.05rem;">
+                                                        <?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?>
+                                                    </div>
+                                                    <?php if (($a['role'] ?? '') !== ''): ?>
+                                                        <span style="display: inline-block; background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px;">
+                                                            <?php echo html((string)$a['role']); ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td class="d-none d-md-table-cell">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?>>
+                                        <td class="d-none d-md-table-cell align-middle" style="color: #64748b; font-weight: 500;"><?php echo html($a['email']); ?></td>
+                                        <td class="d-none d-md-table-cell align-middle">
+                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                            </div>
+                                        </td>
+                                        <td class="d-none d-md-table-cell align-middle">
+                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
                                             </div>
                                         </td>
                                     </tr>

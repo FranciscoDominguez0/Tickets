@@ -125,7 +125,18 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     
                     $emailBodyText = "Hola $clientName,\n\nRequerimos su firma de conformidad para el ticket #$ticketNo.\n\nFirme aquí: $signUrl\n\nAtentamente,\n" . APP_NAME;
                     
-                    Mailer::send($clientEmail, $emailSubject, $emailBodyHtml, $emailBodyText);
+                    if (function_exists('enqueueEmailJob')) {
+                        enqueueEmailJob($clientEmail, $emailSubject, $emailBodyHtml, $emailBodyText, [
+                            'empresa_id' => (int)$eid,
+                            'context_type' => 'ticket_signature_request',
+                            'context_id' => (int)$tid,
+                        ]);
+                        if (function_exists('triggerEmailQueueWorkerAsync')) {
+                            triggerEmailQueueWorkerAsync();
+                        }
+                    } else {
+                        Mailer::send($clientEmail, $emailSubject, $emailBodyHtml, $emailBodyText);
+                    }
                 }
                 
                 header("Location: tickets.php?id=$tid&msg=sig_requested");
@@ -662,7 +673,18 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                     . '</div>';
 
                                 $bodyText = 'Se te asignó un ticket: ' . $ticketNo . "\n" . 'Asunto: ' . (string)($ticketView['subject'] ?? '') . "\n" . 'Ver: ' . $viewUrl;
-                                Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                if (function_exists('enqueueEmailJob')) {
+                                    enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, [
+                                        'empresa_id' => (int)$eid,
+                                        'context_type' => 'ticket_assigned_staff',
+                                        'context_id' => (int)$tid,
+                                    ]);
+                                    if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                        triggerEmailQueueWorkerAsync();
+                                    }
+                                } else {
+                                    Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                }
                             }
                         }
                     }
