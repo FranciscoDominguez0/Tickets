@@ -862,9 +862,10 @@ if ($ticketClientSignaturePath !== '') {
             <?php endif; ?>
 
             <?php if ($isWalkinTicket): ?>
-            <div class="field">
+            <div class="field field-full-mobile">
                 <label>Cliente no recurrente</label>
                 <div class="value">
+                    <div><strong>Nombre:</strong> <?php echo html((string)($t['subject'] ?? '')); ?></div>
                     <?php if (!empty($t['walkin_phone'])): ?>
                         <div><strong>Tel:</strong> <?php echo html((string)$t['walkin_phone']); ?></div>
                     <?php endif; ?>

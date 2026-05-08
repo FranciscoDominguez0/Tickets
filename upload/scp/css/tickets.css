@@ -1869,6 +1869,11 @@ tr.ticket-row.is-selected td {
         padding: 14px;
         border-radius: 12px;
         margin-bottom: 16px;
+        grid-auto-flow: dense;
+    }
+
+    .ticket-view-overview .field-full-mobile {
+        grid-column: 1 / -1;
     }
 
     .ticket-view-overview>div {
@@ -2153,6 +2158,7 @@ tr.ticket-row.is-selected td {
         gap: 8px 12px;
         grid-template-columns: 1fr 1fr; /* Dos columnas para aprovechar el ancho */
         margin-bottom: 16px;
+        grid-auto-flow: dense;
     }
     .ticket-view-overview .field {
         margin-bottom: 0; /* Eliminar margen para usar espacio hacia abajo */

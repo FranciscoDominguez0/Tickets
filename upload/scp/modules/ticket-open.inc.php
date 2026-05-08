@@ -329,8 +329,8 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
             <div class="section-title"><i class="bi bi-ticket-perforated"></i> Información del Ticket</div>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Asunto <span class="required">*</span></label>
-                    <input type="text" name="subject" class="form-control" placeholder="Describe brevemente el problema" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
+                    <label class="form-label"><?php echo $walkinSelected ? 'Nombre del cliente' : 'Asunto'; ?> <span class="required">*</span></label>
+                    <input type="text" name="subject" class="form-control" placeholder="<?php echo $walkinSelected ? 'Nombre del cliente no recurrente' : 'Describe brevemente el problema'; ?>" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Fuente:</label>
@@ -477,6 +477,14 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     var showWalkin = function (show) {
       if (!walkinFields) return;
       walkinFields.style.display = show ? 'block' : 'none';
+      var subjectInput = document.querySelector('input[name="subject"]');
+      if (subjectInput) {
+        var subjectLabel = subjectInput.previousElementSibling;
+        if (subjectLabel && subjectLabel.tagName === 'LABEL') {
+          subjectLabel.innerHTML = show ? 'Nombre del cliente <span class="required">*</span>' : 'Asunto <span class="required">*</span>';
+        }
+        subjectInput.placeholder = show ? 'Nombre del cliente no recurrente' : 'Describe brevemente el problema';
+      }
     };
 
     if (btnWalkin && userIdInput && userDisplay && userAvatar) {
