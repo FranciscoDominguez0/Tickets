@@ -1038,16 +1038,12 @@ if (!empty($_GET['org'])) {
                                     <input type="text" class="form-control" name="org_name" required value="<?php echo html($orgInfo['name']); ?>">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Sitio Web</label>
-                                    <input type="text" class="form-control" name="org_website" value="<?php echo html($orgInfo['website'] ?? ''); ?>">
-                                </div>
-                                <div class="col-md-6">
                                     <label class="form-label">Teléfono</label>
                                     <input type="text" class="form-control" name="org_phone" value="<?php echo html($orgInfo['phone'] ?? ''); ?>">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Ext</label>
-                                    <input type="text" class="form-control" name="org_phone_ext" value="<?php echo html($orgInfo['phone_ext'] ?? ''); ?>">
+                                    <label class="form-label">Sitio Web</label>
+                                    <input type="text" class="form-control" name="org_website" value="<?php echo html($orgInfo['website'] ?? ''); ?>">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Dirección</label>
@@ -1292,22 +1288,18 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                         <textarea class="org-form-control" id="org_address" name="org_address" rows="2" placeholder="Dirección"><?php echo html($_POST['org_address'] ?? ''); ?></textarea>
                     </div>
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="org-form-group">
                                 <label for="org_phone" class="org-form-label"><i class="bi bi-telephone"></i> Phone</label>
                                 <input type="text" class="org-form-control" id="org_phone" name="org_phone" placeholder="Teléfono" value="<?php echo html($_POST['org_phone'] ?? ''); ?>">
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="org-form-group">
-                                <label for="org_phone_ext" class="org-form-label"><i class="bi bi-telephone-forward"></i> EXT</label>
-                                <input type="text" class="org-form-control" id="org_phone_ext" name="org_phone_ext" placeholder="Ext." value="<?php echo html($_POST['org_phone_ext'] ?? ''); ?>">
+                                <label for="org_website" class="org-form-label"><i class="bi bi-globe"></i> Website</label>
+                                <input type="text" class="org-form-control" id="org_website" name="org_website" placeholder="https://www.ejemplo.com" value="<?php echo html($_POST['org_website'] ?? ''); ?>">
                             </div>
                         </div>
-                    </div>
-                    <div class="org-form-group">
-                        <label for="org_website" class="org-form-label"><i class="bi bi-globe"></i> Website</label>
-                        <input type="text" class="org-form-control" id="org_website" name="org_website" placeholder="https://www.ejemplo.com" value="<?php echo html($_POST['org_website'] ?? ''); ?>">
                     </div>
                     <div class="org-form-group">
                         <label for="org_notes" class="org-form-label"><i class="bi bi-file-text"></i> Internal Notes</label>

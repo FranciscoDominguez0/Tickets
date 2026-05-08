@@ -54,6 +54,80 @@ if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_f
     unset($_SESSION['users_import_flash']);
 }
 
+?>
+<style>
+/* Estilos Premium para Modales de Usuarios (Inspirado en Organizaciones) */
+.user-premium-modal .modal-content {
+    border-radius: 20px !important;
+    border: none !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
+    overflow: hidden;
+}
+.user-premium-modal .modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 20px 24px !important;
+}
+.user-premium-modal .modal-title {
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    font-size: 1.25rem;
+}
+.user-premium-modal .modal-body {
+    padding: 24px !important;
+}
+.user-premium-modal .form-label {
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 8px !important;
+}
+.user-premium-modal .form-control {
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease !important;
+    background-color: #f8fafc !important;
+}
+.user-premium-modal .form-control:focus {
+    background-color: #fff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    outline: none;
+}
+.user-premium-modal .modal-footer {
+    background: #f8fafc !important;
+    border-top: 1px solid #e2e8f0 !important;
+    padding: 20px 24px !important;
+}
+.user-premium-modal .btn-primary {
+    background-color: #2563eb !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 12px 28px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    transition: all 0.2s ease !important;
+}
+.user-premium-modal .btn-primary:hover {
+    background-color: #1d4ed8 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
+}
+.user-premium-modal .btn-secondary {
+    border-radius: 12px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    background: #fff !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+</style>
+<?php
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'import_users') {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $imported = 0;
@@ -217,7 +291,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {
     $add_errors = [];
     $email      = trim($_POST['email'] ?? '');
+    $firstname  = trim($_POST['firstname'] ?? '');
     $lastname   = trim($_POST['lastname'] ?? '');
+    $phone      = trim($_POST['phone'] ?? '');
     $address    = trim($_POST['address'] ?? '');
     $company    = '';
     $password   = $_POST['password'] ?? '';
@@ -243,8 +319,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
     if (empty($add_errors)) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
-        $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, address, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $company, $status);
+        if ($usersHasPhone) {
+            $phoneVal = $phone !== '' ? $phone : null;
+            $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, address, password, firstname, lastname, phone, company, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('issssssss', $eid, $email, $address, $hash, $firstname, $lastname, $phoneVal, $company, $status);
+        } else {
+            $stmt = $mysqli->prepare("INSERT INTO users (empresa_id, email, address, password, firstname, lastname, company, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $company, $status);
+        }
         if ($stmt->execute()) {
             header('Location: users.php?added=1');
             exit;
@@ -1410,48 +1492,58 @@ $statusBadges = [
     <?php endif; ?>
 
     <!-- Modal Añadir usuario -->
-    <div class="modal fade" id="modalAddUser" tabindex="-1" aria-labelledby="modalAddUserLabel" aria-hidden="true">
+    <div class="modal fade user-premium-modal" id="modalAddUser" tabindex="-1" aria-labelledby="modalAddUserLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.12);">
-                <div class="modal-header" style="border-bottom: 1px solid #e2e8f0;">
-                    <h5 class="modal-title" id="modalAddUserLabel"><i class="bi bi-person-plus"></i> Añadir usuario</h5>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAddUserLabel"><i class="bi bi-person-plus me-2" style="color: #2563eb;"></i> Añadir nuevo usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form method="post" action="users.php">
                     <input type="hidden" name="do" value="add">
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-body">
-                        <p class="text-muted small mb-3">El usuario podrá iniciar sesión de inmediato (no se requiere confirmación por correo).</p>
-                        <div class="mb-3">
-                            <label for="add-email" class="form-label">Email <span class="text-danger">*</span></label>
+                        <div class="mb-4">
+                            <label for="add-email" class="form-label"><i class="bi bi-envelope me-1" style="color: #2563eb;"></i> Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="add-email" name="email" required placeholder="usuario@ejemplo.com" value="<?php echo html($_POST['email'] ?? ''); ?>">
                         </div>
+                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="add-firstname" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <div class="col-md-6 mb-4">
+                                <label for="add-firstname" class="form-label"><i class="bi bi-person me-1" style="color: #2563eb;"></i> Nombre <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-firstname" name="firstname" required placeholder="Nombre" value="<?php echo html($_POST['firstname'] ?? ''); ?>">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="add-lastname" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <div class="col-md-6 mb-4">
+                                <label for="add-lastname" class="form-label"><i class="bi bi-person me-1" style="color: #2563eb;"></i> Apellido <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-lastname" name="lastname" required placeholder="Apellido" value="<?php echo html($_POST['lastname'] ?? ''); ?>">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="add-address" class="form-label">Dirección <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="add-address" name="address" required placeholder="Dirección completa" value="<?php echo html($_POST['address'] ?? ''); ?>">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="add-phone" class="form-label"><i class="bi bi-telephone me-1" style="color: #2563eb;"></i> Teléfono</label>
+                                <input type="text" class="form-control" id="add-phone" name="phone" placeholder="Ej. 6621-8585" value="<?php echo html($_POST['phone'] ?? ''); ?>">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="add-address" class="form-label"><i class="bi bi-geo-alt me-1" style="color: #2563eb;"></i> Dirección <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="add-address" name="address" required placeholder="Dirección completa" value="<?php echo html($_POST['address'] ?? ''); ?>">
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="add-password" class="form-label">Contraseña <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="add-password" name="password" required minlength="6" placeholder="Mínimo 6 caracteres">
-                        </div>
-                        <div class="mb-3">
-                            <label for="add-password2" class="form-label">Repetir contraseña <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="add-password2" name="password2" required minlength="6" placeholder="Repetir contraseña">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="add-password" class="form-label"><i class="bi bi-shield-lock me-1" style="color: #2563eb;"></i> Contraseña <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="add-password" name="password" required minlength="6" placeholder="Mínimo 6 caracteres">
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label for="add-password2" class="form-label"><i class="bi bi-shield-check me-1" style="color: #2563eb;"></i> Repetir <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="add-password2" name="password2" required minlength="6" placeholder="Repetir">
+                            </div>
                         </div>
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #e2e8f0;">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Añadir usuario</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus-fill me-2"></i> Crear usuario</button>
                     </div>
                 </form>
             </div>
