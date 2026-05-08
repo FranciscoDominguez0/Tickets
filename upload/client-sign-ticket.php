@@ -27,7 +27,7 @@ $token = trim((string)($_POST['token'] ?? ''));
 $close_message = trim((string)($_POST['close_message'] ?? ''));
 $signature_data = trim((string)($_POST['signature_data'] ?? ''));
 
-if ($ticket_id <= 0 || $token === '') {
+if ($ticket_id <= 0) {
     echo json_encode(['success' => false, 'error' => 'Parámetros inválidos']);
     exit;
 }
@@ -35,16 +35,31 @@ if ($ticket_id <= 0 || $token === '') {
 // Validar ticket y token
 $eid = empresaId();
 $uid = (int)$_SESSION['user_id'];
-$stmt = $mysqli->prepare(
-    'SELECT t.id, t.ticket_number, t.status_id, t.subject, t.empresa_id, t.signature_token,
-            u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email
-     FROM tickets t
-     LEFT JOIN users u ON u.id = t.user_id
-     WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ? AND t.signature_token = ? AND t.closed IS NULL'
-);
-$stmt->bind_param('iiis', $ticket_id, $uid, $eid, $token);
-$stmt->execute();
-$ticket = $stmt->get_result()->fetch_assoc();
+
+$ticket = null;
+if ($token !== '') {
+    $stmt = $mysqli->prepare(
+        'SELECT t.id, t.ticket_number, t.status_id, t.subject, t.empresa_id, t.signature_token,
+                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email
+         FROM tickets t
+         LEFT JOIN users u ON u.id = t.user_id
+         WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ? AND t.signature_token = ? AND t.closed IS NULL'
+    );
+    $stmt->bind_param('iiis', $ticket_id, $uid, $eid, $token);
+    $stmt->execute();
+    $ticket = $stmt->get_result()->fetch_assoc();
+} else {
+    $stmt = $mysqli->prepare(
+        'SELECT t.id, t.ticket_number, t.status_id, t.subject, t.empresa_id, t.signature_token,
+                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email
+         FROM tickets t
+         LEFT JOIN users u ON u.id = t.user_id
+         WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ? AND t.signature_requested = 1 AND t.signature_token IS NOT NULL AND t.closed IS NULL'
+    );
+    $stmt->bind_param('iii', $ticket_id, $uid, $eid);
+    $stmt->execute();
+    $ticket = $stmt->get_result()->fetch_assoc();
+}
 
 if (!$ticket) {
     echo json_encode(['success' => false, 'error' => 'Ticket no encontrado o ya cerrado']);
@@ -104,9 +119,9 @@ try {
     $stmtUpd = $mysqli->prepare(
         'UPDATE tickets 
          SET status_id = ?, close_message = ?, client_signature = ?, closed_at = NOW()' . $legacy_closed_set . ', updated = NOW(), signature_requested = 0, signature_token = NULL
-         WHERE id = ?'
+         WHERE id = ? AND user_id = ? AND empresa_id = ?'
     );
-    $stmtUpd->bind_param('issi', $status_closed, $close_message, $signature_path, $ticket_id);
+    $stmtUpd->bind_param('issiii', $status_closed, $close_message, $signature_path, $ticket_id, $uid, $eid);
     $stmtUpd->execute();
     
     addLog('ticket_closed_client', 'Ticket cerrado con firma digital por el cliente remotamente', 'ticket', $ticket_id, 'user', $uid);

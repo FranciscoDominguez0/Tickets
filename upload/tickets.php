@@ -216,6 +216,44 @@ $filter = $_GET['filter'] ?? 'open';
 if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');
 
+// Firmas pendientes (si existe soporte en esquema)
+$pendingSignCount = 0;
+$pendingSignTickets = [];
+try {
+    $hasSigReqCol = dbColumnExists('tickets', 'signature_requested');
+    $hasSigTokenCol = dbColumnExists('tickets', 'signature_token');
+    if ($hasSigReqCol && $hasSigTokenCol) {
+        $stmtPS = $mysqli->prepare(
+            'SELECT id, ticket_number, subject, created
+             FROM tickets
+             WHERE user_id = ? AND empresa_id = ? AND closed IS NULL AND signature_requested = 1 AND signature_token IS NOT NULL
+             ORDER BY COALESCE(updated, created) DESC
+             LIMIT 5'
+        );
+        $uidPS = (int)($_SESSION['user_id'] ?? 0);
+        $stmtPS->bind_param('ii', $uidPS, $eid);
+        if ($stmtPS->execute()) {
+            $rsPS = $stmtPS->get_result();
+            while ($rsPS && ($r = $rsPS->fetch_assoc())) {
+                $pendingSignTickets[] = $r;
+            }
+        }
+
+        $stmtPSC = $mysqli->prepare(
+            'SELECT COUNT(*) c
+             FROM tickets
+             WHERE user_id = ? AND empresa_id = ? AND closed IS NULL AND signature_requested = 1 AND signature_token IS NOT NULL'
+        );
+        $stmtPSC->bind_param('ii', $uidPS, $eid);
+        if ($stmtPSC->execute()) {
+            $pendingSignCount = (int)($stmtPSC->get_result()->fetch_assoc()['c'] ?? 0);
+        }
+    }
+} catch (Throwable $e) {
+    $pendingSignCount = 0;
+    $pendingSignTickets = [];
+}
+
 // Paginación fija: 10 tickets por página (mejor rendimiento)
 $perPage = 10;
 $page    = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
@@ -932,6 +970,32 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             } catch (e) {}
                         })();
                     </script>
+                <?php endif; ?>
+
+                <?php if ($pendingSignCount > 0): ?>
+                    <div class="alert alert-warning" role="alert" style="border-radius: 14px;">
+                        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                            <div>
+                                <div style="font-weight: 900;"><i class="bi bi-pen-fill me-1"></i> Tienes firmas pendientes</div>
+                                <div style="font-weight: 700; color: #7c5a00; font-size: .92rem;">Hay <?php echo (int)$pendingSignCount; ?> ticket(s) que requieren tu firma para cerrar.</div>
+                            </div>
+                        </div>
+                        <?php if (!empty($pendingSignTickets)): ?>
+                            <div class="mt-3" style="display: grid; gap: 10px;">
+                                <?php foreach ($pendingSignTickets as $ps): ?>
+                                    <div class="d-flex align-items-center justify-content-between gap-2" style="background: rgba(255,255,255,0.7); border: 1px solid rgba(226,232,240,0.95); padding: 10px 12px; border-radius: 12px;">
+                                        <div style="min-width: 0;">
+                                            <div class="mono" style="font-weight: 900; color:#0f172a;">#<?php echo html($ps['ticket_number']); ?></div>
+                                            <div style="font-weight: 700; color:#334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px;"><?php echo html($ps['subject']); ?></div>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <a class="btn btn-sm btn-warning" style="border-radius: 999px; font-weight: 900;" href="view-ticket.php?id=<?php echo (int)$ps['id']; ?>&sign=1">Firmar</a>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 <?php endif; ?>
 
                 <div class="panel">

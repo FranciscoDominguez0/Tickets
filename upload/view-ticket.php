@@ -66,6 +66,13 @@ if ($sigToken !== '' && !empty($t['signature_token']) && $sigToken === $t['signa
     $isSignatureLink = true;
 }
 
+// Permitir firma desde sesión normal (sin token de correo) cuando el cliente es dueño del ticket
+$signIntent = (string)($_GET['sign'] ?? '');
+if (!$isSignatureLink && $signIntent === '1' && !empty($t['signature_requested']) && !empty($t['signature_token']) && empty($t['closed'])) {
+    $isSignatureLink = true;
+    $sigToken = (string)$t['signature_token'];
+}
+
 // Thread id
 $stmt = $mysqli->prepare('SELECT id FROM threads WHERE ticket_id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
 $stmt->bind_param('ii', $tid, $eid);
