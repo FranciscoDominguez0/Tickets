@@ -5,6 +5,10 @@ $tid = (int) $t['id'];
 $entries = $t['thread_entries'] ?? [];
 $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_internal'] ?? 0) === 0; }));
 
+$isWalkinTicket = (!empty($t['walkin_phone']) || !empty($t['walkin_address']));
+$topicName = trim((string)($t['topic_name'] ?? ''));
+$isRedesInformatica = (stripos($topicName, 'redes') !== false || stripos($topicName, 'informática') !== false || stripos($topicName, 'informatica') !== false);
+
 $printCompanyName = trim((string)getAppSetting('company.name', ''));
 if ($printCompanyName === '') $printCompanyName = (string)APP_NAME;
 $printCompanyWebsite = trim((string)getAppSetting('company.website', ''));
@@ -849,7 +853,7 @@ if ($ticketClientSignaturePath !== '') {
         </div>
         <div>
             <?php
-            $isWalkinTicket = (!empty($t['walkin_phone']) || !empty($t['walkin_address']));
+            // $isWalkinTicket ya definido arriba
             ?>
 
             <?php if (!$isWalkinTicket): ?>
@@ -876,7 +880,7 @@ if ($ticketClientSignaturePath !== '') {
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($t['user_address']) || (!empty($t['user_latitude']) && !empty($t['user_longitude']))): ?>
+            <?php if ((!empty($t['user_address']) || (!empty($t['user_latitude']) && !empty($t['user_longitude']))) && !($isWalkinTicket && $isRedesInformatica)): ?>
             <div class="field">
                 <label>Ubicación</label>
                 <div class="value">
@@ -923,11 +927,7 @@ if ($ticketClientSignaturePath !== '') {
             </div>
             <?php endif; ?>
             <div class="field d-none d-md-block">
-                <?php
-                $topicName = trim((string)($t['topic_name'] ?? ''));
-                $isRedesInformatica = (stripos($topicName, 'redes') !== false || stripos($topicName, 'informática') !== false || stripos($topicName, 'informatica') !== false);
-                ?>
-                <?php if ($isRedesInformatica): ?>
+                <?php if ($isRedesInformatica && !$isWalkinTicket): ?>
                     <label>AnyDesk</label>
                     <div class="value"><?php echo html($t['anydesk'] ?? '—'); ?></div>
                 <?php elseif (!$isWalkinTicket): ?>
