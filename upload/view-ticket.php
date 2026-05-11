@@ -59,6 +59,16 @@ if (!$t) {
     exit;
 }
 
+$ticketClientSignatureUrl = '';
+if (!empty($t['client_signature'])) {
+    $sigRel = ltrim(str_replace('\\', '/', $t['client_signature']), '/');
+    // Subir un nivel para salir de /upload/ y entrar en /firmas/
+    $fullSigPath = realpath(__DIR__ . '/../' . $sigRel);
+    if ($fullSigPath && is_file($fullSigPath)) {
+        $ticketClientSignatureUrl = '../' . $sigRel . '?v=' . filemtime($fullSigPath);
+    }
+}
+
 // Validar token de firma (si viene en la URL)
 $isSignatureLink = false;
 $sigToken = trim((string)($_GET['s'] ?? ''));
@@ -917,13 +927,13 @@ function humanSize($bytes) {
                 </div>
             </div>
 
-            <?php if (!empty($t['client_signature'])): ?>
+            <?php if ($ticketClientSignatureUrl !== ''): ?>
                 <div class="card-soft mt-3 mb-1">
                     <div class="head py-2">
                         <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase;"><i class="bi bi-pen-fill"></i> Firma de conformidad</h6>
                     </div>
                     <div class="body py-2 text-center" style="background: #fafafa;">
-                        <img src="<?php echo html($t['client_signature']); ?>" alt="Firma del cliente" style="max-height: 100px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
                         <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
                     </div>
                 </div>
