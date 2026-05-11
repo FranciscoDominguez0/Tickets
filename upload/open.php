@@ -80,6 +80,42 @@ if ($_POST) {
         $hasFiles = !empty($_FILES['attachments']['name'][0]);
         $plain = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags($body), ENT_QUOTES, 'UTF-8')));
 
+        $blockNewIfSignaturePending = ((string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1');
+        if ($blockNewIfSignaturePending && $error === '') {
+            $uidPending = (int)($_SESSION['user_id'] ?? 0);
+            if ($uidPending > 0) {
+                $hasSigReqCol = false;
+                $hasClientSigCol = false;
+                $hasSigTokenCol = false;
+                try { $hasSigReqCol = dbColumnExists('tickets', 'signature_requested'); } catch (Throwable $e) { $hasSigReqCol = false; }
+                try { $hasClientSigCol = dbColumnExists('tickets', 'client_signature'); } catch (Throwable $e) { $hasClientSigCol = false; }
+                try { $hasSigTokenCol = dbColumnExists('tickets', 'signature_token'); } catch (Throwable $e) { $hasSigTokenCol = false; }
+
+                if ($hasSigReqCol) {
+                    $extra = '';
+                    if ($hasClientSigCol) {
+                        $extra .= " AND (client_signature IS NULL OR client_signature = '')";
+                    }
+                    if ($hasSigTokenCol) {
+                        $extra .= " AND signature_token IS NOT NULL AND signature_token <> ''";
+                    }
+                    $stmtPend = $mysqli->prepare(
+                        'SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ? AND signature_requested = 1' . $extra
+                    );
+                    if ($stmtPend) {
+                        $stmtPend->bind_param('ii', $eid, $uidPending);
+                        if ($stmtPend->execute()) {
+                            $rowPend = $stmtPend->get_result()->fetch_assoc();
+                            $pendCount = (int)($rowPend['cnt'] ?? 0);
+                            if ($pendCount > 0) {
+                                $error = 'Tienes firmas pendientes';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
         if ($ticketMaxFileMb < 1) $ticketMaxFileMb = 1;
         if ($ticketMaxFileMb > 256) $ticketMaxFileMb = 256;
@@ -742,6 +778,59 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         }
     }
 }
+
+$blockNewIfSignaturePending = ((string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1');
+$sigBlockOpen = false;
+$pendingSignCount = 0;
+$pendingSignTickets = [];
+if ($blockNewIfSignaturePending) {
+    $uidPS = (int)($_SESSION['user_id'] ?? 0);
+    if ($uidPS > 0) {
+        $hasSigReqCol = false;
+        $hasClientSigCol = false;
+        $hasSigTokenCol = false;
+        try { $hasSigReqCol = dbColumnExists('tickets', 'signature_requested'); } catch (Throwable $e) { $hasSigReqCol = false; }
+        try { $hasClientSigCol = dbColumnExists('tickets', 'client_signature'); } catch (Throwable $e) { $hasClientSigCol = false; }
+        try { $hasSigTokenCol = dbColumnExists('tickets', 'signature_token'); } catch (Throwable $e) { $hasSigTokenCol = false; }
+
+        if ($hasSigReqCol) {
+            $extra = '';
+            if ($hasClientSigCol) {
+                $extra .= " AND (client_signature IS NULL OR client_signature = '')";
+            }
+            if ($hasSigTokenCol) {
+                $extra .= " AND signature_token IS NOT NULL AND signature_token <> ''";
+            }
+
+            $stmtPSC = $mysqli->prepare(
+                'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND user_id = ? AND signature_requested = 1' . $extra
+            );
+            if ($stmtPSC) {
+                $stmtPSC->bind_param('ii', $eid, $uidPS);
+                if ($stmtPSC->execute()) {
+                    $pendingSignCount = (int)($stmtPSC->get_result()->fetch_assoc()['c'] ?? 0);
+                }
+            }
+
+            $stmtPS = $mysqli->prepare(
+                'SELECT id, ticket_number, subject, created FROM tickets WHERE empresa_id = ? AND user_id = ? AND signature_requested = 1' . $extra . ' ORDER BY COALESCE(updated, created) DESC LIMIT 5'
+            );
+            if ($stmtPS) {
+                $stmtPS->bind_param('ii', $eid, $uidPS);
+                if ($stmtPS->execute()) {
+                    $rsPS = $stmtPS->get_result();
+                    while ($rsPS && ($r = $rsPS->fetch_assoc())) {
+                        $pendingSignTickets[] = $r;
+                    }
+                }
+            }
+
+            if ($pendingSignCount > 0) {
+                $sigBlockOpen = true;
+            }
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -1114,6 +1203,60 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
     </style>
 </head>
 <body>
+
+<?php if ($sigBlockOpen): ?>
+    <div class="modal fade" id="pendingSignatureModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 22px 70px rgba(2,6,23,0.35);">
+                <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 18px 20px;">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:40px;height:40px;border-radius:14px;background:rgba(245,158,11,0.14);color:#b45309;display:flex;align-items:center;justify-content:center;">
+                            <i class="bi bi-pen-fill" style="font-size: 1.1rem;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 900; color:#0f172a; line-height: 1.1;">Tienes firmas pendientes</div>
+                            <div style="font-weight: 700; color:#64748b; font-size: .92rem;">Debes firmar para poder crear nuevos tickets.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body" style="padding: 16px 20px;">
+                    <div class="alert alert-warning mb-3" role="alert" style="border-radius: 14px; font-weight: 700;">
+                        Hay <?php echo (int)$pendingSignCount; ?> ticket(s) que requieren tu firma.
+                    </div>
+                    <?php if (!empty($pendingSignTickets)): ?>
+                        <div style="display: grid; gap: 10px;">
+                            <?php foreach ($pendingSignTickets as $ps): ?>
+                                <div class="d-flex align-items-center justify-content-between gap-2" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 10px 12px; border-radius: 12px;">
+                                    <div style="min-width: 0;">
+                                        <div class="mono" style="font-weight: 900; color:#0f172a;">#<?php echo html($ps['ticket_number']); ?></div>
+                                        <div style="font-weight: 700; color:#334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px;"><?php echo html($ps['subject']); ?></div>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <a class="btn btn-sm btn-warning" style="border-radius: 999px; font-weight: 900;" href="view-ticket.php?id=<?php echo (int)$ps['id']; ?>&sign=1">Firmar</a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 12px 20px; background: #f8fafc; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <a class="btn btn-outline-secondary" style="border-radius: 12px; font-weight: 900;" href="tickets.php">Volver a Mis Tickets</a>
+                    <a class="btn btn-primary" style="border-radius: 12px; font-weight: 900;" href="<?php echo !empty($pendingSignTickets) ? ('view-ticket.php?id=' . (int)$pendingSignTickets[0]['id'] . '&sign=1') : 'tickets.php'; ?>">Ir a firmar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function(){
+            try {
+                var el = document.getElementById('pendingSignatureModal');
+                if (!el) return;
+                var modal = new bootstrap.Modal(el, { backdrop: 'static', keyboard: false, focus: true });
+                modal.show();
+            } catch (e) {}
+        })();
+    </script>
+<?php endif; ?>
     <?php
         $navUserName = trim((string)($user['name'] ?? ''));
         $companyName = trim((string)getAppSetting('company.name', ''));

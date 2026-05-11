@@ -62,6 +62,39 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             $isWalkin = ($walkinDefaultUserId > 0 && $user_id === $walkinDefaultUserId);
 
+            $blockNewIfSignaturePending = ((string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1');
+            if ($blockNewIfSignaturePending && $user_id > 0) {
+                $hasSigReqCol = false;
+                $hasClientSigCol = false;
+                $hasSigTokenCol = false;
+                try { $hasSigReqCol = dbColumnExists('tickets', 'signature_requested'); } catch (Throwable $e) { $hasSigReqCol = false; }
+                try { $hasClientSigCol = dbColumnExists('tickets', 'client_signature'); } catch (Throwable $e) { $hasClientSigCol = false; }
+                try { $hasSigTokenCol = dbColumnExists('tickets', 'signature_token'); } catch (Throwable $e) { $hasSigTokenCol = false; }
+
+                if ($hasSigReqCol) {
+                    $extra = '';
+                    if ($hasClientSigCol) {
+                        $extra .= " AND (client_signature IS NULL OR client_signature = '')";
+                    }
+                    if ($hasSigTokenCol) {
+                        $extra .= " AND signature_token IS NOT NULL AND signature_token <> ''";
+                    }
+                    $stmtPend = $mysqli->prepare(
+                        'SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ? AND signature_requested = 1' . $extra
+                    );
+                    if ($stmtPend) {
+                        $stmtPend->bind_param('ii', $eid, $user_id);
+                        if ($stmtPend->execute()) {
+                            $rowPend = $stmtPend->get_result()->fetch_assoc();
+                            $pendCount = (int)($rowPend['cnt'] ?? 0);
+                            if ($pendCount > 0) {
+                                $open_errors[] = 'Este usuario tiene firmas pendientes.';
+                            }
+                        }
+                    }
+                }
+            }
+
             $open_hasTopics = false;
             $open_topicsCount = 0;
             $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");

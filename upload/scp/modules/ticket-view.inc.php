@@ -805,7 +805,7 @@ if ($ticketClientSignaturePath !== '') {
     <div class="ticket-view-overview">
         <div>
             <div class="field">
-                <label>Estado</label>
+                <label><i class="bi bi-info-circle me-1"></i> Estado</label>
                 <div class="value" style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
                     <span class="badge-status" style="background: <?php echo html($t['status_color'] ?? '#e2e8f0'); ?>; color: #0f172a;"><?php echo html($t['status_name']); ?></span>
                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
@@ -831,7 +831,7 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
             </div>
             <div class="field">
-                <label>Prioridad</label>
+                <label><i class="bi bi-flag me-1"></i> Prioridad</label>
                 <div class="value">
                     <?php if ($canTicketEdit): ?>
                         <a href="#" style="text-decoration: none; border-bottom: 1px dashed currentColor; color: inherit;" data-bs-toggle="modal" data-bs-target="#modalPriority" title="Cambiar prioridad">
@@ -843,11 +843,11 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
             </div>
             <div class="field">
-                <label>Departamento</label>
+                <label><i class="bi bi-building me-1"></i> Departamento</label>
                 <div class="value"><?php echo html($t['dept_name']); ?></div>
             </div>
             <div class="field d-none d-md-block">
-                <label>Creado en</label>
+                <label><i class="bi bi-calendar-plus me-1"></i> Creado en</label>
                 <div class="value"><?php echo $t['created'] ? date('m/d/y H:i:s', strtotime($t['created'])) : '—'; ?></div>
             </div>
         </div>
@@ -858,7 +858,7 @@ if ($ticketClientSignaturePath !== '') {
 
             <?php if (!$isWalkinTicket): ?>
             <div class="field">
-                <label>Usuario</label>
+                <label><i class="bi bi-person me-1"></i> Usuario</label>
                 <div class="value">
                     <a href="users.php?id=<?php echo (int)$t['user_id']; ?>"><?php echo html($t['user_name']); ?></a>
                 </div>
@@ -867,7 +867,7 @@ if ($ticketClientSignaturePath !== '') {
 
             <?php if ($isWalkinTicket): ?>
             <div class="field field-full-mobile">
-                <label>Cliente no recurrente</label>
+                <label><i class="bi bi-person-badge me-1"></i> Cliente no recurrente</label>
                 <div class="value">
                     <div><strong>Nombre:</strong> <?php echo html((string)($t['subject'] ?? '')); ?></div>
                     <?php if (!empty($t['walkin_phone'])): ?>
@@ -882,7 +882,7 @@ if ($ticketClientSignaturePath !== '') {
 
             <?php if ((!empty($t['user_address']) || (!empty($t['user_latitude']) && !empty($t['user_longitude']))) && !($isWalkinTicket && $isRedesInformatica)): ?>
             <div class="field">
-                <label>Ubicación</label>
+                <label><i class="bi bi-geo-alt me-1"></i> Ubicación</label>
                 <div class="value">
                     <?php
                         $addrForNav = ($isWalkinTicket && !empty($t['walkin_address'])) ? (string)$t['walkin_address'] : (string)($t['user_address'] ?? '');
@@ -928,15 +928,15 @@ if ($ticketClientSignaturePath !== '') {
             <?php endif; ?>
             <div class="field d-none d-md-block">
                 <?php if ($isRedesInformatica && !$isWalkinTicket): ?>
-                    <label>AnyDesk</label>
+                    <label><i class="bi bi-pc-display me-1"></i> AnyDesk</label>
                     <div class="value"><?php echo html($t['anydesk'] ?? '—'); ?></div>
                 <?php elseif (!$isWalkinTicket): ?>
-                    <label>Fuente</label>
+                    <label><i class="bi bi-globe me-1"></i> Fuente</label>
                     <div class="value">Web</div>
                 <?php endif; ?>
             </div>
             <div class="field d-none d-md-block">
-                <label>Tema</label>
+                <label><i class="bi bi-bookmark me-1"></i> Tema</label>
                 <div class="value">
                     <?php
                     $topicName = trim((string)($t['topic_name'] ?? ''));
@@ -948,15 +948,15 @@ if ($ticketClientSignaturePath !== '') {
         </div>
         <div>
             <div class="field">
-                <label>Asignado a</label>
+                <label><i class="bi bi-person-check me-1"></i> Asignado a</label>
                 <div class="value"><?php echo html($t['staff_name']); ?></div>
             </div>
             <div class="field d-none d-md-block">
-                <label>Último mensaje</label>
+                <label><i class="bi bi-chat-dots me-1"></i> Último mensaje</label>
                 <div class="value"><?php echo $t['last_message'] ? date('m/d/y H:i:s', strtotime($t['last_message'])) : '—'; ?></div>
             </div>
             <div class="field d-none d-md-block">
-                <label>Última respuesta</label>
+                <label><i class="bi bi-reply me-1"></i> Última respuesta</label>
                 <div class="value"><?php echo $t['last_response'] ? date('m/d/y H:i:s', strtotime($t['last_response'])) : '—'; ?></div>
             </div>
         </div>

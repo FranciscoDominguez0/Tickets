@@ -40,7 +40,7 @@ if ($tid <= 0) {
 
 // Cargar ticket y validar pertenencia
 $stmt = $mysqli->prepare(
-    "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested,\n"
+    "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
     . "       d.name AS dept_name\n"
@@ -916,6 +916,18 @@ function humanSize($bytes) {
                     </div>
                 </div>
             </div>
+
+            <?php if (!empty($t['client_signature'])): ?>
+                <div class="card-soft mt-3 mb-1">
+                    <div class="head py-2">
+                        <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase;"><i class="bi bi-pen-fill"></i> Firma de conformidad</h6>
+                    </div>
+                    <div class="body py-2 text-center" style="background: #fafafa;">
+                        <img src="<?php echo html($t['client_signature']); ?>" alt="Firma del cliente" style="max-height: 100px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                        <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <div class="body">
             <div class="thread">

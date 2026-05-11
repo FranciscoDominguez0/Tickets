@@ -213,7 +213,7 @@ if (isset($_GET['msg']) && $_GET['msg'] === 'signed') {
 }
 
 $filter = $_GET['filter'] ?? 'open';
-if (!in_array($filter, ['open', 'closed', 'all'], true)) $filter = 'open';
+if (!in_array($filter, ['open', 'closed', 'all', 'signatures'], true)) $filter = 'open';
 $q = trim($_GET['q'] ?? '');
 
 // Firmas pendientes (si existe soporte en esquema)
@@ -249,10 +249,29 @@ try {
             $pendingSignCount = (int)($stmtPSC->get_result()->fetch_assoc()['c'] ?? 0);
         }
     }
+
+    $hasClientSigCol = dbColumnExists('tickets', 'client_signature');
+    $countSignatures = 0;
+    $sqlSig = 'SELECT COUNT(*) AS c FROM tickets WHERE user_id = ? AND empresa_id = ? AND (';
+    $sigConditions = [];
+    if ($hasSigReqCol) $sigConditions[] = '(signature_requested = 1 AND signature_token IS NOT NULL)';
+    if ($hasClientSigCol) $sigConditions[] = 'client_signature IS NOT NULL';
+    
+    if (!empty($sigConditions)) {
+        $sqlSig .= implode(' OR ', $sigConditions) . ')';
+        $stmtSig = $mysqli->prepare($sqlSig);
+        $stmtSig->bind_param('ii', $uidPS, $eid);
+        if ($stmtSig->execute()) {
+            $countSignatures = (int)($stmtSig->get_result()->fetch_assoc()['c'] ?? 0);
+        }
+    }
 } catch (Throwable $e) {
     $pendingSignCount = 0;
     $pendingSignTickets = [];
 }
+
+$blockNewIfSignaturePending = ((string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1');
+$sigBlockPortal = ($blockNewIfSignaturePending && $pendingSignCount > 0);
 
 // Paginación fija: 10 tickets por página (mejor rendimiento)
 $perPage = 10;
@@ -264,6 +283,15 @@ if ($filter === 'open') {
     $where .= ' AND t.closed IS NULL';
 } elseif ($filter === 'closed') {
     $where .= ' AND t.closed IS NOT NULL';
+} elseif ($filter === 'signatures') {
+    $where .= ' AND (';
+    $whereSigs = [];
+    $hasSigReqCol = dbColumnExists('tickets', 'signature_requested');
+    $hasClientSigCol = dbColumnExists('tickets', 'client_signature');
+    if ($hasSigReqCol) $whereSigs[] = '(t.signature_requested = 1 AND t.signature_token IS NOT NULL)';
+    if ($hasClientSigCol) $whereSigs[] = 't.client_signature IS NOT NULL';
+    if (empty($whereSigs)) $whereSigs[] = '0=1';
+    $where .= implode(' OR ', $whereSigs) . ')';
 }
 
 // Obtener tickets del usuario
@@ -770,6 +798,12 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             display: inline-flex; align-items: center; gap: 4px;
             background: #f1f5f9; border-radius: 10px; padding: 4px;
         }
+        @keyframes pulseHighlight {
+            0% { box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); }
+            50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.5); transform: scale(1.005); }
+            100% { box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); }
+        }
+        .pulse-highlight { animation: pulseHighlight 0.6s ease-in-out 3; }
         .limit-label {
             font-size: .76rem; font-weight: 700; color: #94a3b8;
             padding: 0 8px; white-space: nowrap;
@@ -922,7 +956,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="tickets.php"><i class="bi bi-inboxes"></i> Mis Tickets</a></li>
-                        <li><a class="dropdown-item" href="open.php"><i class="bi bi-plus-circle"></i> Crear Ticket</a></li>
+                        <li><a class="dropdown-item" href="open.php" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Crear Ticket</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i> Mi perfil</a></li>
                         <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
@@ -942,7 +976,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <div class="sub">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
                         </div>
                         <div>
-                            <a href="open.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                            <a href="open.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>
                         </div>
                     </div>
                 </div>
@@ -972,42 +1006,36 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     </script>
                 <?php endif; ?>
 
-                <?php if ($pendingSignCount > 0): ?>
-                    <div class="alert alert-warning" role="alert" style="border-radius: 14px;">
-                        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-                            <div>
-                                <div style="font-weight: 900;"><i class="bi bi-pen-fill me-1"></i> Tienes firmas pendientes</div>
-                                <div style="font-weight: 700; color: #7c5a00; font-size: .92rem;">Hay <?php echo (int)$pendingSignCount; ?> ticket(s) que requieren tu firma para cerrar.</div>
-                            </div>
-                        </div>
-                        <?php if (!empty($pendingSignTickets)): ?>
-                            <div class="mt-3" style="display: grid; gap: 10px;">
-                                <?php foreach ($pendingSignTickets as $ps): ?>
-                                    <div class="d-flex align-items-center justify-content-between gap-2" style="background: rgba(255,255,255,0.7); border: 1px solid rgba(226,232,240,0.95); padding: 10px 12px; border-radius: 12px;">
-                                        <div style="min-width: 0;">
-                                            <div class="mono" style="font-weight: 900; color:#0f172a;">#<?php echo html($ps['ticket_number']); ?></div>
-                                            <div style="font-weight: 700; color:#334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px;"><?php echo html($ps['subject']); ?></div>
-                                        </div>
-                                        <div class="flex-shrink-0">
-                                            <a class="btn btn-sm btn-warning" style="border-radius: 999px; font-weight: 900;" href="view-ticket.php?id=<?php echo (int)$ps['id']; ?>&sign=1">Firmar</a>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
+
 
                 <div class="panel">
+                    <?php if ($pendingSignCount > 0): ?>
+                        <div class="alert alert-warning d-flex align-items-center mb-4 p-3" style="border-radius: 16px; border: 1px solid #fde68a; background: #fffbeb; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05);">
+                            <div class="flex-shrink-0 me-3" style="width: 42px; height: 42px; border-radius: 12px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706;">
+                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.4rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0" style="font-weight: 800; color: #92400e;">Firmas pendientes</h6>
+                                <p class="mb-0" style="font-size: 0.88rem; color: #b45309; line-height: 1.4;">
+                                    Tienes <strong><?php echo (int)$pendingSignCount; ?></strong> ticket(s) que requieren tu firma. Debes firmar para poder abrir nuevos reportes.
+                                </p>
+                            </div>
+                            <div class="ms-3 d-flex gap-2">
+                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>&sign=1" class="btn btn-warning btn-sm" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Firmar ahora</a>
+                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>" class="btn btn-outline-warning btn-sm d-none d-md-inline-block" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Detalles</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="tabs">
                         <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                            <i class="bi bi-folder2-open"></i> Abiertos <span class="count"><?php echo (int)$countOpen; ?></span>
+                            Abiertos <span class="count"><?php echo (int)$countOpen; ?></span>
                         </a>
                         <a class="<?php echo $filter === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                            <i class="bi bi-check2-circle"></i> Cerrados <span class="count"><?php echo (int)$countClosed; ?></span>
+                            Cerrados <span class="count"><?php echo (int)$countClosed; ?></span>
                         </a>
                         <a class="<?php echo $filter === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
-                            <i class="bi bi-inboxes"></i> Todos <span class="count"><?php echo (int)($countOpen + $countClosed); ?></span>
+                            Todos <span class="count"><?php echo (int)($countOpen + $countClosed); ?></span>
                         </a>
                     </div>
 
@@ -1036,7 +1064,14 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     <?php if (empty($tickets)): ?>
                         <div class="text-center py-5">
                             <div class="text-muted mb-3">No hay tickets para este filtro.</div>
-                            <a href="open.php" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                            <a href="open.php" 
+                               class="btn btn-primary" 
+                               style="border-radius: 999px; font-weight: 800; padding: 10px 24px;"
+                               <?php if ($sigBlockPortal): ?>
+                               onclick="window.showSigToast && window.showSigToast(); return false;"
+                               <?php endif; ?>>
+                                <i class="bi bi-plus-circle"></i> Abrir ticket
+                            </a>
                         </div>
                     <?php else: ?>
                         <div class="ticket-cards">
@@ -1149,6 +1184,24 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     </footer>
 
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+        <div id="sigWarningToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Acción bloqueada</div>
+                    <div style="font-size: .88rem; line-height: 1.3;">
+                        Tienes <strong><?php echo (int)$pendingSignCount; ?></strong> firma(s) pendiente(s). 
+                        Debes firmar tus tickets cerrados antes de abrir uno nuevo.
+                    </div>
+                    <?php if (!empty($pendingSignTickets)): ?>
+                        <div class="mt-2">
+                            <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>&sign=1" class="btn btn-dark btn-sm" style="font-weight: 800; border-radius: 8px;">Ir a firmar</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
         <div id="staffReplyToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
@@ -1344,6 +1397,26 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         .catch(function(){});
                 });
             })();
+
+            // Función global para mostrar el aviso de firma
+            window.showSigToast = function() {
+                try {
+                    var toastEl = document.getElementById('sigWarningToast');
+                    if (toastEl && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                        var toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 8000 });
+                        toast.show();
+                    }
+                    // Intentar resaltar el banner amarillo si existe
+                    var banner = document.querySelector('.alert-warning');
+                    if (banner) {
+                        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        banner.classList.add('pulse-highlight');
+                        setTimeout(function(){ banner.classList.remove('pulse-highlight'); }, 2000);
+                    }
+                } catch (e) {
+                    console.log('Error showing signature toast:', e);
+                }
+            };
 
             poll(true);
             window.setInterval(function(){ poll(false); }, POLL_MS);
