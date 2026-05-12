@@ -38,16 +38,23 @@ if ($tid <= 0) {
     exit;
 }
 
+$staffJoin = 'LEFT JOIN staff s ON s.id = t.staff_id';
+if (function_exists('dbColumnExists') && dbColumnExists('staff', 'empresa_id')) {
+    $staffJoin = 'LEFT JOIN staff s ON s.id = t.staff_id AND s.empresa_id = t.empresa_id';
+}
+
 // Cargar ticket y validar pertenencia
 $stmt = $mysqli->prepare(
     "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
-    . "       d.name AS dept_name\n"
+    . "       d.name AS dept_name,\n"
+    . "       s.firstname AS staff_first, s.lastname AS staff_last\n"
     . "FROM tickets t\n"
     . "JOIN ticket_status ts ON t.status_id = ts.id\n"
     . "JOIN priorities p ON t.priority_id = p.id\n"
     . "JOIN departments d ON t.dept_id = d.id\n"
+    . $staffJoin . "\n"
     . "WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ?\n"
     . "LIMIT 1"
 );
@@ -703,7 +710,7 @@ function humanSize($bytes) {
         .notif-item + .notif-item { margin-top: 10px; }
 
         @media (max-width: 760px) {
-            .ticket-meta { grid-template-columns: 1fr; }
+            .ticket-meta { grid-template-columns: 1fr 1fr; gap: 16px; }
             .ticket-view-entry .entry-body img { max-height: 260px !important; }
             .att-item a { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
         }
@@ -908,19 +915,28 @@ function humanSize($bytes) {
                 <div class="head">
                     <div class="ticket-meta">
                         <div>
-                            <div class="label">Departamento</div>
+                            <div class="label"><i class="bi bi-diagram-3 me-1"></i> Departamento</div>
                             <div class="value"><?php echo html($t['dept_name']); ?></div>
                         </div>
                         <div>
-                            <div class="label">Prioridad</div>
+                            <div class="label"><i class="bi bi-person-check me-1"></i> Asignado a</div>
+                            <div class="value">
+                                <?php
+                                    $sname = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
+                                    echo html($sname !== '' ? $sname : 'Sin asignar');
+                                ?>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="label"><i class="bi bi-flag me-1"></i> Prioridad</div>
                             <div class="value"><?php echo html($t['priority_name']); ?></div>
                         </div>
                         <div>
-                            <div class="label">Estado</div>
+                            <div class="label"><i class="bi bi-info-circle me-1"></i> Estado</div>
                             <div class="value"><?php echo html($t['status_name']); ?></div>
                         </div>
                         <div>
-                            <div class="label">Creado</div>
+                            <div class="label"><i class="bi bi-calendar-event me-1"></i> Creado</div>
                             <div class="value"><?php echo !empty($t['created']) ? date('d/m/Y H:i', strtotime($t['created'])) : '-'; ?></div>
                         </div>
                     </div>
@@ -970,7 +986,7 @@ function humanSize($bytes) {
                         if (!empty($parts[0])) $initials .= $sub1($parts[0]);
                         if (!empty($parts[1])) $initials .= $sub1($parts[1]);
                         $initials = strtoupper($initials ?: 'U');
-                        $eid = (int) $e['id'];
+                        $entryId = (int) $e['id'];
                         ?>
                         <div class="ticket-view-entry <?php echo $cssClass; ?>">
                             <div class="entry-row">
@@ -986,9 +1002,9 @@ function humanSize($bytes) {
                                         echo sanitizeRichText((string)($e['body'] ?? ''));
                                     ?></div>
 
-                                    <?php if (!empty($attachmentsByEntry[$eid])): ?>
+                                    <?php if (!empty($attachmentsByEntry[$entryId])): ?>
                                         <div class="att-list">
-                                            <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
+                                            <?php foreach ($attachmentsByEntry[$entryId] as $a): ?>
                                                 <?php
                                                     $mime = strtolower((string)($a['mimetype'] ?? ''));
                                                     $filename = strtolower((string)($a['original_filename'] ?? ''));

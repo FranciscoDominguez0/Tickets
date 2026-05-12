@@ -1010,19 +1010,22 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                 <div class="panel">
                     <?php if ($pendingSignCount > 0): ?>
-                        <div class="alert alert-warning d-flex align-items-center mb-4 p-3" style="border-radius: 16px; border: 1px solid #fde68a; background: #fffbeb; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05);">
-                            <div class="flex-shrink-0 me-3" style="width: 42px; height: 42px; border-radius: 12px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706;">
-                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.4rem;"></i>
+                        <div class="alert alert-warning d-flex flex-wrap align-items-center mb-4 p-3" style="border-radius: 16px; border: 1px solid #fde68a; background: #fffbeb; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); gap: 12px;">
+                            <div class="flex-shrink-0" style="width: 38px; height: 38px; border-radius: 12px; background: #fef3c7; display: flex; align-items: center; justify-content: center; color: #d97706;">
+                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.2rem;"></i>
                             </div>
                             <div class="flex-grow-1">
                                 <h6 class="mb-0" style="font-weight: 800; color: #92400e;">Firmas pendientes</h6>
-                                <p class="mb-0" style="font-size: 0.88rem; color: #b45309; line-height: 1.4;">
+                                <p class="mb-0 d-none d-md-block" style="font-size: 0.88rem; color: #b45309; line-height: 1.4;">
                                     Tienes <strong><?php echo (int)$pendingSignCount; ?></strong> ticket(s) que requieren tu firma. Debes firmar para poder abrir nuevos reportes.
                                 </p>
+                                <p class="mb-0 d-md-none" style="font-size: 0.82rem; color: #b45309; line-height: 1.2;">
+                                    Tienes <strong><?php echo (int)$pendingSignCount; ?></strong> firma(s) pendiente(s).
+                                </p>
                             </div>
-                            <div class="ms-3 d-flex gap-2">
-                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>&sign=1" class="btn btn-warning btn-sm" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Firmar ahora</a>
-                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>" class="btn btn-outline-warning btn-sm d-none d-md-inline-block" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Detalles</a>
+                            <div class="ms-md-auto d-flex gap-2">
+                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>&sign=1" class="btn btn-warning btn-sm" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Firmar</a>
+                                <a href="view-ticket.php?id=<?php echo (int)$pendingSignTickets[0]['id']; ?>" class="btn btn-outline-warning btn-sm" style="border-radius: 10px; font-weight: 700; white-space: nowrap;">Detalles</a>
                             </div>
                         </div>
                     <?php endif; ?>
