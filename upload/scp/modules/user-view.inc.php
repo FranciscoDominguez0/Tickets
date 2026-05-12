@@ -21,6 +21,34 @@ if ($mobileInitials === '') $mobileInitials = 'U';
 ?>
 
 <div class="user-view-wrap">
+    <?php 
+    $msg = $_GET['msg'] ?? '';
+    $alertMsg = '';
+    if ($msg) {
+        switch($msg) {
+            case 'reset_sent': $alertMsg = 'Se envió el correo de restablecer contraseña.'; break;
+            case 'status_updated': $alertMsg = 'Estado de usuario actualizado correctamente.'; break;
+            case 'user_updated':
+            case 'profile_updated': $alertMsg = 'Perfil de usuario actualizado correctamente.'; break;
+            case 'org_assigned': $alertMsg = 'Organización asignada correctamente.'; break;
+            case 'org_removed': $alertMsg = 'Organización removida correctamente.'; break;
+        }
+    }
+    if ($alertMsg): ?>
+        <div class="alert alert-success alert-dismissible fade show mx-3 mt-3" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <i class="bi bi-check-circle-fill me-2"></i> <?php echo html($alertMsg); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        <script>
+            (function(){
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('msg');
+                    history.replaceState(null, '', url.toString());
+                } catch (e) {}
+            })();
+        </script>
+    <?php endif; ?>
     <!-- Vista móvil (solo teléfonos) -->
     <?php $activeTab = $_GET['t'] ?? 'tickets'; ?>
     <div class="user-view-mobile d-md-none">
@@ -338,51 +366,6 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 <i class="bi bi-person-fill"></i>
             </div>
             <div class="user-view-details">
-                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'reset_sent'): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
-                        Se envió el correo de restablecer contraseña.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                    </div>
-                    <script>
-                    (function(){
-                        try {
-                            var url = new URL(window.location.href);
-                            url.searchParams.delete('msg');
-                            history.replaceState(null, '', url.toString());
-                        } catch (e) {}
-                    })();
-                    </script>
-                <?php endif; ?>
-                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'status_updated'): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
-                        Estado de usuario actualizado correctamente.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                    </div>
-                    <script>
-                    (function(){
-                        try {
-                            var url = new URL(window.location.href);
-                            url.searchParams.delete('msg');
-                            history.replaceState(null, '', url.toString());
-                        } catch (e) {}
-                    })();
-                    </script>
-                <?php endif; ?>
-                <?php if (isset($_GET['msg']) && $_GET['msg'] === 'profile_updated'): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert" style="grid-column: 1 / -1;">
-                        Perfil de usuario actualizado correctamente.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                    </div>
-                    <script>
-                    (function(){
-                        try {
-                            var url = new URL(window.location.href);
-                            url.searchParams.delete('msg');
-                            history.replaceState(null, '', url.toString());
-                        } catch (e) {}
-                    })();
-                    </script>
-                <?php endif; ?>
                 <div class="user-view-detail">
                     <label>Nombre</label>
                     <div class="value">
@@ -769,3 +752,71 @@ if ($mobileInitials === '') $mobileInitials = 'U';
         </div>
     </div>
 </div>
+
+<script>
+(function(){
+    function wireOrgAutocomplete(){
+        try {
+            var input = document.getElementById('orgSearch');
+            var suggestions = document.getElementById('orgSuggestions');
+            if (!input || !suggestions) return;
+
+            var lastController = null;
+            input.addEventListener('input', function(){
+                var query = (input.value || '').toString().trim();
+                if (query.length < 2) {
+                    suggestions.innerHTML = '';
+                    return;
+                }
+
+                if (lastController && typeof lastController.abort === 'function') {
+                    lastController.abort();
+                }
+                lastController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+
+                var url = 'users.php?ajax=search_orgs&q=' + encodeURIComponent(query);
+                fetch(url, lastController ? { signal: lastController.signal } : undefined)
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        suggestions.innerHTML = '';
+                        if (!Array.isArray(data)) return;
+                        
+                        data.forEach(function(org){
+                            var item = document.createElement('a');
+                            item.href = '#';
+                            item.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2';
+                            item.innerHTML = '<i class="bi bi-building text-primary"></i> ' + (org && org.name ? org.name : '');
+                            
+                            item.addEventListener('click', function(ev){
+                                ev.preventDefault();
+                                input.value = (org && org.name ? org.name : '');
+                                suggestions.innerHTML = '';
+                            });
+                            suggestions.appendChild(item);
+                        });
+                    })
+                    .catch(function(err){
+                        if (err && err.name !== 'AbortError') {
+                            console.error('Error searching orgs:', err);
+                        }
+                    });
+            });
+
+            // Cerrar sugerencias al hacer clic fuera
+            document.addEventListener('click', function(e){
+                if (e.target !== input && e.target !== suggestions && !suggestions.contains(e.target)) {
+                    suggestions.innerHTML = '';
+                }
+            });
+        } catch (e) {
+            console.error('Autocomplete error:', e);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wireOrgAutocomplete);
+    } else {
+        wireOrgAutocomplete();
+    }
+})();
+</script>

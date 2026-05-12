@@ -32,6 +32,27 @@ if (!$canViewUsers) {
 
 $eid = empresaId();
 
+// AJAX: buscar organizaciones (Debe estar antes de cualquier salida HTML)
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
+    header('Content-Type: application/json; charset=UTF-8');
+    header('X-Content-Type-Options: nosniff');
+
+    $query = trim($_GET['q']);
+    $results = [];
+    if (strlen($query) >= 2) {
+        $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE empresa_id = ? AND name LIKE ? ORDER BY name LIMIT 10");
+        $like = '%' . $query . '%';
+        $stmt->bind_param('is', $eid, $like);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $results[] = $row;
+        }
+    }
+    echo json_encode($results, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     http_response_code(403);
     $_SESSION['flash_error'] = 'No tienes permiso para gestionar usuarios.';
@@ -599,20 +620,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     exit;
 }
 
-// AJAX: buscar organizaciones
-if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])) {
-    header('Content-Type: application/json; charset=UTF-8');
-    header('X-Content-Type-Options: nosniff');
-
-    $query = trim($_GET['q']);
-    $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE empresa_id = ? AND name LIKE ? ORDER BY name LIMIT 10");
-    $like = '%' . $query . '%';
-    $stmt->bind_param('is', $eid, $like);
-    $stmt->execute();
-    $results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    echo json_encode($results, JSON_UNESCAPED_UNICODE);
-    exit;
-}
 
 // Vista de un usuario concreto (users.php?id=X)
 $viewUser = null;

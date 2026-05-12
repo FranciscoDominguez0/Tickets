@@ -890,21 +890,23 @@ if ($ticketClientSignaturePath !== '') {
                         $lat = $hasCoords ? (float)$t['user_latitude'] : null;
                         $lng = $hasCoords ? (float)$t['user_longitude'] : null;
 
-                        if ($hasCoords) {
+                        if ($hasCoords):
                             $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
                             $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
-                        } else {
-                            $wazeApp = 'waze://?q=' . urlencode($addrForNav) . '&navigate=yes';
-                            $wazeWeb = 'https://waze.com/ul?q=' . urlencode($addrForNav) . '&navigate=yes';
-                        }
                     ?>
-                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
-                        <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')"
-                           style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; background:#00aaff; color:#fff; box-shadow:0 2px 6px rgba(0,170,255,0.3);">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 6.63C19.27 3.1 15.93.5 12 .5 6.48.5 2 5 2 10.5c0 2.4.87 4.6 2.3 6.3l-.3 3.7 3.7-1.2c1.3.6 2.7.9 4.3.9 5.52 0 10-4.48 10-10 0-1.34-.27-2.63-.76-3.77zM12 19.5c-1.4 0-2.76-.3-4-.85L4.5 19.5l.85-3.5C3.9 14.6 3 12.65 3 10.5 3 5.53 7.03 1.5 12 1.5c4.41 0 8.12 2.95 9.34 7.02.42 1.2.66 2.47.66 3.98 0 4.97-4.03 9-9 9z"/></svg>
-                            Abrir en Waze
-                        </a>
-                    </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                            <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')"
+                               style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; background:#00aaff; color:#fff; box-shadow:0 2px 6px rgba(0,170,255,0.3);">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.54 6.63C19.27 3.1 15.93.5 12 .5 6.48.5 2 5 2 10.5c0 2.4.87 4.6 2.3 6.3l-.3 3.7 3.7-1.2c1.3.6 2.7.9 4.3.9 5.52 0 10-4.48 10-10 0-1.34-.27-2.63-.76-3.77zM12 19.5c-1.4 0-2.76-.3-4-.85L4.5 19.5l.85-3.5C3.9 14.6 3 12.65 3 10.5 3 5.53 7.03 1.5 12 1.5c4.41 0 8.12 2.95 9.34 7.02.42 1.2.66 2.47.66 3.98 0 4.97-4.03 9-9 9z"/></svg>
+                                Abrir en Waze
+                            </a>
+                        </div>
+                    <?php elseif (!empty($addrForNav)): ?>
+                        <div class="text-muted small" style="line-height: 1.4;">
+                            <i class="bi bi-info-circle me-1"></i> <?php echo html($addrForNav); ?><br>
+                            <span class="text-danger" style="font-size: 11px; font-weight: 600;">Ubicación exacta no disponible</span>
+                        </div>
+                    <?php endif; ?>
                     <script>
                         function abrirWazeInteligente(e, appUrl, webUrl) {
                             e.preventDefault();
