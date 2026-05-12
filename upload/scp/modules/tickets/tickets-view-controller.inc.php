@@ -1319,6 +1319,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             'doc' => 'application/msword',
                             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                             'txt' => 'text/plain',
+                            'mp4' => 'video/mp4',
+                            'webm' => 'video/webm',
+                            'mov' => 'video/quicktime',
                         ];
                         $maxSize = 25 * 1024 * 1024; // Aumentado a 25 MB para soportar PDFs más grandes
                         if (!empty($_FILES['attachments']['name'][0])) {

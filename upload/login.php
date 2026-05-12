@@ -148,12 +148,12 @@ $bodyStyle = $loginBg !== ''
 
                         <!-- Email -->
                         <div class="form-group">
-                            <label for="email">Correo electrónico o nombre de usuario</label>
+                            <label for="email">Correo electrónico</label>
                             <input 
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                placeholder="Correo electrónico o nombre de usuario"
+                                placeholder="Correo electrónico"
                                 value="<?php echo htmlspecialchars($prefillEmail); ?>"
                                 required
                             >
