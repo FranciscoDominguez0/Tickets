@@ -883,6 +883,33 @@ if ($ticketClientSignaturePath !== '') {
                         <div class="value sub-info"><i class="bi bi-geo-alt text-muted"></i><strong>UBICACIÓN:</strong> <?php echo html($t['user_address']); ?></div>
                     <?php endif; ?>
                 <?php endif; ?>
+
+                <?php 
+                    $hasCoords = (!$isWalkinTicket) && !empty($t['user_latitude']) && !empty($t['user_longitude']);
+                    if ($hasCoords): 
+                        $lat = (float)$t['user_latitude'];
+                        $lng = (float)$t['user_longitude'];
+                        $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                        $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                ?>
+                    <div class="mt-2">
+                        <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')" class="btn-waze-premium">
+                            <i class="bi bi-geo-alt-fill"></i> Abrir en Waze
+                        </a>
+                    </div>
+                    <script>
+                        function abrirWazeInteligente(e, appUrl, webUrl) {
+                            e.preventDefault();
+                            var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                            if (isMobile) {
+                                window.location.href = appUrl;
+                                setTimeout(function() { window.location.href = webUrl; }, 1000);
+                            } else {
+                                window.open(webUrl, '_blank');
+                            }
+                        }
+                    </script>
+                <?php endif; ?>
             </div>
 
             <div class="divider d-none d-md-block"></div>
@@ -905,33 +932,6 @@ if ($ticketClientSignaturePath !== '') {
                     </div>
                 </div>
             </div>
-
-            <?php 
-                $hasCoords = (!$isWalkinTicket) && !empty($t['user_latitude']) && !empty($t['user_longitude']);
-                if ($hasCoords): 
-                    $lat = (float)$t['user_latitude'];
-                    $lng = (float)$t['user_longitude'];
-                    $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
-                    $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
-            ?>
-                <div class="field mt-2">
-                    <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')" class="btn-waze-premium">
-                        <i class="bi bi-geo-alt-fill"></i> Abrir en Waze
-                    </a>
-                </div>
-                <script>
-                    function abrirWazeInteligente(e, appUrl, webUrl) {
-                        e.preventDefault();
-                        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                        if (isMobile) {
-                            window.location.href = appUrl;
-                            setTimeout(function() { window.location.href = webUrl; }, 1000);
-                        } else {
-                            window.open(webUrl, '_blank');
-                        }
-                    }
-                </script>
-            <?php endif; ?>
         </div>
 
         <!-- Columna 3: Asignación y Actividad -->
