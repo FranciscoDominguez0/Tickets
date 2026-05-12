@@ -253,7 +253,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                             </ul>
                         </li>
                         <li class="scp-notif-footer">
-                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="scpMarkAllRead" <?php echo empty($notifItems) ? 'disabled' : ''; ?>>
+                            <button type="button" class="scp-notif-btn-all" id="scpMarkAllRead" <?php echo empty($notifItems) ? 'disabled' : ''; ?>>
                                 <i class="bi bi-check-all"></i> Marcar todas como leídas
                             </button>
                         </li>
