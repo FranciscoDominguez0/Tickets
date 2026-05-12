@@ -99,6 +99,13 @@ if ($_POST) {
                     if ($hasSigTokenCol) {
                         $extra .= " AND signature_token IS NOT NULL AND signature_token <> ''";
                     }
+                    
+                    $hasClosedCol = false;
+                    try { $hasClosedCol = dbColumnExists('tickets', 'closed'); } catch (Throwable $e) { $hasClosedCol = false; }
+                    if ($hasClosedCol) {
+                        $extra .= " AND closed IS NULL";
+                    }
+
                     $stmtPend = $mysqli->prepare(
                         'SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ? AND signature_requested = 1' . $extra
                     );
@@ -800,6 +807,12 @@ if ($blockNewIfSignaturePending) {
             }
             if ($hasSigTokenCol) {
                 $extra .= " AND signature_token IS NOT NULL AND signature_token <> ''";
+            }
+
+            $hasClosedCol = false;
+            try { $hasClosedCol = dbColumnExists('tickets', 'closed'); } catch (Throwable $e) { $hasClosedCol = false; }
+            if ($hasClosedCol) {
+                $extra .= " AND closed IS NULL";
             }
 
             $stmtPSC = $mysqli->prepare(

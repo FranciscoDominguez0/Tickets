@@ -156,14 +156,14 @@ $legacy_closed_set = $has_closed_legacy_col ? ', closed = NOW()' : '';
 if ($signature_path !== null) {
     $stmt = $mysqli->prepare(
         'UPDATE tickets
-         SET status_id = ?, staff_id = ?, close_message = ?, client_signature = ?, closed_at = NOW()' . $legacy_closed_set . ', updated = NOW()
+         SET status_id = ?, staff_id = ?, close_message = ?, client_signature = ?, closed_at = NOW()' . $legacy_closed_set . ', updated = NOW(), signature_requested = 0, signature_token = NULL
          WHERE id = ?'
     );
     $stmt->bind_param('iissi', $status_closed, $_SESSION['staff_id'], $close_message, $signature_path, $ticket_id);
 } else {
     $stmt = $mysqli->prepare(
         'UPDATE tickets
-         SET status_id = ?, staff_id = ?, close_message = ?, closed_at = NOW()' . $legacy_closed_set . ', updated = NOW()
+         SET status_id = ?, staff_id = ?, close_message = ?, closed_at = NOW()' . $legacy_closed_set . ', updated = NOW(), signature_requested = 0, signature_token = NULL
          WHERE id = ?'
     );
     $stmt->bind_param('iisi', $status_closed, $_SESSION['staff_id'], $close_message, $ticket_id);

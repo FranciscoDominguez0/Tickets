@@ -335,7 +335,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 
                 if ($isClosingStatus) {
                     requireRolePermission('ticket.close', 'tickets.php?id=' . $tid);
-                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW() WHERE id = ? AND empresa_id = ?");
+                    $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NOW(), updated = NOW(), signature_requested = 0, signature_token = NULL WHERE id = ? AND empresa_id = ?");
                 } else {
                     requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                     $stmt = $mysqli->prepare("UPDATE tickets SET status_id = ?, closed = NULL, updated = NOW() WHERE id = ? AND empresa_id = ?");
