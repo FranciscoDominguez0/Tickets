@@ -831,8 +831,6 @@ if ($ticketClientSignaturePath !== '') {
                         <?php echo html($t['priority_name']); ?>
                     </div>
                 <?php endif; ?>
-
-                <div style="margin-left: auto; color: #64748b;"><i class="bi bi-three-dots-vertical" style="font-size: 1.4rem;"></i></div>
             </div>
 
             <!-- Sección Usuario -->

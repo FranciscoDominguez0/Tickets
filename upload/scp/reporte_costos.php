@@ -194,9 +194,7 @@ ob_start();
 /* Overview: mobile-only cards; desktop uses original tickets.css */
 @media (max-width: 767px) {
     .ticket-view-overview {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        display: block;
         background: transparent;
         border: none;
         border-radius: 0;
@@ -209,8 +207,8 @@ ob_start();
         background: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        padding: 12px 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         margin-bottom: 0;
     }
     .ticket-view-overview label {
@@ -458,47 +456,125 @@ h6.border-bottom {
 
     <!-- Sección de Información General Arriba -->
     <div class="ticket-view-overview mb-4">
-        <div class="field">
-            <label>Número de Ticket</label>
-            <div class="value fs-5"><a href="tickets.php?id=<?php echo $ticketId; ?>" class="text-decoration-none">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a></div>
-        </div>
-        <div class="field">
-            <label>Cliente (Dueño)</label>
-            <div class="value mt-1"><?php echo htmlspecialchars($clientName); ?></div>
-        </div>
-        <div class="field">
-            <label>Departamento</label>
-            <div class="value mt-1"><span class="badge bg-secondary"><?php echo htmlspecialchars($ticket['department_name']); ?></span></div>
-        </div>
-        <div class="field">
-            <label>Técnico Asignado</label>
-            <div class="value mt-1 text-primary fw-bold">
-                <i class="bi bi-person-badge"></i> <?php echo htmlspecialchars($staffName); ?>
+        <!-- DISEÑO MÓVIL (Premium Dashboard similar a tickets.php) -->
+        <div class="d-md-none">
+            <!-- Header: Estado del Reporte y Prioridad -->
+            <div class="mobile-header">
+                <?php 
+                $rStatus = $reportData['billing_status'] ?? 'pending';
+                if ($rStatus === 'confirmed') { $rTxt = 'Facturado'; $rBg = '#dcfce7'; $rDot = '#166534'; }
+                elseif ($rStatus === 'visita_tecnica') { $rTxt = 'Visita Técnica'; $rBg = '#e0f2fe'; $rDot = '#0369a1'; }
+                elseif ($rStatus === 'cotizacion') { $rTxt = 'Cotización'; $rBg = '#eef2ff'; $rDot = '#4338ca'; }
+                else { $rTxt = 'Pendiente Facturación'; $rBg = '#fef9c3'; $rDot = '#854d0e'; }
+                ?>
+                <div class="mobile-badge" style="background: <?php echo $rBg; ?>; color: <?php echo $rDot; ?>;">
+                    <span class="dot" style="background: <?php echo $rDot; ?>;"></span>
+                    <?php echo $rTxt; ?>
+                </div>
+            </div>
+
+            <!-- Sección Usuario -->
+            <div class="mobile-user-section">
+                <div class="mobile-avatar">
+                    <i class="bi bi-person"></i>
+                </div>
+                <div class="mobile-user-info">
+                    <div class="name"><?php echo htmlspecialchars($clientName); ?></div>
+                    <div class="sub">
+                        <i class="bi bi-envelope"></i> 
+                        <?php echo htmlspecialchars($ticket['user_email'] ?? '—'); ?>
+                    </div>
+                    <?php if (!empty($ticket['user_phone'])): ?>
+                    <div class="sub">
+                        <i class="bi bi-telephone"></i> 
+                        <?php echo htmlspecialchars($ticket['user_phone']); ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Grilla Inferior: Dept, Asignado y Tiempos -->
+            <div class="mobile-grid">
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-building"></i> DEP.</label>
+                    <div class="val"><?php echo htmlspecialchars($ticket['department_name']); ?></div>
+                </div>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-person-check"></i> TÉCNICO</label>
+                    <div class="val"><?php echo htmlspecialchars($staffName); ?></div>
+                </div>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-calendar-check"></i> CERRADO</label>
+                    <div class="val"><?php echo htmlspecialchars($closedDate); ?></div>
+                </div>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-hash"></i> TICKET #</label>
+                    <div class="val"><?php echo htmlspecialchars($ticket['ticket_number']); ?></div>
+                </div>
             </div>
         </div>
-        <div class="field">
-            <label>Fecha de Cierre</label>
-            <div class="value mt-1 text-muted"><?php echo htmlspecialchars($closedDate); ?></div>
-        </div>
-        <div class="field">
-            <label>Estado del Reporte</label>
-            <div class="value mt-1">
-                <?php if ($reportExists): ?>
-                    <?php 
-                    $status = $reportData['billing_status'] ?? 'pending';
-                    if ($status === 'confirmed') {
-                        echo '<span class="badge bg-success"><i class="bi bi-check-all"></i> Facturado</span>';
-                    } elseif ($status === 'visita_tecnica') {
-                        echo '<span class="badge bg-info text-dark"><i class="bi bi-geo-alt"></i> Visita Técnica</span>';
-                    } elseif ($status === 'cotizacion') {
-                        echo '<span class="badge bg-primary"><i class="bi bi-file-earmark-text"></i> Cotización</span>';
-                    } else {
-                        echo '<span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Pendiente Facturación</span>';
-                    }
-                    ?>
-                <?php else: ?>
-                    <span class="badge bg-secondary">Sin Reporte</span>
-                <?php endif; ?>
+
+        <!-- DISEÑO DESKTOP (3 Columnas similar a tickets.php) -->
+        <div class="d-none d-md-grid ticket-view-overview-desktop">
+            <!-- Columna 1: Estado y Info -->
+            <div>
+                <div class="field">
+                    <label><i class="bi bi-info-circle"></i> NÚMERO DE TICKET</label>
+                    <div class="value title highlight">
+                        <a href="tickets.php?id=<?php echo $ticketId; ?>" style="text-decoration:none; color:inherit;">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a>
+                    </div>
+                </div>
+                <div class="field">
+                    <label><i class="bi bi-building"></i> DEPARTAMENTO</label>
+                    <div class="value"><?php echo htmlspecialchars($ticket['department_name']); ?></div>
+                </div>
+                <div class="divider"></div>
+                <div class="field">
+                    <label><i class="bi bi-calendar-check"></i> FECHA DE CIERRE</label>
+                    <div class="value" style="font-size: 0.9rem; color: #64748b;"><?php echo htmlspecialchars($closedDate); ?></div>
+                </div>
+            </div>
+
+            <!-- Columna 2: Cliente y Tema -->
+            <div>
+                <div class="field">
+                    <label><i class="bi bi-person"></i> CLIENTE</label>
+                    <div class="value title"><?php echo htmlspecialchars($clientName); ?></div>
+                </div>
+                <div class="field">
+                    <label><i class="bi bi-bookmark"></i> TEMA (SOPORTE)</label>
+                    <div class="value"><?php echo htmlspecialchars($ticket['subject']); ?></div>
+                </div>
+                <div class="divider"></div>
+                <div class="field">
+                    <label><i class="bi bi-envelope"></i> EMAIL</label>
+                    <div class="value" style="font-size: 0.9rem; color: #64748b;"><?php echo htmlspecialchars($ticket['user_email'] ?? '—'); ?></div>
+                </div>
+            </div>
+
+            <!-- Columna 3: Asignación y Reporte -->
+            <div>
+                <div class="field">
+                    <label><i class="bi bi-person-check"></i> TÉCNICO ASIGNADO</label>
+                    <div class="value title" style="color: #0f172a;"><?php echo htmlspecialchars($staffName); ?></div>
+                </div>
+                <div class="divider"></div>
+                <div class="field">
+                    <label><i class="bi bi-file-earmark-bar-graph"></i> ESTADO DEL REPORTE</label>
+                    <div class="value">
+                        <?php if ($reportExists): ?>
+                            <?php 
+                            $status = $reportData['billing_status'] ?? 'pending';
+                            if ($status === 'confirmed') echo '<span class="badge bg-success" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-check-all me-1"></i> Facturado</span>';
+                            elseif ($status === 'visita_tecnica') echo '<span class="badge bg-info text-dark" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-geo-alt me-1"></i> Visita Técnica</span>';
+                            elseif ($status === 'cotizacion') echo '<span class="badge bg-primary" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-file-earmark-text me-1"></i> Cotización</span>';
+                            else echo '<span class="badge bg-warning text-dark" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-clock me-1"></i> Pendiente Facturación</span>';
+                            ?>
+                        <?php else: ?>
+                            <span class="badge bg-secondary" style="padding: 6px 12px; border-radius: 8px;">Sin Reporte</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
