@@ -38,9 +38,12 @@ if ($tid <= 0) {
     exit;
 }
 
-$staffJoin = 'LEFT JOIN staff s ON s.id = t.staff_id';
-if (function_exists('dbColumnExists') && dbColumnExists('staff', 'empresa_id')) {
-    $staffJoin = 'LEFT JOIN staff s ON s.id = t.staff_id AND s.empresa_id = t.empresa_id';
+$topicSelect = '';
+$topicJoin = '';
+if (function_exists('dbColumnExists') && function_exists('dbTableExists')
+    && dbColumnExists('tickets', 'topic_id') && dbTableExists('help_topics')) {
+    $topicSelect = ", ht.name AS topic_name\n";
+    $topicJoin = "LEFT JOIN help_topics ht ON ht.id = t.topic_id AND ht.empresa_id = t.empresa_id\n";
 }
 
 // Cargar ticket y validar pertenencia
@@ -48,13 +51,13 @@ $stmt = $mysqli->prepare(
     "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
-    . "       d.name AS dept_name,\n"
-    . "       s.firstname AS staff_first, s.lastname AS staff_last\n"
+    . "       d.name AS dept_name"
+    . $topicSelect
     . "FROM tickets t\n"
     . "JOIN ticket_status ts ON t.status_id = ts.id\n"
     . "JOIN priorities p ON t.priority_id = p.id\n"
     . "JOIN departments d ON t.dept_id = d.id\n"
-    . $staffJoin . "\n"
+    . $topicJoin
     . "WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ?\n"
     . "LIMIT 1"
 );
@@ -919,13 +922,11 @@ function humanSize($bytes) {
                             <div class="value"><?php echo html($t['dept_name']); ?></div>
                         </div>
                         <div>
-                            <div class="label"><i class="bi bi-person-check me-1"></i> Asignado a</div>
-                            <div class="value">
-                                <?php
-                                    $sname = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
-                                    echo html($sname !== '' ? $sname : 'Sin asignar');
-                                ?>
-                            </div>
+                            <div class="label"><i class="bi bi-bookmark me-1"></i> Tema</div>
+                            <div class="value"><?php
+                                $topicDisplay = trim((string)($t['topic_name'] ?? ''));
+                                echo html($topicDisplay !== '' ? $topicDisplay : '—');
+                            ?></div>
                         </div>
                         <div>
                             <div class="label"><i class="bi bi-flag me-1"></i> Prioridad</div>
@@ -942,18 +943,6 @@ function humanSize($bytes) {
                     </div>
                 </div>
             </div>
-
-            <?php if ($ticketClientSignatureUrl !== ''): ?>
-                <div class="card-soft mt-3 mb-1">
-                    <div class="head py-2">
-                        <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase;"><i class="bi bi-pen-fill"></i> Firma de conformidad</h6>
-                    </div>
-                    <div class="body py-2 text-center" style="background: #fafafa;">
-                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
-                        <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
-                    </div>
-                </div>
-            <?php endif; ?>
 
             <div class="body">
             <div class="thread">
@@ -1114,8 +1103,21 @@ function humanSize($bytes) {
                     </form>
                 <?php endif; ?>
             </div>
+
+            <?php if ($ticketClientSignatureUrl !== ''): ?>
+                <div class="card-soft mt-3 mb-1">
+                    <div class="head py-2">
+                        <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase;"><i class="bi bi-pen-fill"></i> Firma de conformidad</h6>
+                    </div>
+                    <div class="body py-2 text-center" style="background: #fafafa;">
+                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+                        <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
+</div>
 </div>
 
 <script>
@@ -1832,7 +1834,6 @@ function humanSize($bytes) {
         });
     })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Modal de Firma Digital (Cliente) -->
 <?php if ($isSignatureLink): ?>
