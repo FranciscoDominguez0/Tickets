@@ -61,10 +61,7 @@
 }
 
 .ticket-view-overview {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr 1fr;
-    gap: 0;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
@@ -72,12 +69,20 @@
     overflow: hidden;
 }
 
-.ticket-view-overview > div {
+/* Desktop Specific Layout Wrapper */
+.ticket-view-overview-desktop {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 0;
+    width: 100%;
+}
+
+.ticket-view-overview-desktop > div {
     padding: 20px 24px;
     border-right: 1px solid #f1f5f9;
 }
 
-.ticket-view-overview > div:last-child {
+.ticket-view-overview-desktop > div:last-child {
     border-right: none;
 }
 
@@ -2220,64 +2225,120 @@ tr.ticket-row.is-selected td {
     }
     .ticket-view-overview {
         display: block;
-        padding: 16px;
+        padding: 0;
         background: #ffffff;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-        border-radius: 16px;
-        margin-bottom: 20px;
+        border: 1px solid #eef2f6;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border-radius: 24px;
+        margin-bottom: 24px;
+        overflow: hidden;
     }
-    .ticket-view-overview > div {
-        display: block;
-        border: none;
-        padding: 0;
-    }
-    .ticket-view-overview .mobile-side-by-side {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+
+    /* Header Móvil */
+    .ticket-view-overview .mobile-header {
+        display: flex;
+        align-items: center;
         gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f8fafc;
     }
-    .ticket-view-overview .field {
-        background: none;
-        border: none;
-        padding: 0;
-        margin-bottom: 14px;
-        box-shadow: none;
+    .ticket-view-overview .mobile-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.85rem;
     }
-    .ticket-view-overview .divider {
-        display: block !important;
-        margin: 12px 0;
+    .ticket-view-overview .mobile-badge .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
     }
-    .ticket-view-overview .field label {
-        font-size: 0.68rem;
+
+    /* Sección Usuario Móvil */
+    .ticket-view-overview .mobile-user-section {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        border-bottom: 1px solid #f8fafc;
+        position: relative;
+    }
+    .ticket-view-overview .mobile-avatar {
+        width: 60px;
+        height: 60px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+    .ticket-view-overview .mobile-user-info {
+        flex-grow: 1;
+    }
+    .ticket-view-overview .mobile-user-info .name {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 4px;
+    }
+    .ticket-view-overview .mobile-user-info .sub {
+        font-size: 0.82rem;
         color: #64748b;
-        margin-bottom: 3px;
         display: flex;
         align-items: center;
         gap: 6px;
+        margin-bottom: 2px;
+    }
+    .ticket-view-overview .btn-waze-mobile {
+        background: #2563eb;
+        color: #fff;
+        padding: 10px 18px;
+        border-radius: 12px;
         font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-    .ticket-view-overview .field label i {
-        font-size: 0.95rem;
-        color: #2563eb;
-    }
-    .ticket-view-overview .field .value {
-        font-size: 0.92rem;
-        font-weight: 600;
-        color: #0f172a;
-    }
-    .ticket-view-overview .badge-status {
         font-size: 0.85rem;
-        padding: 5px 10px;
-        border-radius: 8px;
-        width: auto;
-        text-align: left;
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        justify-content: center;
-        max-width: 100%;
+        gap: 8px;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+
+    /* Grillas Inferiores Móvil */
+    .ticket-view-overview .mobile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: #f8fafc;
+    }
+    .ticket-view-overview .mobile-grid-item {
+        background: #ffffff;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f8fafc;
+    }
+    .ticket-view-overview .mobile-grid-item:nth-child(odd) {
+        border-right: 1px solid #f8fafc;
+    }
+    .ticket-view-overview .mobile-grid-item label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .ticket-view-overview .mobile-grid-item .val {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #1e293b;
     }
     .ticket-view-tab-content {
         padding: 10px 8px;
