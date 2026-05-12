@@ -180,62 +180,9 @@ if (!$stmt->execute()) {
     exit;
 }
 
-if ($signature_path === null) {
-    $hasRecipients = dbTableExists('notification_recipients');
-    if ($hasRecipients) {
-        $stmt_nr = $mysqli->prepare(
-            'SELECT nr.staff_id FROM notification_recipients nr WHERE nr.empresa_id = ?'
-        );
-        $eid = empresaId();
-        $stmt_nr->bind_param('i', $eid);
-        $stmt_nr->execute();
-        $recipients = $stmt_nr->get_result()->fetch_all(MYSQLI_ASSOC);
-        $hasNotif = dbTableExists('notifications');
-        if ($hasNotif && !empty($recipients)) {
-            $hasNotifEmpresa = dbColumnExists('notifications', 'empresa_id');
-            $eid = empresaId();
-
-            if ($hasNotifEmpresa) {
-                $stmt_notif = $mysqli->prepare(
-                    'INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at)
-                     VALUES (?, ?, ?, ?, ?, 0, NOW())'
-                );
-            } else {
-                $stmt_notif = $mysqli->prepare(
-                    'INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at)
-                     VALUES (?, ?, ?, ?, 0, NOW())'
-                );
-            }
-
-            if ($stmt_notif) {
-                $notif_msg = 'Ticket #' . $ticket['ticket_number'] . ' cerrado sin firma del cliente.';
-                $notif_type = 'ticket_closed';
-
-                foreach ($recipients as $rec) {
-                    $sid = (int)$rec['staff_id'];
-                    if ($sid === (int)$_SESSION['staff_id']) continue;
-
-                    if ($hasNotifEmpresa) {
-                        $stmt_notif->bind_param('iissi', $eid, $sid, $notif_msg, $notif_type, $ticket_id);
-                    } else {
-                        $stmt_notif->bind_param('issi', $sid, $notif_msg, $notif_type, $ticket_id);
-                    }
-                    $stmt_notif->execute();
-                }
-            }
-        }
-    }
-}
-
-$ticket_url_staff = rtrim((string)APP_URL, '/') . '/upload/scp/tickets.php?id=' . (int)$ticket_id;
-$ticket_url_user = rtrim((string)APP_URL, '/') . '/upload/view-ticket.php?id=' . (int)$ticket_id;
-$ticket_no = (string)($ticket['ticket_number'] ?? ('#' . $ticket_id));
-$ticket_subject = trim((string)($ticket['subject'] ?? 'Ticket'));
-$status_label = 'Cerrado';
-$company_name = (string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets');
-$eid_mail = (int)($ticket['empresa_id'] ?? empresaId());
-
+// Notificación interna (campana) a destinatarios configurados
 $stmt_status_name = $mysqli->prepare('SELECT name FROM ticket_status WHERE id = ? LIMIT 1');
+$status_label = 'Cerrado';
 if ($stmt_status_name) {
     $stmt_status_name->bind_param('i', $status_closed);
     if ($stmt_status_name->execute()) {
@@ -244,6 +191,15 @@ if ($stmt_status_name) {
         if ($nm !== '') $status_label = $nm;
     }
 }
+notifyStatusChangeToAdminRecipients($ticket_id, $status_label);
+
+$ticket_url_staff = rtrim((string)APP_URL, '/') . '/upload/scp/tickets.php?id=' . (int)$ticket_id;
+$ticket_url_user = rtrim((string)APP_URL, '/') . '/upload/view-ticket.php?id=' . (int)$ticket_id;
+$ticket_no = (string)($ticket['ticket_number'] ?? ('#' . $ticket_id));
+$ticket_subject = trim((string)($ticket['subject'] ?? 'Ticket'));
+$status_label = 'Cerrado';
+$company_name = (string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets');
+$eid_mail = (int)($ticket['empresa_id'] ?? empresaId());
 
 $client_name = trim((string)($ticket['user_first'] ?? '') . ' ' . (string)($ticket['user_last'] ?? ''));
 if ($client_name === '') $client_name = 'Cliente';

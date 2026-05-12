@@ -427,6 +427,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     notifyStatusChangeToAdminRecipients($tid, 'En Proceso');
                 }
 
+                // Si cambió a Resuelto (id=4), notificar
+                if ($ok && $sid === 4 && (int)($ticketView['status_id'] ?? 0) !== 4) {
+                    notifyStatusChangeToAdminRecipients($tid, 'Resuelto');
+                }
+
+                // Si se cierra (id=5 u otro cierre), notificar
+                if ($ok && $isClosingStatus && (int)($ticketView['status_id'] ?? 0) !== $sid) {
+                    $labelNotif = ($statusLabel !== '') ? $statusLabel : 'Cerrado';
+                    notifyStatusChangeToAdminRecipients($tid, $labelNotif);
+                }
+
                 // Si se cierra desde cambio de estado (sin firma), notificar por correo
                 if ($ok && $isClosingStatus && empty($ticketView['closed'])) {
                     $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
@@ -1274,6 +1285,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 addLog('ticket_en_proceso_email', 'Notificación En Proceso encolada/enviada al usuario ' . $toClient, 'ticket', $tid);
                             }
                             notifyStatusChangeToAdminRecipients($tid, 'En Proceso');
+                        }
+
+                        // Si cambió a Resuelto (id=4), notificar
+                        if ($new_status_id === 4 && (int)($ticketView['status_id'] ?? 0) !== 4) {
+                            notifyStatusChangeToAdminRecipients($tid, 'Resuelto');
+                        }
+
+                        // Si se cierra, notificar
+                        if ($isClosingStatus && (int)($ticketView['status_id'] ?? 0) !== $new_status_id) {
+                            $stLabel = (isset($stName) && $stName !== '') ? ucwords($stName) : 'Cerrado';
+                            notifyStatusChangeToAdminRecipients($tid, $stLabel);
                         }
                         if (!$is_internal && $ticketView['staff_id'] === null) {
                             $stmtAssign = $mysqli->prepare('UPDATE tickets SET staff_id = ? WHERE id = ? AND empresa_id = ?');

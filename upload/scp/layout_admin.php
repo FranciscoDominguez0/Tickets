@@ -53,6 +53,33 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/scp.css'); ?>">
+    <style>
+        .scp-custom-notif {
+            position: fixed;
+            top: 75px;
+            right: -450px;
+            width: 340px;
+            background: #1e293b;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 16px;
+            z-index: 3000;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .scp-custom-notif.active { right: 20px; }
+        .scp-custom-notif .n-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+        .scp-custom-notif .n-title { font-weight: 700; font-size: 0.9rem; color: #60a5fa; display: flex; align-items: center; gap: 8px; }
+        .scp-custom-notif .n-msg { font-size: 1rem; font-weight: 500; line-height: 1.4; }
+        .scp-custom-notif .n-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
+        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white; }
+        .scp-custom-notif .n-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 4px; }
+    </style>
 </head>
 <body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>" style="padding-top: 64px;">
     <!-- NAVBAR ADMINISTRADOR -->
@@ -401,6 +428,15 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         </div>
     <?php endif; ?>
 
+    <div id="customPopNotif" class="scp-custom-notif">
+        <div class="n-header">
+            <span class="n-title"><i class="bi bi-lightning-charge-fill"></i> Actualización</span>
+            <button class="n-close" onclick="document.getElementById('customPopNotif').classList.remove('active')">&times;</button>
+        </div>
+        <div id="customPopMsg" class="n-msg"></div>
+        <a id="customPopLink" href="#" class="n-btn">Ver solicitud</a>
+    </div>
+
     <div class="text-muted scp-footer-brand" style="font-size: 0.85rem; padding: 14px 10px; text-align: center; width: 100%; display: block;">
         &copy; VigitecPanama
     </div>
@@ -533,5 +569,107 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php if (isset($currentRoute) && $currentRoute === 'logs'): ?>
     <script src="js/logs.js"></script>
     <?php endif; ?>
+
+    <?php
+    $maxLoadedId = 0;
+    if (isset($notifItems) && is_array($notifItems) && !empty($notifItems)) {
+        $maxLoadedId = max(array_column($notifItems, 'id'));
+    }
+    ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var lastNotifId = <?php echo (int)$maxLoadedId; ?>;
+            var pollInterval = 6000;
+            var popEl = document.getElementById('customPopNotif');
+
+            function updateBellBadge(count) {
+                var btn = document.querySelector('.scp-notif-btn');
+                var sub = document.querySelector('.scp-notif-sub');
+                if (!btn) return;
+                if (count > 0) {
+                    btn.classList.add('has-new');
+                    var badge = btn.querySelector('.badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+                        btn.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                    if (sub) sub.textContent = count + ' nueva(s)';
+                } else {
+                    btn.classList.remove('has-new');
+                    var badge = btn.querySelector('.badge');
+                    if (badge) badge.remove();
+                    if (sub) sub.textContent = 'Sin nuevas';
+                }
+            }
+
+            function addNotificationToDropdown(n) {
+                var list = document.querySelector('.scp-notif-menu');
+                if (!list) return;
+                var li = document.createElement('li');
+                var icon = 'bi-info-circle';
+                var accent = 'general';
+                if (n.type === 'ticket_assigned') { icon = 'bi-ticket-perforated'; accent = 'ticket'; }
+                else if (n.type === 'task_assigned') { icon = 'bi-check2-square'; accent = 'task'; }
+
+                li.innerHTML = `
+                    <a class="dropdown-item scp-notif-item" href="notification_read.php?id=${n.id}">
+                        <div class="scp-notif-icon ${accent}"><i class="bi ${icon}"></i></div>
+                        <div class="scp-notif-body">
+                            <div class="scp-notif-msg">${n.message}</div>
+                            <div class="scp-notif-time">Justo ahora</div>
+                        </div>
+                    </a>
+                `;
+                var headerLi = list.querySelector('li:first-child');
+                if (headerLi) headerLi.after(li);
+            }
+
+            function showNotificationToast(n) {
+                if (!popEl) return;
+                var msgEl = document.getElementById('customPopMsg');
+                var linkEl = document.getElementById('customPopLink');
+                if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
+                if (linkEl) linkEl.href = 'notification_read.php?id=' + n.id;
+                popEl.classList.add('active');
+                window.setTimeout(function() { popEl.classList.remove('active'); }, 12000);
+
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("Tickets - " + (n.message || "Nueva notificación"), {
+                        icon: '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico'
+                    });
+                }
+
+                try {
+                    var audio = new Audio('<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/audio/notification.mp3');
+                    audio.volume = 0.4;
+                    audio.play().catch(function(e){ console.log('Audio blocked', e); });
+                } catch(e) {}
+            }
+
+            if ("Notification" in window && Notification.permission === "default") {
+                document.addEventListener('click', function() { Notification.requestPermission(); }, { once: true });
+            }
+
+            function pollNotifications() {
+                var url = 'notifications_poll.php?last_id=' + lastNotifId + '&_t=' + Date.now();
+                fetch(url).then(r => r.json()).then(data => {
+                    if (data.ok) {
+                        if (data.notifications && data.notifications.length > 0) {
+                            data.notifications.forEach(function(n) {
+                                showNotificationToast(n);
+                                addNotificationToDropdown(n);
+                                if (n.id > lastNotifId) lastNotifId = n.id;
+                            });
+                        }
+                        updateBellBadge(data.total_unread);
+                    }
+                }).catch(e => console.error('Poll error', e));
+            }
+
+            setInterval(pollNotifications, pollInterval);
+        });
+    </script>
 </body>
 </html>

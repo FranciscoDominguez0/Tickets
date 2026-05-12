@@ -828,9 +828,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
 
                 // Sonido
                 try {
-                    var audio = new Audio('https://cdn.pixabay.com/audio/2022/03/15/audio_7833324f9c.mp3'); 
-                    audio.volume = 0.3;
-                    audio.play().catch(function(){});
+                    var audio = new Audio('<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/audio/notification.mp3'); 
+                    audio.volume = 0.4;
+                    audio.play().catch(function(e){
+                        console.log('Audio play blocked or failed:', e);
+                    });
                 } catch(e) {}
             }
 
