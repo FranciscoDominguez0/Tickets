@@ -1040,6 +1040,27 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     box-shadow: 0 18px 60px rgba(2, 6, 23, 0.18);
 }
 
+.scp-notif-items-scroll {
+    max-height: 380px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Scrollbar personalizada para notificaciones */
+.scp-notif-items-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.scp-notif-items-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scp-notif-items-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.2);
+    border-radius: 10px;
+}
+.scp-notif-items-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.4);
+}
+
 .scp-notif-head {
     padding: 12px 14px;
     background: linear-gradient(135deg, rgba(37,99,235,0.10), rgba(14,165,233,0.10));

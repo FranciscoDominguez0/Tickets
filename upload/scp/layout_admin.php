@@ -108,35 +108,39 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                                 <div class="scp-notif-sub"><?php echo $notifCount > 0 ? ((int)$notifCount . ' nueva(s)') : 'Sin nuevas'; ?></div>
                             </div>
                         </li>
-                        <?php if (empty($notifItems)): ?>
-                            <li><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
-                        <?php else: ?>
-                            <?php foreach ($notifItems as $n): ?>
-                                <?php
-                                $t = (string)($n['type'] ?? 'general');
-                                $icon = 'bi-info-circle';
-                                $accent = 'general';
-                                if ($t === 'ticket_assigned') {
-                                    $icon = 'bi-ticket-perforated';
-                                    $accent = 'ticket';
-                                } elseif ($t === 'task_assigned') {
-                                    $icon = 'bi-check2-square';
-                                    $accent = 'task';
-                                }
-                                ?>
-                                <li>
-                                    <a class="dropdown-item scp-notif-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
-                                        <div class="scp-notif-icon <?php echo html($accent); ?>">
-                                            <i class="bi <?php echo html($icon); ?>"></i>
-                                        </div>
-                                        <div class="scp-notif-body">
-                                            <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'Notificación')); ?></div>
-                                            <div class="scp-notif-time"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
-                                        </div>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <li class="scp-notif-items-scroll">
+                            <ul class="list-unstyled mb-0" id="scpNotifItemsContainer">
+                                <?php if (empty($notifItems)): ?>
+                                    <li id="scpNotifEmptyRow"><div class="scp-notif-empty">No tienes notificaciones nuevas.</div></li>
+                                <?php else: ?>
+                                    <?php foreach ($notifItems as $n): ?>
+                                        <?php
+                                        $t = (string)($n['type'] ?? 'general');
+                                        $icon = 'bi-info-circle';
+                                        $accent = 'general';
+                                        if ($t === 'ticket_assigned') {
+                                            $icon = 'bi-ticket-perforated';
+                                            $accent = 'ticket';
+                                        } elseif ($t === 'task_assigned') {
+                                            $icon = 'bi-check2-square';
+                                            $accent = 'task';
+                                        }
+                                        ?>
+                                        <li>
+                                            <a class="dropdown-item scp-notif-item" href="notification_read.php?id=<?php echo (int) $n['id']; ?>">
+                                                <div class="scp-notif-icon <?php echo html($accent); ?>">
+                                                    <i class="bi <?php echo html($icon); ?>"></i>
+                                                </div>
+                                                <div class="scp-notif-body">
+                                                    <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'Notificación')); ?></div>
+                                                    <div class="scp-notif-time"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </ul>
+                        </li>
                         <li class="scp-notif-footer">
                             <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="scpMarkAllRead" <?php echo empty($notifItems) ? 'disabled' : ''; ?>>
                                 <i class="bi bi-check-all"></i> Marcar todas como leídas
@@ -605,8 +609,9 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
             }
 
             function addNotificationToDropdown(n) {
-                var list = document.querySelector('.scp-notif-menu');
-                if (!list) return;
+                var container = document.getElementById('scpNotifItemsContainer');
+                if (!container) return;
+
                 var li = document.createElement('li');
                 var icon = 'bi-info-circle';
                 var accent = 'general';
@@ -622,8 +627,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                         </div>
                     </a>
                 `;
-                var headerLi = list.querySelector('li:first-child');
-                if (headerLi) headerLi.after(li);
+                container.prepend(li);
+                var empty = document.getElementById('scpNotifEmptyRow');
+                if (empty) empty.style.display = 'none';
+                var btnMark = document.getElementById('scpMarkAllRead');
+                if (btnMark) btnMark.disabled = false;
             }
 
             function showNotificationToast(n) {
