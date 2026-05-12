@@ -32,12 +32,13 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Acciones POST (borrado masivo)
+// Acciones POST (borrado masivo / vaciar todo)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $errors['err'] = 'Token de seguridad inválido.';
     } else {
         $do = strtolower((string)($_POST['do'] ?? ''));
+
         if ($do === 'mass_process') {
             $ids = $_POST['ids'] ?? [];
             $a = strtolower((string)($_POST['a'] ?? ''));
@@ -83,10 +84,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+
+        if ($do === 'empty_all') {
+            if ($logsHasEmpresaId) {
+                $stmt = $mysqli->prepare('DELETE FROM logs WHERE empresa_id = ?');
+                if ($stmt) {
+                    $stmt->bind_param('i', $eid);
+                    if ($stmt->execute()) {
+                        $n = (int)$stmt->affected_rows;
+                        $msg = $n > 0
+                            ? "Se eliminaron {$n} registro(s). La bitácora quedó vacía."
+                            : 'No había registros para eliminar.';
+                    } else {
+                        $errors['err'] = 'No se pudo vaciar el registro de logs.';
+                    }
+                } else {
+                    $errors['err'] = 'No se pudo preparar la operación.';
+                }
+            } else {
+                if ($mysqli->query('DELETE FROM logs')) {
+                    $n = (int)$mysqli->affected_rows;
+                    $msg = $n > 0
+                        ? "Se eliminaron {$n} registro(s). La bitácora quedó vacía."
+                        : 'No había registros para eliminar.';
+                } else {
+                    $errors['err'] = 'No se pudo vaciar el registro de logs.';
+                }
+            }
+        }
     }
 }
-
-// Filtros
 $q = trim((string)($_GET['q'] ?? ''));
 $level = trim((string)($_GET['level'] ?? ''));
 $date_from = trim((string)($_GET['from'] ?? ''));
@@ -213,9 +240,14 @@ ob_start();
 <div class="card settings-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong><i class="bi bi-list-ul"></i> Registros</strong>
-        <button type="button" id="openDeleteLogsModalBtn" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteLogsModal">
-            <i class="bi bi-trash"></i> Eliminar seleccionados
-        </button>
+        <div class="d-flex gap-2 flex-wrap justify-content-end">
+            <button type="button" id="openDeleteLogsModalBtn" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteLogsModal">
+                <i class="bi bi-trash"></i> Eliminar seleccionados
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#emptyAllLogsModal">
+                <i class="bi bi-trash3"></i> Vaciar todo
+            </button>
+        </div>
     </div>
     <div class="card-body">
         <form method="get" action="logs.php" class="row g-3 align-items-end">
@@ -242,6 +274,11 @@ ob_start();
             </div>
         </form>
     </div>
+
+    <form id="emptyAllLogsForm" method="post" action="logs.php" class="d-none" aria-hidden="true">
+        <?php csrfField(); ?>
+        <input type="hidden" name="do" value="empty_all">
+    </form>
 
     <div class="table-responsive">
         <form id="massDeleteForm" method="post" action="<?php echo html($mkUrl()); ?>" class="m-0">
@@ -358,6 +395,29 @@ ob_start();
     </div>
 </div>
 
+<div class="modal fade" id="emptyAllLogsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="bi bi-exclamation-octagon"></i> Vaciar toda la bitácora
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Se eliminarán <strong>todos</strong> los registros de auditoría<?php echo $logsHasEmpresaId ? ' de <strong>esta empresa</strong>' : ''; ?>, incluidos los que no ves por filtros o paginación.</p>
+                <p class="mb-0 text-muted small">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmEmptyAllLogsBtn">
+                    <i class="bi bi-trash3"></i> Sí, vaciar todo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="deleteLogsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -389,6 +449,23 @@ ob_start();
     var modalEl = document.getElementById('deleteLogsModal');
     var bodyEl = document.getElementById('deleteLogsModalBody');
     var confirmBtn = document.getElementById('confirmDeleteLogsBtn');
+    var massForm = document.getElementById('massDeleteForm');
+    var emptyForm = document.getElementById('emptyAllLogsForm');
+    var confirmEmptyBtn = document.getElementById('confirmEmptyAllLogsBtn');
+
+    if (confirmBtn && massForm) {
+        confirmBtn.addEventListener('click', function () {
+            if (getSelectedCount() <= 0) return;
+            massForm.submit();
+        });
+    }
+
+    if (confirmEmptyBtn && emptyForm) {
+        confirmEmptyBtn.addEventListener('click', function () {
+            emptyForm.submit();
+        });
+    }
+
     if (!openBtn || !modalEl) return;
 
     openBtn.addEventListener('click', function(e){
@@ -413,7 +490,6 @@ ob_start();
             } catch (err) {}
         }
     });
-})();
 })();
 </script>
 
