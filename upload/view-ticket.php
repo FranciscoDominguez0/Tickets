@@ -287,110 +287,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
-// Acción: Editar Mensaje (para clientes)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'edit_entry') {
-    if (!validateCSRF()) {
-        header('Location: view-ticket.php?id=' . $tid);
-        exit;
-    }
-    $entryId = (int)($_POST['entry_id'] ?? 0);
-    $newBody = trim($_POST['body'] ?? '');
-    
-    // Validar que la entrada pertenece al hilo, no es interna y es del usuario actual
-    $stmt = $mysqli->prepare("SELECT id FROM thread_entries WHERE id = ? AND thread_id = ? AND user_id = ? AND (is_internal = 0 OR is_internal IS NULL) AND empresa_id = ?");
-    $stmt->bind_param('iiii', $entryId, $thread_id, $uid, $eid);
-    $stmt->execute();
-    if ($stmt->get_result()->fetch_assoc()) {
-        // 1. Eliminar adjuntos marcados
-        if (!empty($_POST['delete_attachments']) && is_array($_POST['delete_attachments'])) {
-            $attachmentsHasEmpresa = false;
-            $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
-            $attachmentsHasEmpresa = ($colA && $colA->num_rows > 0);
 
-            foreach ($_POST['delete_attachments'] as $aid) {
-                $aid = (int)$aid;
-                $sqlDel = "SELECT path FROM attachments WHERE id = ? AND thread_entry_id = ?";
-                if ($attachmentsHasEmpresa) $sqlDel .= " AND empresa_id = ?";
-                $stmtDel = $mysqli->prepare($sqlDel);
-                if ($attachmentsHasEmpresa) $stmtDel->bind_param('iii', $aid, $entryId, $eid);
-                else $stmtDel->bind_param('ii', $aid, $entryId);
-                
-                $stmtDel->execute();
-                if ($rDel = $stmtDel->get_result()->fetch_assoc()) {
-                    $fullPath = __DIR__ . '/' . $rDel['path'];
-                    if (is_file($fullPath)) @unlink($fullPath);
-                    
-                    $sqlFinal = "DELETE FROM attachments WHERE id = ? AND thread_entry_id = ?";
-                    if ($attachmentsHasEmpresa) $sqlFinal .= " AND empresa_id = ?";
-                    $stmtFinal = $mysqli->prepare($sqlFinal);
-                    if ($attachmentsHasEmpresa) $stmtFinal->bind_param('iii', $aid, $entryId, $eid);
-                    else $stmtFinal->bind_param('ii', $aid, $entryId);
-                    $stmtFinal->execute();
-                }
-            }
-        }
-        
-        // 2. Subir nuevos adjuntos
-        if (!empty($_FILES['attachments']['name'][0])) {
-            $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
-            $maxSize = $ticketMaxFileMb * 1024 * 1024;
-            $allowedExt = [
-                'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp',
-                'pdf' => 'application/pdf', 'doc' => 'application/msword', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'txt' => 'text/plain', 'mp4' => 'video/mp4', 'webm' => 'video/webm', 'mov' => 'video/quicktime', 'mkv' => 'video/x-matroska'
-            ];
 
-            $attachmentsHasEmpresa = false;
-            $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
-            $attachmentsHasEmpresa = ($colA && $colA->num_rows > 0);
 
-            $files = $_FILES['attachments'];
-            $n = is_array($files['name']) ? count($files['name']) : 1;
-            for ($i = 0; $i < $n; $i++) {
-                if (($files['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
-                $orig = (string)($files['name'][$i] ?? '');
-                $size = (int)($files['size'][$i] ?? 0);
-                if ($orig === '' || $size <= 0 || $size > $maxSize) continue;
-                $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-                if (!isset($allowedExt[$ext])) continue;
-
-                $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
-                $uploadDir = __DIR__ . '/uploads/attachments';
-                if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
-                
-                if (move_uploaded_file($files['tmp_name'][$i], $uploadDir . '/' . $safeName)) {
-                    $relPath = 'uploads/attachments/' . $safeName;
-                    $mime = $allowedExt[$ext];
-                    $hash = @hash_file('sha256', $uploadDir . '/' . $safeName) ?: '';
-                    if ($attachmentsHasEmpresa) {
-                        $stmtA = $mysqli->prepare("INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                        $stmtA->bind_param('iisssiss', $eid, $entryId, $safeName, $orig, $mime, $size, $relPath, $hash);
-                    } else {
-                        $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-                        $stmtA->bind_param('isssiss', $entryId, $safeName, $orig, $mime, $size, $relPath, $hash);
-                    }
-                    $stmtA->execute();
-                }
-            }
-        }
-
-        // 3. Actualizar cuerpo del mensaje
-        if ($newBody !== '') {
-            $stmtUpd = $mysqli->prepare("UPDATE thread_entries SET body = ?, updated = NOW() WHERE id = ?");
-            $stmtUpd->bind_param('si', $newBody, $entryId);
-            $stmtUpd->execute();
-        }
-        $_SESSION['edit_success'] = true;
-    }
-    header('Location: view-ticket.php?id=' . $tid);
-    exit;
-}
-
-$edit_success = false;
-if (!empty($_SESSION['edit_success'])) {
-    $edit_success = true;
-    unset($_SESSION['edit_success']);
-}
 
 $reply_success = false;
 if (!empty($_SESSION['reply_success'])) {
@@ -1504,13 +1403,7 @@ function humanSize($bytes) {
                     </div>
                 </div>
 
-            <?php if ($edit_success): ?>
-                <div class="alert alert-success alert-dismissible fade show mx-4 mt-3 border-0 shadow-sm" id="edit-success-alert" style="border-radius: 12px; background: #ecfdf5; color: #065f46; font-weight: 700;">
-                    <i class="bi bi-check-circle-fill me-2"></i> Mensaje actualizado correctamente.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                <script>setTimeout(function(){ var a = document.getElementById('edit-success-alert'); if(a){ a.style.opacity='0'; setTimeout(function(){ a.remove(); }, 300); } }, 4000);</script>
-            <?php endif; ?>
+
             </div>
 
             <div class="ticket-view-overview">
@@ -1654,14 +1547,7 @@ function humanSize($bytes) {
                                                 <span class="author-role">Técnico</span>
                                             <?php endif; ?>
                                             
-                                            <?php if (!$isStaff && (int)$e['user_id'] === $uid): ?>
-                                                <button type="button" class="btn btn-link btn-sm p-0 btn-edit-entry" 
-                                                        data-entry-id="<?php echo $entryId; ?>" 
-                                                        title="Editar mensaje"
-                                                        style="color: #2563eb; text-decoration: none; line-height: 1;">
-                                                    <i class="bi bi-pencil-square" style="font-size: 0.95rem;"></i>
-                                                </button>
-                                            <?php endif; ?>
+
                                         </div>
                                     </div>
                                     
@@ -1841,33 +1727,38 @@ function humanSize($bytes) {
         var chooseLink = document.getElementById('attach-choose-link');
         if (!zone || !input || !list) return;
 
-        var picking = false;
-        try {
-            input.addEventListener('click', function (ev) { try { ev.stopPropagation(); } catch (e) {} });
-        } catch (e) {}
-
-        var openPicker = function () {
-            if (picking) return;
-            picking = true;
-            try { input.value = ''; } catch (e) {}
-            try { input.click(); } catch (e) {}
-            setTimeout(function () { picking = false; }, 800);
+        var openPicker = function (e) {
+            if (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (err) {}
+            }
+            try { input.click(); } catch (err) {}
         };
 
         zone.addEventListener('click', function (e) {
-            if (e.target && (e.target.closest && e.target.closest('button[data-remove-index]'))) return;
+            if (e.target && e.target.closest && e.target.closest('.dz-preview-remove')) return;
             if (e.target === input) return;
-            openPicker();
-        });
-        chooseLink && chooseLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            openPicker();
+            openPicker(e);
         });
 
-        input.addEventListener('change', function () {
-            picking = false;
-            updateList();
+        if (chooseLink) {
+            chooseLink.addEventListener('click', openPicker);
+        }
+
+        // Drag & Drop
+        zone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            zone.classList.add('dragover');
+        });
+        zone.addEventListener('dragleave', function() {
+            zone.classList.remove('dragover');
+        });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer && e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                updateList();
+            }
         });
 
         function humanSize(bytes) {
@@ -1894,18 +1785,20 @@ function humanSize($bytes) {
 
         function updateList() {
             list.innerHTML = '';
-            var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
+            var maxMb = <?php echo (int)($ticketMaxFileMb ?? 10); ?>;
             var maxSize = maxMb * 1024 * 1024;
             var tooLarge = [];
 
             if (input.files && input.files.length > 0) {
                 var dt = new DataTransfer();
+                var validFiles = 0;
                 for (var i = 0; i < input.files.length; i++) {
                     var file = input.files[i];
                     if (file.size > maxSize) {
                         tooLarge.push(file.name + ' (' + (file.size / (1024*1024)).toFixed(1) + ' MB)');
                     } else {
                         dt.items.add(file);
+                        validFiles++;
                     }
                 }
 
@@ -1920,65 +1813,51 @@ function humanSize($bytes) {
                 for (var i = 0; i < input.files.length; i++) {
                     var file = input.files[i];
                     var ext = file.name.split('.').pop().toLowerCase();
-                var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
-                
-                if (['pdf'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
-                } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
-                } else if (['doc', 'docx'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
-                } else if (['xls', 'xlsx'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
-                } else if (['zip', 'rar'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
-                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
-                    iconHtml = '<i class="bi bi-file-earmark-play-fill" style="color: #f59e0b;"></i>';
-                }
+                    var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
+                    
+                    if (['pdf'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
+                    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
+                    } else if (['doc', 'docx'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
+                    } else if (['xls', 'xlsx'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
+                    } else if (['zip', 'rar'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
+                    } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-play-fill" style="color: #f59e0b;"></i>';
+                    }
 
-                var card = document.createElement('div');
-                card.className = 'dz-preview-card';
-                card.innerHTML = 
-                    '<div class="dz-preview-icon" id="preview-icon-'+i+'">' + iconHtml + '</div>' +
-                    '<div class="dz-preview-info">' +
-                        '<div class="dz-preview-name" title="'+file.name+'">' + file.name + '</div>' +
-                        '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
-                    '</div>' +
-                    '<button type="button" class="dz-preview-remove" data-remove-index="'+i+'" title="Eliminar"><i class="bi bi-x"></i></button>';
-                
-                list.appendChild(card);
+                    var card = document.createElement('div');
+                    card.className = 'dz-preview-card';
+                    card.innerHTML = 
+                        '<div class="dz-preview-icon" id="preview-icon-' + i + '">' + iconHtml + '</div>' +
+                        '<div class="dz-preview-info">' +
+                            '<div class="dz-preview-name" title="' + file.name + '">' + file.name + '</div>' +
+                            '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
+                        '</div>' +
+                        '<button type="button" class="dz-preview-remove" data-remove-index="' + i + '" title="Eliminar"><i class="bi bi-x"></i></button>';
+                    
+                    list.appendChild(card);
 
-                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                    (function(idx, f) {
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            var iconDiv = document.getElementById('preview-icon-'+idx);
-                            if (iconDiv) {
-                                iconDiv.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
-                            }
-                        };
-                        reader.readAsDataURL(f);
-                    })(i, file);
-                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
-                    (function(idx, f) {
-                        var video = document.createElement('video');
-                        video.preload = 'metadata';
-                        video.onloadedmetadata = function() {
-                            var iconDiv = document.getElementById('preview-icon-'+idx);
-                            if (iconDiv) {
-                                video.style.width = '100%';
-                                video.style.height = '100%';
-                                video.style.objectFit = 'cover';
-                                iconDiv.innerHTML = '';
-                                iconDiv.appendChild(video);
-                            }
-                        };
-                        video.src = URL.createObjectURL(f);
-                    })(i, file);
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                        (function(idx, f) {
+                            var reader = new FileReader();
+                            reader.onload = function(e) {
+                                var iconDiv = document.getElementById('preview-icon-' + idx);
+                                if (iconDiv) {
+                                    iconDiv.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+                                }
+                            };
+                            reader.readAsDataURL(f);
+                        })(i, file);
+                    }
                 }
             }
         }
-        list.addEventListener('click', function(e) {
+
+        list.addEventListener('click', function (e) {
             var btn = e.target.closest('.dz-preview-remove');
             if (btn) {
                 e.preventDefault();
@@ -1990,6 +1869,7 @@ function humanSize($bytes) {
         input.addEventListener('change', updateList);
     })();
 </script>
+
 
 <style>
     .creative-pop-overlay{position:fixed; inset:0; background:rgba(15,23,42,.46); display:none; align-items:center; justify-content:center; padding:18px; z-index:2000; backdrop-filter: blur(10px);}
@@ -2068,47 +1948,6 @@ function humanSize($bytes) {
                 }, 2600);
             }
         } catch (e4) {}
-
-        var form = document.querySelector('.reply-card form');
-        if (!form) return;
-        var fileInput = document.getElementById('attachments');
-        var editor = document.getElementById('reply_body');
-        var submitBtn = document.getElementById('reply-submit-btn');
-
-        var getPlainTextFromHtml = function (html) {
-            var tmp = document.createElement('div');
-            tmp.innerHTML = html || '';
-            return (tmp.textContent || tmp.innerText || '').replace(/\u00A0/g, ' ').trim();
-        };
-
-        // Capture-phase listener to ensure it always runs
-        form.addEventListener('submit', function (ev) {
-            try {
-                var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-                if (!hasFiles) return;
-
-                var html = '';
-                try {
-                    if (typeof jQuery !== 'undefined' && jQuery(editor).summernote) {
-                        html = jQuery(editor).summernote('code') || '';
-                        if (jQuery(editor).summernote('isEmpty')) html = '';
-                    }
-                } catch (e) {}
-
-                if (!html) html = (editor && editor.value) ? editor.value : '';
-                var plain = getPlainTextFromHtml(html);
-                var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
-
-                if (!hasMedia && plain === '') {
-                    ev.preventDefault();
-                    window.__showCreativePop && window.__showCreativePop(
-                        'Adjuntaste un archivo, pero el mensaje está vacío. Escribe una breve descripción para poder enviarlo.',
-                        'Falta un mensaje'
-                    );
-                    return false;
-                }
-            } catch (e2) {}
-        }, true);
     })();
 </script>
 
@@ -2794,148 +2633,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <?php endif; ?>
 
-<!-- Modal: Editar Mensaje (Clientes) -->
-<div class="modal fade" id="modalEditEntry" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; background: #ffffff;">
-            <form method="post" action="view-ticket.php?id=<?php echo $tid; ?>" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="edit_entry">
-                <input type="hidden" name="entry_id" id="edit-entry-id" value="">
-                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                
-                <div class="modal-header border-0" style="padding: 24px 32px 16px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9 !important;">
-                    <div class="d-flex align-items-center gap-3">
-                        <div style="width: 42px; height: 42px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                            <i class="bi bi-pencil-square"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title mb-0" style="font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Editar Mensaje</h5>
-                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Modifica tu respuesta enviada</div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: #f1f5f9; border-radius: 50%; padding: 10px;"></button>
-                </div>
 
-                <div class="modal-body" style="padding: 32px; background: #ffffff;">
-                    <div class="mb-4">
-                        <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Contenido</label>
-                        <div class="editor-wrapper" style="border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-                            <textarea name="body" id="edit-entry-body" class="form-control" rows="10"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Adjuntos Actuales</label>
-                            <div id="edit-entry-attachments" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
-                                <!-- Se llena vía JS -->
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Añadir nuevos</label>
-                            <div class="edit-upload-zone" style="border: 2px dashed #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; background: #f8fafc; cursor: pointer;" onclick="document.getElementById('edit-new-files').click();">
-                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="window.validateEditFiles && window.validateEditFiles(this)">
-                                <i class="bi bi-cloud-arrow-up" style="font-size: 1.5rem; color: #94a3b8;"></i>
-                                <div id="edit-upload-hint" style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-top: 4px;">Subir más archivos</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer border-0" style="padding: 24px 32px 32px; background: #f8fafc; border-top: 1px solid #f1f5f9 !important; gap: 12px;">
-                    <button type="button" class="btn" data-bs-dismiss="modal" style="font-weight: 700; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 24px; font-size: 0.9rem;">Cancelar</button>
-                    <button type="submit" class="btn" style="font-weight: 800; color: #ffffff; background: #2563eb; border: none; border-radius: 12px; padding: 10px 28px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Abrir modal de edición
-    $('.btn-edit-entry').on('click', function() {
-        var entryId = $(this).data('entry-id');
-        var $entry = $(this).closest('.ticket-view-entry');
-        var bodyHtml = $entry.find('.entry-body').html();
-        
-        $('#edit-entry-id').val(entryId);
-        $('#edit-entry-body').summernote('code', bodyHtml);
-        
-        // Cargar adjuntos
-        var $attList = $('#edit-entry-attachments').empty();
-        $entry.find('.chat-att-list .chat-att-item').each(function() {
-            var attLink = $(this).find('a[href*="download="]').attr('href');
-            if (!attLink) return;
-            var match = attLink.match(/download=(\d+)/);
-            if (!match) return;
-            var attId = match[1];
-            var filename = $(this).find('.att-filename').text();
-            var iconClass = $(this).find('.chat-att-icon i').attr('class') || 'bi bi-paperclip';
-            
-            $attList.append(
-                '<div class="edit-att-item d-flex align-items-center justify-content-between" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px;">' +
-                '  <div class="d-flex align-items-center gap-2 overflow-hidden">' +
-                '    <div class="edit-att-icon" style="font-size: 1.1rem; flex: 0 0 auto;"><i class="' + iconClass + '"></i></div>' +
-                '    <span class="text-truncate" style="font-size: 0.88rem; font-weight: 600; color: #334155;">' + filename + '</span>' +
-                '  </div>' +
-                '  <div class="form-check form-switch ms-2">' +
-                '    <input class="form-check-input" type="checkbox" name="delete_attachments[]" value="' + attId + '" id="del-att-' + attId + '">' +
-                '    <label class="form-check-label text-danger" for="del-att-' + attId + '" style="font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="bi bi-trash"></i></label>' +
-                '  </div>' +
-                '</div>'
-            );
-        });
-        
-        $('#modalEditEntry').modal('show');
-    });
-
-    // Inicializar summernote para el modal si no está ya
-    if (typeof $.fn.summernote !== 'undefined') {
-        $('#edit-entry-body').summernote({
-            height: 200,
-            lang: 'es-ES',
-            toolbar: [
-                ['style', ['bold', 'italic', 'underline', 'clear']],
-                ['para', ['ul', 'ol']]
-            ]
-        });
-    }
-
-    window.validateEditFiles = function(input) {
-        var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
-        var maxSize = maxMb * 1024 * 1024;
-        var tooLarge = [];
-        var dt = new DataTransfer();
-        
-        for (var i = 0; i < input.files.length; i++) {
-            var file = input.files[i];
-            if (file.size > maxSize) {
-                tooLarge.push(file.name + ' (' + (file.size / (1024*1024)).toFixed(1) + ' MB)');
-            } else {
-                dt.items.add(file);
-            }
-        }
-        
-        if (tooLarge.length) {
-            input.files = dt.files;
-            var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
-            window.__showCreativePop && window.__showCreativePop(msg, 'Archivo demasiado grande');
-        }
-        
-        document.getElementById('edit-upload-hint').textContent = input.files.length + ' archivos seleccionados';
-    };
-});
-</script>
-
-<style>
-/* Estilos para el modal de edición */
-.edit-upload-zone:hover { border-color: #2563eb !important; background: #eff6ff !important; }
-.edit-upload-zone:hover i { color: #2563eb !important; transform: translateY(-2px); }
-.edit-upload-zone i { transition: all 0.2s; }
-.edit-att-item { transition: transform 0.2s, box-shadow 0.2s; }
-.edit-att-item:hover { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-</style>
 
 </body>
 </html>
