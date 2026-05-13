@@ -815,9 +815,21 @@ if ($ticketClientSignaturePath !== '') {
         <div class="d-md-none">
             <!-- Header: Estado y Prioridad -->
             <div class="mobile-header">
-                <div class="mobile-badge" style="<?php echo $sStyle; ?>">
-                    <span class="dot" style="background: <?php echo $sColor; ?>;"></span>
-                    <?php echo html($t['status_name']); ?>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="mobile-badge" style="<?php echo $sStyle; ?>">
+                        <span class="dot" style="background: <?php echo $sColor; ?>;"></span>
+                        <?php echo html($t['status_name']); ?>
+                    </div>
+                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                        <?php $bstatus = $t['billing_status'] ?? 'pending'; ?>
+                        <?php if ($bstatus === 'confirmed'): ?>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #16a34a; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Facturado - Ver reporte"><i class="bi bi-patch-check-fill"></i></a>
+                        <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #0284c7; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Visita Técnica - Ver reporte"><i class="bi bi-geo-alt-fill"></i></a>
+                        <?php elseif ($bstatus === 'cotizacion'): ?>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #4f46e5; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Cotización - Ver reporte"><i class="bi bi-file-earmark-text-fill"></i></a>
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
 
                 <?php if ($canTicketEdit): ?>
@@ -833,26 +845,18 @@ if ($ticketClientSignaturePath !== '') {
                 <?php endif; ?>
             </div>
 
-            <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+            <?php 
+            $bstatus = $t['billing_status'] ?? 'pending';
+            if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
                 <div class="mobile-header" style="margin-top: 8px;">
-                    <?php 
-                    $bstatus = $t['billing_status'] ?? 'pending';
-                    if ($bstatus === 'confirmed'): ?>
-                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; text-decoration:none;"><i class="bi bi-patch-check-fill"></i> Facturado</a>
-                    <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; text-decoration:none;"><i class="bi bi-geo-alt-fill"></i> Visita Técnica</a>
-                    <?php elseif ($bstatus === 'cotizacion'): ?>
-                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; text-decoration:none;"><i class="bi bi-file-earmark-text-fill"></i> Cotización</a>
+                    <?php if (roleHasPermission('ticket.edit')): ?>
+                        <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                            <i class="bi bi-clock-history"></i> Pendiente Facturación
+                        </a>
                     <?php else: ?>
-                        <?php if (roleHasPermission('ticket.edit')): ?>
-                            <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
-                                <i class="bi bi-clock-history"></i> Pendiente Facturación
-                            </a>
-                        <?php else: ?>
-                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
-                                <i class="bi bi-clock-history"></i> Pendiente Facturación
-                            </a>
-                        <?php endif; ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
+                            <i class="bi bi-clock-history"></i> Pendiente Facturación
+                        </a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -938,29 +942,33 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="field">
                     <label>ESTADO</label>
                     <div class="value" style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
-                        <span class="badge-status" style="<?php echo $sStyle; ?> padding: 6px 14px;">
-                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:<?php echo html($t['status_color'] ?? '#0f172a'); ?>; margin-right:8px;"></span>
-                            <?php echo html($t['status_name']); ?>
-                        </span>
-                        <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                            <?php 
-                            $bstatus = $t['billing_status'] ?? 'pending';
-                            if ($bstatus === 'confirmed'): ?>
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; text-decoration:none;" title="Ver reporte de facturación"><i class="bi bi-patch-check-fill me-2"></i> Facturado</a>
-                            <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; text-decoration:none;" title="Ver reporte de visita técnica"><i class="bi bi-geo-alt-fill me-2"></i> Visita Técnica</a>
-                            <?php elseif ($bstatus === 'cotizacion'): ?>
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; text-decoration:none;" title="Ver cotización"><i class="bi bi-file-earmark-text-fill me-2"></i> Cotización</a>
-                            <?php else: ?>
-                                <?php if (roleHasPermission('ticket.edit')): ?>
-                                    <a href="#" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
-                                        <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
-                                    </a>
-                                <?php else: ?>
-                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente">
-                                        <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
-                                    </a>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="badge-status" style="<?php echo $sStyle; ?> padding: 6px 14px;">
+                                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:<?php echo html($t['status_color'] ?? '#0f172a'); ?>; margin-right:8px;"></span>
+                                <?php echo html($t['status_name']); ?>
+                            </span>
+                            <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                                <?php $bstatus = $t['billing_status'] ?? 'pending'; ?>
+                                <?php if ($bstatus === 'confirmed'): ?>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-patch-check-fill" style="font-size:0.9rem;"></i> FACTURADO</a>
+                                <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-geo-alt-fill" style="font-size:0.9rem;"></i> VISITA TÉCNICA</a>
+                                <?php elseif ($bstatus === 'cotizacion'): ?>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #eef2ff; color: #4f46e5; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-file-earmark-text-fill" style="font-size:0.9rem;"></i> COTIZACIÓN</a>
                                 <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+                        <?php 
+                        $bstatus = $t['billing_status'] ?? 'pending';
+                        if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
+                            <?php if (roleHasPermission('ticket.edit')): ?>
+                                <a href="#" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                                    <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
+                                </a>
+                            <?php else: ?>
+                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente">
+                                    <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
+                                </a>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
