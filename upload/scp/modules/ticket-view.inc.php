@@ -1981,13 +1981,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (tooLarge.length) {
-                input.files = dt.files; // Mantener solo los válidos
-                var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
-                if (window.Swal) {
-                    Swal.fire({ icon: 'warning', title: 'Archivo demasiado grande', text: msg });
-                } else {
-                    alert(msg);
-                }
+                input.files = dt.files;
+                var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:<br><br><span style="color:#ef4444;font-weight:600">' + tooLarge.join('<br>') + '</span>';
+                window.__showCreativePopScp && window.__showCreativePopScp(msg, 'Archivo demasiado grande');
             }
 
             for (var i = 0; i < input.files.length; i++) {
@@ -2079,12 +2075,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (tooLarge.length) {
             input.files = dt.files;
-            var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
-            if (window.Swal) {
-                Swal.fire({ icon: 'warning', title: 'Archivo demasiado grande', text: msg });
-            } else {
-                alert(msg);
-            }
+            var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:<br><br><span style="color:#ef4444;font-weight:600">' + tooLarge.join('<br>') + '</span>';
+            window.__showCreativePopScp && window.__showCreativePopScp(msg, 'Archivo demasiado grande');
         }
         
         document.getElementById('edit-upload-hint').textContent = input.files.length + ' archivos seleccionados';
@@ -2596,3 +2588,55 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<style>
+    .creative-pop-overlay-scp{position:fixed; inset:0; background:rgba(15,23,42,.46); display:none; align-items:center; justify-content:center; padding:18px; z-index:9999; backdrop-filter: blur(10px);}
+    .creative-pop-scp{max-width:560px; width:100%; background:rgba(255,255,255,0.95); border:1px solid rgba(226,232,240,0.92); border-radius:22px; box-shadow:0 30px 90px rgba(15,23,42,.30); overflow:hidden; backdrop-filter: blur(10px); animation: creativePopInScp .14s ease-out;}
+    .creative-pop-head-scp{display:flex; align-items:center; gap:12px; padding:18px 20px; background:linear-gradient(135deg,#1e293b,#0f172a); color:#fff;}
+    .creative-pop-icon-scp{width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+    .creative-pop-title-scp{font-weight:900; margin:0; font-size:1.1rem; letter-spacing:-0.01em;}
+    .creative-pop-body-scp{padding:24px 20px; color:#334155; font-weight:500; line-height:1.6; font-size:0.95rem;}
+    .creative-pop-actions-scp{display:flex; gap:12px; justify-content:flex-end; padding:0 20px 20px;}
+    .creative-pop-btn-scp{border:1px solid transparent; border-radius:12px; padding:12px 24px; font-weight:800; cursor:pointer; transition: all 0.2s;}
+    .creative-pop-btn-scp.primary{background:#0f172a; color:#fff;}
+    .creative-pop-btn-scp.primary:hover{transform: translateY(-2px); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);}
+    @keyframes creativePopInScp{from{transform:translateY(10px) scale(.98); opacity:0;}to{transform:translateY(0) scale(1); opacity:1;}}
+</style>
+
+<div class="creative-pop-overlay-scp" id="creativePopScp" role="dialog" aria-modal="true">
+    <div class="creative-pop-scp">
+        <div class="creative-pop-head-scp">
+            <div class="creative-pop-icon-scp"><i class="bi bi-exclamation-triangle-fill" style="color: #f59e0b; font-size: 1.25rem;"></i></div>
+            <div>
+                <div class="creative-pop-title-scp" id="creativePopTitleScp">Advertencia</div>
+                <div style="opacity:.7; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Aviso del sistema</div>
+            </div>
+            <button type="button" class="btn-close btn-close-white ms-auto" aria-label="Cerrar" onclick="window.__hideCreativePopScp && window.__hideCreativePopScp()"></button>
+        </div>
+        <div class="creative-pop-body-scp" id="creativePopMsgScp"></div>
+        <div class="creative-pop-actions-scp">
+            <button type="button" class="creative-pop-btn-scp primary" onclick="window.__hideCreativePopScp && window.__hideCreativePopScp()">Entendido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var overlay = document.getElementById('creativePopScp');
+        var msgEl = document.getElementById('creativePopMsgScp');
+        var titleEl = document.getElementById('creativePopTitleScp');
+        window.__showCreativePopScp = function (msg, title) {
+            if (!overlay || !msgEl) return;
+            msgEl.innerHTML = msg || '';
+            if (titleEl) titleEl.textContent = title || 'Advertencia';
+            overlay.style.display = 'flex';
+        };
+        window.__hideCreativePopScp = function () {
+            if (!overlay) return;
+            overlay.style.display = 'none';
+        };
+        overlay && overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) window.__hideCreativePopScp();
+        });
+    })();
+</script>
