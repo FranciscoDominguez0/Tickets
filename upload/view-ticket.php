@@ -1894,10 +1894,32 @@ function humanSize($bytes) {
 
         function updateList() {
             list.innerHTML = '';
-            if (!input.files || input.files.length === 0) return;
-            for (var i = 0; i < input.files.length; i++) {
-                var file = input.files[i];
-                var ext = file.name.split('.').pop().toLowerCase();
+            var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
+            var maxSize = maxMb * 1024 * 1024;
+            var tooLarge = [];
+
+            if (input.files && input.files.length > 0) {
+                var dt = new DataTransfer();
+                for (var i = 0; i < input.files.length; i++) {
+                    var file = input.files[i];
+                    if (file.size > maxSize) {
+                        tooLarge.push(file.name + ' (' + (file.size / (1024*1024)).toFixed(1) + ' MB)');
+                    } else {
+                        dt.items.add(file);
+                    }
+                }
+
+                if (tooLarge.length) {
+                    input.files = dt.files;
+                    var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
+                    window.__showCreativePop && window.__showCreativePop(msg, 'Archivo demasiado grande');
+                }
+
+                if (input.files.length === 0) return;
+
+                for (var i = 0; i < input.files.length; i++) {
+                    var file = input.files[i];
+                    var ext = file.name.split('.').pop().toLowerCase();
                 var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
                 
                 if (['pdf'].includes(ext)) {
@@ -2812,7 +2834,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-6">
                             <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Añadir nuevos</label>
                             <div class="edit-upload-zone" style="border: 2px dashed #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; background: #f8fafc; cursor: pointer;" onclick="document.getElementById('edit-new-files').click();">
-                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="document.getElementById('edit-upload-hint').textContent = this.files.length + ' archivos seleccionados'">
+                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="window.validateEditFiles && window.validateEditFiles(this)">
                                 <i class="bi bi-cloud-arrow-up" style="font-size: 1.5rem; color: #94a3b8;"></i>
                                 <div id="edit-upload-hint" style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-top: 4px;">Subir más archivos</div>
                             </div>
@@ -2879,6 +2901,30 @@ document.addEventListener('DOMContentLoaded', function() {
             ]
         });
     }
+
+    window.validateEditFiles = function(input) {
+        var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
+        var maxSize = maxMb * 1024 * 1024;
+        var tooLarge = [];
+        var dt = new DataTransfer();
+        
+        for (var i = 0; i < input.files.length; i++) {
+            var file = input.files[i];
+            if (file.size > maxSize) {
+                tooLarge.push(file.name + ' (' + (file.size / (1024*1024)).toFixed(1) + ' MB)');
+            } else {
+                dt.items.add(file);
+            }
+        }
+        
+        if (tooLarge.length) {
+            input.files = dt.files;
+            var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
+            window.__showCreativePop && window.__showCreativePop(msg, 'Archivo demasiado grande');
+        }
+        
+        document.getElementById('edit-upload-hint').textContent = input.files.length + ' archivos seleccionados';
+    };
 });
 </script>
 

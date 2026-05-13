@@ -1407,7 +1407,7 @@ if ($ticketClientSignaturePath !== '') {
                         <div class="col-md-6">
                             <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Añadir nuevos</label>
                             <div class="edit-upload-zone" style="border: 2px dashed #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; background: #f8fafc; cursor: pointer;" onclick="document.getElementById('edit-new-files').click();">
-                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="document.getElementById('edit-upload-hint').textContent = this.files.length + ' archivos seleccionados'">
+                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="window.validateEditFiles && window.validateEditFiles(this)">
                                 <i class="bi bi-cloud-arrow-up" style="font-size: 1.5rem; color: #94a3b8;"></i>
                                 <div id="edit-upload-hint" style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-top: 4px;">Haz clic para subir más archivos</div>
                             </div>
@@ -1965,7 +1965,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function updateList() {
         list.innerHTML = '';
+        var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
+        var maxSize = maxMb * 1024 * 1024;
+        var tooLarge = [];
+
         if (input.files.length) {
+            var dt = new DataTransfer();
+            for (var i = 0; i < input.files.length; i++) {
+                var file = input.files[i];
+                if (file.size > maxSize) {
+                    tooLarge.push(file.name + ' (' + humanSize(file.size) + ')');
+                } else {
+                    dt.items.add(file);
+                }
+            }
+            
+            if (tooLarge.length) {
+                input.files = dt.files; // Mantener solo los válidos
+                var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
+                if (window.Swal) {
+                    Swal.fire({ icon: 'warning', title: 'Archivo demasiado grande', text: msg });
+                } else {
+                    alert(msg);
+                }
+            }
+
             for (var i = 0; i < input.files.length; i++) {
                 var file = input.files[i];
                 var ext = file.name.split('.').pop().toLowerCase();
@@ -2037,6 +2061,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     input.addEventListener('change', updateList);
+
+    window.validateEditFiles = function(input) {
+        var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
+        var maxSize = maxMb * 1024 * 1024;
+        var tooLarge = [];
+        var dt = new DataTransfer();
+        
+        for (var i = 0; i < input.files.length; i++) {
+            var file = input.files[i];
+            if (file.size > maxSize) {
+                tooLarge.push(file.name + ' (' + humanSize(file.size) + ')');
+            } else {
+                dt.items.add(file);
+            }
+        }
+        
+        if (tooLarge.length) {
+            input.files = dt.files;
+            var msg = 'Los siguientes archivos superan el límite de ' + maxMb + 'MB y han sido descartados:\n\n' + tooLarge.join('\n');
+            if (window.Swal) {
+                Swal.fire({ icon: 'warning', title: 'Archivo demasiado grande', text: msg });
+            } else {
+                alert(msg);
+            }
+        }
+        
+        document.getElementById('edit-upload-hint').textContent = input.files.length + ' archivos seleccionados';
+    };
     zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
     zone.addEventListener('drop', function(e) {
