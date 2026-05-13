@@ -51,12 +51,14 @@ $stmt = $mysqli->prepare(
     "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
-    . "       d.name AS dept_name"
+    . "       d.name AS dept_name,\n"
+    . "       s.firstname AS staff_first, s.lastname AS staff_last"
     . $topicSelect
     . "FROM tickets t\n"
     . "JOIN ticket_status ts ON t.status_id = ts.id\n"
     . "JOIN priorities p ON t.priority_id = p.id\n"
     . "JOIN departments d ON t.dept_id = d.id\n"
+    . "LEFT JOIN staff s ON t.staff_id = s.id\n"
     . $topicJoin
     . "WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ?\n"
     . "LIMIT 1"
@@ -644,6 +646,166 @@ function humanSize($bytes) {
             .note-editor .note-editable img { max-width: 100% !important; height: auto !important; display: block; object-fit: contain; }
             .note-editor .note-editable iframe { width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
+            /* ── Dashboard Premium Layout ── */
+            .ticket-view-overview {
+                margin-bottom: 24px;
+                background: #fff;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+                border: 1px solid #e2e8f0;
+                overflow: hidden;
+            }
+
+            .ticket-view-overview-desktop {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0;
+            }
+
+            .ticket-view-overview-desktop > div {
+                padding: 20px 24px;
+                border-right: 1px solid #f1f5f9;
+            }
+
+            .ticket-view-overview-desktop > div:last-child {
+                border-right: none;
+            }
+
+            .ticket-view-overview .field {
+                margin-bottom: 16px;
+            }
+
+            .ticket-view-overview .field:last-child {
+                margin-bottom: 0;
+            }
+
+            .ticket-view-overview .field label {
+                font-size: 0.65rem;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                color: #94a3b8;
+                font-weight: 800;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 8px;
+            }
+
+            .ticket-view-overview .field .value {
+                font-size: 1rem;
+                font-weight: 700;
+                color: #1e293b;
+            }
+
+            .ticket-view-overview .divider {
+                height: 1px;
+                background: #f1f5f9;
+                margin: 16px 0;
+            }
+
+            /* ── Mobile Dashboard ── */
+            .mobile-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 16px;
+                background: #f8fafc;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .mobile-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border-radius: 999px;
+                font-size: 0.75rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.02em;
+            }
+
+            .mobile-badge .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+
+            .mobile-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1px;
+                background: #f1f5f9;
+            }
+
+            .mobile-grid-item {
+                background: #fff;
+                padding: 16px;
+            }
+
+            .mobile-grid-item label {
+                display: block;
+                font-size: 0.6rem;
+                font-weight: 800;
+                color: #94a3b8;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 4px;
+            }
+
+            .mobile-grid-item .val {
+                font-size: 0.88rem;
+                font-weight: 700;
+                color: #1e293b;
+                line-height: 1.2;
+            }
+
+            .mobile-user-section {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                padding: 16px;
+                background: #fff;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .mobile-avatar {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: #f1f5f9;
+                color: #64748b;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.4rem;
+                flex-shrink: 0;
+            }
+
+            .mobile-user-info {
+                flex-grow: 1;
+                min-width: 0;
+            }
+
+            .mobile-user-info .name {
+                font-size: 1rem;
+                font-weight: 800;
+                color: #0f172a;
+                margin-bottom: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .mobile-user-info .sub {
+                font-size: 0.78rem;
+                font-weight: 600;
+                color: #64748b;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
             .entry-footer {
                 font-size: 0.72rem;
                 color: #94a3b8;
@@ -824,6 +986,7 @@ function humanSize($bytes) {
             border: 1px solid #bae6fd;
         }
         .preview-hint i { font-size: 1rem; }
+        .preview-hint { transition: opacity 0.8s ease, transform 0.8s ease; }
     </style>
 </head>
 <body>
@@ -899,46 +1062,111 @@ function humanSize($bytes) {
 <div class="container-main">
     <div class="center-wrap">
         <div class="panel-soft">
-            <div class="page-header" style="margin-top: 0;">
-                <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+            <div class="page-header" style="margin-top: 0; padding: 24px;">
+                <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                     <div>
-                        <h2 class="mb-1"><?php echo html($t['subject']); ?></h2>
-                        <div class="sub">Ticket #<?php echo html($t['ticket_number']); ?> · <?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <span style="background: #e0e7ff; color: #4338ca; padding: 4px 14px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid #c7d2fe;">
+                                <i class="bi bi-hash"></i> TICKET #<?php echo html($t['ticket_number']); ?>
+                            </span>
+                        </div>
+                        <h2 class="mb-0" style="font-weight: 900; color: #0f172a;"><?php echo html($t['subject']); ?></h2>
                     </div>
                     <div class="text-end">
-                        <div class="mb-2">
-                            <span class="badge" style="background-color: <?php echo html($t['status_color']); ?>"><?php echo html($t['status_name']); ?></span>
-                        </div>
-                        <a href="tickets.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-arrow-left"></i> Volver</a>
+                        <a href="tickets.php" class="btn btn-light btn-sm px-4" style="border-radius: 999px; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-arrow-left"></i> Volver</a>
                     </div>
                 </div>
             </div>
 
-            <div class="card-soft">
-                <div class="head">
-                    <div class="ticket-meta">
-                        <div>
-                            <div class="label"><i class="bi bi-diagram-3 me-1"></i> Departamento</div>
+            <div class="ticket-view-overview">
+                <?php 
+                    $pColor = $t['priority_color'] ?: '#64748b'; 
+                    $pStyle = "background: {$pColor}15; color: {$pColor}; border: 1px solid {$pColor}30;";
+                    $sColor = $t['status_color'] ?: '#64748b';
+                    $sStyle = "background: {$sColor}22; color: {$sColor}; border: 1px solid {$sColor}30;";
+                ?>
+
+                <!-- DISEÑO MÓVIL (Premium Dashboard similar a tickets.php) -->
+                <div class="d-md-none">
+                    <div class="mobile-header">
+                        <div class="mobile-badge" style="<?php echo $sStyle; ?>">
+                            <span class="dot" style="background: <?php echo $sColor; ?>;"></span>
+                            <?php echo html($t['status_name']); ?>
+                        </div>
+                        <div class="mobile-badge" style="<?php echo $pStyle; ?>">
+                            <i class="bi bi-flag-fill"></i>
+                            <?php echo html($t['priority_name']); ?>
+                        </div>
+                    </div>
+
+                    <div class="mobile-grid">
+                        <div class="mobile-grid-item">
+                            <label><i class="bi bi-bookmark"></i> TEMA</label>
+                            <div class="val"><?php echo html($t['topic_name'] ?? '—'); ?></div>
+                        </div>
+                        <div class="mobile-grid-item">
+                            <label><i class="bi bi-calendar-event"></i> CREADO EL</label>
+                            <div class="val"><?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
+                        </div>
+                        <div class="mobile-grid-item">
+                            <label><i class="bi bi-clock-history"></i> ACTUALIZADO</label>
+                            <div class="val"><?php echo !empty($t['updated']) ? date('d/m/Y H:i', strtotime($t['updated'])) : '—'; ?></div>
+                        </div>
+                        <div class="mobile-grid-item">
+                            <label><i class="bi bi-hash"></i> TICKET #</label>
+                            <div class="val"><?php echo html($t['ticket_number']); ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DISEÑO DESKTOP (3 Columnas) -->
+                <div class="d-none d-md-grid ticket-view-overview-desktop">
+                    <!-- Columna 1 -->
+                    <div>
+                        <div class="field">
+                            <label><i class="bi bi-info-circle"></i> ESTADO</label>
+                            <div class="value">
+                                <span class="badge" style="background-color: <?php echo html($t['status_color']); ?>; padding: 6px 12px; border-radius: 8px;">
+                                    <?php echo html($t['status_name']); ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="field">
+                            <label><i class="bi bi-diagram-3"></i> DEPARTAMENTO</label>
                             <div class="value"><?php echo html($t['dept_name']); ?></div>
                         </div>
-                        <div>
-                            <div class="label"><i class="bi bi-bookmark me-1"></i> Tema</div>
-                            <div class="value"><?php
-                                $topicDisplay = trim((string)($t['topic_name'] ?? ''));
-                                echo html($topicDisplay !== '' ? $topicDisplay : '—');
-                            ?></div>
+                    </div>
+
+                    <!-- Columna 2 -->
+                    <div>
+                        <div class="field">
+                            <label><i class="bi bi-bookmark"></i> TEMA DE AYUDA</label>
+                            <div class="value"><?php echo html($t['topic_name'] ?? '—'); ?></div>
                         </div>
-                        <div>
-                            <div class="label"><i class="bi bi-flag me-1"></i> Prioridad</div>
-                            <div class="value"><?php echo html($t['priority_name']); ?></div>
+                        <div class="divider"></div>
+                        <div class="field">
+                            <label><i class="bi bi-calendar-event"></i> FECHA DE CREACIÓN</label>
+                            <div class="value"><?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
                         </div>
-                        <div>
-                            <div class="label"><i class="bi bi-info-circle me-1"></i> Estado</div>
-                            <div class="value"><?php echo html($t['status_name']); ?></div>
+                    </div>
+
+                    <!-- Columna 3 -->
+                    <div>
+                        <div class="field">
+                            <label><i class="bi bi-flag"></i> PRIORIDAD</label>
+                            <div class="value">
+                                <span class="badge" style="<?php echo $pStyle; ?> padding: 6px 12px; border-radius: 8px;">
+                                    <?php echo html($t['priority_name']); ?>
+                                </span>
+                            </div>
                         </div>
-                        <div>
-                            <div class="label"><i class="bi bi-calendar-event me-1"></i> Creado</div>
-                            <div class="value"><?php echo !empty($t['created']) ? date('d/m/Y H:i', strtotime($t['created'])) : '-'; ?></div>
+                        <div class="divider"></div>
+                        <div class="field">
+                            <label><i class="bi bi-clock-history"></i> ÚLTIMA ACTUALIZACIÓN</label>
+                            <div class="value" style="font-size: 0.9rem; color: #64748b;">
+                                <?php echo !empty($t['updated']) ? date('d/m/Y H:i', strtotime($t['updated'])) : date('d/m/Y H:i', strtotime($t['created'])); ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -948,11 +1176,12 @@ function humanSize($bytes) {
             <div class="thread">
                 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                     <h5 class="mb-0">Hilo del ticket</h5>
-                    <div class="preview-hint">
+                    <div class="preview-hint" id="previewHintTip">
                         <i class="bi bi-info-circle-fill"></i>
                         <span>Tip: <span class="d-none d-md-inline">Pasa el ratón</span><span class="d-md-none">Deja presionado</span> sobre una imagen para verla</span>
                     </div>
                 </div>
+                <script>(function(){ var h = document.getElementById('previewHintTip'); if (!h) return; setTimeout(function(){ h.style.opacity = '0'; h.style.transform = 'translateY(-6px)'; setTimeout(function(){ h.style.display = 'none'; }, 800); }, 4000); })();</script>
 
                 <?php if (empty($entries)): ?>
                     <div class="text-muted">Aún no hay mensajes.</div>

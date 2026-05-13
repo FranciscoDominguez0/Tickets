@@ -835,21 +835,44 @@ if ($ticketClientSignaturePath !== '') {
 
             <!-- Sección Usuario -->
             <div class="mobile-user-section">
-                <div class="mobile-avatar">
-                    <i class="bi bi-person"></i>
+                <?php
+                    if ($isWalkinTicket) {
+                        // Para no recurrentes: el nombre real del cliente está en walkin_name o en el subject
+                        $mobileClientName = trim($t['walkin_name'] ?? '');
+                        if ($mobileClientName === '') {
+                            $mobileClientName = trim($t['subject'] ?? 'Cliente no recurrente');
+                        }
+                    } else {
+                        $mobileClientName = trim($t['user_name'] ?? '');
+                    }
+                    $mobileInitials = '';
+                    $mobileParts = preg_split('/\s+/', $mobileClientName);
+                    if (!empty($mobileParts[0])) $mobileInitials .= mb_substr($mobileParts[0], 0, 1);
+                    if (!empty($mobileParts[1])) $mobileInitials .= mb_substr($mobileParts[1], 0, 1);
+                    $mobileInitials = strtoupper($mobileInitials ?: '?');
+                ?>
+                <div class="mobile-avatar" style="font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; <?php echo $isWalkinTicket ? 'background: #fef3c7; color: #92400e;' : 'background: #eff6ff; color: #2563eb;'; ?>">
+                    <?php echo html($mobileInitials); ?>
                 </div>
                 <div class="mobile-user-info">
-                    <div class="name"><?php echo html($isWalkinTicket ? $t['walkin_name'] : $t['user_name']); ?></div>
-                    <?php if (!empty($t['walkin_address']) || !empty($t['user_address'])): ?>
+                    <?php if ($isWalkinTicket): ?>
+                        <div style="margin-bottom: 4px;">
+                            <span style="display: inline-flex; align-items: center; gap: 4px; background: #fef3c7; color: #92400e; border: 1px solid #fde68a; border-radius: 6px; font-size: 0.6rem; font-weight: 900; letter-spacing: 0.06em; padding: 2px 8px; text-transform: uppercase;">
+                                <i class="bi bi-person-walking"></i> Cliente No Recurrente
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    <div class="name"><?php if (!$isWalkinTicket && !empty($t['user_id'])): ?><a href="users.php?id=<?php echo (int)$t['user_id']; ?>" style="color:inherit;text-decoration:none;"><?php echo html($mobileClientName); ?></a><?php else: ?><?php echo html($mobileClientName); ?><?php endif; ?></div>
+                    <?php if (!empty($t['walkin_address'] ?? '') || !empty($t['user_address'] ?? '')): ?>
                     <div class="sub">
                         <i class="bi bi-geo-alt"></i> 
-                        <?php echo html($isWalkinTicket ? $t['walkin_address'] : $t['user_address']); ?>
+                        <?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?>
                     </div>
                     <?php endif; ?>
-                    <?php if (!empty($t['walkin_phone']) || !empty($t['user_phone'])): ?>
+                    <?php if (!empty($t['walkin_phone'] ?? '') || !empty($t['user_phone'] ?? '')): ?>
                     <div class="sub">
                         <i class="bi bi-telephone"></i> 
-                        <?php echo html($isWalkinTicket ? $t['walkin_phone'] : $t['user_phone']); ?>
+                        <?php echo html($isWalkinTicket ? ($t['walkin_phone'] ?? '') : ($t['user_phone'] ?? '')); ?>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -945,7 +968,15 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="field">
                     <label><i class="bi bi-person"></i> <?php echo $isWalkinTicket ? 'CLIENTE NO RECURRENTE' : 'CLIENTE'; ?></label>
                     <div class="value title <?php echo !$isWalkinTicket ? 'highlight' : ''; ?>">
-                        <?php echo html($isWalkinTicket ? $t['user_name'] : $t['user_name']); ?>
+                        <?php 
+                        if ($isWalkinTicket) {
+                            $displayName = trim($t['walkin_name'] ?? '');
+                            if ($displayName === '') $displayName = trim($t['subject'] ?? 'Cliente no recurrente');
+                            echo html($displayName);
+                        } else {
+                            echo '<a href="users.php?id=' . (int)$t['user_id'] . '" style="color:inherit;text-decoration:none;" title="Ver perfil del cliente">' . html($t['user_name']) . '</a>';
+                        }
+                        ?>
                     </div>
                     
                     <?php if ($isWalkinTicket): ?>

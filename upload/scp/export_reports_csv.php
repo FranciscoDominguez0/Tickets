@@ -64,7 +64,9 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
 
     $sql = "SELECT t.ticket_number, d.name AS department,
                    CONCAT(s.firstname,' ',s.lastname) AS staff_name,
-                   t.closed, r.final_price, r.work_description
+                   t.closed, r.final_price, r.work_description,
+                   u.firstname as user_first, u.lastname as user_last, u.email as user_email,
+                   t.subject, t.walkin_phone, t.walkin_address
             FROM tickets t
             JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
             JOIN ticket_reports r ON r.ticket_id = t.id
@@ -86,7 +88,16 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
     $res = $stmt->get_result();
 
     $rows = [];
-    while ($row = $res->fetch_assoc()) { $rows[] = $row; }
+    while ($row = $res->fetch_assoc()) { 
+        $isWalkinReport = (!empty($row['walkin_phone']) || !empty($row['walkin_address']));
+        if ($isWalkinReport) {
+            $row['client_name'] = trim($row['subject'] ?? 'Cliente no recurrente');
+        } else {
+            $cName = trim(($row['user_first'] ?? '') . ' ' . ($row['user_last'] ?? ''));
+            $row['client_name'] = $cName !== '' ? $cName : ($row['user_email'] ?? 'Usuario Web');
+        }
+        $rows[] = $row; 
+    }
     return $rows;
 }
 
@@ -150,13 +161,13 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $ws->getPageSetup()->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4);
     $ws->setShowGridlines(false);
 
-    // Ancho de columnas
-    $ws->getColumnDimension('A')->setWidth(16); // Ticket #
-    $ws->getColumnDimension('B')->setWidth(26); // Departamento
-    $ws->getColumnDimension('C')->setWidth(28); // Técnico
-    $ws->getColumnDimension('D')->setWidth(22); // Fecha/Hora
-    $ws->getColumnDimension('E')->setWidth(20); // Precio
-    $ws->getColumnDimension('F')->setWidth(70); // Descripción
+    $ws->getColumnDimension('A')->setWidth(14); // Ticket #
+    $ws->getColumnDimension('B')->setWidth(26); // Cliente
+    $ws->getColumnDimension('C')->setWidth(22); // Departamento
+    $ws->getColumnDimension('D')->setWidth(26); // Técnico
+    $ws->getColumnDimension('E')->setWidth(20); // Fecha/Hora
+    $ws->getColumnDimension('F')->setWidth(18); // Precio
+    $ws->getColumnDimension('G')->setWidth(65); // Descripción
 
     // ── LOGO Y CABECERA ────────────────────────────────────────────────────
     $ws->getRowDimension(1)->setRowHeight(40);
@@ -182,7 +193,7 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     }
 
     // Título Principal
-    $ws->mergeCells('B1:F2');
+    $ws->mergeCells('B1:G2');
     $ws->setCellValue('B1', "VIGITEC — SISTEMA INTEGRAL DE TICKETS\nREPORTE DE SERVICIOS Y FACTURACIÓN");
     $ws->getStyle('B1')->getAlignment()->setWrapText(true);
     $ws->getStyle('B1')->applyFromArray([
@@ -195,7 +206,7 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $ws->getStyle('A1:A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF'.$c['primary']);
 
     // Subheader con Información de Periodo
-    $ws->mergeCells('A3:F3');
+    $ws->mergeCells('A3:G3');
     $ws->setCellValue('A3', "PERIODO: " . mb_strtoupper($monthName, 'UTF-8') . " | GENERADO: " . date('d/m/Y H:i'));
     $ws->getStyle('A3')->applyFromArray([
         'font' => ['bold'=>true,'size'=>11,'color'=>['argb'=>'FF'.$c['primary']]],
@@ -208,15 +219,16 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $ws->getRowDimension(5)->setRowHeight(35);
     $headers = [
         'A5'=>'TICKET #',
-        'B5'=>'DEPARTAMENTO',
-        'C5'=>'TÉCNICO RESPONSABLE',
-        'D5'=>'FECHA/HORA CIERRE',
-        'E5'=>'PRECIO FINAL',
-        'F5'=>'DESCRIPCIÓN DEL TRABAJO'
+        'B5'=>'CLIENTE',
+        'C5'=>'DEPARTAMENTO',
+        'D5'=>'TÉCNICO RESPONSABLE',
+        'E5'=>'FECHA/HORA CIERRE',
+        'F5'=>'PRECIO FINAL',
+        'G5'=>'DESCRIPCIÓN DEL TRABAJO'
     ];
     foreach($headers as $cell => $val) { $ws->setCellValue($cell, $val); }
 
-    $ws->getStyle('A5:F5')->applyFromArray([
+    $ws->getStyle('A5:G5')->applyFromArray([
         'font' => ['bold'=>true,'size'=>11,'color'=>['argb'=>'FF'.$c['white']]],
         'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
         'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER,'vertical'=>Alignment::VERTICAL_CENTER],
@@ -234,12 +246,13 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
 
         $ws->getRowDimension($currentRow)->setRowHeight(40);
         $ws->setCellValue("A$currentRow", " " . $row['ticket_number']);
-        $ws->setCellValue("B$currentRow", $row['department']);
-        $ws->setCellValue("C$currentRow", mb_strtoupper((string)$row['staff_name'], 'UTF-8'));
-        $ws->setCellValue("D$currentRow", date('d/m/Y H:i', strtotime((string)$row['closed'])));
-        $ws->setCellValue("E$currentRow", $price);
-        $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
-        $ws->setCellValue("F$currentRow", trim(preg_replace('/\s+/', ' ', (string)$row['work_description'])));
+        $ws->setCellValue("B$currentRow", mb_strtoupper((string)$row['client_name'], 'UTF-8'));
+        $ws->setCellValue("C$currentRow", $row['department']);
+        $ws->setCellValue("D$currentRow", mb_strtoupper((string)$row['staff_name'], 'UTF-8'));
+        $ws->setCellValue("E$currentRow", date('d/m/Y H:i', strtotime((string)$row['closed'])));
+        $ws->setCellValue("F$currentRow", $price);
+        $ws->getStyle("F$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+        $ws->setCellValue("G$currentRow", trim(preg_replace('/\s+/', ' ', (string)$row['work_description'])));
 
         $currentRow++;
     }
@@ -247,22 +260,22 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     // Aplicar estilos a todo el rango a la vez (Optimización de velocidad)
     if ($currentRow > $startRow) {
         $lastRow = $currentRow - 1;
-        $ws->getStyle("A$startRow:F$lastRow")->applyFromArray([
+        $ws->getStyle("A$startRow:G$lastRow")->applyFromArray([
             'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders'=>['borderStyle'=>Border::BORDER_THIN,'color'=>['argb'=>'FFEEEEEE']]]
         ]);
         $ws->getStyle("A$startRow:A$lastRow")->getFont()->setBold(true)->getColor()->setARGB('FF'.$c['secondary']);
-        $ws->getStyle("F$startRow:F$lastRow")->getAlignment()->setWrapText(true);
+        $ws->getStyle("G$startRow:G$lastRow")->getAlignment()->setWrapText(true);
     }
 
     // Fila de Total
     $ws->getRowDimension($currentRow)->setRowHeight(35);
-    $ws->mergeCells("A$currentRow:D$currentRow");
+    $ws->mergeCells("A$currentRow:E$currentRow");
     $ws->setCellValue("A$currentRow", 'SUMATORIA TOTAL DEL PERIODO ');
-    $ws->setCellValue("E$currentRow", $totalAmount);
-    $ws->getStyle("E$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
+    $ws->setCellValue("F$currentRow", $totalAmount);
+    $ws->getStyle("F$currentRow")->getNumberFormat()->setFormatCode('"USD "#,##0.00');
 
-    $ws->getStyle("A$currentRow:E$currentRow")->applyFromArray([
+    $ws->getStyle("A$currentRow:F$currentRow")->applyFromArray([
         'font' => ['bold'=>true,'size'=>12,'color'=>['argb'=>'FF'.$c['white']]],
         'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['primary']]],
         'alignment' => ['vertical'=>Alignment::VERTICAL_CENTER],

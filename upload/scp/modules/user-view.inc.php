@@ -378,6 +378,18 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                     <div class="value"><?php echo html($viewUser['email']); ?></div>
                 </div>
                 <div class="user-view-detail">
+                    <label>Teléfono</label>
+                    <div class="value">
+                        <?php if (!empty($viewUser['phone'])): ?>
+                            <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" style="color:inherit;text-decoration:none;">
+                                <i class="bi bi-telephone me-1"></i><?php echo html((string)$viewUser['phone']); ?>
+                            </a>
+                        <?php else: ?>
+                            <span class="text-muted" style="font-size:0.88rem;">—</span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="user-view-detail">
                     <label>Dirección</label>
                     <div class="value"><?php echo html($viewUser['address'] ?? '—'); ?></div>
                 </div>

@@ -24,7 +24,8 @@ if ($ticketId <= 0) {
 $stmt = $mysqli->prepare("SELECT t.id, t.ticket_number, t.subject, t.closed, t.dept_id, t.user_id,
                                  d.name as department_name, d.requires_report,
                                  s.firstname as staff_first, s.lastname as staff_last,
-                                 u.firstname as user_first, u.lastname as user_last, u.email as user_email
+                                 u.firstname as user_first, u.lastname as user_last, u.email as user_email,
+                                 t.walkin_phone, t.walkin_address
                           FROM tickets t
                           JOIN departments d ON t.dept_id = d.id
                           LEFT JOIN staff s ON t.staff_id = s.id
@@ -447,8 +448,16 @@ h6.border-bottom {
     <?php endif; ?>
 
     <?php
-    $clientName = trim(($ticket['user_first'] ?? '') . ' ' . ($ticket['user_last'] ?? ''));
-    $clientName = $clientName !== '' ? $clientName : ($ticket['user_email'] ?? 'Usuario Web');
+    // Detectar si es cliente no recurrente (walkin)
+    $isWalkinReport = (!empty($ticket['walkin_phone']) || !empty($ticket['walkin_address']));
+    
+    // Para no recurrentes el nombre real está en el subject
+    if ($isWalkinReport) {
+        $clientName = trim($ticket['subject'] ?? 'Cliente no recurrente');
+    } else {
+        $clientName = trim(($ticket['user_first'] ?? '') . ' ' . ($ticket['user_last'] ?? ''));
+        $clientName = $clientName !== '' ? $clientName : ($ticket['user_email'] ?? 'Usuario Web');
+    }
     $staffName = trim(($ticket['staff_first'] ?? '') . ' ' . ($ticket['staff_last'] ?? ''));
     $staffName = $staffName !== '' ? $staffName : 'Sin asignar';
     $closedDate = !empty($ticket['closed']) ? date('d/m/Y H:i', strtotime($ticket['closed'])) : 'N/A';
@@ -538,13 +547,15 @@ h6.border-bottom {
             <!-- Columna 2: Cliente y Tema -->
             <div>
                 <div class="field">
-                    <label><i class="bi bi-person"></i> CLIENTE</label>
+                    <label><i class="bi bi-person"></i> <?php echo $isWalkinReport ? 'CLIENTE NO RECURRENTE' : 'CLIENTE'; ?></label>
                     <div class="value title"><?php echo htmlspecialchars($clientName); ?></div>
                 </div>
+                <?php if (!$isWalkinReport): ?>
                 <div class="field">
                     <label><i class="bi bi-bookmark"></i> TEMA (SOPORTE)</label>
                     <div class="value"><?php echo htmlspecialchars($ticket['subject']); ?></div>
                 </div>
+                <?php endif; ?>
                 <div class="divider"></div>
                 <div class="field">
                     <label><i class="bi bi-envelope"></i> EMAIL</label>

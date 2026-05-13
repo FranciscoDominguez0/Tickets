@@ -70,8 +70,13 @@ $companyWebsite = trim((string)getAppSetting('company.website', ''));
 if ($companyWebsite === '') $companyWebsite = (string)APP_URL;
 $logoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
 
-$userName = trim((string)($t['user_first'] ?? '') . ' ' . (string)($t['user_last'] ?? ''));
-if ($userName === '') $userName = (string)($t['user_email'] ?? '');
+$isWalkinTicket = (!empty($t['walkin_phone']) || !empty($t['walkin_address']));
+if ($isWalkinTicket) {
+    $userName = trim((string)($t['subject'] ?? 'Cliente no recurrente'));
+} else {
+    $userName = trim((string)($t['user_first'] ?? '') . ' ' . (string)($t['user_last'] ?? ''));
+    if ($userName === '') $userName = (string)($t['user_email'] ?? 'Usuario Web');
+}
 
 $staffName = trim((string)($t['staff_first'] ?? '') . ' ' . (string)($t['staff_last'] ?? ''));
 if ($staffName === '') $staffName = '— Sin asignar —';
@@ -273,7 +278,7 @@ if (defined('TICKET_PDF_RENDER')) {
     <div class="summary">
         <table class="summary-table">
             <tr>
-                <td class="kv"><span class="k">Cliente</span><span class="v"><?php echo html($userName); ?> (<?php echo html((string)($t['user_email'] ?? '')); ?>)</span></td>
+                <td class="kv"><span class="k">Cliente</span><span class="v"><?php echo html($userName); ?></span></td>
                 <td class="kv"><span class="k">Departamento</span><span class="v"><?php echo html((string)($t['dept_name'] ?? '')); ?></span></td>
             </tr>
             <tr>

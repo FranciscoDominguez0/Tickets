@@ -29,7 +29,8 @@ $staffSigCol = $has_staff_sig ? ', s.signature as staff_signature' : '';
 $sql = "SELECT r.*, t.ticket_number, t.subject, t.closed {$clientSigCol},
                d.name as department_name,
                s.firstname as st_first, s.lastname as st_last {$staffSigCol},
-               c.firstname as cl_first, c.lastname as cl_last, c.email as cl_email
+               c.firstname as cl_first, c.lastname as cl_last, c.email as cl_email,
+               t.walkin_phone, t.walkin_address
         FROM ticket_reports r
         JOIN tickets t ON r.ticket_id = t.id
         JOIN departments d ON t.dept_id = d.id
@@ -134,8 +135,15 @@ $ticketNo = htmlspecialchars($report['ticket_number']);
 $deptName = htmlspecialchars($report['department_name']);
 $staffName = trim(($report['st_first'] ?? '') . ' ' . ($report['st_last'] ?? ''));
 $staffName = $staffName !== '' ? htmlspecialchars($staffName) : 'Sin asignar';
-$clientName = trim(($report['cl_first'] ?? '') . ' ' . ($report['cl_last'] ?? ''));
-$clientName = $clientName !== '' ? htmlspecialchars($clientName) : htmlspecialchars($report['cl_email'] ?? 'Usuario Web');
+
+$isWalkinReport = (!empty($report['walkin_phone']) || !empty($report['walkin_address']));
+if ($isWalkinReport) {
+    $clientName = trim($report['subject'] ?? 'Cliente no recurrente');
+} else {
+    $clientName = trim(($report['cl_first'] ?? '') . ' ' . ($report['cl_last'] ?? ''));
+    $clientName = $clientName !== '' ? $clientName : ($report['cl_email'] ?? 'Usuario Web');
+}
+$clientName = htmlspecialchars($clientName);
 $closeDate = htmlspecialchars(date('d/m/Y H:i', strtotime($report['closed'])));
 
 $bstatus = $report['billing_status'] ?? 'pending';
