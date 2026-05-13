@@ -806,9 +806,9 @@ if ($ticketClientSignaturePath !== '') {
         <?php 
             // Estilos compartidos para badges
             $pColor = $t['priority_color'] ?: '#64748b'; 
-            $pStyle = "background: {$pColor}15; color: {$pColor}; border: 1px solid {$pColor}30;";
+            $pStyle = "background: {$pColor}15; color: {$pColor}; border: none; border-radius: 50rem;";
             $sColor = $t['status_color'] ?: '#64748b';
-            $sStyle = "background: {$sColor}22; color: {$sColor}; border: 1px solid {$sColor}30;";
+            $sStyle = "background: {$sColor}15; color: {$sColor}; border: none; border-radius: 50rem;";
         ?>
 
         <!-- DISEÑO MÓVIL (Visible solo en pantallas pequeñas) -->
@@ -822,16 +822,40 @@ if ($ticketClientSignaturePath !== '') {
 
                 <?php if ($canTicketEdit): ?>
                     <a href="#" class="mobile-badge" style="<?php echo $pStyle; ?> text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalPriority">
-                        <i class="bi bi-flag-fill"></i>
+                        <i class="bi bi-bar-chart-fill"></i>
                         <?php echo html($t['priority_name']); ?>
                     </a>
                 <?php else: ?>
                     <div class="mobile-badge" style="<?php echo $pStyle; ?>">
-                        <i class="bi bi-flag-fill"></i>
+                        <i class="bi bi-bar-chart-fill"></i>
                         <?php echo html($t['priority_name']); ?>
                     </div>
                 <?php endif; ?>
             </div>
+
+            <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
+                <div class="mobile-header" style="margin-top: 8px;">
+                    <?php 
+                    $bstatus = $t['billing_status'] ?? 'pending';
+                    if ($bstatus === 'confirmed'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; text-decoration:none;"><i class="bi bi-patch-check-fill"></i> Facturado</a>
+                    <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; text-decoration:none;"><i class="bi bi-geo-alt-fill"></i> Visita Técnica</a>
+                    <?php elseif ($bstatus === 'cotizacion'): ?>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; text-decoration:none;"><i class="bi bi-file-earmark-text-fill"></i> Cotización</a>
+                    <?php else: ?>
+                        <?php if (roleHasPermission('ticket.edit')): ?>
+                            <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                                <i class="bi bi-clock-history"></i> Pendiente Facturación
+                            </a>
+                        <?php else: ?>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
+                                <i class="bi bi-clock-history"></i> Pendiente Facturación
+                            </a>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <!-- Sección Usuario -->
             <div class="mobile-user-section">
@@ -901,10 +925,6 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="val"><?php echo html($t['staff_name'] ?: 'Sin asignar'); ?></div>
                 </div>
                 <div class="mobile-grid-item">
-                    <label><i class="bi bi-chat-left-dots"></i> ÚLTIMO MENSAJE</label>
-                    <div class="val"><?php echo $t['last_message'] ? date('d/m/y H:i', strtotime($t['last_message'])) : '—'; ?></div>
-                </div>
-                <div class="mobile-grid-item">
                     <label><i class="bi bi-reply-all"></i> ÚLTIMA RESPUESTA</label>
                     <div class="val"><?php echo $t['last_response'] ? date('d/m/y H:i', strtotime($t['last_response'])) : '—'; ?></div>
                 </div>
@@ -916,9 +936,12 @@ if ($ticketClientSignaturePath !== '') {
             <!-- Columna 1: Estado y Tiempos -->
             <div>
                 <div class="field">
-                    <label><i class="bi bi-info-circle"></i> ESTADO</label>
+                    <label>ESTADO</label>
                     <div class="value" style="display:flex; flex-direction:column; gap:8px; align-items:flex-start;">
-                        <span class="badge-status" style="background: <?php echo html($t['status_color'] ?? '#e2e8f0'); ?>; color: #0f172a;"><?php echo html($t['status_name']); ?></span>
+                        <span class="badge-status" style="<?php echo $sStyle; ?> padding: 6px 14px;">
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:<?php echo html($t['status_color'] ?? '#0f172a'); ?>; margin-right:8px;"></span>
+                            <?php echo html($t['status_name']); ?>
+                        </span>
                         <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                             <?php 
                             $bstatus = $t['billing_status'] ?? 'pending';
@@ -929,22 +952,30 @@ if ($ticketClientSignaturePath !== '') {
                             <?php elseif ($bstatus === 'cotizacion'): ?>
                                 <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #eef2ff; color: #4338ca; border: 1px solid #e0e7ff; text-decoration:none;" title="Ver cotización"><i class="bi bi-file-earmark-text-fill me-2"></i> Cotización</a>
                             <?php else: ?>
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente"><i class="bi bi-clock-history me-2"></i> Pendiente Facturación</a>
+                                <?php if (roleHasPermission('ticket.edit')): ?>
+                                    <a href="#" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                                        <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
+                                    </a>
+                                <?php else: ?>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente">
+                                        <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
+                                    </a>
+                                <?php endif; ?>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
                 
                 <div class="field">
-                    <label><i class="bi bi-flag"></i> PRIORIDAD</label>
+                    <label>PRIORIDAD</label>
                     <div class="value">
                         <?php if ($canTicketEdit): ?>
-                            <a href="#" class="badge-status" style="<?php echo $pStyle; ?> text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalPriority">
-                                <?php echo html($t['priority_name']); ?>
+                            <a href="#" class="badge-status" style="<?php echo $pStyle; ?> text-decoration:none; padding: 6px 14px;" data-bs-toggle="modal" data-bs-target="#modalPriority">
+                                <i class="bi bi-bar-chart-fill" style="margin-right:6px;"></i> <?php echo html($t['priority_name']); ?>
                             </a>
                         <?php else: ?>
-                            <span class="badge-status" style="<?php echo $pStyle; ?>">
-                                <?php echo html($t['priority_name']); ?>
+                            <span class="badge-status" style="<?php echo $pStyle; ?> padding: 6px 14px;">
+                                <i class="bi bi-bar-chart-fill" style="margin-right:6px;"></i> <?php echo html($t['priority_name']); ?>
                             </span>
                         <?php endif; ?>
                     </div>
@@ -1022,15 +1053,6 @@ if ($ticketClientSignaturePath !== '') {
                         ?>
                     </div>
                 </div>
-
-                <?php if (!$isWalkinTicket): ?>
-                <div class="field">
-                    <label><i class="bi bi-tag"></i> SUBTEMA</label>
-                    <div class="value" style="font-weight: 700; color: #334155;">
-                        <?php echo html($t['subject'] ?? '—'); ?>
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
 
             <!-- Columna 3: Asignación y Actividad -->
@@ -1045,18 +1067,18 @@ if ($ticketClientSignaturePath !== '') {
                 <?php if (!$isWalkinTicket && !empty($t['anydesk'])): ?>
                 <div class="field">
                     <label><i class="bi bi-pc-display"></i> ANYDESK</label>
-                    <div class="value" style="font-size: 1.1rem; font-weight: 700; color: #0f172a; user-select: all; cursor: pointer;" title="Haz clic para seleccionar todo">
-                        <?php echo html($t['anydesk']); ?>
+                    <div class="value" style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 0.02em; user-select: all;" title="Haz clic para seleccionar todo">
+                            <?php echo html($t['anydesk']); ?>
+                        </span>
+                        <button type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($t['anydesk'], ENT_QUOTES); ?>').then(() => { let i = this.querySelector('i'); i.className = 'bi bi-check2 text-success'; setTimeout(() => i.className='bi bi-copy', 2000); })" style="background: #f8fafc; color: #64748b; border: 1px solid #f1f5f9; border-radius: 10px; padding: 6px 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#f8fafc'; this.style.color='#64748b';" title="Copiar AnyDesk">
+                            <i class="bi bi-copy" style="font-size: 1rem;"></i>
+                        </button>
                     </div>
                 </div>
                 <?php endif; ?>
 
                 <div class="divider"></div>
-
-                <div class="field">
-                    <label><i class="bi bi-chat-left-dots"></i> ÚLTIMO MENSAJE</label>
-                    <div class="value" style="color: #475569;"><?php echo $t['last_message'] ? date('d/m/y H:i:s', strtotime($t['last_message'])) : '—'; ?></div>
-                </div>
                 
                 <div class="field">
                     <label><i class="bi bi-reply-all"></i> ÚLTIMA RESPUESTA</label>
@@ -2208,9 +2230,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 26px; background: #fff;">
-                <p style="color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 0;">
+                <p style="color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 18px;">
                     ¿Estás seguro de que deseas marcar este ticket como <strong style="color: #0f172a;">facturado</strong>? Esta acción confirmará el proceso de facturación de forma permanente.
                 </p>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; line-height: 1.3;"><i class="bi bi-file-earmark-text me-1"></i> Puedes revisar los costos antes de confirmar:</span>
+                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" target="_blank" class="btn btn-sm" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-weight: 700; border-radius: 8px; white-space: nowrap;">Ver Reporte</a>
+                </div>
             </div>
             <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 20px 26px; gap: 12px; background: #f8fafc;">
                 <button type="button" class="btn" data-bs-dismiss="modal" style="background: #fff; color: #64748b; font-weight: 700; border-radius: 12px; padding: 10px 20px; border: 1px solid #e2e8f0; font-size: 0.9rem;">Cancelar</button>
