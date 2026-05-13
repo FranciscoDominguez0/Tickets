@@ -2613,3 +2613,9 @@ tr.ticket-row.is-selected td {
         font-size: 0.8rem;
     }
 }
+/* Edit Modal Creative Upload Zone */
+.edit-upload-zone:hover { border-color: #2563eb !important; background: #eff6ff !important; }
+.edit-upload-zone:hover i { color: #2563eb !important; transform: translateY(-2px); }
+.edit-upload-zone i { transition: all 0.2s; }
+.edit-att-item { transition: transform 0.2s, box-shadow 0.2s; }
+.edit-att-item:hover { transform: translateX(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }

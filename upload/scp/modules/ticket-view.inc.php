@@ -1369,35 +1369,55 @@ if ($ticketClientSignaturePath !== '') {
 
 <!-- Modal: Editar Mensaje -->
 <div class="modal fade" id="modalEditEntry" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; background: #ffffff;">
             <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="edit_entry">
                 <input type="hidden" name="entry_id" id="edit-entry-id" value="">
                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Mensaje</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Contenido</label>
-                        <textarea name="body" id="edit-entry-body" class="form-control" rows="10"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Archivos Adjuntos Actuales</label>
-                        <div id="edit-entry-attachments" class="list-group">
-                            <!-- Se llena vía JS -->
+                
+                <div class="modal-header border-0" style="padding: 24px 32px 16px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9 !important;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 42px; height: 42px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                            <i class="bi bi-pencil-square"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0" style="font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">Editar Mensaje</h5>
+                            <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Modifica el contenido del hilo del ticket</div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Añadir nuevos adjuntos</label>
-                        <input type="file" name="attachments[]" class="form-control" multiple>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: #f1f5f9; border-radius: 50%; padding: 10px;"></button>
+                </div>
+
+                <div class="modal-body" style="padding: 32px; background: #ffffff;">
+                    <div class="mb-4">
+                        <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Contenido del mensaje</label>
+                        <div class="editor-wrapper" style="border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                            <textarea name="body" id="edit-entry-body" class="form-control" rows="10"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Adjuntos Actuales</label>
+                            <div id="edit-entry-attachments" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
+                                <!-- Se llena vía JS con un diseño de tarjetas mini -->
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Añadir nuevos</label>
+                            <div class="edit-upload-zone" style="border: 2px dashed #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; transition: all 0.2s; background: #f8fafc; cursor: pointer;" onclick="document.getElementById('edit-new-files').click();">
+                                <input type="file" name="attachments[]" id="edit-new-files" class="d-none" multiple onchange="document.getElementById('edit-upload-hint').textContent = this.files.length + ' archivos seleccionados'">
+                                <i class="bi bi-cloud-arrow-up" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                                <div id="edit-upload-hint" style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-top: 4px;">Haz clic para subir más archivos</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+
+                <div class="modal-footer border-0" style="padding: 24px 32px 32px; background: #f8fafc; border-top: 1px solid #f1f5f9 !important; gap: 12px;">
+                    <button type="button" class="btn" data-bs-dismiss="modal" style="font-weight: 700; color: #64748b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 24px; font-size: 0.9rem;">Cancelar</button>
+                    <button type="submit" class="btn" style="font-weight: 800; color: #ffffff; background: #2563eb; border: none; border-radius: 12px; padding: 10px 28px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -1721,14 +1741,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!match) return;
                 var attId = match[1];
                 var filename = $(this).find('.att-filename').text();
+                var iconClass = $(this).find('.chat-att-icon i').attr('class') || 'bi bi-paperclip';
                 
                 $attList.append(
-                    '<div class="list-group-item d-flex justify-content-between align-items-center">' +
-                    '<span><i class="bi bi-paperclip me-2"></i>' + filename + '</span>' +
-                    '<div class="form-check">' +
-                    '  <input class="form-check-input" type="checkbox" name="delete_attachments[]" value="' + attId + '" id="del-att-' + attId + '">' +
-                    '  <label class="form-check-label text-danger" for="del-att-' + attId + '">Eliminar</label>' +
-                    '</div>' +
+                    '<div class="edit-att-item d-flex align-items-center justify-content-between" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px;">' +
+                    '  <div class="d-flex align-items-center gap-2 overflow-hidden">' +
+                    '    <div class="edit-att-icon" style="font-size: 1.1rem; flex: 0 0 auto;"><i class="' + iconClass + '"></i></div>' +
+                    '    <span class="text-truncate" style="font-size: 0.88rem; font-weight: 600; color: #334155;">' + filename + '</span>' +
+                    '  </div>' +
+                    '  <div class="form-check form-switch ms-2" title="Marcar para eliminar">' +
+                    '    <input class="form-check-input" type="checkbox" name="delete_attachments[]" value="' + attId + '" id="del-att-' + attId + '">' +
+                    '    <label class="form-check-label text-danger" for="del-att-' + attId + '" style="font-size: 0.75rem; font-weight: 700; cursor: pointer;"><i class="bi bi-trash"></i></label>' +
+                    '  </div>' +
                     '</div>'
                 );
             });
@@ -1744,17 +1768,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Inicializar summernote para el editor de edición
         $('#edit-entry-body').summernote({
-            height: 300,
+            height: 250,
             lang: 'es-ES',
             toolbar: [
                 ['style', ['bold', 'italic', 'underline', 'clear']],
-                ['font', ['strikethrough', 'superscript', 'subscript']],
-                ['fontsize', ['fontsize']],
-                ['color', ['color']],
-                ['para', ['ul', 'ol', 'paragraph']],
-                ['height', ['height']],
-                ['insert', ['link', 'picture', 'video', 'table', 'hr']],
-                ['view', ['fullscreen', 'codeview', 'help']]
+                ['para', ['ul', 'ol']],
+                ['view', ['codeview']]
             ],
             callbacks: {
                 onImageUpload: function(files) {
