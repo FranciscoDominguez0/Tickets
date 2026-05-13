@@ -737,64 +737,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Adjuntos en respuesta de ticket
-  var zone = document.getElementById('attach-zone');
-  var input = document.getElementById('attachments');
-  var list = document.getElementById('attach-list');
-  function updateList() {
-    if (!list || !input) return;
-    list.innerHTML = '';
-    if (input.files && input.files.length) {
-      for (var i = 0; i < input.files.length; i++) {
-        list.innerHTML += '<span class=\"d-inline-block me-2 mb-1\"><i class=\"bi bi-paperclip\"></i> ' + input.files[i].name + '</span> ';
-      }
-    }
-  }
-    if (input && zone && list) {
-    input.addEventListener('change', updateList);
-    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
-    zone.addEventListener('drop', function(e) {
-      e.preventDefault();
-      zone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) {
-        input.files = e.dataTransfer.files;
-        updateList();
-      }
-    });
-
-    // Validación de tamaño al enviar
-    var form = input.closest('form');
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        if (!input.files || input.files.length === 0) return;
-        var totalSize = 0;
-        var maxFileMb = 32; // Límite razonable por archivo
-        var maxPostMb = 100; // Límite total (post_max_size es 128M)
-        
-        for (var i = 0; i < input.files.length; i++) {
-          var f = input.files[i];
-          totalSize += f.size;
-          if (f.size > (maxFileMb * 1024 * 1024)) {
-            e.preventDefault();
-            alert('El archivo "' + f.name + '" es muy pesado (' + (f.size/(1024*1024)).toFixed(2) + ' MB). El límite es de ' + maxFileMb + ' MB.');
-            return false;
-          }
-        }
-        if (totalSize > (maxPostMb * 1024 * 1024)) {
-          e.preventDefault();
-          alert('El total de archivos (' + (totalSize/(1024*1024)).toFixed(2) + ' MB) excede el límite de ' + maxPostMb + ' MB.');
-          return false;
-        }
-      });
-    }
-  }
+  // El manejo de adjuntos se ha movido al módulo de vista de ticket para soportar el nuevo diseño premium y validaciones avanzadas.
   var btnReset = document.getElementById('btn-reset');
   if (btnReset) {
     btnReset.addEventListener('click', function() {
       if (typeof jQuery !== 'undefined' && jQuery('#reply_body').length && jQuery('#reply_body').summernote('code')) {
         jQuery('#reply_body').summernote('reset');
       }
+      var input = document.getElementById('attachments');
+      var list = document.getElementById('attach-list');
       if (input && list) {
         input.value = '';
         list.innerHTML = '';

@@ -207,6 +207,83 @@ if ($ticketClientSignaturePath !== '') {
                     margin-left: 22px;
                 }
             }
+
+            /* Estilos de tarjetas de adjuntos (estilo Open Ticket) */
+            .dz-preview-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 10px 14px;
+                margin-right: 8px;
+                margin-bottom: 8px;
+                min-width: 260px;
+                max-width: 320px;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            }
+            .dz-preview-card:hover {
+                border-color: #cbd5e1;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                transform: translateY(-1px);
+            }
+            .dz-preview-icon {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                border-radius: 10px;
+                overflow: hidden;
+                background: #f8fafc;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid #f1f5f9;
+            }
+            .dz-preview-icon img, .dz-preview-icon video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .dz-preview-icon i {
+                font-size: 1.4rem;
+            }
+            .dz-preview-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .dz-preview-name {
+                font-size: 0.88rem;
+                font-weight: 700;
+                color: #0f172a;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 2px;
+            }
+            .dz-preview-size {
+                font-size: 0.78rem;
+                color: #64748b;
+                font-weight: 500;
+            }
+            .dz-preview-remove {
+                background: #fff;
+                border: 1px solid #ef4444;
+                color: #ef4444;
+                font-size: 0.78rem;
+                font-weight: 800;
+                padding: 6px 14px;
+                border-radius: 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+                line-height: 1;
+            }
+            .dz-preview-remove:hover {
+                background: #ef4444;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+            }
         </style>
 
         <div id="tv-billing-toast" role="alert" aria-live="assertive">
@@ -2013,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         '<div class="dz-preview-name" title="'+file.name+'">' + file.name + '</div>' +
                         '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
                     '</div>' +
-                    '<button type="button" class="dz-preview-remove" data-remove-index="'+i+'" title="Eliminar"><i class="bi bi-x"></i></button>';
+                    '<button type="button" class="dz-preview-remove" data-remove-index="'+i+'">Quitar</button>';
                 
                 list.appendChild(card);
 
