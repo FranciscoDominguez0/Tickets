@@ -2588,6 +2588,15 @@ tr.ticket-row.is-selected td {
     .ticket-view-reply {
         padding: 14px;
     }
+    .ticket-view-reply .attach-zone {
+        padding: 20px 14px;
+    }
+    .ticket-view-reply .attach-zone .attach-text {
+        font-size: 0.85rem;
+    }
+    .ticket-view-reply .attach-zone .attach-hint {
+        font-size: 0.72rem;
+    }
     .ticket-view-reply .reply-buttons {
         gap: 8px;
     }

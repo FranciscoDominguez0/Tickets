@@ -578,6 +578,10 @@ if ($_POST) {
                     'doc' => 'application/msword',
                     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'txt' => 'text/plain',
+                    'mp4' => 'video/mp4',
+                    'webm' => 'video/webm',
+                    'mov' => 'video/quicktime',
+                    'mkv' => 'video/x-matroska',
                 ];
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $attachmentsHasEmpresa = false;
@@ -1087,6 +1091,11 @@ if ($blockNewIfSignaturePending) {
         .attach-zone:hover { border-color: #94a3b8; }
         .attach-zone input[type="file"] { display: none; }
         .attach-text { color: #64748b; font-size: 0.95rem; }
+        @media (max-width: 768px) {
+            .attach-text { font-size: 0.85rem; }
+            .attach-hint { font-size: 0.72rem; }
+            .attach-zone { padding: 20px 14px; }
+        }
         .attach-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
         .attach-item {
             display: flex;
@@ -1099,7 +1108,9 @@ if ($blockNewIfSignaturePending) {
             padding: 8px 10px;
             color: #0f172a;
         }
-        .attach-item .name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .attach-item .thumb { width: 34px; height: 34px; border-radius: 6px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex: 0 0 auto; overflow: hidden; }
+        .attach-item .thumb img, .attach-item .thumb video { width: 100%; height: 100%; object-fit: cover; }
+        .attach-item .name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; }
         .attach-item .size { color: #64748b; font-size: 0.85rem; flex: 0 0 auto; }
 
         .note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
@@ -1438,8 +1449,10 @@ if ($blockNewIfSignaturePending) {
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
-                    <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
-                    <div class="attach-text"><i class="bi bi-paperclip"></i> Agregar archivos aquí o <a href="#" id="attach-choose-link">elegirlos</a></div>
+                    <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.mp4,.webm,.mov,.mkv">
+                    <?php $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>
+                    <div class="attach-text"><i class="bi bi-paperclip"></i> Arrastra o <a href="#" id="attach-choose-link">selecciona archivos</a></div>
+                    <div class="attach-hint" style="color: #64748b; font-size: 0.8rem; margin-top: 6px;">PDF, JPG, PNG, DOC, Video (Máx. <?php echo $ticketMaxFileMb; ?>MB)</div>
                     <div class="attach-list" id="attach-list"></div>
                 </div>
 
@@ -1589,8 +1602,24 @@ if ($blockNewIfSignaturePending) {
                 if (!input.files || input.files.length === 0) return;
                 for (var i = 0; i < input.files.length; i++) {
                     var f = input.files[i];
+                    var ext = f.name.split('.').pop().toLowerCase();
                     var row = document.createElement('div');
                     row.className = 'attach-item';
+                    var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
+                    if (['pdf'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
+                    } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
+                    } else if (['doc', 'docx'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
+                    } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                        iconHtml = '<i class="bi bi-file-earmark-play-fill" style="color: #f59e0b;"></i>';
+                    }
+
+                    var thumb = document.createElement('div');
+                    thumb.className = 'thumb';
+                    thumb.id = 'thumb-' + i;
+                    thumb.innerHTML = iconHtml;
 
                     var left = document.createElement('div');
                     left.className = 'name';
@@ -1619,9 +1648,34 @@ if ($blockNewIfSignaturePending) {
 
                     right.appendChild(size);
                     right.appendChild(btn);
+                    row.appendChild(thumb);
                     row.appendChild(left);
                     row.appendChild(right);
                     list.appendChild(row);
+
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                        (function(idx, file) {
+                            var reader = new FileReader();
+                            reader.onload = function(e) {
+                                var t = document.getElementById('thumb-' + idx);
+                                if (t) t.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+                            };
+                            reader.readAsDataURL(file);
+                        })(i, f);
+                    } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                        (function(idx, file) {
+                            var video = document.createElement('video');
+                            video.preload = 'metadata';
+                            video.onloadedmetadata = function() {
+                                var t = document.getElementById('thumb-' + idx);
+                                if (t) {
+                                    t.innerHTML = '';
+                                    t.appendChild(video);
+                                }
+                            };
+                            video.src = URL.createObjectURL(file);
+                        })(i, f);
+                    }
                 }
             }
 

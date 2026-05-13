@@ -1243,9 +1243,11 @@ if ($ticketClientSignaturePath !== '') {
                                             <?php
                                                 $mime = strtolower((string)($a['mimetype'] ?? ''));
                                                 $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                                                 $isImage = str_starts_with($mime, 'image/');
-                                                $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
-                                                $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                                $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'mov', 'mkv']);
+                                                $isPdf = ($mime === 'application/pdf' || $ext === 'pdf');
+                                                $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $ext === 'docx');
                                                 
                                                 $type = 'unknown';
                                                 $iconClass = 'bi-file-earmark-text text-secondary';
@@ -1253,6 +1255,9 @@ if ($ticketClientSignaturePath !== '') {
                                                 if ($isImage) {
                                                     $type = 'image';
                                                     $iconClass = 'bi-file-earmark-image text-primary';
+                                                } elseif ($isVideo) {
+                                                    $type = 'video';
+                                                    $iconClass = 'bi-file-earmark-play-fill text-warning';
                                                 } elseif ($isPdf) {
                                                     $type = 'pdf';
                                                     $iconClass = 'bi-filetype-pdf text-danger';
@@ -1271,7 +1276,7 @@ if ($ticketClientSignaturePath !== '') {
                                                        class="att-preview-trigger att-filename" 
                                                        data-preview-url="<?php echo html($previewUrl); ?>"
                                                        data-preview-type="<?php echo $type; ?>"
-                                                       <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                       <?php if ($type === 'image' || $type === 'pdf' || $type === 'video'): ?>
                                                        data-mobile-inline="1"
                                                        <?php endif; ?>
                                                        <?php else: ?>
@@ -1342,10 +1347,10 @@ if ($ticketClientSignaturePath !== '') {
             </div>
             <?php $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>
             <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
-                <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
+                <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.mp4,.webm,.mov,.mkv">
                 <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
-                <div class="attach-text">Arrastra archivos aquí o <a href="#" data-action="attachments-browse">selecciona archivos</a></div>
-                <div class="attach-hint">Formatos permitidos: PDF, JPG, PNG, DOC, DOCX, TXT (Máx. <?php echo $ticketMaxFileMb; ?>MB por archivo)</div>
+                <div class="attach-text">Arrastra o <a href="#" data-action="attachments-browse">selecciona archivos</a></div>
+                <div class="attach-hint">PDF, JPG, PNG, DOC, Video (Máx. <?php echo $ticketMaxFileMb; ?>MB)</div>
                 <div class="attach-list" id="attach-list"></div>
             </div>
             <div class="reply-buttons">
@@ -1957,6 +1962,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
                 } else if (['zip', 'rar'].includes(ext)) {
                     iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
+                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-play-fill" style="color: #f59e0b;"></i>';
                 }
 
                 var card = document.createElement('div');
@@ -1981,6 +1988,22 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         };
                         reader.readAsDataURL(f);
+                    })(i, file);
+                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                    (function(idx, f) {
+                        var video = document.createElement('video');
+                        video.preload = 'metadata';
+                        video.onloadedmetadata = function() {
+                            var iconDiv = document.getElementById('preview-icon-'+idx);
+                            if (iconDiv) {
+                                video.style.width = '100%';
+                                video.style.height = '100%';
+                                video.style.objectFit = 'cover';
+                                iconDiv.innerHTML = '';
+                                iconDiv.appendChild(video);
+                            }
+                        };
+                        video.src = URL.createObjectURL(f);
                     })(i, file);
                 }
             }
@@ -2274,6 +2297,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         error.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.';
                         previewContainer.appendChild(error);
                     });
+            } else if (type === 'video') {
+                var video = document.createElement('video');
+                video.src = url;
+                video.controls = true;
+                video.autoplay = true;
+                video.style.width = '100%';
+                video.style.maxHeight = isMobile ? '60vh' : '400px';
+                video.style.borderRadius = '8px';
+                previewContainer.appendChild(video);
+                if (!isMobile) previewContainer.style.maxWidth = '600px';
             }
         }
 

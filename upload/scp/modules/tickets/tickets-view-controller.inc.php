@@ -1151,7 +1151,12 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         if (!empty($_FILES['attachments']['name'][0])) {
                             $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : dirname(__DIR__, 4) . '/uploads/attachments';
                             if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
-                            $allowedExt = ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp','pdf'=>'application/pdf','doc'=>'application/msword','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document','txt'=>'text/plain'];
+                            $allowedExt = [
+                                'jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp',
+                                'pdf'=>'application/pdf','doc'=>'application/msword','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                'txt'=>'text/plain',
+                                'mp4'=>'video/mp4','webm'=>'video/webm','mov'=>'video/quicktime','mkv'=>'video/x-matroska'
+                            ];
                             $files = $_FILES['attachments'];
                             $n = is_array($files['name']) ? count($files['name']) : 1;
                             for ($i = 0; $i < $n; $i++) {
@@ -1433,6 +1438,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             'mp4' => 'video/mp4',
                             'webm' => 'video/webm',
                             'mov' => 'video/quicktime',
+                            'mkv' => 'video/x-matroska',
                         ];
                         $maxSize = 25 * 1024 * 1024; // Aumentado a 25 MB para soportar PDFs más grandes
                         if (!empty($_FILES['attachments']['name'][0])) {

@@ -212,6 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                     'doc' => 'application/msword',
                     'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'txt' => 'text/plain',
+                    'mp4' => 'video/mp4',
+                    'webm' => 'video/webm',
+                    'mov' => 'video/quicktime',
+                    'mkv' => 'video/x-matroska',
                 ];
                 if (!empty($_FILES['attachments']['name'][0])) {
                     $attachmentsHasEmpresa = false;
@@ -1193,6 +1197,9 @@ function humanSize($bytes) {
             .ticket-meta { grid-template-columns: 1fr 1fr; gap: 16px; }
             .ticket-view-entry .entry-body img { max-height: 260px !important; }
             .att-item a { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+            .attach-zone { padding: 20px 14px; }
+            .attach-zone .attach-text { font-size: 0.85rem; }
+            .attach-zone .attach-hint { font-size: 0.72rem; }
         }
 
         @media (min-width: 761px) {
@@ -1549,9 +1556,11 @@ function humanSize($bytes) {
                                                     <?php
                                                         $mime = strtolower((string)($a['mimetype'] ?? ''));
                                                         $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                                        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                                                         $isImage = str_starts_with($mime, 'image/');
-                                                        $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
-                                                        $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                                        $isVideo = str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'mov', 'mkv']);
+                                                        $isPdf = ($mime === 'application/pdf' || $ext === 'pdf');
+                                                        $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $ext === 'docx');
                                                         
                                                         $type = 'unknown';
                                                         $iconClass = 'bi-file-earmark-text text-secondary';
@@ -1559,6 +1568,9 @@ function humanSize($bytes) {
                                                         if ($isImage) {
                                                             $type = 'image';
                                                             $iconClass = 'bi-file-earmark-image text-primary';
+                                                        } elseif ($isVideo) {
+                                                            $type = 'video';
+                                                            $iconClass = 'bi-file-earmark-play-fill text-warning';
                                                         } elseif ($isPdf) {
                                                             $type = 'pdf';
                                                             $iconClass = 'bi-filetype-pdf text-danger';
@@ -1577,7 +1589,7 @@ function humanSize($bytes) {
                                                                class="att-preview-trigger att-filename" 
                                                                data-preview-url="<?php echo html($previewUrl); ?>"
                                                                data-preview-type="<?php echo $type; ?>"
-                                                               <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                               <?php if ($type === 'image' || $type === 'pdf' || $type === 'video'): ?>
                                                                data-mobile-inline="1"
                                                                <?php endif; ?>
                                                                <?php else: ?>
@@ -1666,10 +1678,10 @@ function humanSize($bytes) {
                             if (!isset($ticketMaxFileMb)) $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
                         ?>
                         <div class="attach-zone" id="attach-zone">
-                            <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
+                            <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.mp4,.webm,.mov,.mkv">
                             <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
-                            <div class="attach-text">Arrastra archivos aquí o <a href="#" id="attach-choose-link">selecciona archivos</a></div>
-                            <div class="attach-hint">Formatos permitidos: PDF, JPG, PNG, DOC, DOCX, TXT (Máx. <?php echo $ticketMaxFileMb; ?>MB por archivo)</div>
+                            <div class="attach-text">Arrastra o <a href="#" id="attach-choose-link">selecciona archivos</a></div>
+                            <div class="attach-hint">PDF, JPG, PNG, DOC, Video (Máx. <?php echo $ticketMaxFileMb; ?>MB)</div>
                             <div class="attach-list" id="attach-list"></div>
                         </div>
 
@@ -1774,6 +1786,8 @@ function humanSize($bytes) {
                     iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
                 } else if (['zip', 'rar'].includes(ext)) {
                     iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
+                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-play-fill" style="color: #f59e0b;"></i>';
                 }
 
                 var card = document.createElement('div');
@@ -1798,6 +1812,22 @@ function humanSize($bytes) {
                             }
                         };
                         reader.readAsDataURL(f);
+                    })(i, file);
+                } else if (['mp4', 'webm', 'mov', 'mkv'].includes(ext)) {
+                    (function(idx, f) {
+                        var video = document.createElement('video');
+                        video.preload = 'metadata';
+                        video.onloadedmetadata = function() {
+                            var iconDiv = document.getElementById('preview-icon-'+idx);
+                            if (iconDiv) {
+                                video.style.width = '100%';
+                                video.style.height = '100%';
+                                video.style.objectFit = 'cover';
+                                iconDiv.innerHTML = '';
+                                iconDiv.appendChild(video);
+                            }
+                        };
+                        video.src = URL.createObjectURL(f);
                     })(i, file);
                 }
             }
@@ -2375,6 +2405,16 @@ function humanSize($bytes) {
                         error.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.';
                         previewContainer.appendChild(error);
                     });
+            } else if (type === 'video') {
+                var video = document.createElement('video');
+                video.src = url;
+                video.controls = true;
+                video.autoplay = true;
+                video.style.width = '100%';
+                video.style.maxHeight = isMobile ? '60vh' : '400px';
+                video.style.borderRadius = '8px';
+                previewContainer.appendChild(video);
+                if (!isMobile) previewContainer.style.maxWidth = '600px';
             }
         }
 
