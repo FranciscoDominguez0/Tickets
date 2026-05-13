@@ -1045,7 +1045,9 @@ if ($ticketClientSignaturePath !== '') {
                 <?php if (!$isWalkinTicket && !empty($t['anydesk'])): ?>
                 <div class="field">
                     <label><i class="bi bi-pc-display"></i> ANYDESK</label>
-                    <div class="value"><span class="badge bg-light text-dark border"><?php echo html($t['anydesk']); ?></span></div>
+                    <div class="value" style="font-size: 1.1rem; font-weight: 700; color: #0f172a; user-select: all; cursor: pointer;" title="Haz clic para seleccionar todo">
+                        <?php echo html($t['anydesk']); ?>
+                    </div>
                 </div>
                 <?php endif; ?>
 

@@ -226,7 +226,6 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             </a>
         </h1>
         <div class="user-view-actions">
-            <a href="#" class="btn btn-register"><i class="bi bi-person-check"></i> Registrarse</a>
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser"><i class="bi bi-trash"></i> Eliminar usuario</button>
             <div class="dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></button>
