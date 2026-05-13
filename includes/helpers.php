@@ -1755,3 +1755,29 @@ function requireRolePermission($permKey, $redirectUrl = null) {
     header('Location: ' . $fallback);
     exit;
 }
+
+function getPostMaxSize() {
+    $val = trim(ini_get('post_max_size'));
+    if ($val === '') return 8 * 1024 * 1024; // default
+    $last = strtolower($val[strlen($val)-1]);
+    $res = (int)$val;
+    switch($last) {
+        case 'g': $res *= 1024;
+        case 'm': $res *= 1024;
+        case 'k': $res *= 1024;
+    }
+    return $res;
+}
+
+function getUploadMaxSize() {
+    $val = trim(ini_get('upload_max_filesize'));
+    if ($val === '') return 2 * 1024 * 1024; // default
+    $last = strtolower($val[strlen($val)-1]);
+    $res = (int)$val;
+    switch($last) {
+        case 'g': $res *= 1024;
+        case 'm': $res *= 1024;
+        case 'k': $res *= 1024;
+    }
+    return $res;
+}

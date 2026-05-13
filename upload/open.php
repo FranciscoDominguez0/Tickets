@@ -1684,36 +1684,39 @@ if ($blockNewIfSignaturePending) {
             var form = document.getElementById('open-ticket-form');
             if (form) {
                 form.addEventListener('submit', function (e) {
-                    if (!input.files || input.files.length === 0) return;
-                    
+                    var phpPostMaxSize = <?php echo getPostMaxSize(); ?>;
+                    var phpUploadMaxSize = <?php echo getUploadMaxSize(); ?>;
                     var totalSize = 0;
-                    var maxFileMb = <?php echo (int)($ticketMaxFileMb ?? 10); ?>;
-                    var maxPostMb = 100; // Un poco menos que el post_max_size de 128M para seguridad
+                    var maxFileMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
                     var maxFileBytes = maxFileMb * 1024 * 1024;
-                    var maxPostBytes = maxPostMb * 1024 * 1024;
+                    if (maxFileBytes > phpUploadMaxSize) maxFileBytes = phpUploadMaxSize;
                     
-                    for (var i = 0; i < input.files.length; i++) {
-                        var f = input.files[i];
-                        totalSize += f.size;
-                        
-                        if (f.size > maxFileBytes) {
-                            e.preventDefault();
-                            var msg = 'El archivo "<strong>' + f.name + '</strong>" es demasiado pesado (' + humanSize(f.size) + '). El límite por archivo es de ' + maxFileMb + ' MB.';
-                            window.__showCreativePop && window.__showCreativePop(msg, 'Imagen muy pesada');
-                            return false;
+                    if (input.files) {
+                        for (var i = 0; i < input.files.length; i++) {
+                            var f = input.files[i];
+                            totalSize += f.size;
+                            
+                            if (f.size > maxFileBytes) {
+                                e.preventDefault();
+                                var msg = 'El archivo "<strong>' + f.name + '</strong>" es demasiado pesado (' + humanSize(f.size) + '). El límite por archivo es de ' + humanSize(maxFileBytes) + '.';
+                                window.__showCreativePop && window.__showCreativePop(msg, 'Imagen muy pesada');
+                                return false;
+                            }
                         }
                     }
                     
-                    if (totalSize > maxPostBytes) {
+                    // Margen de seguridad del 5%
+                    var postLimit = phpPostMaxSize * 0.95;
+                    if (totalSize > postLimit) {
                         e.preventDefault();
-                        var msgTotal = 'El total de los archivos adjuntos (' + humanSize(totalSize) + ') excede el límite permitido de ' + maxPostMb + ' MB. Por favor, sube archivos más pequeños o menos cantidad.';
+                        var msgTotal = 'El total de los archivos adjuntos (' + humanSize(totalSize) + ') excede el límite permitido por el servidor (' + humanSize(phpPostMaxSize) + '). Por favor, sube menos archivos o archivos más pequeños.';
                         window.__showCreativePop && window.__showCreativePop(msgTotal, 'Límite excedido');
                         return false;
                     }
 
                     // Mostrar overlay de carga si pasa la validación
-                    var loading = document.getElementById('open-ticket-loading');
-                    if (loading) loading.classList.remove('d-none');
+                    var loading = document.getElementById('open-loading-overlay');
+                    if (loading) loading.classList.add('active');
                 });
             }
         })();

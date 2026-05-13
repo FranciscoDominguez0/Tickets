@@ -1867,6 +1867,53 @@ function humanSize($bytes) {
         });
 
         input.addEventListener('change', updateList);
+
+        var form = document.querySelector('.reply-card form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                var phpPostMaxSize = <?php echo getPostMaxSize(); ?>;
+                var phpUploadMaxSize = <?php echo getUploadMaxSize(); ?>;
+                var totalSize = 0;
+                var maxFileMb = <?php echo (int)($ticketMaxFileMb ?? 10); ?>;
+                var maxFileBytes = maxFileMb * 1024 * 1024;
+                if (maxFileBytes > phpUploadMaxSize) maxFileBytes = phpUploadMaxSize;
+
+                if (input.files) {
+                    for (var i = 0; i < input.files.length; i++) {
+                        var f = input.files[i];
+                        totalSize += f.size;
+                        
+                        if (f.size > maxFileBytes) {
+                            e.preventDefault();
+                            var msg = 'El archivo "<strong>' + f.name + '</strong>" es demasiado pesado (' + humanSize(f.size) + '). El límite por archivo es de ' + humanSize(maxFileBytes) + '.';
+                            window.__showCreativePop && window.__showCreativePop(msg, 'Imagen muy pesada');
+                            return false;
+                        }
+                    }
+                }
+
+                // Margen de seguridad del 5%
+                var postLimit = phpPostMaxSize * 0.95;
+                if (totalSize > postLimit) {
+                    e.preventDefault();
+                    var msgTotal = 'El total de los archivos adjuntos (' + humanSize(totalSize) + ') excede el límite permitido por el servidor (' + humanSize(phpPostMaxSize) + '). Por favor, sube menos archivos o archivos más pequeños.';
+                    window.__showCreativePop && window.__showCreativePop(msgTotal, 'Límite excedido');
+                    return false;
+                }
+
+                // Mostrar loading en el botón
+                var btn = document.getElementById('reply-submit-btn');
+                if (btn) {
+                    var label = btn.querySelector('.btn-label');
+                    var loader = btn.querySelector('.btn-loading');
+                    if (label && loader) {
+                        label.classList.add('d-none');
+                        loader.classList.remove('d-none');
+                        btn.disabled = true;
+                    }
+                }
+            });
+        }
     })();
 </script>
 

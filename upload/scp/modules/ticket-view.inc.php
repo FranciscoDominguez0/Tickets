@@ -2044,6 +2044,8 @@ document.addEventListener('DOMContentLoaded', function() {
         list.innerHTML = '';
         var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
         var maxSize = maxMb * 1024 * 1024;
+        var phpUploadLimit = <?php echo getUploadMaxSize(); ?>;
+        if (maxSize > phpUploadLimit) maxSize = phpUploadLimit; // No exceder el límite real de PHP
         var tooLarge = [];
 
         if (input.files.length) {
@@ -2138,6 +2140,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.validateEditFiles = function(input) {
         var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
         var maxSize = maxMb * 1024 * 1024;
+        var phpUploadLimit = <?php echo getUploadMaxSize(); ?>;
+        if (maxSize > phpUploadLimit) maxSize = phpUploadLimit; // No exceder el límite real de PHP
         var tooLarge = [];
         var dt = new DataTransfer();
         
@@ -2632,6 +2636,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 hasDrawn = false;
             });
         }
+    }
+    var phpPostMaxSize = <?php echo getPostMaxSize(); ?>;
+    var phpUploadMaxSize = <?php echo getUploadMaxSize(); ?>;
+
+    function validateFormTotalSize(form) {
+        var files = form.querySelectorAll('input[type="file"]');
+        var total = 0;
+        files.forEach(function(input) {
+            if (input.files) {
+                for (var i = 0; i < input.files.length; i++) {
+                    total += input.files[i].size;
+                }
+            }
+        });
+
+        // Margen de seguridad del 5% para otros campos del formulario
+        var limit = phpPostMaxSize * 0.95; 
+        if (total > limit) {
+            var msg = 'La suma total de los archivos (' + humanSize(total) + ') excede el límite permitido por el servidor (' + humanSize(phpPostMaxSize) + ').<br><br>Por favor, sube menos archivos o archivos más pequeños.';
+            window.__showCreativePopScp && window.__showCreativePopScp(msg, 'Límite de subida excedido');
+            return false;
+        }
+        return true;
+    }
+
+    var formReply = document.getElementById('form-reply');
+    if (formReply) {
+        formReply.addEventListener('submit', function(e) {
+            if (!validateFormTotalSize(this)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    var formEdit = document.querySelector('#modalEditEntry form');
+    if (formEdit) {
+        formEdit.addEventListener('submit', function(e) {
+            if (!validateFormTotalSize(this)) {
+                e.preventDefault();
+                // Si el botón ya se puso en "Cargando", resetearlo (aunque usualmente el preventDefault es antes)
+                var btn = this.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Guardar Cambios';
+                }
+            }
+        });
     }
 });
 </script>
