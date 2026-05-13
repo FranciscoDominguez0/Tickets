@@ -593,53 +593,229 @@ function humanSize($bytes) {
 
         .thread { margin-top: 18px; }
 
-        .ticket-view-entry { margin-bottom: 12px; }
-        .ticket-view-entry .entry-row { display: flex; align-items: flex-start; gap: 10px; }
-        .ticket-view-entry.user .entry-row { flex-direction: row-reverse; }
+        .ticket-view-entry {
+            margin-bottom: 24px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .ticket-view-entry .entry-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .ticket-view-entry.user .entry-row {
+            flex-direction: row-reverse;
+        }
+
         .ticket-view-entry .entry-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             background: #e2e8f0;
-            color: #0f172a;
             display: flex;
             align-items: center;
             justify-content: center;
             flex: 0 0 auto;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
         }
-        .ticket-view-entry .entry-avatar-inner { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.06em; }
-        .ticket-view-entry.staff .entry-avatar { background: #dcfce7; color: #065f46; }
-        .ticket-view-entry.user .entry-avatar { background: #dbeafe; color: #1e3a8a; }
 
-        .ticket-view-entry .entry-content {
-            max-width: 720px;
+        .ticket-view-entry .entry-avatar-inner {
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+        }
+
+        .ticket-view-entry.staff .entry-avatar {
+            background: #0f62fe;
+            color: #ffffff;
+        }
+
+        .ticket-view-entry.user .entry-avatar {
+            background: #eff6ff;
+            color: #1e3a8a;
+        }
+
+        .ticket-view-entry.internal .entry-avatar {
+            background: #ffedd5;
+            color: #9a3412;
+        }
+
+        .ticket-view-entry .entry-bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
             width: 100%;
-            min-width: 0;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            padding: 10px 12px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
         }
-        .ticket-view-entry.user .entry-content { background: #eff6ff; border-color: #bfdbfe; }
-        .ticket-view-entry.staff .entry-content { background: #fff7ed; border-color: #fed7aa; }
 
-        .ticket-view-entry .entry-meta {
+        .ticket-view-entry.user .entry-bubble-wrapper {
+            align-items: flex-end;
+        }
+
+        .ticket-view-entry .entry-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 6px;
-            font-size: 0.78rem;
-            color: #475569;
+            padding-left: 2px;
         }
-        .ticket-view-entry.user .entry-meta { flex-direction: row-reverse; }
-        .ticket-view-entry .entry-meta .author { font-weight: 700; color: #0f172a; }
-        .ticket-view-entry .entry-body { color: #0f172a; white-space: pre-wrap; word-break: break-word; font-size: 0.9rem; line-height: 1.45; }
-        .ticket-view-entry .entry-body p { margin: 0 0 0.4em; }
-        .ticket-view-entry .entry-body p:last-child { margin-bottom: 0; }
+
+        .ticket-view-entry .author-name {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 1rem;
+        }
+
+        .ticket-view-entry .author-role {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #2563eb;
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 50rem;
+        }
+
+        .ticket-view-entry .entry-content {
+            border-radius: 16px;
+            padding: 16px 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .ticket-view-entry.user .entry-content {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+
+        .ticket-view-entry.staff .entry-content {
+            background: #eff6ff;
+            border-color: #dbeafe;
+        }
+
+        .ticket-view-entry.internal .entry-content {
+            background: #fffbeb;
+            border-color: #fde68a;
+        }
+
+        .ticket-view-entry .entry-meta-top {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .ticket-view-entry .entry-body {
+            color: #1e293b;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .ticket-view-entry .entry-body p {
+            margin: 0 0 0.5em;
+        }
+
+        .ticket-view-entry .entry-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ticket-view-entry .entry-footer {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ticket-view-entry.user .entry-footer {
+            justify-content: flex-end;
+        }
+
+        .ticket-view-entry.staff .entry-footer {
+            justify-content: flex-start;
+        }
+
+        .chat-att-list {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-att-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 10px 14px;
+            max-width: 380px;
+            transition: all 0.2s;
+        }
+
+        .chat-att-item:hover {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+
+        .chat-att-icon {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-att-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-att-info .att-filename {
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: block;
+        }
+
+        .chat-att-info .att-filename:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+
+        .chat-att-info .att-size {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .chat-att-download {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .chat-att-download:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
         .ticket-view-entry .entry-body img { max-width: 100% !important; height: auto !important; display: block; object-fit: contain; }
         .ticket-view-entry .entry-body iframe { width: 100% !important; max-width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
@@ -821,14 +997,153 @@ function humanSize($bytes) {
             .att-item .size { color: #64748b; font-size: 0.85rem; }
 
         .reply-card { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
-        .attach-zone { border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 12px; padding: 14px; cursor: pointer; margin-bottom: 12px; }
-        .attach-zone:hover { border-color: #94a3b8; }
-        .attach-zone input[type="file"] { display: none; }
-        .attach-text { color: #64748b; font-size: 0.95rem; }
-        .attach-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .attach-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; color: #0f172a; }
-        .attach-item .name { font-weight: 600; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .attach-item .size { color: #64748b; font-size: 0.85rem; flex: 0 0 auto; }
+        .attach-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 32px 24px;
+            text-align: center;
+            background: #f8fafc;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .attach-zone:hover,
+        .attach-zone.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .attach-zone .dz-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .attach-zone input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+            opacity: 0;
+        }
+
+        .attach-zone .attach-text {
+            color: #334155;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .attach-zone .attach-text a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .attach-zone .attach-text a:hover {
+            text-decoration: underline;
+        }
+
+        .attach-zone .attach-hint {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 6px;
+        }
+
+        .attach-list {
+            margin-top: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .dz-preview-card {
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px 10px 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            width: auto;
+            min-width: 280px;
+            max-width: 340px;
+            text-align: left;
+            gap: 12px;
+        }
+        .dz-preview-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .dz-preview-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .dz-preview-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .dz-preview-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+        .dz-preview-size {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1;
+        }
+        .dz-preview-remove {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 4px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dz-preview-remove:hover {
+            color: #ef4444;
+        }
 
         .notif-dd {
             border-radius: 18px;
@@ -1211,54 +1526,82 @@ function humanSize($bytes) {
                                 <div class="entry-avatar" aria-hidden="true">
                                     <span class="entry-avatar-inner"><?php echo html($initials); ?></span>
                                 </div>
-                                <div class="entry-content">
-                                    <div class="entry-meta">
-                                        <span class="author"><?php echo html($author); ?></span>
-                                        <span><?php echo !empty($e['created']) ? date('d/m/Y H:i', strtotime($e['created'])) : ''; ?></span>
-                                    </div>
-                                    <div class="entry-body"><?php
-                                        echo sanitizeRichText((string)($e['body'] ?? ''));
-                                    ?></div>
-
-                                    <?php if (!empty($attachmentsByEntry[$entryId])): ?>
-                                        <div class="att-list">
-                                            <?php foreach ($attachmentsByEntry[$entryId] as $a): ?>
-                                                <?php
-                                                    $mime = strtolower((string)($a['mimetype'] ?? ''));
-                                                    $filename = strtolower((string)($a['original_filename'] ?? ''));
-                                                    $isImage = str_starts_with($mime, 'image/');
-                                                    $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
-                                                    $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
-                                                    
-                                                    $type = 'unknown';
-                                                    if ($isImage) $type = 'image';
-                                                    elseif ($isPdf) $type = 'pdf';
-                                                    elseif ($isDocx) $type = 'docx';
-
-                                                    $previewUrl = "view-ticket.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
-                                                ?>
-                                                <div class="att-item">
-                                                    <div>
-                                                        <i class="bi bi-paperclip"></i>
-                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>"
-                                                           <?php if ($type !== 'unknown'): ?>
-                                                           class="att-preview-trigger"
-                                                           data-preview-url="<?php echo html($previewUrl); ?>"
-                                                           data-preview-type="<?php echo $type; ?>"
-                                                           <?php if ($type === 'image' || $type === 'pdf'): ?>
-                                                           data-mobile-inline="1"
-                                                           <?php endif; ?>
-                                                           <?php endif; ?>
-                                                        ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
-                                                    </div>
-                                                    <div class="size"><?php echo humanSize($a['size'] ?? 0); ?></div>
-                                                </div>
-                                            <?php endforeach; ?>
+                                <div class="entry-bubble-wrapper">
+                                    <?php if ($isStaff): ?>
+                                        <div class="entry-header">
+                                            <span class="author-name"><?php echo html($author); ?></span>
+                                            <span class="author-role">Técnico</span>
                                         </div>
                                     <?php endif; ?>
+                                    
+                                    <div class="entry-content">
+                                        <div class="entry-meta-top">
+                                            <?php echo !empty($e['created']) ? date('d/m/y H:i:s', strtotime($e['created'])) : ''; ?>
+                                        </div>
+
+                                        <div class="entry-body"><?php
+                                            echo sanitizeRichText((string)($e['body'] ?? ''));
+                                        ?></div>
+
+                                        <?php if (!empty($attachmentsByEntry[$entryId])): ?>
+                                            <div class="chat-att-list">
+                                                <?php foreach ($attachmentsByEntry[$entryId] as $a): ?>
+                                                    <?php
+                                                        $mime = strtolower((string)($a['mimetype'] ?? ''));
+                                                        $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                                        $isImage = str_starts_with($mime, 'image/');
+                                                        $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
+                                                        $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                                        
+                                                        $type = 'unknown';
+                                                        $iconClass = 'bi-file-earmark-text text-secondary';
+                                                        
+                                                        if ($isImage) {
+                                                            $type = 'image';
+                                                            $iconClass = 'bi-file-earmark-image text-primary';
+                                                        } elseif ($isPdf) {
+                                                            $type = 'pdf';
+                                                            $iconClass = 'bi-filetype-pdf text-danger';
+                                                        } elseif ($isDocx) {
+                                                            $type = 'docx';
+                                                            $iconClass = 'bi-file-word text-info';
+                                                        }
+
+                                                        $previewUrl = "view-ticket.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                                    ?>
+                                                    <div class="chat-att-item">
+                                                        <div class="chat-att-icon"><i class="bi <?php echo $iconClass; ?>"></i></div>
+                                                        <div class="chat-att-info">
+                                                            <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>" 
+                                                               <?php if ($type !== 'unknown'): ?>
+                                                               class="att-preview-trigger att-filename" 
+                                                               data-preview-url="<?php echo html($previewUrl); ?>"
+                                                               data-preview-type="<?php echo $type; ?>"
+                                                               <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                               data-mobile-inline="1"
+                                                               <?php endif; ?>
+                                                               <?php else: ?>
+                                                               class="att-filename"
+                                                               <?php endif; ?>
+                                                               title="<?php echo html($a['original_filename'] ?? 'archivo'); ?>"
+                                                            ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
+                                                            <div class="att-size"><?php echo humanSize($a['size'] ?? 0); ?></div>
+                                                        </div>
+                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="entry-footer">
+                                        <?php if ($isStaff): ?>
+                                            <i class="bi bi-check2-all text-muted"></i> Enviado
+                                        <?php else: ?>
+                                            Enviado <i class="bi bi-check2 text-muted"></i>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="entry-footer">Creado por <?php echo html($author); ?> <?php echo !empty($e['created']) ? date('d/m/Y H:i', strtotime($e['created'])) : ''; ?></div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -1319,9 +1662,14 @@ function humanSize($bytes) {
                             <textarea name="body" id="reply_body" class="form-control" rows="6" placeholder="Para ayudarle mejor, sea específico y detallado"><?php echo html($replyBodyPrefill); ?></textarea>
                         </div>
 
+                        <?php 
+                            if (!isset($ticketMaxFileMb)) $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10');
+                        ?>
                         <div class="attach-zone" id="attach-zone">
                             <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
-                            <div class="attach-text"><i class="bi bi-paperclip"></i> Adjuntar archivos o <a href="#" id="attach-choose-link">elegirlos</a></div>
+                            <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
+                            <div class="attach-text">Arrastra archivos aquí o <a href="#" id="attach-choose-link">selecciona archivos</a></div>
+                            <div class="attach-hint">Formatos permitidos: PDF, JPG, PNG, DOC, DOCX, TXT (Máx. <?php echo $ticketMaxFileMb; ?>MB por archivo)</div>
                             <div class="attach-list" id="attach-list"></div>
                         </div>
 
@@ -1412,42 +1760,56 @@ function humanSize($bytes) {
             list.innerHTML = '';
             if (!input.files || input.files.length === 0) return;
             for (var i = 0; i < input.files.length; i++) {
-                var f = input.files[i];
-                var row = document.createElement('div');
-                row.className = 'attach-item';
+                var file = input.files[i];
+                var ext = file.name.split('.').pop().toLowerCase();
+                var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
+                
+                if (['pdf'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
+                } else if (['doc', 'docx'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
+                } else if (['xls', 'xlsx'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
+                } else if (['zip', 'rar'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
+                }
 
-                var left = document.createElement('div');
-                left.className = 'name';
-                left.textContent = f.name;
+                var card = document.createElement('div');
+                card.className = 'dz-preview-card';
+                card.innerHTML = 
+                    '<div class="dz-preview-icon" id="preview-icon-'+i+'">' + iconHtml + '</div>' +
+                    '<div class="dz-preview-info">' +
+                        '<div class="dz-preview-name" title="'+file.name+'">' + file.name + '</div>' +
+                        '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
+                    '</div>' +
+                    '<button type="button" class="dz-preview-remove" data-remove-index="'+i+'" title="Eliminar"><i class="bi bi-x"></i></button>';
+                
+                list.appendChild(card);
 
-                var right = document.createElement('div');
-                right.style.display = 'flex';
-                right.style.alignItems = 'center';
-                right.style.gap = '8px';
-
-                var size = document.createElement('div');
-                size.className = 'size';
-                size.textContent = humanSize(f.size);
-
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn btn-sm btn-outline-danger';
-                btn.textContent = 'Quitar';
-                btn.setAttribute('data-remove-index', String(i));
-                btn.addEventListener('click', function (ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    var idx = parseInt(this.getAttribute('data-remove-index'), 10);
-                    if (!isNaN(idx)) removeAt(idx);
-                });
-
-                right.appendChild(size);
-                right.appendChild(btn);
-                row.appendChild(left);
-                row.appendChild(right);
-                list.appendChild(row);
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    (function(idx, f) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var iconDiv = document.getElementById('preview-icon-'+idx);
+                            if (iconDiv) {
+                                iconDiv.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+                            }
+                        };
+                        reader.readAsDataURL(f);
+                    })(i, file);
+                }
             }
         }
+        list.addEventListener('click', function(e) {
+            var btn = e.target.closest('.dz-preview-remove');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                removeAt(parseInt(btn.getAttribute('data-remove-index')));
+            }
+        });
 
         input.addEventListener('change', updateList);
     })();

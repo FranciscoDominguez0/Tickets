@@ -1204,57 +1204,83 @@ if ($ticketClientSignaturePath !== '') {
                         <div class="entry-avatar" aria-hidden="true">
                             <span class="entry-avatar-inner"><?php echo html($initials); ?></span>
                         </div>
-                        <div class="entry-content">
-                            <div class="entry-meta">
-                                <span class="author"><?php echo html($author); ?></span>
-                                <span><?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?></span>
-                            </div>
-                            <div class="entry-body"><?php
-                                echo sanitizeRichText((string)($e['body'] ?? ''));
-                            ?></div>
-
-                            <?php $eid = (int) ($e['id'] ?? 0); ?>
-                            <?php if (!empty($attachmentsByEntry[$eid])): ?>
-                                <div class="att-list">
-                                    <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
-                                        <?php
-                                            $mime = strtolower((string)($a['mimetype'] ?? ''));
-                                            $filename = strtolower((string)($a['original_filename'] ?? ''));
-                                            $isImage = str_starts_with($mime, 'image/');
-                                            $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
-                                            $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
-                                            
-                                            $type = 'unknown';
-                                            if ($isImage) $type = 'image';
-                                            elseif ($isPdf) $type = 'pdf';
-                                            elseif ($isDocx) $type = 'docx';
-
-                                            $previewUrl = "tickets.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
-                                        ?>
-                                        <div class="att-item">
-                                            <div>
-                                                <i class="bi bi-paperclip"></i>
-                                                <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>" 
-                                                   <?php if ($type !== 'unknown'): ?>
-                                                   class="att-preview-trigger" 
-                                                   data-preview-url="<?php echo html($previewUrl); ?>"
-                                                   data-preview-type="<?php echo $type; ?>"
-                                                   <?php if ($type === 'image' || $type === 'pdf'): ?>
-                                                   data-mobile-inline="1"
-                                                   <?php endif; ?>
-                                                   <?php endif; ?>
-                                                ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
-                                            </div>
-                                            <div class="size"><?php echo isset($a['size']) ? number_format((int)$a['size'] / 1024, 0) . ' KB' : ''; ?></div>
-                                        </div>
-                                    <?php endforeach; ?>
+                        <div class="entry-bubble-wrapper">
+                            <?php if ($isStaff): ?>
+                                <div class="entry-header">
+                                    <span class="author-name"><?php echo html($author); ?></span>
+                                    <span class="author-role">Técnico</span>
                                 </div>
                             <?php endif; ?>
+                            
+                            <div class="entry-content">
+                                <div class="entry-meta-top">
+                                    <?php echo $e['created'] ? date('d/m/y H:i:s', strtotime($e['created'])) : ''; ?>
+                                </div>
+
+                                <div class="entry-body"><?php
+                                    echo sanitizeRichText((string)($e['body'] ?? ''));
+                                ?></div>
+
+                                <?php $eid = (int) ($e['id'] ?? 0); ?>
+                                <?php if (!empty($attachmentsByEntry[$eid])): ?>
+                                    <div class="chat-att-list">
+                                        <?php foreach ($attachmentsByEntry[$eid] as $a): ?>
+                                            <?php
+                                                $mime = strtolower((string)($a['mimetype'] ?? ''));
+                                                $filename = strtolower((string)($a['original_filename'] ?? ''));
+                                                $isImage = str_starts_with($mime, 'image/');
+                                                $isPdf = ($mime === 'application/pdf' || str_ends_with($filename, '.pdf'));
+                                                $isDocx = ($mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || str_ends_with($filename, '.docx'));
+                                                
+                                                $type = 'unknown';
+                                                $iconClass = 'bi-file-earmark-text text-secondary';
+                                                
+                                                if ($isImage) {
+                                                    $type = 'image';
+                                                    $iconClass = 'bi-file-earmark-image text-primary';
+                                                } elseif ($isPdf) {
+                                                    $type = 'pdf';
+                                                    $iconClass = 'bi-filetype-pdf text-danger';
+                                                } elseif ($isDocx) {
+                                                    $type = 'docx';
+                                                    $iconClass = 'bi-file-word text-info';
+                                                }
+
+                                                $previewUrl = "tickets.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                            ?>
+                                            <div class="chat-att-item">
+                                                <div class="chat-att-icon"><i class="bi <?php echo $iconClass; ?>"></i></div>
+                                                <div class="chat-att-info">
+                                                    <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>" 
+                                                       <?php if ($type !== 'unknown'): ?>
+                                                       class="att-preview-trigger att-filename" 
+                                                       data-preview-url="<?php echo html($previewUrl); ?>"
+                                                       data-preview-type="<?php echo $type; ?>"
+                                                       <?php if ($type === 'image' || $type === 'pdf'): ?>
+                                                       data-mobile-inline="1"
+                                                       <?php endif; ?>
+                                                       <?php else: ?>
+                                                       class="att-filename"
+                                                       <?php endif; ?>
+                                                       title="<?php echo html($a['original_filename'] ?? 'archivo'); ?>"
+                                                    ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
+                                                    <div class="att-size"><?php echo isset($a['size']) ? number_format((int)$a['size'] / 1024, 0) . ' KB' : ''; ?></div>
+                                                </div>
+                                                <a href="tickets.php?id=<?php echo (int)$tid; ?>&download=<?php echo (int)$a['id']; ?>" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="entry-footer">
+                                <?php if ($isInternal): ?> <span class="badge bg-warning text-dark me-2">Nota interna</span><?php endif; ?>
+                                <?php if ($isStaff): ?>
+                                    <i class="bi bi-check2-all text-muted"></i> Enviado
+                                <?php else: ?>
+                                    Enviado <i class="bi bi-check2 text-muted"></i>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="entry-footer">
-                        Creado por <?php echo html($author); ?> <?php echo $e['created'] ? date('m/d/y H:i:s', strtotime($e['created'])) : ''; ?>
-                        <?php if ($isInternal): ?> <span class="badge bg-warning text-dark">Nota interna</span><?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -1299,9 +1325,12 @@ if ($ticketClientSignaturePath !== '') {
                 <label class="form-label fw-bold">Respuesta</label>
                 <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
             </div>
+            <?php $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>
             <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
                 <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt">
-                <div class="attach-text">Agregar archivos aquí o <a href="#" data-action="attachments-browse">elegirlos</a></div>
+                <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
+                <div class="attach-text">Arrastra archivos aquí o <a href="#" data-action="attachments-browse">selecciona archivos</a></div>
+                <div class="attach-hint">Formatos permitidos: PDF, JPG, PNG, DOC, DOCX, TXT (Máx. <?php echo $ticketMaxFileMb; ?>MB por archivo)</div>
                 <div class="attach-list" id="attach-list"></div>
             </div>
             <div class="reply-buttons">
@@ -1747,14 +1776,78 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    function humanSize(bytes) {
+        if (!bytes) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB'];
+        var i = Math.floor(Math.log(bytes) / Math.log(1024));
+        i = Math.min(i, units.length - 1);
+        return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+    function removeAt(index) {
+        try {
+            var dt = new DataTransfer();
+            for (var i = 0; i < input.files.length; i++) {
+                if (i !== index) dt.items.add(input.files[i]);
+            }
+            input.files = dt.files;
+            updateList();
+        } catch (e) {}
+    }
     function updateList() {
         list.innerHTML = '';
         if (input.files.length) {
             for (var i = 0; i < input.files.length; i++) {
-                list.innerHTML += '<span class="d-inline-block me-2 mb-1"><i class="bi bi-paperclip"></i> ' + input.files[i].name + '</span> ';
+                var file = input.files[i];
+                var ext = file.name.split('.').pop().toLowerCase();
+                var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
+                
+                if (['pdf'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
+                } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
+                } else if (['doc', 'docx'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
+                } else if (['xls', 'xlsx'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
+                } else if (['zip', 'rar'].includes(ext)) {
+                    iconHtml = '<i class="bi bi-file-earmark-zip-fill" style="color: #f59e0b;"></i>';
+                }
+
+                var card = document.createElement('div');
+                card.className = 'dz-preview-card';
+                card.innerHTML = 
+                    '<div class="dz-preview-icon" id="preview-icon-'+i+'">' + iconHtml + '</div>' +
+                    '<div class="dz-preview-info">' +
+                        '<div class="dz-preview-name" title="'+file.name+'">' + file.name + '</div>' +
+                        '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
+                    '</div>' +
+                    '<button type="button" class="dz-preview-remove" data-remove-index="'+i+'" title="Eliminar"><i class="bi bi-x"></i></button>';
+                
+                list.appendChild(card);
+
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                    (function(idx, f) {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var iconDiv = document.getElementById('preview-icon-'+idx);
+                            if (iconDiv) {
+                                iconDiv.innerHTML = '<img src="' + e.target.result + '" alt="preview">';
+                            }
+                        };
+                        reader.readAsDataURL(f);
+                    })(i, file);
+                }
             }
         }
     }
+    list.addEventListener('click', function(e) {
+        var btn = e.target.closest('.dz-preview-remove');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            removeAt(parseInt(btn.getAttribute('data-remove-index')));
+        }
+    });
     input.addEventListener('change', updateList);
     zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
     zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
