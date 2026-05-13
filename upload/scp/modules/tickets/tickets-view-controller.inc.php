@@ -308,7 +308,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -1100,6 +1100,117 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 }
 
                 $_SESSION['flash_error'] = 'No se pudo eliminar el ticket.';
+                header('Location: tickets.php?id=' . $tid);
+                exit;
+            } elseif ($action === 'edit_entry' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
+                $entryId = (int)($_POST['entry_id'] ?? 0);
+                $body = trim($_POST['body'] ?? '');
+                
+                $sqlCheck = 'SELECT id, staff_id FROM thread_entries WHERE id = ? AND thread_id = ?';
+                if ($entriesHasEmpresa) $sqlCheck .= ' AND empresa_id = ?';
+                $sqlCheck .= ' LIMIT 1';
+
+                $stmtCheck = $mysqli->prepare($sqlCheck);
+                if ($entriesHasEmpresa) {
+                    $stmtCheck->bind_param('iii', $entryId, $thread_id, $eid);
+                } else {
+                    $stmtCheck->bind_param('ii', $entryId, $thread_id);
+                }
+                $stmtCheck->execute();
+                $entryData = $stmtCheck->get_result()->fetch_assoc();
+                
+                if ($entryData) {
+                    $entryStaffId = (int)($entryData['staff_id'] ?? 0);
+                    if ($entryStaffId > 0 && (roleHasPermission('ticket.edit') || $entryStaffId === (int)$_SESSION['staff_id'])) {
+                        $stmtUpdate = $mysqli->prepare('UPDATE thread_entries SET body = ? WHERE id = ?');
+                        $stmtUpdate->bind_param('si', $body, $entryId);
+                        if ($stmtUpdate->execute()) {
+                            addLog('ticket_entry_edited', "Editado mensaje ID $entryId", 'ticket', $tid);
+                            $_SESSION['flash_msg'] = 'Mensaje actualizado correctamente.';
+                        } else {
+                            $_SESSION['flash_error'] = 'Error al actualizar el mensaje: ' . $mysqli->error;
+                        }
+                        
+                        if (!empty($_POST['delete_attachments']) && is_array($_POST['delete_attachments'])) {
+                            foreach ($_POST['delete_attachments'] as $attId) {
+                                $attId = (int)$attId;
+                                $stmtAtt = $mysqli->prepare('SELECT id, path FROM attachments WHERE id = ? AND thread_entry_id = ? LIMIT 1');
+                                $stmtAtt->bind_param('ii', $attId, $entryId);
+                                if ($stmtAtt->execute()) {
+                                    $att = $stmtAtt->get_result()->fetch_assoc();
+                                    if ($att) {
+                                        $fullPath = dirname(__DIR__, 4) . '/' . $att['path'];
+                                        if (file_exists($fullPath)) @unlink($fullPath);
+                                        $mysqli->query("DELETE FROM attachments WHERE id = $attId");
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!empty($_FILES['attachments']['name'][0])) {
+                            $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : dirname(__DIR__, 4) . '/uploads/attachments';
+                            if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+                            $allowedExt = ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp','pdf'=>'application/pdf','doc'=>'application/msword','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document','txt'=>'text/plain'];
+                            $files = $_FILES['attachments'];
+                            $n = is_array($files['name']) ? count($files['name']) : 1;
+                            for ($i = 0; $i < $n; $i++) {
+                                $err = $files['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+                                if ($err !== UPLOAD_ERR_OK) continue;
+                                $orig = (string)$files['name'][$i];
+                                $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+                                if (!isset($allowedExt[$ext])) continue;
+                                $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . $ext;
+                                $path = $uploadDir . '/' . $safeName;
+                                if (move_uploaded_file($files['tmp_name'][$i], $path)) {
+                                    $relPath = 'uploads/attachments/' . $safeName;
+                                    $hash = @hash_file('sha256', $path) ?: '';
+                                    $mime = $allowedExt[$ext];
+                                    $size = $files['size'][$i];
+                                    $stmtA = $mysqli->prepare('INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+                                    $stmtA->bind_param('iisssiss', $eid, $entryId, $safeName, $orig, $mime, $size, $relPath, $hash);
+                                    $stmtA->execute();
+                                }
+                            }
+                        }
+                        
+                        addLog('ticket_entry_edited', "Editado mensaje ID $entryId", 'ticket', $tid);
+                        $_SESSION['flash_msg'] = 'Mensaje actualizado correctamente.';
+                    }
+                }
+                header('Location: tickets.php?id=' . $tid);
+                exit;
+            } elseif ($action === 'delete_entry' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                requireRolePermission('ticket.delete', 'tickets.php?id=' . $tid);
+                $entryId = (int)($_POST['entry_id'] ?? 0);
+                
+                $sqlCheck = 'SELECT id, staff_id FROM thread_entries WHERE id = ? AND thread_id = ?';
+                if ($entriesHasEmpresa) $sqlCheck .= ' AND empresa_id = ?';
+                $sqlCheck .= ' LIMIT 1';
+
+                $stmtCheck = $mysqli->prepare($sqlCheck);
+                if ($entriesHasEmpresa) {
+                    $stmtCheck->bind_param('iii', $entryId, $thread_id, $eid);
+                } else {
+                    $stmtCheck->bind_param('ii', $entryId, $thread_id);
+                }
+                $stmtCheck->execute();
+                $entryData = $stmtCheck->get_result()->fetch_assoc();
+                if ($entryData && (int)($entryData['staff_id'] ?? 0) > 0) {
+                    $stmtAtts = $mysqli->prepare('SELECT id, path FROM attachments WHERE thread_entry_id = ?');
+                    $stmtAtts->bind_param('i', $entryId);
+                    if ($stmtAtts->execute()) {
+                        $resAtts = $stmtAtts->get_result();
+                        while ($att = $resAtts->fetch_assoc()) {
+                            $fullPath = dirname(__DIR__, 4) . '/' . $att['path'];
+                            if (file_exists($fullPath)) @unlink($fullPath);
+                            $mysqli->query("DELETE FROM attachments WHERE id = " . (int)$att['id']);
+                        }
+                    }
+                    $mysqli->query("DELETE FROM thread_entries WHERE id = $entryId");
+                    addLog('ticket_entry_deleted', "Eliminado mensaje ID $entryId", 'ticket', $tid);
+                    $_SESSION['flash_msg'] = 'Mensaje eliminado correctamente.';
+                }
                 header('Location: tickets.php?id=' . $tid);
                 exit;
             }

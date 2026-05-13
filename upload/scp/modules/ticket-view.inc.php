@@ -1207,10 +1207,23 @@ if ($ticketClientSignaturePath !== '') {
                             <span class="entry-avatar-inner"><?php echo html($initials); ?></span>
                         </div>
                         <div class="entry-bubble-wrapper">
+                            <?php 
+                                $current_entry_id = (int)($e['id'] ?? 0); 
+                            ?>
                             <?php if ($isStaff): ?>
                                 <div class="entry-header">
                                     <span class="author-name"><?php echo html($author); ?></span>
                                     <span class="author-role">Técnico</span>
+                                    <div class="entry-actions ms-auto">
+                                        <?php if (roleHasPermission('ticket.edit') || (int)($e['staff_id'] ?? 0) === (int)$_SESSION['staff_id']): ?>
+                                            <button type="button" class="btn btn-sm btn-link text-primary p-0 me-2 js-edit-entry" data-id="<?php echo $current_entry_id; ?>" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                                            <button type="button" class="btn btn-sm btn-link text-danger p-0 js-delete-entry" data-id="<?php echo $current_entry_id; ?>" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="entry-header">
+                                    <span class="author-name"><?php echo html($author); ?></span>
                                 </div>
                             <?php endif; ?>
                             
@@ -1346,6 +1359,67 @@ if ($ticketClientSignaturePath !== '') {
                 <?php endif; ?>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal: Editar Mensaje -->
+<div class="modal fade" id="modalEditEntry" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="edit_entry">
+                <input type="hidden" name="entry_id" id="edit-entry-id" value="">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Mensaje</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contenido</label>
+                        <textarea name="body" id="edit-entry-body" class="form-control" rows="10"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Archivos Adjuntos Actuales</label>
+                        <div id="edit-entry-attachments" class="list-group">
+                            <!-- Se llena vía JS -->
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Añadir nuevos adjuntos</label>
+                        <input type="file" name="attachments[]" class="form-control" multiple>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Borrado de Mensaje -->
+<div class="modal fade" id="modalDeleteEntry" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
+                <input type="hidden" name="action" value="delete_entry">
+                <input type="hidden" name="entry_id" id="delete-entry-id" value="">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar Mensaje</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-danger">¿Estás seguro de que deseas eliminar este mensaje? Esta acción no se puede deshacer y también eliminará sus archivos adjuntos.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar permanentemente</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -1598,12 +1672,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (videoConfirmEl) {
             videoConfirmEl.addEventListener('click', function () {
                 if (!onVideoSubmit || !videoUrlEl) return;
-                var v = (videoUrlEl.value || '').trim();
-                if (v === '') return;
-                try { videoModal && videoModal.hide(); } catch (e) {}
-                try { onVideoSubmit(v); } catch (e2) {}
+                var url = (videoUrlEl.value || '').trim();
+                if (url) {
+                    onVideoSubmit(url);
+                    if (videoModal) videoModal.hide();
+                }
             });
         }
+
         if (imageConfirmEl) {
             imageConfirmEl.addEventListener('click', function () {
                 if (!onImageSubmit || !imageFileEl) return;
@@ -1614,6 +1690,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 try { onImageSubmit(f || url); } catch (e2) {}
             });
         }
+
+        // --- Manejo de Edición y Borrado de Entradas ---
+        // Sincronizar Summernote antes de enviar el formulario de edición
+        $('#modalEditEntry form').on('submit', function() {
+            var $textarea = $('#edit-entry-body');
+            var code = $textarea.summernote('code');
+            $textarea.val(code);
+            $(this).find('button[type="submit"]').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+        });
+
+        $(document).on('click', '.js-edit-entry', function() {
+            var entryId = $(this).data('id');
+            var entryBody = $(this).closest('.ticket-view-entry').find('.entry-body').html();
+            
+            $('#edit-entry-id').val(entryId);
+            $('#edit-entry-body').summernote('code', entryBody);
+            
+            // Limpiar y cargar adjuntos actuales
+            var $attList = $('#edit-entry-attachments').empty();
+            $(this).closest('.ticket-view-entry').find('.chat-att-list .chat-att-item').each(function() {
+                var attLink = $(this).find('a[href*="download="]').attr('href');
+                if (!attLink) return;
+                var match = attLink.match(/download=(\d+)/);
+                if (!match) return;
+                var attId = match[1];
+                var filename = $(this).find('.att-filename').text();
+                
+                $attList.append(
+                    '<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                    '<span><i class="bi bi-paperclip me-2"></i>' + filename + '</span>' +
+                    '<div class="form-check">' +
+                    '  <input class="form-check-input" type="checkbox" name="delete_attachments[]" value="' + attId + '" id="del-att-' + attId + '">' +
+                    '  <label class="form-check-label text-danger" for="del-att-' + attId + '">Eliminar</label>' +
+                    '</div>' +
+                    '</div>'
+                );
+            });
+
+            $('#modalEditEntry').modal('show');
+        });
+
+        $(document).on('click', '.js-delete-entry', function() {
+            var entryId = $(this).data('id');
+            $('#delete-entry-id').val(entryId);
+            $('#modalDeleteEntry').modal('show');
+        });
+
+        // Inicializar summernote para el editor de edición
+        $('#edit-entry-body').summernote({
+            height: 300,
+            lang: 'es-ES',
+            toolbar: [
+                ['style', ['bold', 'italic', 'underline', 'clear']],
+                ['font', ['strikethrough', 'superscript', 'subscript']],
+                ['fontsize', ['fontsize']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['height', ['height']],
+                ['insert', ['link', 'picture', 'video', 'table', 'hr']],
+                ['view', ['fullscreen', 'codeview', 'help']]
+            ],
+            callbacks: {
+                onImageUpload: function(files) {
+                    // Aquí se podría implementar la subida de imágenes para la edición
+                }
+            }
+        });
+
         if (videoUrlEl) {
             videoUrlEl.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
