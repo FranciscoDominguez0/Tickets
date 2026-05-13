@@ -847,9 +847,11 @@ if ($ticketClientSignaturePath !== '') {
 
             <?php 
             $bstatus = $t['billing_status'] ?? 'pending';
+            $billingRoleName = function_exists('getCurrentStaffRoleName') ? getCurrentStaffRoleName() : ($staff['role'] ?? '');
+            $isAdminBilling = in_array($billingRoleName, ['admin', 'supervisor'], true);
             if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
                 <div class="mobile-header" style="margin-top: 8px;">
-                    <?php if (roleHasPermission('ticket.edit')): ?>
+                    <?php if ($isAdminBilling): ?>
                         <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
                             <i class="bi bi-clock-history"></i> Pendiente Facturación
                         </a>
@@ -961,7 +963,7 @@ if ($ticketClientSignaturePath !== '') {
                         <?php 
                         $bstatus = $t['billing_status'] ?? 'pending';
                         if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
-                            <?php if (roleHasPermission('ticket.edit')): ?>
+                            <?php if ($isAdminBilling): ?>
                                 <a href="#" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
                                     <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
                                 </a>
