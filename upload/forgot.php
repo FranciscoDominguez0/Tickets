@@ -144,8 +144,6 @@ $bodyStyle = $loginBg !== ''
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
             <div class="support-header-right">
-                <span class="guest-user">Usuario Invitado</span>
-                <span class="header-separator">|</span>
                 <a href="login.php" class="header-login-link">Inicia Sesión</a>
             </div>
         </div>

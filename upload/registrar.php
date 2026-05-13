@@ -141,8 +141,6 @@ $bodyStyle = $loginBg !== ''
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
             <div class="support-header-right">
-                <span class="guest-user">Usuario Invitado</span>
-                <span class="header-separator">|</span>
                 <a href="login.php" class="header-login-link">Inicia Sesión</a>
             </div>
         </div>
@@ -215,15 +213,16 @@ $bodyStyle = $loginBg !== ''
                                 <input type="hidden" name="latitude" id="latitude" value="<?php echo html($_POST['latitude'] ?? ''); ?>">
                                 <input type="hidden" name="longitude" id="longitude" value="<?php echo html($_POST['longitude'] ?? ''); ?>">
                                 
-                                <button type="button" class="map-btn" id="btnOpenMap" style="margin-top: 0;">
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C5.2 0 3 2.2 3 5c0 3.5 5 11 5 11s5-7.5 5-11c0-2.8-2.2-5-5-5zm0 7.5c-1.4 0-2.5-1.1-2.5-2.5S6.6 2.5 8 2.5 10.5 3.6 10.5 5 9.4 7.5 8 7.5z"/></svg>
-                                    Fijar ubicación exacta en el mapa
+                                <button type="button" class="map-btn" id="btnOpenMap" style="margin-top: 0; <?php echo (!empty($_POST['latitude']) && !empty($_POST['longitude'])) ? 'color: #166534; background: #f0fdf4; border-color: #bbf7d0;' : ''; ?>">
+                                    <?php if (!empty($_POST['latitude']) && !empty($_POST['longitude'])): ?>
+                                        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 4px;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        Ubicación lista para registrarse.
+                                    <?php else: ?>
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C5.2 0 3 2.2 3 5c0 3.5 5 11 5 11s5-7.5 5-11c0-2.8-2.2-5-5-5zm0 7.5c-1.4 0-2.5-1.1-2.5-2.5S6.6 2.5 8 2.5 10.5 3.6 10.5 5 9.4 7.5 8 7.5z"/></svg>
+                                        Fijar ubicación exacta en el mapa
+                                    <?php endif; ?>
                                 </button>
-                                
-                                <div id="mapStatusText" style="font-size: 0.85rem; color: #166534; font-weight: 600; margin-top: 8px; display: <?php echo !empty($_POST['address']) ? 'flex' : 'none'; ?>; align-items: center; gap: 6px;">
-                                    <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                    Ubicación lista para registrarse.
-                                </div>
+
                                 <div id="mapErrorText" style="display:none; color:#dc2626; font-size:13px; margin-top:6px; font-weight:600;">
                                     Este campo es obligatorio.
                                 </div>
@@ -381,7 +380,7 @@ $bodyStyle = $loginBg !== ''
             var latInput = document.getElementById('latitude');
             var lngInput = document.getElementById('longitude');
             var addressInput = document.getElementById('address');
-            var statusText = document.getElementById('mapStatusText');
+
 
             var map = null;
             var marker = null;
@@ -522,14 +521,15 @@ $bodyStyle = $loginBg !== ''
                 latInput.value = currentLat.toFixed(8);
                 lngInput.value = currentLng.toFixed(8);
                 
-                // Ocultar error si existía y mostrar check verde
+                // Ocultar error si existía y actualizar botón
                 var errTxt = document.getElementById('mapErrorText');
                 if(errTxt) errTxt.style.display = 'none';
-                statusText.style.display = 'flex';
                 
                 btnOpenMap.style.color = '#166534';
                 btnOpenMap.style.background = '#f0fdf4';
                 btnOpenMap.style.borderColor = '#bbf7d0';
+                btnOpenMap.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 4px;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg> Ubicación lista para registrarse.';
+                
                 closeMap();
             });
 
@@ -554,10 +554,12 @@ $bodyStyle = $loginBg !== ''
             
             // Mostrar texto verde si ya hay coords (al recargar con error form)
             if (latInput.value && lngInput.value) {
-                statusText.style.display = 'block';
+                btnOpenMap.style.color = '#166534';
                 btnOpenMap.style.background = '#f0fdf4';
                 btnOpenMap.style.borderColor = '#bbf7d0';
+                btnOpenMap.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="margin-right: 4px;"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg> Ubicación lista para registrarse.';
             }
+
         })();
     </script>
 </body>
