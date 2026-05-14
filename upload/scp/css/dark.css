@@ -1315,8 +1315,8 @@ body.dark-mode .user-view-tabs .tab:hover {
 }
 
 body.dark-mode .user-view-tabs .tab.active {
-    color: #3b82f6 !important;
-    border-bottom-color: #3b82f6 !important;
+    color: #ef4444 !important;
+    border-bottom-color: #ef4444 !important;
     background: transparent !important;
 }
 

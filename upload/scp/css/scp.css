@@ -2536,8 +2536,8 @@ body.sidebar-collapsed .scp-footer-brand {
     }
 
     .nav-tabs .nav-link.active {
-        border-bottom-color: #2563eb;
-        color: #2563eb;
+        border-bottom-color: #ef4444;
+        color: #ef4444;
         background: transparent;
     }
 }
