@@ -19,8 +19,8 @@ $eid = empresaId();
 $sid = (int)$_SESSION['staff_id'];
 $action = $_GET['action'] ?? '';
 
-// Identificar ID del estado "En camino" (Prioridad ID 2 si existe)
-$statusIdEnCamino = 2; 
+// Estados activos en los que se debe trackear al agente (En camino = 2, En proceso = 3)
+$statusIdsTrack = [2, 3];
 
 // Asegurar tabla staff_locations con UNIQUE KEY
 $mysqli->query("CREATE TABLE IF NOT EXISTS staff_locations (
@@ -42,13 +42,14 @@ if ($action === 'update') {
         exit;
     }
 
-    // Verificar si el agente tiene tickets "En camino"
-    $stmtCheck = $mysqli->prepare("SELECT COUNT(*) as total FROM tickets WHERE staff_id = ? AND status_id = ? AND empresa_id = ?");
-    $stmtCheck->bind_param('iii', $sid, $statusIdEnCamino, $eid);
+    // Verificar si el agente tiene tickets "En camino" o "En proceso"
+    $stmtCheck = $mysqli->prepare("SELECT COUNT(*) as total FROM tickets WHERE staff_id = ? AND status_id IN (2, 3) AND empresa_id = ? AND closed IS NULL");
+    $stmtCheck->bind_param('ii', $sid, $eid);
     $stmtCheck->execute();
     $count = (int)($stmtCheck->get_result()->fetch_assoc()['total'] ?? 0);
 
     if ($count > 0) {
+        // Hay tickets En Camino activos: insertar/actualizar ubicación
         $stmtIns = $mysqli->prepare("INSERT INTO staff_locations (staff_id, lat, lng, updated_at) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE lat = VALUES(lat), lng = VALUES(lng), updated_at = NOW()");
         $stmtIns->bind_param('idd', $sid, $lat, $lng);
         if ($stmtIns->execute()) {
@@ -57,7 +58,13 @@ if ($action === 'update') {
             echo json_encode(['ok' => false, 'error' => $mysqli->error]);
         }
     } else {
-        echo json_encode(['ok' => false, 'error' => 'No active "En camino" tickets']);
+        // Ya no hay tickets En Camino (fue cerrado u otro estado) → eliminar del mapa
+        $stmtDel = $mysqli->prepare("DELETE FROM staff_locations WHERE staff_id = ?");
+        if ($stmtDel) {
+            $stmtDel->bind_param('i', $sid);
+            $stmtDel->execute();
+        }
+        echo json_encode(['ok' => false, 'removed' => true, 'error' => 'No active En Camino tickets; location removed']);
     }
     exit;
 }
@@ -80,7 +87,7 @@ if ($action === 'get_locations') {
         JOIN (
             SELECT staff_id, MAX(id) as max_ticket_id
             FROM tickets
-            WHERE status_id = ? AND empresa_id = ? AND closed IS NULL
+            WHERE status_id IN (2, 3) AND empresa_id = ? AND closed IS NULL
             GROUP BY staff_id
         ) t_active ON t_active.staff_id = s.id
         JOIN tickets t ON t.id = t_active.max_ticket_id
@@ -88,7 +95,7 @@ if ($action === 'get_locations') {
     ";
     
     $stmt = $mysqli->prepare($query);
-    $stmt->bind_param('ii', $statusIdEnCamino, $eid);
+    $stmt->bind_param('i', $eid);
     $stmt->execute();
     $res = $stmt->get_result();
     
@@ -107,6 +114,19 @@ if ($action === 'get_locations') {
     }
     
     echo json_encode(['ok' => true, 'locations' => $locations]);
+    exit;
+}
+
+// Acción explícita para eliminar ubicación (al cerrar ticket desde el panel)
+if ($action === 'remove') {
+    $stmtDel = $mysqli->prepare("DELETE FROM staff_locations WHERE staff_id = ?");
+    if ($stmtDel) {
+        $stmtDel->bind_param('i', $sid);
+        $stmtDel->execute();
+        echo json_encode(['ok' => true]);
+    } else {
+        echo json_encode(['ok' => false, 'error' => $mysqli->error]);
+    }
     exit;
 }
 

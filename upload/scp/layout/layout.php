@@ -54,9 +54,14 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
         KEY idx_updated (updated_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Buscamos tickets abiertos asignados a este staff con status_id = 2 (En Camino)
-    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = " . (int)$_SESSION['staff_id'] . " AND status_id = 2 AND closed IS NULL LIMIT 1");
+    // Buscamos tickets abiertos asignados a este staff con status_id en (2=En Camino, 3=En proceso)
+    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = " . (int)$_SESSION['staff_id'] . " AND status_id IN (2, 3) AND closed IS NULL LIMIT 1");
     $hasEnCamino = ($resEc && $resEc->num_rows > 0);
+    
+    // Si no tiene tickets en camino, limpiamos su ubicación para no dejar datos huérfanos
+    if (!$hasEnCamino) {
+        $mysqli->query("DELETE FROM staff_locations WHERE staff_id = " . (int)$_SESSION['staff_id']);
+    }
 }
 
 // Estado inicial del sidebar: persistido por cookie, sin auto-toggle al cargar páginas.

@@ -1501,7 +1501,7 @@ tr.ticket-row.is-selected td {
     align-items: center;
     gap: 14px;
     padding: 20px 22px;
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #b91c1c 0%, #dc2626 55%, #ef4444 100%);
     color: #fff;
 }
 
@@ -1609,13 +1609,13 @@ tr.ticket-row.is-selected td {
 }
 
 .scp-btn-choice-primary {
-    border-color: #bfdbfe;
-    background: #eff6ff;
+    border-color: #fecaca;
+    background: #fef2f2;
 }
 
 .scp-btn-choice-primary:hover {
-    border-color: #2563eb;
-    background: #dbeafe;
+    border-color: #dc2626;
+    background: #fee2e2;
 }
 
 .scp-btn-choice-ghost {
@@ -1632,7 +1632,7 @@ tr.ticket-row.is-selected td {
     width: 42px;
     height: 42px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff;
     display: flex;
     align-items: center;
@@ -1675,15 +1675,15 @@ tr.ticket-row.is-selected td {
     display: flex;
     align-items: flex-start;
     gap: 14px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 14px;
     padding: 16px;
 }
 
 .scp-nosig-info-icon {
     font-size: 1.5rem;
-    color: #2563eb;
+    color: #dc2626;
     flex: 0 0 auto;
     margin-top: 2px;
 }
@@ -1729,8 +1729,8 @@ tr.ticket-row.is-selected td {
 }
 
 .scp-textarea:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
 /* Sección firma */
@@ -1767,9 +1767,9 @@ tr.ticket-row.is-selected td {
 
 .scp-sig-canvas-wrap {
     position: relative;
-    border: 2px dashed #bfdbfe;
+    border: 2px dashed #fecaca;
     border-radius: 14px;
-    background: #f8fbff;
+    background: #fef2f2;
     overflow: hidden;
 }
 
@@ -1847,7 +1847,7 @@ tr.ticket-row.is-selected td {
     padding: 9px 22px;
     border-radius: 10px;
     border: none;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
     color: #fff;
     font-weight: 700;
     font-size: 0.9rem;
@@ -1856,7 +1856,7 @@ tr.ticket-row.is-selected td {
     align-items: center;
     gap: 7px;
     transition: opacity 0.18s, transform 0.18s;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .scp-btn-confirm:hover {

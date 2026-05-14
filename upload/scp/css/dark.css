@@ -1742,3 +1742,218 @@ body.dark-mode .user-view-actions .btn:hover {
     color: #f4f4f5 !important;
 }
 
+
+/* ============================================================
+   Modales de cierre de ticket (Dark Mode)
+   ============================================================ */
+
+body.dark-mode .scp-modal-content {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.dark-mode .scp-modal-header {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #b91c1c 100%) !important;
+    color: #f8fafc !important;
+    border-bottom: 1px solid #450a0a !important;
+}
+
+body.dark-mode .scp-modal-header-icon {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .scp-modal-header-icon-warn {
+    background: rgba(217, 119, 6, 0.2) !important;
+    border-color: rgba(217, 119, 6, 0.4) !important;
+    color: #fcd34d !important;
+}
+
+body.dark-mode .scp-modal-header-title {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-modal-header-sub {
+    color: rgba(248, 250, 252, 0.7) !important;
+}
+
+body.dark-mode .scp-modal-close {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-modal-close:hover {
+    background: rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-mode .scp-modal-body {
+    background: #18181b !important;
+}
+
+body.dark-mode .scp-choice-label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .scp-btn-choice {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+}
+
+body.dark-mode .scp-btn-choice:hover {
+    background: #3f3f46 !important;
+    border-color: #52525b !important;
+}
+
+body.dark-mode .scp-btn-choice-primary {
+    background: #450a0a !important;
+    border-color: #7f1d1d !important;
+}
+
+body.dark-mode .scp-btn-choice-primary:hover {
+    background: #7f1d1d !important;
+    border-color: #991b1b !important;
+}
+
+body.dark-mode .scp-btn-choice-ghost {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+
+body.dark-mode .scp-btn-choice-ghost:hover {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+}
+
+body.dark-mode .scp-btn-choice-icon {
+    background: linear-gradient(135deg, #991b1b, #dc2626) !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-btn-choice-ghost .scp-btn-choice-icon {
+    background: #3f3f46 !important;
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .scp-btn-choice-main {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-btn-choice-sub {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .scp-nosig-info {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+}
+
+body.dark-mode .scp-nosig-info-icon {
+    color: #ef4444 !important;
+}
+
+body.dark-mode .scp-nosig-info-title {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-nosig-info-desc {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .scp-field-label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .scp-field-optional {
+    color: #64748b !important;
+}
+
+body.dark-mode .scp-textarea {
+    background: #18181b !important;
+    border-color: #3f3f46 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-textarea:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+body.dark-mode .scp-btn-clear {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .scp-btn-clear:hover {
+    background: #3f3f46 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-sig-canvas-wrap {
+    background: #f4f4f5 !important;
+    border-color: #a1a1aa !important;
+}
+
+body.dark-mode .scp-signature-canvas {
+    background: #ffffff !important;
+}
+
+body.dark-mode .scp-sig-hint {
+    background: rgba(24, 24, 27, 0.85) !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .scp-rotate-hint {
+    background: #451a03 !important;
+    border-color: #78350f !important;
+    color: #fde68a !important;
+}
+
+body.dark-mode .scp-modal-footer {
+    background: #18181b !important;
+    border-top-color: #27272a !important;
+}
+
+body.dark-mode .scp-btn-cancel {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .scp-btn-cancel:hover {
+    background: #3f3f46 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .scp-btn-confirm {
+    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
+    color: #fff !important;
+}
+
+/* ============================================================
+   Vista de Firma del Cliente en el Ticket (Dark Mode)
+   ============================================================ */
+
+body.dark-mode .ticket-signature-print-box {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+
+body.dark-mode .ticket-signature-print-title {
+    background: #27272a !important;
+    border-bottom-color: #3f3f46 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .ticket-signature-print-body {
+    background: #18181b !important;
+}
+
+body.dark-mode .ticket-signature-print-image {
+    background: #ffffff !important;
+    border: 1px solid #3f3f46 !important;
+    border-radius: 8px !important;
+}

@@ -281,6 +281,9 @@ body.dark-mode .open-section .form-control {
 body.dark-mode .tickets-shell.open-ticket-shell {
     background: transparent;
 }
+body.dark-mode .loading-overlay-form {
+    background: rgba(0, 0, 0, 0.6);
+}
 body.dark-mode .open-section {
     background: #111111 !important;
     border-color: #222 !important;
@@ -593,7 +596,7 @@ body.dark-mode .text-muted {
         sections.forEach(function(sec) {
           var overlay = document.createElement('div');
           overlay.className = 'loading-overlay-form';
-          overlay.innerHTML = '<div class="spinner-grow text-primary" role="status" style="width:1.5rem; height:1.5rem;"></div>';
+          overlay.innerHTML = '<div class="spinner-border text-danger" role="status" style="width:2rem; height:2rem; border-width:0.25rem;"></div>';
           sec.appendChild(overlay);
         });
       });
