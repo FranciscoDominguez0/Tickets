@@ -338,11 +338,11 @@ class Auth {
         $hasEmpresaId = self::tableHasColumn('staff', 'empresa_id');
         $hasRole = self::tableHasColumn('staff', 'role');
         if ($hasEmpresaId && $hasRole) {
-            $sql = 'SELECT id, username, email, firstname, lastname, password, role, COALESCE(empresa_id, 1) AS empresa_id FROM staff WHERE username = ? AND is_active = 1';
+            $sql = 'SELECT id, username, email, firstname, lastname, password, role, dark_mode, COALESCE(empresa_id, 1) AS empresa_id FROM staff WHERE username = ? AND is_active = 1';
         } elseif ($hasRole) {
-            $sql = 'SELECT id, username, email, firstname, lastname, password, role FROM staff WHERE username = ? AND is_active = 1';
+            $sql = 'SELECT id, username, email, firstname, lastname, password, role, dark_mode FROM staff WHERE username = ? AND is_active = 1';
         } else {
-            $sql = 'SELECT id, username, email, firstname, lastname, password FROM staff WHERE username = ? AND is_active = 1';
+            $sql = 'SELECT id, username, email, firstname, lastname, password, dark_mode FROM staff WHERE username = ? AND is_active = 1';
         }
         $stmt = $mysqli->prepare($sql);
         $stmt->bind_param('s', $username);
@@ -431,6 +431,7 @@ class Auth {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         $_SESSION['session_fp'] = self::sessionFingerprint('agente');
         $_SESSION['session_fp_relaxed'] = self::sessionFingerprintRelaxed('agente');
+        $_SESSION['scp_dark_mode'] = (string)($staff['dark_mode'] ?? '0');
 
         $sid = (int)$staff['id'];
         if ($sid > 0) {

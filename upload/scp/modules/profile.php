@@ -27,6 +27,7 @@ if ($staff_id <= 0) {
 }
 
 $has_signature_column = $profile_staff && array_key_exists('signature', $profile_staff);
+$has_dark_mode_column = $profile_staff && array_key_exists('dark_mode', $profile_staff);
 
 // ----- Procesar cambio de contraseña (POST desde modal)
 if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'change_password') {
@@ -73,6 +74,7 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
         $lastname  = trim($_POST['lastname'] ?? '');
         $email     = trim($_POST['email'] ?? '');
         $signature = isset($_POST['signature']) ? trim($_POST['signature']) : null;
+        $dark_mode = isset($_POST['dark_mode']) ? (int)$_POST['dark_mode'] : 0;
 
         if (empty($firstname)) {
             $profile_errors['firstname'] = 'El nombre es obligatorio.';
@@ -94,7 +96,13 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
         }
 
         if (empty($profile_errors)) {
-            if ($has_signature_column) {
+            if ($has_signature_column && $has_dark_mode_column) {
+                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, signature = ?, dark_mode = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmt->bind_param('ssssiii', $firstname, $lastname, $email, $signature, $dark_mode, $staff_id, $eid);
+            } elseif ($has_dark_mode_column) {
+                $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, dark_mode = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+                $stmt->bind_param('sssiiii', $firstname, $lastname, $email, $dark_mode, $staff_id, $eid);
+            } elseif ($has_signature_column) {
                 $stmt = $mysqli->prepare('UPDATE staff SET firstname = ?, lastname = ?, email = ?, signature = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
                 $stmt->bind_param('ssssii', $firstname, $lastname, $email, $signature, $staff_id, $eid);
             } else {
@@ -108,6 +116,10 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
                 $profile_staff['email']     = $email;
                 if ($has_signature_column) {
                     $profile_staff['signature'] = $signature;
+                }
+                if ($has_dark_mode_column) {
+                    $profile_staff['dark_mode'] = $dark_mode;
+                    $_SESSION['scp_dark_mode'] = (string)$dark_mode;
                 }
                 $_SESSION['staff_name']  = $firstname . ' ' . $lastname;
                 $_SESSION['staff_email'] = $email;

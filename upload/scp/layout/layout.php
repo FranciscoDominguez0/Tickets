@@ -199,7 +199,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         <?php unset($_SESSION['show_agent_loading_overlay']); ?>
     <?php endif; ?>
     <!-- NAVBAR -->
-    <nav class="navbar navbar-dark <?php echo !isset($_SESSION['staff_id']) ? 'd-none' : ''; ?>" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; flex-direction: column; align-items: stretch; padding: 0;">
+    <nav class="navbar navbar-dark <?php echo !isset($_SESSION['staff_id']) ? 'd-none' : ''; ?>" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; flex-direction: column; align-items: stretch; padding: 0; height: 60px;">
         <div class="container-fluid d-flex flex-nowrap w-100 justify-content-between" style="padding-top: 8px; padding-bottom: 8px;">
             <div class="d-flex align-items-center gap-2">
                 <button class="btn scp-menu-toggle px-1" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>" style="color: rgba(255,255,255,.9);">
@@ -208,11 +208,6 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 <span class="navbar-brand scp-brand-title m-0">Sistema de Tickets</span>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <!-- Toggle Modo Oscuro -->
-                <button id="dmToggleBtn" type="button" title="Modo oscuro / claro" aria-label="Alternar modo oscuro">
-                    <i class="bi bi-moon-stars-fill dm-icon-dark"></i>
-                    <i class="bi bi-sun-fill dm-icon-light"></i>
-                </button>
                 <div class="dropdown">
                     <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                         <i class="bi bi-bell"></i>
@@ -639,25 +634,6 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
-        // === DARK MODE TOGGLE ===
-        (function () {
-            var btn = document.getElementById('dmToggleBtn');
-            if (!btn) return;
-            btn.addEventListener('click', function () {
-                var body = document.body;
-                var isDark = body.classList.toggle('dark-mode');
-                var mode = isDark ? 'dark' : 'light';
-                // Persistir en sesión PHP
-                var fd = new FormData();
-                fd.append('mode', mode);
-                fetch('toggle_dark_mode.php', {
-                    method: 'POST',
-                    body: fd,
-                    credentials: 'same-origin'
-                }).catch(function () {});
-            });
-        })();
-
         // Botón "Marcar todas como leídas" en notificaciones
         (function(){
             var btn = document.getElementById('scpMarkAllRead');

@@ -6,11 +6,14 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 $mode = (string)($_POST['mode'] ?? '');
-if ($mode === 'dark') {
-    $_SESSION['scp_dark_mode'] = '1';
-} else {
-    $_SESSION['scp_dark_mode'] = '0';
-}
+$val = ($mode === 'dark') ? 1 : 0;
+$_SESSION['scp_dark_mode'] = (string)$val;
+
+// Persistir en base de datos
+$sid = (int)$_SESSION['staff_id'];
+$stmt = $mysqli->prepare('UPDATE staff SET dark_mode = ?, updated = NOW() WHERE id = ?');
+$stmt->bind_param('ii', $val, $sid);
+$stmt->execute();
 
 header('Content-Type: application/json');
 echo json_encode(['ok' => true, 'mode' => $mode]);

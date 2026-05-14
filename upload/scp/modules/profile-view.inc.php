@@ -112,18 +112,18 @@ $p = $profile_staff;
                     <p class="text-muted">Opciones de visualización y comportamiento del panel.</p>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Registros por página</label>
-                            <select class="form-select" name="page_size" disabled>
-                                <option value="">Valor por defecto del sistema</option>
-                                <?php for ($i = 10; $i <= 50; $i += 10): ?>
-                                    <option value="<?php echo $i; ?>"><?php echo $i; ?> registros</option>
-                                <?php endfor; ?>
-                            </select>
-                            <small class="text-muted">Disponible en una próxima versión.</small>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label">Zona horaria</label>
                             <input type="text" class="form-control bg-light" value="<?php echo html(TIMEZONE); ?>" readonly>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <h4 class="profile-section-title" style="font-size: 1rem;">Apariencia</h4>
+                            <div class="form-check form-switch profile-theme-switch">
+                                <input class="form-check-input" type="checkbox" name="dark_mode" id="dark_mode_profile" value="1" <?php echo (int)($p['dark_mode'] ?? 0) === 1 ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="dark_mode_profile">
+                                    <strong>Modo Oscuro (Deep Black)</strong>
+                                    <span class="d-block text-muted small">Activa la interfaz premium oscura en todo el panel administrativo.</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

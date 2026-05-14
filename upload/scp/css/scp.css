@@ -7,7 +7,7 @@
 body {
     background: #f5f7fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding-top: 56px; /* Para PC */
+    padding-top: 60px; /* Estandarizado para PC */
 }
 
 @media (max-width: 768px) {
@@ -1191,7 +1191,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
 
 .layout {
     display: flex;
-    min-height: calc(100vh - 56px);
+    min-height: calc(100vh - 60px);
 }
 
 .sidebar {
@@ -1202,9 +1202,9 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     color: #e5e7eb;
     padding: 24px 16px;
     position: fixed;
-    top: 56px;
+    top: 60px;
     left: 0;
-    height: calc(100vh - 56px);
+    height: calc(100vh - 60px);
     overflow-y: scroll;
     z-index: 1000;
     box-sizing: border-box;
