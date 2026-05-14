@@ -243,10 +243,16 @@
                                 <input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>" style="cursor: pointer; width: 1.1em; height: 1.1em;">
                             </td>
                             <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
-                                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
                                     <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #2563eb; text-decoration: none;">
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
+                                    <?php if (!empty($t['priority_name'])): ?>
+                                        <span title="Prioridad: <?php echo html($t['priority_name']); ?>" style="display:inline-flex; align-items:center; gap:4px; background:<?php echo html($priorityColor); ?>18; color:<?php echo html($priorityColor); ?>; border:1px solid <?php echo html($priorityColor); ?>40; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
+                                            <span style="width:5px; height:5px; border-radius:50%; background:<?php echo html($priorityColor); ?>; flex-shrink:0; display:inline-block;"></span>
+                                            <?php echo html($t['priority_name']); ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <?php if ($isNew): ?>
                                         <span class="badge" style="background:#ef4444; color: #fff; font-size: 0.65rem; padding: 4px 6px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">Nuevo</span>
                                     <?php endif; ?>
