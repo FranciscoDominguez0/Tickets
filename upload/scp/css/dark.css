@@ -1018,7 +1018,7 @@ body.dark-mode .org-stat-card {
     color: #e4e4e7 !important;
 }
 
-body.dark-mode .user-view-detail,
+/* body.dark-mode .user-view-detail, */
 body.dark-mode .org-stat-icon,
 body.dark-mode .user-view-avatar {
     background: #09090b !important;
@@ -1322,8 +1322,8 @@ body.dark-mode .user-view-tabs .tab.active {
 
 /* Detail blocks refinement */
 body.dark-mode .user-view-detail {
-    background: #111113 !important; /* Slightly lighter than pure black for better contrast with card */
-    border: 1px solid #27272a !important;
+    background: transparent !important;
+    border: none !important;
 }
 
 body.dark-mode .user-view-avatar {
@@ -1956,4 +1956,30 @@ body.dark-mode .ticket-signature-print-image {
     background: #ffffff !important;
     border: 1px solid #3f3f46 !important;
     border-radius: 8px !important;
+}
+
+/* ============================================================
+   BOTONES DE AGREGAR (USUARIOS Y ORGS) EN MODO OSCURO
+   ============================================================ */
+body.dark-mode .users-directory .btn-add,
+body.dark-mode .btn-add-org {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4) !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+}
+
+body.dark-mode .users-directory .btn-add:hover,
+body.dark-mode .btn-add-org:hover {
+    background: linear-gradient(135deg, #f87171, #ef4444) !important;
+    box-shadow: 0 6px 22px rgba(239, 68, 68, 0.55) !important;
+    border-color: rgba(248, 113, 113, 0.6) !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    transform: translateY(-1px);
+}
+
+/* Fix ticket preview ID color in dark mode */
+body.dark-mode .ticket-hover-preview-head .num {
+    color: #f4f4f5 !important;
 }
