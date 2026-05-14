@@ -1630,3 +1630,115 @@ body.dark-mode h6.border-bottom {
     border-bottom-color: #27272a !important;
     color: #60a5fa !important;
 }
+
+/* ============================================================
+   DIRECTORIO DE USUARIOS — correcciones dark mode
+   ============================================================ */
+
+/* Fondo de tarjetas / table-card */
+body.dark-mode .users-directory .table-card,
+body.dark-mode .users-directory .search-card,
+body.dark-mode .users-directory .user-view-card {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border-color: #27272a !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+/* Encabezado de tabla */
+body.dark-mode .users-directory .table thead th {
+    background: #1c1c1f !important;
+    color: #a1a1aa !important;
+    border-bottom-color: #27272a !important;
+}
+
+/* Filas del cuerpo */
+body.dark-mode .users-directory .table tbody tr {
+    background: transparent !important;
+    color: #e4e4e7 !important;
+}
+
+/* HOVER — era #f8fafc (blanco), ahora oscuro visible */
+body.dark-mode .users-directory .table tbody tr:hover {
+    background: #27272a !important;
+    color: #f4f4f5 !important;
+}
+
+/* Celdas */
+body.dark-mode .users-directory .table tbody td {
+    border-bottom-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+
+/* Nombre del usuario (enlace) */
+body.dark-mode .users-directory .user-name-cell a {
+    color: #f87171 !important;
+}
+
+/* Ticket-count y subtextos */
+body.dark-mode .users-directory .user-name-cell .ticket-count {
+    color: #71717a !important;
+}
+
+/* Pie de tabla (paginación / "mostrando") */
+body.dark-mode .users-directory .table-footer-bar {
+    background: #18181b !important;
+    border-top-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+
+/* Botones Import / Más */
+body.dark-mode .users-directory .btn-import,
+body.dark-mode .users-directory .btn-more {
+    background: #27272a !important;
+    color: #e4e4e7 !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .users-directory .btn-import:hover,
+body.dark-mode .users-directory .btn-more:hover {
+    background: #3f3f46 !important;
+    color: #f4f4f5 !important;
+}
+
+/* Encabezado de página (título) */
+body.dark-mode .users-directory .page-title {
+    color: #f4f4f5 !important;
+}
+
+/* Vista detalle de usuario */
+body.dark-mode .user-view-header {
+    border-bottom-color: #27272a !important;
+}
+body.dark-mode .user-view-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .user-view-detail label {
+    color: #71717a !important;
+}
+body.dark-mode .user-view-detail .value {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .user-view-tabs {
+    background: #18181b !important;
+    border-bottom-color: #27272a !important;
+}
+body.dark-mode .user-view-tab-content {
+    background: transparent !important;
+}
+body.dark-mode .user-view-tickets-table th,
+body.dark-mode .user-view-tickets-table td {
+    border-bottom-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .user-view-tickets-table th {
+    color: #71717a !important;
+}
+body.dark-mode .user-view-actions .btn {
+    background: #27272a !important;
+    color: #e4e4e7 !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .user-view-actions .btn:hover {
+    background: #3f3f46 !important;
+    color: #f4f4f5 !important;
+}
+
