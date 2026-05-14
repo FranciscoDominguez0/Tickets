@@ -958,7 +958,7 @@ if ($ticketClientSignaturePath !== '') {
                     if (!empty($mobileParts[1])) $mobileInitials .= mb_substr($mobileParts[1], 0, 1);
                     $mobileInitials = strtoupper($mobileInitials ?: '?');
                 ?>
-                <div class="mobile-avatar" style="font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; <?php echo $isWalkinTicket ? 'background: #fef3c7; color: #92400e;' : 'background: #fef2f2; color: #ef4444;'; ?>">
+                <div class="mobile-avatar" style="font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; <?php echo $isWalkinTicket ? 'background: #fef3c7; color: #92400e;' : 'background: #eff6ff; color: #2563eb;'; ?>">
                     <?php echo html($mobileInitials); ?>
                 </div>
                 <div class="mobile-user-info">
@@ -1455,7 +1455,7 @@ if ($ticketClientSignaturePath !== '') {
                 
                 <div class="modal-header border-0" style="padding: 24px 32px 16px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-bottom: 1px solid #f1f5f9 !important;">
                     <div class="d-flex align-items-center gap-3">
-                        <div style="width: 42px; height: 42px; border-radius: 12px; background: #fef2f2; color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                        <div style="width: 42px; height: 42px; border-radius: 12px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                             <i class="bi bi-pencil-square"></i>
                         </div>
                         <div>
@@ -2709,7 +2709,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </p>
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; line-height: 1.3;"><i class="bi bi-file-earmark-text me-1"></i> Puedes revisar los costos antes de confirmar:</span>
-                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" target="_blank" class="btn btn-sm" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-weight: 700; border-radius: 8px; white-space: nowrap;">Ver Reporte</a>
+                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" target="_blank" class="btn btn-sm" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-weight: 700; border-radius: 8px; white-space: nowrap;">Ver Reporte</a>
                 </div>
             </div>
             <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 20px 26px; gap: 12px; background: #f8fafc;">

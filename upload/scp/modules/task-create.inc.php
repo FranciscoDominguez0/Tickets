@@ -9,8 +9,10 @@ $agentsByDeptB64 = base64_encode((string)($agentsJson ?: '{}'));
 <div id="tasks-data" hidden data-agents-by-dept-b64="<?php echo html($agentsByDeptB64); ?>" data-current-assigned=""></div>
 
 <div class="page-header">
-    <h1>Crear Nueva Tarea</h1>
-    <p>Asigna una nueva tarea a un agente</p>
+    <div>
+        <h1 style="margin:0; font-size:1.5rem; font-weight:800; letter-spacing:-0.01em; color:#fff;">Crear Nueva Tarea</h1>
+        <div style="margin-top:6px; opacity:0.92; font-size:0.95rem; font-weight:500; color:#fff;">Asigna una nueva tarea a un agente</div>
+    </div>
 </div>
 
 <?php if (!empty($errors)): ?>

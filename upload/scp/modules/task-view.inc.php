@@ -41,19 +41,26 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
 <div id="tasks-data" hidden data-agents-by-dept-b64="<?php echo html($agentsByDeptB64); ?>" data-current-assigned="<?php echo (int)$currentAssigned; ?>"></div>
 
 <div class="page-header">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
         <div>
-            <h1>Tarea #<?php echo $taskView['id']; ?></h1>
-            <p><?php echo html($taskView['title']); ?></p>
+            <h1 style="margin:0; font-size:1.5rem; font-weight:800; letter-spacing:-0.01em; color:#fff;">Tarea #<?php echo $taskView['id']; ?></h1>
+            <div style="margin-top:6px; opacity:0.92; font-size:0.95rem; font-weight:500; color:#fff;"><?php echo html($taskView['title']); ?></div>
+            <div class="meta mt-3 d-flex gap-2">
+                <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2);"><i class="bi bi-activity me-1"></i> <?php echo html((string)($status_labels[$taskView['status']] ?? '')); ?></span>
+                <span class="badge" style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2);"><i class="bi bi-flag me-1"></i> <?php echo html((string)($priority_labels[$taskView['priority']] ?? '')); ?></span>
+                <?php if ($is_overdue_header): ?>
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Vencida</span>
+                <?php endif; ?>
+            </div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="tasks.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
-            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i> Editar</button>
+            <a href="tasks.php" class="btn btn-outline-light btn-sm" style="border-radius:10px; font-weight:600;"><i class="bi bi-arrow-left"></i> Volver</a>
+            <button type="button" class="btn btn-light btn-sm" style="border-radius:10px; font-weight:700;" data-bs-toggle="modal" data-bs-target="#editModal"><i class="bi bi-pencil"></i> Editar</button>
             <div class="dropdown">
-                <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <button class="btn btn-outline-light btn-sm dropdown-toggle" style="border-radius:10px; font-weight:600;" type="button" data-bs-toggle="dropdown">
                     <i class="bi bi-list"></i> Más
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end" style="border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
                     <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="pending" data-status-label="Pendiente">Marcar Pendiente</a></li>
                     <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="in_progress" data-status-label="En Progreso">Marcar En Progreso</a></li>
                     <li><a class="dropdown-item" href="#" data-action="task-change-status" data-status="completed" data-status-label="Completada">Marcar Completada</a></li>
@@ -62,13 +69,6 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                 </ul>
             </div>
         </div>
-    </div>
-    <div class="meta">
-        <span class="chip"><i class="bi bi-activity"></i> <?php echo html((string)($status_labels[$taskView['status']] ?? '')); ?></span>
-        <span class="chip"><i class="bi bi-flag"></i> <?php echo html((string)($priority_labels[$taskView['priority']] ?? '')); ?></span>
-        <?php if ($is_overdue_header): ?>
-            <span class="chip chip-danger"><i class="bi bi-exclamation-triangle"></i> Vencida</span>
-        <?php endif; ?>
     </div>
 </div>
 

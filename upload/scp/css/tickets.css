@@ -31,7 +31,7 @@
 }
 
 .ticket-view-title a:hover {
-    color: #ef4444;
+    color: #2563eb;
 }
 
 .ticket-view-actions {
@@ -57,7 +57,7 @@
 
 .ticket-view-actions .btn-icon:hover {
     background: #f8fafc;
-    color: #ef4444;
+    color: #2563eb;
 }
 
 .ticket-view-overview {

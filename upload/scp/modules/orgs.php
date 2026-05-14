@@ -280,20 +280,20 @@ if (!empty($_GET['org'])) {
         }
         .org-detail-container .btn-edit-premium {
             background-color: transparent;
-            color: #3b82f6;
-            border: 2px solid #bfdbfe;
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.25);
             font-weight: 700;
             padding: 8px 20px;
             border-radius: 99px;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.05);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05);
         }
         .org-detail-container .btn-edit-premium:hover {
-            background-color: #eff6ff;
-            border-color: #93c5fd;
-            color: #2563eb;
+            background-color: rgba(239, 68, 68, 0.06);
+            border-color: #ef4444;
+            color: #dc2626;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
         }
         .org-detail-container .btn-delete-premium {
             background-color: transparent;
@@ -351,8 +351,8 @@ if (!empty($_GET['org'])) {
         }
         .org-detail-container .org-stat-icon {
             font-size: 1.6rem;
-            color: #2563eb;
-            background: #eff6ff;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
             width: 48px;
             height: 48px;
             display: flex;
@@ -426,7 +426,7 @@ if (!empty($_GET['org'])) {
             border-bottom: none;
         }
         .org-detail-container .user-view-tickets-table tbody td a {
-            color: #2563eb;
+            color: #ef4444;
             font-weight: 600;
             text-decoration: none;
         }
@@ -450,8 +450,8 @@ if (!empty($_GET['org'])) {
         }
         .org-detail-container .user-view-avatar {
             font-size: 3.5rem;
-            color: #3b82f6;
-            background: #eff6ff;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
             width: 90px;
             height: 90px;
             display: flex;
@@ -509,13 +509,13 @@ if (!empty($_GET['org'])) {
             font-size: 0.95rem;
         }
         .org-detail-container .user-view-tabs .tab:hover {
-            color: #2563eb;
+            color: #ef4444;
             background: #f8fafc;
             border-radius: 8px 8px 0 0;
         }
         .org-detail-container .user-view-tabs .tab.active {
-            color: #2563eb;
-            border-bottom-color: #2563eb;
+            color: #ef4444;
+            border-bottom-color: #ef4444;
             background: transparent;
         }
     }
@@ -621,7 +621,7 @@ if (!empty($_GET['org'])) {
             color: #0f172a;
         }
         .org-detail-container .user-view-detail .value a {
-            color: #2563eb;
+            color: #ef4444;
             text-decoration: none;
         }
 
@@ -656,9 +656,9 @@ if (!empty($_GET['org'])) {
         }
         .org-detail-container .org-stat-icon {
             font-size: 1.5rem;
-            color: #2563eb;
+            color: #ef4444;
             margin-bottom: 10px;
-            background: #eff6ff;
+            background: rgba(239, 68, 68, 0.1);
             width: 44px;
             height: 44px;
             display: flex;
@@ -700,7 +700,7 @@ if (!empty($_GET['org'])) {
             flex-direction: column;
             background: #fff;
             border: 1px solid #e2e8f0;
-            border-top: 4px solid #2563eb;
+            border-top: 4px solid #ef4444;
             border-radius: 12px;
             margin-bottom: 16px;
             padding: 16px 12px 6px;
@@ -964,7 +964,7 @@ if (!empty($_GET['org'])) {
                                     <?php foreach ($tickets as $tkt): ?>
                                         <tr>
                                             <td data-label="Detalle" class="primary-field">
-                                                <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>" style="display:block; font-weight:800; font-size: 1rem; color:#2563eb; text-decoration:none; margin-bottom:2px;">
+                                                <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>" style="display:block; font-weight:800; font-size: 1rem; color:#ef4444; text-decoration:none; margin-bottom:2px;">
                                                     <i class="bi bi-ticket-detailed" style="margin-right:4px; opacity:0.8;"></i>#<?php echo html($tkt['ticket_number']); ?>
                                                 </a>
                                                 <span style="color:#475569; font-size:0.95rem; font-weight:500;">

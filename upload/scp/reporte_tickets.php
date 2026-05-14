@@ -213,6 +213,39 @@ ob_start();
     .rpt-desktop-table { display: none !important; }
     .rpt-card-list { display: flex; }
 }
+
+/* Ticket Number Color: Blue in both light and dark mode */
+.ticket-title {
+    color: #2563eb !important;
+}
+body.dark-mode .ticket-title {
+    color: #2563eb !important;
+}
+.rpt-card-num {
+    color: #2563eb !important;
+}
+body.dark-mode .rpt-card-num {
+    color: #2563eb !important;
+}
+
+/* ── Dark Mode Overrides for Cards ── */
+body.dark-mode .rpt-card {
+    background: #111111 !important;
+    border-color: #222 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+body.dark-mode .rpt-card-row {
+    color: #94a3b8 !important;
+}
+body.dark-mode .rpt-card-row .rpt-val {
+    color: #f1f5f9 !important;
+}
+body.dark-mode .rpt-card-footer {
+    border-top-color: #222 !important;
+}
+body.dark-mode .rpt-card-body .rpt-card-subject {
+    color: #f1f5f9 !important;
+}
 </style>
 
 <div class="tickets-shell">
@@ -294,7 +327,7 @@ ob_start();
                         <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo $hasReport ? $reportUrl : $viewUrl; ?>';">
                             <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
                                 <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
-                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; color: #ef4444; text-decoration: none;" onclick="event.stopPropagation();">
+                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; text-decoration: none;" onclick="event.stopPropagation();">
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
                                     <?php if ($isNew): ?>
@@ -416,7 +449,7 @@ ob_start();
                         </div>
                         <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;"><?php echo html($closedDateShort); ?></div>
                     </div>
-                    <div style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:10px; line-height:1.35;">
+                    <div class="rpt-card-subject" style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:10px; line-height:1.35;">
                         <?php echo html((string)($t['subject'] ?? '')); ?>
                     </div>
                     <div class="rpt-card-rows">

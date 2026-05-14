@@ -428,6 +428,37 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
         color: #475569;
         border-bottom-color: rgba(148, 163, 184, 0.25);
     }
+    
+    /* Dark Mode Overrides para Estadísticas */
+    body.dark-mode .stats-page .card {
+        background: #111;
+        border-color: #222;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    body.dark-mode .stats-page h5 {
+        color: #f1f5f9;
+    }
+    body.dark-mode .stats-page .form-label {
+        color: #94a3b8;
+    }
+    body.dark-mode .stats-kpi .fs-3 {
+        color: #fff;
+    }
+    body.dark-mode .stats-kpi .text-muted {
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .stats-page .table thead th {
+        color: #94a3b8;
+        border-bottom-color: #333;
+    }
+    body.dark-mode .stats-page .table td {
+        color: #cbd5e1;
+    }
+    body.dark-mode .stats-page .form-control {
+        background: #000;
+        border-color: #333;
+        color: #fff;
+    }
 </style>
 
 <div class="stats-page">

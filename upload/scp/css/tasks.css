@@ -1,10 +1,10 @@
 .page-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
     color: #fff;
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+    border-radius: 14px;
+    padding: 28px 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);
 }
 .page-header h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
 .page-header p { margin: 6px 0 0 0; opacity: 0.92; }
@@ -40,10 +40,10 @@
     width: 4px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
-    background: #2563eb;
+    background: #ef4444;
 }
 .detail-accent.status-pending:before { background: #64748b; }
-.detail-accent.status-in_progress:before { background: #2563eb; }
+.detail-accent.status-in_progress:before { background: #ef4444; }
 .detail-accent.status-completed:before { background: #16a34a; }
 .detail-accent.status-cancelled:before { background: #94a3b8; }
 
@@ -57,32 +57,32 @@
 .table thead th { background: #f8fafc; color: #475569; font-size: 0.85rem; }
 .table-hover tbody tr:hover { background: #f8fafc; }
 
-.chip-status { background: rgba(37, 99, 235, 0.10); color: #1d4ed8; }
+.chip-status { background: rgba(239, 68, 68, 0.10); color: #dc2626; }
 .chip-priority { background: rgba(15, 23, 42, 0.06); color: #0f172a; }
 .chip-danger { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
 
 .task-row { transition: transform .06s ease, box-shadow .12s ease; }
 .task-row:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(2, 6, 23, 0.06); }
 .task-row.status-pending { box-shadow: inset 4px 0 0 rgba(100, 116, 139, 0.75); }
-.task-row.status-in_progress { box-shadow: inset 4px 0 0 rgba(37, 99, 235, 0.85); }
+.task-row.status-in_progress { box-shadow: inset 4px 0 0 rgba(239, 68, 68, 0.85); }
 .task-row.status-completed { box-shadow: inset 4px 0 0 rgba(22, 163, 74, 0.85); }
 .task-row.status-cancelled { box-shadow: inset 4px 0 0 rgba(148, 163, 184, 0.85); }
 
 .prio-dot { width: 9px; height: 9px; border-radius: 999px; display: inline-block; margin-right: 6px; }
 .prio-low { background: #94a3b8; }
-.prio-normal { background: #2563eb; }
-.prio-high { background: #0ea5e9; }
+.prio-normal { background: #ef4444; }
+.prio-high { background: #f59e0b; }
 .prio-urgent { background: #ef4444; }
 
-.btn-primary { background: #2563eb; border-color: #2563eb; }
-.btn-outline-primary { color: #2563eb; border-color: rgba(37, 99, 235, 0.35); }
-.btn-outline-primary:hover { background: #2563eb; border-color: #2563eb; }
+.btn-primary { background: #ef4444; border-color: #ef4444; }
+.btn-outline-primary { color: #ef4444; border-color: rgba(239, 68, 68, 0.35); }
+.btn-outline-primary:hover { background: #ef4444; border-color: #ef4444; }
 
 .task-description {
     background: #f8f9fa;
     padding: 15px;
     border-radius: 6px;
-    border-left: 4px solid #007bff;
+    border-left: 4px solid #ef4444;
     white-space: pre-wrap;
     word-wrap: break-word;
 }

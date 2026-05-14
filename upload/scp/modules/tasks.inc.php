@@ -217,6 +217,54 @@
     .task-card-accent.prio-high { background: linear-gradient(90deg, #f59e0b, #fb923c); }
     .task-card-accent.prio-urgent { background: linear-gradient(90deg, #ef4444, #dc2626); }
 }
+
+/* ── Dark Mode Overrides ── */
+body.dark-mode .task-stat-card {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+body.dark-mode .task-stat-card::after {
+    background: #27272a !important;
+}
+body.dark-mode .task-stat-card .stat-number {
+    color: #f8fafc !important;
+}
+body.dark-mode .task-stat-card .stat-label {
+    color: #a1a1aa !important;
+}
+body.dark-mode .task-stat-card:hover {
+    background: #1c1c1f !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45) !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .tasks-toolbar .filter-dd .btn {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #f1f5f9 !important;
+}
+body.dark-mode .tasks-toolbar .filter-dd .btn:hover {
+    background: #27272a !important;
+}
+body.dark-mode #tasksTable tbody tr {
+    background: #111 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .tickets-table td {
+    color: #d4d4d8 !important;
+}
+body.dark-mode .tickets-table td strong {
+    color: #fafafa !important;
+}
+body.dark-mode #tasksTable thead {
+    background-color: #161616 !important;
+    border-bottom-color: #252525 !important;
+}
+body.dark-mode #tasksTable thead th {
+    color: #71717a !important;
+    background-color: transparent !important;
+}
+
 @media (min-width: 768px) {
     .task-mobile-meta { display: none !important; }
     .task-card-accent { display: none !important; }
@@ -224,7 +272,7 @@
 </style>
 
 <div class="tickets-shell">
-    <div class="tickets-header" style="background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%); border-radius: 14px; padding: 28px 22px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);">
+    <div class="page-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1 style="margin:0; font-size:1.5rem; font-weight:800; letter-spacing:-0.01em; color:#fff;">Tareas</h1>
