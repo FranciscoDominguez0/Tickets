@@ -2771,3 +2771,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     })();
 </script>
+
+<script>
+    function abrirWazeInteligente(event, appUrl, webUrl) {
+        event.preventDefault();
+        var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        if (isMobile) {
+            // Intentar abrir la app nativa; si no está instalada, caer a la web
+            var start = Date.now();
+            window.location.href = appUrl;
+            setTimeout(function () {
+                // Si la página sigue visible (app no abrió), abrir la web
+                if (Date.now() - start < 2000) {
+                    window.open(webUrl, '_blank');
+                }
+            }, 1500);
+        } else {
+            window.open(webUrl, '_blank');
+        }
+    }
+</script>
