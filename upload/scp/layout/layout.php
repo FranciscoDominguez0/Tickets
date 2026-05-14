@@ -104,9 +104,14 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
     <link rel="stylesheet" href="css/tasks.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tasks.css'); ?>">
     <?php endif; ?>
+    <link rel="stylesheet" href="css/dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/dark.css'); ?>">
 </head>
+<?php
+// Leer preferencia de modo oscuro desde sesión (sin flash)
+$isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
+?>
 <?php $userActiveTab = (isset($currentRoute) && $currentRoute === 'users') ? (isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets') : ''; ?>
-<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>"<?php if ($userActiveTab !== ''): ?> data-user-active-tab="<?php echo $userActiveTab; ?>"<?php endif; ?>>
+<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?><?php echo $isDarkMode ? ' dark-mode' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>"<?php if ($userActiveTab !== ''): ?> data-user-active-tab="<?php echo $userActiveTab; ?>"<?php endif; ?>>
     <?php $showOverlay = !empty($_SESSION['show_agent_loading_overlay']); ?>
     <?php if ($showOverlay): ?>
         <style>
@@ -203,6 +208,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
                 <span class="navbar-brand scp-brand-title m-0">Sistema de Tickets</span>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <!-- Toggle Modo Oscuro -->
+                <button id="dmToggleBtn" type="button" title="Modo oscuro / claro" aria-label="Alternar modo oscuro">
+                    <i class="bi bi-moon-stars-fill dm-icon-dark"></i>
+                    <i class="bi bi-sun-fill dm-icon-light"></i>
+                </button>
                 <div class="dropdown">
                     <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
                         <i class="bi bi-bell"></i>
@@ -629,6 +639,25 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
+        // === DARK MODE TOGGLE ===
+        (function () {
+            var btn = document.getElementById('dmToggleBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var body = document.body;
+                var isDark = body.classList.toggle('dark-mode');
+                var mode = isDark ? 'dark' : 'light';
+                // Persistir en sesión PHP
+                var fd = new FormData();
+                fd.append('mode', mode);
+                fetch('toggle_dark_mode.php', {
+                    method: 'POST',
+                    body: fd,
+                    credentials: 'same-origin'
+                }).catch(function () {});
+            });
+        })();
+
         // Botón "Marcar todas como leídas" en notificaciones
         (function(){
             var btn = document.getElementById('scpMarkAllRead');

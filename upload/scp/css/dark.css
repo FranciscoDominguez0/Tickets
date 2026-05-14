@@ -1,0 +1,1606 @@
+/* ============================================================
+   DARK MODE — SCP Panel de Agente
+   Basado en escala de grises negros (no azul)
+   Activo cuando <body> tiene la clase "dark-mode"
+   ============================================================ */
+
+/* --- Transición suave al cambiar de modo --- */
+body.dark-mode,
+body.dark-mode *,
+body.dark-mode *::before,
+body.dark-mode *::after {
+    transition: background-color 0.22s ease, border-color 0.22s ease, color 0.18s ease, box-shadow 0.22s ease !important;
+}
+
+/* === BASE === */
+body.dark-mode {
+    background: #0a0a0a !important;
+    color: #e5e5e5 !important;
+}
+
+/* sidebar: sin cambios en modo oscuro (queda igual) */
+
+/* === MAIN SHELL / CONTAINER === */
+body.dark-mode .main-shell {
+    background: transparent !important;
+}
+body.dark-mode .container-main {
+    color: #e5e5e5 !important;
+}
+
+/* === CARDS / PANELS genéricos === */
+body.dark-mode .card,
+body.dark-mode .modal-content,
+body.dark-mode .ticket-view-tab-content,
+body.dark-mode .ticket-view-tabs {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+}
+body.dark-mode .ticket-view-overview,
+body.dark-mode .ticket-view-reply {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+}
+body.dark-mode .card-header,
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .modal-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .modal-body {
+    background: #141414 !important;
+    color: #ddd !important;
+}
+
+/* === TICKETS PANEL === */
+body.dark-mode .tickets-panel,
+body.dark-mode .tickets-toolbar,
+body.dark-mode .tickets-table-wrap {
+    background: #111 !important;
+    border-color: #222 !important;
+}
+
+/* === TABLA === */
+body.dark-mode .table {
+    color: #ddd !important;
+    border-color: #1f1f1f !important;
+}
+body.dark-mode .table thead,
+body.dark-mode .table-light {
+    background: #161616 !important;
+    border-bottom-color: #252525 !important;
+}
+body.dark-mode .table thead th {
+    color: #888 !important;
+    background: #161616 !important;
+}
+body.dark-mode .table > :not(caption) > * > * {
+    background-color: transparent !important;
+    border-bottom-color: #1e1e1e !important;
+}
+body.dark-mode .table-hover > tbody > tr:hover > * {
+    background-color: #1a1a1a !important;
+}
+body.dark-mode tr.ticket-row {
+    background: #111 !important;
+}
+body.dark-mode tr.ticket-row:hover > td {
+    background: #181818 !important;
+}
+
+/* Ticket número y asunto */
+body.dark-mode .ticket-title {
+    color: #60a5fa !important;
+}
+body.dark-mode .ticket-subject {
+    color: #ccc !important;
+}
+
+/* === FORMULARIOS === */
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode .input-group-text {
+    background: #1a1a1a !important;
+    color: #e5e5e5 !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode .form-control::placeholder {
+    color: #555 !important;
+}
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+    background: #1f1f1f !important;
+    border-color: #444 !important;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.07) !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .form-label,
+body.dark-mode label {
+    color: #aaa !important;
+}
+body.dark-mode .form-check-input {
+    background-color: #1e1e1e !important;
+    border-color: #3a3a3a !important;
+}
+body.dark-mode .form-check-input:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+/* === DROPDOWNS === */
+body.dark-mode .dropdown-menu {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7) !important;
+}
+body.dark-mode .dropdown-item {
+    color: #ccc !important;
+}
+body.dark-mode .dropdown-item:hover,
+body.dark-mode .dropdown-item:focus {
+    background: #252525 !important;
+    color: #fff !important;
+}
+body.dark-mode .dropdown-item.active,
+body.dark-mode .dropdown-item:active {
+    background: #2a2a2a !important;
+    color: #fff !important;
+}
+body.dark-mode .dropdown-divider {
+    border-color: #2a2a2a !important;
+}
+body.dark-mode .dropdown-item.disabled,
+body.dark-mode .dropdown-item:disabled {
+    color: #555 !important;
+}
+
+/* --- Botones --- */
+body.dark-mode .btn-outline-secondary {
+    color: #a1a1aa !important;
+    border-color: #3f3f46 !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+body.dark-mode .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #f4f4f5 !important;
+    border-color: #52525b !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-mode .btn-outline-dark {
+    color: #e4e4e7 !important;
+    border-color: #3f3f46 !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+body.dark-mode .btn-outline-dark:hover {
+    background: #f4f4f5 !important;
+    color: #111113 !important;
+    border-color: #f4f4f5 !important;
+}
+body.dark-mode .btn-light {
+    background: linear-gradient(145deg, #27272a, #18181b) !important;
+    border: 1px solid #3f3f46 !important;
+    color: #e4e4e7 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+body.dark-mode .btn-light:hover {
+    background: linear-gradient(145deg, #3f3f46, #27272a) !important;
+    color: #fff !important;
+}
+body.dark-mode .btn-reply {
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+}
+body.dark-mode .btn-reply:hover {
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4) !important;
+}
+body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(1.4) !important;
+}
+
+/* === TICKET VIEW ENTRIES (burbujas de chat) === */
+body.dark-mode .ticket-view-entry .entry-content {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+body.dark-mode .ticket-view-entry.staff .entry-content {
+    background: linear-gradient(145deg, #27272a, #18181b) !important; /* Grafito profundo para el técnico */
+    border: 1px solid #3f3f46 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+body.dark-mode .ticket-view-entry.user .entry-content {
+    background: #0f172a !important; /* Azul sólido (sin degradado) para el cliente */
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .ticket-view-entry.internal .entry-content {
+    background: linear-gradient(145deg, #1c1917, #171717) !important;
+    border: 1px solid #292524 !important;
+}
+body.dark-mode .ticket-view-entry .entry-body {
+    color: #d4d4d4 !important;
+}
+body.dark-mode .ticket-view-entry .entry-meta-top {
+    color: #555 !important;
+}
+body.dark-mode .ticket-view-entry .author-name {
+    color: #e5e5e5 !important;
+}
+body.dark-mode .ticket-view-entry .entry-footer {
+    color: #555 !important;
+}
+body.dark-mode .ticket-view-entry .author-role {
+    background: #1e2d3d !important;
+    color: #7eb3f5 !important;
+}
+
+/* Chat adjuntos */
+body.dark-mode .chat-att-item {
+    background: #1a1a1a !important;
+    border-color: #252525 !important;
+}
+body.dark-mode .chat-att-info .att-filename {
+    color: #bbb !important;
+}
+body.dark-mode .chat-att-download {
+    background: #1e1e1e !important;
+    border-color: #2e2e2e !important;
+    color: #888 !important;
+}
+
+/* === OVERVIEW DESKTOP === */
+body.dark-mode .ticket-view-overview-desktop {
+    background: #141414 !important;
+}
+body.dark-mode .ticket-view-overview .field label {
+    color: #555 !important;
+}
+body.dark-mode .ticket-view-overview .field .value {
+    color: #ddd !important;
+}
+body.dark-mode .ticket-view-overview .divider {
+    background: #222 !important;
+}
+
+/* === TICKET OVERVIEW MÓVIL === */
+body.dark-mode .mobile-header {
+    background: transparent !important;
+}
+body.dark-mode .mobile-user-section {
+    background: #141414 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .mobile-avatar {
+    background: #1e1e1e !important;
+}
+body.dark-mode .mobile-user-info .name {
+    color: #e5e5e5 !important;
+}
+body.dark-mode .mobile-user-info .sub {
+    color: #777 !important;
+}
+body.dark-mode .mobile-grid {
+    background: transparent !important;
+    border: none !important;
+}
+body.dark-mode .mobile-grid-item {
+    background: linear-gradient(145deg, #18181b, #0f0f11) !important;
+    border: 1px solid #27272a !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+body.dark-mode .mobile-grid-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5), 0 0 12px rgba(59, 130, 246, 0.1) !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .mobile-grid-item label {
+    color: #a1a1aa !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+}
+body.dark-mode .mobile-grid-item .val {
+    color: #f4f4f5 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* === TICKET TABS === */
+body.dark-mode .ticket-view-tabs {
+    background: #111 !important;
+    border-color: #1e1e1e !important;
+}
+body.dark-mode .ticket-view-tabs .tab {
+    color: #666 !important;
+}
+body.dark-mode .ticket-view-tabs .tab:hover {
+    color: #bbb !important;
+}
+body.dark-mode .ticket-view-tabs .tab.active {
+    color: #e5e5e5 !important;
+    background: #1a1a1a !important;
+    border-bottom-color: #e5e5e5 !important;
+}
+
+/* === REPLY BOX === */
+body.dark-mode .ticket-view-reply {
+    background: #141414 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .ticket-view-reply .attach-zone {
+    background: #1a1a1a !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode .ticket-view-reply .attach-zone:hover,
+body.dark-mode .ticket-view-reply .attach-zone.dragover {
+    border-color: #555 !important;
+    background: #1f1f1f !important;
+}
+body.dark-mode .ticket-view-reply .attach-zone .attach-text {
+    color: #888 !important;
+}
+body.dark-mode .ticket-view-reply .attach-zone .attach-hint {
+    color: #555 !important;
+}
+
+/* === NOTE-EDITOR (Summernote) === */
+body.dark-mode .note-editor.note-frame {
+    background: #1a1a1a !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode .note-editor .note-toolbar {
+    background: #161616 !important;
+    border-bottom-color: #2a2a2a !important;
+}
+body.dark-mode .note-editor .note-editable {
+    background: #1a1a1a !important;
+    color: #ddd !important;
+}
+body.dark-mode .note-editor .note-btn {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: #999 !important;
+}
+body.dark-mode .note-editor .note-btn:hover {
+    background: #252525 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .note-editor .note-status-output {
+    background: #161616 !important;
+    color: #666 !important;
+    border-top-color: #222 !important;
+}
+
+/* === TICKET CERRADO BANNER === */
+body.dark-mode .ticket-closed-banner {
+    background: #141e2e !important;
+    border-color: #1e2d46 !important;
+    color: #bbb !important;
+}
+body.dark-mode .ticket-closed-icon {
+    background: #1e2d46 !important;
+    color: #7eb3f5 !important;
+}
+
+/* === ALERTS === */
+body.dark-mode .alert-success {
+    background: #0c2018 !important;
+    border-color: #1a4731 !important;
+    color: #86efac !important;
+}
+body.dark-mode .alert-danger {
+    background: #1f0a0a !important;
+    border-color: #3d1515 !important;
+    color: #fca5a5 !important;
+}
+body.dark-mode .alert-warning {
+    background: #1f1700 !important;
+    border-color: #3d2e00 !important;
+    color: #fde68a !important;
+}
+body.dark-mode .alert-info {
+    background: #0a1520 !important;
+    border-color: #1a2d40 !important;
+    color: #93c5fd !important;
+}
+
+/* === BADGES === */
+body.dark-mode .badge.bg-danger { background-color: #991b1b !important; }
+body.dark-mode .badge.bg-success { background-color: #166534 !important; }
+body.dark-mode .badge.bg-warning { background-color: #854d0e !important; }
+
+/* === DASHBOARD === */
+body.dark-mode .kpi-card {
+    background: #141414 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .kpi-card .kpi-number {
+    color: #f0f0f0 !important;
+}
+body.dark-mode .kpi-card .kpi-label {
+    color: #666 !important;
+}
+body.dark-mode .chart-card {
+    background: #141414 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .chart-title {
+    color: #bbb !important;
+}
+
+/* === SELECTION BAR === */
+body.dark-mode .tickets-selection-bar {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    color: #ccc !important;
+}
+body.dark-mode .btn-bulk {
+    background: #252525 !important;
+    color: #ccc !important;
+    border-color: #333 !important;
+}
+body.dark-mode .btn-bulk:hover {
+    background: #2e2e2e !important;
+    color: #fff !important;
+}
+
+/* === TEXT HELPERS === */
+body.dark-mode .text-muted {
+    color: #666 !important;
+}
+body.dark-mode .text-dark {
+    color: #ccc !important;
+}
+body.dark-mode .border,
+body.dark-mode .border-bottom,
+body.dark-mode .border-top {
+    border-color: #222 !important;
+}
+
+/* === PAGINATION === */
+body.dark-mode .page-link {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    color: #999 !important;
+}
+body.dark-mode .page-item.active .page-link {
+    background: #333 !important;
+    border-color: #444 !important;
+    color: #fff !important;
+}
+
+/* === FOOTER === */
+body.dark-mode .scp-footer-brand {
+    color: #444 !important;
+}
+
+/* === DASHBOARD legacy (stat-card, top-tabs, welcome-card) === */
+body.dark-mode .stat-card {
+    background: #141414 !important;
+    border-color: #222 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .stat-number { color: #60a5fa !important; }
+body.dark-mode .stat-label  { color: #888 !important; }
+
+body.dark-mode .top-tabs {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .top-tab-link {
+    color: #888 !important;
+}
+body.dark-mode .top-tab-link.active,
+body.dark-mode .top-tab-link:hover {
+    color: #e5e5e5 !important;
+    border-color: #e5e5e5 !important;
+}
+
+body.dark-mode .welcome-card {
+    background: #141414 !important;
+    border-color: #222 !important;
+    color: #e5e5e5 !important;
+}
+
+/* === CARDS MÓVIL (table rows como cards) === */
+body.dark-mode .card-body .table-responsive table tbody tr {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+}
+body.dark-mode .card-body .table-responsive table tbody td {
+    border-bottom-color: #252525 !important;
+    color: #ccc !important;
+}
+
+/* === ORG / USER / TASK CARDS === */
+body.dark-mode .directory-card,
+body.dark-mode .users-mobile-card,
+body.dark-mode .user-view-mobile-head,
+body.dark-mode .user-view-mobile-card,
+body.dark-mode .user-view-mobile-panel,
+body.dark-mode .uvm-ticket,
+body.dark-mode .uvm-note,
+body.dark-mode .task-card,
+body.dark-mode .task-item,
+body.dark-mode .profile-card,
+body.dark-mode .profile-panel,
+body.dark-mode .settings-card,
+body.dark-mode .settings-section,
+body.dark-mode .panel,
+body.dark-mode .panel-body,
+body.dark-mode .dash-card,
+body.dark-mode .dash-panel,
+body.dark-mode .dash-widget {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    border-radius: 14px !important;
+    color: #e4e4e7 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+}
+body.dark-mode .directory-card:hover,
+body.dark-mode .users-mobile-card:hover,
+body.dark-mode .uvm-ticket:hover,
+body.dark-mode .task-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(59, 130, 246, 0.08) !important;
+    border-color: #3f3f46 !important;
+    transform: translateY(-2px);
+}
+body.dark-mode .directory-name,
+body.dark-mode .users-mobile-name,
+body.dark-mode .user-view-mobile-name,
+body.dark-mode .uvm-ticket-num,
+body.dark-mode .uvm-ticket-subject,
+body.dark-mode .uvm-note-body {
+    color: #f4f4f5 !important;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.5) !important;
+}
+body.dark-mode .directory-sub,
+body.dark-mode .users-mobile-email,
+body.dark-mode .users-mobile-meta,
+body.dark-mode .user-view-mobile-sub,
+body.dark-mode .uvm-ticket-foot,
+body.dark-mode .uvm-ticket-status,
+body.dark-mode .uvm-note-foot {
+    color: #a1a1aa !important;
+}
+body.dark-mode .directory-kpi,
+body.dark-mode .users-mobile-kpi {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+    border-radius: 10px !important;
+}
+body.dark-mode .directory-kpi .kpi-value,
+body.dark-mode .directory-kpi .kpi-muted {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-empty {
+    background: #09090b !important;
+    border: 1px dashed #3f3f46 !important;
+    color: #71717a !important;
+}
+
+/* === ELEMENTOS INLINE con color blanco hardcoded === */
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background-color: #fff"],
+body.dark-mode [style*="background-color:#fff"],
+body.dark-mode [style*="background: #f8fafc"],
+body.dark-mode [style*="background:#f8fafc"],
+body.dark-mode [style*="background: #f1f5f9"],
+body.dark-mode [style*="background: #ffffff"] {
+    background: #1a1a1a !important;
+}
+body.dark-mode [style*="color: #0f172a"],
+body.dark-mode [style*="color:#0f172a"],
+body.dark-mode [style*="color: #1e293b"],
+body.dark-mode [style*="color: #334155"] {
+    color: #ddd !important;
+}
+body.dark-mode [style*="color: #64748b"],
+body.dark-mode [style*="color: #475569"],
+body.dark-mode [style*="color: #94a3b8"] {
+    color: #888 !important;
+}
+body.dark-mode [style*="border: 1px solid #e2e8f0"],
+body.dark-mode [style*="border-color: #e2e8f0"],
+body.dark-mode [style*="border: 1px solid #f1f5f9"] {
+    border-color: #2a2a2a !important;
+}
+
+/* === SCROLLBAR (Webkit) === */
+body.dark-mode ::-webkit-scrollbar { width: 6px; height: 6px; }
+body.dark-mode ::-webkit-scrollbar-track { background: #0f0f0f; }
+body.dark-mode ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 6px; }
+body.dark-mode ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+/* === TICKET OVERVIEW DESKTOP (grid) === */
+body.dark-mode .ticket-view-overview-desktop > div {
+    border-right-color: #1e1e1e !important;
+}
+
+/* === PROFILE / USERS menus === */
+body.dark-mode .scp-profile-menu {
+    background: #141414 !important;
+    border-color: #252525 !important;
+}
+body.dark-mode .scp-notif-menu {
+    background: #141414 !important;
+    border-color: #252525 !important;
+}
+body.dark-mode .scp-notif-head {
+    background: #1a1a1a !important;
+    border-bottom-color: #252525 !important;
+}
+body.dark-mode .scp-notif-title {
+    color: #e5e5e5 !important;
+}
+body.dark-mode .scp-notif-sub {
+    color: #666 !important;
+}
+body.dark-mode .scp-notif-item {
+    color: #ccc !important;
+}
+body.dark-mode .scp-notif-item:hover {
+    background: #1e1e1e !important;
+}
+body.dark-mode .scp-notif-msg {
+    color: #ccc !important;
+}
+body.dark-mode .scp-notif-time {
+    color: #555 !important;
+}
+body.dark-mode .scp-notif-empty {
+    color: #555 !important;
+}
+body.dark-mode .scp-notif-footer {
+    border-top-color: #222 !important;
+    background: #111 !important;
+}
+body.dark-mode .scp-notif-btn-all {
+    color: #666 !important;
+}
+body.dark-mode .scp-notif-btn-all:not(:disabled):hover {
+    color: #bbb !important;
+}
+
+/* === INPUT DATE RANGE === */
+body.dark-mode #ticketDateRange {
+    background: #1a1a1a !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode #dateFromInput,
+body.dark-mode #dateToInput {
+    color: #ccc !important;
+    color-scheme: dark;
+}
+
+/* === HOVER PREVIEW === */
+body.dark-mode .ticket-hover-preview-inner {
+    background: #161616 !important;
+    border-color: #2a2a2a !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8) !important;
+}
+body.dark-mode .ticket-hover-preview-head {
+    border-bottom-color: #222 !important;
+}
+body.dark-mode .ticket-hover-preview .subject {
+    color: #e5e5e5 !important;
+}
+body.dark-mode .ticket-hover-preview .meta {
+    color: #777 !important;
+}
+body.dark-mode .ticket-hover-preview .msg {
+    color: #bbb !important;
+    border-top-color: #222 !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-item {
+    background: #1a1a1a !important;
+    border-color: #252525 !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-head {
+    border-bottom-color: #222 !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-item.user .th-head {
+    background: #111c2e !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-item.staff .th-head {
+    background: #1a1400 !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-author {
+    color: #ccc !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-when {
+    color: #666 !important;
+}
+body.dark-mode .ticket-hover-preview .msg .th-body {
+    color: #bbb !important;
+}
+
+/* === BREADCRUMBS / TABLE LIGHT === */
+body.dark-mode .breadcrumb {
+    background: transparent !important;
+}
+body.dark-mode .breadcrumb-item + .breadcrumb-item::before {
+    color: #444 !important;
+}
+body.dark-mode .breadcrumb-item.active {
+    color: #777 !important;
+}
+
+/* === HR / DIVIDERS === */
+body.dark-mode hr,
+body.dark-mode .dropdown-divider {
+    border-color: #222 !important;
+    opacity: 1 !important;
+}
+
+/* === LIST GROUPS === */
+body.dark-mode .list-group-item {
+    background: #1a1a1a !important;
+    border-color: #252525 !important;
+    color: #ccc !important;
+}
+body.dark-mode .list-group-item:hover,
+body.dark-mode .list-group-item:focus {
+    background: #202020 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .list-group-item.active {
+    background: #222 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+}
+
+/* === DZ PREVIEW CARDS (adjuntos) === */
+body.dark-mode .dz-preview-card {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+}
+body.dark-mode .dz-preview-name {
+    color: #ddd !important;
+}
+body.dark-mode .dz-preview-size {
+    color: #666 !important;
+}
+
+/* Smooth toggle button */
+#dmToggleBtn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    font-size: 1rem;
+    line-height: 1;
+}
+#dmToggleBtn:hover {
+    background: rgba(255,255,255,0.16);
+    border-color: rgba(255,255,255,0.36);
+}
+#dmToggleBtn .dm-icon-light { display: none; }
+#dmToggleBtn .dm-icon-dark  { display: block; }
+body.dark-mode #dmToggleBtn .dm-icon-light { display: block; }
+body.dark-mode #dmToggleBtn .dm-icon-dark  { display: none; }
+
+/* ============================================================
+   MÓVIL — fixes específicos de dark mode
+   ============================================================ */
+
+/* --- Listado de tickets: tarjetas móvil (≤768px) --- */
+body.dark-mode .tickets-table tbody tr.ticket-row {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+}
+body.dark-mode .tickets-table tbody tr.ticket-row:hover {
+    background: linear-gradient(145deg, #27272a, #18181b) !important;
+    border-color: #3f3f46 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(59, 130, 246, 0.1) !important;
+}
+body.dark-mode .tickets-table tbody tr.ticket-row::after {
+    color: #52525b !important;
+}
+body.dark-mode .tickets-table tbody tr.ticket-row:hover::after {
+    color: #60a5fa !important;
+    text-shadow: 0 0 8px rgba(96, 165, 250, 0.4) !important;
+}
+/* Número de ticket (pill azul) en móvil */
+body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-title {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1) !important;
+}
+body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-title:hover {
+    background: rgba(59, 130, 246, 0.25) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2) !important;
+}
+/* Asunto del ticket en tarjeta móvil */
+body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-subject {
+    color: #f4f4f5 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8) !important;
+}
+
+/* --- Detalle de ticket: botones de acción (btn-icon) --- */
+body.dark-mode .ticket-view-actions .btn-icon,
+body.dark-mode .btn-icon {
+    background: #1e1e1e !important;
+    border-color: #2e2e2e !important;
+    color: #aaa !important;
+}
+body.dark-mode .ticket-view-actions .btn-icon:hover,
+body.dark-mode .btn-icon:hover {
+    background: #252525 !important;
+    border-color: #3a3a3a !important;
+    color: #e5e5e5 !important;
+}
+
+/* --- Detalle de ticket: título y número --- */
+body.dark-mode .ticket-view-title {
+    color: #f0f0f0 !important;
+}
+body.dark-mode .ticket-view-title .ticket-num {
+    color: #888 !important;
+}
+
+/* --- Vista overview (grid de campos TEMA, ASIGNADO A, etc.) --- */
+body.dark-mode .ticket-view-overview {
+    background: #141414 !important;
+    border-color: #222 !important;
+}
+body.dark-mode .ticket-view-overview .field {
+    background: transparent !important;
+}
+body.dark-mode .ticket-view-overview .field label,
+body.dark-mode .ticket-view-overview .field .label {
+    color: #555 !important;
+}
+body.dark-mode .ticket-view-overview .field .value,
+body.dark-mode .ticket-view-overview .field .val {
+    color: #ddd !important;
+}
+/* Borde entre celdas en desktop */
+body.dark-mode .ticket-view-overview > div {
+    border-color: #1e1e1e !important;
+}
+
+/* --- Filtro dropdown y btn-sm en toolbar --- */
+body.dark-mode .filter-dd .btn,
+body.dark-mode .tickets-filters .btn,
+body.dark-mode .btn-sm.dropdown-toggle {
+    background: #1a1a1a !important;
+    border-color: #2e2e2e !important;
+    color: #bbb !important;
+}
+body.dark-mode .filter-dd .btn:hover,
+body.dark-mode .tickets-filters .btn:hover {
+    background: #222 !important;
+    color: #e5e5e5 !important;
+}
+
+/* --- Chips de estado en tarjeta móvil --- */
+body.dark-mode .chip.chip-status {
+    filter: brightness(0.85) !important;
+}
+
+/* --- Mobile info sections (directory, users, orgs) --- */
+body.dark-mode .directory-mobile .directory-card,
+body.dark-mode .users-mobile-list .users-mobile-card {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+
+/* --- Org view móvil --- */
+body.dark-mode .org-view-mobile-head,
+body.dark-mode .org-view-mobile-card,
+body.dark-mode .org-view-mobile-panel {
+    background: #141414 !important;
+    border-color: #222 !important;
+    color: #e5e5e5 !important;
+    box-shadow: none !important;
+}
+
+/* --- back link / header de vista detalle --- */
+body.dark-mode .ticket-view-back,
+body.dark-mode .ticket-view-header {
+    border-color: #1e1e1e !important;
+}
+body.dark-mode .ticket-view-back a {
+    color: #888 !important;
+}
+body.dark-mode .ticket-view-back a:hover {
+    color: #ccc !important;
+}
+
+/* --- Chip/badges inline en overview --- */
+body.dark-mode .badge-status,
+body.dark-mode .badge-priority {
+    filter: brightness(0.8) !important;
+}
+
+/* --- Summernote dark (toolbar dropdown menus) --- */
+body.dark-mode .note-dropdown-menu,
+body.dark-mode .note-popover .popover-content {
+    background: #1a1a1a !important;
+    border-color: #2a2a2a !important;
+    color: #ccc !important;
+}
+body.dark-mode .note-dropdown-item:hover {
+    background: #252525 !important;
+}
+body.dark-mode .note-color-row .note-color-btn {
+    border-color: #333 !important;
+}
+
+/* --- Dashboard widgets adicionales --- */
+body.dark-mode .dash-card,
+body.dark-mode .dash-panel,
+body.dark-mode .dash-widget {
+    background: #141414 !important;
+    border-color: #222 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .dash-card h5,
+body.dark-mode .dash-card h6,
+body.dark-mode .dash-panel h5 {
+    color: #ddd !important;
+}
+
+/* --- Table-responsive general en móvil --- */
+body.dark-mode .table-responsive {
+    background: transparent !important;
+}
+
+/* --- input-group dark --- */
+body.dark-mode .input-group .btn {
+    background: #1a1a1a !important;
+    border-color: #2e2e2e !important;
+    color: #aaa !important;
+}
+body.dark-mode .input-group .btn:hover {
+    background: #252525 !important;
+    color: #e5e5e5 !important;
+}
+
+/* --- Texto con color explícito en tickets list --- */
+body.dark-mode strong {
+    color: inherit;
+}
+body.dark-mode .text-secondary {
+    color: #888 !important;
+}
+body.dark-mode small {
+    color: #666 !important;
+}
+
+/* ============================================================
+   USERS & ORGS VIEW (Desktop & Shared Cards)
+   ============================================================ */
+
+body.dark-mode .user-view-card,
+body.dark-mode .org-stat-card {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .user-view-detail,
+body.dark-mode .org-stat-icon,
+body.dark-mode .user-view-avatar {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .user-view-avatar i,
+body.dark-mode .org-stat-icon i {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .user-view-detail label,
+body.dark-mode .org-stat-label {
+    color: #71717a !important;
+}
+
+body.dark-mode .user-view-detail .value,
+body.dark-mode .org-stat-value {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .user-view-title {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-back-link {
+    background: rgba(255,255,255,0.05) !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .org-back-link:hover {
+    background: rgba(255,255,255,0.1) !important;
+    color: #f4f4f5 !important;
+}
+
+/* Tables inside User/Org view */
+body.dark-mode .user-view-tickets-table thead th {
+    background: #111113 !important;
+    color: #a1a1aa !important;
+    border-bottom: 2px solid #27272a !important;
+}
+body.dark-mode .user-view-tickets-table tbody td {
+    color: #d4d4d8 !important;
+    border-bottom: 1px solid #27272a !important;
+}
+body.dark-mode .user-view-tickets-table tbody tr:hover td {
+    background: #18181b !important;
+}
+body.dark-mode .user-view-tickets-table tbody td a {
+    color: #60a5fa !important;
+}
+
+/* Mobile overrides for User/Org specific tables */
+@media (max-width: 768px) {
+    body.dark-mode .user-view-tickets-table tbody tr {
+        background: linear-gradient(145deg, #18181b, #111113) !important;
+        border: 1px solid #27272a !important;
+        border-top: 4px solid #3b82f6 !important;
+    }
+    body.dark-mode .user-view-tickets-table tbody td {
+        border-bottom: 1px dashed #27272a !important;
+    }
+    body.dark-mode .user-view-tickets-table tbody td::before {
+        color: #71717a !important;
+    }
+    body.dark-mode .user-view-tickets-table tbody td.primary-field {
+        border-bottom: 1px solid #27272a !important;
+    }
+    body.dark-mode .user-view-tickets-table tbody td.primary-field a {
+        color: #f4f4f5 !important;
+    }
+}
+
+/* ============================================================
+   USERS & ORGS LIST VIEW (Directories)
+   ============================================================ */
+
+body.dark-mode .search-card,
+body.dark-mode .org-search-card,
+body.dark-mode .table-card {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .search-card form .search-wrap,
+body.dark-mode .org-search-input-wrapper {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+}
+
+body.dark-mode .search-card input,
+body.dark-mode .org-search-input {
+    background: transparent !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .search-card input::placeholder,
+body.dark-mode .org-search-input::placeholder {
+    color: #71717a !important;
+}
+
+body.dark-mode .page-title,
+body.dark-mode .org-page-title {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .table-card table thead th {
+    background: #111113 !important;
+    color: #a1a1aa !important;
+    border-bottom: 2px solid #27272a !important;
+}
+
+body.dark-mode .table-card table tbody td {
+    color: #d4d4d8 !important;
+    border-bottom: 1px solid #27272a !important;
+}
+
+body.dark-mode .table-card table tbody tr:hover td,
+body.dark-mode table.table tbody tr:hover td,
+body.dark-mode table.table tbody tr:hover th {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+}
+
+body.dark-mode .table-hover > tbody > tr:hover > * {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+}
+
+body.dark-mode .table-card table tbody td a {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .table-footer-bar {
+    background: #111113 !important;
+    border-top: 1px solid #27272a !important;
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .table-footer-bar .pagination-wrap a {
+    color: #a1a1aa !important;
+}
+body.dark-mode .table-footer-bar .pagination-wrap a:hover {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-card {
+    background: #111113 !important;
+    border: 1px solid #27272a !important;
+    overflow: hidden !important;
+}
+
+body.dark-mode .org-card-header {
+    background: #18181b !important;
+    border-bottom: 1px solid #27272a !important;
+}
+
+body.dark-mode .org-card-stat {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .org-card-stat i {
+    color: #3b82f6 !important;
+}
+
+body.dark-mode .org-card-stat-value {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-card-stat-label {
+    color: #71717a !important;
+}
+
+body.dark-mode .org-card-title a {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-card-footer {
+    border-top: 1px solid #27272a !important;
+    background: #111113 !important;
+}
+
+body.dark-mode .org-card-date {
+    color: #a1a1aa !important;
+}
+
+/* ============================================================
+   SELECTION & CHECKBOXES (Fixing white selection)
+   ============================================================ */
+
+/* Text Selection */
+body.dark-mode *::selection {
+    background: rgba(37, 99, 235, 0.35) !important;
+    color: #fff !important;
+}
+
+/* Table Selection/Active states */
+body.dark-mode .table > :not(caption) > * > *.table-active,
+body.dark-mode .table-active,
+body.dark-mode .table-info,
+body.dark-mode .table-primary {
+    background-color: rgba(37, 99, 235, 0.15) !important;
+    color: #f4f4f5 !important;
+}
+
+/* Checkboxes & Radios */
+body.dark-mode .form-check-input {
+    background-color: #09090b !important;
+    border-color: #27272a !important;
+}
+
+body.dark-mode .form-check-input:checked {
+    background-color: #2563eb !important;
+    border-color: #3b82f6 !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+}
+
+body.dark-mode .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25) !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Specific fix for white backgrounds on selected items in directories */
+body.dark-mode .users-directory .table-card .table tbody tr.selected td,
+body.dark-mode .users-directory .table-card .table tbody tr:active td {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Fix for buttons like 'Importar' and 'Más' that were white */
+body.dark-mode .btn-import,
+body.dark-mode .btn-more {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .btn-import:hover,
+body.dark-mode .btn-more:hover {
+    background: #27272a !important;
+    color: #fff !important;
+}
+
+/* Dropdown menus in dark mode */
+body.dark-mode .dropdown-menu {
+    background-color: #111113 !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+body.dark-mode .dropdown-item {
+    color: #d4d4d8 !important;
+}
+body.dark-mode .dropdown-item:hover {
+    background-color: rgba(255,255,255,0.05) !important;
+    color: #fff !important;
+}
+body.dark-mode .dropdown-divider {
+    border-top: 1px solid #27272a !important;
+}
+
+/* ============================================================
+   USER VIEW DETAIL REFINEMENT (users.php?id=X)
+   ============================================================ */
+
+/* The Tab Bar was white in the screenshot */
+body.dark-mode .user-view-tabs {
+    background: #111113 !important;
+    border-bottom: 2px solid #27272a !important;
+}
+
+body.dark-mode .user-view-tabs .tab {
+    color: #a1a1aa !important;
+    border-bottom: 3px solid transparent !important;
+}
+
+body.dark-mode .user-view-tabs .tab:hover {
+    background: rgba(255,255,255,0.03) !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .user-view-tabs .tab.active {
+    color: #3b82f6 !important;
+    border-bottom-color: #3b82f6 !important;
+    background: transparent !important;
+}
+
+/* Detail blocks refinement */
+body.dark-mode .user-view-detail {
+    background: #111113 !important; /* Slightly lighter than pure black for better contrast with card */
+    border: 1px solid #27272a !important;
+}
+
+body.dark-mode .user-view-avatar {
+    background: #111113 !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+/* Red Delete Button refinement */
+body.dark-mode .btn-danger {
+    background-color: #450a0a !important;
+    border-color: #7f1d1d !important;
+    color: #fecaca !important;
+}
+body.dark-mode .btn-danger:hover {
+    background-color: #7f1d1d !important;
+    color: #fff !important;
+}
+
+/* Status badges refinement in dark mode */
+body.dark-mode .badge.active, 
+body.dark-mode .badge.user-status-active {
+    background-color: #064e3b !important;
+    color: #6ee7b7 !important;
+    border: 1px solid #065f46 !important;
+}
+
+body.dark-mode .badge.inactive,
+body.dark-mode .badge.user-status-inactive {
+    background-color: #1f2937 !important;
+    color: #9ca3af !important;
+    border: 1px solid #374151 !important;
+}
+
+body.dark-mode .badge.banned,
+body.dark-mode .badge.user-status-banned {
+    background-color: #450a0a !important;
+    color: #fca5a5 !important;
+    border: 1px solid #7f1d1d !important;
+}
+
+/* Fix for the 'Cambiar' link and other icons next to values */
+body.dark-mode .user-view-detail .value a.edit-icon,
+body.dark-mode .user-view-detail .value a[data-bs-target*="modal"] {
+    color: #60a5fa !important;
+}
+
+/* ============================================================
+   MOBILE USER VIEW REFINEMENT (users.php?id=X)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body.dark-mode .user-view-mobile-head,
+    body.dark-mode .user-view-mobile-card,
+    body.dark-mode .user-view-mobile-tabs,
+    body.dark-mode .user-view-mobile-panel,
+    body.dark-mode .uvm-ticket,
+    body.dark-mode .uvm-note {
+        background: linear-gradient(145deg, #18181b, #111113) !important;
+        border: 1px solid #27272a !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+        color: #e4e4e7 !important;
+    }
+
+    body.dark-mode .user-view-mobile-back {
+        background: #1f2937 !important;
+        border: 1px solid #374151 !important;
+        color: #f4f4f5 !important;
+    }
+
+    body.dark-mode .user-view-mobile-name {
+        color: #f4f4f5 !important;
+    }
+
+    body.dark-mode .user-view-mobile-sub {
+        color: #a1a1aa !important;
+    }
+
+    body.dark-mode .user-view-mobile-avatar {
+        background: #111113 !important;
+        border-color: #3b82f6 !important;
+        color: #60a5fa !important;
+    }
+
+    body.dark-mode .uvm-row {
+        border-bottom-color: #27272a !important;
+    }
+
+    body.dark-mode .uvm-k {
+        color: #71717a !important;
+    }
+
+    body.dark-mode .uvm-v {
+        color: #f4f4f5 !important;
+    }
+
+    body.dark-mode .uvm-tab {
+        color: #a1a1aa !important;
+    }
+
+    body.dark-mode .uvm-tab.active {
+        background: #1e3a8a !important;
+        color: #60a5fa !important;
+        border-color: #3b82f6 !important;
+    }
+
+    body.dark-mode .uvm-panel-title {
+        color: #f4f4f5 !important;
+    }
+
+    body.dark-mode .uvm-empty {
+        background: rgba(255,255,255,0.02) !important;
+        border-color: #27272a !important;
+        color: #71717a !important;
+    }
+
+    body.dark-mode .uvm-ticket-num {
+        color: #60a5fa !important;
+    }
+
+    body.dark-mode .uvm-ticket-subject {
+        color: #e4e4e7 !important;
+    }
+
+    body.dark-mode .uvm-ticket-foot,
+    body.dark-mode .uvm-note-foot {
+        color: #71717a !important;
+    }
+
+    body.dark-mode .uvm-note-body {
+        color: #d4d4d8 !important;
+    }
+}
+
+/* ============================================================
+   ORGANIZATION MODALS (orgs.php)
+   ============================================================ */
+
+body.dark-mode .org-modal-content {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .org-modal-header,
+body.dark-mode .org-modal-footer {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-modal-title {
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .org-modal-body {
+    background: #09090b !important;
+    color: #d4d4d8 !important;
+}
+
+body.dark-mode .org-form-label {
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .org-form-label i {
+    color: #3b82f6 !important;
+}
+
+body.dark-mode .org-form-control {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+}
+
+body.dark-mode .org-form-control:focus {
+    background: #1f1f23 !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15) !important;
+    color: #fff !important;
+}
+
+body.dark-mode .org-form-control::placeholder {
+    color: #52525b !important;
+}
+
+/* Fix for delete warning in org modal */
+body.dark-mode .org-delete-warning {
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .org-delete-org-name {
+    background: rgba(127, 29, 29, 0.2) !important;
+    border: 1px solid #7f1d1d !important;
+    color: #fecaca !important;
+}
+
+/* ============================================================
+   BILLING REPORT (reporte_costos.php)
+   ============================================================ */
+
+body.dark-mode .settings-card {
+    background: #111113 !important;
+    border: 1px solid #27272a !important;
+}
+
+body.dark-mode .settings-card .card-header {
+    background: #18181b !important;
+    border-bottom: 1px solid #27272a !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .settings-card .card-body {
+    background: #111113 !important;
+    color: #d4d4d8 !important;
+}
+
+/* Alerts refinement */
+body.dark-mode .alert-secondary {
+    background-color: #18181b !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .alert-secondary.text-dark {
+    color: #e4e4e7 !important; /* Fix for unreadable message */
+}
+
+body.dark-mode .bg-light {
+    background-color: #18181b !important;
+    border-color: #27272a !important;
+    color: #d4d4d8 !important;
+}
+
+/* Items Table refinement */
+body.dark-mode .table-light,
+body.dark-mode .table-light th {
+    background-color: #18181b !important;
+    color: #a1a1aa !important;
+    border-bottom-color: #27272a !important;
+}
+
+body.dark-mode .table-primary,
+body.dark-mode .table-primary td {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .items-table-wrap .table tfoot tr.table-primary td {
+    background: rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Read-only list refinement */
+body.dark-mode .mat-read-item {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .mat-read-item .mat-name {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .mat-read-item .mat-qty {
+    background: #09090b !important;
+    color: #3b82f6 !important;
+}
+
+/* Price Box */
+body.dark-mode .price-display-box {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-color: #1e3a8a !important;
+}
+body.dark-mode .price-display-box .price-label {
+    color: #94a3b8 !important;
+}
+body.dark-mode .price-display-box .price-value {
+    color: #60a5fa !important;
+}
+
+/* Custom Radios */
+body.dark-mode .custom-option {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .custom-option:hover {
+    background: #27272a !important;
+}
+body.dark-mode .custom-option:has(input:checked) {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-color: #2563eb !important;
+}
+
+/* Mobile grid and overview in reports */
+body.dark-mode .ticket-view-overview-desktop label {
+    color: #71717a !important;
+}
+body.dark-mode .ticket-view-overview-desktop .value.title {
+    color: #f4f4f5 !important;
+}
+
+/* Sticky footer fix */
+body.dark-mode .form-footer-sticky {
+    border-top: 1px solid #27272a !important;
+}
+
+/* Fix for unreadable h6 in dark mode */
+body.dark-mode h6.border-bottom {
+    border-bottom-color: #27272a !important;
+    color: #60a5fa !important;
+}
