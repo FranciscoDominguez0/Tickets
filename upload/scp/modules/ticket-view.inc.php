@@ -1603,11 +1603,14 @@ if ($ticketClientSignaturePath !== '') {
     opacity: 0.95;
 }
 
-.ticket-view-entry .entry-body img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-.ticket-view-entry .entry-body iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+.ticket-view-entry .entry-body img { max-width: 100% !important; max-height: 320px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; border-radius: 6px; }
+.ticket-view-entry .entry-body iframe { max-width: 100% !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+.ticket-view-entry .entry-body table { max-width: 100%; width: auto; overflow-x: auto; display: block; }
+.ticket-view-entry .entry-body { overflow-wrap: break-word; word-break: break-word; overflow: hidden; }
+.ticket-view-entry .entry-bubble-wrapper { min-width: 0; overflow: hidden; }
 
-.note-editor .note-editable img { max-width: 420px !important; max-height: 260px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
-.note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
+.note-editor .note-editable img { max-width: 100% !important; max-height: 320px !important; width: auto !important; height: auto !important; display: block; object-fit: contain; }
+.note-editor .note-editable iframe { max-width: 100% !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
 /* Image Preview Styles */
 .att-image-preview-container {

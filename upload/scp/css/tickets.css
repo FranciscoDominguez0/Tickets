@@ -536,6 +536,8 @@ tr.ticket-row.is-selected td {
     flex-direction: column;
     max-width: 800px;
     width: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .ticket-view-entry.user .entry-bubble-wrapper {
@@ -573,6 +575,9 @@ tr.ticket-row.is-selected td {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     width: 100%;
     max-width: 100%;
+    overflow: hidden;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .ticket-view-entry.user .entry-content {
@@ -599,8 +604,9 @@ tr.ticket-row.is-selected td {
 
 .ticket-view-entry .entry-body {
     color: #1e293b;
-    white-space: pre-wrap;
     word-break: break-word;
+    overflow-wrap: break-word;
+    overflow: hidden;
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -646,7 +652,7 @@ tr.ticket-row.is-selected td {
     border: 1px solid #f1f5f9;
     border-radius: 12px;
     padding: 10px 14px;
-    max-width: 380px;
+    max-width: min(380px, 100%);
     transition: all 0.2s;
 }
 
