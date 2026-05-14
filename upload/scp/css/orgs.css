@@ -28,8 +28,8 @@
     color: #0f172a;
     margin: 0;
     padding-left: 16px;
-    border-left: 4px solid #2563eb;
-    background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent);
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.06), transparent);
     padding-top: 6px;
     padding-bottom: 6px;
     border-radius: 0 8px 8px 0;
@@ -116,8 +116,8 @@
 
 .org-search-input:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .org-search-clear {
@@ -139,7 +139,7 @@
 .org-search-btn {
     border-radius: 12px;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff;
     border: none;
     font-weight: 600;
@@ -234,7 +234,7 @@
 .org-card-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -258,7 +258,7 @@
 }
 
 .org-card-title a:hover {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: underline;
 }
 
@@ -291,7 +291,7 @@
 .org-card-stat i {
     display: block;
     font-size: 1.25rem;
-    color: #2563eb;
+    color: #ef4444;
     margin-bottom: 6px;
 }
 
@@ -331,7 +331,7 @@
 }
 
 .org-card-link {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.9rem;
@@ -384,7 +384,7 @@
 .org-icon-wrapper {
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -446,15 +446,15 @@
 }
 
 .org-stat-users .org-stat-icon {
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
 }
 
 .org-stat-tickets .org-stat-icon {
-    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    background: linear-gradient(135deg, #ef4444, #991b1b);
 }
 
 .org-stat-open .org-stat-icon {
-    background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    background: linear-gradient(135deg, #991b1b, #000000);
 }
 
 .org-stat-date .org-stat-icon {
@@ -501,7 +501,7 @@
 }
 
 .table-footer-bar .pagination-wrap a {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: none;
     margin-left: 8px;
 }
@@ -539,7 +539,7 @@
 .org-modal-title i {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -575,7 +575,7 @@
 }
 
 .org-form-label i {
-    color: #2563eb;
+    color: #ef4444;
     font-size: 0.95rem;
 }
 
@@ -690,7 +690,7 @@
     color: #0f172a;
 }
 .org-detail-container .user-view-detail .value a {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: none;
 }
 .org-detail-container .user-view-detail .value a:hover {
@@ -739,7 +739,7 @@
 }
 
 .org-detail-container .user-view-title a:hover {
-    color: #2563eb;
+    color: #ef4444;
 }
 
 .org-detail-container .user-view-actions {
@@ -781,12 +781,12 @@
 }
 
 .org-detail-container .user-view-tabs .tab:hover {
-    color: #2563eb;
+    color: #ef4444;
 }
 
 .org-detail-container .user-view-tabs .tab.active {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: #ef4444;
+    border-bottom-color: #ef4444;
     background: #fff;
 }
 

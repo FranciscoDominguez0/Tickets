@@ -40,7 +40,7 @@
     background: #e2e8f0;
 }
 .task-stat-card.stat-pending::after { background: #94a3b8; }
-.task-stat-card.stat-progress::after { background: #2563eb; }
+.task-stat-card.stat-progress::after { background: #ef4444; }
 .task-stat-card.stat-completed::after { background: #16a34a; }
 .task-stat-card.stat-cancelled::after { background: #cbd5e1; }
 
@@ -109,11 +109,11 @@
     gap: 8px;
 }
 .tasks-toolbar .filter-dd .dropdown-item:hover {
-    background: #eff6ff;
-    color: #2563eb;
+    background: #fef2f2;
+    color: #ef4444;
 }
 .tasks-toolbar .filter-dd .dropdown-item.active {
-    background: #2563eb;
+    background: #ef4444;
     color: #fff;
 }
 .tasks-toolbar .filter-dd .dropdown-divider {
@@ -124,9 +124,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
     border-radius: 20px;
     padding: 4px 12px;
     font-size: 0.8rem;
@@ -158,19 +158,19 @@
     display: inline-block;
 }
 .prio-dot.prio-low { background: #94a3b8; }
-.prio-dot.prio-normal { background: #2563eb; }
+.prio-dot.prio-normal { background: #ef4444; }
 .prio-dot.prio-high { background: #f59e0b; }
 .prio-dot.prio-urgent { background: #ef4444; }
 
 /* Status backgrounds */
 .status-pending .chip-status { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-.status-in_progress .chip-status { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.status-in_progress .chip-status { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 .status-completed .chip-status { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 .status-cancelled .chip-status { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; text-decoration: line-through; }
 
 /* Priority backgrounds */
 .prio-low { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
-.prio-normal { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.prio-normal { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 .prio-high { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 .prio-urgent { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
 
@@ -213,7 +213,7 @@
         margin: -14px -16px 10px;
     }
     .task-card-accent.prio-low { background: linear-gradient(90deg, #94a3b8, #cbd5e1); }
-    .task-card-accent.prio-normal { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+    .task-card-accent.prio-normal { background: linear-gradient(90deg, #ef4444, #dc2626); }
     .task-card-accent.prio-high { background: linear-gradient(90deg, #f59e0b, #fb923c); }
     .task-card-accent.prio-urgent { background: linear-gradient(90deg, #ef4444, #dc2626); }
 }
@@ -224,7 +224,7 @@
 </style>
 
 <div class="tickets-shell">
-    <div class="tickets-header" style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%); border-radius: 14px; padding: 28px 22px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(2, 6, 23, 0.15);">
+    <div class="tickets-header" style="background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%); border-radius: 14px; padding: 28px 22px; margin-bottom: 20px; box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1 style="margin:0; font-size:1.5rem; font-weight:800; letter-spacing:-0.01em; color:#fff;">Tareas</h1>
@@ -371,7 +371,7 @@
                                 <div class="task-card-accent prio-<?php echo html($rowPriority); ?>"></div>
 
                                 <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
-                                    <a href="tasks.php?id=<?php echo (int)$t['id']; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; color: #2563eb; text-decoration: none;" onclick="event.stopPropagation();">
+                                    <a href="tasks.php?id=<?php echo (int)$t['id']; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; color: #ef4444; text-decoration: none;" onclick="event.stopPropagation();">
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo (int)$t['id']; ?>
                                     </a>
                                     <?php if ($is_overdue): ?>
@@ -446,7 +446,7 @@
                                 <?php endif; ?>
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
-                                <button type="button" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'">
+                                <button type="button" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
                             </td>
@@ -505,7 +505,7 @@
                 <?php for ($i = $start; $i <= $end; $i++): ?>
                     <a href="tasks.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $i])); ?>"
                        class="btn btn-sm <?php echo $i === $pageNum ? 'btn-primary' : 'btn-outline-secondary'; ?>"
-                       <?php echo $i === $pageNum ? 'style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;"' : ''; ?>>
+                       <?php echo $i === $pageNum ? 'style="background:linear-gradient(135deg,#ef4444,#991b1b);border:none;"' : ''; ?>>
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>

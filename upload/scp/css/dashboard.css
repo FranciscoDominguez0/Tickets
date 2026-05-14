@@ -53,8 +53,8 @@
         background: transparent !important;
     }
     #statsTabs .nav-link.active {
-        color: #2563eb;
-        border-bottom-color: #2563eb;
+        color: #ef4444;
+        border-bottom-color: #ef4444;
     }
 
     /* Transformación de Tablas a Tarjetas (Cards Premium) */
@@ -197,7 +197,7 @@
         padding: 12px;
         border-radius: 8px;
         font-weight: 600;
-        color: #3b82f6;
+        color: #ef4444;
         text-decoration: none;
         margin-top: 10px;
     }

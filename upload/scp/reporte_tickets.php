@@ -294,7 +294,7 @@ ob_start();
                         <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo $hasReport ? $reportUrl : $viewUrl; ?>';">
                             <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
                                 <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
-                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; color: #2563eb; text-decoration: none;" onclick="event.stopPropagation();">
+                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; color: #ef4444; text-decoration: none;" onclick="event.stopPropagation();">
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
                                     <?php if ($isNew): ?>
@@ -373,7 +373,7 @@ ob_start();
                             <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
                                 <a href="<?php echo $reportUrl; ?>"
                                    class="btn btn-sm <?php echo $hasReport ? 'btn-outline-primary' : 'btn-primary'; ?>"
-                                   style="font-weight: 600; border-radius: 8px; <?php echo $hasReport ? '' : 'background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;'; ?>"
+                                   style="font-weight: 600; border-radius: 8px; <?php echo $hasReport ? '' : 'background: linear-gradient(135deg, #ef4444, #991b1b); border: none;'; ?> "
                                    onclick="event.stopPropagation();">
                                     <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-lg'; ?>"></i>
                                     <span class="d-none d-md-inline"><?php echo $hasReport ? 'Ver' : 'Reportar'; ?></span>
@@ -450,7 +450,7 @@ ob_start();
                         <a href="<?php echo $viewUrl; ?>" class="btn btn-sm btn-outline-secondary" style="border-radius:8px; font-weight:600;">
                             <i class="bi bi-ticket-detailed"></i> Ver Ticket
                         </a>
-                        <a href="<?php echo $reportUrl; ?>" class="btn btn-sm <?php echo $hasReport ? 'btn-outline-primary' : 'btn-primary'; ?>" style="border-radius:8px; font-weight:600; <?php echo $hasReport ? '' : 'background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;'; ?>">
+                        <a href="<?php echo $reportUrl; ?>" class="btn btn-sm <?php echo $hasReport ? 'btn-outline-primary' : 'btn-primary'; ?>" style="border-radius:8px; font-weight:600; <?php echo $hasReport ? '' : 'background:linear-gradient(135deg,#ef4444,#991b1b);border:none;'; ?>">
                             <i class="bi <?php echo $hasReport ? 'bi-eye' : 'bi-plus-lg'; ?>"></i>
                             <?php echo $hasReport ? 'Ver Reporte' : 'Reportar'; ?>
                         </a>
@@ -494,7 +494,7 @@ ob_start();
                 <?php for ($i = $start; $i <= $end; $i++): ?>
                     <a href="?page=<?php echo $i; ?><?php echo $allParams; ?>"
                        class="btn btn-sm <?php echo $i === $page ? 'btn-primary' : 'btn-outline-secondary'; ?>"
-                       <?php echo $i === $page ? 'style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border:none;"' : ''; ?>>
+                       <?php echo $i === $page ? 'style="background:linear-gradient(135deg,#ef4444,#991b1b);border:none;"' : ''; ?>>
                         <?php echo $i; ?>
                     </a>
                 <?php endfor; ?>

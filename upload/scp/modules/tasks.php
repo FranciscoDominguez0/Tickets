@@ -231,14 +231,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                         $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tasks.php?id=' . $taskId;
 
                                         $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
-                                            . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó una tarea</h2>'
+                                            . '<h2 style="color:#ef4444; margin: 0 0 8px;">Se te asignó una tarea</h2>'
                                             . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó la siguiente tarea:</p>'
                                             . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
                                             . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>ID:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars((string)$taskId) . '</td></tr>'
                                             . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Título:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$title) . '</td></tr>'
                                             . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars((string)($departments[$dept_id]['name'] ?? '')) . '</td></tr>'
                                             . '</table>'
-                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
+                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#ef4444; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
                                             . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
                                             . '</div>';
 
@@ -387,14 +387,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                         $viewUrl = (defined('APP_URL') ? APP_URL : '') . '/upload/scp/tasks.php?id=' . $taskId;
 
                                         $bodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
-                                            . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Se te asignó una tarea</h2>'
+                                            . '<h2 style="color:#ef4444; margin: 0 0 8px;">Se te asignó una tarea</h2>'
                                             . '<p style="color:#475569; margin: 0 0 12px;">Hola <strong>' . htmlspecialchars($staffName) . '</strong>, se te asignó la siguiente tarea:</p>'
                                             . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
                                             . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>ID:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars((string)$taskId) . '</td></tr>'
                                             . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Título:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars($taskTitle) . '</td></tr>'
                                             . '<tr><td style="padding: 6px 0;"><strong>Departamento:</strong></td><td style="padding: 6px 0;">' . htmlspecialchars((string)($task['dept_name'] ?? '')) . '</td></tr>'
                                             . '</table>'
-                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
+                                            . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($viewUrl) . '" style="display:inline-block; background:#ef4444; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Ver tarea</a></p>'
                                             . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
                                             . '</div>';
 

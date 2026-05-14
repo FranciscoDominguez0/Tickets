@@ -357,12 +357,12 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
 <style>
     .stats-page { padding-bottom: 18px; }
     .stats-hero {
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
-        border: 1px solid rgba(37, 99, 235, 0.2);
+        background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
+        border: 1px solid rgba(239, 68, 68, 0.2);
         border-radius: 14px;
         padding: 1.5rem 2rem;
         color: #fff;
-        box-shadow: 0 14px 32px rgba(37, 99, 235, 0.28);
+        box-shadow: 0 14px 32px rgba(239, 68, 68, 0.28);
         margin-bottom: 16px;
     }
     .stats-hero-title {
@@ -454,7 +454,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
                     <input class="form-control" type="date" id="stat-end" name="end" value="<?php echo html($end); ?>">
                 </div>
                 <div class="col-12 col-md-4 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                    <button type="submit" class="btn btn-danger">Filtrar</button>
                     <a class="btn btn-outline-secondary" href="statics.php">Limpiar</a>
                 </div>
             </form>
@@ -591,7 +591,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
     var resolvedTotals = safeParseJson(<?php echo json_encode(json_encode($resolvedTotals)); ?>, []);
 
     var palette = [
-        '#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9', '#22c55e', '#e11d48', '#14b8a6', '#a855f7',
+        '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#0ea5e9', '#22c55e', '#e11d48', '#14b8a6', '#a855f7',
         '#64748b', '#f97316'
     ];
     var bg = function (n) {
@@ -618,8 +618,8 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
                 datasets: [{
                     label: 'Tickets',
                     data: topicTotals,
-                    backgroundColor: 'rgba(37, 99, 235, 0.35)',
-                    borderColor: 'rgba(37, 99, 235, 0.9)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.35)',
+                    borderColor: 'rgba(239, 68, 68, 0.9)',
                     borderWidth: 1
                 }]
             },
@@ -710,7 +710,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
                     {
                         label: 'Creados',
                         data: createdTotals,
-                        backgroundColor: 'rgba(37, 99, 235, 0.55)'
+                        backgroundColor: 'rgba(239, 68, 68, 0.55)'
                     },
                     {
                         label: 'Resueltos',

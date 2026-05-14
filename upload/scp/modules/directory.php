@@ -275,12 +275,12 @@ $basePaging['order'] = $currentOrder;
 <style>
 /* ── Header azul difuminado profesional ── */
 .tickets-shell .tickets-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
     color: #fff;
     border-radius: 14px;
     padding: 28px 22px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.15);
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);
 }
 .tickets-shell .tickets-header h1 {
     margin: 0;
@@ -311,6 +311,16 @@ $basePaging['order'] = $currentOrder;
         width: 100%;
     }
 }
+body.dark-mode .tickets-toolbar {
+    background: #111;
+    border-color: #333;
+}
+body.dark-mode .form-select,
+body.dark-mode .form-control {
+    background: #000;
+    border-color: #333;
+    color: #fff;
+}
 
 /* ── Mobile table cards ── */
 @media (max-width: 767px) {
@@ -323,6 +333,11 @@ $basePaging['order'] = $currentOrder;
         padding: 14px 16px;
         margin-bottom: 10px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    body.dark-mode #agentsTable tbody tr {
+        background: #111;
+        border-color: #222;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
     #agentsTable tbody td {
         display: block;
@@ -347,8 +362,8 @@ $basePaging['order'] = $currentOrder;
         width: 36px;
         height: 36px;
         border-radius: 8px;
-        background: #eff6ff;
-        color: #2563eb;
+        background: #fef2f2;
+        color: #ef4444;
         text-decoration: none;
     }
 }
@@ -388,7 +403,7 @@ $basePaging['order'] = $currentOrder;
                         <input type="hidden" name="sort" value="<?php echo html($currentSort); ?>">
                         <input type="hidden" name="order" value="<?php echo html($currentOrder); ?>">
                     <?php endif; ?>
-                    <button type="submit" class="btn btn-primary" style="border-radius: 0 10px 10px 0; background: linear-gradient(135deg,#2563eb,#1d4ed8); border: none;"><i class="bi bi-search"></i></button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 0 10px 10px 0; background: linear-gradient(135deg,#dc2626,#ef4444); border: none;"><i class="bi bi-search"></i></button>
                     <?php if ($search !== '' || $deptFilter > 0): ?>
                         <a href="directory.php" class="btn btn-outline-secondary" style="margin-left: 6px; border-radius: 10px;"><i class="bi bi-x-lg"></i></a>
                     <?php endif; ?>

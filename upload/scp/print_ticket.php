@@ -197,7 +197,7 @@ if (defined('TICKET_PDF_RENDER')) {
             --line:#e2e8f0;
             --paper:#ffffff;
             --soft:#f8fafc;
-            --brand:#2563eb;
+            --brand:#ef4444;
         }
         html,body{background:var(--paper); color:var(--ink); font-family: "Lato", "Segoe UI", Arial, sans-serif; font-size:14px; margin:0; padding:0;}
         .sheet{max-width: 920px; margin: 22px auto; padding: 0 18px;}
@@ -258,7 +258,7 @@ if (defined('TICKET_PDF_RENDER')) {
                         <div class="logo" style="margin-bottom:14px;"><img src="<?php echo html($logoUrl); ?>" alt="<?php echo html($companyName); ?>"></div>
                     <?php endif; ?>
                     <h1 style="font-size:13px; margin:0; font-weight:900; text-transform:uppercase; letter-spacing:0.06em; color:#0f172a;"><?php echo html($companyName); ?></h1>
-                    <div style="color:#2563eb; font-weight:700; margin-top:4px; font-size:11px; letter-spacing:0.02em;"><?php echo html(str_replace(['http://', 'https://'], '', $companyWebsite)); ?></div>
+                    <div style="color:#ef4444; font-weight:700; margin-top:4px; font-size:11px; letter-spacing:0.02em;"><?php echo html(str_replace(['http://', 'https://'], '', $companyWebsite)); ?></div>
                 </div>
             </td>
             <td style="vertical-align:bottom; text-align:right; width:40%;">

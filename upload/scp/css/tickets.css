@@ -31,7 +31,7 @@
 }
 
 .ticket-view-title a:hover {
-    color: #2563eb;
+    color: #ef4444;
 }
 
 .ticket-view-actions {
@@ -57,7 +57,7 @@
 
 .ticket-view-actions .btn-icon:hover {
     background: #f8fafc;
-    color: #1d4ed8;
+    color: #ef4444;
 }
 
 .ticket-view-overview {
@@ -157,7 +157,7 @@
 }
 
 .ticket-view-overview .value.title.highlight {
-    color: #2563eb;
+    color: #ef4444;
 }
 
 .ticket-view-overview .btn-waze-premium {
@@ -219,12 +219,12 @@
 }
 
 .ticket-view-tabs .tab:hover {
-    color: #2563eb;
+    color: #ef4444;
 }
 
 .ticket-view-tabs .tab.active {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: #ef4444;
+    border-bottom-color: #ef4444;
     background: #fff;
     border-radius: 8px 8px 0 0;
 }
@@ -241,7 +241,7 @@
 
 /* Listado: vista previa tipo osTicket (hover modal) */
 tr.ticket-row.is-selected td {
-    background: #eff6ff !important;
+    background: #fef2f2 !important;
 }
 
 .ticket-title.ticket-preview-trigger {
@@ -295,7 +295,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-hover-preview-head .open {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: none;
     width: 34px;
     height: 34px;
@@ -1180,12 +1180,12 @@ tr.ticket-row.is-selected td {
 }
 
 .tickets-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #000000 0%, #111111 50%, #ef4444 100%);
     color: #fff;
     border-radius: 10px;
     padding: 26px 18px;
     margin-bottom: 16px;
-    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.12);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
 }
 
 .tickets-header h1 {

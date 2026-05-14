@@ -34,7 +34,7 @@ if (count($parts) > 1) {
 }
 $initials = trim($i1 . $i2);
 if ($initials === '') $initials = 'U';
-$avatarColors = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+$avatarColors = ['#ef4444','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
 $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 ?>
 
@@ -62,12 +62,12 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 .open-ticket-shell .form-actions { animation: fadeInUpProfessional 0.4s 0.44s cubic-bezier(0.16,1,0.3,1) both; opacity:0; }
 
 .open-ticket-shell .tickets-header {
-    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+    background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
     color: #fff;
     border-radius: 14px;
     padding: 24px 22px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.15);
+    box-shadow: 0 8px 30px rgba(239, 68, 68, 0.2);
 }
 .open-ticket-shell .tickets-header h1 {
     margin: 0;
@@ -91,6 +91,12 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     padding: 22px 24px;
     margin-bottom: 16px;
     position: relative;
+    transition: all 0.3s ease;
+}
+body.dark-mode .open-section {
+    background: #111111;
+    border-color: #333;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 .open-section::before {
     content: '';
@@ -99,7 +105,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, #2563eb, #3b82f6);
+    background: linear-gradient(180deg, #ef4444, #991b1b);
     border-radius: 14px 0 0 14px;
 }
 .open-section .section-title {
@@ -113,8 +119,11 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     align-items: center;
     gap: 8px;
 }
+body.dark-mode .open-section .section-title {
+    color: #cbd5e1;
+}
 .open-section .section-title i {
-    color: #2563eb;
+    color: #ef4444;
     font-size: 1rem;
 }
 
@@ -127,6 +136,10 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     padding: 14px 16px;
+}
+body.dark-mode .user-select-card {
+    background: #0a0a0a;
+    border-color: #222;
 }
 .user-select-card .user-avatar {
     width: 44px;
@@ -150,6 +163,9 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     color: #0f172a;
     font-size: 0.95rem;
 }
+body.dark-mode .user-select-card .user-name {
+    color: #f1f5f9;
+}
 .user-select-card .user-email {
     font-size: 0.82rem;
     color: #64748b;
@@ -168,6 +184,9 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     font-size: 0.88rem;
     margin-bottom: 6px;
 }
+body.dark-mode .open-section .form-label {
+    color: #94a3b8;
+}
 .open-section .form-label .required {
     color: #dc2626;
 }
@@ -180,8 +199,14 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 }
 .open-section .form-select:focus,
 .open-section .form-control:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+body.dark-mode .open-section .form-select,
+body.dark-mode .open-section .form-control {
+    background: #000;
+    border-color: #333;
+    color: #fff;
 }
 
 /* Actions */
@@ -192,7 +217,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     padding-top: 8px;
 }
 .form-actions .btn-submit {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff;
     border: none;
     padding: 12px 28px;
@@ -207,7 +232,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 .form-actions .btn-submit:hover {
     opacity: 0.95;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 .form-actions .btn-cancel {
     background: #fff;
@@ -251,6 +276,47 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     justify-content: center;
     border-radius: 14px;
     backdrop-filter: blur(2px);
+}
+/* Forzamos el modo oscuro si el body tiene la clase dark-mode */
+body.dark-mode .tickets-shell.open-ticket-shell {
+    background: transparent;
+}
+body.dark-mode .open-section {
+    background: #111111 !important;
+    border-color: #222 !important;
+    color: #f1f5f9;
+}
+body.dark-mode .user-select-card {
+    background: #0a0a0a !important;
+    border-color: #222 !important;
+}
+body.dark-mode .section-title {
+    color: #94a3b8 !important;
+}
+body.dark-mode .form-label {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background: #000 !important;
+    border-color: #333 !important;
+    color: #fff !important;
+}
+body.dark-mode .btn-outline-danger {
+    color: #ef4444;
+    border-color: #ef4444;
+}
+body.dark-mode .btn-outline-danger:hover {
+    background: #ef4444;
+    color: #fff;
+}
+body.dark-mode .btn-cancel {
+    background: #111;
+    border-color: #333;
+    color: #94a3b8;
+}
+body.dark-mode .text-muted {
+    color: #64748b !important;
 }
 </style>
 
@@ -296,14 +362,14 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
                             <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un usuario</div>
                         <?php endif; ?>
                     </div>
-                    <button type="button" class="btn btn-outline-primary btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch">
-                        <i class="bi bi-search"></i> Buscar
+                    <button type="button" class="btn btn-outline-danger btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch" style="border-radius: 10px; font-weight: 600;">
+                        <i class="bi bi-search text-danger"></i> Buscar
                     </button>
                 </div>
 
                 <?php if ($walkinDefaultUserId > 0 && $walkinDefaultUser): ?>
                     <div class="mt-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn_walkin_user" data-user-id="<?php echo (int)$walkinDefaultUserId; ?>" data-user-name="<?php echo html(trim((string)($walkinDefaultUser['firstname'] ?? '') . ' ' . (string)($walkinDefaultUser['lastname'] ?? ''))); ?>" data-user-email="<?php echo html((string)($walkinDefaultUser['email'] ?? '')); ?>" style="border-radius: 10px; font-weight: 700;">
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="btn_walkin_user" data-user-id="<?php echo (int)$walkinDefaultUserId; ?>" data-user-name="<?php echo html(trim((string)($walkinDefaultUser['firstname'] ?? '') . ' ' . (string)($walkinDefaultUser['lastname'] ?? ''))); ?>" data-user-email="<?php echo html((string)($walkinDefaultUser['email'] ?? '')); ?>" style="border-radius: 10px; font-weight: 700;">
                             Usar cliente no recurrente
                         </button>
                     </div>
@@ -538,9 +604,19 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
 <!-- Modal: Buscar usuario -->
 <div class="modal fade" id="modalUserSearch" tabindex="-1" aria-labelledby="modalUserSearchLabel" aria-hidden="true" data-open-default="<?php echo $open_user_query !== '' ? '1' : '0'; ?>">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 16px; border: 1px solid #e2e8f0;">
+    <div class="modal-content" style="border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.3s ease;">
+      <style>
+        body.dark-mode #modalUserSearch .modal-content { background: #111; border-color: #333; color: #fff; }
+        body.dark-mode #modalUserSearch .modal-header, 
+        body.dark-mode #modalUserSearch .modal-footer { border-color: #222; }
+        body.dark-mode #modalUserSearch .alert-info { background: #1e1b4b; border-color: #312e81; color: #e0e7ff; }
+        body.dark-mode #modalUserSearch .list-group-item { background: #111; border-color: #222; color: #fff; }
+        body.dark-mode #modalUserSearch .list-group-item:hover { background: #1a1a1a; }
+        body.dark-mode #modalUserSearch .form-control { background: #000; border-color: #333; color: #fff; }
+        body.dark-mode #modalUserSearch .input-group-text { background: #0a0a0a !important; border-color: #333; color: #94a3b8; }
+      </style>
       <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
-        <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-primary"></i>Buscar usuario</h5>
+        <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-danger"></i>Buscar usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
@@ -553,7 +629,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
           <div class="input-group">
             <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search text-muted"></i></span>
             <input type="text" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>">
-            <button class="btn btn-primary" type="submit" style="border-radius: 0 10px 10px 0; margin-left: 6px; background: linear-gradient(135deg,#2563eb,#1d4ed8); border: none;">Buscar</button>
+            <button class="btn btn-primary" type="submit" style="border-radius: 0 10px 10px 0; margin-left: 6px; background: linear-gradient(135deg,#dc2626,#ef4444); border: none;">Buscar</button>
           </div>
         </form>
 
@@ -578,7 +654,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
                     <div style="font-size: 0.82rem; color: #64748b;"><?php echo html($u['email']); ?><?php if (!empty($u['phone'])): ?> · <?php echo html($u['phone']); ?><?php endif; ?></div>
                   </div>
                 </div>
-                <a class="btn btn-sm btn-outline-primary" style="border-radius: 8px; font-weight: 600;" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
+                <a class="btn btn-sm btn-outline-danger" style="border-radius: 8px; font-weight: 600;" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
               </div>
             <?php endforeach; ?>
           </div>

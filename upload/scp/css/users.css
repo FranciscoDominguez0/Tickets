@@ -37,7 +37,7 @@
 .users-directory .search-card .btn-search {
     border-radius: 12px;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    background: linear-gradient(135deg, #dc2626, #ef4444);
     color: #fff;
     border: none;
     font-weight: 600;
@@ -56,8 +56,8 @@
     color: #0f172a;
     margin: 0;
     padding-left: 16px;
-    border-left: 4px solid #2563eb;
-    background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent);
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.06), transparent);
     padding-top: 6px;
     padding-bottom: 6px;
     border-radius: 0 8px 8px 0;
@@ -135,7 +135,7 @@
 }
 .users-directory .user-name-cell a {
     font-weight: 600;
-    color: #1d4ed8;
+    color: #ef4444;
     text-decoration: none;
 }
 .users-directory .user-name-cell a:hover { text-decoration: underline; }
@@ -167,7 +167,7 @@
 }
 .users-directory .table-footer-bar .select-links a:hover { text-decoration: underline; }
 .users-directory .table-footer-bar .pagination-wrap a {
-    color: #2563eb;
+    color: #ef4444;
     text-decoration: none;
     margin-left: 8px;
 }
@@ -203,7 +203,7 @@
     gap: 10px;
     transition: color .15s;
 }
-.user-view-title a:hover { color: #2563eb; }
+.user-view-title a:hover { color: #ef4444; }
 .user-view-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .user-view-actions .btn {
     display: inline-flex;
@@ -262,7 +262,7 @@
     margin-bottom: 4px;
 }
 .user-view-detail .value { font-size: 1rem; color: #0f172a; }
-.user-view-detail .value a { color: #2563eb; text-decoration: none; }
+.user-view-detail .value a { color: #ef4444; text-decoration: none; }
 .user-view-detail .value a:hover { text-decoration: underline; }
 .user-view-detail .value .edit-icon { font-size: 0.85rem; margin-left: 6px; opacity: 0.7; }
 .user-view-status-badge {
@@ -294,8 +294,8 @@
     gap: 8px;
     font-size: 0.95rem;
 }
-.user-view-tabs .tab:hover { color: #2563eb; }
-.user-view-tabs .tab.active { color: #2563eb; border-bottom-color: #2563eb; background: #fff; }
+.user-view-tabs .tab:hover { color: #ef4444; }
+.user-view-tabs .tab.active { color: #ef4444; border-bottom-color: #ef4444; background: #fff; }
 .user-view-tab-content { padding: 24px 32px; min-height: 120px; }
 .user-view-tab-content .empty-state {
     text-align: center;

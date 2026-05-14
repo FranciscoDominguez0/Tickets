@@ -215,7 +215,7 @@ $html = <<<HTML
             --line:#e2e8f0;
             --paper:#ffffff;
             --soft:#f8fafc;
-            --brand:#2563eb;
+            --brand:#ef4444;
         }
         html,body{background:var(--paper); color:var(--ink); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size:13px; margin:0; padding:0;}
         .sheet{padding: 30px; margin: 0;}
@@ -309,7 +309,7 @@ if ($logoUrl !== '') {
 
 $html .= <<<HTML
                         <h1 style="font-size:13px; margin:0; font-weight:bold; text-transform:uppercase; letter-spacing:0.06em; color:#0f172a;">{$appName}</h1>
-                        <div style="color:#2563eb; font-weight:bold; margin-top:4px; font-size:11px; letter-spacing:0.02em;">{$webSafe}</div>
+                        <div style="color:#ef4444; font-weight:bold; margin-top:4px; font-size:11px; letter-spacing:0.02em;">{$webSafe}</div>
                     </div>
                 </td>
                 <td style="vertical-align:bottom; text-align:right; width:40%;">

@@ -14,12 +14,12 @@ if (!isset($_SESSION['staff_id'])) exit;
 <style>
     /* Estilos del Hero Principal (Adaptado de stats-hero) */
     .map-hero {
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
-        border: 1px solid rgba(37, 99, 235, 0.2);
+        background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
+        border: 1px solid rgba(239, 68, 68, 0.2);
         border-radius: 14px;
         padding: 1.5rem 2rem;
         color: #fff;
-        box-shadow: 0 14px 32px rgba(37, 99, 235, 0.28);
+        box-shadow: 0 14px 32px rgba(239, 68, 68, 0.2);
         margin-bottom: 16px;
     }
     .map-hero-title {
@@ -85,6 +85,12 @@ if (!isset($_SESSION['staff_id'])) exit;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .map-sidebar {
+        background: #111111;
+        border-color: #333;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
 
     .sidebar-header {
@@ -94,6 +100,9 @@ if (!isset($_SESSION['staff_id'])) exit;
         justify-content: space-between;
         align-items: center;
     }
+    body.dark-mode .sidebar-header {
+        border-color: #222;
+    }
 
     .sidebar-header h4 {
         margin: 0;
@@ -101,10 +110,13 @@ if (!isset($_SESSION['staff_id'])) exit;
         font-weight: 800;
         color: #0f172a;
     }
+    body.dark-mode .sidebar-header h4 {
+        color: #f1f5f9;
+    }
 
     .agent-badge {
-        background: #eff6ff;
-        color: #2563eb;
+        background: #fef2f2;
+        color: #ef4444;
         padding: 4px 12px;
         border-radius: 20px;
         font-size: 0.75rem;
@@ -134,10 +146,18 @@ if (!isset($_SESSION['staff_id'])) exit;
         border-color: #e2e8f0;
         transform: scale(1.02);
     }
+    body.dark-mode .agent-item:hover {
+        background: #1a1a1a;
+        border-color: #333;
+    }
 
     .agent-item.active {
-        background: #f0f7ff;
-        border-color: #bfdbfe;
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+    body.dark-mode .agent-item.active {
+        background: #2a1010;
+        border-color: #5a1010;
     }
 
     .agent-avatar-container {
@@ -148,14 +168,14 @@ if (!isset($_SESSION['staff_id'])) exit;
         width: 48px;
         height: 48px;
         border-radius: 14px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
         font-size: 1.2rem;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
     }
 
     .status-indicator {
@@ -184,6 +204,9 @@ if (!isset($_SESSION['staff_id'])) exit;
         overflow: hidden;
         text-overflow: ellipsis;
     }
+    body.dark-mode .agent-name {
+        color: #f1f5f9;
+    }
 
     .agent-sub {
         font-size: 0.8rem;
@@ -200,6 +223,12 @@ if (!isset($_SESSION['staff_id'])) exit;
         position: relative;
         background: #f8fafc;
         min-height: 400px;
+        transition: all 0.3s ease;
+    }
+    body.dark-mode .map-container-outer {
+        background: #000;
+        border-color: #333;
+        box-shadow: 0 10px 50px rgba(0,0,0,0.6);
     }
 
     #map {
@@ -241,7 +270,7 @@ if (!isset($_SESSION['staff_id'])) exit;
     .custom-marker { position: relative; }
     .marker-pulse {
         width: 32px; height: 32px;
-        background: rgba(37, 99, 235, 0.2);
+        background: rgba(239, 68, 68, 0.2);
         border-radius: 50%;
         position: absolute;
         top: 50%; left: 50%;
@@ -250,7 +279,7 @@ if (!isset($_SESSION['staff_id'])) exit;
     }
     .marker-core {
         width: 22px; height: 22px;
-        background: #2563eb;
+        background: #ef4444;
         border: 3px solid white;
         border-radius: 50%;
         position: absolute;
@@ -263,7 +292,7 @@ if (!isset($_SESSION['staff_id'])) exit;
         position: absolute;
         top: -35px; left: 50%;
         transform: translateX(-50%);
-        background: #2563eb;
+        background: #ef4444;
         color: white;
         padding: 4px 12px;
         border-radius: 8px;
@@ -457,9 +486,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 var customIcon = L.divIcon({
                     className: 'custom-marker',
                     html: `
-                        <div class="marker-pulse" style="background: rgba(37, 99, 235, 0.4);"></div>
-                        <div class="marker-core" style="background: #2563eb; width: 22px; height: 22px; margin: -11px 0 0 -11px;"></div>
-                        <div class="marker-label-pro" style="background: #2563eb; border: 1px solid white; top: -35px;">${loc.name.split(' ')[0]}</div>
+                        <div class="marker-pulse" style="background: rgba(239, 68, 68, 0.4);"></div>
+                        <div class="marker-core" style="background: #ef4444; width: 22px; height: 22px; margin: -11px 0 0 -11px;"></div>
+                        <div class="marker-label-pro" style="background: #ef4444; border: 1px solid white; top: -35px;">${loc.name.split(' ')[0]}</div>
                     `,
                     iconSize: [32, 32],
                     iconAnchor: [16, 16]
