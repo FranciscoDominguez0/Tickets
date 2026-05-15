@@ -1,5 +1,5 @@
 
-ALTER TABLE organizations DROP COLUMN phone_ext;
+ALTER TABLE organizations ADD COLUMN phone_ext VARCHAR(20) DEFAULT NULL AFTER phone;
 
 ALTER TABLE staff ADD COLUMN dark_mode TINYINT(1) DEFAULT 0 AFTER signature;
 
