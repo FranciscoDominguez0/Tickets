@@ -67,6 +67,7 @@ body.dark-mode .notif-dd-title { color: #fff !important; }
 body.dark-mode .notif-dd-sub { color: #94a3b8 !important; }
 body.dark-mode .notif-dd-head { background: #0a0a0a !important; border-bottom: 1px solid #1a1a1a !important; }
 body.dark-mode .notif-dd-head .notif-dd-title { color: #fff !important; }
+body.dark-mode .notif-dd div[style*="background:#f8f9fa"] { background: #0a0a0a !important; border-top-color: #1a1a1a !important; }
 
 body.dark-mode .tabs { background: transparent !important; border-bottom-color: #27272a !important; }
 body.dark-mode .tabs a { color: #a1a1aa !important; }
@@ -305,6 +306,7 @@ body.dark-mode .dropdown-divider {
 }
 body.dark-mode .user-menu-btn:hover {
     border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.15) !important;
     color: #fff !important;
 }
 body.dark-mode .uavatar {

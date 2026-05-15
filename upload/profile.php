@@ -106,7 +106,7 @@ if ($_POST) {
             pointer-events: none;
             background:
                 radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
-                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                radial-gradient(900px circle at 88% 10%, rgba(239, 68, 68, 0.10), transparent 55%),
                 repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
             z-index: -1;
         }
@@ -213,7 +213,7 @@ if ($_POST) {
 
         .panel {
             background-image:
-                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.05), transparent 52%),
+                radial-gradient(900px circle at 0% 0%, rgba(239, 68, 68, 0.05), transparent 52%),
                 radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.05), transparent 55%);
             transition: box-shadow .15s ease, border-color .15s ease;
         }
@@ -297,7 +297,7 @@ if ($_POST) {
             font-weight: 900;
             white-space: nowrap;
         }
-        .profile-badge i { color: #2563eb; }
+        .profile-badge i { color: #ef4444; }
 
         .content-card {
             background: #ffffff;
@@ -331,7 +331,7 @@ if ($_POST) {
         }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
-                        linear-gradient(135deg, #2563eb, #0ea5e9);
+                        linear-gradient(135deg, #ef4444, #f87171);
             color: #fff;
         }
         .notif-dd-flex.show {
@@ -358,6 +358,15 @@ if ($_POST) {
             .profile-shell { max-width: 100%; }
         }
     
+        /* Botones primarios (Rojo corporativo) */
+        .btn-primary { background-color: #ef4444; border-color: #ef4444; color: #fff; }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: #dc2626; border-color: #dc2626; color: #fff; }
+        .btn-outline-primary { color: #ef4444; border-color: #ef4444; }
+        .btn-outline-primary:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
+        .text-primary { color: #ef4444 !important; }
+        .bg-primary { background-color: #ef4444 !important; }
+        a { color: #ef4444; }
+        a:hover { color: #dc2626; }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
@@ -586,7 +595,7 @@ if ($_POST) {
                         html += ''
                             + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
                             +   '<div class="d-flex align-items-start gap-2">'
-                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(37,99,235,.12);display:flex;align-items:center;justify-content:center;color:#2563eb;">'
+                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;color:#ef4444;">'
                             +       '<i class="bi bi-chat-dots"></i>'
                             +     '</div>'
                             +     '<div class="flex-grow-1">'
@@ -720,3 +729,4 @@ if ($_POST) {
     </script>
 </body>
 </html>
+

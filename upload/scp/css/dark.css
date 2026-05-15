@@ -255,6 +255,9 @@ body.dark-mode .ticket-view-entry .author-role {
 }
 
 /* Chat adjuntos */
+body.dark-mode .ticket-view-entry.staff .entry-avatar { background: #1d4ed8 !important; border-color: #1e3a8a !important; }
+body.dark-mode .ticket-view-entry.user .entry-avatar { background: #1e293b !important; border-color: #0f172a !important; }
+body.dark-mode .ticket-view-entry.internal .entry-avatar { background: #78350f !important; border-color: #451a03 !important; }
 body.dark-mode .chat-att-item {
     background: #1a1a1a !important;
     border-color: #252525 !important;

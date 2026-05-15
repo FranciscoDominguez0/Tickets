@@ -468,7 +468,7 @@ function humanSize($bytes) {
             pointer-events: none;
             background:
                 radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
-                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                radial-gradient(900px circle at 88% 10%, rgba(239, 68, 68, 0.10), transparent 55%),
                 repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
             z-index: -1;
         }
@@ -567,7 +567,7 @@ function humanSize($bytes) {
 
         .panel-soft {
             background-image:
-                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.06), transparent 52%),
+                radial-gradient(900px circle at 0% 0%, rgba(239, 68, 68, 0.06), transparent 52%),
                 radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.06), transparent 55%);
         }
 
@@ -605,7 +605,7 @@ function humanSize($bytes) {
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
             color: #0f172a;
             border: 1px solid #e2e8f0;
-            border-left: 6px solid #2563eb;
+            border-left: 6px solid #ef4444;
         }
         .page-header .sub { color: #64748b; font-weight: 700; }
 
@@ -657,7 +657,7 @@ function humanSize($bytes) {
         }
 
         .ticket-view-entry.user .entry-avatar {
-            background: #eff6ff;
+            background: #fef2f2;
             color: #1e3a8a;
         }
 
@@ -696,8 +696,8 @@ function humanSize($bytes) {
         .ticket-view-entry .author-role {
             font-size: 0.75rem;
             font-weight: 700;
-            color: #2563eb;
-            background: #eff6ff;
+            color: #ef4444;
+            background: #fef2f2;
             padding: 2px 8px;
             border-radius: 50rem;
         }
@@ -718,7 +718,7 @@ function humanSize($bytes) {
         }
 
         .ticket-view-entry.staff .entry-content {
-            background: #eff6ff;
+            background: #fef2f2;
             border-color: #dbeafe;
         }
 
@@ -827,7 +827,7 @@ function humanSize($bytes) {
 
 
         .chat-att-info .att-filename:hover {
-            color: #2563eb;
+            color: #ef4444;
             text-decoration: underline;
         }
 
@@ -1035,7 +1035,7 @@ function humanSize($bytes) {
             .att-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
             .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; flex-wrap: wrap; }
             .att-item > div:first-child { min-width: 0; }
-            .att-item a { text-decoration: none; font-weight: 600; color: #2563eb; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+            .att-item a { text-decoration: none; font-weight: 600; color: #ef4444; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
             .att-item .size { color: #64748b; font-size: 0.85rem; }
 
         .reply-card { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
@@ -1056,16 +1056,16 @@ function humanSize($bytes) {
 
         .attach-zone:hover,
         .attach-zone.dragover {
-            border-color: #3b82f6;
-            background: #eff6ff;
+            border-color: #ef4444;
+            background: #fef2f2;
         }
 
         .attach-zone .dz-icon {
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: #e0e7ff;
-            color: #3b82f6;
+            background: #fef2f2;
+            color: #ef4444;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1093,7 +1093,7 @@ function humanSize($bytes) {
         }
 
         .attach-zone .attach-text a {
-            color: #2563eb;
+            color: #ef4444;
             text-decoration: none;
             font-weight: 600;
         }
@@ -1208,7 +1208,7 @@ function humanSize($bytes) {
         }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
-                        linear-gradient(135deg, #2563eb, #0ea5e9);
+                        linear-gradient(135deg, #ef4444, #f87171);
             color: #fff;
         }
         .notif-dd-flex.show {
@@ -1347,6 +1347,15 @@ function humanSize($bytes) {
         }
         .preview-hint i { font-size: 1rem; }
         .preview-hint { transition: opacity 0.8s ease, transform 0.8s ease; }
+        /* Botones primarios (Rojo corporativo) */
+        .btn-primary { background-color: #ef4444; border-color: #ef4444; color: #fff; }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: #dc2626; border-color: #dc2626; color: #fff; }
+        .btn-outline-primary { color: #ef4444; border-color: #ef4444; }
+        .btn-outline-primary:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
+        .text-primary { color: #ef4444 !important; }
+        .bg-primary { background-color: #ef4444 !important; }
+        a { color: #ef4444; }
+        a:hover { color: #dc2626; }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
@@ -1436,7 +1445,7 @@ function humanSize($bytes) {
                 <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                     <div>
                         <div class="d-flex align-items-center gap-3 mb-2">
-                            <span style="background: #e0e7ff; color: #4338ca; padding: 4px 14px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid #c7d2fe;">
+                            <span style="background: #fef2f2; color: #4338ca; padding: 4px 14px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid #c7d2fe;">
                                 <i class="bi bi-hash"></i> TICKET #<?php echo html($t['ticket_number']); ?>
                             </span>
                         </div>
@@ -1862,9 +1871,9 @@ function humanSize($bytes) {
                     if (['pdf'].includes(ext)) {
                         iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>';
                     } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-                        iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>';
+                        iconHtml = '<i class="bi bi-file-earmark-image" style="color: #ef4444;"></i>';
                     } else if (['doc', 'docx'].includes(ext)) {
-                        iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>';
+                        iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #f87171;"></i>';
                     } else if (['xls', 'xlsx'].includes(ext)) {
                         iconHtml = '<i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i>';
                     } else if (['zip', 'rar'].includes(ext)) {
@@ -2086,7 +2095,7 @@ function humanSize($bytes) {
                     html += ''
                         + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
                         +   '<div class="d-flex align-items-start gap-2">'
-                        +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(37,99,235,.12);display:flex;align-items:center;justify-content:center;color:#2563eb;">'
+                        +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;color:#ef4444;">'
                         +       '<i class="bi bi-chat-dots"></i>'
                         +     '</div>'
                         +     '<div class="flex-grow-1">'
@@ -2550,7 +2559,7 @@ function humanSize($bytes) {
             
             <div class="modal-header border-0" style="padding: 24px 32px 16px;">
                 <div class="d-flex align-items-center gap-3 w-100">
-                    <div style="width: 46px; height: 46px; border-radius: 14px; background: rgba(37, 99, 235, 0.1); color: #2563eb; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
+                    <div style="width: 46px; height: 46px; border-radius: 14px; background: rgba(239, 68, 68, 0.1); color: #ef4444; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">
                         <i class="bi bi-pen-fill" style="font-size: 1.3rem;"></i>
                     </div>
                     <div class="flex-grow-1">
@@ -2584,7 +2593,7 @@ function humanSize($bytes) {
 
             <div class="modal-footer border-0" style="background: #f8fafc; padding: 20px 32px; gap: 12px; border-top: 1px solid #e2e8f0 !important;">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="font-weight: 700; border-radius: 12px; padding: 10px 24px; color: #475569; border: 1px solid #e2e8f0; background: #ffffff;">Cancelar</button>
-                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="font-weight: 800; border-radius: 12px; padding: 10px 28px; background: #2563eb; border: none; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                <button type="button" id="btnConfirmClientSign" class="btn btn-primary" style="font-weight: 800; border-radius: 12px; padding: 10px 28px; background: #ef4444; border: none; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25); display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
                     Finalizar Ticket <i class="bi bi-check2-circle" style="font-size: 1.15rem;"></i>
                 </button>
             </div>
@@ -2781,3 +2790,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
+

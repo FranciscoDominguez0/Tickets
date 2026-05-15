@@ -393,7 +393,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             pointer-events: none;
             background:
                 radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
-                radial-gradient(900px circle at 88% 10%, rgba(99, 102, 241, 0.10), transparent 55%),
+                radial-gradient(900px circle at 88% 10%, rgba(239, 68, 68, 0.10), transparent 55%),
                 repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
             z-index: -1;
         }
@@ -506,7 +506,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
         .panel-soft {
             background-image:
-                radial-gradient(900px circle at 0% 0%, rgba(37, 99, 235, 0.06), transparent 52%),
+                radial-gradient(900px circle at 0% 0%, rgba(239, 68, 68, 0.06), transparent 52%),
                 radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.06), transparent 55%);
         }
 
@@ -518,7 +518,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
             color: #0f172a;
             border: 1px solid #e2e8f0;
-            border-left: 6px solid #2563eb;
+            border-left: 6px solid #ef4444;
         }
         .page-header .sub { color: #64748b; font-weight: 700; }
 
@@ -556,7 +556,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             gap: 8px;
         }
         .tabs a:hover { color: #0f172a; background: rgba(15,23,42,0.03); }
-        .tabs a.active { color: #2563eb; border-bottom-color: #2563eb; background: #fff; border-radius: 10px 10px 0 0; }
+        .tabs a.active { color: #ef4444; border-bottom-color: #ef4444; background: #fff; border-radius: 10px 10px 0 0; }
         .tabs .count { background: #e2e8f0; color: #0f172a; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; }
 
         .panel-head {
@@ -579,7 +579,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .tickets-table .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .tickets-table .table tbody tr:hover { background: #f8fafc; }
         .tickets-table .table tbody tr { transition: background .12s ease; }
-        .ticket-new-highlight { background: rgba(37, 99, 235, 0.08) !important; box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.25); }
+        .ticket-new-highlight { background: rgba(239, 68, 68, 0.08) !important; box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.25); }
         .ticket-new-badge { 
             display: inline-flex; 
             align-items: center; 
@@ -590,9 +590,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             font-weight: 900; 
             letter-spacing: 0.04em; 
             text-transform: uppercase; 
-            background: rgba(37, 99, 235, 0.1); 
-            color: #1d4ed8; 
-            border: 1px solid rgba(37, 99, 235, 0.2); 
+            background: rgba(239, 68, 68, 0.1); 
+            color: #b91c1c; 
+            border: 1px solid rgba(239, 68, 68, 0.2); 
             margin-left: 10px; 
         }
 
@@ -631,8 +631,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
 
         .ticket-card.ticket-new-highlight {
-            border-color: rgba(37, 99, 235, 0.35);
-            box-shadow: 0 14px 34px rgba(37, 99, 235, 0.16);
+            border-color: rgba(239, 68, 68, 0.35);
+            box-shadow: 0 14px 34px rgba(239, 68, 68, 0.16);
         }
 
         .ticket-card-top {
@@ -722,7 +722,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
-                        linear-gradient(135deg, #2563eb, #0ea5e9);
+                        linear-gradient(135deg, #ef4444, #f59e0b);
             color: #fff;
         }
         .notif-dd-flex.show {
@@ -786,11 +786,11 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             cursor: pointer;
         }
         .pg-btn:hover {
-            background: #eff6ff; border-color: #bfdbfe; color: #2563eb;
+            background: #fef2f2; border-color: #fecaca; color: #ef4444;
         }
         .pg-btn.pg-current {
-            background: #2563eb; border-color: #2563eb; color: #fff;
-            box-shadow: 0 2px 8px rgba(37,99,235,.28);
+            background: #ef4444; border-color: #ef4444; color: #fff;
+            box-shadow: 0 2px 8px rgba(239,68,68,.28);
             cursor: default;
         }
         .pg-btn.pg-disabled {
@@ -849,9 +849,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             transition: background .13s, color .13s, box-shadow .13s;
             white-space: nowrap;
         }
-        .limit-btn:hover { background: #fff; color: #2563eb; }
+        .limit-btn:hover { background: #fff; color: #ef4444; }
         .limit-btn.active {
-            background: #fff; color: #2563eb;
+            background: #fff; color: #ef4444;
             box-shadow: 0 1px 4px rgba(15,23,42,.10);
         }
 
@@ -880,6 +880,13 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             .tabs .count { padding: 2px 5px; font-size: 0.72rem; }
             .tickets-table { padding: 0 12px 12px; }
         }
+
+        /* Botones primarios (Rojo) */
+        .btn-primary { background-color: #ef4444; border-color: #ef4444; color: #fff; }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: #dc2626; border-color: #dc2626; color: #fff; }
+        .btn-outline-primary { color: #ef4444; border-color: #ef4444; }
+        .btn-outline-primary:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
+        .text-primary { color: #ef4444 !important; }
     </style>
     <link rel="stylesheet" href="css/client_dark.css">
     <?php if ($preventOpenBack || $flashMsg !== ''): ?>
@@ -1334,7 +1341,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         html += ''
                             + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
                             +   '<div class="d-flex align-items-start gap-2">'
-                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(37,99,235,.12);display:flex;align-items:center;justify-content:center;color:#2563eb;">'
+                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;color:#ef4444;">'
                             +       '<i class="bi bi-chat-dots"></i>'
                             +     '</div>'
                             +     '<div class="flex-grow-1">'
