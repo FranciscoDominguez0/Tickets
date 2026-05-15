@@ -202,3 +202,92 @@
         margin-top: 10px;
     }
 }
+
+/* Base classes for Dashboard components */
+.dashboard-card-bg {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.chart-container-box {
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 20px;
+    margin-bottom: 24px;
+    min-height: 350px;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode {
+    color: #f1f5f9;
+}
+body.dark-mode .dashboard-card-bg {
+    background: #000;
+    border: 1px solid #222;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+body.dark-mode .chart-container-box {
+    background: #000;
+    border: 1px solid #222;
+}
+body.dark-mode .dashboard-period-form label strong {
+    color: #94a3b8;
+}
+body.dark-mode h2 {
+    color: #fff;
+}
+body.dark-mode .text-muted {
+    color: #94a3b8 !important;
+}
+
+/* Mobile Cards Dark Mode */
+@media (max-width: 768px) {
+    body.dark-mode .tab-content tbody tr {
+        background: #000;
+        border-color: #222;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    body.dark-mode .tab-content tbody tr th {
+        color: #fff;
+        border-bottom-color: #1a1a1a;
+    }
+    body.dark-mode .tab-content tbody tr td {
+        background: #0a0a0a;
+        border-color: #222;
+    }
+    body.dark-mode .tab-content tbody tr td::before {
+        color: #64748b;
+    }
+    
+    /* KPI Chips Dark Mode */
+    body.dark-mode .tab-content tbody tr td:nth-child(2) { color: #fbbf24; background: rgba(217, 119, 6, 0.1); border-color: rgba(217, 119, 6, 0.2); } /* Abierto */
+    body.dark-mode .tab-content tbody tr td:nth-child(4) { color: #f87171; background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.2); } /* Atrasado */
+    body.dark-mode .tab-content tbody tr td:nth-child(5) { color: #34d399; background: rgba(5, 150, 105, 0.1); border-color: rgba(5, 150, 105, 0.2); } /* Cerrado */
+
+    body.dark-mode [data-action="dashboard-export"] {
+        background: #000;
+        border-color: #222;
+        color: #ef4444;
+    }
+}
+
+/* Tables Dark Mode */
+body.dark-mode .table-light {
+    background-color: #1a1a1a !important;
+    color: #94a3b8 !important;
+}
+body.dark-mode .table {
+    border-color: #222;
+    color: #cbd5e1;
+}
+body.dark-mode .table thead th {
+    background-color: #1a1a1a;
+    border-bottom-color: #333;
+    color: #94a3b8;
+}
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+    color: #fff;
+}
+

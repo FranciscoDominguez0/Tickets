@@ -579,7 +579,7 @@ while ($row = $res->fetch_assoc()) {
 
 <!-- Formulario de selección de período -->
 <form method="post" action="dashboard.php" class="mb-4">
-    <div class="d-flex align-items-center gap-3 flex-wrap dashboard-period-form" style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <div class="d-flex align-items-center gap-3 flex-wrap dashboard-period-form dashboard-card-bg">
         <label class="mb-0">
             <strong>Reporte del Período:</strong>
             <input type="date" 
@@ -611,7 +611,7 @@ while ($row = $res->fetch_assoc()) {
 </div>
 
 <!-- Gráfica de actividad de tickets -->
-<div style="background:#ffffff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:20px;margin-bottom:24px;min-height:350px;">
+<div class="dashboard-card-bg chart-container-box">
     <div id="chart-container" style="position:relative;width:100%;height:300px;">
         <canvas id="ticketsActivityChart"></canvas>
     </div>

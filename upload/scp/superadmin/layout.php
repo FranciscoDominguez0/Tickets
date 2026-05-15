@@ -204,20 +204,29 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
 <script src="../js/scp.js"></script>
 <script>
     (function(){
-        // Auto-dismiss alerts after 5 seconds
-        var alerts = document.querySelectorAll('.alert-dismissible');
-        alerts.forEach(function(alert) {
-            setTimeout(function() {
-                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                if (bsAlert) {
-                    // Start fade out effect if possible
-                    alert.style.transition = 'opacity 0.5s ease';
-                    alert.style.opacity = '0';
-                    setTimeout(function() {
-                        bsAlert.close();
-                    }, 500);
+        // Auto-dismiss alerts after 3.5 seconds
+        var alerts = document.querySelectorAll('.alert.alert-dismissible.fade.show:not(.d-none)');
+        alerts.forEach(function(el) {
+            // Do not dismiss static alerts or those that specifically shouldn't be auto-hidden
+            if (el.hasAttribute('data-alert-static') || el.getAttribute('data-static') === '1') return;
+            
+            window.setTimeout(function() {
+                try {
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
+                        var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+                        if (bsAlert) {
+                            el.style.transition = 'opacity 0.6s ease, transform 0.4s ease';
+                            el.style.opacity = '0';
+                            el.style.transform = 'translateY(-10px)';
+                            window.setTimeout(function() { bsAlert.close(); }, 600);
+                        }
+                    } else {
+                        el.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.warn('Error dismissing alert:', e);
                 }
-            }, 5000);
+            }, 3500);
         });
 
         var form = document.querySelector('[data-superadmin-dark-toggle-form]');

@@ -706,7 +706,13 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 window.setTimeout(function(){
                     try {
                         if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
-                            bootstrap.Alert.getOrCreateInstance(el).close();
+                            var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
+                            if (bsAlert) {
+                                el.style.transition = 'opacity 0.6s ease, transform 0.4s ease';
+                                el.style.opacity = '0';
+                                el.style.transform = 'translateY(-10px)';
+                                window.setTimeout(function() { bsAlert.close(); }, 600);
+                            }
                         } else {
                             el.classList.remove('show');
                             window.setTimeout(function(){ if (el && el.parentNode) el.parentNode.removeChild(el); }, 250);
