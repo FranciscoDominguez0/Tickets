@@ -91,6 +91,7 @@ if ($_POST) {
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Login - <?php echo APP_NAME; ?></title>
     <?php $loginCssV = (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: 1); ?>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo $loginCssV; ?>">
 </head>
 <?php
@@ -100,15 +101,30 @@ $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '
 $bodyStyle = $loginBg !== ''
     ? ('background-color: #f6f7fb; background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
     : '';
+
+// Dark Mode logic for Login (Cookie based since user is not logged in)
+$isPortalDarkModeEnabled = (string)getAppSetting('portal.dark_mode_enabled', '1') === '1';
+// If enabled, default to dark unless cookie explicitly says '0'
+if ($isPortalDarkModeEnabled) {
+    $isDarkMode = !isset($_COOKIE['client_dark_mode']) || $_COOKIE['client_dark_mode'] === '1';
+} else {
+    $isDarkMode = false;
+}
 ?>
-<body style="<?php echo $bodyStyle; ?>">
+<body style="<?php echo $bodyStyle; ?>" class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
+    <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <div class="support-center-wrapper">
         <!-- HEADER SUPERIOR -->
         <div class="support-header">
             <div class="support-header-left">
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
-            <div class="support-header-right">
+            <div class="support-header-right d-flex align-items-center gap-3">
+                <?php if ($isPortalDarkModeEnabled): ?>
+                <button type="button" id="loginDarkModeBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:999px; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-color: rgba(0,0,0,0.1);" title="Alternar modo oscuro">
+                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?>" style="font-size:16px;"></i>
+                </button>
+                <?php endif; ?>
                 <a href="#" class="header-login-link">Acceder</a>
             </div>
         </div>
@@ -282,6 +298,28 @@ $bodyStyle = $loginBg !== ''
                 } else {
                     this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
                 }
+            });
+        }
+        // Dark Mode Toggle for Login
+        var loginDarkBtn = document.getElementById('loginDarkModeBtn');
+        if (loginDarkBtn) {
+            loginDarkBtn.addEventListener('click', function() {
+                var isDark = document.body.classList.contains('dark-mode');
+                var nextDark = !isDark;
+                
+                if (nextDark) document.body.classList.add('dark-mode');
+                else document.body.classList.remove('dark-mode');
+                
+                var icon = this.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-sun', 'bi-moon-stars');
+                    icon.classList.add(nextDark ? 'bi-sun' : 'bi-moon-stars');
+                }
+                
+                // Save in cookie (30 days)
+                var d = new Date();
+                d.setTime(d.getTime() + (30*24*60*60*1000));
+                document.cookie = "client_dark_mode=" + (nextDark ? "1" : "0") + ";expires=" + d.toUTCString() + ";path=/";
             });
         }
     </script>

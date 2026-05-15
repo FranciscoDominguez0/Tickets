@@ -37,6 +37,7 @@ if ($_POST) {
         $log_level = (string)($_POST['log_level'] ?? 'notice');
         $purge_logs_months = (string)($_POST['purge_logs_months'] ?? '12');
         $show_avatars = isset($_POST['show_avatars']) ? '1' : '0';
+        $portal_dark_mode_enabled = isset($_POST['portal_dark_mode_enabled']) ? '1' : '0';
         $enable_rich_text = isset($_POST['enable_rich_text']) ? '1' : '0';
         $allow_iframe = trim((string)($_POST['allow_iframe'] ?? ''));
         $embed_whitelist = trim((string)($_POST['embed_whitelist'] ?? ''));
@@ -75,6 +76,7 @@ if ($_POST) {
             setAppSetting('system.log_level', $log_level);
             setAppSetting('system.purge_logs_months', $purge_logs_months);
             setAppSetting('system.show_avatars', $show_avatars);
+            setAppSetting('portal.dark_mode_enabled', $portal_dark_mode_enabled);
             setAppSetting('system.enable_rich_text', $enable_rich_text);
             setAppSetting('system.allow_iframe', $allow_iframe);
             setAppSetting('system.embed_whitelist', $embed_whitelist);
@@ -109,6 +111,7 @@ $page_size = (string)getAppSetting('system.page_size', '25');
 $log_level = (string)getAppSetting('system.log_level', 'notice');
 $purge_logs_months = (string)getAppSetting('system.purge_logs_months', '12');
 $show_avatars = (string)getAppSetting('system.show_avatars', '1') === '1';
+$portal_dark_mode_enabled = (string)getAppSetting('portal.dark_mode_enabled', '1') === '1';
 $enable_rich_text = (string)getAppSetting('system.enable_rich_text', '1') === '1';
 $allow_iframe = (string)getAppSetting('system.allow_iframe', '');
 $embed_whitelist = (string)getAppSetting('system.embed_whitelist', 'youtube.com, dailymotion.com, vimeo.com, player.vimeo.com, web.microsoftstream.com');
@@ -236,6 +239,14 @@ ob_start();
                             </label>
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="portal_dark_mode_enabled" id="portal-dark-mode-enabled" value="1" <?php echo $portal_dark_mode_enabled ? 'checked' : ''; ?>>
+                            <label class="form-check-label" for="portal-dark-mode-enabled">Habilitar Modo Oscuro en Portal
+                                <i class="bi bi-question-circle ms-1 text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Permite a los usuarios del portal activar el tema oscuro 'Premium'."></i>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -304,6 +315,7 @@ ob_start();
                                 <i class="bi bi-question-circle ms-1 text-muted" data-bs-toggle="tooltip" data-bs-placement="top" title="Mejora la identificación visual de participantes en conversaciones."></i>
                             </label>
                         </div>
+
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="enable_rich_text" id="enable-rich-text" value="1" <?php echo $enable_rich_text ? 'checked' : ''; ?>>
                             <label class="form-check-label" for="enable-rich-text">Activar Texto Enriquecido (HTML)

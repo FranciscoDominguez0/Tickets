@@ -17,9 +17,9 @@ body.dark-mode::before {
     inset: 0;
     pointer-events: none;
     background: 
-        radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, #050505 100%);
+        radial-gradient(circle at 10% 10%, rgba(239, 68, 68, 0.03) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(239, 68, 68, 0.01) 0%, transparent 40%),
+        #050505;
     z-index: -1;
     display: block !important;
 }
@@ -143,7 +143,7 @@ body.dark-mode .alert-danger {
 }
 body.dark-mode .pg-btn { background: #1a1a1a !important; border-color: #27272a !important; color: #e4e4e7 !important; }
 body.dark-mode .pg-btn:hover { background: #27272a !important; border-color: #3f3f46 !important; color: #fff !important; }
-body.dark-mode .pg-btn.pg-current { background: #3b82f6 !important; border-color: #3b82f6 !important; color: #fff !important; }
+body.dark-mode .pg-btn.pg-current { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
 body.dark-mode .notif-dd-head { background: linear-gradient(135deg, #1e293b, #0f172a) !important; }
 body.dark-mode .notif-item { background: #18181b !important; border-color: #27272a !important; color: #e5e5e5 !important; }
 body.dark-mode .notif-item:hover { background: #27272a !important; color: #fff !important;}
@@ -258,7 +258,7 @@ body.dark-mode .mobile-badge {
 body.dark-mode .bg-success, 
 body.dark-mode .text-bg-success { background: rgba(16, 185, 129, 0.15) !important; color: #6ee7b7 !important; border-color: rgba(16, 185, 129, 0.3) !important; }
 body.dark-mode .bg-primary, 
-body.dark-mode .text-bg-primary { background: rgba(59, 130, 246, 0.15) !important; color: #93c5fd !important; border-color: rgba(59, 130, 246, 0.3) !important; }
+body.dark-mode .text-bg-primary { background: rgba(239, 68, 68, 0.15) !important; color: #fca5a5 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
 body.dark-mode .bg-danger, 
 body.dark-mode .text-bg-danger { background: rgba(239, 68, 68, 0.15) !important; color: #fca5a5 !important; border-color: rgba(239, 68, 68, 0.3) !important; }
 body.dark-mode .bg-warning, 
@@ -281,7 +281,7 @@ body.dark-mode .note-editor { background: #1a1a1a !important; border-color: #2e2
 body.dark-mode .note-toolbar { background: #111113 !important; border-color: #2a2a2a !important; border-top-left-radius: 8px; border-top-right-radius: 8px; }
 body.dark-mode .note-btn { background: #27272a !important; border-color: #3f3f46 !important; color: #e4e4e7 !important; }
 body.dark-mode .note-btn:hover { background: #3f3f46 !important; color: #fff !important; }
-body.dark-mode .note-btn.active { background: #3b82f6 !important; border-color: #3b82f6 !important; color: #fff !important; }
+body.dark-mode .note-btn.active { background: #ef4444 !important; border-color: #ef4444 !important; color: #fff !important; }
 body.dark-mode .note-editable { background: #1a1a1a !important; color: #e5e5e5 !important; }
 body.dark-mode .note-placeholder { color: #52525b !important; }
 body.dark-mode .note-status-output { background: #111113 !important; border-top-color: #2a2a2a !important; }
@@ -297,20 +297,20 @@ body.dark-mode .dropdown-item {
     color: #e5e5e5 !important;
 }
 body.dark-mode .dropdown-item:hover {
-    background: #27272a !important;
+    background: rgba(239, 68, 68, 0.1) !important;
     color: #fff !important;
 }
 body.dark-mode .dropdown-divider {
     border-color: #27272a !important;
 }
-body.dark-mode .user-menu-btn {
-    background: #1a1a1a !important;
-    border-color: #2e2e2e !important;
-    color: #e4e4e7 !important;
+body.dark-mode .user-menu-btn:hover {
+    border-color: #ef4444 !important;
+    color: #fff !important;
 }
 body.dark-mode .uavatar {
-    background: #2563eb !important;
+    background: #ef4444 !important;
     color: #fff !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
 }
 
 /* Overlays and Popups in open.php */
@@ -335,7 +335,7 @@ body.dark-mode .creative-pop-btn.ghost:hover { background: #3f3f46 !important; c
 
 /* Custom Adjustments for open.php forms */
 body.dark-mode .attach-zone { background: #0a0a0a !important; border-color: #1a1a1a !important; }
-body.dark-mode .attach-zone:hover { border-color: #3b82f6 !important; background: rgba(37, 99, 235, 0.05) !important; }
+body.dark-mode .attach-zone:hover { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.05) !important; }
 body.dark-mode .attach-text { color: #a1a1aa !important; }
 body.dark-mode .attach-item,
 body.dark-mode .dz-preview-card { 
@@ -397,18 +397,31 @@ body.dark-mode .form-label {
 /* Creative Profile Touches */
 body.dark-mode .profile-hero,
 body.dark-mode .page-header {
-    background: linear-gradient(135deg, #0f172a 0%, #020617 100%) !important;
-    border-color: rgba(255,255,255,0.05) !important;
+    background: #0a0a0a !important;
+    border-color: #1a1a1a !important;
     position: relative;
     overflow: hidden;
-    border-left: 6px solid #3b82f6 !important;
-    box-shadow: inset 0 0 100px rgba(37, 99, 235, 0.1) !important;
+    border-left: 6px solid #ef4444 !important;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .page-header .btn-light {
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+body.dark-mode .page-header .btn-light:hover {
+    background: #dc2626 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3) !important;
 }
 body.dark-mode .profile-hero::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="%233B82F6" fill-opacity="0.05" d="M44.7,-76.4C58.1,-69.2,69.2,-58.1,77.3,-44.7C85.4,-31.3,90.5,-15.7,89.2,-0.7C88,14.2,80.4,28.4,71.2,40.4C62,52.4,51.2,62.2,38.6,70.5C26,78.8,11.6,85.6,-3.1,90.9C-17.8,96.3,-32.8,100.2,-46.6,95.1C-60.4,90.1,-73,76,-81.4,60.2C-89.8,44.4,-94,26.9,-93.2,10.2C-92.4,-6.5,-86.6,-22.4,-78.2,-36.4C-69.8,-50.4,-58.8,-62.5,-45.4,-69.7C-32,-76.9,-16,-79.2,-0.5,-78.3C15,-77.4,31.3,-83.6,44.7,-76.4Z" transform="translate(100 100)" /></svg>') no-repeat center;
+    background: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><path fill="%23EF4444" fill-opacity="0.05" d="M44.7,-76.4C58.1,-69.2,69.2,-58.1,77.3,-44.7C85.4,-31.3,90.5,-15.7,89.2,-0.7C88,14.2,80.4,28.4,71.2,40.4C62,52.4,51.2,62.2,38.6,70.5C26,78.8,11.6,85.6,-3.1,90.9C-17.8,96.3,-32.8,100.2,-46.6,95.1C-60.4,90.1,-73,76,-81.4,60.2C-89.8,44.4,-94,26.9,-93.2,10.2C-92.4,-6.5,-86.6,-22.4,-78.2,-36.4C-69.8,-50.4,-58.8,-62.5,-45.4,-69.7C-32,-76.9,-16,-79.2,-0.5,-78.3C15,-77.4,31.3,-83.6,44.7,-76.4Z" transform="translate(100 100)" /></svg>') no-repeat center;
     background-size: 150%;
     opacity: 0.2;
     pointer-events: none;
@@ -435,17 +448,17 @@ body.dark-mode .profile-hero::after {
     pointer-events: none;
 }
 body.dark-mode .profile-hero-avatar {
-    background: linear-gradient(135deg, #2563eb, #0ea5e9) !important;
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
     border-color: rgba(255,255,255,0.2) !important;
     color: #fff !important;
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3) !important;
 }
 body.dark-mode .profile-hero-name { color: #fff !important; }
 body.dark-mode .profile-hero-email { color: #94a3b8 !important; }
 body.dark-mode .profile-badge {
-    background: rgba(37, 99, 235, 0.12) !important;
-    border-color: rgba(37, 99, 235, 0.25) !important;
-    color: #93c5fd !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.25) !important;
+    color: #fca5a5 !important;
 }
 body.dark-mode .content-card,
 body.dark-mode .form-card {
@@ -506,9 +519,9 @@ body.dark-mode .ticket-view-entry .entry-body * { color: #d1d5db !important; bac
 
 /* Buttons styling for better contrast */
 body.dark-mode .btn-primary {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    background: linear-gradient(135deg, #ef4444, #991b1b) !important;
     border: none !important;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4) !important;
     position: relative;
     overflow: hidden;
 }
@@ -523,17 +536,17 @@ body.dark-mode .btn-primary::after {
 body.dark-mode .btn-primary:hover::after { opacity: 1; }
 
 body.dark-mode .btn-primary:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5) !important;
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5) !important;
 }
 
 body.dark-mode .btn-outline-primary {
-    color: #60a5fa !important;
-    border-color: #3b82f6 !important;
+    color: #fca5a5 !important;
+    border-color: #ef4444 !important;
 }
 body.dark-mode .btn-outline-primary:hover {
-    background: #3b82f6 !important;
+    background: #ef4444 !important;
     color: #fff !important;
 }
 
@@ -559,3 +572,109 @@ body.dark-mode .mobile-badge[style*="background: #eff6ff"] {
     color: #93c5fd !important;
 }
 
+
+/* Login/Registrar Page Dark Mode Styles - ELITE BLACK FIXED */
+body.dark-mode .support-center-wrapper {
+    background: #000000 !important;
+    border-color: #1a1a1a !important;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode .support-header {
+    background: #000000 !important;
+    border-bottom: 1px solid #1a1a1a !important;
+}
+
+body.dark-mode .support-nav {
+    background: #000000 !important;
+    border-bottom: 1px solid #1a1a1a !important;
+}
+
+body.dark-mode .nav-item.active {
+    color: #fff !important;
+    background: #0a0a0a !important;
+    border-bottom-color: #ef4444 !important;
+}
+
+body.dark-mode .login-panel::before {
+    background: radial-gradient(900px circle at 12% 0%, rgba(239, 68, 68, 0.05), transparent 55%) !important;
+}
+
+body.dark-mode .login-panel-left {
+    background: #000000 !important;
+}
+
+body.dark-mode .login-panel-right {
+    border-left: 1px solid #1a1a1a !important;
+    background: 
+        radial-gradient(620px circle at 18% 22%, rgba(239, 68, 68, 0.15), transparent 70%),
+        radial-gradient(780px circle at 85% 85%, rgba(239, 68, 68, 0.2), transparent 75%),
+        linear-gradient(145deg, #000000 0%, #050505 40%, #2a0a0a 100%) !important;
+    color: #fff !important;
+}
+
+body.dark-mode .login-panel-right::before,
+body.dark-mode .login-panel-right::after {
+    display: none !important;
+}
+
+body.dark-mode .login-form-title {
+    color: #ffffff !important;
+}
+
+body.dark-mode .login-form-subtitle,
+body.dark-mode .welcome-text {
+    color: #71717a !important;
+}
+
+body.dark-mode .form-group label {
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .form-group input {
+    background: #0a0a0a !important;
+    border: 1px solid #1a1a1a !important;
+    color: #fff !important;
+}
+
+body.dark-mode .form-group input::placeholder {
+    color: #3f3f46 !important;
+}
+
+body.dark-mode .form-group input:focus {
+    background: #050505 !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+body.dark-mode .btn-login {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+    border: none !important;
+    color: #fff !important;
+}
+
+body.dark-mode .btn-login:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3) !important;
+}
+
+body.dark-mode .register-text, 
+body.dark-mode .agent-text {
+    color: #52525b !important;
+}
+
+body.dark-mode .support-footer {
+    background: #000000 !important;
+    border-top: 1px solid #1a1a1a !important;
+}
+
+body.dark-mode .copyright {
+    color: #27272a !important;
+}
+
+body.dark-mode .lock-icon {
+    background: #050505 !important;
+    border-color: #1a1a1a !important;
+    color: #ffffff !important;
+}

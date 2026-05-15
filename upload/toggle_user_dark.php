@@ -9,6 +9,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Para usuarios logueados el modo oscuro siempre es válido
+if (isset($_SESSION['user_id'])) {
+    $canToggle = true;
+} else {
+    // Para login/público depende del superadmin
+    $isGlobalEnabled = (string)getAppSetting('portal.dark_mode_enabled', '1') === '1';
+    $canToggle = $isGlobalEnabled;
+}
+
+if (!$canToggle) {
+    echo json_encode(['success' => false, 'error' => 'Funcionalidad desactivada']);
+    exit;
+}
+
 if (validateCSRF()) {
     $newVal = (string)($_POST['dark_mode'] ?? '0');
     $isDark = ($newVal === '1') ? 1 : 0;

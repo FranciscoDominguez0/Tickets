@@ -37,7 +37,7 @@ if (!isset($_SESSION['client_dark_mode'])) {
         } catch (Throwable $e) {}
     }
 }
-$isDarkMode = (int)($_SESSION['client_dark_mode'] ?? 0) === 1;
+$isDarkMode = (isset($_SESSION['client_dark_mode']) && (int)$_SESSION['client_dark_mode'] === 1);
 
 if (!function_exists('normalizeTopicMatchValue')) {
     function normalizeTopicMatchValue($value) {
@@ -1351,6 +1351,7 @@ if ($blockNewIfSignaturePending) {
                         </div>
                     </div>
                 </div>
+                <?php if (true): // Siempre disponible para usuarios logueados ?>
                 <form method="post" action="toggle_user_dark.php" class="d-inline" style="margin:0" id="clientDarkModeForm">
                     <?php csrfField(); ?>
                     <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
@@ -1359,6 +1360,7 @@ if ($blockNewIfSignaturePending) {
                         <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> user-theme-toggle-icon" style="font-size:16px;"></i>
                     </button>
                 </form>
+                <?php endif; ?>
                 <div class="dropdown">
                     <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>

@@ -123,6 +123,43 @@ if ($_POST) {
             .login-panel { padding: 22px !important; }
             .form-grid { grid-template-columns: 1fr !important; }
         }
+
+        /* Registrar specific Dark Mode adjustments */
+        body.dark-mode .map-btn {
+            background: #1e293b !important;
+            color: #e2e8f0 !important;
+            border-color: #334155 !important;
+        }
+        body.dark-mode .map-btn:hover {
+            background: #334155 !important;
+            border-color: #475569 !important;
+        }
+        body.dark-mode #mapModalOverlay div[style*="background:#fff"] {
+            background: #0f172a !important;
+            color: #fff !important;
+        }
+        body.dark-mode #mapModalOverlay h3,
+        body.dark-mode #mapModalOverlay div {
+            color: #f8fafc !important;
+        }
+        body.dark-mode #mapModalOverlay div[style*="background:#fff"],
+        body.dark-mode #mapModalOverlay div[style*="background:#f8fafc"] {
+            background: #0f172a !important;
+            border-color: #1e293b !important;
+        }
+        body.dark-mode #mapSearchInput {
+            background: #1e293b !important;
+            color: #fff !important;
+        }
+        body.dark-mode #btnCloseMap {
+            background: #334155 !important;
+            color: #e2e8f0 !important;
+        }
+        body.dark-mode #btnLocateMe {
+            background: #1e293b !important;
+            color: #fff !important;
+            border-color: #334155 !important;
+        }
     </style>
 </head>
 <?php
@@ -131,8 +168,19 @@ $loginBg = $bgMode === 'custom' ? (string)getBrandAssetUrl('login.background', '
 $bodyStyle = $loginBg !== ''
     ? ('background-image: linear-gradient(135deg, rgba(240, 244, 248, 0.92) 0%, rgba(226, 232, 240, 0.92) 100%), url(' . html($loginBg) . '); background-size: cover, cover; background-position: center, center; background-repeat: no-repeat, no-repeat;')
     : '';
+
+// Dark Mode logic for Registrar (Cookie based since user is not logged in)
+$isPortalDarkModeEnabled = (string)getAppSetting('portal.dark_mode_enabled', '1') === '1';
+// If enabled, default to dark unless cookie explicitly says '0'
+if ($isPortalDarkModeEnabled) {
+    $isDarkMode = !isset($_COOKIE['client_dark_mode']) || $_COOKIE['client_dark_mode'] === '1';
+} else {
+    $isDarkMode = false;
+}
 ?>
-<body style="<?php echo $bodyStyle; ?>">
+<body style="<?php echo $bodyStyle; ?>" class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <div class="support-center-wrapper">
         <!-- HEADER SUPERIOR -->
         <div class="support-header">
@@ -140,7 +188,12 @@ $bodyStyle = $loginBg !== ''
                 <?php $brandLogo = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png'); ?>
                 <img src="<?php echo html($brandLogo); ?>" alt="VIGITEC PANAMA" class="vigitec-logo">
             </div>
-            <div class="support-header-right">
+            <div class="support-header-right d-flex align-items-center gap-3">
+                <?php if ($isPortalDarkModeEnabled): ?>
+                <button type="button" id="loginDarkModeBtn" class="btn btn-outline-secondary btn-sm" style="border-radius:999px; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center; border-color: rgba(255,255,255,0.15);" title="Alternar modo oscuro">
+                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?>" style="font-size:16px;"></i>
+                </button>
+                <?php endif; ?>
                 <a href="login.php" class="header-login-link">Inicia Sesión</a>
             </div>
         </div>
@@ -561,6 +614,28 @@ $bodyStyle = $loginBg !== ''
             }
 
         })();
+        // Dark Mode Toggle for Registrar
+        var loginDarkBtn = document.getElementById('loginDarkModeBtn');
+        if (loginDarkBtn) {
+            loginDarkBtn.addEventListener('click', function() {
+                var isDark = document.body.classList.contains('dark-mode');
+                var nextDark = !isDark;
+                
+                if (nextDark) document.body.classList.add('dark-mode');
+                else document.body.classList.remove('dark-mode');
+                
+                var icon = this.querySelector('i');
+                if (icon) {
+                    icon.classList.remove('bi-sun', 'bi-moon-stars');
+                    icon.classList.add(nextDark ? 'bi-sun' : 'bi-moon-stars');
+                }
+                
+                // Save in cookie (30 days)
+                var d = new Date();
+                d.setTime(d.getTime() + (30*24*60*60*1000));
+                document.cookie = "client_dark_mode=" + (nextDark ? "1" : "0") + ";expires=" + d.toUTCString() + ";path=/";
+            });
+        }
     </script>
 </body>
 </html>
