@@ -204,6 +204,22 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
 <script src="../js/scp.js"></script>
 <script>
     (function(){
+        // Auto-dismiss alerts after 5 seconds
+        var alerts = document.querySelectorAll('.alert-dismissible');
+        alerts.forEach(function(alert) {
+            setTimeout(function() {
+                var bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                if (bsAlert) {
+                    // Start fade out effect if possible
+                    alert.style.transition = 'opacity 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        bsAlert.close();
+                    }, 500);
+                }
+            }, 5000);
+        });
+
         var form = document.querySelector('[data-superadmin-dark-toggle-form]');
         if (!form) return;
         var btn = form.querySelector('[data-superadmin-dark-toggle-btn]');
