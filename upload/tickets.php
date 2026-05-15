@@ -580,7 +580,22 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .tickets-table .table tbody tr:hover { background: #f8fafc; }
         .tickets-table .table tbody tr { transition: background .12s ease; }
         .ticket-new-highlight { background: rgba(37, 99, 235, 0.08) !important; box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.25); }
-        .ticket-new-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(16, 185, 129, 0.14); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.25); margin-left: 10px; }
+        .ticket-new-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 2px 10px; 
+            border-radius: 999px; 
+            font-size: 0.72rem; 
+            font-weight: 900; 
+            letter-spacing: 0.04em; 
+            text-transform: uppercase; 
+            background: rgba(37, 99, 235, 0.1); 
+            color: #1d4ed8; 
+            border: 1px solid rgba(37, 99, 235, 0.2); 
+            margin-left: 10px; 
+        }
+
         .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
         .mono { font-variant-numeric: tabular-nums; }
         .dropdown-menu .notif-item:hover { background: #f1f5f9; }

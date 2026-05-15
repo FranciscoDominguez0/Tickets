@@ -671,7 +671,9 @@ function humanSize($bytes) {
             flex-direction: column;
             max-width: 800px;
             width: 100%;
+            min-width: 0;
         }
+
 
         .ticket-view-entry.user .entry-bubble-wrapper {
             align-items: flex-end;
@@ -781,9 +783,11 @@ function humanSize($bytes) {
             border: 1px solid #f1f5f9;
             border-radius: 12px;
             padding: 10px 14px;
-            max-width: 380px;
+            max-width: 100%;
+            min-width: 0;
             transition: all 0.2s;
         }
+
 
         .chat-att-item:hover {
             background: #f1f5f9;
@@ -802,13 +806,25 @@ function humanSize($bytes) {
             min-width: 0;
         }
 
+
         .chat-att-info .att-filename {
             color: #0f172a;
             font-weight: 700;
             font-size: 0.88rem;
             text-decoration: none;
             display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
         }
+        @media (max-width: 600px) {
+            .chat-att-info .att-filename {
+                max-width: 180px;
+            }
+        }
+
+
 
         .chat-att-info .att-filename:hover {
             color: #2563eb;
@@ -2595,7 +2611,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#000';
+        ctx.strokeStyle = <?php echo $isDarkMode ? "'#ffffff'" : "'#000000'"; ?>;
     }
 
     modalEl.addEventListener('shown.bs.modal', function () {
