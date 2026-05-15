@@ -17,6 +17,23 @@ $success = '';
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
+if (!isset($_SESSION['client_dark_mode'])) {
+    $_SESSION['client_dark_mode'] = 0;
+    if (isset($mysqli) && $mysqli && !empty($_SESSION['user_id'])) {
+        $uidT = (int)$_SESSION['user_id'];
+        try {
+            $colRes = $mysqli->query("SHOW COLUMNS FROM users LIKE 'dark_mode'");
+            if ($colRes && $colRes->num_rows > 0) {
+                $rs = $mysqli->query("SELECT dark_mode FROM users WHERE id = $uidT");
+                if ($rs && $r = $rs->fetch_assoc()) {
+                    $_SESSION['client_dark_mode'] = (int)$r['dark_mode'];
+                }
+            }
+        } catch (Throwable $e) {}
+    }
+}
+$isDarkMode = (int)($_SESSION['client_dark_mode'] ?? 0) === 1;
+
 // Obtener datos completos del usuario
 $stmt = $mysqli->prepare('SELECT * FROM users WHERE id = ? AND empresa_id = ?');
 $uid = (int)($_SESSION['user_id'] ?? 0);
@@ -74,6 +91,7 @@ if ($_POST) {
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/client_dark.css">
     <style>
         body {
             background: #f6f7fb;
@@ -342,7 +360,7 @@ if ($_POST) {
     
     </style>
 </head>
-<body>
+<body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
     <?php
         $fullName = trim((string)($userData['firstname'] ?? '') . ' ' . (string)($userData['lastname'] ?? ''));
         $companyName = trim((string)getAppSetting('company.name', ''));
@@ -400,6 +418,14 @@ if ($_POST) {
                         </div>
                     </div>
                 </div>
+                <form method="post" action="toggle_user_dark.php" class="d-inline" style="margin:0" id="clientDarkModeForm">
+                    <?php csrfField(); ?>
+                    <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
+                    <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'profile.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
+                    <button type="submit" class="btn btn-outline-light btn-sm user-theme-toggle" id="clientDarkModeBtn" title="Modo oscuro" style="border-radius:999px; font-weight:700; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                        <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> user-theme-toggle-icon" style="font-size:16px;"></i>
+                    </button>
+                </form>
                 <div class="dropdown">
                     <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="uavatar" aria-hidden="true"><?php echo html($initials); ?></span>
@@ -637,6 +663,57 @@ if ($_POST) {
 
             poll();
             window.setInterval(poll, POLL_MS);
+        })();
+
+        // Dark Mode Toggle
+        (function(){
+            var form = document.getElementById('clientDarkModeForm');
+            if (!form) return;
+            var btn = document.getElementById('clientDarkModeBtn');
+            var body = document.body;
+            var input = form.querySelector('input[name="dark_mode"]');
+            var icon = form.querySelector('.user-theme-toggle-icon');
+
+            function setUi(isDark) {
+                if (isDark) body.classList.add('dark-mode');
+                else body.classList.remove('dark-mode');
+                if (icon) {
+                    icon.classList.remove('bi-sun', 'bi-moon-stars');
+                    icon.classList.add(isDark ? 'bi-sun' : 'bi-moon-stars');
+                }
+                if (input) input.value = isDark ? '0' : '1';
+            }
+
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                var isDark = body.classList.contains('dark-mode');
+                var nextDark = !isDark;
+                setUi(nextDark);
+                try {
+                    if (btn) btn.disabled = true;
+                    var fd = new FormData(form);
+                    fd.set('dark_mode', nextDark ? '1' : '0');
+                    fetch(form.getAttribute('action') || 'toggle_user_dark.php', {
+                        method: 'POST',
+                        body: fd,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                    }).then(function(r){ return r.json().catch(function(){ return null; }); })
+                      .then(function(data){
+                          if (data && typeof data.dark_mode !== 'undefined') {
+                              setUi(String(data.dark_mode) === '1' || data.dark_mode === 1);
+                          }
+                      })
+                      .catch(function(){
+                          setUi(isDark);
+                      })
+                      .finally(function(){
+                          if (btn) btn.disabled = false;
+                      });
+                } catch (err) {
+                    setUi(isDark);
+                    if (btn) btn.disabled = false;
+                }
+            });
         })();
     </script>
 </body>

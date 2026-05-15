@@ -191,6 +191,23 @@ if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_co
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
+if (!isset($_SESSION['client_dark_mode'])) {
+    $_SESSION['client_dark_mode'] = 0;
+    if (isset($mysqli) && $mysqli && !empty($_SESSION['user_id'])) {
+        $uidT = (int)$_SESSION['user_id'];
+        try {
+            $colRes = $mysqli->query("SHOW COLUMNS FROM users LIKE 'dark_mode'");
+            if ($colRes && $colRes->num_rows > 0) {
+                $rs = $mysqli->query("SELECT dark_mode FROM users WHERE id = $uidT");
+                if ($rs && $r = $rs->fetch_assoc()) {
+                    $_SESSION['client_dark_mode'] = (int)$r['dark_mode'];
+                }
+            }
+        } catch (Throwable $e) {}
+    }
+}
+$isDarkMode = (int)($_SESSION['client_dark_mode'] ?? 0) === 1;
+
 $flashMsg = '';
 if (!empty($_SESSION['flash_msg'])) {
     $flashMsg = (string)$_SESSION['flash_msg'];
@@ -849,6 +866,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             .tickets-table { padding: 0 12px 12px; }
         }
     </style>
+    <link rel="stylesheet" href="css/client_dark.css">
     <?php if ($preventOpenBack || $flashMsg !== ''): ?>
     <script>
         (function(){
@@ -869,7 +887,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <?php endif; ?>
 
 </head>
-<body>
+<body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
     <?php
         $navUserName = trim((string)($user['name'] ?? ''));
         $companyName = trim((string)getAppSetting('company.name', ''));
@@ -949,6 +967,14 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         </div>
                     </div>
                 </div>
+                <form method="post" action="toggle_user_dark.php" class="d-inline" style="margin:0" id="clientDarkModeForm">
+                    <?php csrfField(); ?>
+                    <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
+                    <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'tickets.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
+                    <button type="submit" class="btn btn-outline-light btn-sm user-theme-toggle" id="clientDarkModeBtn" title="Modo oscuro" style="border-radius:999px; font-weight:700; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                        <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> user-theme-toggle-icon" style="font-size:16px;"></i>
+                    </button>
+                </form>
                 <div class="dropdown">
                     <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
@@ -1420,6 +1446,57 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     console.log('Error showing signature toast:', e);
                 }
             };
+
+            // Dark Mode Toggle
+            (function(){
+                var form = document.getElementById('clientDarkModeForm');
+                if (!form) return;
+                var btn = document.getElementById('clientDarkModeBtn');
+                var body = document.body;
+                var input = form.querySelector('input[name="dark_mode"]');
+                var icon = form.querySelector('.user-theme-toggle-icon');
+
+                function setUi(isDark) {
+                    if (isDark) body.classList.add('dark-mode');
+                    else body.classList.remove('dark-mode');
+                    if (icon) {
+                        icon.classList.remove('bi-sun', 'bi-moon-stars');
+                        icon.classList.add(isDark ? 'bi-sun' : 'bi-moon-stars');
+                    }
+                    if (input) input.value = isDark ? '0' : '1';
+                }
+
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var isDark = body.classList.contains('dark-mode');
+                    var nextDark = !isDark;
+                    setUi(nextDark);
+                    try {
+                        if (btn) btn.disabled = true;
+                        var fd = new FormData(form);
+                        fd.set('dark_mode', nextDark ? '1' : '0');
+                        fetch(form.getAttribute('action') || 'toggle_user_dark.php', {
+                            method: 'POST',
+                            body: fd,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                        }).then(function(r){ return r.json().catch(function(){ return null; }); })
+                          .then(function(data){
+                              if (data && typeof data.dark_mode !== 'undefined') {
+                                  setUi(String(data.dark_mode) === '1' || data.dark_mode === 1);
+                              }
+                          })
+                          .catch(function(){
+                              setUi(isDark);
+                          })
+                          .finally(function(){
+                              if (btn) btn.disabled = false;
+                          });
+                    } catch (err) {
+                        setUi(isDark);
+                        if (btn) btn.disabled = false;
+                    }
+                });
+            })();
 
             poll(true);
             window.setInterval(function(){ poll(false); }, POLL_MS);
