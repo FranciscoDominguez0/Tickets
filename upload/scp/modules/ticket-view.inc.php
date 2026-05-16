@@ -354,110 +354,99 @@ if ($ticketClientSignaturePath !== '') {
         <div class="ticket-view-actions">
             <a href="<?php echo html($backUrlFinal); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>><i class="bi bi-flag"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>>
+                    <i class="bi bi-flag"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
+                    <div class="creative-dropdown-header">Cambiar Estado</div>
                     <?php
-                    $st = $mysqli->query("SELECT id, name FROM ticket_status ORDER BY order_by, id");
+                    $st = $mysqli->query("SELECT id, name, color FROM ticket_status ORDER BY order_by, id");
                     while ($row = $st->fetch_assoc()): ?>
                         <?php
                         $stName = strtolower(trim((string)($row['name'] ?? '')));
                         $isClosing = ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved')));
                         $allowed = $isClosing ? $canTicketClose : $canTicketEdit;
+                        
+                        $statusIcon = 'bi-circle-fill';
+                        $dbColor = trim((string)($row['color'] ?? ''));
+                        $statusColor = ($dbColor !== '') ? $dbColor : '#94a3b8';
+
+                        if (str_contains($stName, 'abiert') || str_contains($stName, 'open')) $statusIcon = 'bi-record-circle-fill';
+                        elseif ($isClosing) $statusIcon = 'bi-check-circle-fill';
+                        elseif (str_contains($stName, 'espera') || str_contains($stName, 'wait')) $statusIcon = 'bi-pause-circle-fill';
+                        elseif (str_contains($stName, 'pendient')) $statusIcon = 'bi-clock-fill';
                         ?>
-                        <li>
-                            <a class="dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?> <?php echo ($allowed && $isClosing) ? 'js-status-close' : ''; ?>"
-                               <?php
-                               if ($allowed && $isClosing) {
-                                   echo 'href="#" data-close-status-id="' . (int)$row['id'] . '" data-close-status-name="' . html($row['name']) . '"';
-                               } elseif ($allowed) {
-                                   echo 'href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"';
-                               } else {
-                                   echo 'href="#" tabindex="-1" aria-disabled="true"';
-                               }
-                               ?>>
-                                <?php echo html($row['name']); ?>
-                            </a>
-                        </li>
+                        <a class="creative-dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?> <?php echo ($allowed && $isClosing) ? 'js-status-close' : ''; ?>"
+                           <?php
+                           if ($allowed && $isClosing) {
+                               echo 'href="#" data-close-status-id="' . (int)$row['id'] . '" data-close-status-name="' . html($row['name']) . '"';
+                           } elseif ($allowed) {
+                               echo 'href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"';
+                           } else {
+                               echo 'href="#" tabindex="-1" aria-disabled="true"';
+                           }
+                           ?>>
+                            <div class="creative-dropdown-icon">
+                                <i class="bi <?php echo $statusIcon; ?>" style="color: <?php echo $statusColor; ?>; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));"></i>
+                            </div>
+                            <span><?php echo html($row['name']); ?></span>
+                            <i class="bi bi-check-circle-fill creative-dropdown-check"></i>
+                        </a>
                     <?php endwhile; ?>
-                </ul>
+                </div>
             </div>
+
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo $canTicketAssign ? 'Asignar' : 'Sin permiso'; ?>" <?php echo $canTicketAssign ? '' : 'disabled'; ?>><i class="bi bi-person"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item <?php echo empty($t['staff_id']) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=0">— Sin asignar —</a></li>
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo $canTicketAssign ? 'Asignar' : 'Sin permiso'; ?>" <?php echo $canTicketAssign ? '' : 'disabled'; ?>>
+                    <i class="bi bi-person"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
+                    <div class="creative-dropdown-header">Asignar Agente</div>
+                    <a href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=0" class="creative-dropdown-item <?php echo empty($t['staff_id']) ? 'active' : ''; ?>">
+                        <div class="creative-dropdown-icon"><i class="bi bi-person-dash"></i></div>
+                        <span>— Sin asignar —</span>
+                        <i class="bi bi-check-circle-fill creative-dropdown-check"></i>
+                    </a>
                     <?php
                     $tdept = (int) ($t['dept_id'] ?? 0);
                     $gd = isset($generalDeptId) ? (int) $generalDeptId : 0;
                     $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
                     $st = null;
 
-                    // Check if staff_departments table exists
                     $hasStaffDepartmentsTable = false;
                     if (isset($mysqli) && $mysqli) {
                         try {
                             $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
                             $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-                        } catch (Throwable $e) {
-                            $hasStaffDepartmentsTable = false;
-                        }
+                        } catch (Throwable $e) {}
                     }
 
-                    // Regla: General NO es comodín. Solo listar agentes del mismo dept_id.
-                    // Ticket General => solo agentes General.
-                    // Ticket de otro dept => solo agentes de ese dept.
                     if ($tdept > 0) {
                         if ($hasStaffDepartmentsTable) {
-                            // New model: use staff_departments for multi-department support
-                            $stmtSt = $mysqli->prepare(
-                                "SELECT DISTINCT s.id, s.firstname, s.lastname FROM staff s "
-                                . "JOIN staff_departments sd ON sd.staff_id = s.id "
-                                . "WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? "
-                                . "ORDER BY s.firstname, s.lastname"
-                            );
-                            if ($stmtSt) {
-                                $stmtSt->bind_param('ii', $empresaId, $tdept);
-                                $stmtSt->execute();
-                                $st = $stmtSt->get_result();
-                            }
-                        } elseif ($gd > 0) {
-                            // Legacy model with general dept fallback
-                            $stmtSt = $mysqli->prepare(
-                                "SELECT id, firstname, lastname FROM staff "
-                                . "WHERE empresa_id = ? AND is_active = 1 "
-                                . "AND COALESCE(NULLIF(dept_id, 0), ?) = ? "
-                                . "ORDER BY firstname, lastname"
-                            );
-                            if ($stmtSt) {
-                                $stmtSt->bind_param('iii', $empresaId, $gd, $tdept);
-                                $stmtSt->execute();
-                                $st = $stmtSt->get_result();
-                            }
+                            $stmtSt = $mysqli->prepare("SELECT DISTINCT s.id, s.firstname, s.lastname FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? ORDER BY s.firstname, s.lastname");
+                            if ($stmtSt) { $stmtSt->bind_param('ii', $empresaId, $tdept); $stmtSt->execute(); $st = $stmtSt->get_result(); }
                         } else {
-                            $stmtSt = $mysqli->prepare(
-                                "SELECT id, firstname, lastname FROM staff "
-                                . "WHERE empresa_id = ? AND is_active = 1 AND dept_id = ? "
-                                . "ORDER BY firstname, lastname"
-                            );
-                            if ($stmtSt) {
-                                $stmtSt->bind_param('ii', $empresaId, $tdept);
-                                $stmtSt->execute();
-                                $st = $stmtSt->get_result();
-                            }
+                            $stmtSt = $mysqli->prepare("SELECT id, firstname, lastname FROM staff WHERE empresa_id = ? AND is_active = 1 AND (dept_id = ? OR dept_id = ?) ORDER BY firstname, lastname");
+                            if ($stmtSt) { $stmtSt->bind_param('iii', $empresaId, $tdept, $gd); $stmtSt->execute(); $st = $stmtSt->get_result(); }
                         }
                     } else {
                         $stmtSt = $mysqli->prepare("SELECT id, firstname, lastname FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname");
-                        if ($stmtSt) {
-                            $stmtSt->bind_param('i', $empresaId);
-                            $stmtSt->execute();
-                            $st = $stmtSt->get_result();
-                        }
+                        if ($stmtSt) { $stmtSt->bind_param('i', $empresaId); $stmtSt->execute(); $st = $stmtSt->get_result(); }
                     }
 
-                    while ($st && $row = $st->fetch_assoc()): ?>
-                        <li><a class="dropdown-item <?php echo (int)$row['id'] === (int)($t['staff_id'] ?? 0) ? 'active' : ''; ?>" href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=<?php echo (int)$row['id']; ?>"><?php echo html(trim($row['firstname'] . ' ' . $row['lastname'])); ?></a></li>
+                    while ($st && $row = $st->fetch_assoc()): 
+                        $initials = strtoupper(substr($row['firstname'], 0, 1) . substr($row['lastname'], 0, 1));
+                        $isActive = (int)$row['id'] === (int)($t['staff_id'] ?? 0);
+                    ?>
+                    <a href="tickets.php?id=<?php echo $tid; ?>&action=assign&staff_id=<?php echo (int)$row['id']; ?>" class="creative-dropdown-item <?php echo $isActive ? 'active' : ''; ?>">
+                        <div class="creative-dropdown-avatar"><?php echo html($initials); ?></div>
+                        <span><?php echo html(trim($row['firstname'] . ' ' . $row['lastname'])); ?></span>
+                        <i class="bi bi-check-circle-fill creative-dropdown-check"></i>
+                    </a>
                     <?php endwhile; ?>
-                </ul>
+                </div>
             </div>
+
             <?php if ($canTicketTransfer): ?>
                 <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
             <?php endif; ?>
@@ -465,21 +454,63 @@ if ($ticketClientSignaturePath !== '') {
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
 
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración"><i class="bi bi-gear"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalOwner"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-person-badge me-2"></i>Cambiar Propietario</a></li>
-                    <li><a class="dropdown-item <?php echo $canTicketMerge ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketMerge ? 'data-bs-toggle="modal" data-bs-target="#modalMerge"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-link-45deg me-2"></i>Unir Tiquetes</a></li>
-                    <li><a class="dropdown-item <?php echo $canTicketLink ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketLink ? 'data-bs-toggle="modal" data-bs-target="#modalLinked"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-link me-2"></i>Tickets vinculados</a></li>
-                    <li><a class="dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" <?php echo $canTicketMark ? '' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-check-circle me-2"></i>Marcar como contestados</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-share me-2"></i>Administrar referidos</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-file-text me-2"></i>Gestionar formularios</a></li>
-                    <li><a class="dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-people me-2"></i>Gestionar Colaboradores</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-envelope-x me-2"></i>Bloquear Email &lt;<?php echo html($t['user_email']); ?>&gt;</a></li>
-                    <li><a class="dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'tabindex="-1" aria-disabled="true"'; ?>><i class="bi bi-trash me-2"></i>Borrar Ticket</a></li>
-                </ul>
+                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración">
+                    <i class="bi bi-gear"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
+                    <div class="creative-dropdown-header">Opciones de Ticket</div>
+                    
+                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalOwner"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-person-badge"></i></div>
+                        <span>Cambiar Propietario</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item <?php echo $canTicketMerge ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketMerge ? 'data-bs-toggle="modal" data-bs-target="#modalMerge"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-link-45deg"></i></div>
+                        <span>Unir Tiquetes</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item <?php echo $canTicketLink ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketLink ? 'data-bs-toggle="modal" data-bs-target="#modalLinked"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-link"></i></div>
+                        <span>Tickets vinculados</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" <?php echo $canTicketMark ? '' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-check-circle"></i></div>
+                        <span>Marcar como contestados</span>
+                    </a>
+
+                    <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
+                    
+                    <a class="creative-dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalReferrals">
+                        <div class="creative-dropdown-icon"><i class="bi bi-share"></i></div>
+                        <span>Administrar referidos</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item" href="#">
+                        <div class="creative-dropdown-icon"><i class="bi bi-file-text"></i></div>
+                        <span>Gestionar formularios</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-people"></i></div>
+                        <span>Gestionar Colaboradores</span>
+                    </a>
+
+                    <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
+                    
+                    <a class="creative-dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon text-danger" style="background: rgba(239, 68, 68, 0.1);"><i class="bi bi-envelope-x"></i></div>
+                        <span>Bloquear Email</span>
+                    </a>
+                    
+                    <a class="creative-dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                        <div class="creative-dropdown-icon text-danger" style="background: rgba(239, 68, 68, 0.1);"><i class="bi bi-trash"></i></div>
+                        <span>Borrar Ticket</span>
+                    </a>
+                </div>
             </div>
+
             <?php if ($canTicketClose && empty($t['closed'])): ?>
                 <button type="button" class="btn-icon <?php echo !empty($t['signature_requested']) ? 'text-warning' : ''; ?>" 
                         title="<?php echo !empty($t['signature_requested']) ? 'Firma ya solicitada' : 'Solicitar firma del cliente'; ?>"
@@ -2791,3 +2822,89 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 </script>
+
+<!-- Modal Administrar Referidos -->
+<div class="modal fade" id="modalReferrals" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header border-0 bg-dark text-white py-3">
+                <h5 class="modal-title fw-bold"><i class="bi bi-share me-2"></i>Administrar Referidos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">Los agentes o departamentos referidos podrán ver y participar en este ticket sin ser los propietarios primarios.</p>
+                
+                <form action="tickets.php?id=<?php echo $tid; ?>" method="POST" class="mb-4 p-3 rounded-3" style="background: rgba(0,0,0,0.02); border: 1px dashed rgba(0,0,0,0.1);">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                    <input type="hidden" name="action" value="referral_add">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Referir a Departamento</label>
+                        <select name="ref_dept_id" class="form-select border-0 shadow-sm">
+                            <option value="0">— Seleccionar Departamento —</option>
+                            <?php
+                            $eid_ref = (int)empresaId();
+                            $resD = $mysqli->query("SELECT id, name FROM departments WHERE empresa_id = $eid_ref AND is_active = 1 ORDER BY name");
+                            if ($resD) {
+                                while($d = $resD->fetch_assoc()) {
+                                    echo "<option value='".(int)$d['id']."'>".html($d['name'])."</option>";
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <div class="text-center my-2 text-muted small">o</div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Referir a Agente</label>
+                        <select name="ref_staff_id" class="form-select border-0 shadow-sm">
+                            <option value="0">— Seleccionar Agente —</option>
+                            <?php
+                            $resS = $mysqli->query("SELECT id, firstname, lastname FROM staff WHERE empresa_id = $eid_ref AND is_active = 1 ORDER BY firstname");
+                            if ($resS) {
+                                while($s = $resS->fetch_assoc()) {
+                                    echo "<option value='".(int)$s['id']."'>".html($s['firstname'].' '.$s['lastname'])."</option>";
+                                }
+                            }
+                            ?>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 fw-bold py-2 shadow-sm" style="border-radius: 10px;">
+                        <i class="bi bi-plus-lg me-2"></i>Agregar Referencia
+                    </button>
+                </form>
+
+                <h6 class="fw-bold mb-3 small text-uppercase letter-spacing-1">Referidos Actuales</h6>
+                <div class="referrals-list">
+                    <?php if (empty($ticketView['referrals'])): ?>
+                        <div class="text-center py-4 text-muted border rounded-3 bg-light opacity-75">
+                            <i class="bi bi-info-circle mb-2 d-block fs-4"></i>
+                            No hay referidos para este ticket
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush border rounded-3">
+                            <?php foreach ($ticketView['referrals'] as $ref): ?>
+                                <div class="list-group-item d-flex align-items-center justify-content-between py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-light text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                            <i class="bi <?php echo $ref['dept_id'] ? 'bi-building' : 'bi-person'; ?>"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold small"><?php echo $ref['dept_id'] ? html($ref['dept_name']) : html($ref['firstname'].' '.$ref['lastname']); ?></div>
+                                            <div class="text-muted" style="font-size: 0.7rem;"><?php echo $ref['dept_id'] ? 'Departamento' : 'Agente'; ?></div>
+                                        </div>
+                                    </div>
+                                    <a href="tickets.php?id=<?php echo $tid; ?>&action=referral_delete&ref_id=<?php echo $ref['id']; ?>" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
