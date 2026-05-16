@@ -583,6 +583,15 @@ tr.ticket-row.is-selected td {
     box-sizing: border-box;
 }
 
+.ticket-view-entry .entry-meta-top {
+    font-size: 0.78rem;
+    color: #475569;
+    margin-bottom: 8px;
+    font-weight: 600;
+    display: block;
+}
+
+
 .ticket-view-entry.user .entry-content {
     background: #f1f5f9;
     border-color: #e2e8f0;
@@ -624,7 +633,8 @@ tr.ticket-row.is-selected td {
 
 .ticket-view-entry .entry-footer {
     font-size: 0.75rem;
-    color: #64748b;
+    color: #475569;
+
     margin-top: 8px;
     font-weight: 600;
     display: flex;

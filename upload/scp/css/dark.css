@@ -217,6 +217,20 @@ body.dark-mode .btn-close {
 }
 
 /* === TICKET VIEW ENTRIES (burbujas de chat) === */
+/* Ticket view entry footer (sent text) */
+body.dark-mode .ticket-view-entry .entry-footer {
+    color: #94a3b8 !important;
+}
+body.dark-mode .ticket-view-entry .entry-footer i.text-muted {
+    color: #60a5fa !important; /* Brighter blue for the checkmarks */
+}
+body.dark-mode .ticket-view-entry .author-name {
+    color: #f1f5f9 !important;
+}
+body.dark-mode .ticket-view-entry .entry-meta-top {
+    color: #94a3b8 !important;
+}
+
 body.dark-mode .ticket-view-entry .entry-content {
     background: linear-gradient(145deg, #18181b, #111113) !important;
     border: 1px solid #27272a !important;
@@ -938,6 +952,19 @@ body.dark-mode .tickets-filters .btn:hover {
 body.dark-mode .chip.chip-status {
     filter: brightness(0.85) !important;
 }
+
+/* --- Report Status Chips (Desktop & Mobile) --- */
+body.dark-mode .chip-report-pending {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+body.dark-mode .chip-report-done {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
 
 /* --- Mobile info sections (directory, users, orgs) --- */
 body.dark-mode .directory-mobile .directory-card,

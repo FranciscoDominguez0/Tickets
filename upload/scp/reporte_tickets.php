@@ -390,18 +390,21 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                         <?php 
                                         $bstatus = $t['billing_status'] ?? 'pending';
                                         if ($bstatus !== 'pending'): ?>
-                                            <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                            <span class="chip chip-report-done" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
                                                 <i class="bi bi-check-all" style="margin-right: 4px;"></i>Facturado
                                             </span>
+
                                         <?php else: ?>
-                                            <span class="chip" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                            <span class="chip chip-report-done" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
                                                 <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>Completado
                                             </span>
+
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span class="chip" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                        <span class="chip chip-report-pending" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
                                             <i class="bi bi-exclamation-circle" style="margin-right: 4px;"></i>Pendiente
                                         </span>
+
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -477,9 +480,10 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                 echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion') ? '#16a34a' : '#f59e0b'; 
                             ?>;"></i>
                             <span class="rpt-label">Reporte</span>
-                            <span class="rpt-val" style="color:<?php 
-                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion') ? '#16a34a' : '#92400e'; 
-                            ?>;">
+                            <span class="rpt-val <?php echo ($bstatus !== 'pending' || $hasReport) ? 'chip-report-done' : 'chip-report-pending'; ?>" style="color:<?php 
+                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion' || $hasReport) ? '#16a34a' : '#92400e'; 
+                            ?>; border-radius: 4px; padding: 1px 4px;">
+
                                 <?php 
                                 if ($bstatus !== 'pending') echo 'Facturado';
                                 else echo $hasReport ? 'Completado' : 'Pendiente'; 
