@@ -728,17 +728,28 @@ body.dark-mode .ticket-hover-preview .msg .th-head {
     border-bottom-color: #222 !important;
 }
 body.dark-mode .ticket-hover-preview .msg .th-item.user .th-head {
-    background: #111c2e !important;
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
 }
+
 body.dark-mode .ticket-hover-preview .msg .th-item.staff .th-head {
-    background: #1a1400 !important;
+    background: #083344 !important;
+    border-bottom-color: #0e7490 !important;
 }
+
+
+
 body.dark-mode .ticket-hover-preview .msg .th-author {
     color: #ccc !important;
 }
 body.dark-mode .ticket-hover-preview .msg .th-when {
     color: #666 !important;
 }
+body.dark-mode .ticket-hover-preview .msg .th-item.internal .th-head {
+    background: #27272a !important;
+    border-bottom-color: #3f3f46 !important;
+}
+
 body.dark-mode .ticket-hover-preview .msg .th-body {
     color: #bbb !important;
 }
@@ -841,15 +852,25 @@ body.dark-mode .tickets-table tbody tr.ticket-row:hover::after {
 }
 /* Número de ticket (pill azul) en móvil */
 body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-title {
-    background: rgba(59, 130, 246, 0.15) !important;
+    background: transparent !important;
     color: #93c5fd !important;
-    border: 1px solid rgba(59, 130, 246, 0.2) !important;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.1) !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    padding: 0 !important;
 }
+
+
+
 body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-title:hover {
-    background: rgba(59, 130, 246, 0.25) !important;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+    opacity: 0.8;
 }
+
+
+
 /* Asunto del ticket en tarjeta móvil */
 body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-subject {
     color: #f4f4f5 !important;
@@ -1984,5 +2005,8 @@ body.dark-mode .btn-add-org:hover {
 
 /* Fix ticket preview ID color in dark mode */
 body.dark-mode .ticket-hover-preview-head .num {
-    color: #f4f4f5 !important;
+    color: #22d3ee !important;
 }
+
+
+

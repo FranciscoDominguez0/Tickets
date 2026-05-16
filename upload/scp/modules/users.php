@@ -115,8 +115,8 @@ if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_f
 }
 .user-premium-modal .form-control:focus {
     background-color: #fff !important;
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
     outline: none;
 }
 .user-premium-modal .modal-footer {
@@ -125,19 +125,20 @@ if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_f
     padding: 20px 24px !important;
 }
 .user-premium-modal .btn-primary {
-    background-color: #2563eb !important;
+    background: linear-gradient(135deg, #dc2626, #ef4444) !important;
     border: none !important;
     border-radius: 12px !important;
     padding: 12px 28px !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
     transition: all 0.2s ease !important;
 }
 .user-premium-modal .btn-primary:hover {
-    background-color: #1d4ed8 !important;
+    opacity: 0.9 !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3) !important;
 }
+
 .user-premium-modal .btn-secondary {
     border-radius: 12px !important;
     padding: 12px 24px !important;
@@ -1503,7 +1504,7 @@ $statusBadges = [
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalAddUserLabel"><i class="bi bi-person-plus me-2" style="color: #2563eb;"></i> Añadir nuevo usuario</h5>
+                    <h5 class="modal-title" id="modalAddUserLabel"><i class="bi bi-person-plus me-2" style="color: #ef4444;"></i> Añadir nuevo usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form method="post" action="users.php">
@@ -1511,39 +1512,39 @@ $statusBadges = [
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-body">
                         <div class="mb-4">
-                            <label for="add-email" class="form-label"><i class="bi bi-envelope me-1" style="color: #2563eb;"></i> Email <span class="text-danger">*</span></label>
+                            <label for="add-email" class="form-label"><i class="bi bi-envelope me-1" style="color: #ef4444;"></i> Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="add-email" name="email" required placeholder="usuario@ejemplo.com" value="<?php echo html($_POST['email'] ?? ''); ?>">
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="add-firstname" class="form-label"><i class="bi bi-person me-1" style="color: #2563eb;"></i> Nombre <span class="text-danger">*</span></label>
+                                <label for="add-firstname" class="form-label"><i class="bi bi-person me-1" style="color: #ef4444;"></i> Nombre <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-firstname" name="firstname" required placeholder="Nombre" value="<?php echo html($_POST['firstname'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="add-lastname" class="form-label"><i class="bi bi-person me-1" style="color: #2563eb;"></i> Apellido <span class="text-danger">*</span></label>
+                                <label for="add-lastname" class="form-label"><i class="bi bi-person me-1" style="color: #ef4444;"></i> Apellido <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-lastname" name="lastname" required placeholder="Apellido" value="<?php echo html($_POST['lastname'] ?? ''); ?>">
                             </div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="add-phone" class="form-label"><i class="bi bi-telephone me-1" style="color: #2563eb;"></i> Teléfono</label>
+                                <label for="add-phone" class="form-label"><i class="bi bi-telephone me-1" style="color: #ef4444;"></i> Teléfono</label>
                                 <input type="text" class="form-control" id="add-phone" name="phone" placeholder="Ej. 6621-8585" value="<?php echo html($_POST['phone'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="add-address" class="form-label"><i class="bi bi-geo-alt me-1" style="color: #2563eb;"></i> Dirección <span class="text-danger">*</span></label>
+                                <label for="add-address" class="form-label"><i class="bi bi-geo-alt me-1" style="color: #ef4444;"></i> Dirección <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="add-address" name="address" required placeholder="Dirección completa" value="<?php echo html($_POST['address'] ?? ''); ?>">
                             </div>
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6 mb-4">
-                                <label for="add-password" class="form-label"><i class="bi bi-shield-lock me-1" style="color: #2563eb;"></i> Contraseña <span class="text-danger">*</span></label>
+                                <label for="add-password" class="form-label"><i class="bi bi-shield-lock me-1" style="color: #ef4444;"></i> Contraseña <span class="text-danger">*</span></label>
                                 <input type="password" class="form-control" id="add-password" name="password" required minlength="6" placeholder="Mínimo 6 caracteres">
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="add-password2" class="form-label"><i class="bi bi-shield-check me-1" style="color: #2563eb;"></i> Repetir <span class="text-danger">*</span></label>
+                                <label for="add-password2" class="form-label"><i class="bi bi-shield-check me-1" style="color: #ef4444;"></i> Repetir <span class="text-danger">*</span></label>
                                 <input type="password" class="form-control" id="add-password2" name="password2" required minlength="6" placeholder="Repetir">
                             </div>
                         </div>

@@ -244,7 +244,8 @@
                             </td>
                             <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #2563eb; text-decoration: none;">
+                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #2563eb;">
+
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
                                     <?php if (!empty($t['priority_name'])): ?>

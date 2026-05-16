@@ -1172,7 +1172,8 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                     <a href="<?php echo html($orgsBaseUrl); ?>" class="org-search-clear"><i class="bi bi-x-circle"></i></a>
                 <?php endif; ?>
             </div>
-            <button type="submit" class="btn org-search-btn"><i class="bi bi-search"></i> Buscar</button>
+            <button type="submit" class="btn org-search-btn">Buscar</button>
+
         </form>
     </div>
 

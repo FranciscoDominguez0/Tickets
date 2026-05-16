@@ -111,6 +111,13 @@ body.dark-mode label { color: #a1a1aa !important; }
 body.dark-mode .ticket-card-foot { border-top-color: #27272a !important; }
 body.dark-mode .form-control,
 body.dark-mode .form-select { background: #1a1a1a !important; border-color: #2e2e2e !important; color: #e5e5e5 !important; }
+body.dark-mode .form-control::placeholder,
+body.dark-mode .note-input::placeholder,
+body.dark-mode textarea::placeholder { 
+    color: #88888b !important; 
+    opacity: 1 !important; 
+    font-style: italic;
+}
 body.dark-mode .form-control:focus,
 body.dark-mode .form-select:focus { background: #1f1f1f !important; border-color: #444 !important; color: #e5e5e5 !important; }
 body.dark-mode .is-invalid {
@@ -158,27 +165,48 @@ body.dark-mode div[style*="background: #fafafa"] {
     border-color: #1a1a1a !important;
 }
 body.dark-mode .card-soft .body,
-body.dark-mode .modal-content[style*="background: #ffffff"] {
+body.dark-mode .modal-content {
     background: #18181b !important;
     color: #e4e4e7 !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5) !important;
 }
-body.dark-mode div[style*="background: #f8fafc"] {
+body.dark-mode .modal-header {
+    border-bottom: 1px solid #27272a !important;
+    background: #18181b !important;
+}
+body.dark-mode .modal-footer {
+    border-top: 1px solid #27272a !important;
     background: #111113 !important;
-    border-color: #1a1a1a !important;
 }
-body.dark-mode .modal-header[style*="background: #f1f5f9"],
-body.dark-mode button[style*="background-color: #f1f5f9"] {
-    background-color: #27272a !important;
+body.dark-mode .modal-title {
+    color: #ffffff !important;
+    font-weight: 800 !important;
 }
-body.dark-mode .modal-footer[style*="background: #f8fafc"] {
-    background: #111113 !important;
-    border-top-color: #27272a !important;
+body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+    opacity: 0.8 !important;
 }
+body.dark-mode .btn-close:hover { opacity: 1 !important; }
+
+/* Catch-all for hardcoded light backgrounds in modals/divs */
+body.dark-mode div[style*="background: #ffffff"],
+body.dark-mode div[style*="background:#ffffff"],
+body.dark-mode div[style*="background: #fff"],
+body.dark-mode div[style*="background:#fff"],
+body.dark-mode div[style*="background: #f8fafc"],
+body.dark-mode div[style*="background:#f8fafc"] {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+
 body.dark-mode div[style*="color: #0f172a"],
 body.dark-mode strong[style*="color: #0f172a"],
-body.dark-mode h4[style*="color: #0f172a"] {
+body.dark-mode h4[style*="color: #0f172a"],
+body.dark-mode h5[style*="color: #0f172a"] {
     color: #f4f4f5 !important;
 }
+
 body.dark-mode div[style*="color: #334155"],
 body.dark-mode p[style*="color: #334155"] {
     color: #d1d5db !important;
@@ -680,3 +708,98 @@ body.dark-mode .lock-icon {
     border-color: #1a1a1a !important;
     color: #ffffff !important;
 }
+
+/* Summernote Modals in Dark Mode (Image, Link, Video) */
+body.dark-mode .note-modal-content {
+    background: #18181b !important;
+    color: #e4e4e7 !important;
+    border: 1px solid #27272a !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+}
+body.dark-mode .note-modal-header {
+    border-bottom: 1px solid #27272a !important;
+    background: #18181b !important;
+    padding: 1rem !important;
+}
+body.dark-mode .note-modal-title {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+body.dark-mode .note-modal-header .close {
+    color: #ffffff !important;
+    opacity: 0.7;
+    filter: invert(1) brightness(200%);
+}
+body.dark-mode .note-modal-body {
+    background: #18181b !important;
+    padding: 1.5rem !important;
+}
+body.dark-mode .note-form-group {
+    margin-bottom: 1rem !important;
+}
+body.dark-mode .note-form-label {
+    color: #a1a1aa !important;
+    font-weight: 700 !important;
+    margin-bottom: 0.5rem !important;
+    display: block !important;
+}
+body.dark-mode .note-input {
+    background: #0a0a0a !important;
+    border: 1px solid #2e2e2e !important;
+    color: #ffffff !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+}
+body.dark-mode .note-input:focus {
+    border-color: #ef4444 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+body.dark-mode .note-modal-footer {
+    border-top: 1px solid #27272a !important;
+    background: #111113 !important;
+    padding: 1rem !important;
+}
+body.dark-mode .note-modal-footer .btn {
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 1.25rem !important;
+}
+body.dark-mode .note-modal-footer .btn-primary {
+    background: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #fff !important;
+}
+body.dark-mode .note-modal-footer .btn-default {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .note-help-block {
+    color: #71717a !important;
+    font-size: 0.85rem !important;
+    margin-top: 0.4rem !important;
+}
+
+/* Catch-all for Summernote modals using Bootstrap classes */
+body.dark-mode .note-modal .modal-content {
+    background: #18181b !important;
+    color: #e4e4e7 !important;
+    border: 1px solid #27272a !important;
+}
+body.dark-mode .note-modal .modal-header {
+    border-bottom: 1px solid #27272a !important;
+}
+body.dark-mode .note-modal .modal-footer {
+    border-top: 1px solid #27272a !important;
+    background: #111113 !important;
+}
+body.dark-mode .note-modal .modal-title {
+    color: #fff !important;
+}
+body.dark-mode .note-modal .close {
+    color: #fff !important;
+    opacity: 0.8 !important;
+}
+

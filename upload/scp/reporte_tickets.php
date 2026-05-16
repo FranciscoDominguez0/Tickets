@@ -217,16 +217,23 @@ ob_start();
 /* Ticket Number Color: Blue in both light and dark mode */
 .ticket-title {
     color: #2563eb !important;
+    text-decoration: none !important;
 }
+.ticket-title:hover {
+    text-decoration: none !important;
+    opacity: 0.8;
+}
+
 body.dark-mode .ticket-title {
-    color: #2563eb !important;
+    color: #93c5fd !important;
+    text-decoration: none !important;
 }
-.rpt-card-num {
-    color: #2563eb !important;
-}
+
 body.dark-mode .rpt-card-num {
-    color: #2563eb !important;
+    color: #93c5fd !important;
 }
+
+
 
 /* ── Dark Mode Overrides for Cards ── */
 body.dark-mode .rpt-card {
@@ -327,7 +334,8 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                         <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo $hasReport ? $reportUrl : $viewUrl; ?>';">
                             <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
                                 <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
-                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem; text-decoration: none;" onclick="event.stopPropagation();">
+                                    <a href="<?php echo $viewUrl; ?>" class="ticket-title" style="font-weight: 800; font-size: 1.05rem;" onclick="event.stopPropagation();">
+
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
                                     <?php if ($isNew): ?>

@@ -245,14 +245,15 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-title.ticket-preview-trigger {
-    display: inline-block;
-    text-decoration: none;
-    cursor: pointer;
+    text-decoration: none !important;
+}
+.ticket-title.ticket-preview-trigger:hover {
+    text-decoration: none !important;
+    opacity: 0.8;
 }
 
-.ticket-title.ticket-preview-trigger:hover {
-    text-decoration: underline;
-}
+
+
 
 .ticket-hover-preview {
     position: fixed;
@@ -295,7 +296,9 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-hover-preview-head .open {
-    color: #ef4444;
+    color: #22d3ee;
+
+
     text-decoration: none;
     width: 34px;
     height: 34px;
