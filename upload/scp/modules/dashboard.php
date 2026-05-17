@@ -81,7 +81,7 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
     fwrite($out, "\xEF\xBB\xBF");
 
     if ($type === 'dept') {
-        fputcsv($out, ['Departamento', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        fputcsv($out, ['Departamento', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)'], ',', '"', '\\');
         $sql = "SELECT 
             d.name as departamento,
             COUNT(t.id) as total_tickets,
@@ -130,7 +130,7 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
                     (int)$row['borrado'],
                     ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
                     ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
-                ]);
+                ], ',', '"', '\\');
             }
         }
     }
@@ -173,7 +173,7 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
             }
         }
 
-        fputcsv($out, ['Tema', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        fputcsv($out, ['Tema', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)'], ',', '"', '\\');
         if ($topicsTable && $topicsKeyColumn) {
             $sql = "SELECT 
                 ht.$topicsNameColumn AS tema,
@@ -207,14 +207,14 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
                         (int)$row['borrado'],
                         ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
                         ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
-                    ]);
+                    ], ',', '"', '\\');
                 }
             }
         }
     }
 
     if ($type === 'agent') {
-        fputcsv($out, ['Agente', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)']);
+        fputcsv($out, ['Agente', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)'], ',', '"', '\\');
         $sql = "SELECT
             CONCAT(TRIM(s.firstname), ' ', TRIM(s.lastname)) AS agente,
             COUNT(t.id) AS total_tickets,
@@ -248,7 +248,7 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
                     (int)$row['borrado'],
                     ($row['tiempo_servicio'] !== null ? number_format((float)$row['tiempo_servicio'], 1, '.', '') : ''),
                     ($row['tiempo_respuesta'] !== null ? number_format((float)$row['tiempo_respuesta'], 1, '.', '') : ''),
-                ]);
+                ], ',', '"', '\\');
             }
         }
     }

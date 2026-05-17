@@ -56,9 +56,9 @@ if (!$out) {
 fwrite($out, "\xEF\xBB\xBF");
 
 $writeCsv = function (array $headerRow, array $rows) use ($out) {
-    fputcsv($out, $headerRow);
+    fputcsv($out, $headerRow, ',', '"', '\\');
     foreach ($rows as $r) {
-        fputcsv($out, $r);
+        fputcsv($out, $r, ',', '"', '\\');
     }
 };
 

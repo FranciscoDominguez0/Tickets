@@ -161,8 +161,8 @@ if ($mobileInitials === '') $mobileInitials = 'U';
         <div class="user-view-mobile-tabs-pill">
             <a class="uvm-tab-pill <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=tickets">
                 <i class="bi bi-ticket-perforated"></i> Tickets
-                <?php if (!empty($userTickets)): ?>
-                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 20px;"><?php echo count($userTickets); ?></span>
+                <?php if (!empty($userTicketTotal)): ?>
+                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 20px;"><?php echo html($userTicketTotal); ?></span>
                 <?php endif; ?>
             </a>
             <a class="uvm-tab-pill <?php echo $activeTab === 'notes' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=notes">
@@ -265,6 +265,53 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                             </a>
                         <?php endforeach; ?>
                     </div>
+                    <?php if (isset($tTotalPages) && $tTotalPages > 1): ?>
+                        <div class="uvm-pagination-wrap">
+                            <div class="uvm-showing-text text-center">
+                                Mostrando <?php echo $userTicketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $userTicketTotal); ?> de <?php echo $userTicketTotal; ?>
+                            </div>
+                            <div class="uvm-pagination justify-content-center">
+                                <?php if ($tp > 1): ?>
+                                    <a class="uvm-page-btn" href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
+                                <?php else: ?>
+                                    <span class="uvm-page-btn disabled"><i class="bi bi-chevron-left"></i></span>
+                                <?php endif; ?>
+                                
+                                <?php 
+                                $startPage = max(1, $tp - 1);
+                                $endPage = min($tTotalPages, $tp + 1);
+                                
+                                if ($startPage > 1) {
+                                    echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => 1]) . '">1</a>';
+                                    if ($startPage > 2) {
+                                        echo '<span class="uvm-page-dots">...</span>';
+                                    }
+                                }
+                                
+                                for ($i = $startPage; $i <= $endPage; $i++) {
+                                    if ($i === $tp) {
+                                        echo '<strong class="uvm-page-btn active">' . $i . '</strong>';
+                                    } else {
+                                        echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $i]) . '">' . $i . '</a>';
+                                    }
+                                }
+                                
+                                if ($endPage < $tTotalPages) {
+                                    if ($endPage < $tTotalPages - 1) {
+                                        echo '<span class="uvm-page-dots">...</span>';
+                                    }
+                                    echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tTotalPages]) . '">' . $tTotalPages . '</a>';
+                                }
+                                ?>
+                                
+                                <?php if ($tp < $tTotalPages): ?>
+                                    <a class="uvm-page-btn" href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
+                                <?php else: ?>
+                                    <span class="uvm-page-btn disabled"><i class="bi bi-chevron-right"></i></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

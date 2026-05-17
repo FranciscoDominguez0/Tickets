@@ -75,6 +75,231 @@ if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_f
     unset($_SESSION['users_import_flash']);
 }
 
+// ==========================================
+// EXPORTACIÓN A CSV (Antes de cualquier salida HTML/CSS)
+// ==========================================
+
+// 1. Exportar todos/filtrados
+if (isset($_GET['a']) && $_GET['a'] === 'export') {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
+    $search = trim($_GET['q'] ?? '');
+    $sort   = strtolower($_GET['sort'] ?? 'name');
+    $order  = strtoupper($_GET['order'] ?? 'ASC');
+
+    $validSorts = ['name', 'status', 'created', 'updated'];
+    if (!in_array($sort, $validSorts)) $sort = 'name';
+    $validOrders = ['ASC', 'DESC'];
+    if (!in_array($order, $validOrders)) $order = 'ASC';
+
+    $sortColumnsExport = [
+        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
+        'status'  => 'u.status',
+        'created' => 'u.created',
+        'updated' => 'u.updated'
+    ];
+    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
+
+    $exportSql = "
+        SELECT
+            u.id,
+            u.email,
+            u.firstname,
+            u.lastname,
+            u.company,
+            u.status,
+            u.created,
+            u.updated,
+            COUNT(t.id) AS ticket_count
+        FROM users u
+        LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
+        WHERE u.empresa_id = ?
+    ";
+
+    $exportParams = [];
+    $exportTypes = 'ii';
+    $exportParams[] = $eid;
+    $exportParams[] = $eid;
+    if ($search !== '') {
+        $term = '%' . $search . '%';
+        $exportSql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
+        array_push($exportParams, $term, $term, $term, $term);
+        $exportTypes .= 'ssss';
+    }
+
+    $exportSql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
+    if ($usersHasPhone) {
+        $exportSql .= ", u.phone";
+    }
+    $exportSql .= " ORDER BY $orderByExport $order";
+
+    $stmtX = $mysqli->prepare($exportSql);
+    if ($stmtX) {
+        $types = $exportTypes;
+        $stmtX->bind_param($types, ...$exportParams);
+        $stmtX->execute();
+        $resX = $stmtX->get_result();
+    } else {
+        header('Location: users.php');
+        exit;
+    }
+
+    $ts = date('Ymd');
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="users-' . $ts . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    fprintf($out, "\xEF\xBB\xBF");
+
+    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
+    if ($usersHasPhone) {
+        $headers[] = 'Telefono';
+    }
+    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
+    fputcsv($out, $headers, ',', '"', '\\');
+
+    while ($row = $resX->fetch_assoc()) {
+        $line = [
+            (int)($row['id'] ?? 0),
+            (string)($row['email'] ?? ''),
+            (string)($row['firstname'] ?? ''),
+            (string)($row['lastname'] ?? '')
+        ];
+        if ($usersHasPhone) {
+            $line[] = (string)($row['phone'] ?? '');
+        }
+        $line[] = (string)($row['company'] ?? '');
+        $line[] = (string)($row['status'] ?? '');
+        $line[] = (string)($row['created'] ?? '');
+        $line[] = (string)($row['updated'] ?? '');
+        $line[] = (int)($row['ticket_count'] ?? 0);
+        fputcsv($out, $line, ',', '"', '\\');
+    }
+    fclose($out);
+    exit;
+}
+
+// 2. Exportar seleccionados
+if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
+    $ids = [];
+    if (isset($_GET['ids']) && is_array($_GET['ids'])) {
+        foreach ($_GET['ids'] as $v) {
+            $v = trim((string)$v);
+            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+        }
+    } else {
+        $idsRaw = (string)($_GET['ids'] ?? '');
+        foreach (explode(',', $idsRaw) as $v) {
+            $v = trim((string)$v);
+            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
+        }
+    }
+
+    $ids = array_values(array_unique($ids));
+    if (empty($ids)) {
+        header('Location: users.php?msg=export_no_selection');
+        exit;
+    }
+    if (count($ids) > 5000) {
+        $ids = array_slice($ids, 0, 5000);
+    }
+
+    $sort   = strtolower($_GET['sort'] ?? 'name');
+    $order  = strtoupper($_GET['order'] ?? 'ASC');
+    $validSorts = ['name', 'status', 'created', 'updated'];
+    if (!in_array($sort, $validSorts)) $sort = 'name';
+    $validOrders = ['ASC', 'DESC'];
+    if (!in_array($order, $validOrders)) $order = 'ASC';
+
+    $sortColumnsExport = [
+        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
+        'status'  => 'u.status',
+        'created' => 'u.created',
+        'updated' => 'u.updated'
+    ];
+    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $exportSql = "
+        SELECT
+            u.id,
+            u.email,
+            u.firstname,
+            u.lastname,";
+    if ($usersHasPhone) {
+        $exportSql .= "\n            u.phone,";
+    }
+    $exportSql .= "
+            u.company,
+            u.status,
+            u.created,
+            u.updated,
+            COUNT(t.id) AS ticket_count
+        FROM users u
+        LEFT JOIN tickets t ON t.user_id = u.id
+        WHERE u.id IN ($placeholders)
+        GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
+    if ($usersHasPhone) {
+        $exportSql .= ", u.phone";
+    }
+    $exportSql .= " ORDER BY $orderByExport $order";
+
+    $stmtX = $mysqli->prepare($exportSql);
+    if ($stmtX) {
+        $types = str_repeat('i', count($ids));
+        $stmtX->bind_param($types, ...$ids);
+        $stmtX->execute();
+        $resX = $stmtX->get_result();
+    } else {
+        header('Location: users.php');
+        exit;
+    }
+
+    $ts = date('Ymd');
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="users-selected-' . $ts . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    fprintf($out, "\xEF\xBB\xBF");
+
+    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
+    if ($usersHasPhone) {
+        $headers[] = 'Telefono';
+    }
+    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
+    fputcsv($out, $headers, ',', '"', '\\');
+
+    while ($row = $resX->fetch_assoc()) {
+        $line = [
+            (int)($row['id'] ?? 0),
+            (string)($row['email'] ?? ''),
+            (string)($row['firstname'] ?? ''),
+            (string)($row['lastname'] ?? '')
+        ];
+        if ($usersHasPhone) {
+            $line[] = (string)($row['phone'] ?? '');
+        }
+        $line[] = (string)($row['company'] ?? '');
+        $line[] = (string)($row['status'] ?? '');
+        $line[] = (string)($row['created'] ?? '');
+        $line[] = (string)($row['updated'] ?? '');
+        $line[] = (int)($row['ticket_count'] ?? 0);
+        fputcsv($out, $line, ',', '"', '\\');
+    }
+    fclose($out);
+    exit;
+}
+
 ?>
 <style>
 /* Estilos Premium para Modales de Usuarios (Inspirado en Organizaciones) */
@@ -689,96 +914,7 @@ if (!in_array($sort, $validSorts)) $sort = 'name';
 $validOrders = ['ASC', 'DESC'];
 if (!in_array($order, $validOrders)) $order = 'ASC';
 
-// Export CSV (users.php?a=export)
-if (isset($_GET['a']) && $_GET['a'] === 'export') {
-    $sortColumnsExport = [
-        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
-        'status'  => 'u.status',
-        'created' => 'u.created',
-        'updated' => 'u.updated'
-    ];
-    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
 
-    $exportSql = "
-        SELECT
-            u.id,
-            u.email,
-            u.firstname,
-            u.lastname,
-            u.company,
-            u.status,
-            u.created,
-            u.updated,
-            COUNT(t.id) AS ticket_count
-        FROM users u
-        LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
-        WHERE u.empresa_id = ?
-    ";
-
-    $exportParams = [];
-    $exportTypes = 'ii';
-    $exportParams[] = $eid;
-    $exportParams[] = $eid;
-    if ($search !== '') {
-        $term = '%' . $search . '%';
-        $exportSql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
-        array_push($exportParams, $term, $term, $term, $term);
-        $exportTypes .= 'ssss';
-    }
-
-    $exportSql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
-    if ($usersHasPhone) {
-        $exportSql .= ", u.phone";
-    }
-    $exportSql .= " ORDER BY $orderByExport $order";
-
-    $stmtX = $mysqli->prepare($exportSql);
-    if ($stmtX) {
-        $types = $exportTypes;
-        $stmtX->bind_param($types, ...$exportParams);
-        $stmtX->execute();
-        $resX = $stmtX->get_result();
-    } else {
-        header('Location: users.php');
-        exit;
-    }
-
-    $ts = date('Ymd');
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="users-' . $ts . '.csv"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-
-    $out = fopen('php://output', 'w');
-    fprintf($out, "\xEF\xBB\xBF");
-
-    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
-    if ($usersHasPhone) {
-        $headers[] = 'Telefono';
-    }
-    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
-    fputcsv($out, $headers);
-
-    while ($row = $resX->fetch_assoc()) {
-        $line = [
-            (int)($row['id'] ?? 0),
-            (string)($row['email'] ?? ''),
-            (string)($row['firstname'] ?? ''),
-            (string)($row['lastname'] ?? '')
-        ];
-        if ($usersHasPhone) {
-            $line[] = (string)($row['phone'] ?? '');
-        }
-        $line[] = (string)($row['company'] ?? '');
-        $line[] = (string)($row['status'] ?? '');
-        $line[] = (string)($row['created'] ?? '');
-        $line[] = (string)($row['updated'] ?? '');
-        $line[] = (int)($row['ticket_count'] ?? 0);
-        fputcsv($out, $line);
-    }
-    fclose($out);
-    exit;
-}
 
 // Cambiar organización (bulk): validar selección (sin depender de JS)
 if (isset($_GET['a']) && $_GET['a'] === 'bulk_org') {
@@ -857,112 +993,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
-// Export CSV seleccionados (users.php?a=export_selected&ids=1,2,3)
-if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
-    $ids = [];
-    if (isset($_GET['ids']) && is_array($_GET['ids'])) {
-        foreach ($_GET['ids'] as $v) {
-            $v = trim((string)$v);
-            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
-        }
-    } else {
-        $idsRaw = (string)($_GET['ids'] ?? '');
-        foreach (explode(',', $idsRaw) as $v) {
-            $v = trim((string)$v);
-            if (ctype_digit($v) && (int)$v > 0) $ids[] = (int)$v;
-        }
-    }
 
-    $ids = array_values(array_unique($ids));
-    if (empty($ids)) {
-        header('Location: users.php?msg=export_no_selection');
-        exit;
-    }
-    // límite de seguridad
-    if (count($ids) > 5000) {
-        $ids = array_slice($ids, 0, 5000);
-    }
-
-    $sortColumnsExport = [
-        'name'    => 'CONCAT(u.firstname, \' \', u.lastname)',
-        'status'  => 'u.status',
-        'created' => 'u.created',
-        'updated' => 'u.updated'
-    ];
-    $orderByExport = $sortColumnsExport[$sort] ?? $sortColumnsExport['name'];
-
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $exportSql = "
-        SELECT
-            u.id,
-            u.email,
-            u.firstname,
-            u.lastname,";
-    if ($usersHasPhone) {
-        $exportSql .= "\n            u.phone,";
-    }
-    $exportSql .= "
-            u.company,
-            u.status,
-            u.created,
-            u.updated,
-            COUNT(t.id) AS ticket_count
-        FROM users u
-        LEFT JOIN tickets t ON t.user_id = u.id
-        WHERE u.id IN ($placeholders)
-        GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
-    if ($usersHasPhone) {
-        $exportSql .= ", u.phone";
-    }
-    $exportSql .= " ORDER BY $orderByExport $order";
-
-    $stmtX = $mysqli->prepare($exportSql);
-    if ($stmtX) {
-        $types = str_repeat('i', count($ids));
-        $stmtX->bind_param($types, ...$ids);
-        $stmtX->execute();
-        $resX = $stmtX->get_result();
-    } else {
-        header('Location: users.php');
-        exit;
-    }
-
-    $ts = date('Ymd');
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="users-selected-' . $ts . '.csv"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
-
-    $out = fopen('php://output', 'w');
-    fprintf($out, "\xEF\xBB\xBF");
-
-    $headers = ['ID', 'Email', 'Nombre', 'Apellido'];
-    if ($usersHasPhone) {
-        $headers[] = 'Telefono';
-    }
-    $headers = array_merge($headers, ['Organizacion', 'Estado', 'Creado', 'Actualizado', 'Tickets']);
-    fputcsv($out, $headers);
-
-    while ($row = $resX->fetch_assoc()) {
-        $line = [
-            (int)($row['id'] ?? 0),
-            (string)($row['email'] ?? ''),
-            (string)($row['firstname'] ?? ''),
-            (string)($row['lastname'] ?? '')
-        ];
-        if ($usersHasPhone) {
-            $line[] = (string)($row['phone'] ?? '');
-        }
-        $line[] = (string)($row['company'] ?? '');
-        $line[] = (string)($row['status'] ?? '');
-        $line[] = (string)($row['created'] ?? '');
-        $line[] = (string)($row['updated'] ?? '');
-        $line[] = (int)($row['ticket_count'] ?? 0);
-        fputcsv($out, $line);
-    }
-    fclose($out);
-    exit;
-}
 
 // Contar total (con filtro de búsqueda)
 $countSql = "SELECT COUNT(*) AS total FROM users WHERE empresa_id = ?";

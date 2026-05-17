@@ -259,8 +259,16 @@ if (!empty($_GET['org'])) {
     $ticketsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/tickets.php');
     ?>
     <style>
+    /* ── Visibility control via ID (highest specificity, no overrides) ── */
+    #org-detail-desktop { display: none; }
+    #org-mobile-summary { display: block; }
+    @media (min-width: 992px) {
+        #org-detail-desktop { display: block; }
+        #org-mobile-summary { display: none; }
+    }
+
     /* Estilos Premium para Desktop - Vista Organización */
-    @media (min-width: 769px) {
+    @media (min-width: 992px) {
         .org-detail-container .user-view-header {
             display: flex;
             justify-content: space-between;
@@ -521,13 +529,227 @@ if (!empty($_GET['org'])) {
     }
 
     /* Corrección y Estilo Profesional en Móviles */
-    @media (max-width: 768px) {
-        .org-detail-container .user-view-header,
+    @media (max-width: 991px) {
+        .org-desktop-only {
+            display: none !important;
+        }
+
+        /* ─── Restaurar visibilidad de las tablas y tabs (anula scp.css global) ─── */
         .org-detail-container .user-view-card,
-        .org-detail-container .user-view-tabs {
+        .org-detail-container .user-view-tab-content.active {
             display: block !important;
         }
+        .org-detail-container .user-view-tabs {
+            display: flex !important;
+        }
+
+
+        /* ─── REDISEÑO TOTAL MÓVIL (COMPACTO Y PROFESIONAL) ─── */
+        .org-mobile-summary-card {
+            background: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05), 0 1px 4px rgba(15,23,42,0.02);
+            margin-bottom: 18px;
+            text-align: left;
+        }
+        body.dark-mode .org-mobile-summary-card {
+            background: #111b27;
+            border-color: #1e293b;
+        }
+        .org-mobile-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none !important;
+            margin-bottom: 12px;
+        }
+        body.dark-mode .org-mobile-back {
+            color: #94a3b8;
+        }
+        .org-mobile-header {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            text-align: left;
+        }
+        .org-mobile-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(239,68,68,0.13), rgba(99,102,241,0.13));
+            border: 1.5px solid rgba(239,68,68,0.22);
+            color: #ef4444;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex: 0 0 46px;
+        }
+        .org-mobile-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .org-mobile-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            line-height: 1.2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        body.dark-mode .org-mobile-title {
+            color: #f8fafc;
+        }
+        .org-mobile-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .org-mobile-action-btn {
+            font-size: 0.72rem !important;
+            font-weight: 800 !important;
+            padding: 4px 10px !important;
+            border-radius: 8px !important;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
         
+        /* KPI horizontal strip */
+        .org-mobile-kpis {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 10px 0;
+            border-top: 1px solid rgba(226,232,240,0.8);
+            border-bottom: 1px solid rgba(226,232,240,0.8);
+        }
+        body.dark-mode .org-mobile-kpis {
+            border-color: #1e293b;
+        }
+        .org-mobile-kpi {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-width: 0;
+        }
+        .org-mobile-kpi .value {
+            font-size: 0.95rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.1;
+        }
+        body.dark-mode .org-mobile-kpi .value {
+            color: #f8fafc;
+        }
+        .org-mobile-kpi .label {
+            font-size: 0.62rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        .org-mobile-kpis .divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(226,232,240,0.9);
+            flex-shrink: 0;
+        }
+        body.dark-mode .org-mobile-kpis .divider {
+            background: #1e293b;
+        }
+        
+        /* Collapsible details component */
+        .org-mobile-details-collapse {
+            margin-top: 12px;
+        }
+        .org-mobile-toggle-btn {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px;
+            color: #ef4444;
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        body.dark-mode .org-mobile-toggle-btn {
+            background: #1e293b;
+            border-color: #334155;
+            color: #ef4444;
+        }
+        .org-mobile-toggle-btn:active,
+        .org-mobile-toggle-btn.active {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        body.dark-mode .org-mobile-toggle-btn:active,
+        body.dark-mode .org-mobile-toggle-btn.active {
+            background: #334155;
+            border-color: #475569;
+        }
+        
+        .org-mobile-details-content {
+            margin-top: 10px;
+            background: #fafafa;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+        body.dark-mode .org-mobile-details-content {
+            background: #0d1520;
+            border-color: #1e293b;
+        }
+        .org-mobile-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+        }
+        .org-mobile-detail-item .item-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            text-align: left;
+        }
+        .org-mobile-detail-item .item-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+            overflow-wrap: anywhere;
+            text-align: left;
+        }
+        body.dark-mode .org-mobile-detail-item .item-value {
+            color: #cbd5e1;
+        }
+        .org-mobile-detail-item .item-value a {
+            color: #ef4444;
+            text-decoration: none;
+        }
+
         /* Solo mostrar el contenido de los tabs si es la pestaña activa, 
            así evitamos el enorme espacio en blanco fantasma de la inactiva */
         .org-detail-container .user-view-tab-content.active {
@@ -768,7 +990,114 @@ if (!empty($_GET['org'])) {
                 </script>
             <?php endif; ?>
         <?php endif; ?>
-        <div class="user-view-header">
+        <!-- ─── SLEEK MOBILE CARD FOR TOTAL MOBILE REDESIGN ─── -->
+        <div id="org-mobile-summary" class="org-mobile-summary-card">
+            <a href="<?php echo html($orgsBaseUrl); ?>" class="org-mobile-back"><i class="bi bi-arrow-left"></i> Volver al listado</a>
+            <div class="org-mobile-header">
+                <div class="org-mobile-avatar">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div class="org-mobile-info">
+                    <h1 class="org-mobile-title"><?php echo html($orgInfo['name']); ?></h1>
+                    <div class="org-mobile-actions">
+                        <button type="button" class="btn btn-outline-secondary org-mobile-action-btn" data-bs-toggle="modal" data-bs-target="#editOrgModal">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger org-mobile-action-btn btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
+                            <i class="bi bi-trash3"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="org-mobile-kpis">
+                <div class="org-mobile-kpi">
+                    <span class="value"><?php echo (int)($orgInfo['user_count'] ?? 0); ?></span>
+                    <span class="label">Usuarios</span>
+                </div>
+                <div class="divider"></div>
+                <div class="org-mobile-kpi">
+                    <span class="value"><?php echo (int)($orgInfo['open_tickets'] ?? 0); ?></span>
+                    <span class="label">Abiertos</span>
+                </div>
+                <div class="divider"></div>
+                <div class="org-mobile-kpi">
+                    <span class="value"><?php echo (int)($orgInfo['ticket_count'] ?? 0); ?></span>
+                    <span class="label">Totales</span>
+                </div>
+                <div class="divider"></div>
+                <div class="org-mobile-kpi">
+                    <span class="value" style="font-size: 0.72rem; font-weight: 800;"><?php echo !empty($orgInfo['since']) ? date('d/m/y', strtotime($orgInfo['since'])) : '—'; ?></span>
+                    <span class="label">Desde</span>
+                </div>
+            </div>
+
+            <div class="org-mobile-details-collapse">
+                <button class="org-mobile-toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#orgMobileCollapse" aria-expanded="false" aria-controls="orgMobileCollapse">
+                    <span class="toggle-text-show"><i class="bi bi-info-circle me-1"></i> Ver Datos de la Empresa</span>
+                    <span class="toggle-text-hide d-none"><i class="bi bi-chevron-up me-1"></i> Ocultar Datos</span>
+                </button>
+                
+                <div class="collapse" id="orgMobileCollapse">
+                    <div class="org-mobile-details-content">
+                        <?php if (!empty($orgInfo['address'])): ?>
+                            <div class="org-mobile-detail-item">
+                                <span class="item-label"><i class="bi bi-geo-alt-fill me-1"></i> Dirección</span>
+                                <span class="item-value"><?php echo nl2br(html($orgInfo['address'])); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div class="org-mobile-detail-item">
+                            <span class="item-label"><i class="bi bi-telephone-fill me-1"></i> Teléfono</span>
+                            <span class="item-value">
+                                <?php
+                                $phone = html($orgInfo['phone'] ?? '');
+                                $ext = html($orgInfo['phone_ext'] ?? '');
+                                echo $phone ? $phone . ($ext ? ' ext. ' . $ext : '') : '—';
+                                ?>
+                            </span>
+                        </div>
+                        
+                        <?php if (!empty($orgInfo['website'])): ?>
+                            <div class="org-mobile-detail-item">
+                                <span class="item-label"><i class="bi bi-globe me-1"></i> Sitio Web</span>
+                                <span class="item-value"><a href="<?php echo html($orgInfo['website']); ?>" target="_blank" rel="noopener"><?php echo html($orgInfo['website']); ?></a></span>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <?php if (!empty($orgInfo['notes'])): ?>
+                            <div class="org-mobile-detail-item">
+                                <span class="item-label"><i class="bi bi-journal-text me-1"></i> Notas Internas</span>
+                                <span class="item-value" style="white-space: pre-wrap; font-style: italic;"><?php echo html($orgInfo['notes']); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var coll = document.getElementById('orgMobileCollapse');
+            var btn = document.querySelector('.org-mobile-toggle-btn');
+            if(coll && btn) {
+                coll.addEventListener('show.bs.collapse', function () {
+                    btn.querySelector('.toggle-text-show').classList.add('d-none');
+                    btn.querySelector('.toggle-text-hide').classList.remove('d-none');
+                    btn.classList.add('active');
+                });
+                coll.addEventListener('hide.bs.collapse', function () {
+                    btn.querySelector('.toggle-text-show').classList.remove('d-none');
+                    btn.querySelector('.toggle-text-hide').classList.add('d-none');
+                    btn.classList.remove('active');
+                });
+            }
+        });
+        </script>
+
+        <!-- ─── DESKTOP HEADER AND DETAILS (hidden on mobile via ID CSS) ─── -->
+        <div id="org-detail-desktop">
+        <div class="user-view-header" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid #e2e8f0; margin-bottom:24px;">
             <div>
                 <a href="<?php echo html($orgsBaseUrl); ?>" class="org-back-link"><i class="bi bi-arrow-left"></i> Volver al listado</a>
                 <h1 class="user-view-title">
@@ -776,7 +1105,7 @@ if (!empty($_GET['org'])) {
                     <?php echo html($orgInfo['name']); ?>
                 </h1>
             </div>
-            <div class="user-view-actions" style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px;">
                 <button type="button" class="btn btn-edit-premium" data-bs-toggle="modal" data-bs-target="#editOrgModal">
                     <i class="bi bi-pencil-square" style="margin-right:4px;"></i> Editar
                 </button>
@@ -806,9 +1135,9 @@ if (!empty($_GET['org'])) {
                         <label>Teléfono</label>
                         <div class="value">
                             <?php
-                            $phone = html($orgInfo['phone'] ?? '');
-                            $ext = html($orgInfo['phone_ext'] ?? '');
-                            echo $phone ? $phone . ($ext ? ' ext. ' . $ext : '') : '—';
+                            $phone2 = html($orgInfo['phone'] ?? '');
+                            $ext2   = html($orgInfo['phone_ext'] ?? '');
+                            echo $phone2 ? $phone2 . ($ext2 ? ' ext. ' . $ext2 : '') : '—';
                             ?>
                         </div>
                     </div>
@@ -868,6 +1197,7 @@ if (!empty($_GET['org'])) {
                 </div>
             </div>
         </div>
+        </div><!-- /#org-detail-desktop -->
 
         <div class="user-view-tabs" id="org-tabs">
             <a href="<?php echo html($orgsBaseUrl); ?>?org=<?php echo urlencode($orgName); ?>&t=users" class="tab <?php echo $activeTab === 'users' ? 'active' : ''; ?>"><i class="bi bi-people"></i> Usuarios</a>
