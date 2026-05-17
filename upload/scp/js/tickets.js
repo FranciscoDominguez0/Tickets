@@ -295,7 +295,213 @@ document.addEventListener('DOMContentLoaded', function() {
           closePopup();
         } catch (err) {}
       }, true);
-    })();
+
+      // ── Gesto móvil: deslizar hacia la izquierda sobre la fila abre la preview ──
+      (function initMobileSwipePreview() {
+        if (!table) return;
+
+        var mobilePreviewActive = false;
+        var swipeStartX = 0;
+        var swipeStartY = 0;
+        var swipeRow = null;
+
+        function isMobile() {
+          return window.matchMedia && window.matchMedia('(max-width: 991px)').matches;
+        }
+
+        // Aplica estilos de bottom-sheet al popup para móvil
+        function openMobilePopup() {
+          pop.style.setProperty('display', 'block', 'important'); // Forzar la visualización sobreescribiendo display:none !important del CSS móvil
+          pop.style.position     = 'fixed';
+          pop.style.top          = '16px'; // Sale desde arriba flotando
+          pop.style.bottom       = 'auto';
+          pop.style.left         = '4%'; // Centrado horizontal
+          pop.style.right        = '4%';
+          pop.style.width        = '92%'; // Menos ancho
+          pop.style.maxWidth     = '460px'; // Compacto
+          pop.style.height       = '50vh'; // Menos alto
+          pop.style.maxHeight    = '50vh';
+          pop.style.transform    = 'translateY(-20px)'; // Inicio de animación de caída
+          pop.style.borderRadius = '16px';
+          pop.style.zIndex       = '9999';
+          pop.style.overflowY    = 'auto';
+          pop.style.boxShadow    = '0 12px 40px rgba(0,0,0,0.35)';
+          pop.style.transition   = 'all 0.3s cubic-bezier(.4,0,.2,1)';
+          
+          // Fuerza el reflow
+          pop.offsetHeight;
+          pop.style.transform    = 'translateY(0)'; // Termina animación de caída
+          
+          // Ajustar bordes del contenedor interno para que calce perfecto como bottom-sheet
+          var inner = pop.querySelector('.ticket-hover-preview-inner');
+          if (inner) {
+            inner.style.borderRadius = '16px';
+            inner.style.border = '2px solid #ef4444'; // Borde de color destacado exclusivo para vista móvil
+            inner.style.boxShadow = 'none';
+          }
+          
+          mobilePreviewActive    = true;
+        }
+
+        function resetPopupStyles() {
+          pop.style.removeProperty('display'); // Dejar que el CSS vuelva a ocultarlo
+          pop.style.position = pop.style.bottom = pop.style.left = '';
+          pop.style.right = pop.style.top = pop.style.width = '';
+          pop.style.maxWidth = pop.style.maxHeight = pop.style.borderRadius = '';
+          pop.style.height = pop.style.transform = '';
+          pop.style.zIndex = pop.style.overflowY = pop.style.boxShadow = '';
+          pop.style.transition = '';
+          
+          var inner = pop.querySelector('.ticket-hover-preview-inner');
+          if (inner) {
+            inner.style.borderRadius = '';
+            inner.style.border = '';
+            inner.style.boxShadow = '';
+          }
+          
+          mobilePreviewActive = false;
+        }
+
+        // Muestra un indicador visual de swipe en la fila
+        function showSwipeHint(row) {
+          var hint = row.querySelector('.swipe-preview-hint');
+          if (!hint) {
+            hint = document.createElement('div');
+            hint.className = 'swipe-preview-hint';
+            hint.innerHTML = '<i class="bi bi-eye"></i>';
+            hint.style.cssText = [
+              'position:absolute', 'right:0', 'top:0', 'bottom:0',
+              'width:56px', 'display:flex', 'align-items:center', 'justify-content:center',
+              'background:linear-gradient(to left,rgba(37,99,235,0.18),transparent)',
+              'color:#2563eb', 'font-size:1.3rem', 'pointer-events:none',
+              'opacity:0', 'transition:opacity 0.15s', 'border-radius:0 8px 8px 0'
+            ].join(';');
+            // La fila debe tener position:relative para que funcione el absolute
+            if (getComputedStyle(row).position === 'static') {
+              row.style.position = 'relative';
+            }
+            row.appendChild(hint);
+          }
+          hint.style.opacity = '1';
+          return hint;
+        }
+
+        function hideSwipeHint(row) {
+          var hint = row && row.querySelector('.swipe-preview-hint');
+          if (hint) {
+            hint.style.opacity = '0';
+            setTimeout(function() {
+              try { if (hint.parentNode) hint.parentNode.removeChild(hint); } catch(e) {}
+            }, 200);
+          }
+        }
+
+        // — touchstart: registrar punto de inicio —
+        table.addEventListener('touchstart', function (ev) {
+          try {
+            if (!isMobile()) return;
+            if (!ev.touches || ev.touches.length !== 1) return;
+
+            var target = ev.target;
+            if (!target || !target.closest) return;
+
+            // No iniciar gesto si se toca el checkbox
+            if (target.closest('.check-cell')) return;
+
+            var row = target.closest('tr.ticket-row[data-ticket-id]');
+            if (!row) return;
+
+            swipeStartX = ev.touches[0].clientX;
+            swipeStartY = ev.touches[0].clientY;
+            swipeRow    = row;
+            swipeLocked = false;
+          } catch (err) {}
+        }, { passive: true });
+
+        // — touchmove: solo feedback visual, bloquea scroll vertical si el swipe es horizontal —
+        table.addEventListener('touchmove', function (ev) {
+          try {
+            if (!isMobile() || !swipeRow) return;
+            if (!ev.touches || ev.touches.length !== 1) return;
+
+            var dx = swipeStartX - ev.touches[0].clientX; // positivo = swipe izquierda
+            var dy = Math.abs(ev.touches[0].clientY - swipeStartY);
+
+            if (dx > 10 && dx > dy) {
+              // Si el usuario está deslizando horizontalmente, prevenimos el scroll vertical de la página
+              if (ev.cancelable) {
+                ev.preventDefault();
+              }
+              showSwipeHint(swipeRow);
+            } else if (dx < 0) {
+              // Swipe hacia la derecha → ocultar hint
+              hideSwipeHint(swipeRow);
+            }
+          } catch (err) {}
+        }, { passive: false }); // ¡Importante: false para poder hacer preventDefault!
+
+        // — touchend: si el desliz fue suficiente, abrir preview —
+        table.addEventListener('touchend', function (ev) {
+          try {
+            if (!isMobile() || !swipeRow) return;
+
+            var endX = (ev.changedTouches && ev.changedTouches[0])
+              ? ev.changedTouches[0].clientX : swipeStartX;
+            var endY = (ev.changedTouches && ev.changedTouches[0])
+              ? ev.changedTouches[0].clientY : swipeStartY;
+
+            var dx = swipeStartX - endX;  // positivo = desliz izquierda
+            var dy = Math.abs(endY - swipeStartY);
+
+            var row = swipeRow;
+            swipeRow = null;
+
+            hideSwipeHint(row);
+
+            // Umbral: al menos 50px horizontal y menos de 80px vertical
+            if (dx < 50 || dy > 80) return;
+
+            var tid = (row.getAttribute('data-ticket-id') || '').toString();
+            if (!tid) return;
+
+            // Feedback en la fila
+            row.style.transition = 'background 0.2s';
+            row.style.background = 'rgba(37,99,235,0.07)';
+            setTimeout(function() { try { row.style.background = ''; } catch(e) {} }, 350);
+
+            openMobilePopup();
+            markSelected(tid);
+            loadPreview(tid);
+
+          } catch (err) {}
+        }, { passive: true });
+
+        // — Cerrar tocando fuera del popup —
+        document.addEventListener('touchstart', function (ev) {
+          try {
+            if (!mobilePreviewActive || pop.classList.contains('d-none')) return;
+            if (!ev.touches || ev.touches.length !== 1) return;
+            var el = document.elementFromPoint(ev.touches[0].clientX, ev.touches[0].clientY);
+            if (!el || pop.contains(el)) return;
+            closePopup();
+            resetPopupStyles();
+          } catch (err) {}
+        }, { passive: true });
+
+        // — Cerrar con botón X (touch) —
+        if (closeEl) {
+          closeEl.addEventListener('touchend', function (e) {
+            try {
+              if (e && e.preventDefault) e.preventDefault();
+              closePopup();
+              resetPopupStyles();
+            } catch (err) {}
+          }, { passive: false });
+        }
+      })();
+
+    })(); // end initTicketPreviewPane
+
 
     function showInfoModal(msg) {
       var textEl = document.getElementById('bulkInfoText');
