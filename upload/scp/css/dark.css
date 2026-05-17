@@ -654,9 +654,6 @@ body.dark-mode .users-mobile-card {
     background: linear-gradient(145deg, #18181b, #111113) !important;
     border-color: #27272a !important;
 }
-body.dark-mode .users-mobile-card::before {
-    opacity: 0.9;
-}
 body.dark-mode .users-mobile-avatar {
     background: linear-gradient(135deg, rgba(239,68,68,0.18), rgba(99,102,241,0.15)) !important;
     border-color: rgba(239,68,68,0.30) !important;
@@ -696,12 +693,14 @@ body.dark-mode .umc-kpi-value.umc-kpi-zero {
 }
 /* Botones */
 body.dark-mode .umc-btn-view {
-    background: #dc2626 !important;
-    box-shadow: 0 3px 10px rgba(239,68,68,0.20) !important;
-    color: #fff !important;
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
 }
 body.dark-mode .umc-btn-view:hover {
-    background: #b91c1c !important;
+    background: #334155 !important;
+    color: #f1f5f9 !important;
 }
 body.dark-mode .umc-btn-mail {
     background: #1c1c1e !important;
@@ -712,6 +711,18 @@ body.dark-mode .umc-btn-mail:hover {
     background: #1e2d46 !important;
     border-color: #1d4ed8 !important;
     color: #93c5fd !important;
+}
+
+/* Botón Buscar en Modo Oscuro */
+body.dark-mode .users-directory .search-card .btn-search {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #cbd5e1 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .users-directory .search-card .btn-search:hover {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
 }
 
 /* === MOBILE PAGINATION DARK MODE === */
@@ -794,11 +805,12 @@ body.dark-mode .uvm-status-badge.banned {
 
 /* Acciones */
 body.dark-mode .uvm-btn-edit {
-    background: #dc2626 !important;
-    box-shadow: 0 3px 10px rgba(239,68,68,0.2) !important;
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 3px 10px rgba(255,255,255,0.05) !important;
 }
 body.dark-mode .uvm-btn-edit:hover {
-    background: #b91c1c !important;
+    background: #f8fafc !important;
 }
 body.dark-mode .uvm-btn-status {
     background: #1c1c1e !important;
@@ -819,6 +831,16 @@ body.dark-mode .uvm-action-btn-danger:hover {
 }
 
 /* Details Section */
+body.dark-mode .user-mobile-toggle-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .user-mobile-toggle-btn:hover {
+    background: #334155 !important;
+}
+
 body.dark-mode .user-view-mobile-card-details {
     background: #141414 !important;
     border-color: #222 !important;
@@ -1857,6 +1879,10 @@ body.dark-mode .org-modal-title {
     color: #f4f4f5 !important;
 }
 
+body.dark-mode .org-modal-title i {
+    color: #ffffff !important;
+}
+
 body.dark-mode .org-modal-body {
     background: #09090b !important;
     color: #d4d4d8 !important;
@@ -1867,7 +1893,7 @@ body.dark-mode .org-form-label {
 }
 
 body.dark-mode .org-form-label i {
-    color: #3b82f6 !important;
+    color: #ef4444 !important;
 }
 
 body.dark-mode .org-form-control {
@@ -1878,8 +1904,8 @@ body.dark-mode .org-form-control {
 
 body.dark-mode .org-form-control:focus {
     background: #1f1f23 !important;
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15) !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 0.25rem rgba(239, 68, 68, 0.15) !important;
     color: #fff !important;
 }
 

@@ -175,25 +175,12 @@ body {
     }
     .users-mobile-card:active { transform: scale(0.985); }
 
-    /* Accent bar by status */
-    .users-mobile-card::before {
-        content: '';
-        position: absolute;
-        left: 0; top: 18px; bottom: 18px;
-        width: 4px;
-        border-radius: 0 6px 6px 0;
-        background: #94a3b8;
-    }
-    .users-mobile-card.umc-status-active::before  { background: #16a34a; }
-    .users-mobile-card.umc-status-inactive::before { background: #94a3b8; }
-    .users-mobile-card.umc-status-banned::before   { background: #ef4444; }
-
     /* ── Top row ── */
     .users-mobile-top {
         display: flex;
         gap: 12px;
         align-items: flex-start;
-        padding-left: 6px;
+        padding-left: 0;
     }
 
     /* Avatar */
@@ -332,13 +319,13 @@ body {
         font-weight: 700;
         font-size: 0.88rem;
         text-decoration: none;
-        background: #ef4444;
-        color: #fff;
-        border: none;
-        transition: background .15s, box-shadow .15s;
-        box-shadow: 0 3px 10px rgba(239,68,68,0.25);
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        transition: all .15s;
+        box-shadow: 0 2px 4px rgba(15,23,42,0.02);
     }
-    .umc-btn-view:hover { background: #dc2626; color: #fff; box-shadow: 0 5px 14px rgba(239,68,68,0.32); }
+    .umc-btn-view:hover { background: #e2e8f0; color: #334155; box-shadow: 0 3px 6px rgba(15,23,42,0.05); }
 
     .umc-btn-mail {
         display: inline-flex;
@@ -587,11 +574,11 @@ body {
         transition: background 0.12s, box-shadow 0.12s;
     }
     .uvm-btn-edit {
-        background: #ef4444;
+        background: #0f172a;
         color: #fff !important;
-        box-shadow: 0 3px 10px rgba(239,68,68,0.22);
+        box-shadow: 0 3px 10px rgba(15,23,42,0.22);
     }
-    .uvm-btn-edit:hover { background: #dc2626; }
+    .uvm-btn-edit:hover { background: #1e293b; }
     
     .uvm-btn-status {
         background: #f1f5f9;

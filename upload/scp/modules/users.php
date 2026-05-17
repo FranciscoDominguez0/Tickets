@@ -1200,10 +1200,10 @@ $statusBadges = [
         <h1 class="page-title">Directorio de usuarios</h1>
         <div class="header-actions">
             <button type="button" class="btn btn-add" data-bs-toggle="modal" data-bs-target="#modalAddUser"><i class="bi bi-plus-lg"></i> Añadir usuario</button>
-            <a href="javascript:void(0)" class="btn btn-import" data-bs-toggle="modal" data-bs-target="#modalImportUsers"><i class="bi bi-upload"></i> Importar</a>
+            <a href="javascript:void(0)" class="btn btn-import" data-bs-toggle="modal" data-bs-target="#modalImportUsers"><i class="bi bi-upload"></i><span class="d-none d-md-inline ms-1">Importar</span></a>
             <div class="dropdown">
-                <button class="btn btn-more dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i>
+                <button class="btn btn-more" type="button" data-bs-toggle="dropdown" style="padding-right: 12px;">
+                    <i class="bi bi-gear"></i><span class="d-none d-md-inline ms-1">Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><button type="submit" form="usersListForm" name="a" value="export_selected" class="dropdown-item">Exportar seleccionados</button></li>

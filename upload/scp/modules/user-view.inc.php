@@ -82,66 +82,103 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             </button>
         </div>
 
-        <!-- Información Detallada y Opciones -->
         <div class="user-view-mobile-details-section">
-            <div class="user-view-mobile-card-details">
-                <h3 class="uvm-card-title"><i class="bi bi-person-badge"></i> Datos de contacto</h3>
+            <div class="user-mobile-details-collapse">
+                <button class="user-mobile-toggle-btn w-100 mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#userMobileCollapse" aria-expanded="false" aria-controls="userMobileCollapse" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; font-weight: 700; color: #475569; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(15,23,42,0.02); transition: all 0.2s ease;">
+                    <span class="toggle-text-show"><i class="bi bi-person-vcard me-1"></i> Ver Datos de Contacto</span>
+                    <span class="toggle-text-hide d-none"><i class="bi bi-chevron-up me-1"></i> Ocultar Datos</span>
+                </button>
                 
-                <div class="uvm-detail-item">
-                    <div class="uvm-detail-icon"><i class="bi bi-building"></i></div>
-                    <div class="uvm-detail-content">
-                        <span class="uvm-detail-label">Organización</span>
-                        <span class="uvm-detail-val">
-                            <?php if ($mobileCompany !== ''): ?>
-                                <strong class="text-dark"><?php echo html($mobileCompany); ?></strong>
-                                <button type="button" class="uvm-action-link text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">(Remover)</button>
-                            <?php else: ?>
-                                <button type="button" class="uvm-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
-                            <?php endif; ?>
-                        </span>
-                    </div>
-                </div>
+                <div class="collapse" id="userMobileCollapse">
+                    <div class="user-view-mobile-card-details mb-3">
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-person"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Nombre Completo</span>
+                                <span class="uvm-detail-val text-dark fw-bold"><?php echo html($mobileName !== '' ? $mobileName : '—'); ?></span>
+                            </div>
+                        </div>
 
-                <?php if (!empty($viewUser['phone'])): ?>
-                <div class="uvm-detail-item">
-                    <div class="uvm-detail-icon"><i class="bi bi-telephone"></i></div>
-                    <div class="uvm-detail-content">
-                        <span class="uvm-detail-label">Teléfono</span>
-                        <span class="uvm-detail-val">
-                            <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" class="text-dark fw-bold" style="text-decoration:none;">
-                                <?php echo html((string)$viewUser['phone']); ?>
-                            </a>
-                        </span>
-                    </div>
-                </div>
-                <?php endif; ?>
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-envelope-at"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Correo</span>
+                                <span class="uvm-detail-val">
+                                    <a href="mailto:<?php echo html($mobileEmail); ?>" class="text-dark" style="text-decoration:none;">
+                                        <?php echo html($mobileEmail); ?>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-building"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Organización</span>
+                                <span class="uvm-detail-val">
+                                    <?php if ($mobileCompany !== ''): ?>
+                                        <strong class="text-dark"><?php echo html($mobileCompany); ?></strong>
+                                        <button type="button" class="uvm-action-link text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">(Remover)</button>
+                                    <?php else: ?>
+                                        <button type="button" class="uvm-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
 
-                <?php if (!empty($viewUser['address'])): ?>
-                <div class="uvm-detail-item">
-                    <div class="uvm-detail-icon"><i class="bi bi-geo-alt"></i></div>
-                    <div class="uvm-detail-content">
-                        <span class="uvm-detail-label">Dirección</span>
-                        <span class="uvm-detail-val text-dark"><?php echo html((string)$viewUser['address']); ?></span>
-                    </div>
-                </div>
-                <?php endif; ?>
+                        <?php if (!empty($viewUser['phone'])): ?>
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-telephone"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Teléfono</span>
+                                <span class="uvm-detail-val">
+                                    <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" class="text-dark fw-bold" style="text-decoration:none;">
+                                        <?php echo html((string)$viewUser['phone']); ?>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
-                <div class="uvm-detail-item">
-                    <div class="uvm-detail-icon"><i class="bi bi-calendar-plus"></i></div>
-                    <div class="uvm-detail-content">
-                        <span class="uvm-detail-label">Creado</span>
-                        <span class="uvm-detail-val text-muted"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></span>
-                    </div>
-                </div>
+                        <?php if (!empty($viewUser['address'])): ?>
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-geo-alt"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Dirección</span>
+                                <span class="uvm-detail-val text-dark"><?php echo html((string)$viewUser['address']); ?></span>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
-                <div class="uvm-detail-item">
-                    <div class="uvm-detail-icon"><i class="bi bi-clock-history"></i></div>
-                    <div class="uvm-detail-content">
-                        <span class="uvm-detail-label">Última actualización</span>
-                        <span class="uvm-detail-val text-muted"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></span>
+                        <div class="uvm-detail-item">
+                            <div class="uvm-detail-icon"><i class="bi bi-calendar-plus"></i></div>
+                            <div class="uvm-detail-content">
+                                <span class="uvm-detail-label">Creado</span>
+                                <span class="uvm-detail-val text-muted"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
+
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var collUser = document.getElementById('userMobileCollapse');
+                var btnUser = document.querySelector('.user-mobile-toggle-btn');
+                if(collUser && btnUser) {
+                    collUser.addEventListener('show.bs.collapse', function () {
+                        btnUser.querySelector('.toggle-text-show').classList.add('d-none');
+                        btnUser.querySelector('.toggle-text-hide').classList.remove('d-none');
+                        btnUser.style.backgroundColor = '#f1f5f9';
+                    });
+                    collUser.addEventListener('hide.bs.collapse', function () {
+                        btnUser.querySelector('.toggle-text-show').classList.remove('d-none');
+                        btnUser.querySelector('.toggle-text-hide').classList.add('d-none');
+                        btnUser.style.backgroundColor = '#ffffff';
+                    });
+                }
+            });
+            </script>
 
             <!-- Acción de Seguridad -->
             <div class="user-view-mobile-card-security">
@@ -178,7 +215,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             <div class="user-view-mobile-panel-modern">
                 <div class="uvm-panel-head">
                     <div class="uvm-panel-title"><i class="bi bi-pin-angle-fill text-danger me-1"></i> Notas del usuario</div>
-                    <button type="button" class="btn btn-primary btn-sm uvm-add-note-btn" data-bs-toggle="modal" data-bs-target="#modalAddUserNote">
+                    <button type="button" class="btn btn-dark btn-sm uvm-add-note-btn" data-bs-toggle="modal" data-bs-target="#modalAddUserNote">
                         <i class="bi bi-plus-lg"></i> Nueva nota
                     </button>
                 </div>
