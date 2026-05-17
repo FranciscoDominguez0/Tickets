@@ -43,7 +43,7 @@ $staff_bind_session_ip = (string)getAppSetting('agents.bind_session_ip', '0') ==
 ob_start();
 ?>
 
-<div class="settings-hero" id="settings">
+<div class="settings-hero">
     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
             <span class="settings-hero-icon"><i class="bi bi-person-badge"></i></span>

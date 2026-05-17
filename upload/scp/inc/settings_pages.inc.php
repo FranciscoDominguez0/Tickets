@@ -8,37 +8,7 @@ if (!in_array($activeTab, ['basic', 'logos', 'login'], true)) {
     $activeTab = 'basic';
 }
 
-if (isset($_GET['action']) && $_GET['action'] === 'walkin_user_search') {
-    header('Content-Type: application/json; charset=utf-8');
-    $q = trim((string)($_GET['q'] ?? ''));
-    $out = ['ok' => true, 'items' => []];
-    if ($q !== '' && mb_strlen($q) >= 2 && isset($mysqli) && $mysqli) {
-        $eid = empresaId();
-        $term = '%' . $q . '%';
-        $stmt = $mysqli->prepare(
-            "SELECT id, firstname, lastname, email
-             FROM users
-             WHERE empresa_id = ? AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ?)
-             ORDER BY firstname, lastname
-             LIMIT 25"
-        );
-        if ($stmt) {
-            $stmt->bind_param('isss', $eid, $term, $term, $term);
-            if ($stmt->execute()) {
-                $res = $stmt->get_result();
-                while ($res && ($row = $res->fetch_assoc())) {
-                    $id = (int)($row['id'] ?? 0);
-                    if ($id <= 0) continue;
-                    $name = trim((string)($row['firstname'] ?? '') . ' ' . (string)($row['lastname'] ?? ''));
-                    $email = (string)($row['email'] ?? '');
-                    $out['items'][] = ['id' => $id, 'name' => $name, 'email' => $email];
-                }
-            }
-        }
-    }
-    echo json_encode($out);
-    exit;
-}
+
 
 if (isset($_SESSION['flash_msg'])) {
     $msg = (string)$_SESSION['flash_msg'];
@@ -85,8 +55,6 @@ if ($_POST) {
         $company_website = trim((string)($_POST['company_website'] ?? ''));
         $company_phone = trim((string)($_POST['company_phone'] ?? ''));
         $company_address = trim((string)($_POST['company_address'] ?? ''));
-        $walkin_default_user_id_raw = (string)($_POST['walkin_default_user_id'] ?? '0');
-        $walkin_default_user_id = is_numeric($walkin_default_user_id_raw) ? (int)$walkin_default_user_id_raw : 0;
 
         $existingCompanyName = trim((string)getAppSetting('company.name', ''));
 
@@ -111,7 +79,6 @@ if ($_POST) {
         if ($isEditingCompanyInfo && $company_name === '' && $existingCompanyName === '' && !$hasAnyUpload) {
             $error = 'El nombre de la empresa es requerido.';
         } else {
-            setAppSetting('tickets.walkin_default_user_id', (string)($walkin_default_user_id > 0 ? $walkin_default_user_id : 0));
 
             if ($company_name !== '') {
                 setAppSetting('company.name', $company_name);
@@ -189,7 +156,6 @@ $company_website = (string)getAppSetting('company.website', '');
 $company_phone = (string)getAppSetting('company.phone', '');
 $company_address = (string)getAppSetting('company.address', '');
 $company_logo = (string)getAppSetting('company.logo', '');
-$walkin_default_user_id = (int)getAppSetting('tickets.walkin_default_user_id', '0');
 $company_logo_mode = (string)getAppSetting('company.logo_mode', $company_logo !== '' ? 'custom' : 'default');
 if (!in_array($company_logo_mode, ['default', 'custom'], true)) {
     $company_logo_mode = 'default';
@@ -202,17 +168,7 @@ if (!in_array($login_bg_mode, ['default', 'custom'], true)) {
 }
 $default_staff_bg = (string)toAppAbsoluteUrl('publico/img/agent-background.webp');
 
-$walkin_selected_user = null;
-if ($walkin_default_user_id > 0 && isset($mysqli) && $mysqli) {
-    $eid = empresaId();
-    $stmt = $mysqli->prepare('SELECT id, firstname, lastname, email FROM users WHERE empresa_id = ? AND id = ? LIMIT 1');
-    if ($stmt) {
-        $stmt->bind_param('ii', $eid, $walkin_default_user_id);
-        if ($stmt->execute()) {
-            $walkin_selected_user = $stmt->get_result()->fetch_assoc();
-        }
-    }
-}
+
 
 ob_start();
 ?>
@@ -276,90 +232,9 @@ ob_start();
                     <textarea name="company_address" class="form-control" rows="3"><?php echo html($company_address); ?></textarea>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Usuario por defecto (cliente no recurrente)</label>
-                    <input type="hidden" name="walkin_default_user_id" id="walkin_default_user_id" value="<?php echo (int)$walkin_default_user_id; ?>">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="walkin_user_search" placeholder="Buscar por nombre o email..." value="<?php
-                            $nm = '';
-                            $em = '';
-                            if ($walkin_selected_user) {
-                                $nm = trim((string)($walkin_selected_user['firstname'] ?? '') . ' ' . (string)($walkin_selected_user['lastname'] ?? ''));
-                                $em = (string)($walkin_selected_user['email'] ?? '');
-                            }
-                            echo html(trim($nm . ($em !== '' ? ' — ' . $em : '')));
-                        ?>">
-                        <button type="button" class="btn btn-outline-secondary" id="walkin_user_clear">Quitar</button>
-                    </div>
-                    <div class="list-group mt-2" id="walkin_user_results" style="display:none;"></div>
-                    <div class="form-text">Se usará al abrir tickets desde el panel de agentes cuando el cliente sea no recurrente.</div>
-                </div>
             </div>
         </div>
     </div>
-
-    <script>
-      (function(){
-        var input = document.getElementById('walkin_user_search');
-        var hid = document.getElementById('walkin_default_user_id');
-        var results = document.getElementById('walkin_user_results');
-        var clearBtn = document.getElementById('walkin_user_clear');
-        if (!input || !hid || !results) return;
-
-        var lastReq = 0;
-        var hideResults = function(){ results.style.display = 'none'; results.innerHTML = ''; };
-        var showResults = function(){ results.style.display = 'block'; };
-
-        var esc = function(s){
-          return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        };
-
-        var pick = function(item){
-          hid.value = (item && item.id) ? item.id : '0';
-          var label = ((item && item.name) ? item.name : '').trim();
-          if (item && item.email) label = (label ? (label + ' — ') : '') + item.email;
-          input.value = label;
-          hideResults();
-        };
-
-        if (clearBtn) {
-          clearBtn.addEventListener('click', function(){
-            hid.value = '0';
-            input.value = '';
-            hideResults();
-            input.focus();
-          });
-        }
-
-        input.addEventListener('input', function(){
-          var q = (input.value || '').trim();
-          if (q.length < 2) { hideResults(); return; }
-          var myReq = ++lastReq;
-          fetch('settings.php?t=pages&action=walkin_user_search&q=' + encodeURIComponent(q), {credentials:'same-origin'})
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-              if (myReq !== lastReq) return;
-              var items = (data && data.items) ? data.items : [];
-              if (!items.length) { hideResults(); return; }
-              results.innerHTML = '';
-              items.forEach(function(it){
-                var a = document.createElement('button');
-                a.type = 'button';
-                a.className = 'list-group-item list-group-item-action';
-                a.innerHTML = '<div class="fw-semibold">' + esc(it.name || '') + '</div>' + (it.email ? ('<div class="small text-muted">' + esc(it.email) + '</div>') : '');
-                a.addEventListener('click', function(){ pick(it); });
-                results.appendChild(a);
-              });
-              showResults();
-            })
-            .catch(function(){ hideResults(); });
-        });
-
-        document.addEventListener('click', function(e){
-          if (!results.contains(e.target) && e.target !== input) hideResults();
-        });
-      })();
-    </script>
 
     <div class="tab-pane fade <?php echo $activeTab === 'logos' ? 'show active' : ''; ?>" id="tab-logos">
         <div class="card settings-card">

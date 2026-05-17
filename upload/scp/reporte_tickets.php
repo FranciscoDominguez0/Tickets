@@ -480,9 +480,9 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                 echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion') ? '#16a34a' : '#f59e0b'; 
                             ?>;"></i>
                             <span class="rpt-label">Reporte</span>
-                            <span class="rpt-val <?php echo ($bstatus !== 'pending' || $hasReport) ? 'chip-report-done' : 'chip-report-pending'; ?>" style="color:<?php 
-                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion' || $hasReport) ? '#16a34a' : '#92400e'; 
-                            ?>; border-radius: 4px; padding: 1px 4px;">
+                            <span class="rpt-val" style="text-decoration: none !important; border: none !important; font-weight: 700; color: <?php 
+                                echo ($bstatus === 'confirmed' || $bstatus === 'visita_tecnica' || $bstatus === 'cotizacion' || $hasReport) ? '#10b981' : '#f59e0b'; 
+                            ?> !important;">
 
                                 <?php 
                                 if ($bstatus !== 'pending') echo 'Facturado';
