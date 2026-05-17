@@ -667,23 +667,34 @@ body.dark-mode .welcome-text {
 }
 
 body.dark-mode .form-group label {
+    color: #f4f4f5 !important;
+    font-weight: 700 !important;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group textarea,
+body.dark-mode .form-group select {
+    background: #18181b !important;
+    border: 1px solid #3f3f46 !important;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+body.dark-mode .form-group input::placeholder,
+body.dark-mode .form-group textarea::placeholder {
     color: #a1a1aa !important;
 }
 
-body.dark-mode .form-group input {
-    background: #0a0a0a !important;
-    border: 1px solid #1a1a1a !important;
-    color: #fff !important;
-}
-
-body.dark-mode .form-group input::placeholder {
-    color: #3f3f46 !important;
-}
-
-body.dark-mode .form-group input:focus {
-    background: #050505 !important;
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group textarea:focus,
+body.dark-mode .form-group select:focus {
+    background: #202024 !important;
     border-color: #ef4444 !important;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25) !important;
+}
+
+body.dark-mode .form-group small {
+    color: #a1a1aa !important;
 }
 
 body.dark-mode .btn-login {
