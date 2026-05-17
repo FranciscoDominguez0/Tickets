@@ -1027,43 +1027,135 @@ if ($blockNewIfSignaturePending) {
             .shell { max-width: 100%; }
         }
         .page-header {
-            background: linear-gradient(180deg, #ffffff, #f8fafc);
-            padding: 22px 22px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 20px 24px;
             border-radius: 16px;
-            margin-bottom: 18px;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 22px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
             color: #0f172a;
-            border: 1px solid #e2e8f0;
-            border-left: 6px solid #ef4444;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-left: 5px solid #ef4444;
+            transition: all 0.3s ease;
         }
-        .page-header .sub { color: #64748b; font-weight: 700; }
+        body.dark-mode .page-header {
+            background: rgba(24, 24, 27, 0.75) !important;
+            border-color: rgba(63, 63, 70, 0.4) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            color: #f4f4f5;
+        }
+        .page-header h2 {
+            font-weight: 850 !important;
+            font-size: 1.45rem !important;
+            letter-spacing: -0.03em;
+            margin: 0;
+        }
+        .page-header .sub {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.88rem;
+            margin-top: 4px;
+        }
+        body.dark-mode .page-header .sub {
+            color: #a1a1aa;
+        }
+        .page-header .btn-light {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px !important;
+            font-weight: 700 !important;
+            border-radius: 999px !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .page-header .btn-light:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        body.dark-mode .page-header .btn-light {
+            background: #27272a !important;
+            color: #f4f4f5 !important;
+            border-color: #3f3f46 !important;
+        }
+        body.dark-mode .page-header .btn-light:hover {
+            background: #3f3f46 !important;
+            color: #ffffff !important;
+            border-color: #52525b !important;
+        }
 
         .form-card {
-            background: #fff;
-            padding: 28px;
+            background: #ffffff;
+            padding: 32px;
             border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-            border: 1px solid #e2e8f0;
+            box-shadow: 0 12px 34px rgba(15, 23, 42, 0.03);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .form-card {
-            transition: box-shadow .15s ease, border-color .15s ease;
+        body.dark-mode .form-card {
+            background: #18181b !important;
+            border-color: #27272a !important;
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.15) !important;
         }
         .form-card:hover {
-            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
-            border-color: #cbd5e1;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+            border-color: rgba(203, 213, 225, 0.8);
+        }
+        body.dark-mode .form-card:hover {
+            border-color: #3f3f46 !important;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25) !important;
         }
 
         .section-title {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 18px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 18px;
         }
-        .section-title h4 { margin: 0; font-weight: 800; color: #0f172a; }
-        .help { color: #64748b; font-size: 0.95rem; }
+        body.dark-mode .section-title {
+            border-bottom-color: #27272a;
+        }
+        .card-title-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(239, 68, 68, 0.08);
+            color: #ef4444;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.04);
+            flex-shrink: 0;
+        }
+        body.dark-mode .card-title-icon-wrapper {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+        }
+        .section-title h4 {
+            margin: 0;
+            font-weight: 850;
+            color: #0f172a;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+        body.dark-mode .section-title h4 {
+            color: #ffffff;
+        }
+        .help {
+            color: #64748b;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+        body.dark-mode .help {
+            color: #a1a1aa;
+        }
 
         .contact-fields-row {
             display: flex;
@@ -1135,10 +1227,13 @@ if ($blockNewIfSignaturePending) {
         .note-editor .note-editable iframe { max-width: 520px !important; width: 100% !important; aspect-ratio: 16 / 9; height: auto !important; display: block; }
 
         #open-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.46);z-index:2000;backdrop-filter: blur(10px);padding:18px}
-        #open-loading-overlay .box{background:rgba(255,255,255,0.92);border:1px solid rgba(226,232,240,0.92);border-radius:22px;padding:18px 20px;width:360px;max-width:90vw;box-shadow:0 30px 90px rgba(15,23,42,.30);backdrop-filter: blur(10px);animation: openLoadingIn .14s ease-out}
-        #open-loading-overlay .spinner-border{width:2.25rem;height:2.25rem}
+        #open-loading-overlay .box{background:rgba(255,255,255,0.95);border:1px solid rgba(226,232,240,0.95);border-radius:22px;padding:18px 20px;width:360px;max-width:90vw;box-shadow:0 30px 90px rgba(15,23,42,.30);backdrop-filter: blur(10px);animation: openLoadingIn .14s ease-out}
+        #open-loading-overlay .spinner-border{width:2.25rem;height:2.25rem;color:#ef4444 !important;}
         #open-loading-overlay .progress{border-radius:999px;overflow:hidden;background:rgba(148,163,184,0.25)}
-        #open-loading-overlay .progress-bar{background:linear-gradient(90deg,#ef4444,#60a5fa);width:100%}
+        #open-loading-overlay .progress-bar{background:#ef4444 !important;width:100%}
+        body.dark-mode #open-loading-overlay .box{background:rgba(24, 24, 27, 0.96) !important;border-color:rgba(63, 63, 70, 0.4) !important;box-shadow:0 30px 90px rgba(0,0,0,0.5) !important;}
+        body.dark-mode #open-loading-overlay .fw-semibold{color:#ffffff !important;}
+        body.dark-mode #open-loading-overlay .text-muted{color:#a1a1aa !important;}
         @keyframes openLoadingIn{from{transform:translateY(6px) scale(.985); opacity:.65;}to{transform:translateY(0) scale(1); opacity:1;}}
 
         .notif-dd {
@@ -1252,10 +1347,85 @@ if ($blockNewIfSignaturePending) {
         a { color: #ef4444; }
         a:hover { color: #dc2626; }
 
+        /* Premium Open Form styling */
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        body.dark-mode .form-section-header {
+            border-bottom-color: #27272a;
+        }
+        .form-section-header h5 {
+            margin: 0;
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+        }
+        body.dark-mode .form-section-header h5 {
+            color: #f4f4f5;
+        }
+        .step-badge {
+            background: #ef4444;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.22);
+            flex-shrink: 0;
+        }
+        .form-card .form-label {
+            font-weight: 700;
+            color: #475569;
+            font-size: 0.88rem;
+            margin-bottom: 6px;
+            letter-spacing: -0.1px;
+        }
+        body.dark-mode .form-card .form-label {
+            color: #cbd5e1;
+        }
+        .form-card .form-control,
+        .form-card .form-select {
+            border-radius: 12px;
+            padding: 11px 14px;
+            border-color: #cbd5e1;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.dark-mode .form-card .form-control,
+        body.dark-mode .form-card .form-select {
+            border-color: #3f3f46;
+        }
+        .form-card .form-control:focus,
+        .form-card .form-select:focus {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+        }
+        .btn-row-submit {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 28px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
+        }
+        body.dark-mode .btn-row-submit {
+            border-top-color: #27272a;
+        }
+
         @media (max-width: 576px) {
             body .container-main {
                 padding: 0 10px !important;
-                margin: 20px auto !important;
+                margin: 16px auto !important;
             }
             body .shell {
                 max-width: 100% !important;
@@ -1278,9 +1448,44 @@ if ($blockNewIfSignaturePending) {
                 margin-bottom: 16px !important;
                 border-radius: 12px !important;
             }
+            body .page-header h2 {
+                font-size: 1.25rem !important;
+            }
+            body .page-header .sub {
+                font-size: 0.8rem !important;
+                line-height: 1.3 !important;
+            }
             body .form-card {
-                padding: 16px 12px !important;
+                padding: 20px 14px !important;
                 border-radius: 12px !important;
+            }
+            body .section-title {
+                display: flex !important;
+                align-items: center !important;
+                flex-wrap: nowrap !important;
+                gap: 12px !important;
+                margin-bottom: 18px !important;
+                padding-bottom: 12px !important;
+            }
+            body .section-title h4 {
+                font-size: 1.05rem !important;
+            }
+            body .section-title .help {
+                display: none !important;
+            }
+            body .form-section-header {
+                margin-top: 20px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 8px !important;
+            }
+            body .form-section-header h5 {
+                font-size: 0.95rem !important;
+            }
+            body .step-badge {
+                width: 20px !important;
+                height: 20px !important;
+                font-size: 0.72rem !important;
+                border-radius: 6px !important;
             }
         }
     </style>
@@ -1450,9 +1655,14 @@ if ($blockNewIfSignaturePending) {
                 </div>
 
                 <div class="form-card">
-                    <div class="section-title">
-                        <h4><i class="bi bi-chat-left-text"></i> Ticket Details</h4>
-                        <div class="help">Completa los datos para crear una nueva solicitud.</div>
+                    <div class="section-title gap-3 flex-wrap">
+                        <div class="card-title-icon-wrapper">
+                            <i class="bi bi-chat-left-text"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4>Detalles del Ticket</h4>
+                            <div class="help mb-0 mt-1">Completa los datos para crear una nueva solicitud.</div>
+                        </div>
                     </div>
 
             <?php if ($error): ?>
@@ -1470,9 +1680,14 @@ if ($blockNewIfSignaturePending) {
             <?php endif; ?>
 
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">
+                <div class="form-section-header" style="margin-top: 0;">
+                    <span class="step-badge">1</span>
+                    <h5>Clasificación de la Solicitud</h5>
+                </div>
+
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
-                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" required>
+                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" required>
                 </div>
 
                 <?php if ($hasTopics): ?>
@@ -1501,6 +1716,11 @@ if ($blockNewIfSignaturePending) {
                 </div>
                 <?php endif; ?>
 
+                <div class="form-section-header">
+                    <span class="step-badge">2</span>
+                    <h5>Información de Conexión</h5>
+                </div>
+
                 <div id="contact-fields-row" class="contact-fields-row">
                     <div class="contact-field telefono-field">
                         <label for="telefono_display" class="form-label">Teléfono registrado</label>
@@ -1508,13 +1728,18 @@ if ($blockNewIfSignaturePending) {
                     </div>
                     <div id="network-extra-fields" class="contact-field anydesk-field">
                         <label for="anydesk" class="form-label">Anydesk</label>
-                        <input type="text" class="form-control <?php echo !empty($errorFields['anydesk']) ? 'is-invalid' : ''; ?>" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" autocomplete="off" disabled>
+                        <input type="text" class="form-control <?php echo !empty($errorFields['anydesk']) ? 'is-invalid' : ''; ?>" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" placeholder="Ej: 123 456 789" autocomplete="off" disabled>
                     </div>
+                </div>
+
+                <div class="form-section-header">
+                    <span class="step-badge">3</span>
+                    <h5>Detalles del Problema</h5>
                 </div>
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
-                    <textarea class="form-control <?php echo !empty($errorFields['body']) ? 'is-invalid' : ''; ?>" id="body" name="body" rows="8"><?php echo html($body ?? ''); ?></textarea>
+                    <textarea class="form-control <?php echo !empty($errorFields['body']) ? 'is-invalid' : ''; ?>" id="body" name="body" rows="8" placeholder="Describe detalladamente el problema o solicitud..."><?php echo html($body ?? ''); ?></textarea>
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
@@ -1527,8 +1752,10 @@ if ($blockNewIfSignaturePending) {
 
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                <button id="open-ticket-submit" type="submit" class="btn btn-primary" <?php echo !$hasUserPhone ? 'disabled' : ''; ?>>Crear Ticket</button>
-                <a href="tickets.php" class="btn btn-secondary">Cancelar</a>
+                <div class="btn-row-submit">
+                    <button id="open-ticket-submit" type="submit" class="btn btn-primary px-4 py-2" style="border-radius: 999px; font-weight: 800;" <?php echo !$hasUserPhone ? 'disabled' : ''; ?>>Crear Ticket</button>
+                    <a href="tickets.php" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 999px; font-weight: 800;">Cancelar</a>
+                </div>
             </form>
                 </div>
             </main>

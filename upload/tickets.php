@@ -1146,7 +1146,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 <?php
                                     $statusColor = (string)($ticket['status_color'] ?? '');
                                     if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $statusColor)) {
-                                        $statusColor = '#2563eb';
+                                        $statusColor = '#ef4444';
                                     }
                                     $priorityColor = (string)($ticket['priority_color'] ?? '');
                                     if ($priorityColor === '' || !preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $priorityColor)) {

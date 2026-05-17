@@ -142,7 +142,7 @@
                         <input type="date" id="dateToInput" value="<?php echo html($dateTo); ?>" title="Hasta"
                                style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
                         <button type="button" id="applyDateRange"
-                                style="display:inline-flex; align-items:center; gap:3px; background:#2563eb; color:#fff; border:none; border-radius:6px; padding:2px 10px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                                style="display:inline-flex; align-items:center; gap:3px; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:2px 10px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
                             <i class="bi bi-check-lg"></i> Aplicar
                         </button>
                         <?php if ($dateFrom !== $defaultDateFrom || $dateTo !== $defaultDateTo): ?>
@@ -208,7 +208,7 @@
                         <?php
                         $clientName = trim($t['user_first'] . ' ' . $t['user_last']) ?: $t['user_email'];
                         $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
-                        $statusColor = $t['status_color'] ?: '#2563eb';
+                        $statusColor = $t['status_color'] ?: '#ef4444';
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
 
                         $tidRow = (int)($t['id'] ?? 0);
@@ -244,7 +244,7 @@
                             </td>
                             <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #2563eb;">
+                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #ef4444;">
 
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
@@ -342,7 +342,7 @@
                                 </div>
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
-                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'">
+                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </td>
