@@ -324,7 +324,7 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                         <?php
                         $staffName = trim(($t['staff_first'] ?? '') . ' ' . ($t['staff_last'] ?? ''));
                         if ($staffName === '') $staffName = 'Sin asignar';
-                        $closedDate = !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : 'N/A';
+                        $closedDate = !empty($t['closed']) ? date('d/m/Y h:i A', strtotime($t['closed'])) : 'N/A';
                         $closedDateShort = !empty($t['closed']) ? date('d/m/Y', strtotime($t['closed'])) : 'N/A';
                         $hasReport = (int)($t['has_report'] ?? 0);
                         $isNew = !$hasReport && !in_array((int)$t['id'], $seenIds);

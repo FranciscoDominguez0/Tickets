@@ -484,7 +484,7 @@ body.dark-mode #tasksTable thead th {
                                 <?php if ($due_date): ?>
                                     <div style="display:flex; align-items:center; gap:6px; color: <?php echo $is_overdue ? '#ef4444' : '#64748b'; ?>; font-size: 0.85rem; font-weight: 600;">
                                         <i class="bi bi-calendar-event" style="color:<?php echo $is_overdue ? '#ef4444' : '#94a3b8'; ?>"></i>
-                                        <?php echo date('d/m/Y H:i', $due_date); ?>
+                                        <?php echo date('d/m/Y h:i A', $due_date); ?>
                                         <?php if ($is_overdue): ?>
                                             <span class="badge bg-danger" style="font-size:0.65rem;">Vencida</span>
                                         <?php endif; ?>

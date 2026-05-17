@@ -1182,9 +1182,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                                     <div class="ticket-card-foot">
                                         <div class="ticket-card-dates">
-                                            <div>Creado: <?php echo date('d/m/Y H:i', strtotime($ticket['created'])); ?></div>
+                                            <div>Creado: <?php echo date('d/m/Y h:i A', strtotime($ticket['created'])); ?></div>
                                             <?php if (!empty($ticket['closed'])): ?>
-                                                <div>Cerrado: <?php echo date('d/m/Y H:i', strtotime($ticket['closed'])); ?></div>
+                                                <div>Cerrado: <?php echo date('d/m/Y h:i A', strtotime($ticket['closed'])); ?></div>
                                             <?php endif; ?>
                                         </div>
                                         <div>

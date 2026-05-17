@@ -414,11 +414,41 @@ body.dark-mode .note-editor .note-status-output {
 body.dark-mode .ticket-closed-banner {
     background: #141e2e !important;
     border-color: #1e2d46 !important;
-    color: #bbb !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .ticket-closed-text {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .ticket-closed-text strong {
+    color: #f8fafc !important;
 }
 body.dark-mode .ticket-closed-icon {
     background: #1e2d46 !important;
     color: #7eb3f5 !important;
+}
+
+body.dark-mode .ticket-closed-icon:hover {
+    background: #2a3f61 !important;
+}
+
+body.dark-mode .ticket-closed-icon:active {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+
+body.dark-mode .closed-reply-prompt {
+    background: #1e1e24 !important;
+    border-color: #333 !important;
+}
+
+body.dark-mode .closed-reply-prompt h4 {
+    color: #e5e5e5 !important;
+}
+
+body.dark-mode .closed-reply-prompt p {
+    color: #94a3b8 !important;
 }
 
 /* === ALERTS === */
@@ -2199,7 +2229,8 @@ body.dark-mode .modal-content .form-label {
 }
 
 body.dark-mode .modal-content .form-control,
-body.dark-mode .modal-content .form-select {
+body.dark-mode .modal-content .form-select,
+body.dark-mode .modal-content textarea.form-control {
     background-color: #0f0f11 !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
     color: #f1f5f9 !important;
@@ -2207,7 +2238,8 @@ body.dark-mode .modal-content .form-select {
 }
 
 body.dark-mode .modal-content .form-control:focus,
-body.dark-mode .modal-content .form-select:focus {
+body.dark-mode .modal-content .form-select:focus,
+body.dark-mode .modal-content textarea.form-control:focus {
     border-color: #ef4444 !important;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
     background-color: #0f0f11 !important;

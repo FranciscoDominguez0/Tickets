@@ -727,7 +727,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-closed-banner {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
@@ -748,6 +748,19 @@ tr.ticket-row.is-selected td {
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ticket-closed-icon:hover {
+    background: #a5b4fc;
+    transform: scale(1.05);
+}
+
+.ticket-closed-icon:active {
+    background: #818cf8;
+    color: #fff;
+    transform: scale(0.92);
 }
 
 .ticket-closed-text {
@@ -2267,13 +2280,15 @@ tr.ticket-row.is-selected td {
     }
 
     .ticket-closed-banner {
-        flex-direction: column;
-        text-align: center;
+        flex-direction: row;
+        text-align: left;
         padding: 12px;
+        align-items: flex-start;
     }
 
     .ticket-closed-icon {
-        margin: 0 auto;
+        margin: 0;
+        margin-top: 2px;
     }
 }
 

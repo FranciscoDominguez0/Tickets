@@ -99,11 +99,11 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 <?php endif; ?>
                 <div class="uvm-row">
                     <div class="uvm-k">Creado</div>
-                    <div class="uvm-v"><?php echo $viewUser['created'] ? date('d/m/y H:i', strtotime($viewUser['created'])) : '—'; ?></div>
+                    <div class="uvm-v"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></div>
                 </div>
                 <div class="uvm-row">
                     <div class="uvm-k">Actualizado</div>
-                    <div class="uvm-v"><?php echo $viewUser['updated'] ? date('d/m/y H:i', strtotime($viewUser['updated'])) : '—'; ?></div>
+                    <div class="uvm-v"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></div>
                 </div>
             </div>
 
@@ -412,11 +412,11 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 </div>
                 <div class="user-view-detail">
                     <label>Creado</label>
-                    <div class="value"><?php echo $viewUser['created'] ? date('d/m/y H:i:s', strtotime($viewUser['created'])) : '—'; ?></div>
+                    <div class="value"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></div>
                 </div>
                 <div class="user-view-detail">
                     <label>Actualizado</label>
-                    <div class="value"><?php echo $viewUser['updated'] ? date('d/m/y H:i:s', strtotime($viewUser['updated'])) : '—'; ?></div>
+                    <div class="value"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></div>
                 </div>
             </div>
         </div>
@@ -457,7 +457,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 <td><a href="<?php echo html($ticketHref); ?>"><?php echo html($t['ticket_number']); ?></a></td>
                                 <td><a href="<?php echo html($ticketHref); ?>"><?php echo html($t['subject']); ?></a></td>
                                 <td><?php echo html($t['status_name'] ?? '—'); ?></td>
-                                <td><?php echo $t['created'] ? date('d/m/y H:i', strtotime($t['created'])) : '—'; ?></td>
+                                <td><?php echo $t['created'] ? date('d/m/y h:i A', strtotime($t['created'])) : '—'; ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -511,7 +511,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 <div class="d-flex justify-content-between align-items-start" style="gap:10px;">
                                     <div class="text-muted small">
                                         <i class="bi bi-person"></i>
-                                        <?php echo $noteCreated ? date('d/m/y H:i:s', strtotime($noteCreated)) : '—'; ?>
+                                        <?php echo $noteCreated ? date('d/m/y h:i A', strtotime($noteCreated)) : '—'; ?>
                                     </div>
                                     <div class="d-flex align-items-center" style="gap:10px;">
                                         <div class="small" style="white-space:nowrap;">

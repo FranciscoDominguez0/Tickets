@@ -185,12 +185,12 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
 
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Fecha de creación:</strong></div>
-                        <div class="col-sm-9"><?php echo date('d/m/Y H:i', strtotime($taskView['created'])); ?></div>
+                        <div class="col-sm-9"><?php echo date('d/m/Y h:i A', strtotime($taskView['created'])); ?></div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Última actualización:</strong></div>
-                        <div class="col-sm-9"><?php echo date('d/m/Y H:i', strtotime($taskView['updated'])); ?></div>
+                        <div class="col-sm-9"><?php echo date('d/m/Y h:i A', strtotime($taskView['updated'])); ?></div>
                     </div>
 
                     <?php if ($taskView['due_date']): ?>
@@ -202,7 +202,7 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                                 $is_overdue = $due_date < time() && $taskView['status'] !== 'completed';
                                 ?>
                                 <span class="<?php echo $is_overdue ? 'text-danger fw-bold' : ''; ?>">
-                                    <?php echo date('d/m/Y H:i', $due_date); ?>
+                                    <?php echo date('d/m/Y h:i A', $due_date); ?>
                                 </span>
                                 <?php if ($is_overdue): ?>
                                     <span class="badge bg-danger ms-2">VENCIDA</span>
@@ -258,11 +258,11 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                 <div class="user-view-mobile-card">
                     <div class="uvm-row">
                         <span class="uvm-k"><i class="bi bi-calendar-plus"></i> Creación</span>
-                        <span class="uvm-v"><?php echo date('d/m/y H:i', strtotime($taskView['created'])); ?></span>
+                        <span class="uvm-v"><?php echo date('d/m/y h:i A', strtotime($taskView['created'])); ?></span>
                     </div>
                     <div class="uvm-row">
                         <span class="uvm-k"><i class="bi bi-calendar-check"></i> Act.</span>
-                        <span class="uvm-v"><?php echo date('d/m/y H:i', strtotime($taskView['updated'])); ?></span>
+                        <span class="uvm-v"><?php echo date('d/m/y h:i A', strtotime($taskView['updated'])); ?></span>
                     </div>
                     <?php if ($taskView['due_date']): ?>
                     <div class="uvm-row">
@@ -273,7 +273,7 @@ $currentAssigned = isset($taskView['assigned_to']) ? (int)$taskView['assigned_to
                             $is_overdue = $due_date < time() && $taskView['status'] !== 'completed';
                             ?>
                             <span class="<?php echo $is_overdue ? 'text-danger fw-bold' : ''; ?>">
-                                <?php echo date('d/m/y H:i', $due_date); ?>
+                                <?php echo date('d/m/y h:i A', $due_date); ?>
                             </span>
                             <?php if ($is_overdue): ?>
                                 <span class="badge bg-danger ms-1" style="font-size:0.65rem;">VENCIDA</span>

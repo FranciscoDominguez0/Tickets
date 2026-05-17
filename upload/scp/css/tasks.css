@@ -87,6 +87,42 @@
     word-wrap: break-word;
 }
 
+/* ── Dark Mode Overrides ── */
+body.dark-mode .card {
+    background: #111827;
+    border-color: rgba(255,255,255,0.08);
+}
+body.dark-mode .card-header {
+    background: #1f2937;
+    border-bottom-color: rgba(255,255,255,0.08);
+    color: #f1f5f9;
+}
+body.dark-mode .task-description {
+    background: #1f2937;
+    color: #e2e8f0;
+}
+body.dark-mode .details-grid strong {
+    color: #f1f5f9;
+}
+body.dark-mode .details-grid .col-sm-3 {
+    color: #94a3b8;
+}
+body.dark-mode .details-grid .col-sm-9 {
+    color: #e2e8f0;
+}
+body.dark-mode .table thead th {
+    background: #1f2937;
+    color: #94a3b8;
+    border-color: rgba(255,255,255,0.08);
+}
+body.dark-mode .table tbody td {
+    color: #e2e8f0;
+    border-color: rgba(255,255,255,0.06);
+}
+body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(255,255,255,0.04);
+}
+
 .card-header .btn-group .btn {
     border-radius: 0.375rem !important;
 }

@@ -1542,11 +1542,11 @@ function humanSize($bytes) {
                         </div>
                         <div class="mobile-grid-item">
                             <label><i class="bi bi-calendar-event"></i> CREADO EL</label>
-                            <div class="val"><?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
+                            <div class="val"><?php echo date('d/m/Y h:i A', strtotime($t['created'])); ?></div>
                         </div>
                         <div class="mobile-grid-item">
                             <label><i class="bi bi-clock-history"></i> ACTUALIZADO</label>
-                            <div class="val"><?php echo !empty($t['updated']) ? date('d/m/Y H:i', strtotime($t['updated'])) : '—'; ?></div>
+                            <div class="val"><?php echo !empty($t['updated']) ? date('d/m/Y h:i A', strtotime($t['updated'])) : '—'; ?></div>
                         </div>
                         <div class="mobile-grid-item">
                             <label><i class="bi bi-hash"></i> TICKET #</label>
@@ -1583,7 +1583,7 @@ function humanSize($bytes) {
                         <div class="divider"></div>
                         <div class="field">
                             <label><i class="bi bi-calendar-event"></i> FECHA DE CREACIÓN</label>
-                            <div class="value"><?php echo date('d/m/Y H:i', strtotime($t['created'])); ?></div>
+                            <div class="value"><?php echo date('d/m/Y h:i A', strtotime($t['created'])); ?></div>
                         </div>
                     </div>
 
@@ -1601,7 +1601,7 @@ function humanSize($bytes) {
                         <div class="field">
                             <label><i class="bi bi-clock-history"></i> ÚLTIMA ACTUALIZACIÓN</label>
                             <div class="value" style="font-size: 0.9rem; color: #64748b;">
-                                <?php echo !empty($t['updated']) ? date('d/m/Y H:i', strtotime($t['updated'])) : date('d/m/Y H:i', strtotime($t['created'])); ?>
+                                <?php echo !empty($t['updated']) ? date('d/m/Y h:i A', strtotime($t['updated'])) : date('d/m/Y h:i A', strtotime($t['created'])); ?>
                             </div>
                         </div>
                     </div>
@@ -1666,7 +1666,7 @@ function humanSize($bytes) {
                                     
                                     <div class="entry-content">
                                         <div class="entry-meta-top">
-                                            <?php echo !empty($e['created']) ? date('d/m/y H:i:s', strtotime($e['created'])) : ''; ?>
+                                            <?php echo !empty($e['created']) ? date('d/m/y h:i A', strtotime($e['created'])) : ''; ?>
                                         </div>
 
                                         <div class="entry-body"><?php
@@ -1825,7 +1825,7 @@ function humanSize($bytes) {
                     </div>
                     <div class="body py-2 text-center" style="background: #ffffff;">
                         <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12)); background: #ffffff; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
+                        <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y h:i A', strtotime($t['closed'])) : '-'; ?></div>
                     </div>
                 </div>
             <?php endif; ?>

@@ -966,7 +966,7 @@ function sanitizeRichText($inputHtml) {
 // Formatear fecha
 function formatDate($date) {
     if (!$date) return '-';
-    return date('d/m/Y H:i', strtotime($date));
+    return date('d/m/Y h:i A', strtotime($date));
 }
 
 // Redirect

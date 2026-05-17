@@ -65,7 +65,18 @@ document.addEventListener('DOMContentLoaded', function() {
           if (!whenStr) return '';
           var d = new Date(whenStr.replace(' ', 'T'));
           if (isNaN(d.getTime())) return whenStr;
-          return d.toLocaleString();
+          
+          var day = String(d.getDate()).padStart(2, '0');
+          var month = String(d.getMonth() + 1).padStart(2, '0');
+          var year = d.getFullYear();
+          var h = d.getHours();
+          var m = String(d.getMinutes()).padStart(2, '0');
+          var ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12;
+          h = h ? h : 12; // la hora '0' debe ser '12'
+          var hStr = String(h).padStart(2, '0');
+          
+          return day + '/' + month + '/' + year + ' ' + hStr + ':' + m + ' ' + ampm;
         } catch (e) {
           return whenStr || '';
         }

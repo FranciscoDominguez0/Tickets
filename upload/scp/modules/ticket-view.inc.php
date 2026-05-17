@@ -1040,7 +1040,7 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
                 <div class="mobile-grid-item">
                     <label><i class="bi bi-reply-all"></i> ÚLTIMA RESPUESTA</label>
-                    <div class="val"><?php echo $t['last_response'] ? date('d/m/y H:i', strtotime($t['last_response'])) : '—'; ?></div>
+                    <div class="val"><?php echo $t['last_response'] ? date('d/m/y h:i A', strtotime($t['last_response'])) : '—'; ?></div>
                 </div>
             </div>
         </div>
@@ -1108,7 +1108,7 @@ if ($ticketClientSignaturePath !== '') {
                 
                 <div class="field">
                     <label><i class="bi bi-calendar-event"></i> CREADO EN</label>
-                    <div class="value" style="color: #64748b; font-size: 0.9rem;"><?php echo $t['created'] ? date('d/m/y H:i:s', strtotime($t['created'])) : '—'; ?></div>
+                    <div class="value" style="color: #64748b; font-size: 0.9rem;"><?php echo $t['created'] ? date('d/m/y h:i A', strtotime($t['created'])) : '—'; ?></div>
                 </div>
             </div>
 
@@ -1200,7 +1200,7 @@ if ($ticketClientSignaturePath !== '') {
                 
                 <div class="field">
                     <label><i class="bi bi-reply-all"></i> ÚLTIMA RESPUESTA</label>
-                    <div class="value" style="color: #475569;"><?php echo $t['last_response'] ? date('d/m/y H:i:s', strtotime($t['last_response'])) : '—'; ?></div>
+                    <div class="value" style="color: #475569;"><?php echo $t['last_response'] ? date('d/m/y h:i A', strtotime($t['last_response'])) : '—'; ?></div>
                 </div>
             </div>
         </div>
@@ -1229,7 +1229,7 @@ if ($ticketClientSignaturePath !== '') {
                     <?php echo html((string)($t['user_name'] ?? '')); ?> · <?php echo html((string)($t['user_email'] ?? '')); ?>
                 </div>
                 <div class="tph-meta">
-                    Impreso: <?php echo date('d/m/Y H:i'); ?>
+                    Impreso: <?php echo date('d/m/Y h:i A'); ?>
                 </div>
             </div>
         </div>
@@ -1337,7 +1337,7 @@ if ($ticketClientSignaturePath !== '') {
                             
                             <div class="entry-content">
                                 <div class="entry-meta-top">
-                                    <?php echo $e['created'] ? date('d/m/y H:i:s', strtotime($e['created'])) : ''; ?>
+                                    <?php echo $e['created'] ? date('d/m/y h:i A', strtotime($e['created'])) : ''; ?>
                                 </div>
 
                                 <div class="entry-body"><?php
@@ -1421,9 +1421,8 @@ if ($ticketClientSignaturePath !== '') {
                     Cerrado por
                     <span class="ticket-closed-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
                     <strong><?php echo html($ticket_closed_info['by'] ?? 'Agente'); ?></strong>
-                    con el estado de
-                    <strong><?php echo html($ticket_closed_info['status'] ?? 'Cerrado'); ?></strong>
-                    <?php echo !empty($ticket_closed_info['at']) ? date('d/m/y H:i', strtotime($ticket_closed_info['at'])) : ''; ?>
+                    &nbsp;&bull;&nbsp; 
+                    <?php echo !empty($ticket_closed_info['at']) ? date('d/m/y h:i A', strtotime($ticket_closed_info['at'])) : ''; ?>
                 </div>
             </div>
 
@@ -1447,31 +1446,46 @@ if ($ticketClientSignaturePath !== '') {
 
     <!-- Responder -->
     <div class="ticket-view-reply">
-        <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data" id="form-reply">
-            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-            <div class="mb-3">
-                <label class="form-label fw-bold">Respuesta</label>
-                <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
-            </div>
-            <?php $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>
-            <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
-                <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.mp4,.webm,.mov,.mkv">
-                <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
-                <div class="attach-text">Arrastra o <a href="#" data-action="attachments-browse">selecciona archivos</a></div>
-                <div class="attach-hint">PDF, JPG, PNG, DOC, Video (Máx. <?php echo $ticketMaxFileMb; ?>MB)</div>
-                <div class="attach-list" id="attach-list"></div>
-            </div>
-            <div class="reply-buttons">
-                <button type="submit" name="do" value="reply" class="btn btn-reply btn-publish">
-                    <i class="bi bi-send"></i> Publicar Respuesta
-                </button>
-                <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
-                <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
-                    <i class="bi bi-check2-circle"></i> Cerrar ticket
-                </button>
+        <?php if (!empty($t['closed'])): ?>
+            <div style="text-align:center; padding:40px 20px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:14px; margin-bottom:20px;" class="closed-reply-prompt">
+                <i class="bi bi-lock-fill" style="font-size:2rem; color:#94a3b8; margin-bottom:10px; display:block;"></i>
+                <h4 style="font-size:1.1rem; color:#475569; font-weight:700; margin-bottom:6px;">Este ticket está cerrado</h4>
+                <p style="color:#64748b; font-size:0.95rem; margin-bottom:16px;">Para escribir una nueva respuesta, primero debes reabrir el ticket.</p>
+                <?php if ($canTicketEdit): ?>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalReopenTicket" style="border-radius:10px; font-weight:700; padding:10px 24px; box-shadow:0 4px 12px rgba(37,99,235,0.2);">
+                        <i class="bi bi-unlock-fill me-2"></i>Reabrir Ticket
+                    </button>
+                <?php else: ?>
+                    <div class="badge bg-secondary">No tienes permisos para reabrir</div>
                 <?php endif; ?>
             </div>
-        </form>
+        <?php else: ?>
+            <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data" id="form-reply">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Respuesta</label>
+                    <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
+                </div>
+                <?php $ticketMaxFileMb = (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>
+                <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
+                    <input type="file" name="attachments[]" id="attachments" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.mp4,.webm,.mov,.mkv">
+                    <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
+                    <div class="attach-text">Arrastra o <a href="#" data-action="attachments-browse">selecciona archivos</a></div>
+                    <div class="attach-hint">PDF, JPG, PNG, DOC, Video (Máx. <?php echo $ticketMaxFileMb; ?>MB)</div>
+                    <div class="attach-list" id="attach-list"></div>
+                </div>
+                <div class="reply-buttons">
+                    <button type="submit" name="do" value="reply" class="btn btn-reply btn-publish">
+                        <i class="bi bi-send"></i> Publicar Respuesta
+                    </button>
+                    <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
+                    <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
+                        <i class="bi bi-check2-circle"></i> Cerrar ticket
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </form>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -1552,6 +1566,25 @@ if ($ticketClientSignaturePath !== '') {
                     <button type="submit" class="btn btn-danger">Eliminar permanentemente</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Reabrir Ticket -->
+<div class="modal fade" id="modalReopenTicket" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Reapertura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary" style="font-size: 1.05rem;">¿Estás seguro de que deseas reabrir este ticket? <br><br>El estado cambiará a <strong>Abierto</strong> y se habilitará nuevamente el área para enviar respuestas.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a href="tickets.php?id=<?php echo $tid; ?>&action=status&status_id=1" class="btn btn-primary">Sí, reabrir ticket</a>
+            </div>
         </div>
     </div>
 </div>

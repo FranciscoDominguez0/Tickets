@@ -1451,7 +1451,7 @@ $statusBadges = [
                                 </span>
                             </td>
                             <td><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '-'; ?></td>
-                            <td><?php echo $u['updated'] ? date('d/m/y H:i:s', strtotime($u['updated'])) : '-'; ?></td>
+                            <td><?php echo $u['updated'] ? date('d/m/y h:i A', strtotime($u['updated'])) : '-'; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

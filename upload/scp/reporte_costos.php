@@ -460,7 +460,7 @@ h6.border-bottom {
     }
     $staffName = trim(($ticket['staff_first'] ?? '') . ' ' . ($ticket['staff_last'] ?? ''));
     $staffName = $staffName !== '' ? $staffName : 'Sin asignar';
-    $closedDate = !empty($ticket['closed']) ? date('d/m/Y H:i', strtotime($ticket['closed'])) : 'N/A';
+    $closedDate = !empty($ticket['closed']) ? date('d/m/Y h:i A', strtotime($ticket['closed'])) : 'N/A';
     ?>
 
     <!-- Sección de Información General Arriba -->
