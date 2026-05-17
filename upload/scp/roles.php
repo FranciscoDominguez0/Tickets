@@ -397,7 +397,7 @@ ob_start();
                                         <tr>
                                             <!-- VISTA MÓVIL (Tarjeta Premium) -->
                                             <td class="d-md-none p-0">
-                                                <div style="padding: 16px; background: #ffffff; position: relative;">
+                                                <div class="role-mobile-card">
                                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                                         <div class="d-flex align-items-center gap-3">
                                                             <input type="checkbox" name="ids[]" value="<?php echo $rid; ?>" class="form-check-input role-checkbox m-0 shadow-sm" style="width: 1.25rem; height: 1.25rem;">
@@ -407,7 +407,7 @@ ob_start();
                                                             <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
                                                             <?php endif; ?>
                                                         </div>
-                                                        <a href="role_permissions.php?role=<?php echo urlencode($name); ?>" class="btn btn-sm btn-light border-0" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;" title="Permisos">
+                                                        <a href="role_permissions.php?role=<?php echo urlencode($name); ?>" class="btn btn-sm role-mobile-action-btn" title="Permisos">
                                                             <i class="bi bi-chevron-right text-secondary"></i>
                                                         </a>
                                                     </div>
@@ -422,23 +422,23 @@ ob_start();
                                                         <i class="bi bi-calendar3 me-1 text-muted"></i> Creado: <?php echo date('d M Y', strtotime($created)); ?>
                                                     </div>
 
-                                                    <div class="row g-2 mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                                    <div class="row g-2 mt-2 pt-3 role-stats-row">
                                                         <div class="col-6">
-                                                            <div style="background: #f8fafc; border-radius: 8px; padding: 8px 12px;">
-                                                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                            <div class="role-stat-box">
+                                                                <div class="stat-label">
                                                                     Total Agentes
                                                                 </div>
-                                                                <div style="font-size: 1rem; color: #0f172a; font-weight: 800;">
+                                                                <div class="stat-value">
                                                                     <?php echo (int)$agentsCount; ?>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-6">
-                                                            <div style="background: #f8fafc; border-radius: 8px; padding: 8px 12px;">
-                                                                <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                            <div class="role-stat-box">
+                                                                <div class="stat-label">
                                                                     Agentes Activos
                                                                 </div>
-                                                                <div style="font-size: 1rem; color: #16a34a; font-weight: 800;">
+                                                                <div class="stat-value" style="color: #10b981;">
                                                                     <?php echo (int)$agentsActive; ?>
                                                                 </div>
                                                             </div>
@@ -495,6 +495,81 @@ ob_start();
 </div>
 
 <style>
+/* ── Roles Mobile Card Dark Mode Variables ── */
+:root {
+    --role-card-bg: #ffffff;
+    --role-card-border: #e2e8f0;
+    --role-stat-bg: #f8fafc;
+    --role-stat-text: #0f172a;
+    --role-card-title: #0f172a;
+    --role-card-meta: #64748b;
+    --role-dashed-border: #e2e8f0;
+    --role-action-btn-bg: #f8fafc;
+    --role-action-btn-color: #64748b;
+}
+body.dark-mode {
+    --role-card-bg: #111111;
+    --role-card-border: #27272a;
+    --role-stat-bg: #1c1c1e;
+    --role-stat-text: #f1f5f9;
+    --role-card-title: #f8fafc;
+    --role-card-meta: #94a3b8;
+    --role-dashed-border: #3f3f46;
+    --role-action-btn-bg: #27272a;
+    --role-action-btn-color: #94a3b8;
+}
+
+.role-mobile-card {
+    padding: 16px;
+    background: var(--role-card-bg);
+    position: relative;
+}
+.role-mobile-card .role-mobile-card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--role-card-title);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+.role-mobile-card .role-mobile-card-meta {
+    font-size: 0.75rem;
+    color: var(--role-card-meta);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.role-mobile-card .role-stats-row {
+    border-top: 1px dashed var(--role-dashed-border);
+}
+.role-stat-box {
+    background: var(--role-stat-bg);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+.role-stat-box .stat-label {
+    font-size: 0.65rem;
+    color: var(--role-card-meta);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+.role-stat-box .stat-value {
+    font-size: 1rem;
+    color: var(--role-stat-text);
+    font-weight: 800;
+}
+.role-mobile-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--role-action-btn-bg) !important;
+    color: var(--role-action-btn-color) !important;
+    border: none !important;
+}
+
 /* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
     #rolesMassForm .table-responsive { border: none !important; overflow: visible !important; }
@@ -503,8 +578,8 @@ ob_start();
     #rolesMassForm .table tbody tr {
         display: block !important;
         margin-bottom: 1rem !important;
-        background: #fff !important;
-        border: 1px solid #e2e8f0 !important;
+        background: var(--role-card-bg) !important;
+        border: 1px solid var(--role-card-border) !important;
         border-radius: 16px !important;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
         overflow: hidden !important;

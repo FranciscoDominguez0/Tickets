@@ -659,6 +659,24 @@ ob_start();
 </div>
 
 <style>
+/* ── Departments Mobile Card Dark Mode Variables ── */
+:root {
+    --dept-card-bg: #ffffff;
+    --dept-card-border: #e2e8f0;
+    --dept-card-title: #0f172a;
+    --dept-card-meta: #64748b;
+    --dept-dashed-border: #e2e8f0;
+    --dept-link-color: #475569;
+}
+body.dark-mode {
+    --dept-card-bg: #111111;
+    --dept-card-border: #27272a;
+    --dept-card-title: #f8fafc;
+    --dept-card-meta: #94a3b8;
+    --dept-dashed-border: #3f3f46;
+    --dept-link-color: #94a3b8;
+}
+
 @media (max-width: 768px) {
     #deptsMassForm .table-responsive {
         border: none;
@@ -669,11 +687,11 @@ ob_start();
     #deptsMassForm .table tbody tr {
         display: flex;
         flex-direction: column;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--dept-card-border);
         border-radius: 12px;
         margin-bottom: 12px;
         padding: 14px 16px;
-        background: #fff;
+        background: var(--dept-card-bg);
         position: relative;
     }
     #deptsMassForm .table tbody td {
@@ -695,25 +713,36 @@ ob_start();
         padding-right: 48px;
     }
     #deptsMassForm .table tbody td:nth-child(2) .fw-semibold {
-        font-size: 15px; color: #0f172a;
+        font-size: 15px;
+        color: var(--dept-card-title) !important;
     }
-    #deptsMassForm .table tbody td:nth-child(2) .text-muted {
-        line-height: 1.3; margin-top: 3px;
+    #deptsMassForm .table tbody td:nth-child(2),
+    #deptsMassForm .table tbody td:nth-child(2) * {
+        color: var(--dept-card-title) !important;
+    }
+    #deptsMassForm .table tbody td:nth-child(2) .text-muted,
+    #deptsMassForm .table tbody td:nth-child(2) .text-muted * {
+        color: var(--dept-card-meta) !important;
     }
     /* Email */
     #deptsMassForm .table tbody td:nth-child(5) {
         font-size: 13px;
         padding-left: 32px;
         word-break: break-all;
+        color: var(--dept-link-color);
+    }
+    #deptsMassForm .table tbody td:nth-child(5) a {
+        color: var(--dept-link-color) !important;
+        text-decoration: none !important;
     }
     #deptsMassForm .table tbody td:nth-child(5)::before {
         content: "Email: ";
         font-weight: 600;
-        color: #64748b;
+        color: var(--dept-card-meta);
     }
     /* Stats & Status Divider */
     #deptsMassForm .table tbody td:nth-child(3) {
-        border-top: 1px dashed #e2e8f0;
+        border-top: 1px dashed var(--dept-dashed-border);
         margin-top: 12px;
         padding-top: 12px;
         display: inline-block;
@@ -723,16 +752,17 @@ ob_start();
         display: inline-block;
         font-size: 13px;
         padding-top: 12px;
+        color: var(--dept-card-title);
     }
     #deptsMassForm .table tbody td:nth-child(4)::before {
         content: "Agentes: ";
-        color: #64748b;
+        color: var(--dept-card-meta);
         font-weight: 500;
         margin-left: 12px;
     }
     #deptsMassForm .table tbody td:nth-child(6)::before {
         content: "Tickets: ";
-        color: #64748b;
+        color: var(--dept-card-meta);
         font-weight: 500;
         margin-left: 12px;
     }
@@ -745,6 +775,7 @@ ob_start();
     }
 }
 </style>
+
 
 <script>
 window.addEventListener('DOMContentLoaded', function(){
