@@ -1053,12 +1053,7 @@ $statusBadges = [
 ?>
 
 <div class="users-directory">
-    <?php if (!empty($add_errors)): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?php echo implode(' ', array_map('htmlspecialchars', $add_errors)); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
+    <?php /* Los errores de add_errors se muestran dentro del modal (ver #modalAddUser) */ ?>
     <?php if ($importFlash && isset($_GET['msg']) && $_GET['msg'] === 'import_done'): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             Importación completada. Importados: <?php echo (int)($importFlash['imported'] ?? 0); ?>.
@@ -1511,6 +1506,12 @@ $statusBadges = [
                     <input type="hidden" name="do" value="add">
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-body">
+                        <?php if (!empty($add_errors)): ?>
+                        <div class="alert alert-danger d-flex align-items-start gap-2 mb-4" role="alert" style="border-radius:12px;">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                            <div><?php echo implode('<br>', array_map('htmlspecialchars', $add_errors)); ?></div>
+                        </div>
+                        <?php endif; ?>
                         <div class="mb-4">
                             <label for="add-email" class="form-label"><i class="bi bi-envelope me-1" style="color: #ef4444;"></i> Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control" id="add-email" name="email" required placeholder="usuario@ejemplo.com" value="<?php echo html($_POST['email'] ?? ''); ?>">
@@ -1557,6 +1558,26 @@ $statusBadges = [
             </div>
         </div>
     </div>
+
+    <?php if (!empty($add_errors)): ?>
+    <script>
+    (function(){
+        function reopenAddUserModal() {
+            try {
+                var el = document.getElementById('modalAddUser');
+                if (el && window.bootstrap && window.bootstrap.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(el).show();
+                }
+            } catch(e) {}
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', reopenAddUserModal);
+        } else {
+            reopenAddUserModal();
+        }
+    })();
+    </script>
+    <?php endif; ?>
 
     <!-- Modal Importar usuarios -->
     <div class="modal fade" id="modalImportUsers" tabindex="-1" aria-hidden="true">
