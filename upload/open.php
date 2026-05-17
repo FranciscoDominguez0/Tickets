@@ -1251,6 +1251,38 @@ if ($blockNewIfSignaturePending) {
         .bg-primary { background-color: #ef4444 !important; }
         a { color: #ef4444; }
         a:hover { color: #dc2626; }
+
+        @media (max-width: 576px) {
+            body .container-main {
+                padding: 0 10px !important;
+                margin: 20px auto !important;
+            }
+            body .shell {
+                max-width: 100% !important;
+            }
+            body .panel-soft {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel-soft {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body .page-header {
+                padding: 16px !important;
+                margin-bottom: 16px !important;
+                border-radius: 12px !important;
+            }
+            body .form-card {
+                padding: 16px 12px !important;
+                border-radius: 12px !important;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">

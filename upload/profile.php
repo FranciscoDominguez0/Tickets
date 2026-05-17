@@ -367,6 +367,40 @@ if ($_POST) {
         .bg-primary { background-color: #ef4444 !important; }
         a { color: #ef4444; }
         a:hover { color: #dc2626; }
+
+        @media (max-width: 576px) {
+            body .container-main {
+                padding: 0 10px !important;
+                margin: 20px auto !important;
+            }
+            body .profile-shell {
+                max-width: 100% !important;
+            }
+            body .panel {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body .profile-content {
+                padding: 0 !important;
+            }
+            body .profile-hero {
+                padding: 16px 12px !important;
+                border-radius: 12px !important;
+            }
+            body .content-card {
+                padding: 16px 12px !important;
+                border-radius: 12px !important;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">

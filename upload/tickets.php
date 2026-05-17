@@ -861,8 +861,21 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
 
         @media (max-width: 576px) {
-            .container-main { padding: 0 12px; margin: 18px auto; }
-            .shell { max-width: 100%; }
+            body .container-main { padding: 0 10px !important; margin: 20px auto !important; }
+            body .shell { max-width: 100% !important; }
+            body .panel-soft {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel-soft {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
             .tabs { 
                 padding: 0 4px; 
                 display: flex; 

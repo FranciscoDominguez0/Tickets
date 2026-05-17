@@ -164,6 +164,15 @@ body.dark-mode div[style*="background: #fafafa"] {
     background: #0a0a0a !important;
     border-color: #1a1a1a !important;
 }
+body.dark-mode .card-soft,
+body.dark-mode .card-soft .head {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .card-soft .head h5 {
+    color: #e4e4e7 !important;
+}
 body.dark-mode .card-soft .body,
 body.dark-mode .modal-content {
     background: #18181b !important;
