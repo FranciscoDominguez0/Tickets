@@ -237,9 +237,9 @@ while ($dept = $deptResult->fetch_assoc()) {
 
 // Helper badges
 $roleBadges = [
-    'admin' => ['bg' => 'bg-danger', 'label' => 'Admin'],
-    'supervisor' => ['bg' => 'bg-warning text-dark', 'label' => 'Supervisor'],
-    'agent' => ['bg' => 'bg-info text-dark', 'label' => 'Agente'],
+    'admin' => ['bg' => 'badge-agent-role role-admin', 'label' => 'Admin'],
+    'supervisor' => ['bg' => 'badge-agent-role role-supervisor', 'label' => 'Supervisor'],
+    'agent' => ['bg' => 'badge-agent-role role-other', 'label' => 'Agente'],
 ];
 
 // Generar URL para ordenamiento
@@ -294,6 +294,154 @@ $basePaging['order'] = $currentOrder;
     font-size: 0.95rem;
     font-weight: 500;
 }
+
+/* ── Hacer barra de búsqueda y filtro más pequeños y compactos ── */
+.tickets-filters .form-select {
+    min-width: 180px !important;
+    max-width: 220px !important;
+    font-size: 0.85rem !important;
+    padding: 0.35rem 2rem 0.35rem 0.75rem !important;
+    height: 34px !important;
+    font-weight: 600 !important;
+}
+/* ── Buscador del Directorio según diseño premium ── */
+.tickets-search {
+    max-width: 440px !important;
+    flex: initial !important;
+    width: 100%;
+}
+.directory-search-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.directory-search-input-box {
+    position: relative;
+    flex: 1;
+    min-width: 180px;
+}
+.directory-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 0.95rem;
+    pointer-events: none;
+    z-index: 5;
+}
+.directory-search-input {
+    width: 100% !important;
+    height: 38px !important;
+    padding-left: 36px !important;
+    padding-right: 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(2, 6, 23, 0.12) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    background: #fff !important;
+    color: #0f172a !important;
+    transition: all 0.2s !important;
+}
+
+/* Modo oscuro para el input del buscador */
+body.dark-mode .directory-search-input {
+    background: #0f0f11 !important;
+    border-color: #222 !important;
+    color: #f1f5f9 !important;
+}
+body.dark-mode .directory-search-input::placeholder {
+    color: #64748b !important;
+}
+.directory-search-input:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    outline: none !important;
+}
+
+/* Botón Buscar independiente estilo cápsula */
+.directory-search-btn {
+    height: 38px !important;
+    padding: 0 18px !important;
+    border-radius: 12px !important;
+    background: #ef4444 !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+    transition: all 0.2s !important;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.directory-search-btn:hover {
+    background: #dc2626 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3) !important;
+    color: #fff !important;
+}
+.directory-search-btn:active {
+    transform: translateY(0);
+}
+
+/* ── Premium Department Select Styles ── */
+#deptSelect {
+    height: 38px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(2, 6, 23, 0.12) !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    background-color: #fff !important;
+    color: #475569 !important;
+    padding-left: 12px !important;
+    padding-right: 32px !important;
+    transition: all 0.2s !important;
+    cursor: pointer;
+}
+#deptSelect:focus {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    outline: none !important;
+}
+body.dark-mode #deptSelect {
+    background-color: #0f0f11 !important;
+    border-color: #222 !important;
+    color: #f1f5f9 !important;
+}
+
+.directory-search-clear {
+    height: 38px !important;
+    width: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
+    font-size: 0.85rem !important;
+    border: 1px solid rgba(2, 6, 23, 0.12) !important;
+    background: #f8fafc !important;
+    color: #64748b !important;
+    flex-shrink: 0;
+}
+body.dark-mode .directory-search-clear {
+    background: #0f0f11 !important;
+    border-color: #222 !important;
+    color: #94a3b8 !important;
+}
+.directory-search-clear:hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+body.dark-mode .directory-search-clear:hover {
+    background: #18181b !important;
+    color: #fff !important;
+}
+
 
 /* ── Toolbar responsive ── */
 @media (max-width: 576px) {
@@ -371,6 +519,51 @@ body.dark-mode .form-control {
     .agent-mobile-meta { display: none !important; }
     .agent-mobile-action { display: none !important; }
 }
+
+/* ── Premium Agent Roles Styling (Celeste en Modo Oscuro Solucionado) ── */
+.badge-agent-role {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1;
+    border: 1px solid transparent;
+}
+.badge-agent-role.role-admin {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+}
+.badge-agent-role.role-supervisor {
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+}
+.badge-agent-role.role-other {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Modo oscuro */
+body.dark-mode .badge-agent-role.role-admin {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+body.dark-mode .badge-agent-role.role-supervisor {
+    background: rgba(245, 158, 11, 0.18) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+body.dark-mode .badge-agent-role.role-other {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
 </style>
 
 <div class="tickets-shell">
@@ -385,31 +578,36 @@ body.dark-mode .form-control {
 
     <!-- Toolbar: filtros y búsqueda -->
     <div class="tickets-panel" style="margin-bottom: 16px;">
-        <div class="tickets-toolbar">
-            <div class="tickets-filters">
-                <select name="did" class="form-select form-select-sm" id="deptSelect" style="min-width: 200px; font-weight: 600; color: #475569;">
-                    <option value="0">Todos los departamentos</option>
-                    <?php foreach ($departments as $dept): ?>
-                        <option value="<?php echo $dept['id']; ?>" <?php echo $deptFilter == $dept['id'] ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
+        <form method="GET" action="directory.php" class="m-0 p-0">
+            <div class="tickets-toolbar">
+                <div class="tickets-filters">
+                    <select name="did" class="form-select form-select-sm" id="deptSelect" style="min-width: 200px; font-weight: 600; color: #475569;" onchange="this.form.submit()">
+                        <option value="0">Todos los departamentos</option>
+                        <?php foreach ($departments as $dept): ?>
+                            <option value="<?php echo $dept['id']; ?>" <?php echo $deptFilter == $dept['id'] ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="tickets-search">
+                    <div class="directory-search-form">
+                        <div class="directory-search-input-box">
+                            <i class="bi bi-search directory-search-icon"></i>
+                            <input type="text" name="q" class="directory-search-input" placeholder="Buscar por nombre, email o username..." value="<?php echo html($search); ?>" autocomplete="off">
+                        </div>
+                        <button type="submit" class="btn btn-danger directory-search-btn">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        <?php if ($search !== '' || $deptFilter > 0): ?>
+                            <a href="directory.php" class="directory-search-clear" title="Limpiar filtros"><i class="bi bi-x-lg"></i></a>
+                        <?php endif; ?>
+                        <?php if ($currentSort !== 'name' || $currentOrder !== 'ASC'): ?>
+                            <input type="hidden" name="sort" value="<?php echo html($currentSort); ?>">
+                            <input type="hidden" name="order" value="<?php echo html($currentOrder); ?>">
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
-            <div class="tickets-search">
-                <form method="GET" action="" class="input-group">
-                    <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
-                    <input type="text" name="q" class="form-control" style="border-left: none; border-radius: 0;" placeholder="Buscar nombre, email o username..." value="<?php echo html($search); ?>" autocomplete="off">
-                    <?php if ($deptFilter > 0): ?><input type="hidden" name="did" value="<?php echo (int)$deptFilter; ?>"><?php endif; ?>
-                    <?php if ($currentSort !== 'name' || $currentOrder !== 'ASC'): ?>
-                        <input type="hidden" name="sort" value="<?php echo html($currentSort); ?>">
-                        <input type="hidden" name="order" value="<?php echo html($currentOrder); ?>">
-                    <?php endif; ?>
-                    <button type="submit" class="btn btn-primary" style="border-radius: 0 10px 10px 0; background: linear-gradient(135deg,#dc2626,#ef4444); border: none;"><i class="bi bi-search"></i></button>
-                    <?php if ($search !== '' || $deptFilter > 0): ?>
-                        <a href="directory.php" class="btn btn-outline-secondary" style="margin-left: 6px; border-radius: 10px;"><i class="bi bi-x-lg"></i></a>
-                    <?php endif; ?>
-                </form>
-            </div>
-        </div>
+        </form>
     </div>
 
     <!-- Lista de agentes -->

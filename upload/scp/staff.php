@@ -632,6 +632,185 @@ foreach ($agents as $a) {
 ob_start();
 ?>
 
+<style>
+/* ── Premium Agent Roles Styling (Celeste en Modo Oscuro Solucionado) ── */
+.badge-agent-role {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    line-height: 1;
+    border: 1px solid transparent;
+}
+/* Administrador: rojo corporativo premium */
+.badge-agent-role.role-admin {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+}
+/* Agentes u otros: azul/pizarra premium */
+.badge-agent-role.role-other {
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Modo oscuro */
+body.dark-mode .badge-agent-role.role-admin {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+body.dark-mode .badge-agent-role.role-other {
+    background: rgba(59, 130, 246, 0.18) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Tarjetas móviles y bordes */
+.agent-mobile-card {
+    padding: 16px;
+    background: #ffffff;
+    position: relative;
+    border-radius: 12px;
+}
+body.dark-mode .agent-mobile-card {
+    background: #0f0f11 !important;
+    color: #f1f5f9 !important;
+}
+body.dark-mode .agent-mobile-card .agent-card-title {
+    color: #fff !important;
+}
+body.dark-mode .agent-mobile-card .agent-card-username {
+    color: #94a3b8 !important;
+}
+body.dark-mode .agent-mobile-card .agent-card-meta-text {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .agent-mobile-card .agent-card-divider {
+    border-top-color: #222 !important;
+}
+
+/* ── Premium Status Badges ── */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1;
+    border: 1px solid transparent;
+}
+.badge-status.active {
+    background: rgba(16, 185, 129, 0.1) !important;
+    color: #10b981 !important;
+    border-color: rgba(16, 185, 129, 0.2) !important;
+}
+.badge-status.inactive {
+    background: rgba(100, 116, 139, 0.1) !important;
+    color: #64748b !important;
+    border-color: rgba(100, 116, 139, 0.2) !important;
+}
+body.dark-mode .badge-status.active {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+body.dark-mode .badge-status.inactive {
+    background: rgba(148, 163, 184, 0.18) !important;
+    color: #94a3b8 !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+/* ── Premium Action Buttons ── */
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none !important;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-action.edit {
+    background: rgba(37, 99, 235, 0.08) !important;
+    color: #2563eb !important;
+}
+.btn-action.edit:hover {
+    background: #2563eb !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+.btn-action.reset {
+    background: rgba(8, 145, 178, 0.08) !important;
+    color: #0891b2 !important;
+}
+.btn-action.reset:hover {
+    background: #0891b2 !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+.btn-action.delete {
+    background: rgba(239, 68, 68, 0.08) !important;
+    color: #ef4444 !important;
+}
+.btn-action.delete:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+
+/* Dark mode for Action Buttons */
+body.dark-mode .btn-action.edit {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+}
+body.dark-mode .btn-action.edit:hover {
+    background: #3b82f6 !important;
+    color: #fff !important;
+}
+body.dark-mode .btn-action.reset {
+    background: rgba(6, 182, 212, 0.15) !important;
+    color: #22d3ee !important;
+}
+body.dark-mode .btn-action.reset:hover {
+    background: #0891b2 !important;
+    color: #fff !important;
+}
+body.dark-mode .btn-action.delete {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+}
+body.dark-mode .btn-action.delete:hover {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+/* Dark mode for desktop table text */
+body.dark-mode .agent-desktop-name {
+    color: #f1f5f9 !important;
+}
+body.dark-mode .agent-desktop-username {
+    color: #94a3b8 !important;
+}
+body.dark-mode .table th {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .table td {
+    border-color: #27272a !important;
+}
+</style>
+
 <div class="settings-hero">
     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
@@ -710,15 +889,15 @@ ob_start();
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead class="table-light">
+                <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                     <tr>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Departamento(s)</th>
-                        <th>Rol</th>
-                        <th class="text-center">Estado</th>
-                        <th>Último acceso</th>
-                        <th class="text-end">Acciones</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Nombre</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Email</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Departamento</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Rol</th>
+                        <th class="text-center" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Último acceso</th>
+                        <th class="text-end" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-right: 20px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -741,11 +920,26 @@ ob_start();
                         $role = (string)($a['role'] ?? '');
                         $active = (int)($a['is_active'] ?? 0) === 1;
                         $last = $a['last_login'] ?? null;
+
+                        // Generar iniciales y colores de avatar para un look consistente
+                        $parts = preg_split('/\s+/', trim($name));
+                        $i1 = strtoupper((string)($parts[0][0] ?? ''));
+                        $i2 = '';
+                        if (count($parts) > 1) {
+                            $i2 = strtoupper((string)($parts[1][0] ?? ''));
+                        } elseif (strlen($name) > 1) {
+                            $i2 = strtoupper(substr($name, 1, 1));
+                        }
+                        $initials = trim($i1 . $i2);
+                        if ($initials === '') $initials = 'A';
+
+                        $avatarColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+                        $avatarColor = $avatarColors[($a['id'] ?? 0) % count($avatarColors)];
                         ?>
                         <tr>
                             <!-- VISTA MÓVIL (Tarjeta Premium) -->
                             <td class="d-md-none p-0">
-                                <div style="padding: 16px; background: #ffffff; position: relative;">
+                                <div class="agent-mobile-card">
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div class="d-flex align-items-center gap-3">
                                             <?php if ($active): ?>
@@ -798,10 +992,10 @@ ob_start();
                                         <?php endif; ?>
                                     </div>
 
-                                    <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; line-height: 1.2;">
+                                    <div class="agent-card-title" style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; line-height: 1.2;">
                                         <?php echo html($name); ?>
                                     </div>
-                                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600;">
+                                    <div class="agent-card-username" style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600;">
                                         @<?php echo html((string)($a['username'] ?? '')); ?>
                                     </div>
                                     
@@ -809,16 +1003,23 @@ ob_start();
                                         <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>"><?php echo html((string)($a['email'] ?? '')); ?></a>
                                     </div>
 
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div style="font-size: 0.8rem; color: #334155; font-weight: 600;">
-                                            <i class="bi bi-shield-lock me-1 text-muted"></i> Rol: <span class="fw-bold text-primary"><?php echo html($role ?: '—'); ?></span>
+                                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                        <div class="agent-card-meta-text" style="font-size: 0.8rem; color: #334155; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i class="bi bi-shield-lock text-muted"></i> Rol:
+                                            <?php if ($role === 'admin'): ?>
+                                                <span class="badge-agent-role role-admin" style="padding: 2px 6px; font-size: 0.7rem;">Administrador</span>
+                                            <?php elseif ($role !== ''): ?>
+                                                <span class="badge-agent-role role-other" style="padding: 2px 6px; font-size: 0.7rem;"><?php echo html(ucfirst($role)); ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted" style="font-size: 0.75rem;">—</span>
+                                            <?php endif; ?>
                                         </div>
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
                                             <i class="bi bi-clock-history me-1 text-muted"></i> <?php echo $last ? date('d M, Y', strtotime($last)) : 'Nunca'; ?>
                                         </div>
                                     </div>
 
-                                    <div class="d-flex align-items-center mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
+                                    <div class="d-flex align-items-center mt-2 pt-3 agent-card-divider" style="border-top: 1px dashed #e2e8f0;">
                                         <div style="font-size: 0.75rem; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px;">
                                             Dpto:
                                         </div>
@@ -836,71 +1037,88 @@ ob_start();
                             </td>
 
                             <!-- VISTA ESCRITORIO -->
-                            <td class="d-none d-md-table-cell">
-                                <strong><?php echo html($name); ?></strong><br>
-                                <small class="text-muted">@<?php echo html((string)($a['username'] ?? '')); ?></small>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle; padding-left: 20px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: <?php echo html($avatarColor); ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; letter-spacing: 0.02em;">
+                                        <?php echo html($initials); ?>
+                                    </div>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;" class="agent-desktop-name"><?php echo html($name); ?></div>
+                                        <div style="font-size: 0.8rem; color: #64748b;" class="agent-desktop-username">@<?php echo html((string)($a['username'] ?? '')); ?></div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="d-none d-md-table-cell">
-                                <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>"><?php echo html((string)($a['email'] ?? '')); ?></a>
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                                <a class="text-decoration-none fw-semibold" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>" style="color:#2563eb;"><?php echo html((string)($a['email'] ?? '')); ?></a>
                             </td>
-                            <td class="d-none d-md-table-cell">
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
                                 <?php if ($dept !== ''): ?>
-                                    <span class="badge bg-secondary"><?php echo html($dept); ?></span>
+                                    <span class="chip-dept" style="background: rgba(59,130,246,0.08); color: #2563eb; border: 1px solid rgba(59,130,246,0.15); padding: 5px 12px; font-weight: 700; font-size: 0.78rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="bi bi-building"></i> <?php echo html($dept); ?>
+                                    </span>
                                 <?php else: ?>
-                                    <span class="text-muted">Sin asignar</span>
+                                    <span class="text-muted" style="font-size:0.8rem;">Sin asignar</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="d-none d-md-table-cell">
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
                                 <?php if ($role !== ''): ?>
-                                    <span class="badge bg-info text-dark"><?php echo html($role); ?></span>
+                                    <?php if ($role === 'admin'): ?>
+                                        <span class="badge-agent-role role-admin">Administrador</span>
+                                    <?php else: ?>
+                                        <span class="badge-agent-role role-other"><?php echo html(ucfirst($role)); ?></span>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-center d-none d-md-table-cell">
+                            <td class="text-center d-none d-md-table-cell" style="vertical-align: middle;">
                                 <?php if ($active): ?>
-                                    <span class="badge bg-success">Activo</span>
+                                    <span class="badge-status active"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem; vertical-align:middle;"></i> Activo</span>
                                 <?php else: ?>
-                                    <span class="badge bg-secondary">Inactivo</span>
+                                    <span class="badge-status inactive"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem; vertical-align:middle;"></i> Inactivo</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="d-none d-md-table-cell">
+                            <td class="d-none d-md-table-cell" style="vertical-align: middle; font-weight: 500; font-size: 0.85rem; color:#475569;">
                                 <?php if ($last): ?>
-                                    <?php echo html(formatDate($last)); ?>
+                                    <i class="bi bi-clock me-1 text-muted" style="font-size:0.8rem;"></i> <?php echo html(formatDate($last)); ?>
                                 <?php else: ?>
                                     <span class="text-muted">Nunca</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end d-none d-md-table-cell">
+                            <td class="text-end d-none d-md-table-cell" style="vertical-align: middle; padding-right: 20px;">
                                 <?php if ($currentStaffRole === 'admin'): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-primary agent-edit-btn"
-                                        data-id="<?php echo (int)$a['id']; ?>"
-                                        data-firstname="<?php echo htmlspecialchars((string)($a['firstname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-lastname="<?php echo htmlspecialchars((string)($a['lastname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-email="<?php echo htmlspecialchars((string)($a['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-username="<?php echo htmlspecialchars((string)($a['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-role="<?php echo htmlspecialchars((string)($a['role'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-dept-ids="<?php echo htmlspecialchars((string)($a['dept_ids'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-is-active="<?php echo $active ? '1' : '0'; ?>"
-                                        data-bs-toggle="modal" data-bs-target="#agentEditModal">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-
-                                    <button type="button" class="btn btn-sm btn-outline-danger agent-delete-btn"
-                                        data-id="<?php echo (int)$a['id']; ?>"
-                                        data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-bs-toggle="modal" data-bs-target="#agentDeleteModal">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-
-                                    <form method="post" action="staff.php" class="d-inline">
-                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                                        <input type="hidden" name="do" value="send_reset">
-                                        <input type="hidden" name="id" value="<?php echo (int)$a['id']; ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Enviar reseteo">
-                                            <i class="bi bi-envelope"></i>
+                                    <div class="d-flex align-items-center justify-content-end gap-2">
+                                        <button type="button" class="btn-action edit agent-edit-btn"
+                                            data-id="<?php echo (int)$a['id']; ?>"
+                                            data-firstname="<?php echo htmlspecialchars((string)($a['firstname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-lastname="<?php echo htmlspecialchars((string)($a['lastname'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-email="<?php echo htmlspecialchars((string)($a['email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-username="<?php echo htmlspecialchars((string)($a['username'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-role="<?php echo htmlspecialchars((string)($a['role'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-dept-ids="<?php echo htmlspecialchars((string)($a['dept_ids'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-is-active="<?php echo $active ? '1' : '0'; ?>"
+                                            data-bs-toggle="modal" data-bs-target="#agentEditModal"
+                                            title="Editar Agente">
+                                            <i class="bi bi-pencil-fill"></i>
                                         </button>
-                                    </form>
+
+                                        <form method="post" action="staff.php" class="m-0 p-0 d-inline">
+                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                            <input type="hidden" name="do" value="send_reset">
+                                            <input type="hidden" name="id" value="<?php echo (int)$a['id']; ?>">
+                                            <button type="submit" class="btn-action reset" title="Enviar reseteo de contraseña">
+                                                <i class="bi bi-envelope-fill"></i>
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn-action delete agent-delete-btn"
+                                            data-id="<?php echo (int)$a['id']; ?>"
+                                            data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-bs-toggle="modal" data-bs-target="#agentDeleteModal"
+                                            title="Eliminar Agente">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </div>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
@@ -982,16 +1200,40 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Departamento(s)</label>
-                            <div class="border rounded p-2" style="max-height: 220px; overflow: auto;">
-                                <?php foreach ($departments as $d): ?>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="dept_ids[]" id="createDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
-                                        <label class="form-check-label" for="createDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                            <label class="form-label d-flex justify-content-between align-items-center mb-2">
+                                <span>Departamento(s)</span>
+                                <span class="badge bg-secondary rounded-pill dept-count-badge" id="createDeptBadge">0 seleccionados</span>
+                            </label>
+                            
+                            <!-- Botón elegante para expandir/colapsar -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-between align-items-center py-2 px-3 dept-toggle-btn" data-target="createDeptContainer">
+                                <span><i class="bi bi-building me-1"></i> Gestionar departamentos asociados...</span>
+                                <i class="bi bi-chevron-down toggle-arrow"></i>
+                            </button>
+                            
+                            <!-- Contenedor expandible -->
+                            <div id="createDeptContainer" class="dept-expandable-container mt-2" style="display: none;">
+                                <!-- Barra de búsqueda y acciones rápidas -->
+                                <div class="d-flex gap-2 mb-2">
+                                    <div class="position-relative flex-grow-1">
+                                        <input type="text" class="form-control form-control-sm dept-search-input" placeholder="Buscar departamento..." style="border-radius: 8px; padding-left: 36px !important;">
                                     </div>
-                                <?php endforeach; ?>
+                                    <button type="button" class="btn btn-light btn-sm dept-select-all" style="border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(15, 23, 42, 0.1);">Mostrar todos</button>
+                                    <button type="button" class="btn btn-light btn-sm dept-clear-all" style="border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(15, 23, 42, 0.1);">Ocultar</button>
+                                </div>
+                                
+                                <!-- Checklist con scroll -->
+                                <div class="border rounded-3 p-2 dept-checkbox-list" style="max-height: 160px; overflow-y: auto;">
+                                    <div class="dept-placeholder text-muted text-center py-3 small"><i class="bi bi-search me-1"></i> Escribe para buscar o haz clic en "Todos"</div>
+                                    <?php foreach ($departments as $d): ?>
+                                        <div class="form-check dept-check-item" style="display: none;">
+                                            <input class="form-check-input dept-checkbox" type="checkbox" name="dept_ids[]" id="createDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
+                                            <label class="form-check-label" for="createDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
-                            <div class="form-text">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
+                            <div class="form-text mt-1">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
                         </div>
                         <div class="col-12">
                             <div class="form-check">
@@ -1055,16 +1297,40 @@ ob_start();
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Departamento(s)</label>
-                            <div class="border rounded p-2" style="max-height: 220px; overflow: auto;" id="edit_dept_box">
-                                <?php foreach ($departments as $d): ?>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="dept_ids[]" id="editDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
-                                        <label class="form-check-label" for="editDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                            <label class="form-label d-flex justify-content-between align-items-center mb-2">
+                                <span>Departamento(s)</span>
+                                <span class="badge bg-secondary rounded-pill dept-count-badge" id="editDeptBadge">0 seleccionados</span>
+                            </label>
+                            
+                            <!-- Botón elegante para expandir/colapsar -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-between align-items-center py-2 px-3 dept-toggle-btn" data-target="editDeptContainer">
+                                <span><i class="bi bi-building me-1"></i> Gestionar departamentos asociados...</span>
+                                <i class="bi bi-chevron-down toggle-arrow"></i>
+                            </button>
+                            
+                            <!-- Contenedor expandible -->
+                            <div id="editDeptContainer" class="dept-expandable-container mt-2" style="display: none;">
+                                <!-- Barra de búsqueda y acciones rápidas -->
+                                <div class="d-flex gap-2 mb-2">
+                                    <div class="position-relative flex-grow-1">
+                                        <input type="text" class="form-control form-control-sm dept-search-input" placeholder="Buscar departamento..." style="border-radius: 8px; padding-left: 36px !important;">
                                     </div>
-                                <?php endforeach; ?>
+                                    <button type="button" class="btn btn-light btn-sm dept-select-all" style="border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(15, 23, 42, 0.1);">Mostrar todos</button>
+                                    <button type="button" class="btn btn-light btn-sm dept-clear-all" style="border-radius: 8px; font-weight: 700; font-size: 0.78rem; border: 1px solid rgba(15, 23, 42, 0.1);">Ocultar</button>
+                                </div>
+                                
+                                <!-- Checklist con scroll -->
+                                <div class="border rounded-3 p-2 dept-checkbox-list" style="max-height: 160px; overflow-y: auto;" id="edit_dept_box">
+                                    <div class="dept-placeholder text-muted text-center py-3 small"><i class="bi bi-search me-1"></i> Escribe para buscar o haz clic en "Todos"</div>
+                                    <?php foreach ($departments as $d): ?>
+                                        <div class="form-check dept-check-item" style="display: none;">
+                                            <input class="form-check-input dept-checkbox" type="checkbox" name="dept_ids[]" id="editDept<?php echo (int)$d['id']; ?>" value="<?php echo (int)$d['id']; ?>">
+                                            <label class="form-check-label" for="editDept<?php echo (int)$d['id']; ?>"><?php echo html($d['name']); ?></label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
-                            <div class="form-text">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
+                            <div class="form-text mt-1">Si marcas varios, el primero guardado será el principal (compatibilidad).</div>
                         </div>
                         <div class="col-12">
                             <div class="form-check">
@@ -1109,42 +1375,227 @@ ob_start();
 
 <script>
     (function () {
-        var btns = document.querySelectorAll('.agent-edit-btn');
-        if (!btns || !btns.length) return;
-        btns.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var id = this.getAttribute('data-id') || '';
-                document.getElementById('edit_id').value = id;
-                document.getElementById('edit_firstname').value = this.getAttribute('data-firstname') || '';
-                document.getElementById('edit_lastname').value = this.getAttribute('data-lastname') || '';
-                document.getElementById('edit_email').value = this.getAttribute('data-email') || '';
-                document.getElementById('edit_username').value = this.getAttribute('data-username') || '';
-                document.getElementById('edit_role').value = this.getAttribute('data-role') || 'agent';
-                var raw = (this.getAttribute('data-dept-ids') || '').toString();
-                var ids = raw.split(',').map(function (s) { return parseInt((s || '').trim(), 10) || 0; }).filter(function (v) { return v > 0; });
-                var box = document.getElementById('edit_dept_box');
-                if (box) {
-                    box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-                        var v = parseInt(cb.value, 10) || 0;
-                        cb.checked = ids.indexOf(v) !== -1;
-                    });
-                }
-                document.getElementById('editIsActive').checked = (this.getAttribute('data-is-active') || '0') === '1';
+        // --- Funciones del Widget de Departamentos ---
+        function initDeptWidgets() {
+            var toggleBtns = document.querySelectorAll('.dept-toggle-btn');
+            toggleBtns.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var targetId = btn.getAttribute('data-target');
+                    var container = document.getElementById(targetId);
+                    if (!container) return;
+                    
+                    var isVisible = container.style.display !== 'none';
+                    if (isVisible) {
+                        container.style.display = 'none';
+                        btn.querySelector('.toggle-arrow').className = 'bi bi-chevron-down toggle-arrow';
+                    } else {
+                        container.style.display = 'block';
+                        btn.querySelector('.toggle-arrow').className = 'bi bi-chevron-up toggle-arrow';
+                        var search = container.querySelector('.dept-search-input');
+                        if (search) search.focus();
+                    }
+                });
             });
-        });
 
-        var delBtns = document.querySelectorAll('.agent-delete-btn');
-        if (!delBtns || !delBtns.length) return;
-        delBtns.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var id = this.getAttribute('data-id') || '';
-                var name = this.getAttribute('data-name') || '';
-                var idEl = document.getElementById('delete_id');
-                var nameEl = document.getElementById('delete_agent_name');
-                if (idEl) idEl.value = id;
-                if (nameEl) nameEl.textContent = name || '—';
+            function updateBadge(containerId, badgeId) {
+                var container = document.getElementById(containerId);
+                var badge = document.getElementById(badgeId);
+                if (!container || !badge) return;
+                var checkedCount = container.querySelectorAll('.dept-checkbox:checked').length;
+                badge.textContent = checkedCount + ' seleccionado' + (checkedCount !== 1 ? 's' : '');
+                if (checkedCount > 0) {
+                    badge.className = 'badge bg-danger rounded-pill dept-count-badge';
+                } else {
+                    badge.className = 'badge bg-secondary rounded-pill dept-count-badge';
+                }
+            }
+
+            // Escuchar cambios en los checkboxes
+            document.querySelectorAll('.dept-checkbox').forEach(function (cb) {
+                cb.addEventListener('change', function () {
+                    updateBadge('createDeptContainer', 'createDeptBadge');
+                    updateBadge('editDeptContainer', 'editDeptBadge');
+                });
             });
-        });
+
+            // Exponer globalmente para actualizar badges cuando cargue la edición y sincronizar visibilidad
+            window.updateDeptBadges = function () {
+                updateBadge('createDeptContainer', 'createDeptBadge');
+                updateBadge('editDeptContainer', 'editDeptBadge');
+
+                // Ajustar visibilidad inicial para crear y editar (ocultar unselected por defecto)
+                ['createDeptContainer', 'editDeptContainer'].forEach(function (containerId) {
+                    var container = document.getElementById(containerId);
+                    if (!container) return;
+                    
+                    var items = container.querySelectorAll('.dept-check-item');
+                    var placeholder = container.querySelector('.dept-placeholder');
+                    var visibleCount = 0;
+                    
+                    items.forEach(function (item) {
+                        var cb = item.querySelector('.dept-checkbox');
+                        if (cb && cb.checked) {
+                            item.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    if (placeholder) {
+                        placeholder.style.display = (visibleCount === 0) ? 'block' : 'none';
+                    }
+                });
+            };
+
+            // Filtrado en vivo de búsqueda
+            document.querySelectorAll('.dept-search-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    var q = input.value.toLowerCase().trim();
+                    var container = input.closest('.dept-expandable-container');
+                    if (!container) return;
+                    
+                    var placeholder = container.querySelector('.dept-placeholder');
+                    var items = container.querySelectorAll('.dept-check-item');
+                    var visibleCount = 0;
+                    
+                    items.forEach(function (item) {
+                        var text = (item.querySelector('.form-check-label').textContent || '').toLowerCase();
+                        var cb = item.querySelector('.dept-checkbox');
+                        
+                        if (q === '') {
+                            // Si la búsqueda está vacía, solo mostrar los que estén seleccionados
+                            if (cb && cb.checked) {
+                                item.style.display = 'block';
+                                visibleCount++;
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        } else {
+                            // Si hay búsqueda, mostrar los que coincidan
+                            if (text.indexOf(q) !== -1) {
+                                item.style.display = 'block';
+                                visibleCount++;
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        }
+                    });
+                    
+                    if (placeholder) {
+                        placeholder.style.display = (visibleCount === 0) ? 'block' : 'none';
+                    }
+                });
+            });
+
+            // Botones Mostrar Todos / Ocultar
+            document.querySelectorAll('.dept-select-all').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var container = btn.closest('.dept-expandable-container');
+                    if (!container) return;
+                    
+                    var items = container.querySelectorAll('.dept-check-item');
+                    var placeholder = container.querySelector('.dept-placeholder');
+                    
+                    items.forEach(function (item) {
+                        item.style.display = 'block';
+                        // No seleccionamos automáticamente, solo mostramos
+                    });
+                    
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                    
+                    updateBadge('createDeptContainer', 'createDeptBadge');
+                    updateBadge('editDeptContainer', 'editDeptBadge');
+                });
+            });
+
+            document.querySelectorAll('.dept-clear-all').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var container = btn.closest('.dept-expandable-container');
+                    if (!container) return;
+                    
+                    // Limpiar el input de búsqueda
+                    var search = container.querySelector('.dept-search-input');
+                    if (search) search.value = '';
+
+                    // Ocultar los ítems no seleccionados y mantener visibles los seleccionados
+                    var items = container.querySelectorAll('.dept-check-item');
+                    var visibleCount = 0;
+                    
+                    items.forEach(function (item) {
+                        var cb = item.querySelector('.dept-checkbox');
+                        if (cb && cb.checked) {
+                            item.style.display = 'block';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                    
+                    var placeholder = container.querySelector('.dept-placeholder');
+                    if (placeholder) {
+                        placeholder.style.display = (visibleCount === 0) ? 'block' : 'none';
+                    }
+                    
+                    updateBadge('createDeptContainer', 'createDeptBadge');
+                    updateBadge('editDeptContainer', 'editDeptBadge');
+                });
+            });
+        }
+
+        // Inicializar widgets al cargar la página
+        initDeptWidgets();
+
+        // --- Carga de Datos en modal de Edición ---
+        var btns = document.querySelectorAll('.agent-edit-btn');
+        if (btns && btns.length) {
+            btns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var id = this.getAttribute('data-id') || '';
+                    document.getElementById('edit_id').value = id;
+                    document.getElementById('edit_firstname').value = this.getAttribute('data-firstname') || '';
+                    document.getElementById('edit_lastname').value = this.getAttribute('data-lastname') || '';
+                    document.getElementById('edit_email').value = this.getAttribute('data-email') || '';
+                    document.getElementById('edit_username').value = this.getAttribute('data-username') || '';
+                    document.getElementById('edit_role').value = this.getAttribute('data-role') || 'agent';
+                    
+                    var raw = (this.getAttribute('data-dept-ids') || '').toString();
+                    var ids = raw.split(',').map(function (s) { return parseInt((s || '').trim(), 10) || 0; }).filter(function (v) { return v > 0; });
+                    var box = document.getElementById('edit_dept_box');
+                    if (box) {
+                        box.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+                            var v = parseInt(cb.value, 10) || 0;
+                            cb.checked = ids.indexOf(v) !== -1;
+                        });
+                    }
+                    
+                    // Actualizar el conteo del badge de departamentos
+                    if (window.updateDeptBadges) {
+                        window.updateDeptBadges();
+                    }
+                    
+                    document.getElementById('editIsActive').checked = (this.getAttribute('data-is-active') || '0') === '1';
+                });
+            });
+        }
+
+        // --- Carga de Datos en modal de Eliminación ---
+        var delBtns = document.querySelectorAll('.agent-delete-btn');
+        if (delBtns && delBtns.length) {
+            delBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var id = this.getAttribute('data-id') || '';
+                    var name = this.getAttribute('data-name') || '';
+                    var idEl = document.getElementById('delete_id');
+                    var nameEl = document.getElementById('delete_agent_name');
+                    if (idEl) idEl.value = id;
+                    if (nameEl) nameEl.textContent = name || '—';
+                });
+            });
+        }
     })();
 </script>
 <?php endif; ?>

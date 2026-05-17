@@ -205,4 +205,25 @@ document.addEventListener('DOMContentLoaded', function () {
             new bootstrap.Tooltip(tooltipTriggerEl);
         });
     }
+
+    // Persistir scroll del sidebar para evitar saltos al recargar o cambiar de sección
+    if (sidebar) {
+        var savedScroll = sessionStorage.getItem('scp_sidebar_scroll');
+        if (savedScroll !== null) {
+            sidebar.scrollTop = parseInt(savedScroll, 10);
+        }
+
+        // Guardar la posición de scroll en cada movimiento
+        sidebar.addEventListener('scroll', function () {
+            sessionStorage.setItem('scp_sidebar_scroll', sidebar.scrollTop);
+        });
+
+        // Asegurar que se guarde antes de descargar la página o navegar
+        sidebar.querySelectorAll('a, button').forEach(function (el) {
+            el.addEventListener('click', function () {
+                sessionStorage.setItem('scp_sidebar_scroll', sidebar.scrollTop);
+            });
+        });
+    }
 });
+

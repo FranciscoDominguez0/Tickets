@@ -632,17 +632,17 @@ while ($row = $res->fetch_assoc()) {
 <ul class="nav nav-tabs mb-3" id="statsTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="dept-tab" data-bs-toggle="tab" data-bs-target="#dept" type="button" role="tab">
-            Departamento
+            <i class="bi bi-building me-1"></i> Departamento
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="topics-tab" data-bs-toggle="tab" data-bs-target="#topics" type="button" role="tab">
-            Temas
+            <i class="bi bi-tags me-1"></i> Temas
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="agent-tab" data-bs-toggle="tab" data-bs-target="#agent" type="button" role="tab">
-            Agente
+            <i class="bi bi-people me-1"></i> Agente
         </button>
     </li>
 </ul>
@@ -652,46 +652,51 @@ while ($row = $res->fetch_assoc()) {
     <!-- Tab Departamento -->
     <div class="tab-pane fade show active" id="dept" role="tabpanel">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-light">
+            <table class="table table-hover align-middle stats-premium-table">
+                <thead>
                     <tr>
                         <th width="30%" class="text-start">Departamento</th>
-                        <th>Abierto <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets abiertos"></i></th>
-                        <th>Asignado <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets asignados"></i></th>
-                        <th>Atrasado <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets atrasados"></i></th>
-                        <th>Cerrado <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets cerrados"></i></th>
-                        <th>Reabierto <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets reabiertos"></i></th>
-                        <th>Borrado <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tickets borrados"></i></th>
-                        <th>Tiempo de Servicio <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tiempo promedio de servicio en horas"></i></th>
-                        <th>Tiempo de Respuesta <i class="bi bi-question-circle" style="font-size: 0.8em; cursor: help;" title="Tiempo promedio de respuesta en horas"></i></th>
+                        <th>Abierto <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets abiertos"></i></th>
+                        <th>Asignado <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets asignados"></i></th>
+                        <th>Atrasado <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets atrasados"></i></th>
+                        <th>Cerrado <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets cerrados"></i></th>
+                        <th>Reabierto <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets reabiertos"></i></th>
+                        <th>Borrado <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tickets borrados"></i></th>
+                        <th>Tiempo de Servicio <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tiempo promedio de servicio en horas"></i></th>
+                        <th>Tiempo de Respuesta <i class="bi bi-question-circle text-muted" style="font-size: 0.8em; cursor: help;" title="Tiempo promedio de respuesta en horas"></i></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($deptStats)): ?>
                         <tr>
-                            <td colspan="9" class="text-center text-muted">No hay datos para el período seleccionado</td>
+                            <td colspan="9" class="text-center text-muted py-4">No hay datos para el período seleccionado</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($deptStats as $stat): ?>
                             <tr>
-                                <th class="text-start"><?php echo html($stat['departamento']); ?></th>
-                                <td><?php echo (int)$stat['abierto']; ?></td>
-                                <td><?php echo (int)$stat['asignado']; ?></td>
-                                <td><?php echo (int)$stat['atrasado']; ?></td>
-                                <td><?php echo (int)$stat['cerrado']; ?></td>
-                                <td><?php echo (int)$stat['reabierto']; ?></td>
-                                <td><?php echo (int)$stat['borrado']; ?></td>
-                                <td><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></td>
-                                <td><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></td>
+                                <th class="text-start">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="dept-dot"></span>
+                                        <span><?php echo html($stat['departamento']); ?></span>
+                                    </div>
+                                </th>
+                                <td><span class="badge-stat stat-open"><?php echo (int)$stat['abierto']; ?></span></td>
+                                <td><span class="badge-stat stat-assigned"><?php echo (int)$stat['asignado']; ?></span></td>
+                                <td><span class="badge-stat stat-overdue"><?php echo (int)$stat['atrasado']; ?></span></td>
+                                <td><span class="badge-stat stat-closed"><?php echo (int)$stat['cerrado']; ?></span></td>
+                                <td><span class="badge-stat stat-reopened"><?php echo (int)$stat['reabierto']; ?></span></td>
+                                <td><span class="badge-stat stat-deleted"><?php echo (int)$stat['borrado']; ?></span></td>
+                                <td><span class="badge-stat stat-service"><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></span></td>
+                                <td><span class="badge-stat stat-response"><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-        <div class="mt-3">
-            <button type="button" class="btn btn-link p-0" data-action="dashboard-export" data-export-type="dept">
-                <i class="bi bi-download"></i> Exportar
+        <div class="mt-3 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm px-3 rounded-pill" data-action="dashboard-export" data-export-type="dept" style="font-weight:700;">
+                <i class="bi bi-download me-1"></i> Exportar CSV
             </button>
         </div>
     </div>
@@ -699,13 +704,13 @@ while ($row = $res->fetch_assoc()) {
     <!-- Tab Temas -->
     <div class="tab-pane fade" id="topics" role="tabpanel">
         <?php if (!$topicStatsAvailable): ?>
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i> No se encontró una estructura de Temas en la base de datos (tabla/columna). Si deseas esta pestaña, hay que agregar una tabla de temas (ej. help_topics) y una columna en tickets (ej. topic_id).
+            <div class="alert alert-warning" style="border-radius: 12px;">
+                <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i> No se encontró una estructura de Temas en la base de datos (tabla/columna). Si deseas esta pestaña, hay que agregar una tabla de temas (ej. help_topics) y una columna en tickets (ej. topic_id).
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle stats-premium-table">
+                    <thead>
                         <tr>
                             <th width="30%" class="text-start">Tema</th>
                             <th>Abierto</th>
@@ -721,29 +726,34 @@ while ($row = $res->fetch_assoc()) {
                     <tbody>
                         <?php if (empty($topicStats)): ?>
                             <tr>
-                                <td colspan="9" class="text-center text-muted">No hay datos para el período seleccionado</td>
+                                <td colspan="9" class="text-center text-muted py-4">No hay datos para el período seleccionado</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($topicStats as $stat): ?>
                                 <tr>
-                                    <th class="text-start"><?php echo html($stat['tema']); ?></th>
-                                    <td><?php echo (int)$stat['abierto']; ?></td>
-                                    <td><?php echo (int)$stat['asignado']; ?></td>
-                                    <td><?php echo (int)$stat['atrasado']; ?></td>
-                                    <td><?php echo (int)$stat['cerrado']; ?></td>
-                                    <td><?php echo (int)$stat['reabierto']; ?></td>
-                                    <td><?php echo (int)$stat['borrado']; ?></td>
-                                    <td><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></td>
-                                    <td><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></td>
+                                    <th class="text-start">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="topic-dot"></span>
+                                            <span><?php echo html($stat['tema']); ?></span>
+                                        </div>
+                                    </th>
+                                    <td><span class="badge-stat stat-open"><?php echo (int)$stat['abierto']; ?></span></td>
+                                    <td><span class="badge-stat stat-assigned"><?php echo (int)$stat['asignado']; ?></span></td>
+                                    <td><span class="badge-stat stat-overdue"><?php echo (int)$stat['atrasado']; ?></span></td>
+                                    <td><span class="badge-stat stat-closed"><?php echo (int)$stat['cerrado']; ?></span></td>
+                                    <td><span class="badge-stat stat-reopened"><?php echo (int)$stat['reabierto']; ?></span></td>
+                                    <td><span class="badge-stat stat-deleted"><?php echo (int)$stat['borrado']; ?></span></td>
+                                    <td><span class="badge-stat stat-service"><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></span></td>
+                                    <td><span class="badge-stat stat-response"><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
-            <div class="mt-3">
-                <button type="button" class="btn btn-link p-0" data-action="dashboard-export" data-export-type="topics">
-                    <i class="bi bi-download"></i> Exportar
+            <div class="mt-3 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 rounded-pill" data-action="dashboard-export" data-export-type="topics" style="font-weight:700;">
+                    <i class="bi bi-download me-1"></i> Exportar CSV
                 </button>
             </div>
         <?php endif; ?>
@@ -752,8 +762,8 @@ while ($row = $res->fetch_assoc()) {
     <!-- Tab Agente -->
     <div class="tab-pane fade" id="agent" role="tabpanel">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-light">
+            <table class="table table-hover align-middle stats-premium-table">
+                <thead>
                     <tr>
                         <th width="30%" class="text-start">Agente</th>
                         <th>Abierto</th>
@@ -769,29 +779,34 @@ while ($row = $res->fetch_assoc()) {
                 <tbody>
                     <?php if (empty($agentStats)): ?>
                         <tr>
-                            <td colspan="9" class="text-center text-muted">No hay datos para el período seleccionado</td>
+                            <td colspan="9" class="text-center text-muted py-4">No hay datos para el período seleccionado</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($agentStats as $stat): ?>
                             <tr>
-                                <th class="text-start"><?php echo html($stat['agente']); ?></th>
-                                <td><?php echo (int)$stat['abierto']; ?></td>
-                                <td><?php echo (int)$stat['asignado']; ?></td>
-                                <td><?php echo (int)$stat['atrasado']; ?></td>
-                                <td><?php echo (int)$stat['cerrado']; ?></td>
-                                <td><?php echo (int)$stat['reabierto']; ?></td>
-                                <td><?php echo (int)$stat['borrado']; ?></td>
-                                <td><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></td>
-                                <td><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></td>
+                                <th class="text-start">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="agent-mini-avatar" aria-hidden="true"><?php echo strtoupper(substr($stat['agente'], 0, 1)); ?></div>
+                                        <span><?php echo html($stat['agente']); ?></span>
+                                    </div>
+                                </th>
+                                <td><span class="badge-stat stat-open"><?php echo (int)$stat['abierto']; ?></span></td>
+                                <td><span class="badge-stat stat-assigned"><?php echo (int)$stat['asignado']; ?></span></td>
+                                <td><span class="badge-stat stat-overdue"><?php echo (int)$stat['atrasado']; ?></span></td>
+                                <td><span class="badge-stat stat-closed"><?php echo (int)$stat['cerrado']; ?></span></td>
+                                <td><span class="badge-stat stat-reopened"><?php echo (int)$stat['reabierto']; ?></span></td>
+                                <td><span class="badge-stat stat-deleted"><?php echo (int)$stat['borrado']; ?></span></td>
+                                <td><span class="badge-stat stat-service"><?php echo $stat['tiempo_servicio'] ? number_format($stat['tiempo_servicio'], 1) : '-'; ?></span></td>
+                                <td><span class="badge-stat stat-response"><?php echo $stat['tiempo_respuesta'] ? number_format($stat['tiempo_respuesta'], 1) : '-'; ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
-        <div class="mt-3">
-            <button type="button" class="btn btn-link p-0" data-action="dashboard-export" data-export-type="agent">
-                <i class="bi bi-download"></i> Exportar
+        <div class="mt-3 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm px-3 rounded-pill" data-action="dashboard-export" data-export-type="agent" style="font-weight:700;">
+                <i class="bi bi-download me-1"></i> Exportar CSV
             </button>
         </div>
     </div>
