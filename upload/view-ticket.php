@@ -1356,6 +1356,61 @@ function humanSize($bytes) {
         .bg-primary { background-color: #ef4444 !important; }
         a { color: #ef4444; }
         a:hover { color: #dc2626; }
+
+        @media (max-width: 576px) {
+            body .container-main {
+                padding: 0 10px !important;
+                margin: 20px auto !important;
+            }
+            body .center-wrap {
+                max-width: 100% !important;
+            }
+            body .panel-soft {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel-soft {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body .page-header {
+                padding: 16px !important;
+                margin-bottom: 16px !important;
+                border-radius: 12px !important;
+            }
+            body .card-soft {
+                border-radius: 12px !important;
+            }
+            body .card-soft .head {
+                padding: 12px 16px !important;
+            }
+            body .card-soft .body {
+                padding: 14px 10px !important;
+            }
+            body .reply-card {
+                padding: 12px !important;
+                border-radius: 12px !important;
+            }
+            body .ticket-view-entry .entry-row {
+                gap: 8px !important;
+            }
+            body .ticket-view-entry .entry-avatar {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            body .ticket-view-entry .entry-avatar-inner {
+                font-size: 0.8rem !important;
+            }
+            body .ticket-view-entry .entry-content {
+                padding: 12px 14px !important;
+                border-radius: 12px !important;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
@@ -1554,15 +1609,20 @@ function humanSize($bytes) {
             </div>
 
             <div class="body">
-            <div class="thread">
-                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                    <h5 class="mb-0">Hilo del ticket</h5>
-                    <div class="preview-hint" id="previewHintTip">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <span>Tip: <span class="d-none d-md-inline">Pasa el ratón</span><span class="d-md-none">Deja presionado</span> sobre una imagen para verla</span>
+            
+            <div class="card-soft mt-4">
+                <div class="head py-3 px-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <h5 class="mb-0" style="font-weight: 800; color: #0f172a;"><i class="bi bi-chat-left-text-fill text-muted me-2"></i> Hilo del ticket</h5>
+                        <div class="preview-hint" id="previewHintTip" style="margin-bottom: 0;">
+                            <i class="bi bi-info-circle-fill"></i>
+                            <span>Tip: <span class="d-none d-md-inline">Pasa el ratón</span><span class="d-md-none">Deja presionado</span> sobre una imagen para verla</span>
+                        </div>
                     </div>
                 </div>
-                <script>(function(){ var h = document.getElementById('previewHintTip'); if (!h) return; setTimeout(function(){ h.style.opacity = '0'; h.style.transform = 'translateY(-6px)'; setTimeout(function(){ h.style.display = 'none'; }, 800); }, 4000); })();</script>
+                <div class="body p-3 p-md-4" style="background: #fafafa;">
+                    <div class="thread mt-0">
+                        <script>(function(){ var h = document.getElementById('previewHintTip'); if (!h) return; setTimeout(function(){ h.style.opacity = '0'; h.style.transform = 'translateY(-6px)'; setTimeout(function(){ h.style.display = 'none'; }, 800); }, 4000); })();</script>
 
                 <?php if (empty($entries)): ?>
                     <div class="text-muted">Aún no hay mensajes.</div>
@@ -1680,6 +1740,8 @@ function humanSize($bytes) {
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
+                    </div>
+                </div>
             </div>
 
             <div class="reply-card" id="reply-section">
