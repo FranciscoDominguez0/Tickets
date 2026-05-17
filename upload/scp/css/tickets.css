@@ -2383,24 +2383,7 @@ tr.ticket-row.is-selected td {
         position: static;
     }
 
-    /* Flecha chevron a la derecha */
-    .tickets-table tbody tr.ticket-row::after {
-        content: '\F285';
-        font-family: 'Bootstrap Icons';
-        position: absolute;
-        right: 18px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #cbd5e1;
-        font-size: 1.2rem;
-        pointer-events: none;
-        transition: color 0.2s, transform 0.2s;
-    }
 
-    .tickets-table tbody tr.ticket-row:hover::after {
-        color: #3b82f6;
-        transform: translateY(-50%) translateX(3px);
-    }
 
     /* Enlace que cubre toda la tarjeta */
     .tickets-table tbody td:nth-child(2) .ticket-title::after {

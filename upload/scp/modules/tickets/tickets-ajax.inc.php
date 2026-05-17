@@ -173,6 +173,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
                                             'id' => (int)$att['id'],
                                             'filename' => (string)$att['original_filename'],
                                             'is_image' => $isImage,
+                                            'size' => (int)$att['size'],
                                             'url' => 'tickets.php?id=' . $tid . '&download=' . (int)$att['id']
                                         ];
                                         break;

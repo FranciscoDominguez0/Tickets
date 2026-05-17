@@ -342,9 +342,9 @@
                                 </div>
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
-                                <button type="button" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'">
+                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'">
                                     <i class="bi bi-chevron-right"></i>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

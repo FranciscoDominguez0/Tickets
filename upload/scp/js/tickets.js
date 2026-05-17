@@ -126,7 +126,35 @@ document.addEventListener('DOMContentLoaded', function() {
                       var imagesHtml = '';
                       e.attachments.forEach(function(att) {
                         if (att.is_image && att.url) {
-                          imagesHtml += '<img src="' + escapeHtml(att.url) + '" style="max-width:100%; max-height:160px; border-radius:8px; border:1px solid #e2e8f0; margin-right:8px; margin-top:10px; object-fit:contain; background:#f8fafc;" alt="adjunto">';
+                          if (!isDesktop()) {
+                            // On mobile, show a beautiful click-to-load placeholder
+                            var sizeStr = '';
+                            if (att.size) {
+                              var sizeBytes = parseInt(att.size, 10) || 0;
+                              if (sizeBytes > 1024 * 1024) {
+                                sizeStr = (sizeBytes / (1024 * 1024)).toFixed(1) + ' MB';
+                              } else if (sizeBytes > 1024) {
+                                sizeStr = (sizeBytes / 1024).toFixed(0) + ' KB';
+                              } else {
+                                sizeStr = sizeBytes + ' B';
+                              }
+                            } else {
+                              sizeStr = 'Tamaño desconocido';
+                            }
+                            
+                            imagesHtml += '<div class="th-img-wrapper" style="margin-top:10px;">'
+                              + '<div class="th-preview-img-placeholder" data-url="' + escapeHtml(att.url) + '" style="display:inline-flex; align-items:center; gap:12px; background:#f8fafc; border:1px solid #e2e8f0; padding:10px 14px; border-radius:12px; max-width:100%; box-sizing:border-box; width:100%;">'
+                              + '<div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;"><i class="bi bi-image"></i></div>'
+                              + '<div style="display:flex; flex-direction:column; min-width:0; flex-grow:1; line-height:1.3; text-align:left;">'
+                              + '<span style="font-size:0.85rem; font-weight:700; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + escapeHtml(att.filename) + '">' + escapeHtml(att.filename) + '</span>'
+                              + '<span style="font-size:0.75rem; color:#64748b; font-weight:600;">' + escapeHtml(sizeStr) + '</span>'
+                              + '</div>'
+                              + '<button type="button" class="btn btn-sm btn-primary btn-load-preview-img" style="border-radius:8px; padding:4px 12px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; background:#2563eb; color:#fff; border:none; box-shadow:0 2px 4px rgba(37,99,235,0.15);"><i class="bi bi-eye-fill"></i> Ver</button>'
+                              + '</div>'
+                              + '</div>';
+                          } else {
+                            imagesHtml += '<img src="' + escapeHtml(att.url) + '" style="max-width:100%; max-height:160px; border-radius:8px; border:1px solid #e2e8f0; margin-right:8px; margin-top:10px; object-fit:contain; background:#f8fafc;" alt="adjunto">';
+                          }
                         }
                       });
                       if (imagesHtml) {
@@ -276,6 +304,40 @@ document.addEventListener('DOMContentLoaded', function() {
         try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err) {}
       });
       pop.addEventListener('click', function (e) {
+        try {
+          var btn = e.target.closest('.btn-load-preview-img');
+          if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var wrapper = btn.closest('.th-img-wrapper');
+            var placeholder = btn.closest('.th-preview-img-placeholder');
+            if (wrapper && placeholder) {
+              var url = placeholder.getAttribute('data-url');
+              if (url) {
+                // Change button to spinner
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width:0.8rem; height:0.8rem; margin-right:4px;"></span> Cargando...';
+
+                // Create image
+                var img = new Image();
+                img.style.cssText = 'max-width:100%; max-height:220px; border-radius:12px; border:1px solid #e2e8f0; object-fit:contain; background:#f8fafc; display:block; opacity:0; transition:opacity 0.2s;';
+                img.alt = 'adjunto';
+                img.onload = function () {
+                  wrapper.innerHTML = '';
+                  wrapper.appendChild(img);
+                  img.style.opacity = '1';
+                };
+                img.onerror = function () {
+                  btn.disabled = false;
+                  btn.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Error';
+                };
+                img.src = url;
+              }
+            }
+            return;
+          }
+        } catch (err) {}
         try { if (e && e.stopPropagation) e.stopPropagation(); } catch (err) {}
       });
 
@@ -325,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
           pop.style.borderRadius = '16px';
           pop.style.zIndex       = '9999';
           pop.style.overflowY    = 'auto';
-          pop.style.boxShadow    = '0 12px 40px rgba(0,0,0,0.35)';
+          pop.style.boxShadow    = '0 0 25px rgba(239, 68, 68, 0.5), 0 12px 40px rgba(0, 0, 0, 0.45)';
           pop.style.transition   = 'all 0.3s cubic-bezier(.4,0,.2,1)';
           
           // Fuerza el reflow
@@ -336,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
           var inner = pop.querySelector('.ticket-hover-preview-inner');
           if (inner) {
             inner.style.borderRadius = '16px';
-            inner.style.border = '2px solid #ef4444'; // Borde de color destacado exclusivo para vista móvil
+            inner.style.border = '2px solid rgba(239, 68, 68, 0.85)'; // Borde semi-transparente que combina con el glow
             inner.style.boxShadow = 'none';
           }
           

@@ -41,33 +41,6 @@ $initials = strtoupper(substr($p['firstname'], 0, 1) . substr($p['lastname'], 0,
         </div>
     </div>
 
-    <!-- ROW DE ESTADÍSTICAS COMPACTO -->
-    <div class="profile-stats-row">
-        <div class="profile-stat-widget widget-total">
-            <i class="bi bi-ticket-perforated"></i>
-            <div class="profile-stat-details">
-                <span class="profile-stat-num"><?php echo $profile_total_tickets; ?></span>
-                <span class="profile-stat-lbl">Asignados</span>
-            </div>
-        </div>
-        <div class="profile-stat-widget widget-pending">
-            <i class="bi bi-hourglass-split"></i>
-            <div class="profile-stat-details">
-                <span class="profile-stat-num"><?php echo $profile_open_tickets; ?></span>
-                <span class="profile-stat-lbl">Pendientes</span>
-            </div>
-        </div>
-        <div class="profile-stat-widget widget-login">
-            <i class="bi bi-clock-history"></i>
-            <div class="profile-stat-details">
-                <span class="profile-stat-num" style="font-size: 0.9rem; font-weight: 700;">
-                    <?php echo !empty($p['last_login']) ? date('d/m/Y H:i', strtotime($p['last_login'])) : 'Primer ingreso'; ?>
-                </span>
-                <span class="profile-stat-lbl">Último acceso</span>
-            </div>
-        </div>
-    </div>
-
     <!-- FORMULARIO PRINCIPAL -->
     <form action="profile.php" method="post" class="profile-form" autocomplete="off" id="profile-form">
         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token']); ?>">

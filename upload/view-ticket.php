@@ -1761,8 +1761,8 @@ function humanSize($bytes) {
                     <div class="head py-2">
                         <h6 class="mb-0 text-muted" style="font-size: 0.85rem; font-weight: 800; text-transform: uppercase;"><i class="bi bi-pen-fill"></i> Firma de conformidad</h6>
                     </div>
-                    <div class="body py-2 text-center" style="background: #fafafa;">
-                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));">
+                    <div class="body py-2 text-center" style="background: #ffffff;">
+                        <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" style="max-height: 120px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12)); background: #ffffff; padding: 6px; border-radius: 8px; border: 1px solid #e2e8f0;">
                         <div class="mt-1 text-muted" style="font-size: 0.75rem;">Documento firmado digitalmente el <?php echo !empty($t['closed']) ? date('d/m/Y H:i', strtotime($t['closed'])) : '-'; ?></div>
                     </div>
                 </div>
@@ -2583,7 +2583,7 @@ function humanSize($bytes) {
                         <i class="bi bi-eraser-fill"></i> Limpiar
                     </button>
                 </div>
-                <div style="border: 2px dashed #cbd5e1; border-radius: 20px; background: #fafafa; overflow: hidden; position: relative; transition: all 0.2s ease; height: 230px; width: 100%; touch-action: none;">
+                <div style="border: 2px dashed #cbd5e1; border-radius: 20px; background: #ffffff; overflow: hidden; position: relative; transition: all 0.2s ease; height: 230px; width: 100%; touch-action: none;">
                     <canvas id="clientSignatureCanvas" style="width: 100%; height: 100%; cursor: crosshair; touch-action: none; display: block;"></canvas>
                     <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; color: #94a3b8; font-size: 0.8rem; pointer-events: none; opacity: 0.6; font-weight: 600;">
                         Dibuja tu firma en este espacio
@@ -2622,7 +2622,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.lineWidth = 3;
-        ctx.strokeStyle = <?php echo $isDarkMode ? "'#ffffff'" : "'#000000'"; ?>;
+        ctx.strokeStyle = '#000000';
     }
 
     modalEl.addEventListener('shown.bs.modal', function () {

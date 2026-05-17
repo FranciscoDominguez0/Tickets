@@ -212,11 +212,11 @@ body.dark-mode p[style*="color: #334155"] {
     color: #d1d5db !important;
 }
 body.dark-mode div[style*="border: 2px dashed #cbd5e1"] {
-    border-color: #3f3f46 !important;
-    background: #000 !important;
+    border-color: #cbd5e1 !important;
+    background: #ffffff !important;
 }
 body.dark-mode canvas#clientSignatureCanvas {
-    background: #000 !important;
+    background: #ffffff !important;
 }
 
 /* Banner firmas pendientes en tickets.php */
