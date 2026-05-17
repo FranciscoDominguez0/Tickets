@@ -52,98 +52,144 @@ if ($mobileInitials === '') $mobileInitials = 'U';
     <!-- Vista móvil (solo teléfonos) -->
     <?php $activeTab = $_GET['t'] ?? 'tickets'; ?>
     <div class="user-view-mobile d-md-none">
-        <div class="user-view-mobile-head">
-            <a class="btn btn-light btn-sm user-view-mobile-back" href="users.php" title="Volver">
+        <!-- Cabecera de Perfil Premium -->
+        <div class="user-view-mobile-head uvm-status-<?php echo html($statusKey); ?>">
+            <a class="uvm-back-btn" href="users.php" title="Volver">
                 <i class="bi bi-arrow-left"></i>
             </a>
             <div class="user-view-mobile-ident">
-                <div class="user-view-mobile-avatar" aria-hidden="true"><?php echo html($mobileInitials); ?></div>
+                <div class="user-view-mobile-avatar"><?php echo html($mobileInitials); ?></div>
                 <div class="user-view-mobile-title">
                     <div class="user-view-mobile-name"><?php echo html($mobileName !== '' ? $mobileName : $mobileEmail); ?></div>
-                    <div class="user-view-mobile-sub"><?php echo html($mobileEmail); ?></div>
+                    <div class="user-view-mobile-sub">
+                        <i class="bi bi-envelope-at" style="opacity: 0.6; margin-right: 3px;"></i><?php echo html($mobileEmail); ?>
+                    </div>
                 </div>
             </div>
-            <span class="badge user-view-mobile-status <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
+            <span class="badge uvm-status-badge <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
         </div>
 
-        <div class="user-view-mobile-actions">
-            <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalEditUser">
-                <i class="bi bi-pencil"></i> Editar
+        <!-- Acciones Rápidas -->
+        <div class="user-view-mobile-actions-row">
+            <button type="button" class="uvm-action-btn uvm-btn-edit" data-bs-toggle="modal" data-bs-target="#modalEditUser">
+                <i class="bi bi-pencil-square"></i> Editar perfil
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
+            <button type="button" class="uvm-action-btn uvm-btn-status" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
                 <i class="bi bi-person-gear"></i> Estado
             </button>
-            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDeleteUser" title="Eliminar">
+            <button type="button" class="uvm-action-btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser" title="Eliminar usuario">
                 <i class="bi bi-trash"></i>
             </button>
         </div>
 
-        <div class="user-view-mobile-cards">
-            <div class="user-view-mobile-card">
-                <div class="uvm-row">
-                    <div class="uvm-k">Organización</div>
-                    <div class="uvm-v">
-                        <?php if ($mobileCompany !== ''): ?>
-                            <?php echo html($mobileCompany); ?>
-                            <button type="button" class="btn btn-link btn-sm p-0 ms-2 text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">Remover</button>
-                        <?php else: ?>
-                            <button type="button" class="btn btn-link btn-sm p-0" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
-                        <?php endif; ?>
+        <!-- Información Detallada y Opciones -->
+        <div class="user-view-mobile-details-section">
+            <div class="user-view-mobile-card-details">
+                <h3 class="uvm-card-title"><i class="bi bi-person-badge"></i> Datos de contacto</h3>
+                
+                <div class="uvm-detail-item">
+                    <div class="uvm-detail-icon"><i class="bi bi-building"></i></div>
+                    <div class="uvm-detail-content">
+                        <span class="uvm-detail-label">Organización</span>
+                        <span class="uvm-detail-val">
+                            <?php if ($mobileCompany !== ''): ?>
+                                <strong class="text-dark"><?php echo html($mobileCompany); ?></strong>
+                                <button type="button" class="uvm-action-link text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">(Remover)</button>
+                            <?php else: ?>
+                                <button type="button" class="uvm-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
+                            <?php endif; ?>
+                        </span>
                     </div>
                 </div>
+
                 <?php if (!empty($viewUser['phone'])): ?>
-                    <div class="uvm-row">
-                        <div class="uvm-k">Teléfono</div>
-                        <div class="uvm-v"><?php echo html((string)$viewUser['phone']); ?></div>
+                <div class="uvm-detail-item">
+                    <div class="uvm-detail-icon"><i class="bi bi-telephone"></i></div>
+                    <div class="uvm-detail-content">
+                        <span class="uvm-detail-label">Teléfono</span>
+                        <span class="uvm-detail-val">
+                            <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" class="text-dark fw-bold" style="text-decoration:none;">
+                                <?php echo html((string)$viewUser['phone']); ?>
+                            </a>
+                        </span>
                     </div>
-                <?php endif; ?>
-                <div class="uvm-row">
-                    <div class="uvm-k">Creado</div>
-                    <div class="uvm-v"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></div>
                 </div>
-                <div class="uvm-row">
-                    <div class="uvm-k">Actualizado</div>
-                    <div class="uvm-v"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></div>
+                <?php endif; ?>
+
+                <?php if (!empty($viewUser['address'])): ?>
+                <div class="uvm-detail-item">
+                    <div class="uvm-detail-icon"><i class="bi bi-geo-alt"></i></div>
+                    <div class="uvm-detail-content">
+                        <span class="uvm-detail-label">Dirección</span>
+                        <span class="uvm-detail-val text-dark"><?php echo html((string)$viewUser['address']); ?></span>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <div class="uvm-detail-item">
+                    <div class="uvm-detail-icon"><i class="bi bi-calendar-plus"></i></div>
+                    <div class="uvm-detail-content">
+                        <span class="uvm-detail-label">Creado</span>
+                        <span class="uvm-detail-val text-muted"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></span>
+                    </div>
+                </div>
+
+                <div class="uvm-detail-item">
+                    <div class="uvm-detail-icon"><i class="bi bi-clock-history"></i></div>
+                    <div class="uvm-detail-content">
+                        <span class="uvm-detail-label">Última actualización</span>
+                        <span class="uvm-detail-val text-muted"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></span>
+                    </div>
                 </div>
             </div>
 
-            <div class="user-view-mobile-card">
-                <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-grid gap-2">
+            <!-- Acción de Seguridad -->
+            <div class="user-view-mobile-card-security">
+                <form method="post" action="users.php?id=<?php echo $uid; ?>">
                     <input type="hidden" name="do" value="send_user_reset">
                     <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
                     <input type="hidden" name="tab" value="<?php echo html((string)($activeTab ?? 'tickets')); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                    <button type="submit" class="btn btn-outline-dark btn-sm">
-                        <i class="bi bi-envelope"></i> Enviar restablecer contraseña
+                    <button type="submit" class="uvm-security-btn">
+                        <i class="bi bi-shield-lock"></i> Enviar restablecer contraseña
                     </button>
                 </form>
             </div>
         </div>
 
-        <div class="user-view-mobile-tabs">
-            <a class="uvm-tab <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=tickets">
+        <!-- Pestañas de Navegación -->
+        <div class="user-view-mobile-tabs-pill">
+            <a class="uvm-tab-pill <?php echo $activeTab === 'tickets' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=tickets">
                 <i class="bi bi-ticket-perforated"></i> Tickets
+                <?php if (!empty($userTickets)): ?>
+                    <span class="badge bg-danger ms-1" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 20px;"><?php echo count($userTickets); ?></span>
+                <?php endif; ?>
             </a>
-            <a class="uvm-tab <?php echo $activeTab === 'notes' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=notes">
+            <a class="uvm-tab-pill <?php echo $activeTab === 'notes' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=notes">
                 <i class="bi bi-pin-angle"></i> Notas
+                <?php if (!empty($userNotes)): ?>
+                    <span class="badge bg-secondary ms-1" style="font-size: 0.65rem; padding: 2px 6px; border-radius: 20px;"><?php echo count($userNotes); ?></span>
+                <?php endif; ?>
             </a>
         </div>
 
+        <!-- Paneles -->
         <?php if ($activeTab === 'notes'): ?>
-            <div class="user-view-mobile-panel">
+            <div class="user-view-mobile-panel-modern">
                 <div class="uvm-panel-head">
-                    <div class="uvm-panel-title">Notas</div>
-                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAddUserNote">
-                        <i class="bi bi-plus-lg"></i>
+                    <div class="uvm-panel-title"><i class="bi bi-pin-angle-fill text-danger me-1"></i> Notas del usuario</div>
+                    <button type="button" class="btn btn-primary btn-sm uvm-add-note-btn" data-bs-toggle="modal" data-bs-target="#modalAddUserNote">
+                        <i class="bi bi-plus-lg"></i> Nueva nota
                     </button>
                 </div>
                 <?php if (empty($userNotes)): ?>
-                    <div class="uvm-empty">
+                    <div class="uvm-empty-state">
                         <div class="icon"><i class="bi bi-pin-angle"></i></div>
-                        <div>No hay notas para este usuario.</div>
+                        <div class="title">Sin notas registradas</div>
+                        <div class="desc">Las notas son privadas y solo visibles para los agentes.</div>
                     </div>
                 <?php else: ?>
-                    <div class="uvm-notes">
+                    <div class="uvm-notes-list">
                         <?php foreach ($userNotes as $n): ?>
                             <?php
                                 $noteId = (int)($n['id'] ?? 0);
@@ -151,24 +197,30 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 $noteWhen = (string)($n['updated'] ?? $n['created'] ?? '');
                                 $noteStaff = trim((string)($n['staff_name'] ?? ''));
                             ?>
-                            <div class="uvm-note">
-                                <div class="uvm-note-body"><?php echo nl2br(html($noteText)); ?></div>
-                                <div class="uvm-note-foot">
-                                    <span><?php echo $noteStaff !== '' ? html($noteStaff) : '—'; ?></span>
-                                    <span class="dot">·</span>
-                                    <span><?php echo $noteWhen !== '' ? html(formatDate($noteWhen)) : '—'; ?></span>
-                                    <span class="spacer"></span>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                                            data-bs-toggle="modal" data-bs-target="#modalEditUserNote"
-                                            data-note-id="<?php echo $noteId; ?>"
-                                            data-note-text="<?php echo html($noteText); ?>">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                            data-bs-toggle="modal" data-bs-target="#modalDeleteUserNote"
-                                            data-note-id="<?php echo $noteId; ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                            <div class="uvm-note-card-modern">
+                                <div class="uvm-note-text-body"><?php echo nl2br(html($noteText)); ?></div>
+                                <div class="uvm-note-meta-foot">
+                                    <div class="uvm-note-author-info">
+                                        <i class="bi bi-person-circle"></i>
+                                        <span><?php echo $noteStaff !== '' ? html($noteStaff) : 'Sistema'; ?></span>
+                                        <span class="dot">•</span>
+                                        <span><?php echo $noteWhen !== '' ? html(formatDate($noteWhen)) : '—'; ?></span>
+                                    </div>
+                                    <div class="uvm-note-actions">
+                                        <button type="button" class="uvm-note-action-icon-btn text-primary"
+                                                data-bs-toggle="modal" data-bs-target="#modalEditUserNote"
+                                                data-note-id="<?php echo $noteId; ?>"
+                                                data-note-text="<?php echo html($noteText); ?>"
+                                                title="Editar nota">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button type="button" class="uvm-note-action-icon-btn text-danger"
+                                                data-bs-toggle="modal" data-bs-target="#modalDeleteUserNote"
+                                                data-note-id="<?php echo $noteId; ?>"
+                                                title="Eliminar nota">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -176,21 +228,22 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 <?php endif; ?>
             </div>
         <?php else: ?>
-            <div class="user-view-mobile-panel">
+            <div class="user-view-mobile-panel-modern">
                 <div class="uvm-panel-head">
-                    <div class="uvm-panel-title">Tickets</div>
-                    <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-lg"></i>
+                    <div class="uvm-panel-title"><i class="bi bi-ticket-perforated-fill text-danger me-1"></i> Historial de Tickets</div>
+                    <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm uvm-add-ticket-btn">
+                        <i class="bi bi-plus-lg"></i> Nuevo ticket
                     </a>
                 </div>
                 <?php if (empty($userTickets)): ?>
-                    <div class="uvm-empty">
+                    <div class="uvm-empty-state">
                         <div class="icon"><i class="bi bi-inbox"></i></div>
-                        <div>Usuario no tiene ningún ticket.</div>
-                        <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm mt-2">Crear ticket</a>
+                        <div class="title">Sin tickets asociados</div>
+                        <div class="desc">Este usuario no tiene tickets registrados actualmente.</div>
+                        <a href="tickets.php?a=open&uid=<?php echo $uid; ?>" class="btn btn-primary btn-sm mt-3 px-4" style="border-radius:10px;"><i class="bi bi-plus-lg me-1"></i>Crear el primero</a>
                     </div>
                 <?php else: ?>
-                    <div class="uvm-tickets">
+                    <div class="uvm-tickets-list-modern">
                         <?php foreach ($userTickets as $t): ?>
                             <?php
                                 $ticketId = (int)($t['id'] ?? 0);
@@ -200,15 +253,14 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 $ticketStatus = (string)($t['status_name'] ?? '—');
                                 $ticketCreated = (string)($t['created'] ?? '');
                             ?>
-                            <a class="uvm-ticket" href="<?php echo html($ticketHref); ?>">
-                                <div class="uvm-ticket-top">
-                                    <div class="uvm-ticket-num"><?php echo html($ticketNum); ?></div>
-                                    <div class="uvm-ticket-status"><?php echo html($ticketStatus); ?></div>
+                            <a class="uvm-ticket-item-modern" href="<?php echo html($ticketHref); ?>">
+                                <div class="uvm-ticket-item-top">
+                                    <span class="uvm-ticket-item-num">#<?php echo html($ticketNum); ?></span>
+                                    <span class="badge uvm-ticket-status-badge"><?php echo html($ticketStatus); ?></span>
                                 </div>
-                                <div class="uvm-ticket-subject"><?php echo html($ticketSub); ?></div>
-                                <div class="uvm-ticket-foot">
-                                    <i class="bi bi-clock"></i>
-                                    <?php echo $ticketCreated !== '' ? html(formatDate($ticketCreated)) : '—'; ?>
+                                <div class="uvm-ticket-item-sub"><?php echo html($ticketSub); ?></div>
+                                <div class="uvm-ticket-item-foot">
+                                    <span class="uvm-ticket-date"><i class="bi bi-calendar-event"></i> <?php echo $ticketCreated !== '' ? html(formatDate($ticketCreated)) : '—'; ?></span>
                                 </div>
                             </a>
                         <?php endforeach; ?>

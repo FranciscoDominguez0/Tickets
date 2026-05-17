@@ -649,6 +649,303 @@ body.dark-mode .uvm-empty {
     color: #71717a !important;
 }
 
+/* ── Dark mode: nuevas cards de usuarios rediseñadas ── */
+body.dark-mode .users-mobile-card {
+    background: linear-gradient(145deg, #18181b, #111113) !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .users-mobile-card::before {
+    opacity: 0.9;
+}
+body.dark-mode .users-mobile-avatar {
+    background: linear-gradient(135deg, rgba(239,68,68,0.18), rgba(99,102,241,0.15)) !important;
+    border-color: rgba(239,68,68,0.30) !important;
+    color: #f87171 !important;
+}
+body.dark-mode .users-mobile-name {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .users-mobile-name:hover {
+    color: #f87171 !important;
+}
+body.dark-mode .users-mobile-email {
+    color: #a1a1aa !important;
+}
+body.dark-mode .umc-company {
+    color: #71717a !important;
+}
+/* KPI strip */
+body.dark-mode .umc-kpi-strip {
+    border-top-color: rgba(255,255,255,0.07) !important;
+    border-bottom-color: rgba(255,255,255,0.07) !important;
+}
+body.dark-mode .umc-kpi-div {
+    background: rgba(255,255,255,0.08) !important;
+}
+body.dark-mode .umc-kpi-label {
+    color: #52525b !important;
+}
+body.dark-mode .umc-kpi-value {
+    color: #d4d4d8 !important;
+}
+body.dark-mode .umc-kpi-value.umc-kpi-active {
+    color: #4ade80 !important;
+}
+body.dark-mode .umc-kpi-value.umc-kpi-zero {
+    color: #52525b !important;
+}
+/* Botones */
+body.dark-mode .umc-btn-view {
+    background: #dc2626 !important;
+    box-shadow: 0 3px 10px rgba(239,68,68,0.20) !important;
+    color: #fff !important;
+}
+body.dark-mode .umc-btn-view:hover {
+    background: #b91c1c !important;
+}
+body.dark-mode .umc-btn-mail {
+    background: #1c1c1e !important;
+    border-color: #3f3f46 !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .umc-btn-mail:hover {
+    background: #1e2d46 !important;
+    border-color: #1d4ed8 !important;
+    color: #93c5fd !important;
+}
+
+/* === MOBILE PAGINATION DARK MODE === */
+body.dark-mode .users-mobile-pagination {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode a.ump-nav-btn {
+    background: #1c1c1e !important;
+    border-color: #27272a !important;
+    color: #f87171 !important;
+}
+body.dark-mode a.ump-nav-btn:hover,
+body.dark-mode a.ump-nav-btn:active {
+    background: #27272a !important;
+}
+body.dark-mode .ump-nav-btn.ump-disabled {
+    background: #141414 !important;
+    border-color: #1a1a1a !important;
+    color: #52525b !important;
+}
+body.dark-mode .ump-page-indicator {
+    color: #a1a1aa !important;
+}
+body.dark-mode .ump-page-indicator strong {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .ump-meta-row {
+    border-top-color: #222 !important;
+    color: #71717a !important;
+}
+body.dark-mode .ump-export-btn {
+    color: #f87171 !important;
+}
+
+/* === SINGLE USER MOBILE VIEW OVERRIDES === */
+/* Cabecera Premium */
+body.dark-mode .user-view-mobile-head {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .uvm-back-btn {
+    border-color: #222 !important;
+    background: #1c1c1e !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-back-btn:hover {
+    background: #1e2d46 !important;
+    border-color: #1d4ed8 !important;
+    color: #93c5fd !important;
+}
+body.dark-mode .user-view-mobile-avatar {
+    background: linear-gradient(135deg, rgba(239,68,68,0.2), rgba(99,102,241,0.2)) !important;
+    border-color: rgba(239,68,68,0.35) !important;
+    color: #f87171 !important;
+}
+body.dark-mode .user-view-mobile-name {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .user-view-mobile-sub {
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-status-badge.active {
+    background: rgba(22, 163, 74, 0.15) !important;
+    color: #4ade80 !important;
+    border-color: rgba(34, 197, 94, 0.3) !important;
+}
+body.dark-mode .uvm-status-badge.inactive {
+    background: rgba(148, 163, 184, 0.1) !important;
+    color: #94a3b8 !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+}
+body.dark-mode .uvm-status-badge.banned {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Acciones */
+body.dark-mode .uvm-btn-edit {
+    background: #dc2626 !important;
+    box-shadow: 0 3px 10px rgba(239,68,68,0.2) !important;
+}
+body.dark-mode .uvm-btn-edit:hover {
+    background: #b91c1c !important;
+}
+body.dark-mode .uvm-btn-status {
+    background: #1c1c1e !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .uvm-btn-status:hover {
+    background: #27272a !important;
+}
+body.dark-mode .uvm-action-btn-danger {
+    border-color: #450a0a !important;
+    background: #220808 !important;
+    color: #fca5a5 !important;
+}
+body.dark-mode .uvm-action-btn-danger:hover {
+    background: #450a0a !important;
+    color: #fecaca !important;
+}
+
+/* Details Section */
+body.dark-mode .user-view-mobile-card-details {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .uvm-card-title {
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-detail-item {
+    border-bottom-color: #222 !important;
+}
+body.dark-mode .uvm-detail-icon {
+    background: #1c1c1e !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-detail-label {
+    color: #52525b !important;
+}
+body.dark-mode .uvm-detail-val {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-detail-val .text-dark {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-action-link {
+    color: #f87171 !important;
+}
+
+body.dark-mode .user-view-mobile-card-security {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .uvm-security-btn {
+    background: #dc2626 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(239,68,68,0.2) !important;
+}
+body.dark-mode .uvm-security-btn:hover {
+    background: #b91c1c !important;
+}
+
+/* Pill Tabs */
+body.dark-mode .user-view-mobile-tabs-pill {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .uvm-tab-pill {
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-tab-pill.active {
+    color: #f87171 !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Panels */
+body.dark-mode .user-view-mobile-panel-modern {
+    background: #141414 !important;
+    border-color: #222 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .uvm-panel-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-add-note-btn,
+body.dark-mode .uvm-add-ticket-btn {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #fff !important;
+}
+body.dark-mode .uvm-add-note-btn:hover,
+body.dark-mode .uvm-add-ticket-btn:hover {
+    background: #b91c1c !important;
+}
+
+/* Tickets & Notes list */
+body.dark-mode .uvm-ticket-item-modern {
+    background: #1c1c1e !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .uvm-ticket-item-modern:hover {
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .uvm-ticket-item-num {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-ticket-status-badge {
+    background: #27272a !important;
+    color: #a1a1aa !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .uvm-ticket-item-sub {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .uvm-ticket-item-foot {
+    color: #71717a !important;
+}
+
+body.dark-mode .uvm-note-card-modern {
+    background: #1c1c1e !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .uvm-note-text-body {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .uvm-note-meta-foot {
+    border-top-color: #27272a !important;
+}
+body.dark-mode .uvm-note-author-info {
+    color: #71717a !important;
+}
+body.dark-mode .uvm-empty-state {
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    background: #1c1c1e !important;
+}
+body.dark-mode .uvm-empty-state .icon {
+    color: #52525b !important;
+}
+body.dark-mode .uvm-empty-state .title {
+    color: #a1a1aa !important;
+}
+body.dark-mode .uvm-empty-state .desc {
+    color: #71717a !important;
+}
+
 /* === ELEMENTOS INLINE con color blanco hardcoded === */
 body.dark-mode [style*="background: #fff"],
 body.dark-mode [style*="background:#fff"],
