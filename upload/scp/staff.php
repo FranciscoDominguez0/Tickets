@@ -736,63 +736,51 @@ body.dark-mode .badge-status.inactive {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: none !important;
+    border: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    color: #64748b !important;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
-}
-.btn-action.edit {
-    background: rgba(37, 99, 235, 0.08) !important;
-    color: #2563eb !important;
+    transition: all 0.2s ease;
 }
 .btn-action.edit:hover {
-    background: #2563eb !important;
-    color: #fff !important;
+    background: rgba(37, 99, 235, 0.06) !important;
+    color: #2563eb !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
     transform: translateY(-1px);
-}
-.btn-action.reset {
-    background: rgba(8, 145, 178, 0.08) !important;
-    color: #0891b2 !important;
 }
 .btn-action.reset:hover {
-    background: #0891b2 !important;
-    color: #fff !important;
+    background: rgba(8, 145, 178, 0.06) !important;
+    color: #0891b2 !important;
+    border-color: rgba(8, 145, 178, 0.2) !important;
     transform: translateY(-1px);
 }
-.btn-action.delete {
-    background: rgba(239, 68, 68, 0.08) !important;
-    color: #ef4444 !important;
-}
 .btn-action.delete:hover {
-    background: #ef4444 !important;
-    color: #fff !important;
+    background: rgba(239, 68, 68, 0.06) !important;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
     transform: translateY(-1px);
 }
 
 /* Dark mode for Action Buttons */
-body.dark-mode .btn-action.edit {
-    background: rgba(59, 130, 246, 0.15) !important;
-    color: #60a5fa !important;
+body.dark-mode .btn-action {
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
 }
 body.dark-mode .btn-action.edit:hover {
-    background: #3b82f6 !important;
-    color: #fff !important;
-}
-body.dark-mode .btn-action.reset {
-    background: rgba(6, 182, 212, 0.15) !important;
-    color: #22d3ee !important;
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
 }
 body.dark-mode .btn-action.reset:hover {
-    background: #0891b2 !important;
-    color: #fff !important;
-}
-body.dark-mode .btn-action.delete {
-    background: rgba(239, 68, 68, 0.15) !important;
-    color: #f87171 !important;
+    background: rgba(6, 182, 212, 0.12) !important;
+    color: #22d3ee !important;
+    border-color: rgba(6, 182, 212, 0.3) !important;
 }
 body.dark-mode .btn-action.delete:hover {
-    background: #ef4444 !important;
-    color: #fff !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
 /* Dark mode for desktop table text */
@@ -801,6 +789,18 @@ body.dark-mode .agent-desktop-name {
 }
 body.dark-mode .agent-desktop-username {
     color: #94a3b8 !important;
+}
+body.dark-mode .agent-desktop-meta {
+    color: #94a3b8 !important;
+}
+body.dark-mode .agent-desktop-meta a {
+    color: #94a3b8 !important;
+}
+body.dark-mode .agent-desktop-meta a:hover {
+    color: #60a5fa !important;
+}
+body.dark-mode .agent-desktop-dept {
+    color: #cbd5e1 !important;
 }
 body.dark-mode .table th {
     background: #18181b !important;
@@ -1054,8 +1054,7 @@ body.dark-mode .advanced-filters-panel select {
             <table class="table table-hover mb-0">
                 <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                     <tr>
-                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Nombre</th>
-                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Email</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Agente</th>
                         <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Departamento</th>
                         <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Rol</th>
                         <th class="text-center" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
@@ -1065,7 +1064,7 @@ body.dark-mode .advanced-filters-panel select {
                 </thead>
                 <tbody>
                 <?php if (empty($agents)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No hay resultados.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No hay resultados.</td></tr>
                 <?php else: ?>
                     <?php foreach ($agents as $a): ?>
                         <?php
@@ -1207,20 +1206,17 @@ body.dark-mode .advanced-filters-panel select {
                                     </div>
                                     <div style="min-width: 0; flex: 1;">
                                         <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;" class="agent-desktop-name"><?php echo html($name); ?></div>
-                                        <div style="font-size: 0.8rem; color: #64748b;" class="agent-desktop-username">@<?php echo html((string)($a['username'] ?? '')); ?></div>
+                                        <div style="font-size: 0.8rem; color: #64748b;" class="agent-desktop-meta">@<?php echo html((string)($a['username'] ?? '')); ?> · <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>" style="color: inherit;"><?php echo html((string)($a['email'] ?? '')); ?></a></div>
                                     </div>
                                 </div>
                             </td>
                             <td class="d-none d-md-table-cell" style="vertical-align: middle;">
-                                <a class="text-decoration-none fw-semibold" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>" style="color:#2563eb;"><?php echo html((string)($a['email'] ?? '')); ?></a>
-                            </td>
-                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
                                 <?php if ($dept !== ''): ?>
-                                    <span class="chip-dept" style="background: rgba(59,130,246,0.08); color: #2563eb; border: 1px solid rgba(59,130,246,0.15); padding: 5px 12px; font-weight: 700; font-size: 0.78rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
-                                        <i class="bi bi-building"></i> <?php echo html($dept); ?>
+                                    <span class="agent-desktop-dept" style="color: #475569; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="bi bi-building text-muted" style="font-size: 0.85rem;"></i> <?php echo html($dept); ?>
                                     </span>
                                 <?php else: ?>
-                                    <span class="text-muted" style="font-size:0.8rem;">Sin asignar</span>
+                                    <span class="text-muted" style="font-size:0.8rem;">—</span>
                                 <?php endif; ?>
                             </td>
                             <td class="d-none d-md-table-cell" style="vertical-align: middle;">
@@ -1236,9 +1232,13 @@ body.dark-mode .advanced-filters-panel select {
                             </td>
                             <td class="text-center d-none d-md-table-cell" style="vertical-align: middle;">
                                 <?php if ($active): ?>
-                                    <span class="badge-status active"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem; vertical-align:middle;"></i> Activo</span>
+                                    <span style="color: #10b981; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; justify-content: center; width: 100%;">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; display: inline-block;"></span> Activo
+                                    </span>
                                 <?php else: ?>
-                                    <span class="badge-status inactive"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem; vertical-align:middle;"></i> Inactivo</span>
+                                    <span style="color: #64748b; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; justify-content: center; width: 100%;">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: #94a3b8; display: inline-block;"></span> Inactivo
+                                    </span>
                                 <?php endif; ?>
                             </td>
                             <td class="d-none d-md-table-cell" style="vertical-align: middle; font-weight: 500; font-size: 0.85rem; color:#475569;">
