@@ -723,7 +723,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
         .notif-dd-head {
             background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
-                        linear-gradient(135deg, #ef4444, #f59e0b);
+                        linear-gradient(135deg, #ef4444, #f87171);
             color: #fff;
         }
         .notif-dd-flex.show {
