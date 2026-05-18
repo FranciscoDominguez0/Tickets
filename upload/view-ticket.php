@@ -505,14 +505,13 @@ function humanSize($bytes) {
             box-shadow: none;
         }
         .topbar .profile-brand .brand-logo {
-            height: 30px;
+            height: 28px;
             width: auto;
-            max-width: 320px;
+            max-height: 28px;
+            max-width: 160px;
             object-fit: contain;
             display: block;
-        }
-        @media (max-width: 420px) {
-            .topbar .profile-brand .brand-logo { max-width: 200px; }
+            filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
         }
         .topbar .user-menu-btn {
             display: inline-flex;
