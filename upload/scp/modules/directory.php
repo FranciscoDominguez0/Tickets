@@ -470,57 +470,317 @@ body.dark-mode .form-control {
     color: #fff;
 }
 
-/* ── Mobile table cards ── */
-@media (max-width: 767px) {
-    #agentsTable thead { display: none; }
-    #agentsTable tbody tr {
-        display: block;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    body.dark-mode #agentsTable tbody tr {
-        background: #111;
-        border-color: #222;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-    #agentsTable tbody td {
-        display: block;
-        border: none;
-        padding: 0 !important;
-        width: 100% !important;
-    }
-    #agentsTable tbody td:last-child {
-        text-align: right;
-        margin-top: 10px;
-    }
-    .agent-mobile-meta {
-        display: flex !important;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 10px;
-    }
-    .agent-mobile-action {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        background: #fef2f2;
-        color: #ef4444;
-        text-decoration: none;
-    }
-}
-@media (min-width: 768px) {
-    .agent-mobile-meta { display: none !important; }
-    .agent-mobile-action { display: none !important; }
+.agent-mobile-meta {
+    display: none !important;
 }
 
-/* ── Premium Agent Roles Styling (Celeste en Modo Oscuro Solucionado) ── */
+/* ── Estilos de Tarjetas Creativas de Agentes (Móvil) ── */
+.directory-mobile-list {
+    margin-top: 15px;
+    margin-bottom: 24px;
+}
+.directory-agent-card {
+    background: #fff;
+    border: 1px solid rgba(2, 6, 23, 0.08);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+body.dark-mode .directory-agent-card {
+    background: #111;
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+.directory-agent-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
+}
+body.dark-mode .directory-agent-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* Pulsing Status Dot (Slack Style) */
+.status-indicator {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: inline-block;
+}
+body.dark-mode .status-indicator {
+    border-color: #111;
+}
+.status-online {
+    background-color: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    animation: status-pulse 2s infinite;
+}
+.status-offline {
+    background-color: #94a3b8;
+}
+@keyframes status-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.directory-agent-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 -4px 8px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.directory-agent-name {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+body.dark-mode .directory-agent-name {
+    color: #f8fafc;
+}
+.directory-agent-username {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+body.dark-mode .directory-agent-username {
+    color: #94a3b8;
+}
+
+.directory-agent-mail-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(239, 68, 68, 0.1);
+    text-decoration: none !important;
+}
+.directory-agent-mail-btn:hover {
+    background: #ef4444;
+    color: #fff !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Insignias */
+.chip-dept, .chip-email {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+body.dark-mode .chip-dept, body.dark-mode .chip-email {
+    background: rgba(255, 255, 255, 0.04);
+    color: #cbd5e1;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+.chip-email {
+    color: #2563eb;
+    background: rgba(37, 99, 235, 0.04);
+    border-color: rgba(37, 99, 235, 0.1);
+}
+body.dark-mode .chip-email {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.06);
+    border-color: rgba(96, 165, 250, 0.15);
+}
+
+/* Fila de Métricas / Dashboard de Tickets */
+.agent-metrics-row {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 10px 14px;
+    border: 1px solid rgba(2, 6, 23, 0.04);
+}
+body.dark-mode .agent-metrics-row {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+.metric-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.metric-num {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1;
+}
+body.dark-mode .metric-num {
+    color: #f8fafc;
+}
+.metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+body.dark-mode .metric-label {
+    color: #94a3b8;
+}
+.metric-divider {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+}
+body.dark-mode .metric-divider {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Pie de tarjeta */
+.directory-agent-footer {
+    display: flex;
+    align-items: center;
+    font-size: 0.76rem;
+    color: #64748b;
+    border-top: 1px dashed rgba(2, 6, 23, 0.06);
+    padding-top: 12px;
+}
+body.dark-mode .directory-agent-footer {
+    color: #94a3b8;
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ── Estilos de la tabla de escritorio en Modo Oscuro ── */
+.ticket-row {
+    background-color: #fff;
+    cursor: default;
+    transition: all 0.2s;
+}
+body.dark-mode .ticket-row {
+    background-color: #0c0c0e !important;
+}
+body.dark-mode .ticket-row td {
+    color: #cbd5e1 !important;
+    border-color: #1e1e24 !important;
+}
+body.dark-mode .ticket-row:hover {
+    background-color: #16161a !important;
+}
+body.dark-mode .tickets-table-wrap {
+    border-color: #1e1e24 !important;
+}
+body.dark-mode #agentsTable thead {
+    background-color: #16161a !important;
+    border-bottom-color: #222 !important;
+}
+body.dark-mode #agentsTable thead th {
+    color: #94a3b8 !important;
+}
+
+/* Insignias para el listado de PC */
+.chip-dept-desktop {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+}
+body.dark-mode .chip-dept-desktop {
+    background: rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.chip-active-desktop {
+    background: #16a34a15;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+}
+body.dark-mode .chip-active-desktop {
+    background: rgba(22, 163, 74, 0.18);
+    color: #4ade80;
+    border-color: rgba(22, 163, 74, 0.3);
+}
+
+.chip-inactive-desktop {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+}
+body.dark-mode .chip-inactive-desktop {
+    background: rgba(255, 255, 255, 0.03);
+    color: #64748b;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.chip-date-desktop {
+    background: rgba(217, 119, 6, 0.08);
+    color: #d97706;
+    border: 1px solid rgba(217, 119, 6, 0.18);
+    padding: 6px 14px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+}
+body.dark-mode .chip-date-desktop {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.22);
+}
+
+/* ── Premium Agent Roles Styling ── */
 .badge-agent-role {
     display: inline-flex;
     align-items: center;
@@ -548,7 +808,7 @@ body.dark-mode .form-control {
     border-color: rgba(59, 130, 246, 0.2) !important;
 }
 
-/* Modo oscuro */
+/* Modo oscuro de roles */
 body.dark-mode .badge-agent-role.role-admin {
     background: rgba(239, 68, 68, 0.18) !important;
     color: #f87171 !important;
@@ -610,8 +870,8 @@ body.dark-mode .badge-agent-role.role-other {
         </form>
     </div>
 
-    <!-- Lista de agentes -->
-    <div class="tickets-table-wrap">
+    <!-- Lista de agentes (Escritorio) -->
+    <div class="tickets-table-wrap d-none d-md-block">
         <table class="table table-hover tickets-table mb-0" id="agentsTable">
             <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
@@ -690,7 +950,7 @@ body.dark-mode .badge-agent-role.role-other {
                                             <?php endif; ?>
                                         </div>
                                         <!-- Mobile card meta -->
-                                        <div class="agent-mobile-meta">
+                                        <div class="agent-mobile-meta d-none">
                                             <?php if ($deptName !== ''): ?>
                                                 <span class="chip" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                                     <i class="bi bi-building"></i> <?php echo html($deptName); ?>
@@ -765,9 +1025,6 @@ body.dark-mode .badge-agent-role.role-other {
                                     <a href="mailto:<?php echo html($email); ?>" class="btn btn-sm d-none d-md-inline-block" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#94a3b8'" title="Contactar">
                                         <i class="bi bi-envelope"></i>
                                     </a>
-                                    <a href="mailto:<?php echo html($email); ?>" class="agent-mobile-action" title="Contactar">
-                                        <i class="bi bi-envelope-fill"></i>
-                                    </a>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -775,6 +1032,105 @@ body.dark-mode .badge-agent-role.role-other {
                 <?php endif; ?>
             </tbody>
         </table>
+    </div>
+
+    <!-- Lista de agentes (Móvil) -->
+    <div class="d-md-none d-flex flex-column gap-3 directory-mobile-list">
+        <?php if (empty($agents)): ?>
+            <div class="directory-agent-card text-center py-5">
+                <i class="bi bi-people" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                <div class="mt-2 text-muted fw-bold">No se encontraron agentes.</div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($agents as $agent): ?>
+                <?php
+                $fullName = trim((string)($agent['firstname'] ?? '') . ' ' . (string)($agent['lastname'] ?? ''));
+                if ($fullName === '') $fullName = (string)($agent['email'] ?? 'Agente');
+                $email = (string)($agent['email'] ?? '');
+                $username = (string)($agent['username'] ?? '');
+                $deptName = (string)($agent['dept_name'] ?? '');
+                $isActive = (int)($agent['is_active'] ?? 0) === 1;
+                $totalTickets = (int)($agent['total_tickets'] ?? 0);
+                $openTickets = (int)($agent['open_tickets'] ?? 0);
+                $role = (string)($agent['role'] ?? '');
+
+                $parts = preg_split('/\s+/', trim($fullName));
+                $i1 = strtoupper((string)($parts[0][0] ?? ''));
+                $i2 = '';
+                if (count($parts) > 1) {
+                    $i2 = strtoupper((string)($parts[1][0] ?? ''));
+                } elseif (strlen($fullName) > 1) {
+                    $i2 = strtoupper(substr($fullName, 1, 1));
+                }
+                $initials = trim($i1 . $i2);
+                if ($initials === '') $initials = 'A';
+
+                $roleInfo = $roleBadges[$role] ?? ['bg' => 'bg-secondary', 'label' => ($role !== '' ? ucfirst($role) : 'Agente')];
+                $avatarColors = ['#2563eb','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+                $avatarColor = $avatarColors[($agent['id'] ?? 0) % count($avatarColors)];
+                ?>
+                <div class="directory-agent-card">
+                    <!-- Top row: Avatar + Name + Status + Email action -->
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="position-relative">
+                            <div class="directory-agent-avatar" style="background: <?php echo html($avatarColor); ?>;">
+                                <?php echo html($initials); ?>
+                            </div>
+                            <span class="status-indicator <?php echo $isActive ? 'status-online' : 'status-offline'; ?>"></span>
+                        </div>
+                        
+                        <div class="min-width-0 flex-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <h4 class="directory-agent-name"><?php echo html($fullName); ?></h4>
+                                <span class="badge-agent-role <?php echo html($roleInfo['bg']); ?>">
+                                    <?php echo html($roleInfo['label']); ?>
+                                </span>
+                            </div>
+                            <div class="directory-agent-username">@<?php echo html($username); ?></div>
+                        </div>
+                        
+                        <?php if ($email !== ''): ?>
+                            <a href="mailto:<?php echo html($email); ?>" class="directory-agent-mail-btn" title="Contactar por correo">
+                                <i class="bi bi-envelope-fill"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- Meta Rows / Iconic Info -->
+                    <div class="directory-agent-body mt-3">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <?php if ($deptName !== ''): ?>
+                                <span class="chip-dept"><i class="bi bi-building me-1"></i><?php echo html($deptName); ?></span>
+                            <?php endif; ?>
+                            <?php if ($email !== ''): ?>
+                                <span class="chip-email"><i class="bi bi-envelope me-1"></i><?php echo html($email); ?></span>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Ticket Metrics Row (Dashboard Style) -->
+                        <div class="agent-metrics-row">
+                            <div class="metric-col">
+                                <span class="metric-num"><?php echo $totalTickets; ?></span>
+                                <span class="metric-label">Asignados</span>
+                            </div>
+                            <div class="metric-divider"></div>
+                            <div class="metric-col">
+                                <span class="metric-num <?php echo $openTickets > 0 ? 'text-danger fw-extrabold' : 'text-muted'; ?>">
+                                    <?php echo $openTickets; ?>
+                                </span>
+                                <span class="metric-label">Abiertos</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer: Last activity -->
+                    <div class="directory-agent-footer mt-3">
+                        <i class="bi bi-clock-history me-1"></i>
+                        <span>Último acceso: <?php echo $agent['last_login'] ? html(formatDate($agent['last_login'])) : 'Nunca'; ?></span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Paginación -->
