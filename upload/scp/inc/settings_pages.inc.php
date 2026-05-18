@@ -326,12 +326,11 @@ body.dark-mode input[type="file"].form-control::file-selector-button {
                         <label class="form-check-label" for="logo-mode-custom">Personalizado</label>
                     </div>
 
-                    <?php if ($company_logo): ?>
-                        <div class="image-preview-box mb-2">
-                            <img src="<?php echo html(toAppAbsoluteUrl($company_logo)); ?>" alt="Logo personalizado" style="max-height:70px; width:auto; max-width:100%;">
-                        </div>
-                    <?php else: ?>
-                        <div class="alert alert-secondary" style="max-width:520px;">No hay logo personalizado aún.</div>
+                    <div class="image-preview-box mb-2 <?php echo !$company_logo ? 'd-none' : ''; ?>" id="custom-logo-preview-container">
+                        <img src="<?php echo $company_logo ? html(toAppAbsoluteUrl($company_logo)) : ''; ?>" id="custom-logo-preview-img" alt="Logo personalizado" style="max-height:70px; width:auto; max-width:100%;">
+                    </div>
+                    <?php if (!$company_logo): ?>
+                        <div class="alert alert-secondary" style="max-width:520px;" id="custom-logo-no-preview-alert">No hay logo personalizado aún.</div>
                     <?php endif; ?>
 
                     <label class="form-label">Subir un nuevo logo</label>
@@ -364,12 +363,11 @@ body.dark-mode input[type="file"].form-control::file-selector-button {
                         <label class="form-check-label" for="bg-mode-custom">Personalizado</label>
                     </div>
 
-                    <?php if ($login_background): ?>
-                        <div class="image-preview-box mb-2">
-                            <img src="<?php echo html(toAppAbsoluteUrl($login_background)); ?>" alt="Fondo personalizado" style="height:110px; width:auto; max-width:100%; object-fit:cover;">
-                        </div>
-                    <?php else: ?>
-                        <div class="alert alert-secondary" style="max-width:520px;">No hay fondo personalizado aún.</div>
+                    <div class="image-preview-box mb-2 <?php echo !$login_background ? 'd-none' : ''; ?>" id="custom-bg-preview-container">
+                        <img src="<?php echo $login_background ? html(toAppAbsoluteUrl($login_background)) : ''; ?>" id="custom-bg-preview-img" alt="Fondo personalizado" style="height:110px; width:auto; max-width:100%; object-fit:cover;">
+                    </div>
+                    <?php if (!$login_background): ?>
+                        <div class="alert alert-secondary" style="max-width:520px;" id="custom-bg-no-preview-alert">No hay fondo personalizado aún.</div>
                     <?php endif; ?>
 
                     <label class="form-label">Subir archivo nuevo diseño de fondo</label>
@@ -385,5 +383,65 @@ body.dark-mode input[type="file"].form-control::file-selector-button {
         <a class="btn btn-outline-secondary" href="settings.php?t=pages">Restaurar</a>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // ── 1. Sistema de Previsualización en Vivo de Imágenes ──
+    function initLivePreview(inputName, previewImgId, containerId, alertId, radioId) {
+        var input = document.querySelector('input[name="' + inputName + '"]');
+        if (!input) return;
+        
+        input.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById(previewImgId);
+                    var container = document.getElementById(containerId);
+                    var alertEl = document.getElementById(alertId);
+                    var radio = document.getElementById(radioId);
+                    
+                    if (img) img.src = e.target.result;
+                    if (container) container.classList.remove('d-none');
+                    if (alertEl) alertEl.classList.add('d-none');
+                    if (radio) radio.checked = true; // Selecciona automáticamente "Personalizado"
+                };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+
+    initLivePreview('company_logo', 'custom-logo-preview-img', 'custom-logo-preview-container', 'custom-logo-no-preview-alert', 'logo-mode-custom');
+    initLivePreview('login_background', 'custom-bg-preview-img', 'custom-bg-preview-container', 'custom-bg-no-preview-alert', 'bg-mode-custom');
+
+    // ── 2. Persistencia y Control Inteligente de Pestañas (Bootstrap 5) ──
+    var activeTabInput = document.getElementById('active_tab');
+    var tabLinks = document.querySelectorAll('.nav-tabs a[data-bs-toggle="tab"]');
+    
+    // Al hacer click en cualquier pestaña, sincronizar el hidden input y cambiar la URL
+    tabLinks.forEach(function(link) {
+        link.addEventListener('shown.bs.tab', function(e) {
+            var tabName = this.getAttribute('data-tab');
+            if (activeTabInput) {
+                activeTabInput.value = tabName;
+            }
+            // Actualizar URL sin recargar la página
+            var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + "?t=pages&tab=" + encodeURIComponent(tabName);
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        });
+    });
+
+    // Activar pestaña inicial desde la URL si existe
+    var urlParams = new URLSearchParams(window.location.search);
+    var tabParam = urlParams.get('tab');
+    if (tabParam && (tabParam === 'basic' || tabParam === 'logos' || tabParam === 'login')) {
+        var targetLink = document.querySelector('.nav-tabs a[data-tab="' + tabParam + '"]');
+        if (targetLink) {
+            var bsTab = bootstrap.Tab.getOrCreateInstance(targetLink);
+            if (bsTab) bsTab.show();
+        }
+    }
+});
+</script>
+
 <?php
 $content = ob_get_clean();
