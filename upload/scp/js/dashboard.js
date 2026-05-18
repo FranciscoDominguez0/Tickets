@@ -109,7 +109,7 @@
                 labels: labels,
                 datasets: [
                     {
-                        label: 'created',
+                        label: 'Creados',
                         data: createdData,
                         borderColor: '#28a745',
                         backgroundColor: function(context) {
@@ -130,7 +130,7 @@
                         pointBorderWidth: isShortRange ? 2 : 0
                     },
                     {
-                        label: 'closed',
+                        label: 'Cerrados',
                         data: closedData,
                         borderColor: '#007bff',
                         backgroundColor: function(context) {
@@ -151,7 +151,7 @@
                         pointBorderWidth: isShortRange ? 2 : 0
                     },
                     {
-                        label: 'deleted',
+                        label: 'Borrados',
                         data: deletedData,
                         borderColor: '#dc3545',
                         backgroundColor: function(context) {
@@ -182,15 +182,7 @@
                 },
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 15,
-                            font: {
-                                size: 12
-                            }
-                        }
+                        display: false,
                     },
                     tooltip: {
                         mode: 'index',
@@ -259,17 +251,19 @@
         const legendContainer = document.getElementById('line-chart-legend');
         if (legendContainer) {
             legendContainer.innerHTML = ''; // Limpiar contenido anterior
+            legendContainer.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 18px; padding: 0 10px;';
             const datasets = chart.data.datasets;
             datasets.forEach((dataset, index) => {
                 const legendItem = document.createElement('div');
-                legendItem.style.cssText = 'margin-bottom: 5px; cursor: pointer; display: flex; align-items: center;';
+                legendItem.className = 'chart-legend-chip';
                 
                 const colorBox = document.createElement('span');
-                colorBox.style.cssText = `display: inline-block; width: 16px; height: 16px; background-color: ${dataset.borderColor}; margin-right: 8px; border-radius: 3px;`;
+                colorBox.className = 'chart-legend-dot';
+                colorBox.style.backgroundColor = dataset.borderColor;
                 
                 const label = document.createElement('span');
+                label.className = 'chart-legend-label';
                 label.textContent = dataset.label;
-                label.style.cssText = 'font-size: 12px; color: #333;';
                 
                 legendItem.appendChild(colorBox);
                 legendItem.appendChild(label);
@@ -281,9 +275,11 @@
                     chart.update();
                     
                     if (meta.hidden) {
-                        legendItem.style.opacity = '0.5';
+                        legendItem.style.opacity = '0.4';
+                        legendItem.style.textDecoration = 'line-through';
                     } else {
                         legendItem.style.opacity = '1';
+                        legendItem.style.textDecoration = 'none';
                     }
                 });
                 

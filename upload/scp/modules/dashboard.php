@@ -575,33 +575,213 @@ while ($row = $res->fetch_assoc()) {
             font-weight: 600;
         }
     }
+        
+    .mobile-filter-btn {
+        border-radius: 10px;
+        font-weight: 600;
+        background-color: #fff;
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    .mobile-filter-btn:hover, .mobile-filter-btn:focus, .mobile-filter-btn[aria-expanded="true"] {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+    
+    body.dark-mode .mobile-filter-btn {
+        background-color: #000;
+        color: #e2e8f0;
+        border-color: #333;
+    }
+    body.dark-mode .mobile-filter-btn:hover, body.dark-mode .mobile-filter-btn:focus, body.dark-mode .mobile-filter-btn[aria-expanded="true"] {
+        background-color: #1a1a1a;
+        color: #fff;
+        border-color: #444;
+    }
+
+    @media (max-width: 767px) {
+        .mobile-filter-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1050;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 12px;
+        }
+        body.dark-mode .mobile-filter-dropdown {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    }
+
+    /* Premium Dashboard Hero Header styles */
+    .stats-hero {
+        background: radial-gradient(circle at 0% 0%, #ef4444 0%, #1a0000 35%, #000000 100%);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 14px;
+        padding: 1.5rem 2rem;
+        color: #fff;
+        box-shadow: 0 14px 32px rgba(239, 68, 68, 0.28);
+        margin-bottom: 20px;
+    }
+    .stats-hero-title {
+        font-size: 1.45rem;
+        font-weight: 700;
+        margin: 0;
+        color: #fff;
+    }
+    .stats-hero-sub {
+        margin: .2rem 0 0;
+        color: rgba(255, 255, 255, .9);
+        font-size: .95rem;
+        font-weight: 600;
+    }
+    .stats-hero-icon {
+        width: 52px;
+        height: 52px;
+        background: rgba(255, 255, 255, .18);
+        color: #fff;
+        border-radius: 14px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.45rem;
+        box-shadow: 0 4px 14px rgba(2, 6, 23, .2);
+        border: 1px solid rgba(255, 255, 255, .22);
+    }
+    .stats-range {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .15);
+        border: 1px solid rgba(255, 255, 255, .28);
+        font-weight: 800;
+        color: #fff;
+        font-size: 12px;
+    }
+
+    /* Modern Custom Interactive Legend Chips */
+    .chart-legend-chip {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        background: #f8fafc;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .chart-legend-chip:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+    }
+    body.dark-mode .chart-legend-chip {
+        background: #111;
+        border-color: #222;
+    }
+    body.dark-mode .chart-legend-chip:hover {
+        background: #1c1c1c;
+        border-color: #333;
+    }
+    .chart-legend-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 8px;
+        border-radius: 50%;
+    }
+    .chart-legend-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+    }
+    body.dark-mode .chart-legend-label {
+        color: #cbd5e1;
+    }
 </style>
 
-<!-- Formulario de selección de período -->
-<form method="post" action="dashboard.php" class="mb-4">
-    <div class="d-flex align-items-center gap-3 flex-wrap dashboard-period-form dashboard-card-bg">
-        <label class="mb-0">
-            <strong>Reporte del Período:</strong>
-            <input type="date" 
-                   name="start" 
-                   class="form-control form-control-sm d-inline-block" 
-                   style="width: auto; display: inline-block; margin-left: 5px;"
-                   value="<?php echo $startDate->format('Y-m-d'); ?>"
-                   placeholder="Último mes">
-        </label>
-        <label class="mb-0">
-            <strong>Período:</strong>
-            <select name="period" class="form-select form-select-sm d-inline-block" style="width: auto; display: inline-block; margin-left: 5px;">
-                <option value="today" <?php echo $period === 'today' ? 'selected' : ''; ?>>Hasta hoy</option>
-                <option value="yesterday" <?php echo $period === 'yesterday' ? 'selected' : ''; ?>>Ayer</option>
-                <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>>Última semana</option>
-                <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>>Último mes</option>
-                <option value="lastmonth" <?php echo $period === 'lastmonth' ? 'selected' : ''; ?>>Mes pasado</option>
-            </select>
-        </label>
-        <button type="submit" class="btn btn-primary btn-sm">Actualizar</button>
+<!-- Encabezado Premium con Rango de Fechas -->
+<div class="stats-hero d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <span class="stats-hero-icon"><i class="bi bi-speedometer2"></i></span>
+        <div>
+            <h3 class="stats-hero-title">Panel de Control</h3>
+            <div class="stats-hero-sub">Resumen de actividad y métricas de rendimiento.</div>
+        </div>
     </div>
-</form>
+    
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Rango en badge de calendario premium -->
+        <span class="stats-range"><i class="bi bi-calendar3"></i> <?php
+            $meses = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
+            echo strtr($startDate->format('j \d\e F, Y'), $meses); ?> - <?php echo strtr($endDate->format('j \d\e F, Y'), $meses); ?></span>
+    </div>
+</div>
+
+<!-- Formulario de selección de período -->
+<div class="position-relative">
+    <div class="d-md-none mb-3 d-flex justify-content-end">
+        <button class="btn mobile-filter-btn" type="button" data-bs-toggle="collapse" data-bs-target="#mobileFiltersCollapseDashboard" aria-expanded="false" aria-controls="mobileFiltersCollapseDashboard">
+            <i class="bi bi-sliders"></i> Filtros
+        </button>
+    </div>
+    <div class="collapse d-md-block mobile-filter-dropdown" id="mobileFiltersCollapseDashboard">
+        <form method="post" action="dashboard.php" class="mb-4 m-md-0">
+            <div class="d-flex align-items-center gap-3 flex-wrap dashboard-period-form dashboard-card-bg">
+                <label class="mb-0">
+                    <strong>Reporte del Período:</strong>
+                    <input type="date" 
+                           name="start" 
+                           class="form-control form-control-sm d-inline-block" 
+                           style="width: auto; display: inline-block; margin-left: 5px;"
+                           value="<?php echo $startDate->format('Y-m-d'); ?>"
+                           placeholder="Último mes">
+                </label>
+                <label class="mb-0">
+                    <strong>Período:</strong>
+                    <select name="period" class="form-select form-select-sm d-inline-block" style="width: auto; display: inline-block; margin-left: 5px;">
+                        <option value="today" <?php echo $period === 'today' ? 'selected' : ''; ?>>Hasta hoy</option>
+                        <option value="yesterday" <?php echo $period === 'yesterday' ? 'selected' : ''; ?>>Ayer</option>
+                        <option value="week" <?php echo $period === 'week' ? 'selected' : ''; ?>>Última semana</option>
+                        <option value="month" <?php echo $period === 'month' ? 'selected' : ''; ?>>Último mes</option>
+                        <option value="lastmonth" <?php echo $period === 'lastmonth' ? 'selected' : ''; ?>>Mes pasado</option>
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary btn-sm">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(event) {
+        if (window.innerWidth >= 768) return; 
+        
+        var collapseEl = document.getElementById('mobileFiltersCollapseDashboard');
+        var btnEl = document.querySelector('[data-bs-target="#mobileFiltersCollapseDashboard"]');
+        
+        if (collapseEl && collapseEl.classList.contains('show')) {
+            if (!collapseEl.contains(event.target) && btnEl && !btnEl.contains(event.target)) {
+                if (typeof bootstrap !== 'undefined') {
+                    var bsCollapse = bootstrap.Collapse.getInstance(collapseEl);
+                    if (bsCollapse) bsCollapse.hide();
+                } else {
+                    collapseEl.classList.remove('show');
+                }
+            }
+        }
+    });
+});
+</script>
 
 <!-- Título de Actividad de Tickets -->
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -625,8 +805,7 @@ while ($row = $res->fetch_assoc()) {
 <h2 class="mb-3">Estadísticas 
     <i class="bi bi-question-circle" style="font-size: 0.8em; color: #666; cursor: help;" title="Estadísticas de tickets"></i>
 </h2>
-<p class="text-muted">Las estadísticas de los Tickets se organizan por departamento, tema y agente.</p>
-<p><strong>Rango: </strong><?php echo $startDate->format('F j, Y'); ?> - <?php echo $endDate->format('F j, Y'); ?> (America/Bogota)</p>
+<p class="text-muted mb-4">Las estadísticas de los Tickets se organizan por departamento, tema y agente.</p>
 
 <!-- Tabs para diferentes vistas -->
 <ul class="nav nav-tabs mb-3" id="statsTabs" role="tablist">
