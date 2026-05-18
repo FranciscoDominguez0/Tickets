@@ -1403,9 +1403,7 @@ if ($ticketClientSignaturePath !== '') {
                             <div class="entry-footer">
                                 <?php if ($isInternal): ?> <span class="badge bg-warning text-dark me-2">Nota interna</span><?php endif; ?>
                                 <?php if ($isStaff): ?>
-                                    <i class="bi bi-check2-all text-muted"></i> Enviado
-                                <?php else: ?>
-                                    Enviado <i class="bi bi-check2 text-muted"></i>
+                                    <i class="bi bi-check2-all" style="color: #34b7f1; font-weight: bold;"></i> Enviado
                                 <?php endif; ?>
                             </div>
                         </div>

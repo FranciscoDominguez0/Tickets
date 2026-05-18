@@ -876,7 +876,7 @@ if ($blockNewIfSignaturePending) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
-    <link rel="stylesheet" href="css/client_dark.css">
+    <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <style>
         textarea.is-invalid + .note-editor {
             border-color: #dc3545 !important;
@@ -1042,6 +1042,7 @@ if ($blockNewIfSignaturePending) {
         body.dark-mode .page-header {
             background: rgba(24, 24, 27, 0.75) !important;
             border-color: rgba(63, 63, 70, 0.4) !important;
+            border-left: 5px solid #ef4444 !important;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
             color: #f4f4f5;
         }

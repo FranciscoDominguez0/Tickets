@@ -123,8 +123,9 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             #scp-agent-loading {
                 position: fixed;
                 inset: 0;
-                background: rgba(11, 18, 32, 0.78);
-                backdrop-filter: blur(6px);
+                background: rgba(9, 9, 11, 0.82);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -133,22 +134,24 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             }
             #scp-agent-loading .box {
                 width: min(520px, 92vw);
-                padding: 22px 20px;
+                padding: 26px 24px;
                 border-radius: 18px;
-                background: rgba(255,255,255,.06);
-                border: 1px solid rgba(255,255,255,.12);
-                box-shadow: 0 20px 70px rgba(0,0,0,.45);
+                background: rgba(9, 9, 11, 0.65);
+                border: 1px solid rgba(239, 68, 68, 0.2);
+                box-shadow: 
+                    0 25px 80px rgba(0, 0, 0, 0.75),
+                    0 0 40px rgba(239, 68, 68, 0.08);
                 color: #e5e7eb;
                 font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;
             }
             #scp-agent-loading .spin {
-                width: 34px;
-                height: 34px;
+                width: 36px;
+                height: 36px;
                 border-radius: 50%;
-                border: 3px solid rgba(255,255,255,.18);
-                border-top-color: rgba(255,255,255,.82);
-                animation: scpAgentSpin .85s linear infinite;
-                margin: 0 0 14px;
+                border: 3px solid rgba(255, 255, 255, 0.06);
+                border-top-color: #ef4444;
+                animation: scpAgentSpin .85s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                margin: 0 0 16px;
             }
             #scp-agent-loading .t {
                 font-weight: 800;
@@ -157,21 +160,21 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 margin: 0 0 6px;
             }
             #scp-agent-loading .s {
-                margin: 0 0 16px;
+                margin: 0 0 18px;
                 opacity: .85;
                 font-size: 13px;
             }
             #scp-agent-loading .bar {
-                height: 10px;
+                height: 6px;
                 border-radius: 999px;
-                background: rgba(255,255,255,.10);
+                background: rgba(255, 255, 255, 0.06);
                 overflow: hidden;
             }
             #scp-agent-loading .bar>i {
                 display: block;
                 height: 100%;
                 width: 30%;
-                background: linear-gradient(90deg,#60a5fa,#a78bfa,#34d399);
+                background: linear-gradient(90deg, #b91c1c, #ef4444, #f87171);
                 border-radius: 999px;
                 animation: scpAgentMv 1.05s ease-in-out infinite;
             }

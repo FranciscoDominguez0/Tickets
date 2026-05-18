@@ -901,7 +901,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .btn-outline-primary:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
         .text-primary { color: #ef4444 !important; }
     </style>
-    <link rel="stylesheet" href="css/client_dark.css">
+    <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <?php if ($preventOpenBack || $flashMsg !== ''): ?>
     <script>
         (function(){

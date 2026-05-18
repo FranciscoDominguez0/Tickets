@@ -453,7 +453,7 @@ function humanSize($bytes) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
-    <link rel="stylesheet" href="css/client_dark.css">
+    <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <style>
         body {
             background: #f6f7fb;
@@ -1500,8 +1500,8 @@ function humanSize($bytes) {
                 <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                     <div>
                         <div class="d-flex align-items-center gap-3 mb-2">
-                            <span style="background: #fef2f2; color: #4338ca; padding: 4px 14px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid #c7d2fe;">
-                                <i class="bi bi-hash"></i> TICKET #<?php echo html($t['ticket_number']); ?>
+                            <span style="background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid rgba(239, 68, 68, 0.25); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.05);">
+                                <i class="bi bi-hash" style="font-size: 1rem; opacity: 0.85;"></i> TICKET #<?php echo html($t['ticket_number']); ?>
                             </span>
                         </div>
                         <h2 class="mb-0" style="font-weight: 900; color: #0f172a;"><?php echo html($t['subject']); ?></h2>
@@ -1729,10 +1729,8 @@ function humanSize($bytes) {
                                         <?php endif; ?>
                                     </div>
                                     <div class="entry-footer text-end">
-                                        <?php if ($isStaff): ?>
-                                            <i class="bi bi-check2-all text-muted"></i> Enviado
-                                        <?php else: ?>
-                                            Enviado <i class="bi bi-check2 text-muted"></i>
+                                        <?php if (!$isStaff): ?>
+                                            Enviado <i class="bi bi-check2-all" style="color: #34b7f1; font-weight: bold;"></i>
                                         <?php endif; ?>
                                     </div>
                                 </div>

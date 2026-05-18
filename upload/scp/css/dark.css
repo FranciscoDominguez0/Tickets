@@ -1129,17 +1129,19 @@ body.dark-mode .ticket-hover-preview .msg .th-item.user .th-head {
 }
 
 body.dark-mode .ticket-hover-preview .msg .th-item.staff .th-head {
-    background: #083344 !important;
-    border-bottom-color: #0e7490 !important;
+    background: #334155 !important; /* Sofisticado tono gris acero / slate */
+    border-bottom-color: #475569 !important;
 }
-
-
+body.dark-mode .ticket-hover-preview .msg .th-item.staff .th-author {
+    color: #e2e8f0 !important; /* Blanco plata brillante de alto contraste */
+}
 
 body.dark-mode .ticket-hover-preview .msg .th-author {
-    color: #ccc !important;
+    color: #e2e8f0 !important;
+    font-weight: 700 !important;
 }
 body.dark-mode .ticket-hover-preview .msg .th-when {
-    color: #666 !important;
+    color: #888888 !important;
 }
 body.dark-mode .ticket-hover-preview .msg .th-item.internal .th-head {
     background: #27272a !important;
@@ -2430,7 +2432,9 @@ body.dark-mode .btn-add-org:hover {
 
 /* Fix ticket preview ID color in dark mode */
 body.dark-mode .ticket-hover-preview-head .num {
-    color: #22d3ee !important;
+    color: #60a5fa !important; /* Mismo celeste que el listado externo (#60a5fa) */
+    font-size: 1.22rem !important;
+    font-weight: 800 !important;
 }
 
 /* ============================================================

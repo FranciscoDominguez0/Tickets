@@ -111,12 +111,13 @@ body.dark-mode label { color: #a1a1aa !important; }
 body.dark-mode .ticket-card-foot { border-top-color: #27272a !important; }
 body.dark-mode .form-control,
 body.dark-mode .form-select { background: #1a1a1a !important; border-color: #2e2e2e !important; color: #e5e5e5 !important; }
-body.dark-mode .form-control::placeholder,
-body.dark-mode .note-input::placeholder,
-body.dark-mode textarea::placeholder { 
-    color: #88888b !important; 
-    opacity: 1 !important; 
-    font-style: italic;
+body.dark-mode ::placeholder,
+body.dark-mode ::-webkit-input-placeholder,
+body.dark-mode ::-moz-placeholder,
+body.dark-mode :-ms-input-placeholder {
+    color: #88888b !important;
+    opacity: 1 !important;
+    font-style: normal !important;
 }
 body.dark-mode .form-control:focus,
 body.dark-mode .form-select:focus { background: #1f1f1f !important; border-color: #444 !important; color: #e5e5e5 !important; }
