@@ -73,7 +73,7 @@ body.agent-login {
 /* CONTENEDOR PRINCIPAL */
 .agent-login-container {
     width: 100%;
-    max-width: 420px;
+    max-width: 520px;
     padding: 20px;
     display: flex;
     align-items: center;
@@ -281,7 +281,7 @@ body.agent-login {
     
     .agent-login-container {
         padding: 15px;
-        max-width: 380px;
+        max-width: 460px;
     }
     
     .agent-login-panel {
