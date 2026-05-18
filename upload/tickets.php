@@ -971,9 +971,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             </a>
             <div class="d-flex align-items-center gap-2">
                 <div class="dropdown">
-                    <button class="btn btn-outline-light btn-sm user-menu-btn" type="button" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
-                        <i class="bi bi-bell"></i>
-                        <span id="notifBellBadge" class="badge bg-danger ms-1" style="display:none; font-size:.7rem;">0</span>
+                    <button class="btn btn-outline-light btn-sm user-menu-btn position-relative" type="button" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-bell" style="font-size: 15px;"></i>
+                        <span id="notifBellBadge" class="badge bg-danger position-absolute" style="display:none; font-size:.65rem; top: -2px; right: -2px; padding: 3px 5px; border-radius: 50px;">0</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-0 notif-dd notif-dd-flex" style="min-width: 380px; max-height: 420px;" aria-labelledby="notifBellBtn">
                         <div class="p-3 notif-dd-head" style="flex-shrink: 0;">
