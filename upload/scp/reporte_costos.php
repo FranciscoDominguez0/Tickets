@@ -254,7 +254,7 @@ h6.border-bottom {
 .items-table-wrap { margin-bottom: 12px; }
 .items-table-wrap .table { margin-bottom: 0; }
 .items-table-wrap .table tfoot td { border-top: 2px solid #cbd5e1; }
-.items-table-wrap .table tfoot tr.table-primary td { background: #eff6ff !important; }
+.items-table-wrap .table tfoot tr.table-primary td { background: #fef2f2 !important; }
 
 /* Mobile cards for dynamic rows */
 @media (max-width: 576px) {
@@ -304,7 +304,7 @@ h6.border-bottom {
         justify-content: space-between;
         position: sticky;
         bottom: 8px;
-        background: #1e3a8a;
+        background: linear-gradient(135deg, #dc2626, #ef4444);
         color: #fff;
         padding: 12px 16px;
         border-radius: 12px;
@@ -372,13 +372,13 @@ h6.border-bottom {
     align-items: center;
     gap: 12px;
     padding: 14px 18px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 10px;
     margin-bottom: 16px;
 }
 .price-display-box .price-label { font-weight: 600; color: #64748b; font-size: 0.85rem; }
-.price-display-box .price-value { font-size: 1.3rem; font-weight: 700; color: #1e3a8a; }
+.price-display-box .price-value { font-size: 1.3rem; font-weight: 700; color: #dc2626; }
 @media (max-width: 576px) {
     .price-display-box { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
@@ -398,18 +398,169 @@ h6.border-bottom {
     background: #f8fafc;
 }
 .custom-option input:checked + label .fw-bold {
-    color: #2563eb;
+    color: #dc2626;
 }
 .custom-option:has(input:checked) {
-    border-color: #2563eb;
-    background: #eff6ff;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 /* ── Desktop enhancements ── */
 @media (min-width: 768px) {
     .tickets-shell { padding: 1rem; }
     .tickets-header h1 { font-size: 1.5rem; }
+}
+
+/* ── Dark mode overrides ── */
+
+/* Tarjetas de ítems en móvil */
+body.dark-mode .items-table-wrap .table tbody tr {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .items-table-wrap .table tbody td[data-label]::before {
+    color: #71717a !important;
+}
+body.dark-mode .items-table-wrap .table thead th {
+    background: #111113 !important;
+    color: #a1a1aa !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .items-table-wrap .table tbody td {
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+/* Inputs dentro de las tarjetas */
+body.dark-mode .items-table-wrap .item-desc,
+body.dark-mode .items-table-wrap .item-price {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .items-table-wrap .item-desc::placeholder,
+body.dark-mode .items-table-wrap .item-price::placeholder {
+    color: #52525b !important;
+}
+/* Card de overview móvil (Depto, Técnico, etc.) */
+body.dark-mode .ticket-view-overview .field {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .ticket-view-overview label {
+    color: #71717a !important;
+}
+body.dark-mode .ticket-view-overview .value {
+    color: #f4f4f5 !important;
+}
+/* Sección usuario móvil */
+body.dark-mode .mobile-user-section {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .mobile-user-info .name {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .mobile-user-info .sub {
+    color: #a1a1aa !important;
+}
+body.dark-mode .mobile-avatar {
+    background: #111113 !important;
+    color: #a1a1aa !important;
+}
+/* Grid inferior móvil */
+body.dark-mode .mobile-grid-item {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .mobile-grid-item label {
+    color: #71717a !important;
+}
+body.dark-mode .mobile-grid-item .val {
+    color: #f4f4f5 !important;
+}
+/* Settings card */
+body.dark-mode .settings-card {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .settings-card .card-header {
+    background: #111113 !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .settings-card .card-body {
+    background: #18181b !important;
+    color: #e4e4e7 !important;
+}
+/* Textarea y form-control generales */
+body.dark-mode .settings-card textarea.form-control,
+body.dark-mode .settings-card input.form-control {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .settings-card textarea.form-control::placeholder,
+body.dark-mode .settings-card input.form-control::placeholder {
+    color: #52525b !important;
+}
+/* Custom options (radios) */
+body.dark-mode .custom-option {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .custom-option:hover {
+    background: #1f1f23 !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .custom-option:has(input:checked) {
+    border-color: #ef4444 !important;
+    background: #1a0a0a !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+body.dark-mode .custom-option .text-muted {
+    color: #71717a !important;
+}
+/* Observaciones alert */
+body.dark-mode .alert-secondary {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode .bg-light.rounded.border {
+    background: #111113 !important;
+    border-color: #27272a !important;
+    color: #d4d4d8 !important;
+}
+body.dark-mode .items-table-wrap tfoot tr {
+    background: #111113 !important;
+}
+body.dark-mode .items-table-wrap tfoot tr td {
+    background: #111113 !important;
+    color: #f4f4f5 !important;
+    border-top-color: #27272a !important;
+}
+body.dark-mode .price-display-box {
+    background: #111113 !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .price-display-box .price-value {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .price-display-box .price-label {
+    color: #a1a1aa !important;
+}
+body.dark-mode .mat-read-item {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .mat-read-item .mat-name {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .mat-read-item .mat-qty {
+    background: #27272a !important;
+    color: #a1a1aa !important;
 }
 </style>
 
@@ -472,8 +623,8 @@ h6.border-bottom {
                 <?php 
                 $rStatus = $reportData['billing_status'] ?? 'pending';
                 if ($rStatus === 'confirmed') { $rTxt = 'Facturado'; $rBg = '#dcfce7'; $rDot = '#166534'; }
-                elseif ($rStatus === 'visita_tecnica') { $rTxt = 'Visita Técnica'; $rBg = '#e0f2fe'; $rDot = '#0369a1'; }
-                elseif ($rStatus === 'cotizacion') { $rTxt = 'Cotización'; $rBg = '#eef2ff'; $rDot = '#4338ca'; }
+                elseif ($rStatus === 'visita_tecnica') { $rTxt = 'Visita Técnica'; $rBg = '#fee2e2'; $rDot = '#dc2626'; }
+                elseif ($rStatus === 'cotizacion') { $rTxt = 'Cotización'; $rBg = '#fef2f2'; $rDot = '#ef4444'; }
                 else { $rTxt = 'Pendiente Facturación'; $rBg = '#fef9c3'; $rDot = '#854d0e'; }
                 ?>
                 <div class="mobile-badge" style="background: <?php echo $rBg; ?>; color: <?php echo $rDot; ?>;">
@@ -518,7 +669,12 @@ h6.border-bottom {
                 </div>
                 <div class="mobile-grid-item">
                     <label><i class="bi bi-hash"></i> TICKET #</label>
-                    <div class="val"><?php echo htmlspecialchars($ticket['ticket_number']); ?></div>
+                    <div class="val">
+                        <a href="tickets.php?id=<?php echo $ticketId; ?>" style="color: #ef4444; font-weight: 700; text-decoration: none;">
+                            <?php echo htmlspecialchars($ticket['ticket_number']); ?>
+                            <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem; margin-left: 4px; opacity: 0.7;"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -576,10 +732,10 @@ h6.border-bottom {
                         <?php if ($reportExists): ?>
                             <?php 
                             $status = $reportData['billing_status'] ?? 'pending';
-                            if ($status === 'confirmed') echo '<span class="badge bg-success" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-check-all me-1"></i> Facturado</span>';
-                            elseif ($status === 'visita_tecnica') echo '<span class="badge bg-info text-dark" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-geo-alt me-1"></i> Visita Técnica</span>';
-                            elseif ($status === 'cotizacion') echo '<span class="badge bg-primary" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-file-earmark-text me-1"></i> Cotización</span>';
-                            else echo '<span class="badge bg-warning text-dark" style="padding: 6px 12px; border-radius: 8px;"><i class="bi bi-clock me-1"></i> Pendiente Facturación</span>';
+                            if ($status === 'confirmed') echo '<span class="badge" style="padding: 6px 12px; border-radius: 8px; background:#dcfce7; color:#166534;"><i class="bi bi-check-all me-1"></i> Facturado</span>';
+                            elseif ($status === 'visita_tecnica') echo '<span class="badge" style="padding: 6px 12px; border-radius: 8px; background:#fee2e2; color:#dc2626;"><i class="bi bi-geo-alt me-1"></i> Visita Técnica</span>';
+                            elseif ($status === 'cotizacion') echo '<span class="badge" style="padding: 6px 12px; border-radius: 8px; background:#fef2f2; color:#ef4444;"><i class="bi bi-file-earmark-text me-1"></i> Cotización</span>';
+                            else echo '<span class="badge" style="padding: 6px 12px; border-radius: 8px; background:#fef9c3; color:#854d0e;"><i class="bi bi-clock me-1"></i> Pendiente Facturación</span>';
                             ?>
                         <?php else: ?>
                             <span class="badge bg-secondary" style="padding: 6px 12px; border-radius: 8px;">Sin Reporte</span>
@@ -614,7 +770,7 @@ h6.border-bottom {
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
                             <!-- Sección detalles -->
-                            <h6 class="mb-3 border-bottom pb-2 text-primary mt-2"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
+                            <h6 class="mb-3 border-bottom pb-2 mt-2" style="color:#dc2626;"><i class="bi bi-card-checklist me-1"></i> Detalles del Trabajo</h6>
 
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Trabajos realizados <span class="text-danger">*</span></label>
@@ -631,7 +787,7 @@ h6.border-bottom {
                                             <!-- Filas dinámicas -->
                                         </tbody>
                                         <tfoot>
-                                            <tr class="table-primary">
+                                            <tr style="background:#fef2f2;">
                                                 <td class="text-end fw-bold">Total:</td>
                                                 <td colspan="2" class="fw-bold" id="totalDisplay">$0.00</td>
                                             </tr>
@@ -643,7 +799,7 @@ h6.border-bottom {
                                         <span id="mobileTotalDisplay">$0.00</span>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm w-100 w-md-auto mt-2" id="btnAddItem">
+                                <button type="button" class="btn btn-sm w-100 w-md-auto mt-2" style="border:1px solid #ef4444; color:#ef4444; background:transparent;" id="btnAddItem">
                                     <i class="bi bi-plus-circle"></i> Agregar ítem
                                 </button>
                             </div>
@@ -681,7 +837,7 @@ h6.border-bottom {
                             </div>
 
                             <div class="form-footer-sticky">
-                                <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none;">
+                                <button type="submit" class="btn d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #dc2626, #ef4444); color:#fff; border: none;">
                                     <i class="bi bi-save"></i> Guardar Reporte
                                 </button>
                             </div>
@@ -774,7 +930,7 @@ h6.border-bottom {
                         </div>
                         <?php endif; ?>
 
-                        <h6 class="mb-3 border-bottom pb-2 text-primary mt-3"><i class="bi bi-card-checklist me-1"></i> Detalle de Trabajos Realizados</h6>
+                        <h6 class="mb-3 border-bottom pb-2 mt-3" style="color:#dc2626;"><i class="bi bi-card-checklist me-1"></i> Detalle de Trabajos Realizados</h6>
 
                         <!-- Mobile card list -->
                         <div class="d-block d-md-none">
@@ -808,7 +964,7 @@ h6.border-bottom {
                                     <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
-                                    <tr class="table-primary">
+                                    <tr style="background:#fef2f2;">
                                         <td class="text-end fw-bold">Total:</td>
                                         <td class="text-end fw-bold">$<?php echo number_format($total, 2); ?></td>
                                     </tr>
@@ -820,7 +976,7 @@ h6.border-bottom {
                             <a href="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>&action=edit" class="btn btn-warning btn-sm">
                                 <i class="bi bi-pencil"></i> Editar Reporte
                             </a>
-                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-outline-primary btn-sm btn-pdf-action">
+                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-sm btn-pdf-action" style="border:1px solid #ef4444; color:#ef4444; background:transparent;">
                                 <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
                             </a>
                         </div>
