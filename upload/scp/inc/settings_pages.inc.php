@@ -172,6 +172,70 @@ $default_staff_bg = (string)toAppAbsoluteUrl('publico/img/agent-background.webp'
 
 ob_start();
 ?>
+<style>
+/* ── Settings Pages Premium Styling ── */
+.image-preview-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    max-width: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+body.dark-mode .image-preview-box {
+    background: #18181b !important;
+    border-color: #27272a !important;
+}
+.settings-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+.settings-badge.badge-default {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+body.dark-mode .settings-badge.badge-default {
+    background: #18181b;
+    color: #a1a1aa;
+    border-color: #27272a;
+}
+.settings-badge.badge-custom {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+body.dark-mode .settings-badge.badge-custom {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: #ef4444;
+}
+body.dark-mode .alert-secondary {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #a1a1aa !important;
+}
+body.dark-mode input[type="file"].form-control {
+    background: #000000 !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode input[type="file"].form-control::file-selector-button {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+</style>
+
 <div class="settings-hero">
     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
@@ -182,8 +246,12 @@ ob_start();
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge <?php echo $company_logo_mode === 'custom' ? 'bg-primary' : 'bg-secondary'; ?>">Logo: <?php echo $company_logo_mode === 'custom' ? 'Personalizado' : 'Default'; ?></span>
-            <span class="badge <?php echo $login_bg_mode === 'custom' ? 'bg-info text-dark' : 'bg-secondary'; ?>">Fondo login: <?php echo $login_bg_mode === 'custom' ? 'Personalizado' : 'Default'; ?></span>
+            <span class="settings-badge <?php echo $company_logo_mode === 'custom' ? 'badge-custom' : 'badge-default'; ?>">
+                Logo: <?php echo $company_logo_mode === 'custom' ? 'Personalizado' : 'Default'; ?>
+            </span>
+            <span class="settings-badge <?php echo $login_bg_mode === 'custom' ? 'badge-custom' : 'badge-default'; ?>">
+                Fondo login: <?php echo $login_bg_mode === 'custom' ? 'Personalizado' : 'Default'; ?>
+            </span>
         </div>
     </div>
 </div>
@@ -246,7 +314,7 @@ ob_start();
                         <input class="form-check-input" type="radio" name="company_logo_mode" id="logo-mode-default" value="default" <?php echo $company_logo_mode === 'default' ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="logo-mode-default">Default</label>
                     </div>
-                    <div class="border rounded p-3 bg-white" style="max-width:520px;">
+                    <div class="image-preview-box">
                         <img src="<?php echo html($default_company_logo); ?>" alt="Logo default" style="max-height:70px; width:auto; max-width:100%;">
                     </div>
                 </div>
@@ -259,7 +327,7 @@ ob_start();
                     </div>
 
                     <?php if ($company_logo): ?>
-                        <div class="border rounded p-3 bg-white mb-2" style="max-width:520px;">
+                        <div class="image-preview-box mb-2">
                             <img src="<?php echo html(toAppAbsoluteUrl($company_logo)); ?>" alt="Logo personalizado" style="max-height:70px; width:auto; max-width:100%;">
                         </div>
                     <?php else: ?>
@@ -284,7 +352,7 @@ ob_start();
                         <input class="form-check-input" type="radio" name="login_bg_mode" id="bg-mode-default" value="default" <?php echo $login_bg_mode === 'default' ? 'checked' : ''; ?>>
                         <label class="form-check-label" for="bg-mode-default">Staff</label>
                     </div>
-                    <div class="border rounded p-3 bg-white" style="max-width:520px;">
+                    <div class="image-preview-box">
                         <img src="<?php echo html($default_staff_bg); ?>" alt="Backdrop" style="height:110px; width:auto; max-width:100%; object-fit:cover;">
                     </div>
                 </div>
@@ -297,7 +365,7 @@ ob_start();
                     </div>
 
                     <?php if ($login_background): ?>
-                        <div class="border rounded p-3 bg-white mb-2" style="max-width:520px;">
+                        <div class="image-preview-box mb-2">
                             <img src="<?php echo html(toAppAbsoluteUrl($login_background)); ?>" alt="Fondo personalizado" style="height:110px; width:auto; max-width:100%; object-fit:cover;">
                         </div>
                     <?php else: ?>

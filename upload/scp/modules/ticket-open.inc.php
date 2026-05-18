@@ -266,23 +266,41 @@ body.dark-mode .open-section .form-control {
     pointer-events: none;
     opacity: 0.8;
 }
-.loading-overlay-form {
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.6);
-    z-index: 10;
+.loading-fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
-    backdrop-filter: blur(2px);
 }
-/* Forzamos el modo oscuro si el body tiene la clase dark-mode */
-body.dark-mode .tickets-shell.open-ticket-shell {
-    background: transparent;
+.loading-fullscreen-card {
+    background: #ffffff;
+    padding: 28px 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid #f1f5f9;
 }
-body.dark-mode .loading-overlay-form {
+body.dark-mode .loading-fullscreen-overlay {
     background: rgba(0, 0, 0, 0.6);
+}
+body.dark-mode .loading-fullscreen-card {
+    background: #111111;
+    border-color: #222;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+.loading-fullscreen-card .spinner-border {
+    color: #ef4444 !important;
 }
 body.dark-mode .open-section {
     background: #111111 !important;
@@ -591,14 +609,23 @@ body.dark-mode .text-muted {
           icon.style.height = '1rem';
         }
 
-        // Crear overlay de carga en las secciones principales para indicar bloqueo
-        var sections = form.querySelectorAll('.open-section');
-        sections.forEach(function(sec) {
-          var overlay = document.createElement('div');
-          overlay.className = 'loading-overlay-form';
-          overlay.innerHTML = '<div class="spinner-border text-danger" role="status" style="width:2rem; height:2rem; border-width:0.25rem;"></div>';
-          sec.appendChild(overlay);
-        });
+        // Crear un único overlay de pantalla completa centrado profesional
+        var fullscreenOverlay = document.createElement('div');
+        fullscreenOverlay.className = 'loading-fullscreen-overlay';
+        fullscreenOverlay.innerHTML = 
+          '<div class="loading-fullscreen-card">' +
+            '<div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem; border-width: 0.35rem;"></div>' +
+            '<div style="font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; color: var(--text-color, #0f172a); margin-top: 4px;" id="fullscreen-loading-title">Creando ticket...</div>' +
+            '<div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Por favor espera un momento</div>' +
+          '</div>';
+
+        // Soportar modo oscuro en el texto del modal
+        if (document.body.classList.contains('dark-mode')) {
+          var titleEl = fullscreenOverlay.querySelector('#fullscreen-loading-title');
+          if (titleEl) titleEl.style.color = '#ffffff';
+        }
+
+        document.body.appendChild(fullscreenOverlay);
       });
     }
   })();
