@@ -309,6 +309,9 @@ if ($_POST) {
             $error = 'Asunto y descripción son requeridos';
             if (empty($subject)) $errorFields['subject'] = true;
             if ($isBodyEmpty) $errorFields['body'] = true;
+        } elseif (mb_strlen($subject) > 250) {
+            $error = 'El asunto no puede superar los 250 caracteres.';
+            $errorFields['subject'] = true;
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
             $error = 'Debes escribir una descripción para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
             $errorFields['body'] = true;
@@ -1698,7 +1701,7 @@ if ($blockNewIfSignaturePending) {
 
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
-                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" required>
+                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" maxlength="250" required>
                 </div>
 
                 <?php if ($hasTopics): ?>
@@ -1820,6 +1823,18 @@ if ($blockNewIfSignaturePending) {
 
             document.addEventListener('DOMContentLoaded', function () {
                 try { updateTopicHintFromSelect(); } catch (e) {}
+                try {
+                    var inpsubject = document.getElementById('subject');
+                    if (inpsubject) {
+                        inpsubject.addEventListener('input', function () {
+                            if (this.value.length > 250) {
+                                this.setCustomValidity('El asunto no puede superar los 250 caracteres.');
+                            } else {
+                                this.setCustomValidity('');
+                            }
+                        });
+                    }
+                } catch (e) {}
             });
             
         (function () {
@@ -2152,6 +2167,18 @@ if ($blockNewIfSignaturePending) {
                         }
                         try { inpsubject.focus(); } catch(e) {}
                         return false;
+                    }
+
+                    if (inpsubject && String(inpsubject.value || '').length > 250) {
+                        inpsubject.classList.add('is-invalid');
+                        inpsubject.setCustomValidity('El asunto no puede superar los 250 caracteres.');
+                        inpsubject.reportValidity();
+                        if (ev && ev.preventDefault) ev.preventDefault();
+                        if (ev && ev.stopPropagation) ev.stopPropagation();
+                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        return false;
+                    } else if (inpsubject) {
+                        inpsubject.setCustomValidity('');
                     }
 
                     if (topicSelect && String(topicSelect.value || '').trim() === '') {
