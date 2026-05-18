@@ -1663,6 +1663,18 @@ body.dark-mode .btn-more:hover {
     color: #fff !important;
 }
 
+/* Fix for org search button in dark mode */
+body.dark-mode .org-search-btn {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #cbd5e1 !important;
+    box-shadow: none !important;
+}
+body.dark-mode .org-search-btn:hover {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
 /* Dropdown menus in dark mode */
 body.dark-mode .profile-title {
     color: #f4f4f5 !important;
