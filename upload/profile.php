@@ -159,9 +159,6 @@ if ($_POST) {
             filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
         }
         .topbar .user-menu-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
             border-radius: 999px;
             font-weight: 800;
         }
