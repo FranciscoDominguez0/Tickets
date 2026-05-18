@@ -528,6 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $search = trim((string)($_GET['q'] ?? ''));
 $deptFilter = isset($_GET['did']) && is_numeric($_GET['did']) ? (int)$_GET['did'] : 0;
+$status = (string)($_GET['status'] ?? '');
 
 $sql = "
     SELECT
@@ -809,6 +810,148 @@ body.dark-mode .table th {
 body.dark-mode .table td {
     border-color: #27272a !important;
 }
+
+/* ── Premium Search Card ── */
+.search-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.06);
+    border: 1px solid rgba(30, 64, 175, 0.08);
+    margin-bottom: 24px;
+}
+.search-card .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.search-card input.form-control {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 12px 16px 12px 44px;
+    font-size: 0.95rem;
+    height: 48px;
+    transition: all 0.2s ease;
+}
+.search-card input.form-control:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+.search-card .search-icon-wrap {
+    position: relative;
+    flex: 1;
+}
+.search-card .search-icon-wrap::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'/%3E%3C/svg%3E") no-repeat center;
+    pointer-events: none;
+    z-index: 5;
+}
+.search-card .btn-search {
+    border-radius: 12px;
+    padding: 0 24px;
+    height: 48px;
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+.search-card .btn-search:hover {
+    opacity: 0.95;
+    box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
+    transform: translateY(-1px);
+}
+.search-card .btn-filter {
+    border-radius: 12px;
+    padding: 0 20px;
+    height: 48px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+.search-card .btn-filter:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+.search-card .btn-clear {
+    border-radius: 12px;
+    padding: 0 20px;
+    height: 48px;
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+.search-card .btn-clear:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* Modo Oscuro para Search Card */
+body.dark-mode .search-card {
+    background: linear-gradient(145deg, #18181b 0%, #09090b 100%);
+    border-color: rgba(239, 68, 68, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+body.dark-mode .search-card input.form-control {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    color: #f1f5f9 !important;
+}
+body.dark-mode .search-card input.form-control:focus {
+    border-color: #ef4444 !important;
+}
+body.dark-mode .search-card .btn-filter {
+    background: #27272a;
+    color: #e4e4e7;
+    border-color: #3f3f46;
+}
+body.dark-mode .search-card .btn-filter:hover {
+    background: #3f3f46;
+    color: #fff;
+}
+body.dark-mode .search-card .btn-clear {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+body.dark-mode .search-card .btn-clear:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+}
+body.dark-mode .advanced-filters-panel {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+}
+body.dark-mode .advanced-filters-panel label {
+    color: #a1a1aa !important;
+}
+body.dark-mode .advanced-filters-panel select {
+    background-color: #09090b !important;
+    border-color: #27272a !important;
+    color: #cbd5e1 !important;
+}
 </style>
 
 <div class="settings-hero">
@@ -842,37 +985,57 @@ body.dark-mode .table td {
     </div>
 <?php endif; ?>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-12 col-md-5">
-                <label class="form-label">Buscar</label>
-                <input type="text" name="q" class="form-control" value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Nombre, email o usuario">
+<div class="search-card">
+    <form method="GET" action="staff.php" class="search-form">
+        <!-- Fila Principal (Estilo users.php) -->
+        <div class="search-wrap d-flex align-items-center gap-2 flex-wrap">
+            <div class="search-icon-wrap flex-grow-1">
+                <input type="text" name="q" class="form-control" placeholder="Buscar agentes por nombre, email o usuario..." value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
             </div>
-            <div class="col-12 col-md-4">
-                <label class="form-label">Departamento</label>
-                <select name="did" class="form-select">
-                    <option value="0">Todos</option>
-                    <?php foreach ($departments as $d): ?>
-                        <option value="<?php echo (int)$d['id']; ?>" <?php echo $deptFilter === (int)$d['id'] ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
-                    <?php endforeach; ?>
-                </select>
+            
+            <button type="submit" class="btn btn-search">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+            
+            <!-- Botón para alternar los filtros ocultos -->
+            <button type="button" class="btn btn-filter" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="<?php echo ($deptFilter > 0 || $status !== '') ? 'true' : 'false'; ?>" aria-controls="advancedFilters">
+                <i class="bi bi-funnel"></i> Filtros
+            </button>
+
+            <?php if ($search !== '' || $deptFilter > 0 || $status !== ''): ?>
+                <a class="btn btn-clear" href="staff.php">
+                    <i class="bi bi-x-circle"></i> Limpiar
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <!-- Panel de Filtros Oculto/Colapsable -->
+        <div class="collapse <?php echo ($deptFilter > 0 || $status !== '') ? 'show' : ''; ?> mt-3" id="advancedFilters">
+            <div class="card card-body bg-light border-0 p-3 advanced-filters-panel" style="border-radius:12px;">
+                <div class="row g-3">
+                    <!-- Dropdown de Departamento -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-secondary">Departamento</label>
+                        <select name="did" class="form-select" style="border-radius:10px;">
+                            <option value="0">Todos</option>
+                            <?php foreach ($departments as $d): ?>
+                                <option value="<?php echo (int)$d['id']; ?>" <?php echo $deptFilter === (int)$d['id'] ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <!-- Dropdown de Estado -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-secondary">Estado</label>
+                        <select name="status" class="form-select" style="border-radius:10px;">
+                            <option value="" <?php echo $status === '' ? 'selected' : ''; ?>>Todos</option>
+                            <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Activos</option>
+                            <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactivos</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label">Estado</label>
-                <?php $status = (string)($_GET['status'] ?? ''); ?>
-                <select name="status" class="form-select">
-                    <option value="" <?php echo $status === '' ? 'selected' : ''; ?>>Todos</option>
-                    <option value="active" <?php echo $status === 'active' ? 'selected' : ''; ?>>Activos</option>
-                    <option value="inactive" <?php echo $status === 'inactive' ? 'selected' : ''; ?>>Inactivos</option>
-                </select>
-            </div>
-            <div class="col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
-                <a href="staff.php" class="btn btn-outline-secondary">Limpiar</a>
-            </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <div class="card settings-card">
