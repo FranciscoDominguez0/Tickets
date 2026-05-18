@@ -631,7 +631,7 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="modal-body">
                         <p class="text-muted small">Este ticket se cerrará y sus mensajes se copiarán al ticket destino (el destino mantiene su número y recibe una copia de los mensajes).</p>
                         <label class="form-label">Ticket destino (ID o número)</label>
-                        <input type="text" name="target_ticket_id" class="form-control" placeholder="Ej: 5 o TKT-20250126-0001" required>
+                        <input type="text" name="target_ticket_id" class="form-control" placeholder="Ej: 5" required>
                     </div>
                     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Unir y cerrar este ticket</button></div>
                 </form>
