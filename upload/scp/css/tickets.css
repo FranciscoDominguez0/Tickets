@@ -199,6 +199,8 @@
     display: flex;
     gap: 0;
     padding: 0 24px;
+    margin: 0;
+    list-style: none;
     background: #f8fafc;
     border-radius: 12px 12px 0 0;
     border: 1px solid #e2e8f0;

@@ -74,12 +74,49 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             <button type="button" class="uvm-action-btn uvm-btn-edit" data-bs-toggle="modal" data-bs-target="#modalEditUser">
                 <i class="bi bi-pencil-square"></i> Editar perfil
             </button>
-            <button type="button" class="uvm-action-btn uvm-btn-status" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
-                <i class="bi bi-person-gear"></i> Estado
-            </button>
-            <button type="button" class="uvm-action-btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser" title="Eliminar usuario">
-                <i class="bi bi-trash"></i>
-            </button>
+            <!-- Tuerca de configuración con dropdown -->
+            <div class="dropdown">
+                <button type="button" class="uvm-action-btn uvm-btn-gear" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones">
+                    <i class="bi bi-gear-fill"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end uvm-gear-dropdown">
+                    <li>
+                        <a class="dropdown-item uvm-dropdown-item-status" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
+                            <span class="uvm-item-icon-wrap"><i class="bi bi-person-gear"></i></span>
+                            <span class="uvm-item-text-wrap">
+                                <span class="uvm-item-title">Cambiar estado</span>
+                                <span class="uvm-item-desc">Activar, suspender o bloquear</span>
+                            </span>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>" id="formSendUserResetMobile">
+                            <input type="hidden" name="do" value="send_user_reset">
+                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                            <input type="hidden" name="tab" value="<?php echo html((string)($activeTab ?? 'tickets')); ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                            <button type="submit" class="dropdown-item uvm-dropdown-item-reset" id="btnSendUserResetMobile">
+                                <span class="uvm-item-icon-wrap"><i class="bi bi-shield-lock"></i></span>
+                                <span class="uvm-item-text-wrap">
+                                    <span class="uvm-item-title">Restablecer contraseña</span>
+                                    <span class="uvm-item-desc">Enviar enlace por email</span>
+                                </span>
+                            </button>
+                        </form>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item text-danger uvm-dropdown-item-delete" data-bs-toggle="modal" data-bs-target="#modalDeleteUser">
+                            <span class="uvm-item-icon-wrap"><i class="bi bi-trash"></i></span>
+                            <span class="uvm-item-text-wrap">
+                                <span class="uvm-item-title">Eliminar usuario</span>
+                                <span class="uvm-item-desc">Borrar cuenta permanentemente</span>
+                            </span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
         </div>
 
         <div class="user-view-mobile-details-section">
@@ -180,18 +217,6 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             });
             </script>
 
-            <!-- Acción de Seguridad -->
-            <div class="user-view-mobile-card-security">
-                <form method="post" action="users.php?id=<?php echo $uid; ?>">
-                    <input type="hidden" name="do" value="send_user_reset">
-                    <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
-                    <input type="hidden" name="tab" value="<?php echo html((string)($activeTab ?? 'tickets')); ?>">
-                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                    <button type="submit" class="uvm-security-btn">
-                        <i class="bi bi-shield-lock"></i> Enviar restablecer contraseña
-                    </button>
-                </form>
-            </div>
         </div>
 
         <!-- Pestañas de Navegación -->
@@ -787,21 +812,28 @@ if ($mobileInitials === '') $mobileInitials = 'U';
 
     <script>
     (function(){
-        var form = document.getElementById('formSendUserReset');
-        var btn = document.getElementById('btnSendUserReset');
         var modalEl = document.getElementById('modalSendResetLoading');
-        if (!form || !modalEl) return;
-        form.addEventListener('submit', function(){
-            try {
-                if (btn) {
-                    btn.disabled = true;
-                    btn.setAttribute('aria-disabled', 'true');
-                }
-                if (window.bootstrap && window.bootstrap.Modal) {
-                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-                }
-            } catch (e) {}
-        });
+        if (!modalEl) return;
+
+        function bindLoading(formId, btnId) {
+            var form = document.getElementById(formId);
+            var btn = document.getElementById(btnId);
+            if (!form) return;
+            form.addEventListener('submit', function(){
+                try {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.setAttribute('aria-disabled', 'true');
+                    }
+                    if (window.bootstrap && window.bootstrap.Modal) {
+                        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    }
+                } catch (e) {}
+            });
+        }
+
+        bindLoading('formSendUserReset', 'btnSendUserReset');
+        bindLoading('formSendUserResetMobile', 'btnSendUserResetMobile');
     })();
     </script>
 

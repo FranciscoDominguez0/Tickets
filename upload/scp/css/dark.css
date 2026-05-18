@@ -812,22 +812,67 @@ body.dark-mode .uvm-btn-edit {
 body.dark-mode .uvm-btn-edit:hover {
     background: #f8fafc !important;
 }
-body.dark-mode .uvm-btn-status {
-    background: #1c1c1e !important;
+body.dark-mode .uvm-btn-gear {
+    background: #18181b !important;
     border-color: #27272a !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .uvm-btn-gear:hover {
+    background: #27272a !important;
+    color: #fff !important;
+}
+
+body.dark-mode .uvm-gear-dropdown {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+body.dark-mode .uvm-gear-dropdown .dropdown-item {
     color: #e4e4e7 !important;
 }
-body.dark-mode .uvm-btn-status:hover {
+body.dark-mode .uvm-gear-dropdown .dropdown-item:hover {
     background: #27272a !important;
+    color: #fff !important;
 }
-body.dark-mode .uvm-action-btn-danger {
-    border-color: #450a0a !important;
-    background: #220808 !important;
+
+body.dark-mode .uvm-item-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .uvm-item-desc {
+    color: #71717a !important;
+}
+body.dark-mode .uvm-gear-dropdown .dropdown-item:hover .uvm-item-title {
+    color: #ffffff !important;
+}
+body.dark-mode .uvm-gear-dropdown .dropdown-item:hover .uvm-item-desc {
+    color: #a1a1aa !important;
+}
+
+/* Colores de Iconos en Modo Oscuro */
+body.dark-mode .uvm-dropdown-item-status .uvm-item-icon-wrap {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+}
+body.dark-mode .uvm-dropdown-item-reset .uvm-item-icon-wrap {
+    background: rgba(249, 115, 22, 0.15) !important;
+    color: #fb923c !important;
+}
+body.dark-mode .uvm-dropdown-item-delete .uvm-item-icon-wrap {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #f87171 !important;
+}
+
+body.dark-mode .uvm-gear-dropdown .dropdown-item.text-danger:hover {
+    background: #450a0a !important;
+}
+body.dark-mode .uvm-gear-dropdown .dropdown-item.text-danger:hover .uvm-item-title {
+    color: #f87171 !important;
+}
+body.dark-mode .uvm-gear-dropdown .dropdown-item.text-danger:hover .uvm-item-desc {
     color: #fca5a5 !important;
 }
-body.dark-mode .uvm-action-btn-danger:hover {
-    background: #450a0a !important;
-    color: #fecaca !important;
+body.dark-mode .uvm-gear-dropdown .dropdown-divider {
+    border-color: #27272a !important;
 }
 
 /* Details Section */
@@ -870,19 +915,7 @@ body.dark-mode .uvm-action-link {
     color: #f87171 !important;
 }
 
-body.dark-mode .user-view-mobile-card-security {
-    background: #141414 !important;
-    border-color: #222 !important;
-    box-shadow: none !important;
-}
-body.dark-mode .uvm-security-btn {
-    background: #dc2626 !important;
-    color: #fff !important;
-    box-shadow: 0 4px 12px rgba(239,68,68,0.2) !important;
-}
-body.dark-mode .uvm-security-btn:hover {
-    background: #b91c1c !important;
-}
+
 
 /* Pill Tabs */
 body.dark-mode .user-view-mobile-tabs-pill {

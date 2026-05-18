@@ -774,6 +774,8 @@
     display: flex;
     gap: 0;
     padding: 0 32px;
+    margin: 0;
+    list-style: none;
     border-bottom: 2px solid #e2e8f0;
     background: #fafafa;
 }
