@@ -912,6 +912,7 @@ if ($blockNewIfSignaturePending) {
         .topbar .container-fluid {
             padding-top: 2px;
             padding-bottom: 2px;
+            flex-wrap: nowrap !important;
         }
         .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
         .topbar .profile-brand {
