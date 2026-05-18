@@ -172,6 +172,13 @@ body.dark-mode .notif-dd-head { background: linear-gradient(135deg, #1e293b, #0f
 body.dark-mode .notif-item { background: #18181b !important; border-color: #27272a !important; color: #e5e5e5 !important; }
 body.dark-mode .notif-item:hover { background: #27272a !important; color: #fff !important;}
 body.dark-mode .notif-empty { background: transparent !important; border-color: #3f3f46 !important; }
+body.dark-mode #notifBellBadge,
+body.dark-mode #notifBellCountPill {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(239, 68, 68, 0.8) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5) !important;
+}
 body.dark-mode .mobile-grid-item .val { color: #f4f4f5 !important; }
 
 /* Signature area in view-ticket.php and hardcoded styles */
