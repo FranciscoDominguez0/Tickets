@@ -345,9 +345,12 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                         <?php echo html($closedDateShort); ?>
                                     </div>
                                 </div>
-                                <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
-                                    <?php echo html((string)($t['subject'] ?? '')); ?>
-                                </div>
+                                 <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 6px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+                                     <?php 
+                                     $subj = (string)($t['subject'] ?? '');
+                                     echo html(mb_strlen($subj) > 50 ? mb_substr($subj, 0, 47) . '...' : $subj);
+                                     ?>
+                                 </div>
                                 <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b; margin-bottom: 4px;">
                                     <span style="display:inline-flex; align-items:center; gap:5px;">
                                         <i class="bi bi-headset" style="color:#94a3b8;"></i> Asignado a: <strong style="color: #475569; font-weight:600;"><?php echo html($staffName); ?></strong>
@@ -460,9 +463,12 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                         </div>
                         <div style="font-size:0.75rem; color:#94a3b8; font-weight:600;"><?php echo html($closedDateShort); ?></div>
                     </div>
-                    <div class="rpt-card-subject" style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:10px; line-height:1.35;">
-                        <?php echo html((string)($t['subject'] ?? '')); ?>
-                    </div>
+                     <div class="rpt-card-subject" style="font-size:0.9rem; font-weight:700; color:#1e293b; margin-bottom:10px; line-height:1.35;">
+                         <?php 
+                         $subj = (string)($t['subject'] ?? '');
+                         echo html(mb_strlen($subj) > 50 ? mb_substr($subj, 0, 47) . '...' : $subj);
+                         ?>
+                     </div>
                     <div class="rpt-card-rows">
                         <div class="rpt-card-row">
                             <i class="bi bi-building"></i>

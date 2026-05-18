@@ -262,7 +262,13 @@
                                     </div>
                                 </div>
                                 <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
-                                    <?php echo html(function_exists('cleanPlainText') ? cleanPlainText((string)($t['subject'] ?? '')) : (string)($t['subject'] ?? '')); ?>
+                                    <?php 
+                                    $subj = (string)($t['subject'] ?? '');
+                                    if (function_exists('cleanPlainText')) {
+                                        $subj = cleanPlainText($subj);
+                                    }
+                                    echo html(mb_strlen($subj) > 50 ? mb_substr($subj, 0, 47) . '...' : $subj);
+                                    ?>
                                 </div>
                                 <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
                                     <span style="display:inline-flex; align-items:center; gap:5px;">
