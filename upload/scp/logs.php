@@ -206,73 +206,95 @@ ob_start();
 <div class="settings-hero">
     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <span class="settings-hero-icon"><i class="bi bi-graph-up"></i></span>
+            <span class="settings-hero-icon"><i class="bi bi-terminal"></i></span>
             <div>
                 <h1>Registros del Sistema</h1>
                 <p>Auditoría de acciones y eventos</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-info"><?php echo (int)$total; ?> Total</span>
+            <span class="badge" style="font-weight: 700; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; border: 1px solid rgba(239, 68, 68, 0.2);"><i class="bi bi-activity me-1"></i><?php echo (int)$total; ?> Total</span>
         </div>
     </div>
 </div>
 
 <?php if (!empty($errors['err'])): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid #dc2626;">
         <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($errors['err']); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 <?php if ($warn): ?>
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid #d97706;">
         <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($warn); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 <?php if ($msg): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius: 12px; border-left: 4px solid #16a34a;">
         <i class="bi bi-check-circle me-2"></i><?php echo html($msg); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
+<!-- Buscador y Filtros Avanzados -->
+<div class="search-card">
+    <form method="get" action="logs.php" class="m-0">
+        <div class="search-wrap">
+            <div class="position-relative flex-grow-1">
+                <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px;"></i>
+                <input type="text" name="q" value="<?php echo html($q); ?>" class="form-control shadow-none" placeholder="Buscar registros por acción, detalles, IP..." style="padding-left: 44px; border-radius: 12px; height: 46px; border: 1px solid #cbd5e1; font-weight: 500;">
+            </div>
+            <button type="submit" class="btn btn-primary px-4 d-flex align-items-center gap-2" style="border-radius: 12px; height: 46px; font-weight: 600; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+                <i class="bi bi-search"></i> <span class="d-none d-sm-inline">Buscar</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary px-3 d-flex align-items-center gap-2" data-bs-toggle="collapse" data-bs-target="#advancedFilters" aria-expanded="<?php echo ($date_from || $date_to || $level) ? 'true' : 'false'; ?>" style="border-radius: 12px; height: 46px; font-weight: 600; border-color: #cbd5e1;">
+                <i class="bi bi-sliders"></i> <span class="d-none d-sm-inline">Filtros</span>
+            </button>
+        </div>
+        
+        <div class="collapse <?php echo ($date_from || $date_to || $level) ? 'show' : ''; ?>" id="advancedFilters">
+            <div class="row g-3 mt-2 pt-3" style="border-top: 1px dashed rgba(148,163,184,0.15);">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-secondary">Entre:</label>
+                    <input type="date" name="from" value="<?php echo html($date_from); ?>" class="form-control" style="border-radius:10px;">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-secondary">Hasta:</label>
+                    <input type="date" name="to" value="<?php echo html($date_to); ?>" class="form-control" style="border-radius:10px;">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-secondary">Nivel de registro:</label>
+                    <select name="level" class="form-select" style="border-radius:10px;">
+                        <option value="">Todos</option>
+                        <option value="Error" <?php echo ($level === 'Error') ? 'selected' : ''; ?>>Error</option>
+                        <option value="Warning" <?php echo ($level === 'Warning') ? 'selected' : ''; ?>>Warning</option>
+                        <option value="Info" <?php echo ($level === 'Info') ? 'selected' : ''; ?>>Info</option>
+                    </select>
+                </div>
+                <?php if ($q || $date_from || $date_to || $level): ?>
+                    <div class="col-12 text-end mt-2">
+                        <a href="logs.php" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 8px; font-weight: 600;">
+                            <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </form>
+</div>
+
 <div class="card settings-card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <strong><i class="bi bi-list-ul"></i> Registros</strong>
+        <strong><i class="bi bi-list-ul"></i> Bitácora de Auditoría</strong>
         <div class="d-flex gap-2 flex-wrap justify-content-end">
-            <button type="button" id="openDeleteLogsModalBtn" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteLogsModal">
+            <button type="button" id="openDeleteLogsModalBtn" class="btn btn-outline-danger btn-sm px-3 d-flex align-items-center gap-1" style="border-radius: 8px; font-weight: 600; transition: all 0.2s;">
                 <i class="bi bi-trash"></i> Eliminar seleccionados
             </button>
-            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#emptyAllLogsModal">
+            <button type="button" class="btn btn-danger btn-sm px-3 d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#emptyAllLogsModal" style="border-radius: 8px; font-weight: 600; background: #ef4444; border: none; transition: all 0.2s;">
                 <i class="bi bi-trash3"></i> Vaciar todo
             </button>
         </div>
-    </div>
-    <div class="card-body">
-        <form method="get" action="logs.php" class="row g-3 align-items-end">
-            <div class="col-12 col-md-3">
-                <label class="form-label mb-1">Entre:</label>
-                <input type="date" name="from" value="<?php echo html($date_from); ?>" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label mb-1">Hasta:</label>
-                <input type="date" name="to" value="<?php echo html($date_to); ?>" class="form-control form-control-sm">
-            </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label mb-1">Nivel de registro:</label>
-                <select name="level" class="form-select form-select-sm">
-                    <option value="">Todos</option>
-                    <option value="Error" <?php echo ($level === 'Error') ? 'selected' : ''; ?>>Error</option>
-                    <option value="Warning" <?php echo ($level === 'Warning') ? 'selected' : ''; ?>>Warning</option>
-                    <option value="Info" <?php echo ($level === 'Info') ? 'selected' : ''; ?>>Info</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm flex-fill">Filtrar</button>
-                <a href="logs.php" class="btn btn-outline-secondary btn-sm">Limpiar</a>
-            </div>
-        </form>
     </div>
 
     <form id="emptyAllLogsForm" method="post" action="logs.php" class="d-none" aria-hidden="true">
@@ -286,13 +308,15 @@ ob_start();
             <input type="hidden" name="do" value="mass_process">
             <input type="hidden" name="a" value="delete">
             <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+                <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                     <tr>
-                        <th style="width: 44px;" class="text-center"><input class="form-check-input" type="checkbox" id="checkAll"></th>
-                        <th>Título de registro</th>
-                        <th style="width: 140px;">Tipo de registro</th>
-                        <th style="width: 170px;">Fecha de registro</th>
-                        <th style="width: 130px;">Dirección IP</th>
+                        <th style="width: 48px;" class="text-center">
+                            <input class="form-check-input" type="checkbox" id="checkAll" style="width: 1.2rem; height: 1.2rem; border-radius: 4px;">
+                        </th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Evento / Acción</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 140px;">Severidad</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 180px;">Fecha y Hora</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 150px;">Origen IP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -309,8 +333,7 @@ ob_start();
                             if (strpos($lower, 'error') !== false) $lvl = 'Error';
                             elseif (strpos($lower, 'warn') !== false) $lvl = 'Warning';
                             else $lvl = 'Info';
-                            $lvlClass = ($lvl === 'Error') ? 'text-danger fw-bold' : (($lvl === 'Warning') ? 'text-warning fw-bold' : 'text-muted');
-
+                            
                             $popoverTitle = (string)($r['action'] ?? 'Registro');
                             $popoverBody =
                                 "Detalles: " . ($txt !== '' ? $txt : '-') . "\n\n"
@@ -335,21 +358,21 @@ ob_start();
                                             </div>
                                             <div>
                                                 <?php 
-                                                if ($lvl === 'Error') echo '<span style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fecaca;"><i class="bi bi-x-octagon me-1"></i>Error</span>';
-                                                elseif ($lvl === 'Warning') echo '<span style="background: #fffbeb; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fde68a;"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
-                                                else echo '<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-info-circle me-1"></i>Info</span>';
+                                                if ($lvl === 'Error') echo '<span class="badge-lvl lvl-error"><i class="bi bi-x-octagon me-1"></i>Error</span>';
+                                                elseif ($lvl === 'Warning') echo '<span class="badge-lvl lvl-warning"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
+                                                else echo '<span class="badge-lvl lvl-info"><i class="bi bi-info-circle me-1"></i>Info</span>';
                                                 ?>
                                             </div>
                                         </div>
 
                                         <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; line-height: 1.4;">
                                             <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: inherit;">
-                                                <?php echo html($title); ?>
+                                                <?php echo html(ucwords(str_replace(['_', '-'], ' ', $title))); ?>
                                             </a>
                                         </div>
 
                                         <div class="d-flex align-items-center justify-content-between mt-2 pt-3" style="border-top: 1px dashed #e2e8f0;">
-                                            <div style="font-size: 0.75rem; color: #475569; font-family: monospace; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                                            <div style="font-size: 0.75rem; color: #475569; font-family: monospace; background: #f1f5f9; padding: 3px 8px; border-radius: 6px; font-weight: 600;" class="log-ip-box">
                                                 <i class="bi bi-hdd-network me-1"></i><?php echo html($r['ip_address'] ?: '-'); ?>
                                             </div>
                                             <a href="#" class="log-pop btn btn-sm" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: #2563eb; background: rgba(37,99,235,0.08); border-radius: 8px; font-weight: 800; font-size: 0.75rem; padding: 4px 12px; transition: background 0.2s;">
@@ -360,17 +383,38 @@ ob_start();
                                 </td>
 
                                 <!-- VISTA ESCRITORIO -->
-                                <td class="text-center d-none d-md-table-cell"><input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>"></td>
-                                <td class="d-none d-md-table-cell">
-                                    <a href="#" class="log-pop" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="text-decoration:none; display:block;">
-                                        <div class="text-truncate" style="max-width: 720px;" title="<?php echo html($title); ?>">
-                                            <?php echo html($title); ?>
-                                        </div>
-                                    </a>
+                                <td class="text-center d-none d-md-table-cell">
+                                    <input class="form-check-input row-check" type="checkbox" name="ids[]" value="<?php echo (int)$r['id']; ?>" style="width: 1.2rem; height: 1.2rem; border-radius: 4px;">
                                 </td>
-                                <td class="<?php echo $lvlClass; ?> d-none d-md-table-cell"><?php echo html($lvl); ?></td>
-                                <td style="white-space:nowrap;" class="d-none d-md-table-cell"><?php echo html(formatDate($r['created'])); ?></td>
-                                <td style="white-space:nowrap;" class="d-none d-md-table-cell"><code><?php echo html($r['ip_address'] ?: '-'); ?></code></td>
+                                <td class="d-none d-md-table-cell">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <?php if ($lvl === 'Error'): ?>
+                                            <span style="font-size: 1.1rem; line-height: 1;"><i class="bi bi-x-octagon-fill text-danger"></i></span>
+                                        <?php elseif ($lvl === 'Warning'): ?>
+                                            <span style="font-size: 1.1rem; line-height: 1;"><i class="bi bi-exclamation-triangle-fill text-warning"></i></span>
+                                        <?php else: ?>
+                                            <span style="font-size: 1.1rem; line-height: 1;"><i class="bi bi-info-circle-fill text-info"></i></span>
+                                        <?php endif; ?>
+                                        <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: #1e293b; font-weight: 700; font-size: 0.92rem; display: block; flex: 1; min-width: 0;">
+                                            <div class="text-truncate log-desktop-title" style="max-width: 650px;" title="<?php echo html($title); ?>">
+                                                <?php echo html(ucwords(str_replace(['_', '-'], ' ', $title))); ?>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <?php 
+                                    if ($lvl === 'Error') echo '<span class="badge-lvl lvl-error"><i class="bi bi-x-octagon me-1"></i>Error</span>';
+                                    elseif ($lvl === 'Warning') echo '<span class="badge-lvl lvl-warning"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
+                                    else echo '<span class="badge-lvl lvl-info"><i class="bi bi-info-circle me-1"></i>Info</span>';
+                                    ?>
+                                </td>
+                                <td style="white-space:nowrap; font-weight: 500; font-size: 0.85rem; color: #475569;" class="d-none d-md-table-cell agent-desktop-date">
+                                    <i class="bi bi-clock me-1 text-muted" style="font-size:0.8rem;"></i> <?php echo html(formatDate($r['created'])); ?>
+                                </td>
+                                <td style="white-space:nowrap;" class="d-none d-md-table-cell">
+                                    <span class="log-ip"><code><?php echo html($r['ip_address'] ?: '-'); ?></code></span>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -494,6 +538,130 @@ ob_start();
 </script>
 
 <style>
+/* ── Premium Search Card ── */
+.search-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.06);
+    border: 1px solid rgba(30, 64, 175, 0.08);
+    margin-bottom: 24px;
+}
+.search-card .search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+body.dark-mode .search-card {
+    background: linear-gradient(145deg, #18181b 0%, #09090b 100%) !important;
+    border-color: #27272a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+body.dark-mode .search-card input,
+body.dark-mode .search-card select {
+    background-color: #09090b !important;
+    border-color: #27272a !important;
+    color: #f4f4f5 !important;
+}
+body.dark-mode .search-card input::placeholder {
+    color: #52525b !important;
+}
+
+/* ── Dynamic Tooltip/Tip Popover ── */
+#log-tip {
+    font-family: inherit;
+    transition: opacity 0.15s ease;
+}
+body.dark-mode #log-tip {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+body.dark-mode #log-tip-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode #log-tip-body {
+    color: #d4d4d8 !important;
+}
+
+/* ── Table Typography & Elements ── */
+.log-desktop-title {
+    color: #0f172a;
+    transition: color 0.15s ease;
+}
+.log-desktop-title:hover {
+    color: #ef4444;
+}
+body.dark-mode .log-desktop-title {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .log-desktop-title:hover {
+    color: #f87171 !important;
+}
+body.dark-mode .agent-desktop-date {
+    color: #a1a1aa !important;
+}
+
+/* ── Log Badges ── */
+.badge-lvl {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge-lvl.lvl-error {
+    background: rgba(239, 68, 68, 0.06) !important;
+    color: #ef4444 !important;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+.badge-lvl.lvl-warning {
+    background: rgba(245, 158, 11, 0.06) !important;
+    color: #f59e0b !important;
+    border: 1px solid rgba(245, 158, 11, 0.15);
+}
+.badge-lvl.lvl-info {
+    background: rgba(59, 130, 246, 0.06) !important;
+    color: #3b82f6 !important;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+body.dark-mode .badge-lvl.lvl-error {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #f87171 !important;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+body.dark-mode .badge-lvl.lvl-warning {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.25);
+}
+body.dark-mode .badge-lvl.lvl-info {
+    background: rgba(59, 130, 246, 0.12) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* ── IP Styles ── */
+.log-ip code {
+    font-family: var(--bs-font-monospace);
+    background: #f1f5f9;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+body.dark-mode .log-ip code {
+    background: #27272a !important;
+    color: #cbd5e1 !important;
+    border-color: #3f3f46 !important;
+}
+
 /* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
     .settings-card { background: transparent !important; box-shadow: none !important; }
@@ -514,6 +682,13 @@ ob_start();
         display: block;
         border: none !important;
         padding: 0 !important;
+    }
+    body.dark-mode .settings-card .table tbody tr {
+        background: #18181b !important;
+        border-color: #27272a !important;
+    }
+    body.dark-mode .settings-card .table tbody tr td div {
+        background-color: transparent !important;
     }
 }
 </style>
