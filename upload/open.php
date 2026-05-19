@@ -309,8 +309,8 @@ if ($_POST) {
             $error = 'Asunto y descripción son requeridos';
             if (empty($subject)) $errorFields['subject'] = true;
             if ($isBodyEmpty) $errorFields['body'] = true;
-        } elseif (mb_strlen($subject) > 250) {
-            $error = 'El asunto no puede superar los 250 caracteres.';
+        } elseif (mb_strlen($subject) > 80) {
+            $error = 'El asunto no puede superar los 80 caracteres.';
             $errorFields['subject'] = true;
         } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
             $error = 'Debes escribir una descripción para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
@@ -1701,7 +1701,10 @@ if ($blockNewIfSignaturePending) {
 
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
-                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" maxlength="250" required>
+                    <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" maxlength="80" required>
+                    <div class="d-flex justify-content-end mt-1">
+                        <span id="subject-char-counter" style="font-size:0.8rem; font-weight:700; color:#94a3b8; transition: color 0.2s;">0 / 80</span>
+                    </div>
                 </div>
 
                 <?php if ($hasTopics): ?>
@@ -1754,6 +1757,9 @@ if ($blockNewIfSignaturePending) {
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>
                     <textarea class="form-control <?php echo !empty($errorFields['body']) ? 'is-invalid' : ''; ?>" id="body" name="body" rows="8" placeholder="Describe detalladamente el problema o solicitud..."><?php echo html($body ?? ''); ?></textarea>
+                    <div id="body-error-msg" style="display:none; color:#ef4444; font-size:0.82rem; font-weight:700; margin-top:5px;">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i><span id="body-error-text"></span>
+                    </div>
                 </div>
 
                 <div class="attach-zone" id="attach-zone">
@@ -1825,12 +1831,51 @@ if ($blockNewIfSignaturePending) {
                 try { updateTopicHintFromSelect(); } catch (e) {}
                 try {
                     var inpsubject = document.getElementById('subject');
+                    var counter = document.getElementById('subject-char-counter');
+                    var SUBJECT_MAX = 80;
+                    var SUBJECT_WARN = 60;
                     if (inpsubject) {
+                        // Inicializar contador con valor actual (si venía del servidor)
+                        if (counter) {
+                            var initLen = inpsubject.value.length;
+                            counter.textContent = initLen + ' / ' + SUBJECT_MAX;
+                            if (initLen >= SUBJECT_MAX) {
+                                counter.style.color = '#ef4444';
+                                counter.style.fontWeight = '900';
+                            } else if (initLen >= SUBJECT_WARN) {
+                                counter.style.color = '#f59e0b';
+                                counter.style.fontWeight = '800';
+                            } else {
+                                counter.style.color = '#94a3b8';
+                                counter.style.fontWeight = '700';
+                            }
+                        }
+                        var _subjectLimitWarned = false;
                         inpsubject.addEventListener('input', function () {
-                            if (this.value.length > 250) {
-                                this.setCustomValidity('El asunto no puede superar los 250 caracteres.');
+                            var len = this.value.length;
+                            if (counter) {
+                                counter.textContent = len + ' / ' + SUBJECT_MAX;
+                                if (len >= SUBJECT_MAX) {
+                                    counter.style.color = '#ef4444';
+                                    counter.style.fontWeight = '900';
+                                } else if (len >= SUBJECT_WARN) {
+                                    counter.style.color = '#f59e0b';
+                                    counter.style.fontWeight = '800';
+                                } else {
+                                    counter.style.color = '#94a3b8';
+                                    counter.style.fontWeight = '700';
+                                    _subjectLimitWarned = false;
+                                }
+                            }
+                            if (len >= SUBJECT_MAX) {
+                                this.setCustomValidity('El asunto no puede superar los ' + SUBJECT_MAX + ' caracteres. Sé más conciso.');
+                                if (!_subjectLimitWarned) {
+                                    _subjectLimitWarned = true;
+                                    try { this.reportValidity(); } catch(e) {}
+                                }
                             } else {
                                 this.setCustomValidity('');
+                                _subjectLimitWarned = false;
                             }
                         });
                     }
@@ -2147,63 +2192,54 @@ if ($blockNewIfSignaturePending) {
                 return (tmp.textContent || tmp.innerText || '').replace(/\u00A0/g, ' ').trim();
             };
 
+            // Muestra el tooltip nativo del navegador en un elemento visible
+            function _showNativeTip(el, msg) {
+                try {
+                    el.setCustomValidity(msg);
+                    el.classList.add('is-invalid');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(function () {
+                        try { el.focus(); el.reportValidity(); } catch (e) {}
+                    }, 220);
+                } catch (e) {}
+            }
+
             var validateAttachmentsNeedText = function (ev) {
-                document.getElementById('subject') && document.getElementById('subject').classList.remove('is-invalid');
-                document.getElementById('topic_id') && document.getElementById('topic_id').classList.remove('is-invalid');
-                document.getElementById('anydesk') && document.getElementById('anydesk').classList.remove('is-invalid');
-                document.getElementById('body') && document.getElementById('body').classList.remove('is-invalid');
+                // Limpiar estados previos
+                ['subject','topic_id','anydesk','body'].forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) { el.classList.remove('is-invalid'); try { el.setCustomValidity(''); } catch(ex) {} }
+                });
+                var bodyErr = document.getElementById('body-error-msg');
+                var bodyErrTxt = document.getElementById('body-error-text');
+                if (bodyErr) bodyErr.style.display = 'none';
+                var noteEditor = document.querySelector('.note-editor');
+                if (noteEditor) noteEditor.classList.remove('is-invalid');
 
                 try {
                     var inpsubject = document.getElementById('subject');
                     if (inpsubject && String(inpsubject.value || '').trim() === '') {
-                        inpsubject.classList.add('is-invalid');
                         if (ev && ev.preventDefault) ev.preventDefault();
-                        if (ev && ev.stopPropagation) ev.stopPropagation();
-                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-                        if (window.__showCreativePop) {
-                            window.__showCreativePop('El asunto es obligatorio.', 'Falta Asunto');
-                        } else {
-                            alert('El asunto es obligatorio.');
-                        }
-                        try { inpsubject.focus(); } catch(e) {}
+                        _showNativeTip(inpsubject, 'El asunto es obligatorio.');
                         return false;
                     }
 
-                    if (inpsubject && String(inpsubject.value || '').length > 250) {
-                        inpsubject.classList.add('is-invalid');
-                        inpsubject.setCustomValidity('El asunto no puede superar los 250 caracteres.');
-                        inpsubject.reportValidity();
+                    if (inpsubject && String(inpsubject.value || '').length > 80) {
                         if (ev && ev.preventDefault) ev.preventDefault();
-                        if (ev && ev.stopPropagation) ev.stopPropagation();
-                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+                        _showNativeTip(inpsubject, 'El asunto no puede superar los 80 caracteres.');
                         return false;
-                    } else if (inpsubject) {
-                        inpsubject.setCustomValidity('');
                     }
 
                     if (topicSelect && String(topicSelect.value || '').trim() === '') {
-                        topicSelect.classList.add('is-invalid');
                         if (ev && ev.preventDefault) ev.preventDefault();
-                        if (ev && ev.stopPropagation) ev.stopPropagation();
-                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-                        if (window.__showCreativePop) {
-                            window.__showCreativePop('Debes seleccionar un tema para poder crear el ticket.', 'Tema requerido');
-                        } else {
-                            alert('Debes seleccionar un tema para poder crear el ticket.');
-                        }
-                        try { topicSelect.focus(); } catch (e0) {}
+                        _showNativeTip(topicSelect, 'Debes seleccionar un tema para poder crear el ticket.');
                         return false;
                     }
 
                     if (!hasUserPhone) {
                         if (ev && ev.preventDefault) ev.preventDefault();
-                        if (ev && ev.stopPropagation) ev.stopPropagation();
-                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-                        if (window.__showCreativePop) {
-                            window.__showCreativePop('Debes registrar tu teléfono en tu perfil antes de crear un ticket.', 'Teléfono no registrado');
-                        } else {
-                            alert('Debes registrar tu teléfono en tu perfil antes de crear un ticket.');
-                        }
+                        var telEl = document.getElementById('telefono_display');
+                        if (telEl) _showNativeTip(telEl, 'Debes registrar tu teléfono en tu perfil antes de crear un ticket.');
                         return false;
                     }
 
@@ -2211,18 +2247,8 @@ if ($blockNewIfSignaturePending) {
                     if (needsNetworkFields) {
                         var anydeskValue = anydeskInput ? String(anydeskInput.value || '').trim() : '';
                         if (anydeskValue === '') {
-                            if (anydeskInput) anydeskInput.classList.add('is-invalid');
                             if (ev && ev.preventDefault) ev.preventDefault();
-                            if (ev && ev.stopPropagation) ev.stopPropagation();
-                            if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-                            if (window.__showCreativePop) {
-                                window.__showCreativePop('Para el tema Redes Informática debes completar Anydesk.', 'Campo obligatorio');
-                            } else {
-                                alert('Para el tema Redes Informática debes completar Anydesk.');
-                            }
-                            try {
-                                if (anydeskInput) anydeskInput.focus();
-                            } catch (e5) {}
+                            if (anydeskInput) _showNativeTip(anydeskInput, 'Para el tema Redes Informática debes completar el campo Anydesk.');
                             return false;
                         }
                     }
@@ -2241,32 +2267,18 @@ if ($blockNewIfSignaturePending) {
                     var plain = getPlainTextFromHtml(html);
                     var hasMedia = html.indexOf('<img') !== -1 || html.indexOf('<iframe') !== -1;
                     if (!hasMedia && plain === '') {
-                        if (editor) editor.classList.add('is-invalid');
                         if (ev && ev.preventDefault) ev.preventDefault();
-                        if (ev && ev.stopPropagation) ev.stopPropagation();
-                        if (ev && ev.stopImmediatePropagation) ev.stopImmediatePropagation();
-                        if (window.__showCreativePop) {
-                            window.__showCreativePop(hasFiles
-                                ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
-                                : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.',
-                                'Falta una descripción'
-                            );
-                            try {
-                                var o = document.getElementById('creativePop');
-                                if (!o || o.style.display !== 'flex') {
-                                    alert(hasFiles
-                                        ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
-                                        : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.'
-                                    );
-                                }
-                            } catch (e3) {}
-                        } else {
-                            alert(hasFiles
-                                ? 'Adjuntaste un archivo, pero la descripción está vacía. Escribe una breve descripción para poder enviarlo.'
-                                : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.'
-                            );
+                        if (editor) editor.classList.add('is-invalid');
+                        if (noteEditor) noteEditor.classList.add('is-invalid');
+                        var errMsg = hasFiles
+                            ? 'Adjuntaste un archivo pero la descripción está vacía. Escribe una breve descripción.'
+                            : 'La descripción es obligatoria. Escribe un mensaje para poder crear el ticket.';
+                        if (bodyErrTxt) bodyErrTxt.textContent = errMsg;
+                        if (bodyErr) {
+                            bodyErr.style.display = '';
+                            // Scroll al mensaje de error de descripción
+                            bodyErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
-                        setTimeout(focusEditor, 50);
                         return false;
                     }
                 } catch (e2) {}
