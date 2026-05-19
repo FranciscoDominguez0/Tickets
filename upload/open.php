@@ -1702,8 +1702,9 @@ if ($blockNewIfSignaturePending) {
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
                     <input type="text" class="form-control <?php echo !empty($errorFields['subject']) ? 'is-invalid' : ''; ?>" id="subject" name="subject" value="<?php echo html($subject ?? ''); ?>" placeholder="Escribe un título breve y descriptivo" maxlength="80" required>
-                    <div class="d-flex justify-content-end mt-1">
-                        <span id="subject-char-counter" style="font-size:0.8rem; font-weight:700; color:#94a3b8; transition: color 0.2s;">0 / 80</span>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span id="subject-field-error" class="field-inline-error" style="display:none; color:#ef4444; font-size:0.82rem; font-weight:700;"><i class="bi bi-exclamation-circle-fill me-1"></i><span class="field-inline-error-text"></span></span>
+                        <span id="subject-char-counter" style="font-size:0.8rem; font-weight:700; color:#94a3b8; transition: color 0.2s; margin-left:auto;">0 / 80</span>
                     </div>
                 </div>
 
@@ -1720,6 +1721,7 @@ if ($blockNewIfSignaturePending) {
                             <option value="<?php echo $topic['id']; ?>" data-dept="<?php echo $topic['dept_id']; ?>" data-description="<?php echo $topicDescAttr; ?>"<?php echo $topicDesc !== '' ? ' title="' . $topicDescAttr . '"' : ''; ?> <?php echo ((int)($topic['id'] ?? 0) === (int)($topic_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($topic['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <div id="topic_id-field-error" class="field-inline-error" style="display:none; color:#ef4444; font-size:0.82rem; font-weight:700; margin-top:5px;"><i class="bi bi-exclamation-circle-fill me-1"></i><span class="field-inline-error-text"></span></div>
                     <p class="form-text text-muted small mb-0 mt-1" id="topic_description_hint" style="display:none;" role="status" aria-live="polite"></p>
                 </div>
                 <?php else: ?>
@@ -1730,6 +1732,7 @@ if ($blockNewIfSignaturePending) {
                             <option value="<?php echo $dept['id']; ?>" <?php echo ((int)($dept['id'] ?? 0) === (int)($dept_id ?? 0)) ? 'selected' : ''; ?>><?php echo html($dept['name']); ?></option>
                         <?php endforeach; ?>
                     </select>
+                    <div id="dept_id-field-error" class="field-inline-error" style="display:none; color:#ef4444; font-size:0.82rem; font-weight:700; margin-top:5px;"><i class="bi bi-exclamation-circle-fill me-1"></i><span class="field-inline-error-text"></span></div>
                 </div>
                 <?php endif; ?>
 
@@ -1746,6 +1749,7 @@ if ($blockNewIfSignaturePending) {
                     <div id="network-extra-fields" class="contact-field anydesk-field">
                         <label for="anydesk" class="form-label">Anydesk</label>
                         <input type="text" class="form-control <?php echo !empty($errorFields['anydesk']) ? 'is-invalid' : ''; ?>" id="anydesk" name="anydesk" value="<?php echo html($anydesk ?? ''); ?>" placeholder="Ej: 123 456 789" autocomplete="off" disabled>
+                        <div id="anydesk-field-error" class="field-inline-error" style="display:none; color:#ef4444; font-size:0.82rem; font-weight:700; margin-top:5px;"><i class="bi bi-exclamation-circle-fill me-1"></i><span class="field-inline-error-text"></span></div>
                     </div>
                 </div>
 
@@ -1877,9 +1881,61 @@ if ($blockNewIfSignaturePending) {
                                 this.setCustomValidity('');
                                 _subjectLimitWarned = false;
                             }
+                            // Limpiar error inline cuando el asunto tiene contenido válido
+                            if (len > 0 && len <= SUBJECT_MAX) {
+                                this.classList.remove('is-invalid');
+                                var errDiv = document.getElementById('subject-field-error');
+                                if (errDiv) errDiv.style.display = 'none';
+                            }
                         });
                     }
                 } catch (e) {}
+
+                // Limpiar error inline de cualquier campo al interactuar con él
+                function _clearFieldError(el) {
+                    if (!el) return;
+                    el.classList.remove('is-invalid');
+                    try { el.setCustomValidity(''); } catch(ex) {}
+                    var errDiv = document.getElementById(el.id + '-field-error');
+                    if (errDiv) errDiv.style.display = 'none';
+                }
+
+                try {
+                    // Topic select
+                    var _topicSel = document.getElementById('topic_id');
+                    if (_topicSel) {
+                        _topicSel.addEventListener('change', function () {
+                            if (this.value) _clearFieldError(this);
+                        });
+                    }
+                    // Dept select
+                    var _deptSel = document.getElementById('dept_id');
+                    if (_deptSel) {
+                        _deptSel.addEventListener('change', function () {
+                            if (this.value) _clearFieldError(this);
+                        });
+                    }
+                    // Anydesk
+                    var _anydeskInp = document.getElementById('anydesk');
+                    if (_anydeskInp) {
+                        _anydeskInp.addEventListener('input', function () {
+                            if (this.value.trim()) _clearFieldError(this);
+                        });
+                    }
+                    // Body (Summernote) — limpiar al escribir en el editor
+                    try {
+                        var _bodyEl = document.getElementById('body');
+                        if (typeof jQuery !== 'undefined' && _bodyEl && jQuery(_bodyEl).summernote) {
+                            jQuery(_bodyEl).on('summernote.change', function () {
+                                var bodyErr = document.getElementById('body-error-msg');
+                                if (bodyErr) bodyErr.style.display = 'none';
+                                var noteEd = document.querySelector('.note-editor');
+                                if (noteEd) noteEd.classList.remove('is-invalid');
+                                if (_bodyEl) _bodyEl.classList.remove('is-invalid');
+                            });
+                        }
+                    } catch(ej) {}
+                } catch(e) {}
             });
             
         (function () {
@@ -2192,23 +2248,50 @@ if ($blockNewIfSignaturePending) {
                 return (tmp.textContent || tmp.innerText || '').replace(/\u00A0/g, ' ').trim();
             };
 
-            // Muestra el tooltip nativo del navegador en un elemento visible
+            // Scroll robusto al elemento con offset para header fijo (funciona en m\u00f3vil)
+            function _scrollToEl(el) {
+                try {
+                    var headerH = 16;
+                    var fixedEl = document.querySelector('.client-header, header.sticky-top, .navbar.fixed-top, nav');
+                    if (fixedEl && getComputedStyle(fixedEl).position === 'fixed') {
+                        headerH += fixedEl.offsetHeight;
+                    }
+                    var rect = el.getBoundingClientRect();
+                    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    window.scrollTo({ top: scrollTop + rect.top - headerH, behavior: 'auto' });
+                } catch (e) {
+                    try { el.scrollIntoView(); } catch(e2) {}
+                }
+            }
+
+            // Muestra error inline + tooltip nativo del navegador en el campo
             function _showNativeTip(el, msg) {
                 try {
                     el.setCustomValidity(msg);
                     el.classList.add('is-invalid');
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Mensaje inline bajo el campo (funciona en m\u00f3vil siempre)
+                    var inlineErr = document.getElementById(el.id + '-field-error');
+                    if (inlineErr) {
+                        var txt = inlineErr.querySelector('.field-inline-error-text');
+                        if (txt) txt.textContent = msg;
+                        inlineErr.style.display = '';
+                    }
+                    // Scroll inmediato al campo
+                    _scrollToEl(el);
+                    // Tooltip nativo (bonus en desktop, puede no aparecer en m\u00f3vil)
                     setTimeout(function () {
                         try { el.focus(); el.reportValidity(); } catch (e) {}
-                    }, 220);
+                    }, 80);
                 } catch (e) {}
             }
 
             var validateAttachmentsNeedText = function (ev) {
-                // Limpiar estados previos
-                ['subject','topic_id','anydesk','body'].forEach(function(id) {
+                // Limpiar estados previos de todos los campos
+                ['subject','topic_id','dept_id','anydesk','body'].forEach(function(id) {
                     var el = document.getElementById(id);
                     if (el) { el.classList.remove('is-invalid'); try { el.setCustomValidity(''); } catch(ex) {} }
+                    var errDiv = document.getElementById(id + '-field-error');
+                    if (errDiv) errDiv.style.display = 'none';
                 });
                 var bodyErr = document.getElementById('body-error-msg');
                 var bodyErrTxt = document.getElementById('body-error-text');
