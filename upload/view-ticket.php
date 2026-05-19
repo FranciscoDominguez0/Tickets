@@ -1478,13 +1478,57 @@ function humanSize($bytes) {
                     <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
                     <span class="d-none d-sm-inline"><?php echo html($navUserName); ?></span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="tickets.php"><i class="bi bi-inboxes"></i> Mis Tickets</a></li>
-                    <li><a class="dropdown-item" href="open.php"><i class="bi bi-plus-circle"></i> Crear Ticket</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i> Mi perfil</a></li>
-                    <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
-                </ul>
+                    <style>
+                        .profile-dropdown {
+                            width: 230px; border-radius: 16px; border: 1px solid rgba(226,232,240,0.95); box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12); padding: 8px; background: #fff;
+                        }
+                        .profile-dd-item {
+                            border-radius: 10px; padding: 8px 12px; font-weight: 600; color: #334155; margin-bottom: 2px; transition: all .15s ease;
+                        }
+                        .profile-dd-item:hover { background: #f8fafc; color: #0f172a; }
+                        .profile-dd-icon {
+                            width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.1rem;
+                        }
+                        .profile-dd-icon-default { background: #f1f5f9; color: #64748b; }
+                        .profile-dd-icon-success { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+                        .profile-dd-danger { color: #ef4444; }
+                        .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+                        .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+                        .profile-dd-divider { border-color: #f1f5f9; opacity: 1; margin: 8px 0; }
+                        
+                        body.dark-mode .profile-dropdown { background: #1a1a1a; border-color: #2a2a2a; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
+                        body.dark-mode .profile-dd-item { color: #cbd5e1; }
+                        body.dark-mode .profile-dd-item:hover { background: #252525; color: #f8fafc; }
+                        body.dark-mode .profile-dd-icon-default { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
+                        body.dark-mode .profile-dd-icon-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+                        body.dark-mode .profile-dd-danger { color: #ef4444; }
+                        body.dark-mode .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                        body.dark-mode .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.15); }
+                        body.dark-mode .profile-dd-divider { border-color: #2a2a2a; }
+                    </style>
+                    <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-inboxes"></i></div> Mis Tickets
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php" <?php if (!empty($sigBlockPortal)): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>>
+                                <div class="profile-dd-icon profile-dd-icon-success"><i class="bi bi-plus-circle"></i></div> Crear Ticket
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider profile-dd-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="profile.php">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-person"></i></div> Mi perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
+                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
             </div>
         </div>
     </div>

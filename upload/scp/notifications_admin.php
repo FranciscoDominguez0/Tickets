@@ -254,7 +254,7 @@ ob_start();
                                                 if (!isset($selectedRecipientIds[$sid])) continue;
                                                 $fn = trim(trim((string)($cand['firstname'] ?? '')) . ' ' . trim((string)($cand['lastname'] ?? ''))) ?: 'Sin nombre';
                                             ?>
-                                            <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:600;">
+                                            <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:600;">
                                                 <span style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;"><?php echo strtoupper(mb_substr($fn,0,1)); ?></span>
                                                 <?php echo html($fn); ?>
                                             </span>
@@ -262,7 +262,7 @@ ob_start();
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm" style="border-radius:10px;white-space:nowrap;" data-bs-toggle="modal" data-bs-target="#recipientsModal">
+                                <button type="button" class="btn btn-outline-danger btn-sm" style="border-radius:10px;white-space:nowrap;" data-bs-toggle="modal" data-bs-target="#recipientsModal">
                                     <i class="bi bi-person-check me-1"></i>Gestionar
                                 </button>
                             </div>
@@ -287,7 +287,7 @@ ob_start();
                         <div class="modal-content" style="border-radius:18px;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:visible;">
                             <div class="modal-header" style="border-bottom:1px solid #e2e8f0;padding:18px 22px 14px;">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div style="background:linear-gradient(135deg,#3b82f6,#6366f1);width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                                    <div style="background:linear-gradient(135deg,#ef4444,#dc2626);width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;">
                                         <i class="bi bi-people-fill" style="color:#fff;font-size:1rem;"></i>
                                     </div>
                                     <div>
@@ -308,7 +308,7 @@ ob_start();
                                         $isSel = isset($selectedRecipientIds[$sid]);
                                     ?>
                                     <span class="modal-chip" data-id="<?php echo $sid; ?>"
-                                          style="display:<?php echo $isSel ? 'inline-flex' : 'none'; ?>;align-items:center;gap:5px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;padding:4px 8px 4px 6px;border-radius:20px;font-size:0.75rem;font-weight:600;cursor:default;user-select:none;">
+                                          style="display:<?php echo $isSel ? 'inline-flex' : 'none'; ?>;align-items:center;gap:5px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:4px 8px 4px 6px;border-radius:20px;font-size:0.75rem;font-weight:600;cursor:default;user-select:none;">
                                         <span style="width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:800;"><?php echo strtoupper(mb_substr($fn,0,1)); ?></span>
                                         <?php echo html($fn); ?>
                                         <button type="button" class="modal-chip-remove" data-id="<?php echo $sid; ?>" aria-label="Quitar"
@@ -325,7 +325,7 @@ ob_start();
                                     <input type="text" id="modalSearchInput" autocomplete="off"
                                            placeholder="Buscar por nombre o correo..."
                                            style="width:100%;padding:8px 12px 8px 32px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;font-size:0.83rem;outline:none;transition:border-color .15s;"
-                                           onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
+                                           onfocus="this.style.borderColor='#ef4444'" onblur="this.style.borderColor='#e2e8f0'">
                                     <div id="modalDropdown"
                                          style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:1060;max-height:240px;overflow-y:auto;">
                                         <?php foreach ($notificationCandidates as $cand):
@@ -339,14 +339,14 @@ ob_start();
                                              data-email="<?php echo strtolower(html($email)); ?>"
                                              style="display:<?php echo $isSel ? 'none' : 'flex'; ?>;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid #f1f5f9;transition:background .1s;"
                                              onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
-                                            <div style="flex-shrink:0;width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.78rem;">
+                                            <div style="flex-shrink:0;width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#ef4444,#dc2626);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.78rem;">
                                                 <?php echo strtoupper(mb_substr($fn,0,1)); ?>
                                             </div>
                                             <div style="min-width:0;flex:1;">
                                                 <div style="font-weight:600;font-size:0.83rem;color:#1e293b;"><?php echo html($fn); ?></div>
                                                 <div style="font-size:0.71rem;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?php echo html($email); ?></div>
                                             </div>
-                                            <i class="bi bi-plus-circle" style="color:#3b82f6;flex-shrink:0;font-size:1rem;"></i>
+                                            <i class="bi bi-plus-circle" style="color:#ef4444;flex-shrink:0;font-size:1rem;"></i>
                                         </div>
                                         <?php endforeach; ?>
                                         <div id="modalNoResults" style="display:none;padding:14px;text-align:center;color:#94a3b8;font-size:0.8rem;">
@@ -357,7 +357,7 @@ ob_start();
                             </div>
                             <div class="modal-footer" style="border-top:1px solid #e2e8f0;padding:14px 22px;gap:8px;">
                                 <button type="button" class="btn btn-light" id="modalCancelBtn" style="border-radius:10px;font-weight:600;">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="modalSaveBtn" style="border-radius:10px;font-weight:600;padding:8px 22px;">
+                                <button type="button" class="btn btn-danger" id="modalSaveBtn" style="border-radius:10px;font-weight:600;padding:8px 22px;">
                                     <i class="bi bi-check-circle me-1"></i>Confirmar
                                 </button>
                             </div>
@@ -433,7 +433,7 @@ ob_start();
             var label='';
             c.childNodes.forEach(function(n){if(n.nodeType===3)label+=n.textContent;});
             label=label.trim();
-            frags.push('<span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:600;">'
+            frags.push('<span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:600;">'
                 +'<span style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.25);display:inline-flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:800;">'+init+'</span>'
                 +label+'</span>');
         });
@@ -527,7 +527,7 @@ ob_start();
                                             <div style="padding: 16px; background: #ffffff;">
                                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                                     <div class="d-flex align-items-center gap-3">
-                                                        <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
+                                                        <div style="background: rgba(239,68,68,0.1); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
                                                             <?php echo strtoupper(substr($a['name'] !== '' ? $a['name'] : 'U', 0, 1)); ?>
                                                         </div>
                                                         <div style="line-height: 1.2;">
@@ -553,7 +553,7 @@ ob_start();
                                                     
                                                     <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px dashed #cbd5e1;">
                                                         <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
-                                                            <i class="bi bi-ticket-detailed me-2" style="color: #2563eb;"></i>Nuevos Tickets
+                                                            <i class="bi bi-ticket-detailed me-2" style="color: #ef4444;"></i>Nuevos Tickets
                                                         </div>
                                                         <div class="form-check form-switch m-0" style="padding-left: 0;">
                                                             <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
@@ -575,7 +575,7 @@ ob_start();
                                         <!-- VISTA ESCRITORIO (Premium) -->
                                         <td class="d-none d-md-table-cell align-middle" style="padding: 16px;">
                                             <div class="d-flex align-items-center gap-3">
-                                                <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex-shrink: 0;">
+                                                <div style="background: rgba(239,68,68,0.1); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; flex-shrink: 0;">
                                                     <?php echo strtoupper(substr($a['name'] !== '' ? $a['name'] : 'U', 0, 1)); ?>
                                                 </div>
                                                 <div style="line-height: 1.2;">
@@ -610,7 +610,7 @@ ob_start();
             </div>
 
             <div class="d-flex justify-content-end mt-3">
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-check-circle"></i> Guardar</button>
             </div>
         </form>
     </div>
@@ -637,6 +637,11 @@ ob_start();
         border: none !important;
         padding: 0 !important;
     }
+}
+/* Forzar switch en rojo en vez de azul */
+.form-check-input:checked {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
 }
 </style>
 

@@ -214,110 +214,253 @@ ob_start();
     </script>
 <?php endif; ?>
 
+<style>
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+body.dark-mode .form-section-title {
+    color: #e2e8f0;
+    border-bottom-color: #334155;
+}
+.form-section-title i {
+    color: #ef4444;
+}
+.modern-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 6px;
+}
+body.dark-mode .modern-label {
+    color: #94a3b8;
+}
+.modern-input {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+.modern-input:focus {
+    background-color: #fff;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    outline: none;
+}
+body.dark-mode .modern-input {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
+}
+body.dark-mode .modern-input:focus {
+    background-color: #0f172a;
+    border-color: #ef4444;
+}
+.modern-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+body.dark-mode .modern-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23eeeeee' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Toggle Switch */
+.toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+.modern-switch {
+    width: 46px;
+    height: 24px;
+    background-color: #cbd5e1;
+    border-radius: 12px;
+    position: relative;
+    transition: background-color 0.3s;
+    flex-shrink: 0;
+}
+.modern-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+input[type="checkbox"]:checked + .modern-switch {
+    background-color: #ef4444;
+}
+input[type="checkbox"]:checked + .modern-switch::after {
+    transform: translateX(22px);
+}
+body.dark-mode .modern-switch {
+    background-color: #475569;
+}
+
+.info-card {
+    background: linear-gradient(145deg, #fef2f2 0%, #f8fafc 100%);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 16px;
+    color: #7f1d1d;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+.info-card i {
+    font-size: 1.5rem;
+    color: #ef4444;
+}
+body.dark-mode .info-card {
+    background: linear-gradient(145deg, #450a0a 0%, #2a0a0a 100%);
+    border-color: #7f1d1d;
+    color: #fee2e2;
+}
+body.dark-mode .info-card i {
+    color: #f87171;
+}
+
+.settings-panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid #f1f5f9;
+    padding: 30px;
+}
+body.dark-mode .settings-panel {
+    background: #1e1e1e;
+    border-color: #2a2a2a;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+</style>
+
 <div class="row">
     <div class="col-12">
-        <div class="card settings-card" id="account">
-            <div class="card-header">
-                <strong><i class="bi bi-gear"></i> Configuración</strong>
-            </div>
-            <div class="card-body">
-                <form method="post" action="email.php?id=<?php echo (int)$id; ?>#account">
-                    <?php csrfField(); ?>
+        <div class="settings-panel" id="account">
+            <form method="post" action="email.php?id=<?php echo (int)$id; ?>#account">
+                <?php csrfField(); ?>
 
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" value="<?php echo html((string)$emailAccount['email']); ?>" required>
+                <!-- Sección: Información Básica -->
+                <h3 class="form-section-title">
+                    <i class="bi bi-person-badge"></i> Información Básica
+                </h3>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="modern-label">Correo Electrónico</label>
+                        <input type="email" class="form-control modern-input" name="email" value="<?php echo html((string)$emailAccount['email']); ?>" required placeholder="ejemplo@empresa.com">
                     </div>
+                    <div class="col-md-6">
+                        <label class="modern-label">Nombre del Remitente (Opcional)</label>
+                        <input type="text" class="form-control modern-input" name="name" value="<?php echo html((string)($emailAccount['name'] ?? '')); ?>" placeholder="Ej: Soporte Técnico">
+                    </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Nombre (opcional)</label>
-                        <input type="text" class="form-control" name="name" value="<?php echo html((string)($emailAccount['name'] ?? '')); ?>">
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="modern-label">Prioridad de Envío</label>
+                        <?php $p = (string)($emailAccount['priority'] ?? 'Normal'); ?>
+                        <select class="form-select modern-input modern-select" name="priority">
+                            <option value="Normal" <?php echo $p === 'Normal' ? 'selected' : ''; ?>>Normal</option>
+                            <option value="Alta" <?php echo $p === 'Alta' ? 'selected' : ''; ?>>Alta</option>
+                            <option value="Baja" <?php echo $p === 'Baja' ? 'selected' : ''; ?>>Baja</option>
+                        </select>
                     </div>
+                    <div class="col-md-6">
+                        <label class="modern-label">Asignar a Departamento</label>
+                        <select class="form-select modern-input modern-select" name="dept_id">
+                            <option value="">— Sin Asignar —</option>
+                            <?php foreach ($departments as $d): ?>
+                                <option value="<?php echo (int)$d['id']; ?>" <?php echo ((int)($emailAccount['dept_id'] ?? 0) === (int)$d['id']) ? 'selected' : ''; ?>>
+                                    <?php echo html((string)$d['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Prioridad</label>
-                                <?php $p = (string)($emailAccount['priority'] ?? 'Normal'); ?>
-                                <select class="form-select" name="priority">
-                                    <option value="Normal" <?php echo $p === 'Normal' ? 'selected' : ''; ?>>Normal</option>
-                                    <option value="Alta" <?php echo $p === 'Alta' ? 'selected' : ''; ?>>Alta</option>
-                                    <option value="Baja" <?php echo $p === 'Baja' ? 'selected' : ''; ?>>Baja</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Departamento</label>
-                                <select class="form-select" name="dept_id">
-                                    <option value="">Seleccionar</option>
-                                    <?php foreach ($departments as $d): ?>
-                                        <option value="<?php echo (int)$d['id']; ?>" <?php echo ((int)($emailAccount['dept_id'] ?? 0) === (int)$d['id']) ? 'selected' : ''; ?>>
-                                            <?php echo html((string)$d['name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Sección: Configuración SMTP -->
+                <h3 class="form-section-title mt-5">
+                    <i class="bi bi-server"></i> Configuración de Servidor (SMTP)
+                </h3>
 
-                    <hr>
+                <div class="info-card mb-4">
+                    <i class="bi bi-lightbulb"></i>
+                    <div>
+                        <div class="fw-bold mb-1">Guía Rápida de Configuración</div>
+                        <div class="small mb-1"><strong>Gmail:</strong> Servidor <code>smtp.gmail.com</code> | Puerto <code>587</code> | Seguridad <code>TLS</code></div>
+                        <div class="small"><strong>Outlook/Hotmail:</strong> Servidor <code>smtp-mail.outlook.com</code> | Puerto <code>587</code> | Seguridad <code>TLS</code></div>
+                    </div>
+                </div>
 
-                    <div class="alert alert-info py-2">
-                        <div class="fw-semibold mb-1">Ejemplos SMTP</div>
-                        <div class="small">
-                            Gmail: <span class="text-monospace">smtp.gmail.com</span> puerto <span class="text-monospace">587</span> seguridad <span class="text-monospace">tls</span> (o <span class="text-monospace">465</span> con <span class="text-monospace">ssl</span>)
-                        </div>
-                        <div class="small">
-                            Outlook/Hotmail: <span class="text-monospace">smtp-mail.outlook.com</span> puerto <span class="text-monospace">587</span> seguridad <span class="text-monospace">tls</span>
-                        </div>
+                <div class="row mb-4">
+                    <div class="col-md-12 mb-3">
+                        <label class="modern-label">Servidor SMTP (Host)</label>
+                        <input type="text" class="form-control modern-input" name="smtp_host" value="<?php echo html((string)($emailAccount['smtp_host'] ?? '')); ?>" placeholder="Ej: smtp.gmail.com">
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">SMTP Host</label>
-                        <input type="text" class="form-control" name="smtp_host" value="<?php echo html((string)($emailAccount['smtp_host'] ?? '')); ?>" placeholder="smtp.gmail.com">
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="modern-label">Puerto</label>
+                        <input type="number" class="form-control modern-input" name="smtp_port" value="<?php echo html((string)($emailAccount['smtp_port'] ?? '')); ?>" placeholder="587">
                     </div>
+                    <div class="col-md-8">
+                        <label class="modern-label">Tipo de Seguridad</label>
+                        <?php $sec = strtolower((string)($emailAccount['smtp_secure'] ?? '')); ?>
+                        <select class="form-select modern-input modern-select" name="smtp_secure">
+                            <option value="" <?php echo $sec === '' ? 'selected' : ''; ?>>Sin Encriptación</option>
+                            <option value="ssl" <?php echo $sec === 'ssl' ? 'selected' : ''; ?>>SSL (Estricto)</option>
+                            <option value="tls" <?php echo $sec === 'tls' ? 'selected' : ''; ?>>TLS (Recomendado)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="modern-label">Usuario SMTP</label>
+                        <input type="text" class="form-control modern-input" name="smtp_user" value="<?php echo html((string)($emailAccount['smtp_user'] ?? '')); ?>" placeholder="ejemplo@empresa.com">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="modern-label">Contraseña de Aplicación</label>
+                        <input type="password" class="form-control modern-input" name="smtp_pass" value="" placeholder="••••••••••••">
+                    </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Puerto</label>
-                                <input type="number" class="form-control" name="smtp_port" value="<?php echo html((string)($emailAccount['smtp_port'] ?? '')); ?>" placeholder="587">
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label class="form-label">Seguridad</label>
-                                <?php $sec = strtolower((string)($emailAccount['smtp_secure'] ?? '')); ?>
-                                <select class="form-select" name="smtp_secure">
-                                    <option value="" <?php echo $sec === '' ? 'selected' : ''; ?>>Ninguna</option>
-                                    <option value="ssl" <?php echo $sec === 'ssl' ? 'selected' : ''; ?>>SSL</option>
-                                    <option value="tls" <?php echo $sec === 'tls' ? 'selected' : ''; ?>>TLS (STARTTLS)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                <div class="mb-4 mt-2">
+                    <label class="toggle-wrapper" for="keep_pass">
+                        <input type="checkbox" name="keep_pass" id="keep_pass" class="d-none" checked>
+                        <div class="modern-switch"></div>
+                        <span class="text-muted small fw-medium">Mantener la contraseña actual si el campo se deja vacío</span>
+                    </label>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Usuario SMTP</label>
-                        <input type="text" class="form-control" name="smtp_user" value="<?php echo html((string)($emailAccount['smtp_user'] ?? '')); ?>" placeholder="tuemail@gmail.com">
-                    </div>
+                <hr style="border-color: #e2e8f0; margin: 30px 0;">
 
-                    <div class="mb-2">
-                        <label class="form-label">Contraseña de aplicación</label>
-                        <input type="password" class="form-control" name="smtp_pass" value="" placeholder="(dejar vacío para mantener)">
-                    </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="keep_pass" id="keep_pass" checked>
-                        <label class="form-check-label" for="keep_pass">Mantener contraseña actual si el campo está vacío</label>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <a class="btn btn-outline-secondary" href="emails.php">Cerrar</a>
-                        <button type="submit" class="btn btn-primary" id="btn-email-save"><i class="bi bi-check-circle"></i> Guardar</button>
-                    </div>
-                </form>
-            </div>
+                <div class="d-flex justify-content-end gap-3">
+                    <a class="btn btn-light px-4 py-2" style="border-radius: 8px; font-weight: 500;" href="emails.php">Cancelar</a>
+                    <button type="submit" class="btn btn-primary px-4 py-2" style="border-radius: 8px; font-weight: 600;" id="btn-email-save">
+                        <i class="bi bi-check-circle me-1"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
