@@ -1084,10 +1084,12 @@ body.dark-mode .scp-notif-footer {
     background: #111 !important;
 }
 body.dark-mode .scp-notif-btn-all {
-    color: #666 !important;
+    background: #1e1e1e !important;
+    color: #aaa !important;
 }
 body.dark-mode .scp-notif-btn-all:not(:disabled):hover {
-    color: #bbb !important;
+    background: #2a2a2a !important;
+    color: #eee !important;
 }
 
 /* === INPUT DATE RANGE === */

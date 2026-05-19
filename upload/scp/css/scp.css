@@ -1831,6 +1831,21 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     color: #4f46e5;
 }
 
+.scp-notif-icon.success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+}
+
+.scp-notif-icon.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+
+.scp-notif-icon.info {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+}
+
 .scp-notif-body {
     min-width: 0;
 }

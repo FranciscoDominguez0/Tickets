@@ -76,9 +76,18 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         .scp-custom-notif.active { right: 20px; }
         .scp-custom-notif .n-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
         .scp-custom-notif .n-title { font-weight: 700; font-size: 0.9rem; color: #60a5fa; display: flex; align-items: center; gap: 8px; }
-        .scp-custom-notif .n-msg { font-size: 1rem; font-weight: 500; line-height: 1.4; }
-        .scp-custom-notif .n-btn { background: #3b82f6; color: white; text-decoration: none; padding: 8px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
-        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white; }
+        .scp-custom-notif.success .n-title { color: #22c55e; }
+        .scp-custom-notif.success .n-btn { background: #22c55e; }
+        .scp-custom-notif.success .n-btn:hover { background: #16a34a; }
+        .scp-custom-notif.warning .n-title { color: #f59e0b; }
+        .scp-custom-notif.warning .n-btn { background: #f59e0b; color: #fff; }
+        .scp-custom-notif.warning .n-btn:hover { background: #d97706; }
+        .scp-custom-notif.ticket .n-title { color: #ef4444; }
+        .scp-custom-notif.ticket .n-btn { background: #ef4444; }
+        .scp-custom-notif.ticket .n-btn:hover { background: #dc2626; }
+        .scp-custom-notif.info .n-title { color: #3b82f6; }
+        .scp-custom-notif.info .n-btn { background: #3b82f6; }
+        .scp-custom-notif.info .n-btn:hover { background: #2563eb; }
         .scp-custom-notif .n-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 4px; }
     </style>
 </head>
@@ -121,9 +130,23 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     <?php foreach ($notifItems as $n): ?>
                                         <?php
                                         $t = (string)($n['type'] ?? 'general');
-                                        $icon = 'bi-info-circle';
+                                        $msgText = strtolower((string)($n['message'] ?? ''));
+                                        $icon = 'bi-info-circle-fill';
                                         $accent = 'general';
-                                        if ($t === 'ticket_assigned') {
+                                        
+                                        if (strpos($msgText, 'cerrado') !== false || strpos($msgText, 'resuelto') !== false || strpos($msgText, 'completado') !== false) {
+                                            $icon = 'bi-check-circle-fill';
+                                            $accent = 'success';
+                                        } elseif (strpos($msgText, 'camino') !== false || strpos($msgText, 'proceso') !== false) {
+                                            $icon = 'bi-car-front-fill';
+                                            $accent = 'warning';
+                                        } elseif (strpos($msgText, 'creado') !== false || strpos($msgText, 'nuevo') !== false || strpos($msgText, 'asignado') !== false) {
+                                            $icon = 'bi-ticket-detailed-fill';
+                                            $accent = 'ticket';
+                                        } elseif (strpos($msgText, 'respondido') !== false || strpos($msgText, 'mensaje') !== false) {
+                                            $icon = 'bi-chat-dots-fill';
+                                            $accent = 'info';
+                                        } elseif ($t === 'ticket_assigned') {
                                             $icon = 'bi-ticket-perforated';
                                             $accent = 'ticket';
                                         } elseif ($t === 'task_assigned') {
@@ -437,9 +460,9 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         </div>
     <?php endif; ?>
 
-    <div id="customPopNotif" class="scp-custom-notif">
+    <div id="customPopNotif" class="scp-custom-notif info">
         <div class="n-header">
-            <span class="n-title"><i class="bi bi-lightning-charge-fill"></i> Actualización</span>
+            <span class="n-title"><i id="customPopIcon" class="bi bi-info-circle-fill"></i> <span id="customPopTitleText">Actualización</span></span>
             <button class="n-close" onclick="document.getElementById('customPopNotif').classList.remove('active')">&times;</button>
         </div>
         <div id="customPopMsg" class="n-msg"></div>
@@ -618,10 +641,29 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 if (!container) return;
 
                 var li = document.createElement('li');
-                var icon = 'bi-info-circle';
+                var msgText = (n.message || '').toLowerCase();
+                var icon = 'bi-info-circle-fill';
                 var accent = 'general';
-                if (n.type === 'ticket_assigned') { icon = 'bi-ticket-perforated'; accent = 'ticket'; }
-                else if (n.type === 'task_assigned') { icon = 'bi-check2-square'; accent = 'task'; }
+
+                if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
+                    icon = 'bi-check-circle-fill';
+                    accent = 'success';
+                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
+                    icon = 'bi-car-front-fill';
+                    accent = 'warning';
+                } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
+                    icon = 'bi-ticket-detailed-fill';
+                    accent = 'ticket';
+                } else if (msgText.includes('respondido') || msgText.includes('mensaje')) {
+                    icon = 'bi-chat-dots-fill';
+                    accent = 'info';
+                } else if (n.type === 'ticket_assigned') {
+                    icon = 'bi-ticket-perforated';
+                    accent = 'ticket';
+                } else if (n.type === 'task_assigned') {
+                    icon = 'bi-check2-square';
+                    accent = 'task';
+                }
 
                 li.innerHTML = `
                     <a class="dropdown-item scp-notif-item" href="notification_read.php?id=${n.id}">
@@ -643,9 +685,30 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 if (!popEl) return;
                 var msgEl = document.getElementById('customPopMsg');
                 var linkEl = document.getElementById('customPopLink');
+                var iconEl = document.getElementById('customPopIcon');
+                var titleTextEl = document.getElementById('customPopTitleText');
+
+                var msgText = (n.message || '').toLowerCase();
+                var icon = 'bi-info-circle-fill';
+                var accent = 'ticket';
+                var title = 'Notificación';
+
+                if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
+                    icon = 'bi-check-circle-fill'; title = 'Completado';
+                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
+                    icon = 'bi-car-front-fill'; title = 'En Camino';
+                } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
+                    icon = 'bi-ticket-detailed-fill'; title = 'Nuevo Ticket';
+                } else if (msgText.includes('respondido') || msgText.includes('mensaje')) {
+                    icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje';
+                }
+
                 if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
                 if (linkEl) linkEl.href = 'notification_read.php?id=' + n.id;
-                popEl.classList.add('active');
+                if (iconEl) iconEl.className = 'bi ' + icon;
+                if (titleTextEl) titleTextEl.textContent = title;
+
+                popEl.className = 'scp-custom-notif ' + accent + ' active';
                 window.setTimeout(function() { popEl.classList.remove('active'); }, 12000);
 
                 if ("Notification" in window && Notification.permission === "granted") {
