@@ -42,6 +42,33 @@ $searchLike = '%' . $search . '%';
 // Filtro por Mes (Default: Mes actual)
 $monthFilter = trim((string)($_GET['month'] ?? date('Y-m')));
 
+// Obtener meses disponibles con reportes
+$filterMonths = [];
+if ($statusIdClosed > 0) {
+    $monthQuery = "SELECT DISTINCT DATE_FORMAT(t.closed, '%Y-%m') as mDate 
+                   FROM tickets t
+                   JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
+                   WHERE t.empresa_id = ? AND t.status_id = ? AND t.closed IS NOT NULL 
+                   ORDER BY mDate DESC";
+    $mStmt = $mysqli->prepare($monthQuery);
+    if ($mStmt) {
+        $mStmt->bind_param('ii', $eid, $statusIdClosed);
+        $mStmt->execute();
+        $mRes = $mStmt->get_result();
+        while ($mRow = $mRes->fetch_assoc()) {
+            $filterMonths[] = $mRow['mDate'];
+        }
+    }
+}
+if (empty($filterMonths)) {
+    $filterMonths[] = date('Y-m');
+}
+
+// Validar que el mes seleccionado exista, si no, usar el primero disponible o 'all'
+if ($monthFilter !== 'all' && !in_array($monthFilter, $filterMonths)) {
+    $monthFilter = $filterMonths[0];
+}
+
 // Paginación
 $perPage = 10;
 $page = max(1, (int)($_GET['page'] ?? 1));
@@ -55,16 +82,13 @@ if ($statusIdClosed > 0) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
-    // REGLA DE ARRASTRE:
-    // El filtro de mes SOLO aplica a tickets que tengan reporte finalizado
-    // (billing_status IN 'confirmed','visita_tecnica','cotizacion').
-    // Los cerrados sin reporte o con reporte 'pending' aparecen SIEMPRE.
-    $finalizedStatuses = "('confirmed','visita_tecnica','cotizacion')";
+    // Filtrado estricto por mes (solo el mes seleccionado o todos)
     $reportJoinCount   = $hasReportsTable ? ' LEFT JOIN ticket_reports r ON r.ticket_id = t.id' : '';
-    // Condición: (no es finalizado) OR (es finalizado Y el mes de cierre coincide)
-    $monthWhere = $hasReportsTable
-        ? " AND (r.billing_status NOT IN $finalizedStatuses OR r.billing_status IS NULL OR DATE_FORMAT(t.closed, '%Y-%m') = ?)"
-        : " AND DATE_FORMAT(t.closed, '%Y-%m') = ?";
+    if ($monthFilter === 'all') {
+        $monthWhere = "";
+    } else {
+        $monthWhere = " AND DATE_FORMAT(t.closed, '%Y-%m') = ?";
+    }
 
     // COUNT total
     $countJoin = ' LEFT JOIN users u ON t.user_id = u.id';
@@ -76,10 +100,18 @@ if ($statusIdClosed > 0) {
                    WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}";
     $cStmt = $mysqli->prepare($countQuery);
     if ($cStmt) {
-        if ($search !== '') {
-            $cStmt->bind_param('iisssss', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike);
+        if ($monthFilter === 'all') {
+            if ($search !== '') {
+                $cStmt->bind_param('iissss', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike);
+            } else {
+                $cStmt->bind_param('ii', $eid, $statusIdClosed);
+            }
         } else {
-            $cStmt->bind_param('iis', $eid, $statusIdClosed, $monthFilter);
+            if ($search !== '') {
+                $cStmt->bind_param('iisssss', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike);
+            } else {
+                $cStmt->bind_param('iis', $eid, $statusIdClosed, $monthFilter);
+            }
         }
         $cStmt->execute();
         $totalTickets = (int)($cStmt->get_result()->fetch_assoc()['total'] ?? 0);
@@ -111,10 +143,18 @@ if ($statusIdClosed > 0) {
 
     $stmt = $mysqli->prepare($query);
     if ($stmt) {
-        if ($search !== '') {
-            $stmt->bind_param('iisssssii', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
+        if ($monthFilter === 'all') {
+            if ($search !== '') {
+                $stmt->bind_param('iisssssii', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
+            } else {
+                $stmt->bind_param('iiii', $eid, $statusIdClosed, $perPage, $offset);
+            }
         } else {
-            $stmt->bind_param('iisii', $eid, $statusIdClosed, $monthFilter, $perPage, $offset);
+            if ($search !== '') {
+                $stmt->bind_param('iisssssii', $eid, $statusIdClosed, $monthFilter, $searchLike, $searchLike, $searchLike, $searchLike, $perPage, $offset);
+            } else {
+                $stmt->bind_param('iisii', $eid, $statusIdClosed, $monthFilter, $perPage, $offset);
+            }
         }
         $stmt->execute();
         $res = $stmt->get_result();
@@ -272,11 +312,11 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
     <div class="tickets-panel" style="margin-bottom: 16px;">
         <div class="tickets-toolbar">
             <div class="tickets-filters">
-                <select name="month" class="form-select form-select-sm" id="monthSelect" style="min-width: 160px; font-weight: 600; color: #475569;">
+                <select name="month" class="form-select form-select-sm" id="monthSelect" style="min-width: 170px; font-weight: 600; color: #475569; border-radius: 8px;">
+                    <option value="all" <?php echo $monthFilter === 'all' ? 'selected' : ''; ?>>Todos los meses</option>
                     <?php
-                    for ($i = 0; $i < 12; $i++) {
-                        $mDate = date('Y-m', strtotime("-$i months"));
-                        $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
+                    $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
+                    foreach ($filterMonths as $mDate) {
                         $mLabel = str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($mDate . '-01')));
                         $selected = ($mDate === $monthFilter) ? 'selected' : '';
                         echo "<option value=\"$mDate\" $selected>$mLabel</option>";

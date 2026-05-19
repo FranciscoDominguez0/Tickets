@@ -62,6 +62,12 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
+    if ($month === 'all') {
+        $monthWhere = '';
+    } else {
+        $monthWhere = " AND DATE_FORMAT(t.closed,'%Y-%m') = ?";
+    }
+
     $sql = "SELECT t.ticket_number, d.name AS department,
                    CONCAT(s.firstname,' ',s.lastname) AS staff_name,
                    t.closed, r.final_price, r.work_description,
@@ -69,20 +75,28 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
                    t.subject, t.walkin_phone, t.walkin_address
             FROM tickets t
             JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
-            JOIN ticket_reports r ON r.ticket_id = t.id
+            LEFT JOIN ticket_reports r ON r.ticket_id = t.id
             LEFT JOIN staff s ON t.staff_id = s.id
             LEFT JOIN users u ON t.user_id = u.id
             WHERE t.empresa_id = ?
               AND t.status_id = ?
-              AND DATE_FORMAT(t.closed,'%Y-%m') = ?
+              {$monthWhere}
               {$searchWhere}
             ORDER BY t.closed DESC";
 
     $stmt = $mysqli->prepare($sql);
-    if ($search !== '') {
-        $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+    if ($month === 'all') {
+        if ($search !== '') {
+            $stmt->bind_param('iissss', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike);
+        } else {
+            $stmt->bind_param('ii', $eid, $statusIdClosed);
+        }
     } else {
-        $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+        if ($search !== '') {
+            $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+        } else {
+            $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+        }
     }
     $stmt->execute();
     $res = $stmt->get_result();
@@ -107,6 +121,12 @@ function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
+    if ($month === 'all') {
+        $monthWhere = '';
+    } else {
+        $monthWhere = " AND DATE_FORMAT(t.closed,'%Y-%m') = ?";
+    }
+
     $sql = "SELECT t.ticket_number, i.description, i.price
             FROM ticket_report_items i
             JOIN ticket_reports r ON i.report_id = r.id
@@ -116,15 +136,23 @@ function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
             LEFT JOIN users u ON t.user_id = u.id
             WHERE t.empresa_id = ?
               AND t.status_id = ?
-              AND DATE_FORMAT(t.closed,'%Y-%m') = ?
+              {$monthWhere}
               {$searchWhere}
             ORDER BY t.closed DESC, i.id ASC";
 
     $stmt = $mysqli->prepare($sql);
-    if ($search !== '') {
-        $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+    if ($month === 'all') {
+        if ($search !== '') {
+            $stmt->bind_param('iissss', $eid, $statusIdClosed, $searchLike, $searchLike, $searchLike, $searchLike);
+        } else {
+            $stmt->bind_param('ii', $eid, $statusIdClosed);
+        }
     } else {
-        $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+        if ($search !== '') {
+            $stmt->bind_param('iisssss', $eid, $statusIdClosed, $month, $searchLike, $searchLike, $searchLike, $searchLike);
+        } else {
+            $stmt->bind_param('iis', $eid, $statusIdClosed, $month);
+        }
     }
     $stmt->execute();
     $res = $stmt->get_result();
@@ -135,6 +163,9 @@ function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
 }
 
 function getSpanishMonthName($month) {
+    if ($month === 'all') {
+        return 'Todos los Meses';
+    }
     $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
     return str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($month.'-01')));
 }

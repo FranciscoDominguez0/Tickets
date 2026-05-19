@@ -244,7 +244,7 @@
                             </td>
                             <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #ef4444;">
+                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa;">
 
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
                                     </a>
@@ -348,7 +348,7 @@
                                 </div>
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
-                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </td>

@@ -1084,7 +1084,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <div class="sub">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
                         </div>
                         <div>
-                            <a href="open.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                            <a href="open.php" class="btn btn-primary btn-sm" style="border-radius: 999px; font-weight: 800; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>
                         </div>
                     </div>
                 </div>
