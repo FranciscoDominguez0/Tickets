@@ -147,6 +147,10 @@ body.dark-mode .is-invalid:focus {
 
 body.dark-mode .limit-selector { background: #1a1a1a !important; }
 body.dark-mode .pagination-bar { border-top-color: #27272a !important; }
+body.dark-mode .alert {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
 body.dark-mode .alert-success { 
     background: rgba(16, 185, 129, 0.1) !important; 
     border: 1px solid rgba(16, 185, 129, 0.3) !important; 

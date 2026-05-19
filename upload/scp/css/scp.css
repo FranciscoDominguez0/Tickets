@@ -28,6 +28,13 @@ body {
     background-color: #ef4444 !important;
 }
 
+/* --- ESTILOS GLOBALES DE ALERTAS --- */
+.alert {
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+}
+
 @media (max-width: 768px) {
     body {
         padding-top: 96px; /* Taller navbar on mobile with status bar */

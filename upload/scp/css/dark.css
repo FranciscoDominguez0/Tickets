@@ -452,6 +452,10 @@ body.dark-mode .closed-reply-prompt p {
 }
 
 /* === ALERTS === */
+body.dark-mode .alert {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
 body.dark-mode .alert-success {
     background: #0c2018 !important;
     border-color: #1a4731 !important;

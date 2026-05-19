@@ -229,7 +229,9 @@ body {
 /* ALERTAS */
 .alert {
     padding: 0.75rem 1rem;
-    border-radius: 8px;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     margin-bottom: 1.5rem;
     font-weight: 500;
 }
