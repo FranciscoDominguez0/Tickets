@@ -423,175 +423,242 @@ ob_start();
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-success"><?php echo (int)$activeCount; ?> Activos</span>
-            <span class="badge bg-secondary"><?php echo (int)$inactiveCount; ?> Inactivos</span>
-            <span class="badge bg-info"><?php echo (int)count($departments); ?> Total</span>
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold border border-success-subtle"><i class="bi bi-check-circle-fill me-1"></i><?php echo (int)$activeCount; ?> Activos</span>
+            <span class="badge bg-secondary-subtle text-secondary px-3 py-2 rounded-pill fw-bold border border-secondary-subtle"><i class="bi bi-pause-circle-fill me-1"></i><?php echo (int)$inactiveCount; ?> Inactivos</span>
+            <span class="badge bg-info-subtle text-info px-3 py-2 rounded-pill fw-bold border border-info-subtle"><i class="bi bi-diagram-3-fill me-1"></i><?php echo (int)count($departments); ?> Total</span>
         </div>
     </div>
 </div>
 
 <?php if ($flashError): ?>
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html($flashError); ?>
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><?php echo html($flashError); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
 <?php if ($flashMsg): ?>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle me-2"></i><?php echo html($flashMsg); ?>
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i><?php echo html($flashMsg); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 <?php endif; ?>
 
-<div class="alert alert-danger alert-dismissible fade show d-none" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">
-    <i class="bi bi-exclamation-triangle me-2"></i><span id="deptsClientErrorText"></span>
+<div class="alert alert-danger alert-dismissible fade show d-none border-0 shadow-sm rounded-4 mb-4" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="deptsClientErrorText"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card settings-card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <strong><i class="bi bi-diagram-3"></i> Lista de Departamentos</strong>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeptModal">
-                        <i class="bi bi-plus-circle"></i> Añadir nuevo Departamento
-                    </button>
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="deptsMoreDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-gear"></i> Más
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="deptsMoreDropdown">
-                            <li><button class="dropdown-item" type="button" data-dept-action="enable"><i class="bi bi-check-circle me-2"></i>Habilitar</button></li>
-                            <li><button class="dropdown-item" type="button" data-dept-action="disable"><i class="bi bi-slash-circle me-2"></i>Deshabilitar</button></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><button class="dropdown-item text-danger" type="button" data-dept-action="delete"><i class="bi bi-trash me-2"></i>Eliminar</button></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <form method="post" action="departments.php" id="deptsMassForm">
-                    <input type="hidden" name="do" value="mass_process">
-                    <?php csrfField(); ?>
-                    <input type="hidden" name="a" value="" id="deptsMassAction">
+<form method="post" action="departments.php" id="deptsMassForm">
+    <input type="hidden" name="do" value="mass_process">
+    <?php csrfField(); ?>
+    <input type="hidden" name="a" value="" id="deptsMassAction">
 
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="30"><input type="checkbox" id="selectAllDepts" class="form-check-input"></th>
-                                    <th>Departamento</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Agentes</th>
-                                    <th>Correo Electrónico</th>
-                                    <th class="text-center">Tickets</th>
-                                    <th class="text-end">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($departments)): ?>
-                                    <tr><td colspan="7" class="text-center text-muted py-4">No hay departamentos para mostrar.</td></tr>
-                                <?php else: ?>
-                                    <?php foreach ($departments as $d): ?>
-                                        <?php
-                                        $id = (int)($d['id'] ?? 0);
-                                        $name = (string)($d['name'] ?? '');
-                                        $description = (string)($d['description'] ?? '');
-                                        $active = (int)($d['is_active'] ?? 0) === 1;
-                                        $emailId = (int)($d['email_id'] ?? 0);
-                                        $deptEmail = (string)($d['dept_email'] ?? '');
-                                        $deptEmailName = (string)($d['dept_email_name'] ?? '');
-                                        $staffTotal = (int)($d['staff_total'] ?? 0);
-                                        $ticketTotal = (int)($d['ticket_total'] ?? 0);
-                                        ?>
-                                        <tr>
-                                            <td>
-                                                <input type="checkbox" name="ids[]" value="<?php echo $id; ?>" class="form-check-input dept-checkbox">
-                                            </td>
-                                            <td>
-                                                <div class="fw-semibold">
-                                                    <?php echo html($name); ?>
-                                                </div>
-                                                <div class="text-muted small"><?php if ($description !== ''): ?><?php echo html($description); ?><?php endif; ?></div>
-                                            </td>
-                                            <td class="text-center">
-                                                <?php if ($active): ?>
-                                                    <span class="badge bg-success">Activo</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary">Inactivo</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center"><strong><?php echo (int)$staffTotal; ?></strong></td>
-                                            <td>
-                                                <?php if ($deptEmail !== '' && $emailId > 0): ?>
-                                                    <a class="text-decoration-none" href="email.php?id=<?php echo (int)$emailId; ?>">
-                                                        <?php if ($deptEmailName !== ''): ?>
-                                                            <?php echo html($deptEmailName); ?> &lt;<?php echo html($deptEmail); ?>&gt;
-                                                        <?php else: ?>
-                                                            <?php echo html($deptEmail); ?>
-                                                        <?php endif; ?>
-                                                    </a>
-                                                <?php else: ?>
-                                                    <span class="text-muted">—</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="text-center"><strong><?php echo (int)$ticketTotal; ?></strong></td>
-                                            <td class="text-end">
-                                                <button type="button" class="btn btn-sm btn-outline-primary dept-edit-btn"
-                                                    data-id="<?php echo $id; ?>"
-                                                    data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-description="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"
-                                                    data-is-active="<?php echo $active ? '1' : '0'; ?>"
-                                                    data-requires-report="<?php echo (int)($d['requires_report'] ?? 0) === 1 ? '1' : '0'; ?>"
-                                                    data-bs-toggle="modal" data-bs-target="#editDeptModal">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
+    <!-- Control Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 gap-3 flex-wrap p-3 rounded-4 shadow-sm" style="background: var(--dept-card-bg); border: 1px solid var(--dept-card-border); transition: all 0.3s;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check mb-0 d-flex align-items-center gap-2">
+                <input type="checkbox" id="selectAllDepts" class="form-check-input ms-0 shadow-sm" style="width: 1.25rem; height: 1.25rem; cursor: pointer; border-radius: 4px;">
+                <label class="form-check-label fw-bold text-muted" for="selectAllDepts" style="cursor: pointer; user-select: none; font-size: 0.9rem;">Seleccionar todos</label>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-primary px-3 py-2 rounded-3 btn-add-custom shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addDeptModal" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: 0; font-weight: 600; font-size: 0.88rem;">
+                <i class="bi bi-plus-circle-fill"></i> Añadir nuevo Departamento
+            </button>
+            <div class="dropdown">
+                <button class="btn dropdown-toggle px-3 py-2 rounded-3 fw-bold d-flex align-items-center gap-2 btn-actions-custom" type="button" id="deptsMoreDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.88rem; background: var(--dept-stat-bg); color: var(--dept-text-main); border: 1px solid var(--dept-card-border);">
+                    <i class="bi bi-gear-fill"></i> Acciones
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" aria-labelledby="deptsMoreDropdown" style="background: var(--dept-card-bg); border: 1px solid var(--dept-card-border); border-radius: 12px;">
+                    <li><button class="dropdown-item fw-semibold rounded-3 py-2" type="button" data-dept-action="enable" style="color: var(--dept-text-main);"><i class="bi bi-check-circle-fill text-success me-2"></i>Habilitar</button></li>
+                    <li><button class="dropdown-item fw-semibold rounded-3 py-2" type="button" data-dept-action="disable" style="color: var(--dept-text-main);"><i class="bi bi-slash-circle-fill text-warning me-2"></i>Deshabilitar</button></li>
+                    <li><hr class="dropdown-divider" style="border-top: 1px solid var(--dept-card-border);"></li>
+                    <li><button class="dropdown-item fw-semibold rounded-3 py-2 text-danger" type="button" data-dept-action="delete"><i class="bi bi-trash-fill me-2"></i>Eliminar</button></li>
+                </ul>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Premium Table Layout -->
+    <div class="premium-table-wrapper">
+        <div class="table-responsive">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th width="50" class="text-center d-none d-md-table-cell">#</th>
+                        <th class="d-none d-md-table-cell">Departamento</th>
+                        <th class="text-center d-none d-md-table-cell">Estado</th>
+                        <th class="text-center d-none d-md-table-cell">Agentes</th>
+                        <th class="text-center d-none d-md-table-cell">Tickets</th>
+                        <th width="140" class="text-end d-none d-md-table-cell">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($departments)): ?>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <span class="fs-2 mb-2 d-block"><i class="bi bi-diagram-3"></i></span>
+                                No se encontraron departamentos registrados.
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($departments as $d): ?>
+                            <?php
+                            $id = (int)($d['id'] ?? 0);
+                            $name = (string)($d['name'] ?? '');
+                            $description = (string)($d['description'] ?? '');
+                            $active = (int)($d['is_active'] ?? 0) === 1;
+                            $emailId = (int)($d['email_id'] ?? 0);
+                            $deptEmail = (string)($d['dept_email'] ?? '');
+                            $deptEmailName = (string)($d['dept_email_name'] ?? '');
+                            $staffTotal = (int)($d['staff_total'] ?? 0);
+                            $ticketTotal = (int)($d['ticket_total'] ?? 0);
+                            ?>
+                            <tr data-dept-row-id="<?php echo $id; ?>" style="cursor: pointer;">
+                                <!-- VISTA MÓVIL (Tarjeta Original Preservada) -->
+                                <td class="d-md-none p-0">
+                                    <div class="role-mobile-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <input type="checkbox" name="ids[]" value="<?php echo $id; ?>" class="form-check-input dept-checkbox m-0 shadow-sm" style="width: 1.25rem; height: 1.25rem; cursor: pointer; border-radius: 4px;">
+                                                <?php if ($active): ?>
+                                                    <span class="role-badge active"><i class="bi bi-check-circle-fill"></i> Activo</span>
+                                                <?php else: ?>
+                                                    <span class="role-badge inactive"><i class="bi bi-pause-circle-fill"></i> Inactivo</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <button type="button" class="role-mobile-action-btn dept-edit-btn"
+                                                data-id="<?php echo $id; ?>"
+                                                data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-description="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-is-active="<?php echo $active ? '1' : '0'; ?>"
+                                                data-requires-report="<?php echo (int)($d['requires_report'] ?? 0) === 1 ? '1' : '0'; ?>"
+                                                data-bs-toggle="modal" data-bs-target="#editDeptModal">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="role-mobile-card-title">
+                                            <?php echo html($name); ?>
+                                        </div>
+                                        <?php if ($description !== ''): ?>
+                                            <div class="role-mobile-card-meta mb-2" style="font-size: 0.8rem; line-height: 1.3;">
+                                                <?php echo html($description); ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if ($deptEmail !== '' && $emailId > 0): ?>
+                                            <div class="role-mobile-card-meta mb-3" style="font-size: 0.78rem;">
+                                                <i class="bi bi-envelope text-muted me-1"></i>
+                                                <a href="email.php?id=<?php echo (int)$emailId; ?>" style="color: var(--dept-link-color) !important; text-decoration: none;">
+                                                    <?php if ($deptEmailName !== ''): ?>
+                                                        <?php echo html($deptEmailName); ?> &lt;<?php echo html($deptEmail); ?>&gt;
+                                                    <?php else: ?>
+                                                        <?php echo html($deptEmail); ?>
+                                                    <?php endif; ?>
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="row g-2 mt-2 pt-3 role-stats-row">
+                                            <div class="col-6">
+                                                <div class="role-stat-box">
+                                                    <div class="stat-label">Agentes</div>
+                                                    <div class="stat-value"><?php echo (int)$staffTotal; ?></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="role-stat-box">
+                                                    <div class="stat-label">Tickets</div>
+                                                    <div class="stat-value" style="color: #3b82f6;"><?php echo (int)$ticketTotal; ?></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- VISTA ESCRITORIO -->
+                                <td class="text-center d-none d-md-table-cell" onclick="event.stopPropagation();">
+                                    <input type="checkbox" name="ids[]" value="<?php echo $id; ?>" class="form-check-input dept-checkbox shadow-sm m-0" style="width: 1.25rem; height: 1.25rem; cursor: pointer; border-radius: 4px;">
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fs-5" style="color: <?php echo $active ? '#2563eb' : 'var(--dept-text-muted)'; ?>;"><i class="bi bi-diagram-3-fill"></i></span>
+                                        <div>
+                                            <div class="fw-bold" style="color: var(--dept-text-main); font-size: 0.95rem;">
+                                                <?php echo html($name); ?>
+                                            </div>
+                                            <?php if ($description !== ''): ?>
+                                                <div class="text-muted small" style="font-size: 0.78rem; line-height: 1.2;"><?php echo html($description); ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center d-none d-md-table-cell">
+                                    <?php if ($active): ?>
+                                        <span class="role-badge active"><i class="bi bi-check-circle-fill"></i> Activo</span>
+                                    <?php else: ?>
+                                        <span class="role-badge inactive"><i class="bi bi-pause-circle-fill"></i> Inactivo</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center d-none d-md-table-cell">
+                                    <span class="agent-count-badge"><?php echo (int)$staffTotal; ?></span>
+                                </td>
+                                <td class="text-center d-none d-md-table-cell">
+                                    <span class="agent-count-badge <?php echo $ticketTotal > 0 ? 'active-tickets' : ''; ?>"><?php echo (int)$ticketTotal; ?></span>
+                                </td>
+                                <td class="text-end d-none d-md-table-cell" onclick="event.stopPropagation();">
+                                    <button type="button" class="btn-permissions dept-edit-btn"
+                                        data-id="<?php echo $id; ?>"
+                                        data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-description="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-is-active="<?php echo $active ? '1' : '0'; ?>"
+                                        data-requires-report="<?php echo (int)($d['requires_report'] ?? 0) === 1 ? '1' : '0'; ?>"
+                                        data-bs-toggle="modal" data-bs-target="#editDeptModal">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
 
 <div class="modal fade" id="addDeptModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <form method="post" action="departments.php">
                 <input type="hidden" name="do" value="create">
                 <?php csrfField(); ?>
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-plus-circle text-primary"></i> Añadir nuevo Departamento</h5>
+                <div class="modal-header d-flex align-items-center px-4 py-3">
+                    <h5 class="modal-title d-flex align-items-center gap-2 fs-5"><i class="bi bi-plus-circle text-primary"></i> Añadir nuevo Departamento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body px-4 py-4">
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <label class="form-label mb-2">Nombre</label>
+                        <input type="text" name="name" class="form-control" placeholder="Ej. Ventas" required autocomplete="off">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
+                        <label class="form-label mb-2">Descripción</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Descripción breve de la oficina/área"></textarea>
                     </div>
-                    <div class="form-check">
+                    <div class="form-check form-switch fs-6 mt-2">
                         <input class="form-check-input" type="checkbox" name="is_active" id="createDeptIsActive" checked>
-                        <label class="form-check-label" for="createDeptIsActive">Activo</label>
+                        <label class="form-check-label fw-semibold" for="createDeptIsActive">Activo</label>
                     </div>
-                    <div class="form-check mt-2">
+                    <div class="form-check form-switch fs-6 mt-2">
                         <input class="form-check-input" type="checkbox" name="requires_report" id="createDeptRequiresReport" value="1">
-                        <label class="form-check-label" for="createDeptRequiresReport">Requiere reporte</label>
+                        <label class="form-check-label fw-semibold" for="createDeptRequiresReport">Requiere reporte de cierre</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
+                <div class="modal-footer px-4 py-3 border-0">
+                    <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold rounded-3 btn-cancel-custom" data-bs-dismiss="modal" style="font-size: 0.9rem;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold rounded-3 btn-save-custom" style="font-size: 0.9rem; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: 0;"><i class="bi bi-check-circle me-1"></i> Guardar</button>
                 </div>
             </form>
         </div>
@@ -600,36 +667,36 @@ ob_start();
 
 <div class="modal fade" id="editDeptModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
             <form method="post" action="departments.php">
                 <input type="hidden" name="do" value="update">
                 <?php csrfField(); ?>
                 <input type="hidden" name="id" id="dept_edit_id" value="">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-pencil text-primary"></i> Editar Departamento</h5>
+                <div class="modal-header d-flex align-items-center px-4 py-3">
+                    <h5 class="modal-title d-flex align-items-center gap-2 fs-5"><i class="bi bi-pencil text-primary"></i> Editar Departamento</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body px-4 py-4">
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" name="name" id="dept_edit_name" class="form-control" required>
+                        <label class="form-label mb-2">Nombre</label>
+                        <input type="text" name="name" id="dept_edit_name" class="form-control" required autocomplete="off">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Descripción</label>
+                        <label class="form-label mb-2">Descripción</label>
                         <textarea name="description" id="dept_edit_description" class="form-control" rows="3"></textarea>
                     </div>
-                    <div class="form-check">
+                    <div class="form-check form-switch fs-6 mt-2">
                         <input class="form-check-input" type="checkbox" name="is_active" id="dept_edit_is_active" checked>
-                        <label class="form-check-label" for="dept_edit_is_active">Activo</label>
+                        <label class="form-check-label fw-semibold" for="dept_edit_is_active">Activo</label>
                     </div>
-                    <div class="form-check mt-2">
+                    <div class="form-check form-switch fs-6 mt-2">
                         <input class="form-check-input" type="checkbox" name="requires_report" id="dept_edit_requires_report" value="1">
-                        <label class="form-check-label" for="dept_edit_requires_report">Requiere reporte</label>
+                        <label class="form-check-label fw-semibold" for="dept_edit_requires_report">Requiere reporte de cierre</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Guardar</button>
+                <div class="modal-footer px-4 py-3 border-0">
+                    <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold rounded-3 btn-cancel-custom" data-bs-dismiss="modal" style="font-size: 0.9rem;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold rounded-3 btn-save-custom" style="font-size: 0.9rem; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: 0;"><i class="bi bi-check-circle me-1"></i> Guardar</button>
                 </div>
             </form>
         </div>
@@ -638,144 +705,357 @@ ob_start();
 
 <div class="modal fade" id="deleteDeptsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-trash text-danger"></i> Eliminar departamentos</h5>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header d-flex align-items-center px-4 py-3">
+                <h5 class="modal-title d-flex align-items-center gap-2 fs-5"><i class="bi bi-trash text-danger"></i> Eliminar departamentos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body px-4 py-4">
                 ¿Deseas eliminar los departamentos seleccionados?
                 <div class="text-muted small mt-2">
                     Seleccionados: <strong><span id="deleteDeptsCount">0</span></strong>
                 </div>
-                <div class="text-muted small mt-2">Solo se eliminarán departamentos sin agentes ni tickets asignados.</div>
+                <div class="alert alert-warning border-0 rounded-3 mt-3 d-flex gap-2 align-items-start" style="font-size: 0.85rem;">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 mt-0.5"></i>
+                    <div>Solo se eliminarán aquellos departamentos que no tengan agentes ni tickets asignados actualmente en el sistema.</div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteDeptsBtn"><i class="bi bi-trash"></i> Eliminar</button>
+            <div class="modal-footer px-4 py-3 border-0">
+                <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold rounded-3 btn-cancel-custom" data-bs-dismiss="modal" style="font-size: 0.9rem;">Cancelar</button>
+                <button type="button" class="btn btn-danger px-4 py-2 fw-semibold rounded-3" id="confirmDeleteDeptsBtn" style="font-size: 0.9rem;"><i class="bi bi-trash"></i> Eliminar</button>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-/* ── Departments Mobile Card Dark Mode Variables ── */
+/* ── Design System Variables ── */
 :root {
     --dept-card-bg: #ffffff;
     --dept-card-border: #e2e8f0;
-    --dept-card-title: #0f172a;
-    --dept-card-meta: #64748b;
-    --dept-dashed-border: #e2e8f0;
+    --dept-stat-bg: #f8fafc;
+    --dept-table-header-bg: #f8fafc;
+    --dept-table-row-hover: #f8fafc;
+    --dept-text-main: #0f172a;
+    --dept-text-muted: #64748b;
+    --dept-badge-active-bg: rgba(16, 185, 129, 0.1);
+    --dept-badge-active-color: #16a34a;
+    --dept-badge-inactive-bg: #f1f5f9;
+    --dept-badge-inactive-color: #64748b;
+    --dept-badge-count-bg: #e2e8f0;
+    --dept-badge-count-color: #1e293b;
+    --dept-btn-perm-hover-bg: #cbd5e1;
+    --modal-close-filter: none;
+
+    /* Mobile variables */
+    --role-mobile-card-bg: #ffffff;
+    --role-mobile-card-border: #e2e8f0;
+    --role-mobile-stat-bg: #f8fafc;
+    --role-mobile-stat-text: #0f172a;
+    --role-mobile-card-title: #0f172a;
+    --role-mobile-card-meta: #64748b;
+    --role-mobile-dashed-border: #e2e8f0;
+    --role-mobile-action-btn-bg: #f8fafc;
+    --role-mobile-action-btn-color: #64748b;
     --dept-link-color: #475569;
 }
+
 body.dark-mode {
     --dept-card-bg: #111111;
-    --dept-card-border: #27272a;
-    --dept-card-title: #f8fafc;
-    --dept-card-meta: #94a3b8;
-    --dept-dashed-border: #3f3f46;
+    --dept-card-border: #2a2a2a;
+    --dept-stat-bg: #1a1a1a;
+    --dept-table-header-bg: #161616;
+    --dept-table-row-hover: #1a1a1a;
+    --dept-text-main: #e5e5e5;
+    --dept-text-muted: #888888;
+    --dept-badge-active-bg: rgba(16, 185, 129, 0.15);
+    --dept-badge-active-color: #34d399;
+    --dept-badge-inactive-bg: #222222;
+    --dept-badge-inactive-color: #888888;
+    --dept-badge-count-bg: #222222;
+    --dept-badge-count-color: #e5e5e5;
+    --dept-btn-perm-hover-bg: #2a2a2a;
+    --modal-close-filter: invert(1);
+
+    /* Mobile variables */
+    --role-mobile-card-bg: #111111;
+    --role-mobile-card-border: #2a2a2a;
+    --role-mobile-stat-bg: #1a1a1a;
+    --role-mobile-stat-text: #f1f5f9;
+    --role-mobile-card-title: #f8fafc;
+    --role-mobile-card-meta: #94a3b8;
+    --role-mobile-dashed-border: #2a2a2a;
+    --role-mobile-action-btn-bg: #1a1a1a;
+    --role-mobile-action-btn-color: #94a3b8;
     --dept-link-color: #94a3b8;
 }
 
+/* Premium Table Container */
+.premium-table-wrapper {
+    background: var(--dept-card-bg);
+    border: 1px solid var(--dept-card-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.premium-table th {
+    background: var(--dept-table-header-bg);
+    color: var(--dept-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--dept-card-border);
+}
+
+.premium-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--dept-card-border);
+    color: var(--dept-text-main);
+    vertical-align: middle;
+    transition: all 0.2s ease;
+}
+
+.premium-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Row Hover & Selected States */
+.premium-table tr {
+    transition: all 0.2s ease;
+}
+
+.premium-table tr.selected td {
+    background: rgba(37, 99, 235, 0.02) !important;
+}
+
+body.dark-mode .premium-table tr.selected td {
+    background: #18181b !important;
+}
+
+.premium-table tr:hover td {
+    background: var(--dept-table-row-hover);
+}
+
+/* Status & Count Badges */
+.role-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.role-badge.active {
+    background: var(--dept-badge-active-bg);
+    color: var(--dept-badge-active-color);
+}
+
+.role-badge.inactive {
+    background: var(--dept-badge-inactive-bg);
+    color: var(--dept-badge-inactive-color);
+}
+
+.agent-count-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--dept-badge-count-bg);
+    color: var(--dept-badge-count-color);
+    display: inline-block;
+    min-width: 32px;
+    text-align: center;
+}
+
+.agent-count-badge.active-tickets {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+}
+
+body.dark-mode .agent-count-badge.active-tickets {
+    background: rgba(37, 99, 235, 0.15);
+    color: #3b82f6;
+}
+
+/* Buttons */
+.btn-permissions {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 8px;
+    background: var(--dept-badge-count-bg);
+    color: var(--dept-text-main);
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-permissions:hover {
+    background: var(--dept-btn-perm-hover-bg);
+    color: var(--dept-text-main);
+    transform: translateY(-1px);
+}
+
+.btn-add-custom:hover {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37,99,235,0.3) !important;
+}
+
+.btn-actions-custom:hover {
+    background: var(--dept-btn-perm-hover-bg) !important;
+}
+
+/* Modal Styling overrides */
+.modal-content {
+    background: var(--dept-card-bg) !important;
+    border: 1px solid var(--dept-card-border) !important;
+    color: var(--dept-text-main) !important;
+}
+.modal-header {
+    border-bottom: 1px solid var(--dept-card-border) !important;
+}
+.modal-footer {
+    border-top: 1px solid var(--dept-card-border) !important;
+}
+.modal-content .form-label {
+    font-weight: 600;
+    color: var(--dept-text-muted);
+    font-size: 0.85rem;
+}
+.modal-content .form-control {
+    background: var(--dept-stat-bg);
+    border: 1px solid var(--dept-card-border);
+    color: var(--dept-text-main);
+    border-radius: 10px;
+    padding: 10px 14px;
+    transition: all 0.2s;
+}
+.modal-content .form-control:focus {
+    background: var(--dept-card-bg);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+.modal-content .btn-close {
+    filter: var(--modal-close-filter);
+}
+.btn-cancel-custom {
+    background: var(--dept-stat-bg);
+    border: 1px solid var(--dept-card-border);
+    color: var(--dept-text-main);
+}
+.btn-cancel-custom:hover {
+    background: var(--dept-btn-perm-hover-bg) !important;
+    color: var(--dept-text-main);
+}
+
+body.dark-mode .dropdown-item:hover {
+    background-color: #222222 !important;
+    color: #ffffff !important;
+}
+
+/* ── Mobile Cards Styles ── */
+.role-mobile-card {
+    padding: 16px;
+    background: var(--role-mobile-card-bg);
+    position: relative;
+    text-align: left;
+}
+.role-mobile-card .role-mobile-card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--role-mobile-card-title);
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+.role-mobile-card .role-mobile-card-meta {
+    font-size: 0.75rem;
+    color: var(--role-mobile-card-meta);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.role-mobile-card .role-stats-row {
+    border-top: 1px dashed var(--role-mobile-dashed-border);
+}
+.role-stat-box {
+    background: var(--role-mobile-stat-bg);
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+.role-stat-box .stat-label {
+    font-size: 0.65rem;
+    color: var(--role-mobile-card-meta);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+.role-stat-box .stat-value {
+    font-size: 1rem;
+    color: var(--role-mobile-stat-text);
+    font-weight: 800;
+}
+.role-mobile-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--role-mobile-action-btn-bg) !important;
+    color: var(--role-mobile-action-btn-color) !important;
+    border: none !important;
+    text-decoration: none;
+}
+
+/* Responsive Table -> Cards for Mobile */
 @media (max-width: 768px) {
-    #deptsMassForm .table-responsive {
-        border: none;
+    .premium-table-wrapper { border: none !important; overflow: visible !important; background: transparent !important; box-shadow: none !important; }
+    .premium-table { display: block !important; width: 100% !important; }
+    .premium-table thead { display: none !important; }
+    .premium-table tbody { display: block !important; width: 100% !important; }
+    .premium-table tbody tr {
+        display: block !important;
+        margin-bottom: 1rem !important;
+        background: var(--role-mobile-card-bg) !important;
+        border: 1px solid var(--role-mobile-card-border) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
+        overflow: hidden !important;
+        transition: all 0.25s ease !important;
     }
-    #deptsMassForm .table thead {
-        display: none;
+    .premium-table tbody tr.selected {
+        border-color: #2563eb !important;
     }
-    #deptsMassForm .table tbody tr {
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--dept-card-border);
-        border-radius: 12px;
-        margin-bottom: 12px;
-        padding: 14px 16px;
-        background: var(--dept-card-bg);
-        position: relative;
+    body.dark-mode .premium-table tbody tr.selected {
+        border-color: #404040 !important;
+        background: #18181b !important;
     }
-    #deptsMassForm .table tbody td {
-        display: block;
-        padding: 4px 0;
-        border: none;
-        text-align: left !important;
+    .premium-table tbody td.d-md-none {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
     }
-    /* Checkbox */
-    #deptsMassForm .table tbody td:nth-child(1) {
-        position: absolute;
-        top: 18px;
-        left: 16px;
-        padding: 0;
-    }
-    /* Departamento (Name & Desc) */
-    #deptsMassForm .table tbody td:nth-child(2) {
-        padding-left: 32px;
-        padding-right: 48px;
-    }
-    #deptsMassForm .table tbody td:nth-child(2) .fw-semibold {
-        font-size: 15px;
-        color: var(--dept-card-title) !important;
-    }
-    #deptsMassForm .table tbody td:nth-child(2),
-    #deptsMassForm .table tbody td:nth-child(2) * {
-        color: var(--dept-card-title) !important;
-    }
-    #deptsMassForm .table tbody td:nth-child(2) .text-muted,
-    #deptsMassForm .table tbody td:nth-child(2) .text-muted * {
-        color: var(--dept-card-meta) !important;
-    }
-    /* Email */
-    #deptsMassForm .table tbody td:nth-child(5) {
-        font-size: 13px;
-        padding-left: 32px;
-        word-break: break-all;
-        color: var(--dept-link-color);
-    }
-    #deptsMassForm .table tbody td:nth-child(5) a {
-        color: var(--dept-link-color) !important;
-        text-decoration: none !important;
-    }
-    #deptsMassForm .table tbody td:nth-child(5)::before {
-        content: "Email: ";
-        font-weight: 600;
-        color: var(--dept-card-meta);
-    }
-    /* Stats & Status Divider */
-    #deptsMassForm .table tbody td:nth-child(3) {
-        border-top: 1px dashed var(--dept-dashed-border);
-        margin-top: 12px;
-        padding-top: 12px;
-        display: inline-block;
-    }
-    #deptsMassForm .table tbody td:nth-child(4),
-    #deptsMassForm .table tbody td:nth-child(6) {
-        display: inline-block;
-        font-size: 13px;
-        padding-top: 12px;
-        color: var(--dept-card-title);
-    }
-    #deptsMassForm .table tbody td:nth-child(4)::before {
-        content: "Agentes: ";
-        color: var(--dept-card-meta);
-        font-weight: 500;
-        margin-left: 12px;
-    }
-    #deptsMassForm .table tbody td:nth-child(6)::before {
-        content: "Tickets: ";
-        color: var(--dept-card-meta);
-        font-weight: 500;
-        margin-left: 12px;
-    }
-    /* Action btn */
-    #deptsMassForm .table tbody td:nth-child(7) {
-        position: absolute;
-        top: 14px;
-        right: 16px;
-        padding: 0;
+    .premium-table tbody td.d-none {
+        display: none !important;
     }
 }
 </style>
-
 
 <script>
 window.addEventListener('DOMContentLoaded', function(){
@@ -792,8 +1072,8 @@ window.addEventListener('DOMContentLoaded', function(){
             if (!box) {
                 var wrapper = document.createElement('div');
                 wrapper.innerHTML = ''
-                    + '<div class="alert alert-danger alert-dismissible fade show" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">'
-                    + '  <i class="bi bi-exclamation-triangle me-2"></i><span id="deptsClientErrorText"></span>'
+                    + '<div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4 mb-4" role="alert" id="deptsClientError" aria-live="polite" data-alert-static="1">'
+                    + '  <i class="bi bi-exclamation-triangle-fill me-2"></i><span id="deptsClientErrorText"></span>'
                     + '  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>'
                     + '</div>';
                 var newEl = wrapper.firstElementChild;
@@ -820,11 +1100,47 @@ window.addEventListener('DOMContentLoaded', function(){
         return true;
     }
 
+    // Toggle row styling when checked
+    function syncRowSelection(checkbox) {
+        var row = checkbox.closest('tr');
+        if (row) {
+            if (checkbox.checked) {
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+        }
+    }
+
+    var checkboxes = document.querySelectorAll('.dept-checkbox');
+    checkboxes.forEach(function(cb) {
+        syncRowSelection(cb);
+        cb.addEventListener('change', function() {
+            syncRowSelection(cb);
+        });
+        
+        // Also allow clicking anywhere on the row body except on checkbox container and action buttons/links to select it
+        var row = cb.closest('tr');
+        if (row) {
+            row.addEventListener('click', function(e) {
+                // If the user clicked on a link, button, or the checkbox itself, don't trigger
+                if (e.target.closest('a') || e.target.closest('button') || e.target === cb || e.target.closest('.dept-checkbox')) {
+                    return;
+                }
+                cb.checked = !cb.checked;
+                cb.dispatchEvent(new Event('change'));
+            });
+        }
+    });
+
     var selectAll = document.getElementById('selectAllDepts');
     if (selectAll) {
         selectAll.addEventListener('change', function(){
             var boxes = document.querySelectorAll('.dept-checkbox');
-            boxes.forEach(function(b){ b.checked = selectAll.checked; });
+            boxes.forEach(function(b){ 
+                b.checked = selectAll.checked; 
+                syncRowSelection(b);
+            });
         });
     }
 
