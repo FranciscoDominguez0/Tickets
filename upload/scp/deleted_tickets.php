@@ -95,17 +95,16 @@ if ($action === 'view_thread' && $id > 0) {
             $name = trim($isStaff ? $e['staff_name'] : $e['user_name']) ?: 'Sistema';
             
             $typeLabel = $isInternal ? 'Nota Interna' : ($isStaff ? 'Respuesta' : 'Mensaje');
-            $bgColor = $isInternal ? '#fffbeb' : ($isStaff ? '#f8fafc' : '#ffffff');
-            $borderColor = $isInternal ? '#fde68a' : ($isStaff ? '#e2e8f0' : '#cbd5e1');
             $icon = $isInternal ? 'bi-journal-text text-warning' : ($isStaff ? 'bi-person-badge text-primary' : 'bi-person text-success');
+            $typeClass = $isInternal ? 'internal' : ($isStaff ? 'staff' : 'user');
             
             echo "
-            <div class='mb-3 p-3 rounded-3 shadow-sm border' style='background: $bgColor; border-color: $borderColor !important;'>
-                <div class='d-flex justify-content-between align-items-center mb-2 border-bottom pb-2' style='border-color: rgba(0,0,0,0.05) !important;'>
-                    <span class='small fw-bold text-dark'><i class='bi $icon me-1'></i>" . html($name) . "</span>
-                    <span class='text-muted' style='font-size: 0.7rem; font-weight: 600;'>$typeLabel &bull; " . formatDate($e['created']) . "</span>
+            <div class='thread-entry-card thread-entry-$typeClass shadow-sm'>
+                <div class='thread-header d-flex justify-content-between align-items-center'>
+                    <span class='thread-name'><i class='bi $icon me-1'></i>" . html($name) . "</span>
+                    <span class='thread-meta'>$typeLabel &bull; " . formatDate($e['created']) . "</span>
                 </div>
-                <div class='thread-body small text-secondary' style='line-height: 1.5;'>" . (function_exists('sanitizeRichText') ? sanitizeRichText($e['body']) : $e['body']) . "</div>
+                <div class='thread-body'>" . (function_exists('sanitizeRichText') ? sanitizeRichText($e['body']) : $e['body']) . "</div>
             </div>";
         }
     } else {
@@ -163,18 +162,18 @@ ob_start();
                             <tr>
                                 <!-- VISTA MÓVIL (Tarjeta Premium) -->
                                 <td class="d-md-none p-0">
-                                    <div style="padding: 16px; background: #ffffff;">
+                                    <div class="mobile-deletion-card">
                                         <!-- Header -->
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div class="d-flex align-items-center gap-3">
-                                                <div style="background: rgba(37,99,235,0.08); color: #2563eb; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                                <div class="mobile-deletion-icon-box">
                                                     <i class="bi bi-trash3"></i>
                                                 </div>
                                                 <div style="line-height: 1.2;">
-                                                    <a href="javascript:void(0)" onclick="viewTicketThread(<?php echo $r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="text-decoration-none" style="font-weight: 800; color: #0f172a; font-size: 1.1rem; display: block;">
+                                                    <a href="javascript:void(0)" onclick="viewTicketThread(<?php echo $r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="mobile-deletion-ticket-link">
                                                         #<?php echo html($r['ticket_number']); ?>
                                                     </a>
-                                                    <span style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                    <span style="font-size: 0.68rem; color: var(--text-muted, #64748b); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
                                                         <?php echo date('d M Y, H:i', strtotime($r['created_at'])); ?>
                                                     </span>
                                                 </div>
@@ -182,30 +181,30 @@ ob_start();
                                             <div>
                                                 <?php 
                                                 $s = $r['status'];
-                                                if ($s === 'pending') echo '<span style="background: #fffbeb; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #fde68a;"><i class="bi bi-clock me-1"></i>Pendiente</span>';
-                                                elseif ($s === 'approved') echo '<span style="background: #f0fdf4; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</span>';
-                                                else echo '<span style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; border: 1px solid #fecaca;"><i class="bi bi-x-circle-fill me-1"></i>Rechazado</span>';
+                                                if ($s === 'pending') echo '<span class="badge-del-status pending"><i class="bi bi-clock me-1"></i>Pendiente</span>';
+                                                elseif ($s === 'approved') echo '<span class="badge-del-status approved"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</span>';
+                                                else echo '<span class="badge-del-status rejected"><i class="bi bi-x-circle-fill me-1"></i>Rechazado</span>';
                                                 ?>
                                             </div>
                                         </div>
 
                                         <!-- Asunto -->
-                                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 14px; line-height: 1.4;">
+                                        <div class="mobile-deletion-subject">
                                             <?php echo html($r['ticket_subject']); ?>
                                         </div>
 
                                         <!-- Bloque Solicitante y Motivo -->
-                                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
-                                            <div class="d-flex align-items-center gap-2 mb-3 pb-2" style="border-bottom: 1px dashed #cbd5e1;">
-                                                <div class="avatar-circle-sm" style="width: 22px; height: 22px; font-size: 10px; background: #e2e8f0; color: #334155;">
+                                        <div class="mobile-deletion-meta-block">
+                                            <div class="mobile-deletion-meta-header d-flex align-items-center gap-2 mb-3 pb-2">
+                                                <div class="avatar-circle-sm mobile-deletion-avatar">
                                                     <?php echo strtoupper(substr($r['requester_name'] ?? '?', 0, 1)); ?>
                                                 </div>
-                                                <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">
-                                                    Solicitado por <span style="color: #0f172a; font-weight: 700;"><?php echo html($r['requester_name']); ?></span>
+                                                <span class="mobile-deletion-requester-text">
+                                                    Solicitado por <span class="mobile-deletion-requester-name"><?php echo html($r['requester_name']); ?></span>
                                                 </span>
                                             </div>
-                                            <div style="font-size: 0.85rem; color: #334155; font-weight: 500; line-height: 1.5;">
-                                                <div style="color: #94a3b8; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">
+                                            <div class="mobile-deletion-reason-text">
+                                                <div class="mobile-deletion-reason-label">
                                                     Motivo de Eliminación
                                                 </div>
                                                 <?php echo html($r['reason']); ?>
@@ -215,15 +214,15 @@ ob_start();
                                         <!-- Footer: Resolución y Botones -->
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div style="display: flex; flex-direction: column;">
-                                                <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">
+                                                <span class="mobile-deletion-resolver-label">
                                                     Resuelto por
                                                 </span>
                                                 <?php if ($r['resolved_at']): ?>
-                                                    <span style="font-size: 0.85rem; font-weight: 800; color: #0f172a;">
+                                                    <span class="mobile-deletion-resolver-name-val">
                                                         <i class="bi bi-shield-check text-success me-1"></i><?php echo html($r['resolver_name'] ?: 'Admin'); ?>
                                                     </span>
                                                 <?php else: ?>
-                                                    <span style="font-size: 0.85rem; font-weight: 700; color: #cbd5e1;">
+                                                    <span class="mobile-deletion-resolver-pending">
                                                         Pendiente de acción
                                                     </span>
                                                 <?php endif; ?>
@@ -232,15 +231,15 @@ ob_start();
                                             <div>
                                                 <?php if ($s === 'pending'): ?>
                                                     <div class="d-flex gap-2">
-                                                        <button type="button" onclick="openResolveModal('reject_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" style="background: #ffffff; border: 1px solid #fca5a5; color: #dc2626; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(220,38,38,0.1);">
+                                                        <button type="button" onclick="openResolveModal('reject_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="mobile-btn-reject">
                                                             <i class="bi bi-x-lg" style="font-size: 1.1rem; font-weight: bold;"></i>
                                                         </button>
-                                                        <button type="button" onclick="openResolveModal('approve_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" style="background: #10b981; border: none; color: #ffffff; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(16,185,129,0.3);">
+                                                        <button type="button" onclick="openResolveModal('approve_delete', <?php echo (int)$r['id']; ?>, '<?php echo html($r['ticket_number']); ?>')" class="mobile-btn-approve">
                                                             <i class="bi bi-check-lg" style="font-size: 1.4rem; font-weight: bold;"></i>
                                                         </button>
                                                     </div>
                                                 <?php else: ?>
-                                                    <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #cbd5e1;">
+                                                    <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: var(--text-muted, #cbd5e1);">
                                                         <i class="bi bi-check2-all" style="font-size: 1.5rem;"></i>
                                                     </div>
                                                 <?php endif; ?>
@@ -260,23 +259,23 @@ ob_start();
                                 <td class="d-none d-md-table-cell">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="avatar-circle-sm"><?php echo strtoupper(substr($r['requester_name'] ?? '?', 0, 1)); ?></div>
-                                        <span class="small fw-bold" style="color: #334155;"><?php echo html($r['requester_name']); ?></span>
+                                        <span class="small fw-bold"><?php echo html($r['requester_name']); ?></span>
                                     </div>
                                 </td>
                                 <td class="d-none d-md-table-cell">
-                                    <div class="small text-wrap" style="max-width: 100%; font-weight: 500; color: #475569;"><?php echo html($r['reason']); ?></div>
+                                    <div class="small text-wrap" style="max-width: 100%; font-weight: 500;"><?php echo html($r['reason']); ?></div>
                                 </td>
                                 <td class="d-none d-md-table-cell">
                                     <?php 
-                                    if ($s === 'pending') echo '<span class="badge" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; font-weight: 700;"><i class="bi bi-clock me-1"></i>Pendiente</span>';
-                                    elseif ($s === 'approved') echo '<span class="badge" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-weight: 700;"><i class="bi bi-check-circle me-1"></i>Aprobado</span>';
-                                    else echo '<span class="badge" style="background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; font-weight: 700;"><i class="bi bi-x-circle me-1"></i>Rechazado</span>';
+                                    if ($s === 'pending') echo '<span class="badge-del-status pending"><i class="bi bi-clock me-1"></i>Pendiente</span>';
+                                    elseif ($s === 'approved') echo '<span class="badge-del-status approved"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</span>';
+                                    else echo '<span class="badge-del-status rejected"><i class="bi bi-x-circle-fill me-1"></i>Rechazado</span>';
                                     ?>
                                 </td>
                                 <td class="d-none d-md-table-cell">
                                     <?php if ($r['resolved_at']): ?>
                                         <div class="small">
-                                            <div class="fw-bold" style="color: #334155;"><?php echo html($r['resolver_name'] ?: 'Admin'); ?></div>
+                                            <div class="fw-bold"><?php echo html($r['resolver_name'] ?: 'Admin'); ?></div>
                                             <div class="text-muted x-small"><?php echo formatDate($r['resolved_at']); ?></div>
                                         </div>
                                     <?php else: ?>
@@ -341,18 +340,18 @@ ob_start();
 <!-- Modal de Resolución (Estilo Corporativo Premium) -->
 <div class="modal fade" id="resolveModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="post" class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 16px; background: #ffffff;">
+        <form method="post" class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 16px;">
             <?php csrfField(); ?>
             <input type="hidden" name="id" id="modalId">
             <input type="hidden" name="action" id="modalAction">
             
-            <div class="modal-header border-bottom py-3 px-4" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0 !important;">
+            <div class="modal-header py-3 px-4">
                 <div class="d-flex align-items-center gap-3">
                     <div id="modalIconBox" style="width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: all 0.3s ease;">
                         <i class="bi bi-shield-check" id="modalMainIcon"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold mb-0" id="modalTitle" style="color: #0f172a; font-size: 1.1rem; font-weight: 700;">Resolver Solicitud</h5>
+                        <h5 class="modal-title fw-bold mb-0" id="modalTitle" style="font-size: 1.1rem; font-weight: 700;">Resolver Solicitud</h5>
                         <div class="text-muted small fw-semibold" id="modalTicketText" style="font-weight: 600;">Ticket #000000</div>
                     </div>
                 </div>
@@ -360,10 +359,10 @@ ob_start();
             </div>
 
             <div class="modal-body p-4 pt-4 text-center">
-                <h4 class="fw-bold text-dark mb-2" id="modalBodyText" style="font-size: 1.2rem; font-weight: 700;">¿Deseas continuar?</h4>
-                <p class="text-secondary px-2 mb-0" style="font-size: 0.92rem; color: #64748b;">Esta acción es definitiva y quedará registrada en el historial de auditoría de la empresa.</p>
+                <h4 class="fw-bold mb-2" id="modalBodyText" style="font-size: 1.2rem; font-weight: 700;">¿Deseas continuar?</h4>
+                <p class="px-2 mb-0" style="font-size: 0.92rem;">Esta acción es definitiva y quedará registrada en el historial de auditoría de la empresa.</p>
                 
-                <div class="alert mt-4 mb-0 d-none" id="modalWarning" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; text-align: left;">
+                <div class="alert mt-4 mb-0 d-none" id="modalWarning" style="border-radius: 12px; text-align: left;">
                     <div class="d-flex gap-3 align-items-center">
                         <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; flex-shrink: 0;">
                             <i class="bi bi-exclamation-triangle-fill" style="font-size: 0.85rem;"></i>
@@ -376,7 +375,7 @@ ob_start();
             </div>
 
             <div class="modal-footer border-top-0 p-4 pt-0 justify-content-center pb-5">
-                <button type="button" class="btn btn-outline-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 0.88rem; font-weight: 700; border-color: #e2e8f0; color: #64748b;">Cancelar</button>
+                <button type="button" class="btn btn-outline-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 10px; font-size: 0.88rem; font-weight: 700;">Cancelar</button>
                 <button type="submit" class="btn px-4 py-2 shadow-sm text-white" id="modalSubmitBtn" style="border-radius: 10px; font-size: 0.88rem; font-weight: 700; border: none;">Confirmar Acción</button>
             </div>
         </form>
@@ -387,19 +386,19 @@ ob_start();
 <div class="modal fade" id="threadModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header bg-white border-bottom py-3 px-4" style="border-bottom: 1px solid #e2e8f0 !important;">
+            <div class="modal-header py-3 px-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="p-2 rounded-3" style="background: #eff6ff; color: #2563eb; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
                         <i class="bi bi-chat-dots-fill"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold" style="color: #0f172a; font-weight: 700; margin-bottom: 0;">Conversación del Ticket</h5>
+                        <h5 class="modal-title fw-bold" style="font-weight: 700; margin-bottom: 0;">Conversación del Ticket</h5>
                         <p class="text-muted small mb-0" style="font-weight: 600;">Auditoría previa &bull; #<span id="threadTicketNum"></span></p>
                     </div>
                 </div>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body bg-light px-4 py-4" style="background: #f8fafc !important;">
+            <div class="modal-body px-4 py-4">
                 <div id="threadBodyWrap">
                     <div id="threadContent">
                         <div class="text-center py-5">
@@ -409,8 +408,8 @@ ob_start();
                     </div>
                 </div>
             </div>
-            <div class="modal-footer bg-white border-top py-3 px-4" style="border-top: 1px solid #e2e8f0 !important;">
-                <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal" style="border-radius: 10px; padding: 8px 24px; font-size: 0.9rem; border-color: #e2e8f0; color: #64748b;">Cerrar Vista</button>
+            <div class="modal-footer py-3 px-4">
+                <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal" style="border-radius: 10px; padding: 8px 24px; font-size: 0.9rem;">Cerrar Vista</button>
             </div>
         </div>
     </div>
@@ -479,35 +478,397 @@ function viewTicketThread(id, ticketNum) {
 </script>
 
 <style>
+/* ── Variables & Default Light System ── */
+:root {
+    --del-bg-main: #f8fafc;
+    --del-card-bg: #ffffff;
+    --del-card-border: #e2e8f0;
+    --del-text-main: #0f172a;
+    --del-text-muted: #64748b;
+    --del-table-header: #f8fafc;
+    --del-row-hover: #f8fafc;
+    
+    --modal-content-bg: #ffffff;
+    --modal-content-border: rgba(0, 0, 0, 0.1);
+    --modal-header-bg: #f8fafc;
+    --modal-body-bg: #f8fafc;
+    --modal-footer-bg: #ffffff;
+    
+    --thread-internal-bg: #fffbeb;
+    --thread-internal-border: #fde68a;
+    --thread-staff-bg: #f8fafc;
+    --thread-staff-border: #e2e8f0;
+    --thread-user-bg: #ffffff;
+    --thread-user-border: #e2e8f0;
+    --thread-name-color: #1e293b;
+    --thread-body-color: #334155;
+    --thread-border-color: rgba(0, 0, 0, 0.05);
+}
+
+/* ── Dark Mode Variable Overrides ── */
+body.dark-mode {
+    --del-bg-main: #0a0a0a;
+    --del-card-bg: #111111;
+    --del-card-border: #2a2a2a;
+    --del-text-main: #e5e5e5;
+    --del-text-muted: #888888;
+    --del-table-header: #161616;
+    --del-row-hover: #1a1a1a;
+    
+    --modal-content-bg: #111111;
+    --modal-content-border: #2a2a2a;
+    --modal-header-bg: #111111;
+    --modal-body-bg: #161616;
+    --modal-footer-bg: #111111;
+    
+    --thread-internal-bg: #201a15;
+    --thread-internal-border: #3b2f1f;
+    --thread-staff-bg: #161616;
+    --thread-staff-border: #2a2a2a;
+    --thread-user-bg: #111111;
+    --thread-user-border: #2a2a2a;
+    --thread-name-color: #f1f5f9;
+    --thread-body-color: #cbd5e1;
+    --thread-border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Global Styles ── */
 .modal-backdrop.show { opacity: 0.45; background-color: #0f172a; }
 .avatar-circle-sm {
-    width: 28px; height: 28px; background: #f1f5f9; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #475569;
+    width: 28px; height: 28px; background: var(--del-row-hover); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--del-text-main);
 }
 .x-small { font-size: 0.72rem; }
 
 .ticket-link { text-decoration: none; transition: all 0.2s ease; border-radius: 6px; padding: 2px 4px; margin-left: -4px; display: inline-block; }
 .ticket-link:hover { background: #eff6ff; color: #1e40af !important; text-decoration: none !important; }
+body.dark-mode .ticket-link:hover { background: #1e3a8a; color: #3b82f6 !important; }
 
 #threadBodyWrap { max-height: 550px; overflow-y: auto; padding-right: 12px; }
 #threadBodyWrap::-webkit-scrollbar { width: 6px; }
-#threadBodyWrap::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-#threadBodyWrap::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+#threadBodyWrap::-webkit-scrollbar-thumb { background: var(--del-card-border); border-radius: 10px; }
+#threadBodyWrap::-webkit-scrollbar-thumb:hover { background: var(--del-text-muted); }
 
-/* Responsive Table -> Cards for Mobile */
+/* ── Badges ── */
+.badge-del-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid transparent;
+}
+.badge-del-status.pending {
+    background: #fffbeb;
+    color: #b45309;
+    border-color: #fde68a;
+}
+.badge-del-status.approved {
+    background: #f0fdf4;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+.badge-del-status.rejected {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fee2e2;
+}
+
+body.dark-mode .badge-del-status.pending {
+    background: rgba(217, 119, 6, 0.15);
+    color: #fbbf24;
+    border-color: rgba(217, 119, 6, 0.3);
+}
+body.dark-mode .badge-del-status.approved {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+body.dark-mode .badge-del-status.rejected {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ── Thread entries ── */
+.thread-entry-card {
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--del-card-border);
+}
+.thread-entry-card.thread-entry-internal {
+    background: var(--thread-internal-bg);
+    border-color: var(--thread-internal-border) !important;
+}
+.thread-entry-card.thread-entry-staff {
+    background: var(--thread-staff-bg);
+    border-color: var(--thread-staff-border) !important;
+}
+.thread-entry-card.thread-entry-user {
+    background: var(--thread-user-bg);
+    border-color: var(--thread-user-border) !important;
+}
+.thread-entry-card .thread-header {
+    border-bottom: 1px solid var(--thread-border-color);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+.thread-entry-card .thread-name {
+    font-weight: 700;
+    color: var(--thread-name-color);
+}
+.thread-entry-card .thread-meta {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--del-text-muted);
+}
+.thread-entry-card .thread-body {
+    font-size: 0.88rem;
+    color: var(--thread-body-color);
+    line-height: 1.5;
+}
+
+/* ── Modern Layout Custom Styles (Dark Mode Support) ── */
+.settings-card {
+    background: var(--del-card-bg) !important;
+    border: 1px solid var(--del-card-border) !important;
+}
+.settings-card .card-header {
+    background: var(--del-card-bg) !important;
+    border-bottom: 1px solid var(--del-card-border) !important;
+    color: var(--del-text-main);
+}
+.settings-card .card-header strong {
+    color: var(--del-text-main);
+}
+.table {
+    color: var(--del-text-main) !important;
+}
+.table thead.table-light,
+.table thead {
+    background: var(--del-table-header) !important;
+}
+.table thead th {
+    background: var(--del-table-header) !important;
+    color: var(--del-text-muted) !important;
+    border-bottom: 1px solid var(--del-card-border) !important;
+}
+.table tbody tr:hover td {
+    background: var(--del-row-hover) !important;
+}
+.table td {
+    border-bottom: 1px solid var(--del-card-border) !important;
+    color: var(--del-text-main) !important;
+}
+.table td a .fw-bold {
+    color: #2563eb;
+}
+body.dark-mode .table td a .fw-bold {
+    color: #3b82f6;
+}
+
+.pagination .page-link {
+    background: var(--del-card-bg) !important;
+    color: var(--del-text-muted) !important;
+    border-color: var(--del-card-border) !important;
+}
+.pagination .page-item.active .page-link {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* ── Modal Dark Mode ── */
+.modal-content {
+    background: var(--modal-content-bg) !important;
+    border: 1px solid var(--modal-content-border) !important;
+}
+.modal-header {
+    background: var(--modal-header-bg) !important;
+    border-bottom: 1px solid var(--del-card-border) !important;
+}
+.modal-header .modal-title {
+    color: var(--del-text-main) !important;
+}
+.modal-body {
+    background: var(--modal-body-bg) !important;
+    color: var(--del-text-main) !important;
+}
+.modal-body p {
+    color: var(--del-text-muted) !important;
+}
+.modal-footer {
+    background: var(--modal-footer-bg) !important;
+    border-top: 1px solid var(--del-card-border) !important;
+}
+.modal-footer button.btn-outline-secondary {
+    border-color: var(--del-card-border) !important;
+    color: var(--del-text-muted) !important;
+}
+.modal-footer button.btn-outline-secondary:hover {
+    background: var(--del-row-hover) !important;
+}
+body.dark-mode .modal-header .btn-close {
+    filter: invert(1);
+}
+body.dark-mode #modalWarning {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+}
+body.dark-mode #modalWarning .text-danger {
+    color: #f87171 !important;
+}
+body.dark-mode .settings-hero-icon {
+    background: #1e1e1e !important;
+    color: #e5e5e5 !important;
+}
+
+/* ── Mobile Layout CSS & Dark Mode Support ── */
+.mobile-deletion-card {
+    padding: 16px;
+    background: var(--del-card-bg);
+}
+.mobile-deletion-icon-box {
+    background: rgba(37,99,235,0.08); 
+    color: #2563eb; 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 12px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 1.2rem;
+}
+body.dark-mode .mobile-deletion-icon-box {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+.mobile-deletion-ticket-link {
+    text-decoration: none;
+    font-weight: 800; 
+    color: var(--del-text-main); 
+    font-size: 1.1rem; 
+    display: block;
+}
+.mobile-deletion-ticket-link:hover {
+    color: #2563eb;
+}
+.mobile-deletion-subject {
+    font-size: 0.95rem; 
+    font-weight: 700; 
+    color: var(--del-text-main); 
+    margin-bottom: 14px; 
+    line-height: 1.4;
+}
+.mobile-deletion-meta-block {
+    background: var(--del-bg-main); 
+    border: 1px solid var(--del-card-border); 
+    border-radius: 14px; 
+    padding: 14px; 
+    margin-bottom: 16px;
+}
+.mobile-deletion-meta-header {
+    border-bottom: 1px dashed var(--del-card-border);
+}
+.mobile-deletion-avatar {
+    width: 22px; 
+    height: 22px; 
+    font-size: 10px; 
+    background: var(--del-card-border); 
+    color: var(--del-text-main);
+}
+.mobile-deletion-requester-text {
+    font-size: 0.8rem; 
+    font-weight: 600; 
+    color: var(--del-text-muted);
+}
+.mobile-deletion-requester-name {
+    color: var(--del-text-main); 
+    font-weight: 700;
+}
+.mobile-deletion-reason-text {
+    font-size: 0.85rem; 
+    color: var(--del-text-main); 
+    font-weight: 500; 
+    line-height: 1.5;
+}
+.mobile-deletion-reason-label {
+    color: var(--del-text-muted); 
+    font-weight: 800; 
+    font-size: 0.68rem; 
+    text-transform: uppercase; 
+    margin-bottom: 4px; 
+    letter-spacing: 0.5px;
+}
+.mobile-deletion-resolver-label {
+    font-size: 0.68rem; 
+    color: var(--del-text-muted); 
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    margin-bottom: 2px;
+}
+.mobile-deletion-resolver-name-val {
+    font-size: 0.85rem; 
+    font-weight: 800; 
+    color: var(--del-text-main);
+}
+.mobile-deletion-resolver-pending {
+    font-size: 0.85rem; 
+    font-weight: 700; 
+    color: var(--del-text-muted);
+}
+.mobile-btn-reject {
+    background: var(--del-card-bg); 
+    border: 1px solid rgba(239, 68, 68, 0.4); 
+    color: #dc2626; 
+    border-radius: 10px; 
+    width: 40px; 
+    height: 40px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    box-shadow: 0 2px 4px rgba(220,38,38,0.1);
+}
+.mobile-btn-reject:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+.mobile-btn-approve {
+    background: #10b981; 
+    border: none; 
+    color: #ffffff; 
+    border-radius: 10px; 
+    width: 40px; 
+    height: 40px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    transition: all 0.2s; 
+    box-shadow: 0 4px 10px rgba(16,185,129,0.3);
+}
+.mobile-btn-approve:hover {
+    background: #059669;
+}
+
 @media (max-width: 768px) {
-    .settings-card { background: transparent !important; box-shadow: none !important; }
-    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; }
+    .settings-card { background: transparent !important; box-shadow: none !important; border: none !important; }
+    .settings-card .card-header { border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--del-card-border) !important; }
     .table-responsive { border: none !important; overflow: visible; }
     .table { background: transparent; }
     .table thead { display: none; }
     .table tbody tr {
         display: block;
         margin-bottom: 1rem;
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        background: var(--del-card-bg);
+        border: 1px solid var(--del-card-border);
         border-radius: 16px;
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
     }
     .table tbody td {
         display: block;
