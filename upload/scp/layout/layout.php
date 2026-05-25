@@ -511,6 +511,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         </ul>
                     </li>
                     <?php endif; ?>
+                    <?php if (roleHasAnyPermissionPrefix('task.')): ?>
                     <li>
                         <a href="tasks.php" class="sidebar-link <?php echo $currentRoute === 'tasks' ? 'active' : ''; ?>">
                             <span class="icon">
@@ -522,6 +523,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             Tareas
                         </a>
                     </li>
+                    <?php endif; ?>
                     <li>
                         <a href="profile.php" class="sidebar-link <?php echo $currentRoute === 'profile' ? 'active' : ''; ?>">
                             <span class="icon">

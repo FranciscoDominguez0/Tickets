@@ -265,6 +265,61 @@ if ($stmtP) {
 
 $hasAnySaved = !empty($enabledPerms);
 
+if (!function_exists('renderPermissionGroupCard')) {
+    function renderPermissionGroupCard($groupTitle, $perms, $enabledPerms) {
+        $icon = 'bi-shield-lock-fill';
+        $headerColor = '#64748b';
+        $bgColor = '#f8fafc';
+        if ($groupTitle === 'Tickets') {
+            $icon = 'bi-ticket-detailed-fill';
+            $headerColor = '#2563eb';
+            $bgColor = 'rgba(37, 99, 235, 0.04)';
+        } elseif ($groupTitle === 'Tareas') {
+            $icon = 'bi-check2-square';
+            $headerColor = '#10b981';
+            $bgColor = 'rgba(16, 185, 129, 0.04)';
+        } elseif ($groupTitle === 'Directorio / Mapa') {
+            $icon = 'bi-compass-fill';
+            $headerColor = '#8b5cf6';
+            $bgColor = 'rgba(139, 92, 246, 0.04)';
+        }
+        $groupId = 'group_' . preg_replace('/[^a-z0-9]/', '', strtolower($groupTitle));
+        ?>
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; overflow: hidden; background: #fff;">
+            <!-- Cabecera del Grupo -->
+            <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4" style="background: <?php echo $bgColor; ?>;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5" style="color: <?php echo $headerColor; ?>;"><i class="bi <?php echo $icon; ?>"></i></span>
+                    <h2 class="h6 mb-0 fw-bold text-dark" style="font-size: 1.05rem; letter-spacing: -0.01em;"><?php echo html($groupTitle); ?></h2>
+                </div>
+                <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+                    <label class="form-check-label text-muted fw-semibold" style="font-size: 0.8rem; cursor: pointer; user-select: none;" for="<?php echo $groupId; ?>_toggle">Marcar todos</label>
+                    <input class="form-check-input group-toggler-switch" type="checkbox" id="<?php echo $groupId; ?>_toggle" data-group-class="<?php echo $groupId; ?>" style="cursor: pointer;">
+                </div>
+            </div>
+            <!-- Cuerpo del Grupo -->
+            <div class="card-body p-4">
+                <div class="d-flex flex-column gap-3">
+                    <?php foreach ($perms as $key => $meta): ?>
+                        <?php $checked = isset($enabledPerms[$key]); ?>
+                        <div class="perm-item-card p-3 d-flex align-items-start justify-content-between gap-3" 
+                             onclick="togglePermSwitch(this, '<?php echo html($key); ?>')">
+                            <div style="min-width: 0;">
+                                <div class="fw-bold text-dark mb-1" style="font-size: 0.92rem;"><?php echo html($meta['title']); ?></div>
+                                <p class="text-muted mb-0" style="font-size: 0.82rem; line-height: 1.4;"><?php echo html($meta['desc']); ?></p>
+                            </div>
+                            <div class="form-check form-switch form-switch-xl pt-1" onclick="event.stopPropagation();">
+                                <input class="form-check-input perm-checkbox <?php echo $groupId; ?>" type="checkbox" name="perms[]" id="perm_<?php echo html($key); ?>" value="<?php echo html($key); ?>" <?php echo $checked ? 'checked' : ''; ?>>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+}
+
 ob_start();
 ?>
 
@@ -294,47 +349,224 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<div class="card settings-card">
-    <div class="card-body">
-        <form method="post" action="role_permissions.php?role=<?php echo urlencode($roleName); ?>">
-            <?php csrfField(); ?>
-            <input type="hidden" name="do" value="save">
+<style>
+    .perm-item-card {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        user-select: none;
+    }
+    .perm-item-card:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    }
+    .btn-reset-custom {
+        background: transparent;
+        color: #64748b;
+        transition: all 0.2s;
+    }
+    .btn-reset-custom:hover {
+        background: rgba(100, 116, 139, 0.08) !important;
+        color: #1e293b !important;
+    }
+    .btn-save-custom {
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        border: 0;
+        transition: all 0.2s;
+    }
+    .btn-save-custom:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e40af) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37,99,235,0.35);
+    }
+    /* Estilos extras para los switches grandes de Bootstrap */
+    .form-switch.form-switch-xl .form-check-input {
+        width: 2.8em;
+        height: 1.45em;
+        cursor: pointer;
+    }
 
-            <?php foreach ($permissionGroups as $groupTitle => $perms): ?>
-                <div class="mb-3">
-                    <div class="fw-semibold mb-2"><?php echo html($groupTitle); ?></div>
-                    <div class="list-group">
-                        <?php foreach ($perms as $key => $meta): ?>
-                            <?php
-                            $checked = isset($enabledPerms[$key]);
-                            ?>
-                            <label class="list-group-item d-flex gap-2 align-items-start">
-                                <input class="form-check-input mt-1" type="checkbox" name="perms[]" value="<?php echo html($key); ?>" <?php echo $checked ? 'checked' : ''; ?>>
-                                <span>
-                                    <span class="fw-semibold"><?php echo html($meta['title']); ?></span>
-                                    <span class="text-muted"> — <?php echo html($meta['desc']); ?></span>
-                                </span>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
+    /* === MODO OSCURO SOPORTE === */
+    body.dark-mode .card {
+        background: #111111 !important;
+        border: 1px solid #2a2a2a !important;
+    }
+    body.dark-mode .card-header {
+        background: #161616 !important;
+        border-bottom: 1px solid #2a2a2a !important;
+    }
+    body.dark-mode .card-header h2 {
+        color: #e5e5e5 !important;
+    }
+    body.dark-mode .card-header .text-muted {
+        color: #888 !important;
+    }
+    body.dark-mode .perm-item-card {
+        background: #1a1a1a !important;
+        border-color: #2a2a2a !important;
+    }
+    body.dark-mode .perm-item-card:hover {
+        border-color: #404040 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+    }
+    body.dark-mode .perm-item-card .text-dark {
+        color: #e5e5e5 !important;
+    }
+    body.dark-mode .perm-item-card .text-muted {
+        color: #888 !important;
+    }
+    body.dark-mode .btn-reset-custom {
+        color: #888;
+    }
+    body.dark-mode .btn-reset-custom:hover {
+        background: rgba(255, 255, 255, 0.06) !important;
+        color: #e5e5e5 !important;
+    }
+    body.dark-mode .action-bar-container {
+        background: #111111 !important;
+        border-color: #2a2a2a !important;
+    }
+</style>
 
-            <div class="d-flex justify-content-center gap-2 flex-wrap mt-4">
-                <button type="submit" class="btn btn-outline-primary">Guardar cambios</button>
+<div class="p-1">
+    <form method="post" action="role_permissions.php?role=<?php echo urlencode($roleName); ?>">
+        <?php csrfField(); ?>
+        <input type="hidden" name="do" value="save">
+
+        <div class="row g-4">
+            <!-- Columna Izquierda: Tickets -->
+            <div class="col-12 col-xl-6">
+                <?php 
+                if (isset($permissionGroups['Tickets'])) {
+                    renderPermissionGroupCard('Tickets', $permissionGroups['Tickets'], $enabledPerms);
+                }
+                ?>
             </div>
-        </form>
 
-        <div class="d-flex justify-content-center gap-2 flex-wrap mt-2">
-            <form method="post" action="role_permissions.php?role=<?php echo urlencode($roleName); ?>" class="d-inline">
-                <?php csrfField(); ?>
-                <input type="hidden" name="do" value="reset">
-                <button type="submit" class="btn btn-outline-secondary">Restablecer</button>
-            </form>
-            <a href="roles.php" class="btn btn-secondary">Cancelar</a>
+            <!-- Columna Derecha: Tareas + Directorio / Mapa -->
+            <div class="col-12 col-xl-6">
+                <div class="d-flex flex-column">
+                    <?php 
+                    if (isset($permissionGroups['Tareas'])) {
+                        renderPermissionGroupCard('Tareas', $permissionGroups['Tareas'], $enabledPerms);
+                    }
+                    if (isset($permissionGroups['Directorio / Mapa'])) {
+                        renderPermissionGroupCard('Directorio / Mapa', $permissionGroups['Directorio / Mapa'], $enabledPerms);
+                    }
+                    ?>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Barra de acciones -->
+        <div class="d-flex align-items-center justify-content-between gap-3 mt-4 p-4 action-bar-container" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+            <div>
+                <a href="roles.php" class="btn btn-link text-decoration-none text-muted fw-bold px-3 py-2" style="font-size: 0.9rem;"><i class="bi bi-arrow-left me-2"></i> Cancelar y Volver</a>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-reset-custom px-4 py-2 fw-bold" onclick="confirmReset()" style="font-size: 0.9rem;">Restablecer</button>
+                <button type="submit" class="btn btn-primary btn-save-custom px-4 py-2 fw-bold" style="font-size: 0.9rem;">Guardar cambios</button>
+            </div>
+        </div>
+    </form>
 </div>
+
+<form id="resetForm" method="post" action="role_permissions.php?role=<?php echo urlencode($roleName); ?>" style="display: none;">
+    <?php csrfField(); ?>
+    <input type="hidden" name="do" value="reset">
+</form>
+
+<script>
+function togglePermSwitch(card, key) {
+    var checkbox = document.getElementById('perm_' + key);
+    if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+        updateCardStyle(card, checkbox.checked);
+    }
+}
+
+function updateCardStyle(card, isChecked) {
+    var isDarkMode = document.body.classList.contains('dark-mode');
+    if (isChecked) {
+        if (isDarkMode) {
+            card.style.borderColor = '#404040';
+            card.style.background = '#222222';
+            card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.25)';
+        } else {
+            card.style.borderColor = '#93c5fd';
+            card.style.background = '#f8fafc';
+            card.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.03)';
+        }
+    } else {
+        if (isDarkMode) {
+            card.style.borderColor = '#2a2a2a';
+            card.style.background = '#1a1a1a';
+            card.style.boxShadow = 'none';
+        } else {
+            card.style.borderColor = '#e2e8f0';
+            card.style.background = '#fff';
+            card.style.boxShadow = 'none';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Sincronizar estilo inicial de las tarjetas
+    document.querySelectorAll('.perm-item-card').forEach(function(card) {
+        var checkbox = card.querySelector('.perm-checkbox');
+        if (checkbox) {
+            updateCardStyle(card, checkbox.checked);
+            checkbox.addEventListener('change', function() {
+                updateCardStyle(card, checkbox.checked);
+                var classes = checkbox.className.split(' ');
+                var groupClass = classes.find(function(c) { return c.startsWith('group_'); });
+                updateGroupToggler(groupClass);
+            });
+        }
+    });
+
+    // Controladores de "Marcar todos"
+    document.querySelectorAll('.group-toggler-switch').forEach(function(toggler) {
+        var groupClass = toggler.getAttribute('data-group-class');
+        updateGroupToggler(groupClass);
+
+        toggler.addEventListener('change', function() {
+            var checked = this.checked;
+            document.querySelectorAll('.' + groupClass).forEach(function(checkbox) {
+                if (checkbox.checked !== checked) {
+                    checkbox.checked = checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    });
+
+    function updateGroupToggler(groupClass) {
+        if (!groupClass) return;
+        var toggler = document.querySelector('.group-toggler-switch[data-group-class="' + groupClass + '"]');
+        if (!toggler) return;
+        var checkboxes = document.querySelectorAll('.' + groupClass);
+        if (checkboxes.length === 0) return;
+        var allChecked = true;
+        checkboxes.forEach(function(cb) {
+            if (!cb.checked) allChecked = false;
+        });
+        toggler.checked = allChecked;
+    }
+});
+
+function confirmReset() {
+    if (confirm('¿Estás seguro de que deseas restablecer todos los permisos de este rol?')) {
+        document.getElementById('resetForm').submit();
+    }
+}
+</script>
 
 <?php
 $content = ob_get_clean();
