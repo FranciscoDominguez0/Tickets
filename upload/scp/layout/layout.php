@@ -384,6 +384,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Directorio del agente
                                 </a>
                             </li>
+                            <?php
+                            $canViewMap = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('agent.map');
+                            if ($canViewMap):
+                            ?>
                             <li>
                                 <a href="mapa.php" class="sidebar-link <?php echo $currentRoute === 'mapa' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -395,6 +399,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Mapa de agentes
                                 </a>
                             </li>
+                            <?php endif; ?>
                         </ul>
                     </li>
                     <li class="sidebar-group">
@@ -431,6 +436,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Detalles
                                 </a>
                             </li>
+                            <?php
+                            $canViewReports = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('ticket.reports');
+                            if ($canViewReports):
+                            ?>
                             <li>
                                 <a href="reporte_tickets.php" class="sidebar-link <?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -441,8 +450,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Reportes
                                 </a>
                             </li>
+                            <?php endif; ?>
                         </ul>
                     </li>
+                    <?php
+                    $canViewUsers = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('user.view');
+                    $canViewOrgs = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('org.view');
+                    if ($canViewUsers || $canViewOrgs):
+                    ?>
                     <li class="sidebar-group">
                         <?php
                         $isUsersRoute = in_array($currentRoute, ['users', 'orgs']);
@@ -466,6 +481,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             </span>
                         </button>
                         <ul id="users-subnav" class="sidebar-subnav <?php echo $expandUsers ? 'open' : ''; ?>">
+                            <?php if ($canViewUsers): ?>
                             <li>
                                 <a href="users.php" class="sidebar-link <?php echo $currentRoute === 'users' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -478,6 +494,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Directorio usuarios
                                 </a>
                             </li>
+                            <?php endif; ?>
+                            <?php if ($canViewOrgs): ?>
                             <li>
                                 <a href="orgs.php" class="sidebar-link <?php echo $currentRoute === 'orgs' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -489,8 +507,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Organizaciones
                                 </a>
                             </li>
+                            <?php endif; ?>
                         </ul>
                     </li>
+                    <?php endif; ?>
                     <li>
                         <a href="tasks.php" class="sidebar-link <?php echo $currentRoute === 'tasks' ? 'active' : ''; ?>">
                             <span class="icon">
@@ -626,8 +646,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         }
         .scp-custom-notif .n-btn {
             background: #3b82f6;
-            color: white;
-            text-decoration: none;
+            color: white !important;
+            text-decoration: none !important;
             padding: 8px;
             border-radius: 8px;
             text-align: center;
@@ -635,19 +655,22 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             font-size: 0.85rem;
             transition: background 0.2s;
         }
-        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white; }
+        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.success .n-title { color: #22c55e; }
-        .scp-custom-notif.success .n-btn { background: #22c55e; }
-        .scp-custom-notif.success .n-btn:hover { background: #16a34a; }
+        .scp-custom-notif.success .n-btn { background: #22c55e; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.success .n-btn:hover { background: #16a34a; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.warning .n-title { color: #f59e0b; }
-        .scp-custom-notif.warning .n-btn { background: #f59e0b; color: #fff; }
-        .scp-custom-notif.warning .n-btn:hover { background: #d97706; }
+        .scp-custom-notif.warning .n-btn { background: #f59e0b; color: #fff !important; text-decoration: none !important; }
+        .scp-custom-notif.warning .n-btn:hover { background: #d97706; color: #fff !important; text-decoration: none !important; }
         .scp-custom-notif.ticket .n-title { color: #ef4444; }
-        .scp-custom-notif.ticket .n-btn { background: #ef4444; }
-        .scp-custom-notif.ticket .n-btn:hover { background: #dc2626; }
+        .scp-custom-notif.ticket .n-btn { background: #ef4444; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.ticket .n-btn:hover { background: #dc2626; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.info .n-title { color: #3b82f6; }
-        .scp-custom-notif.info .n-btn { background: #3b82f6; }
-        .scp-custom-notif.info .n-btn:hover { background: #2563eb; }
+        .scp-custom-notif.info .n-btn { background: #3b82f6; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.info .n-btn:hover { background: #2563eb; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.proceso .n-title { color: #8b5cf6; }
+        .scp-custom-notif.proceso .n-btn { background: #8b5cf6; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.proceso .n-btn:hover { background: #7c3aed; color: white !important; text-decoration: none !important; }
         .scp-custom-notif .n-close {
             background: none;
             border: none;
@@ -668,6 +691,75 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
+        // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador
+        window.scpNotificationAudio = new Audio('../../publico/audio/notification.mp3');
+        window.scpNotificationAudio.volume = 0.4;
+
+        // Desbloquear el audio en la primera interacción (click, keydown o touch)
+        (function() {
+            var unlock = function() {
+                if (window.scpNotificationAudio) {
+                    window.scpNotificationAudio.play().then(function() {
+                        window.scpNotificationAudio.pause();
+                        window.scpNotificationAudio.currentTime = 0;
+                    }).catch(function(e) {
+                        console.log('Audio unlock failed:', e);
+                    });
+                }
+                document.removeEventListener('click', unlock);
+                document.removeEventListener('keydown', unlock);
+                document.removeEventListener('touchstart', unlock);
+            };
+            document.addEventListener('click', unlock);
+            document.addEventListener('keydown', unlock);
+            document.addEventListener('touchstart', unlock);
+        })();
+
+        window.showNoPermissionAlert = function(action) {
+            var modalEl = document.getElementById('bulkInfoModal');
+            var textEl = document.getElementById('bulkInfoText');
+            if (modalEl && textEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                textEl.textContent = 'No tienes permisos para ' + action + '.';
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            } else {
+                var dynModalEl = document.getElementById('dynamicNoPermModal');
+                if (!dynModalEl) {
+                    dynModalEl = document.createElement('div');
+                    dynModalEl.id = 'dynamicNoPermModal';
+                    dynModalEl.className = 'modal fade';
+                    dynModalEl.tabIndex = -1;
+                    dynModalEl.setAttribute('aria-hidden', 'true');
+                    dynModalEl.innerHTML = 
+                        '<div class="modal-dialog modal-dialog-centered">' +
+                        '  <div class="modal-content" style="border-radius:16px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.3);">' +
+                        '    <div class="modal-header" style="border-bottom:1px solid #f1f5f9;">' +
+                        '      <h5 class="modal-title" style="font-weight:700; color:#0f172a;"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Acción denegada</h5>' +
+                        '      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                        '    </div>' +
+                        '    <div class="modal-body" style="padding:24px; color:#334155; font-size:0.95rem;">' +
+                        '      <span id="dynamicNoPermText"></span>' +
+                        '    </div>' +
+                        '    <div class="modal-footer" style="border-top:none;">' +
+                        '      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px; font-weight:600;">Cerrar</button>' +
+                        '    </div>' +
+                        '  </div>' +
+                        '</div>';
+                    document.body.appendChild(dynModalEl);
+                }
+                var dynTextEl = document.getElementById('dynamicNoPermText');
+                if (dynTextEl) {
+                    dynTextEl.textContent = 'No tienes permisos para ' + action + '. Contacta al administrador para solicitar este permiso.';
+                }
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    var modal = bootstrap.Modal.getOrCreateInstance(dynModalEl);
+                    modal.show();
+                } else {
+                    alert('No tienes permisos para ' + action + '.');
+                }
+            }
+        };
+
         // Botón "Marcar todas como leídas" en notificaciones
         (function(){
             var btn = document.getElementById('scpMarkAllRead');
@@ -834,9 +926,12 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
                     icon = 'bi-check-circle-fill';
                     accent = 'success';
-                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
+                } else if (msgText.includes('camino')) {
                     icon = 'bi-car-front-fill';
                     accent = 'warning';
+                } else if (msgText.includes('proceso')) {
+                    icon = 'bi-gear-fill';
+                    accent = 'proceso';
                 } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
                     icon = 'bi-ticket-detailed-fill';
                     accent = 'ticket';
@@ -875,17 +970,19 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 
                 var msgText = (n.message || '').toLowerCase();
                 var icon = 'bi-info-circle-fill';
-                var accent = 'ticket';
+                var accent = 'info';
                 var title = 'Notificación';
 
                 if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
-                    icon = 'bi-check-circle-fill'; title = 'Completado';
-                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
-                    icon = 'bi-car-front-fill'; title = 'En Camino';
+                    icon = 'bi-check-circle-fill'; title = 'Completado'; accent = 'success';
+                } else if (msgText.includes('camino')) {
+                    icon = 'bi-car-front-fill'; title = 'En Camino'; accent = 'warning';
+                } else if (msgText.includes('proceso')) {
+                    icon = 'bi-gear-fill'; title = 'En Proceso'; accent = 'proceso';
                 } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
-                    icon = 'bi-ticket-detailed-fill'; title = 'Nuevo Ticket';
+                    icon = 'bi-ticket-detailed-fill'; title = 'Nuevo Ticket'; accent = 'ticket';
                 } else if (msgText.includes('respondido') || msgText.includes('mensaje')) {
-                    icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje';
+                    icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje'; accent = 'info';
                 }
 
                 if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
@@ -910,13 +1007,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     } catch(e) {}
                 }
 
-                // Sonido
+                // Sonido usando el audio global previamente desbloqueado
                 try {
-                    var audio = new Audio('<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/audio/notification.mp3'); 
-                    audio.volume = 0.4;
-                    audio.play().catch(function(e){
-                        console.log('Audio play blocked or failed:', e);
-                    });
+                    if (window.scpNotificationAudio) {
+                        window.scpNotificationAudio.currentTime = 0;
+                        window.scpNotificationAudio.play().catch(function(e){
+                            console.log('Audio play blocked or failed:', e);
+                        });
+                    }
                 } catch(e) {}
             }
 

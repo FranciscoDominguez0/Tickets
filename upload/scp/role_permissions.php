@@ -159,6 +159,8 @@ $permissionGroups = [
         'ticket.refer' => ['title' => 'Referido', 'desc' => 'Habilidad para administrar tickets referidos'],
         'ticket.post' => ['title' => 'Publicado', 'desc' => 'Habilidad para realizar una asignación de ticket'],
         'ticket.transfer' => ['title' => 'Transferir', 'desc' => 'Transferir tickets entre departamentos'],
+        'ticket.view_all' => ['title' => 'Ver todo', 'desc' => 'Habilidad para ver todos los tickets (si está desactivado, el agente solo verá los asignados a él)'],
+        'ticket.reports' => ['title' => 'Reportes de tickets', 'desc' => 'Habilidad para acceder a la página de reportes de tickets (reporte_tickets.php)'],
     ],
     'Tareas' => [
         'task.create' => ['title' => 'Crear', 'desc' => 'Crear tareas'],
@@ -166,6 +168,13 @@ $permissionGroups = [
         'task.close' => ['title' => 'Cerrar', 'desc' => 'Cerrar tareas'],
         'task.assign' => ['title' => 'Asignar', 'desc' => 'Asignar tareas'],
         'task.delete' => ['title' => 'Eliminar', 'desc' => 'Eliminar tareas'],
+    ],
+    'Directorio / Mapa' => [
+        'user.view' => ['title' => 'Ver usuarios', 'desc' => 'Habilidad para ver el directorio de usuarios'],
+        'user.manage' => ['title' => 'Gestionar usuarios', 'desc' => 'Habilidad para crear, editar, eliminar y realizar acciones en usuarios'],
+        'org.view' => ['title' => 'Ver organizaciones', 'desc' => 'Habilidad para ver el listado y detalles de organizaciones'],
+        'org.manage' => ['title' => 'Gestionar organizaciones', 'desc' => 'Habilidad para crear, editar y eliminar organizaciones'],
+        'agent.map' => ['title' => 'Ver mapa de agentes', 'desc' => 'Habilidad para acceder al mapa de agentes en tiempo real'],
     ],
 ];
 

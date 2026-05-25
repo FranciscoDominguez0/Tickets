@@ -12,6 +12,16 @@ if (!isset($_SESSION['staff_id'])) {
 requireLogin('agente');
 $staff = getCurrentUser();
 
+$roleName = getCurrentStaffRoleName();
+$canViewReports = in_array($roleName, ['admin', 'supervisor'], true)
+    || roleHasPermission('ticket.reports');
+
+if (!$canViewReports) {
+    $_SESSION['flash_error'] = 'No tienes permiso para ver reportes de tickets.';
+    header('Location: index.php');
+    exit;
+}
+
 $currentRoute = 'reportes';
 $eid = empresaId();
 

@@ -56,6 +56,29 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $stmt->execute();
     $res = $stmt->get_result();
     $ticketView = $res ? $res->fetch_assoc() : null;
+    if ($ticketView) {
+        $canViewAll = roleHasPermission('ticket.view_all');
+        $isAssignedToMe = (int)($ticketView['staff_id'] ?? 0) === (int)($_SESSION['staff_id'] ?? 0);
+        // Allow access if: can view all, is assigned to me, OR has any ticket action permission
+        $canActOnTickets = $canViewAll || $isAssignedToMe
+            || roleHasPermission('ticket.edit')
+            || roleHasPermission('ticket.assign')
+            || roleHasPermission('ticket.reply')
+            || roleHasPermission('ticket.close')
+            || roleHasPermission('ticket.transfer')
+            || roleHasPermission('ticket.post')
+            || roleHasPermission('ticket.merge')
+            || roleHasPermission('ticket.markanswered');
+        if (!$canActOnTickets) {
+            $_SESSION['flash_error'] = 'No tienes permiso para ver este ticket.';
+            header('Location: tickets.php');
+            exit;
+        }
+    } else {
+        $_SESSION['flash_error'] = 'Ticket no encontrado o no pertenece a esta empresa.';
+        header('Location: tickets.php');
+        exit;
+    }
 
 
 
@@ -1252,7 +1275,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 exit;
             }
             if ($ok && $msg && !in_array($action, ['delete', 'merge'], true)) {
-                if ($msg === 'updated' && $isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1) {
+                if ($msg === 'updated' && $isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1 && roleHasPermission('ticket.reports')) {
                     $msg = 'closed_report';
                 }
                 header('Location: tickets.php?id=' . $tid . '&msg=' . $msg);
@@ -1572,7 +1595,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
                         $reply_success = true;
                         $msgFinal = 'reply_sent';
-                        if ($isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1) {
+                        if ($isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1 && roleHasPermission('ticket.reports')) {
                             $msgFinal = 'closed_report';
                         }
                         header('Location: tickets.php?id=' . $tid . '&msg=' . $msgFinal);

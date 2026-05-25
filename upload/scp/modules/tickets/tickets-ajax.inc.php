@@ -64,13 +64,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         exit;
     }
 
+    $canViewAll = roleHasPermission('ticket.view_all');
     $sql = "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
         . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email\n"
         . "FROM tickets t\n"
         . "JOIN users u ON u.id = t.user_id\n"
         . "WHERE t.id = ? AND t.empresa_id = ?";
-    // Si es agente, permitimos ver cualquier ticket de la empresa (consistente con el listado)
-    // Se elimina la restricción de t.staff_id = session.staff_id que causaba el error 404
+    if (!$canViewAll) {
+        $sql .= " AND t.staff_id = ?";
+    }
     $sql .= " LIMIT 1";
 
     $stmt = $mysqli->prepare($sql);
@@ -79,7 +81,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         echo json_encode(['ok' => false, 'error' => 'DB error']);
         exit;
     }
-    $stmt->bind_param('ii', $tid, $eid);
+    if (!$canViewAll) {
+        $stmt->bind_param('iii', $tid, $eid, $_SESSION['staff_id']);
+    } else {
+        $stmt->bind_param('ii', $tid, $eid);
+    }
     $stmt->execute();
     $ticket = $stmt->get_result()->fetch_assoc();
     if (!$ticket) {

@@ -81,7 +81,7 @@ if ($ticketClientSignaturePath !== '') {
 ?>
 
 <div class="ticket-view-wrap">
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'closed_report'): ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'closed_report' && roleHasPermission('ticket.reports')): ?>
         <style>
             @keyframes tvIn {
                 from { opacity: 0; transform: translate(-50%, -16px); }
@@ -354,7 +354,7 @@ if ($ticketClientSignaturePath !== '') {
         <div class="ticket-view-actions">
             <a href="<?php echo html($backUrlFinal); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>>
+                <button class="btn-icon dropdown-toggle <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>" type="button" <?php echo ($canTicketEdit || $canTicketClose) ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'cambiar el estado de este ticket\'); return false;"'; ?> title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" style="<?php echo ($canTicketEdit || $canTicketClose) ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>">
                     <i class="bi bi-flag"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
@@ -397,7 +397,7 @@ if ($ticketClientSignaturePath !== '') {
             </div>
 
             <div class="dropdown d-inline-block">
-                <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="<?php echo $canTicketAssign ? 'Asignar' : 'Sin permiso'; ?>" <?php echo $canTicketAssign ? '' : 'disabled'; ?>>
+                <button class="btn-icon dropdown-toggle <?php echo $canTicketAssign ? '' : 'disabled'; ?>" type="button" <?php echo $canTicketAssign ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'asignar este ticket\'); return false;"'; ?> title="<?php echo $canTicketAssign ? 'Asignar' : 'Sin permiso'; ?>" style="<?php echo $canTicketAssign ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>">
                     <i class="bi bi-person"></i>
                 </button>
                 <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
@@ -447,9 +447,9 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
             </div>
 
-            <?php if ($canTicketTransfer): ?>
-                <button class="btn-icon" title="Transferir" type="button" data-bs-toggle="modal" data-bs-target="#modalTransfer"><i class="bi bi-arrow-left-right"></i></button>
-            <?php endif; ?>
+            <button class="btn-icon <?php echo $canTicketTransfer ? '' : 'disabled'; ?>" style="<?php echo $canTicketTransfer ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" title="Transferir" type="button" <?php echo $canTicketTransfer ? 'data-bs-toggle="modal" data-bs-target="#modalTransfer"' : 'onclick="showNoPermissionAlert(\'transferir este ticket\'); return false;"'; ?>>
+                <i class="bi bi-arrow-left-right"></i>
+            </button>
 
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
 
@@ -460,22 +460,22 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="dropdown-menu dropdown-menu-end creative-dropdown-menu">
                     <div class="creative-dropdown-header">Opciones de Ticket</div>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalOwner"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalOwner"' : 'onclick="showNoPermissionAlert(\'cambiar el propietario de este ticket\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-person-badge"></i></div>
                         <span>Cambiar Propietario</span>
                     </a>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketMerge ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketMerge ? 'data-bs-toggle="modal" data-bs-target="#modalMerge"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item <?php echo $canTicketMerge ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketMerge ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketMerge ? 'data-bs-toggle="modal" data-bs-target="#modalMerge"' : 'onclick="showNoPermissionAlert(\'fusionar tickets\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-link-45deg"></i></div>
                         <span>Unir Tiquetes</span>
                     </a>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketLink ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketLink ? 'data-bs-toggle="modal" data-bs-target="#modalLinked"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item <?php echo $canTicketLink ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketLink ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketLink ? 'data-bs-toggle="modal" data-bs-target="#modalLinked"' : 'onclick="showNoPermissionAlert(\'vincular tickets\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-link"></i></div>
                         <span>Tickets vinculados</span>
                     </a>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" <?php echo $canTicketMark ? '' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" style="<?php echo $canTicketMark ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketMark ? '' : 'onclick="showNoPermissionAlert(\'marcar este ticket como contestado\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-check-circle"></i></div>
                         <span>Marcar como contestados</span>
                     </a>
@@ -492,30 +492,31 @@ if ($ticketClientSignaturePath !== '') {
                         <span>Gestionar formularios</span>
                     </a>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'onclick="showNoPermissionAlert(\'gestionar colaboradores\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-people"></i></div>
                         <span>Gestionar Colaboradores</span>
                     </a>
 
                     <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
                     
-                    <a class="creative-dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'onclick="showNoPermissionAlert(\'bloquear el correo del usuario\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon text-danger" style="background: rgba(239, 68, 68, 0.1);"><i class="bi bi-envelope-x"></i></div>
                         <span>Bloquear Email</span>
                     </a>
                     
-                    <a class="creative-dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'tabindex="-1" aria-disabled="true"'; ?>>
+                    <a class="creative-dropdown-item text-danger <?php echo $canTicketDelete ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketDelete ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketDelete ? 'data-bs-toggle="modal" data-bs-target="#modalDelete"' : 'onclick="showNoPermissionAlert(\'eliminar este ticket\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon text-danger" style="background: rgba(239, 68, 68, 0.1);"><i class="bi bi-trash"></i></div>
                         <span>Borrar Ticket</span>
                     </a>
                 </div>
             </div>
 
-            <?php if ($canTicketClose && empty($t['closed'])): ?>
-                <button type="button" class="btn-icon <?php echo !empty($t['signature_requested']) ? 'text-warning' : ''; ?>" 
-                        title="<?php echo !empty($t['signature_requested']) ? 'Firma ya solicitada' : 'Solicitar firma del cliente'; ?>"
-                        data-bs-toggle="modal" data-bs-target="#modalRequestSignature">
-                    <i class="bi <?php echo !empty($t['signature_requested']) ? 'bi-envelope-check' : 'bi-pen-fill'; ?>"></i>
+            <?php if (empty($t['closed'])): ?>
+                <button type="button" class="btn-icon <?php echo ($canTicketClose && !empty($t['signature_requested'])) ? 'text-warning' : ''; ?> <?php echo $canTicketClose ? '' : 'disabled'; ?>" 
+                        title="<?php echo $canTicketClose ? (!empty($t['signature_requested']) ? 'Firma ya solicitada' : 'Solicitar firma del cliente') : 'Sin permiso'; ?>"
+                        <?php echo $canTicketClose ? 'data-bs-toggle="modal" data-bs-target="#modalRequestSignature"' : 'onclick="showNoPermissionAlert(\'solicitar firma del cliente\'); return false;"'; ?>
+                        style="<?php echo $canTicketClose ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>">
+                    <i class="bi <?php echo ($canTicketClose && !empty($t['signature_requested'])) ? 'bi-envelope-check' : 'bi-pen-fill'; ?>"></i>
                 </button>
             <?php endif; ?>
         </div>
@@ -2382,7 +2383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data && data.success) {
-                var requiresReport = <?php echo (int)($t['requires_report'] ?? 0); ?>;
+                var requiresReport = <?php echo (roleHasPermission('ticket.reports') && (int)($t['requires_report'] ?? 0) === 1) ? 1 : 0; ?>;
                 var finalMsg = 'updated';
                 if (requiresReport === 1) {
                     finalMsg = 'closed_report';

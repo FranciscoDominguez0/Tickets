@@ -1846,6 +1846,11 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     color: #38bdf8;
 }
 
+.scp-notif-icon.proceso {
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+}
+
 .scp-notif-body {
     min-width: 0;
 }

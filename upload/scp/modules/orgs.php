@@ -7,6 +7,32 @@ $action_type = null;
 
 $eid = empresaId();
 
+$roleName = getCurrentStaffRoleName();
+$canViewOrgs = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
+    || roleHasPermission('org.view');
+$canManageOrgs = in_array($roleName, ['admin', 'supervisor'], true)
+    || roleHasPermission('org.manage');
+
+if (!$canViewOrgs) {
+    http_response_code(403);
+    $_SESSION['flash_error'] = 'No tienes permiso para ver organizaciones.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php')
+        : 'index.php';
+    header('Location: ' . $to);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageOrgs) {
+    http_response_code(403);
+    $_SESSION['flash_error'] = 'No tienes permiso para gestionar organizaciones.';
+    $to = function_exists('toAppAbsoluteUrl')
+        ? toAppAbsoluteUrl('upload/scp/index.php?page=orgs')
+        : 'index.php?page=orgs';
+    header('Location: ' . $to);
+    exit;
+}
+
 // Crear tabla de organizaciones si no existe
 $mysqli->query("
     CREATE TABLE IF NOT EXISTS organizations (

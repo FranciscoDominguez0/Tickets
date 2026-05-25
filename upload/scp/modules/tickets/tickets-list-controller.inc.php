@@ -8,10 +8,11 @@ $filters = [
     'all' => ['label' => 'Todos', 'where' => '1=1'],
 ];
 $filterKey = $_GET['filter'] ?? null;
+
 $role = getCurrentStaffRoleName();
 $isAgent = ($role === 'agent');
-$isSupervisor = ($role === 'supervisor');
-if ($filterKey === null && ($isAgent || $isSupervisor)) {
+$canViewAll = roleHasPermission('ticket.view_all');
+if ($filterKey === null && !$canViewAll) {
     $filterKey = 'mine';
 }
 if ($filterKey === null || !isset($filters[$filterKey])) {
@@ -76,28 +77,54 @@ if ($deptFilterAvailable && $selectedDeptId > 0) {
 }
 
 // Contadores rápidos
+$canViewAll = roleHasPermission('ticket.view_all');
+
 $countOpen = 0;
 $countClosed = 0;
 $countUnassigned = 0;
+
 $sqlCo = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NULL';
-// if ($isAgent) $sqlCo .= ' AND staff_id = ' . (int)$_SESSION['staff_id']; // Removido para que el agente vea el total global
+if (!$canViewAll) {
+    $sqlCo .= ' AND staff_id = ?';
+}
 $stmtCo = $mysqli->prepare($sqlCo);
 if ($stmtCo) {
-    $stmtCo->bind_param('i', $eid);
+    if (!$canViewAll) {
+        $stmtCo->bind_param('ii', $eid, $_SESSION['staff_id']);
+    } else {
+        $stmtCo->bind_param('i', $eid);
+    }
     if ($stmtCo->execute()) $countOpen = (int)($stmtCo->get_result()->fetch_assoc()['c'] ?? 0);
 }
+
 $sqlCc = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND closed IS NOT NULL';
-// if ($isAgent) $sqlCc .= ' AND staff_id = ' . (int)$_SESSION['staff_id']; // Removido para que el agente vea el total global
+if (!$canViewAll) {
+    $sqlCc .= ' AND staff_id = ?';
+}
 $stmtCc = $mysqli->prepare($sqlCc);
 if ($stmtCc) {
-    $stmtCc->bind_param('i', $eid);
+    if (!$canViewAll) {
+        $stmtCc->bind_param('ii', $eid, $_SESSION['staff_id']);
+    } else {
+        $stmtCc->bind_param('i', $eid);
+    }
     if ($stmtCc->execute()) $countClosed = (int)($stmtCc->get_result()->fetch_assoc()['c'] ?? 0);
 }
-$stmtCu = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL');
+
+$sqlCu = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL';
+if (!$canViewAll) {
+    $sqlCu .= ' AND staff_id = ?';
+}
+$stmtCu = $mysqli->prepare($sqlCu);
 if ($stmtCu) {
-    $stmtCu->bind_param('i', $eid);
+    if (!$canViewAll) {
+        $stmtCu->bind_param('ii', $eid, $_SESSION['staff_id']);
+    } else {
+        $stmtCu->bind_param('i', $eid);
+    }
     if ($stmtCu->execute()) $countUnassigned = (int)($stmtCu->get_result()->fetch_assoc()['c'] ?? 0);
 }
+
 if (!empty($_SESSION['staff_id'])) {
     $sid = (int) $_SESSION['staff_id'];
     $stmtCm = $mysqli->prepare('SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id = ? AND closed IS NULL');
@@ -114,10 +141,19 @@ $params = [];
 $whereClauses[] = 't.empresa_id = ?';
 $types .= 'i';
 $params[] = $eid;
-if ($filterKey === 'mine') {
+
+if (!$canViewAll) {
     $whereClauses[] = 't.staff_id = ?';
     $types .= 'i';
     $params[] = (int) ($_SESSION['staff_id'] ?? 0);
+}
+
+if ($filterKey === 'mine') {
+    if ($canViewAll) {
+        $whereClauses[] = 't.staff_id = ?';
+        $types .= 'i';
+        $params[] = (int) ($_SESSION['staff_id'] ?? 0);
+    }
 } elseif ($filterKey !== 'all') {
     $whereClauses[] = $filters[$filterKey]['where'];
 }

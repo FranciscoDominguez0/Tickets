@@ -1,5 +1,2 @@
-
-ALTER TABLE organizations ADD COLUMN phone_ext VARCHAR(20) DEFAULT NULL AFTER phone;
-
-ALTER TABLE staff ADD COLUMN dark_mode TINYINT(1) DEFAULT 0 AFTER signature;
-
+ALTER TABLE `staff` 
+MODIFY COLUMN `role` VARCHAR(100) COLLATE utf8mb4_unicode_ci DEFAULT 'agent';

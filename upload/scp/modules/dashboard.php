@@ -13,6 +13,8 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
 }
 
 $eid = empresaId();
+$canViewAll = roleHasPermission('ticket.view_all');
+$currentStaffId = (int)($_SESSION['staff_id'] ?? 0);
 
 // Calcular fechas según el período
 $endDate = new DateTime('today');
@@ -266,19 +268,29 @@ $sqlCreated = "
     SELECT DATE(created) AS day, COUNT(*) AS total
     FROM tickets
     WHERE empresa_id = ? AND DATE(created) BETWEEN ? AND ?
+";
+if (!$canViewAll) {
+    $sqlCreated .= " AND staff_id = ?";
+}
+$sqlCreated .= "
     GROUP BY DATE(created)
     ORDER BY DATE(created)
 ";
 $stmt = $mysqli->prepare($sqlCreated);
 if (!$stmt) {
     error_log("Error preparing created query: " . $mysqli->error);
-}
-$stmt->bind_param('iss', $eid, $start, $end);
-$stmt->execute();
-$createdResult = $stmt->get_result();
-$createdByDay = [];
-while ($row = $createdResult->fetch_assoc()) {
-    $createdByDay[$row['day']] = (int) $row['total'];
+} else {
+    if (!$canViewAll) {
+        $stmt->bind_param('issi', $eid, $start, $end, $currentStaffId);
+    } else {
+        $stmt->bind_param('iss', $eid, $start, $end);
+    }
+    $stmt->execute();
+    $createdResult = $stmt->get_result();
+    $createdByDay = [];
+    while ($row = $createdResult->fetch_assoc()) {
+        $createdByDay[$row['day']] = (int) $row['total'];
+    }
 }
 // Debug: verificar datos obtenidos
 error_log("Created tickets by day: " . print_r($createdByDay, true));
@@ -298,6 +310,11 @@ $sqlClosed = "
     WHERE empresa_id = ? AND DATE(closed) BETWEEN ? AND ?
     AND status_id = ?
     AND closed IS NOT NULL
+";
+if (!$canViewAll) {
+    $sqlClosed .= " AND staff_id = ?";
+}
+$sqlClosed .= "
     GROUP BY DATE(closed)
     ORDER BY DATE(closed)
 ";
@@ -305,7 +322,11 @@ $stmt = $mysqli->prepare($sqlClosed);
 if (!$stmt) {
     error_log("Error preparing closed query: " . $mysqli->error);
 } else {
-    $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
+    if (!$canViewAll) {
+        $stmt->bind_param('issii', $eid, $start, $end, $statusCerradoId, $currentStaffId);
+    } else {
+        $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
+    }
     $stmt->execute();
     $closedResult = $stmt->get_result();
     $closedByDay = [];
@@ -327,6 +348,11 @@ if ($statusCerradoId) {
         AND status_id = ?
         AND closed IS NOT NULL
         AND TIMESTAMPDIFF(MINUTE, closed, updated) BETWEEN 0 AND 60
+    ";
+    if (!$canViewAll) {
+        $sqlDeleted .= " AND staff_id = ?";
+    }
+    $sqlDeleted .= "
         GROUP BY DATE(closed)
         ORDER BY DATE(closed)
     ";
@@ -335,7 +361,11 @@ if ($statusCerradoId) {
         error_log("Error preparing deleted query: " . $mysqli->error);
         $deletedByDay = [];
     } else {
-        $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
+        if (!$canViewAll) {
+            $stmt->bind_param('issii', $eid, $start, $end, $statusCerradoId, $currentStaffId);
+        } else {
+            $stmt->bind_param('issi', $eid, $start, $end, $statusCerradoId);
+        }
         $stmt->execute();
         $deletedResult = $stmt->get_result();
         $deletedByDay = [];
@@ -433,6 +463,11 @@ $sqlStats = "
     LEFT JOIN tickets t ON d.id = t.dept_id 
         AND t.empresa_id = ?
         AND t.created BETWEEN ? AND ?
+";
+if (!$canViewAll) {
+    $sqlStats .= " AND t.staff_id = ?";
+}
+$sqlStats .= "
     WHERE d.is_active = 1
     GROUP BY d.id, d.name
     HAVING total_tickets > 0
@@ -440,7 +475,11 @@ $sqlStats = "
 ";
 
 $stmt = $mysqli->prepare($sqlStats);
-$stmt->bind_param('iss', $eid, $start, $end);
+if (!$canViewAll) {
+    $stmt->bind_param('issi', $eid, $start, $end, $currentStaffId);
+} else {
+    $stmt->bind_param('iss', $eid, $start, $end);
+}
 $stmt->execute();
 $statsResult = $stmt->get_result();
 $deptStats = [];
@@ -505,11 +544,20 @@ if ($topicsTable && $topicsKeyColumn) {
       AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
     FROM $topicsTable ht
     LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
+";
+    if (!$canViewAll) {
+        $sqlTopics .= " AND t.staff_id = ?";
+    }
+    $sqlTopics .= "
     GROUP BY ht.$topicsIdColumn, ht.$topicsNameColumn
     HAVING total_tickets > 0
     ORDER BY ht.$topicsNameColumn";
     $stmt = $mysqli->prepare($sqlTopics);
-    $stmt->bind_param('iss', $eid, $start, $end);
+    if (!$canViewAll) {
+        $stmt->bind_param('issi', $eid, $start, $end, $currentStaffId);
+    } else {
+        $stmt->bind_param('iss', $eid, $start, $end);
+    }
     $stmt->execute();
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
@@ -532,12 +580,21 @@ $sqlAgents = "SELECT
 FROM staff s
 LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
 WHERE s.is_active = 1 AND s.empresa_id = ?
+";
+if (!$canViewAll) {
+    $sqlAgents .= " AND s.id = ?";
+}
+$sqlAgents .= "
 GROUP BY s.id, s.firstname, s.lastname
 HAVING total_tickets > 0
 ORDER BY s.firstname, s.lastname";
 
 $stmt = $mysqli->prepare($sqlAgents);
-$stmt->bind_param('issi', $eid, $start, $end, $eid);
+if (!$canViewAll) {
+    $stmt->bind_param('issii', $eid, $start, $end, $eid, $currentStaffId);
+} else {
+    $stmt->bind_param('issi', $eid, $start, $end, $eid);
+}
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {

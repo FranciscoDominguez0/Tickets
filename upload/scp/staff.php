@@ -75,6 +75,18 @@ $ensureRolesTable = function () use ($mysqli) {
 
 $ensureRolesTable();
 
+if (isset($mysqli) && $mysqli) {
+    try {
+        $resCol = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'role'");
+        if ($resCol && $resCol->num_rows > 0) {
+            $colData = $resCol->fetch_assoc();
+            if (stripos((string)($colData['Type'] ?? ''), 'enum') !== false) {
+                $mysqli->query("ALTER TABLE staff MODIFY COLUMN role VARCHAR(100) COLLATE utf8mb4_unicode_ci DEFAULT 'agent'");
+            }
+        }
+    } catch (Throwable $e) {}
+}
+
 $rolesHasEmpresaId = false;
 if (isset($mysqli) && $mysqli) {
     try {

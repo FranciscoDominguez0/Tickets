@@ -12,6 +12,16 @@ requireLogin('agente');
 $staff = getCurrentUser();
 $currentRoute = 'mapa';
 
+$roleName = getCurrentStaffRoleName();
+$canViewMap = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
+    || roleHasPermission('agent.map');
+
+if (!$canViewMap) {
+    $_SESSION['flash_error'] = 'No tienes permiso para ver el mapa de agentes.';
+    header('Location: index.php');
+    exit;
+}
+
 // El contenido del mapa
 ob_start();
 require __DIR__ . '/modules/mapa-view.inc.php';

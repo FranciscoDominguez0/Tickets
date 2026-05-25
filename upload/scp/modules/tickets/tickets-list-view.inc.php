@@ -75,7 +75,7 @@
             </div>
             <div class="bulk-actions">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-bulk" title="<?php echo $canBulkAssign ? 'Asignar a...' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? 'data-bs-toggle="dropdown"' : 'disabled'; ?>>
+                    <button type="button" class="btn btn-bulk <?php echo $canBulkAssign ? '' : 'disabled'; ?>" style="<?php echo $canBulkAssign ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" title="<?php echo $canBulkAssign ? 'Asignar a...' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'asignar tickets de forma masiva\'); return false;"'; ?>>
                         <i class="bi bi-person-fill"></i> Asignar
                     </button>
                     <ul class="dropdown-menu" id="bulkAssignMenu">
@@ -90,7 +90,7 @@
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn btn-bulk" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar estado' : 'Cambiar estado a...'; ?>" <?php echo $bulkStatusLocked ? 'disabled' : 'data-bs-toggle="dropdown"'; ?>>
+                    <button type="button" class="btn btn-bulk <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>" style="<?php echo $bulkStatusLocked ? 'pointer-events: auto; cursor: not-allowed;' : ''; ?>" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar estado' : 'Cambiar estado a...'; ?>" <?php echo $bulkStatusLocked ? 'onclick="showNoPermissionAlert(\'cambiar el estado de los tickets de forma masiva\'); return false;"' : 'data-bs-toggle="dropdown"'; ?>>
                         <i class="bi bi-flag-fill"></i> Estado
                     </button>
                     <ul class="dropdown-menu">
@@ -100,7 +100,7 @@
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-bulk btn-bulk-danger" data-action="tickets-bulk-delete" title="<?php echo $bulkDeleteTitle; ?>" <?php echo $canBulkDeleteOrRequest ? '' : 'disabled'; ?>>
+                <button type="button" class="btn btn-bulk btn-bulk-danger <?php echo $canBulkDeleteOrRequest ? '' : 'disabled'; ?>" style="<?php echo $canBulkDeleteOrRequest ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canBulkDeleteOrRequest ? 'data-action="tickets-bulk-delete"' : 'onclick="showNoPermissionAlert(\'eliminar o solicitar borrado masivo de tickets\'); return false;"'; ?> title="<?php echo $bulkDeleteTitle; ?>">
                     <i class="bi <?php echo $bulkDeleteIcon; ?>"></i> <?php echo $bulkDeleteText; ?>
                 </button>
             </div>

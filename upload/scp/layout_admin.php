@@ -76,18 +76,38 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         .scp-custom-notif.active { right: 20px; }
         .scp-custom-notif .n-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
         .scp-custom-notif .n-title { font-weight: 700; font-size: 0.9rem; color: #60a5fa; display: flex; align-items: center; gap: 8px; }
+        .scp-custom-notif .n-msg {
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .scp-custom-notif .n-btn {
+            background: #3b82f6;
+            color: white !important;
+            text-decoration: none !important;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .scp-custom-notif .n-btn:hover { background: #2563eb; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.success .n-title { color: #22c55e; }
-        .scp-custom-notif.success .n-btn { background: #22c55e; }
-        .scp-custom-notif.success .n-btn:hover { background: #16a34a; }
+        .scp-custom-notif.success .n-btn { background: #22c55e; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.success .n-btn:hover { background: #16a34a; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.warning .n-title { color: #f59e0b; }
-        .scp-custom-notif.warning .n-btn { background: #f59e0b; color: #fff; }
-        .scp-custom-notif.warning .n-btn:hover { background: #d97706; }
+        .scp-custom-notif.warning .n-btn { background: #f59e0b; color: #fff !important; text-decoration: none !important; }
+        .scp-custom-notif.warning .n-btn:hover { background: #d97706; color: #fff !important; text-decoration: none !important; }
         .scp-custom-notif.ticket .n-title { color: #ef4444; }
-        .scp-custom-notif.ticket .n-btn { background: #ef4444; }
-        .scp-custom-notif.ticket .n-btn:hover { background: #dc2626; }
+        .scp-custom-notif.ticket .n-btn { background: #ef4444; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.ticket .n-btn:hover { background: #dc2626; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.info .n-title { color: #3b82f6; }
-        .scp-custom-notif.info .n-btn { background: #3b82f6; }
-        .scp-custom-notif.info .n-btn:hover { background: #2563eb; }
+        .scp-custom-notif.info .n-btn { background: #3b82f6; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.info .n-btn:hover { background: #2563eb; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.proceso .n-title { color: #8b5cf6; }
+        .scp-custom-notif.proceso .n-btn { background: #8b5cf6; color: white !important; text-decoration: none !important; }
+        .scp-custom-notif.proceso .n-btn:hover { background: #7c3aed; color: white !important; text-decoration: none !important; }
         .scp-custom-notif .n-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 4px; }
     </style>
 </head>
@@ -476,6 +496,30 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
+        // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador
+        window.scpNotificationAudio = new Audio('../../publico/audio/notification.mp3');
+        window.scpNotificationAudio.volume = 0.4;
+
+        // Desbloquear el audio en la primera interacción (click, keydown o touch)
+        (function() {
+            var unlock = function() {
+                if (window.scpNotificationAudio) {
+                    window.scpNotificationAudio.play().then(function() {
+                        window.scpNotificationAudio.pause();
+                        window.scpNotificationAudio.currentTime = 0;
+                    }).catch(function(e) {
+                        console.log('Audio unlock failed:', e);
+                    });
+                }
+                document.removeEventListener('click', unlock);
+                document.removeEventListener('keydown', unlock);
+                document.removeEventListener('touchstart', unlock);
+            };
+            document.addEventListener('click', unlock);
+            document.addEventListener('keydown', unlock);
+            document.addEventListener('touchstart', unlock);
+        })();
+
         // Botón "Marcar todas como leídas" en notificaciones
         (function(){
             var btn = document.getElementById('scpMarkAllRead');
@@ -648,9 +692,12 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
                     icon = 'bi-check-circle-fill';
                     accent = 'success';
-                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
+                } else if (msgText.includes('camino')) {
                     icon = 'bi-car-front-fill';
                     accent = 'warning';
+                } else if (msgText.includes('proceso')) {
+                    icon = 'bi-gear-fill';
+                    accent = 'proceso';
                 } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
                     icon = 'bi-ticket-detailed-fill';
                     accent = 'ticket';
@@ -690,17 +737,19 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 
                 var msgText = (n.message || '').toLowerCase();
                 var icon = 'bi-info-circle-fill';
-                var accent = 'ticket';
+                var accent = 'info';
                 var title = 'Notificación';
 
                 if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
-                    icon = 'bi-check-circle-fill'; title = 'Completado';
-                } else if (msgText.includes('camino') || msgText.includes('proceso')) {
-                    icon = 'bi-car-front-fill'; title = 'En Camino';
+                    icon = 'bi-check-circle-fill'; title = 'Completado'; accent = 'success';
+                } else if (msgText.includes('camino')) {
+                    icon = 'bi-car-front-fill'; title = 'En Camino'; accent = 'warning';
+                } else if (msgText.includes('proceso')) {
+                    icon = 'bi-gear-fill'; title = 'En Proceso'; accent = 'proceso';
                 } else if (msgText.includes('creado') || msgText.includes('nuevo') || msgText.includes('asignado')) {
-                    icon = 'bi-ticket-detailed-fill'; title = 'Nuevo Ticket';
+                    icon = 'bi-ticket-detailed-fill'; title = 'Nuevo Ticket'; accent = 'ticket';
                 } else if (msgText.includes('respondido') || msgText.includes('mensaje')) {
-                    icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje';
+                    icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje'; accent = 'info';
                 }
 
                 if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
@@ -717,10 +766,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     });
                 }
 
+                // Sonido usando el audio global previamente desbloqueado
                 try {
-                    var audio = new Audio('<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/audio/notification.mp3');
-                    audio.volume = 0.4;
-                    audio.play().catch(function(e){ console.log('Audio blocked', e); });
+                    if (window.scpNotificationAudio) {
+                        window.scpNotificationAudio.currentTime = 0;
+                        window.scpNotificationAudio.play().catch(function(e){
+                            console.log('Audio play blocked or failed:', e);
+                        });
+                    }
                 } catch(e) {}
             }
 

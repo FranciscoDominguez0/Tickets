@@ -14,11 +14,9 @@ if (!isset($_SESSION['staff_id'])) {
 
 $roleName = getCurrentStaffRoleName();
 $canViewUsers = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
-    || roleHasAnyPermissionPrefix('user.')
-    || roleHasAnyPermissionPrefix('users.');
+    || roleHasPermission('user.view');
 $canManageUsers = in_array($roleName, ['admin', 'supervisor'], true)
-    || roleHasAnyPermissionPrefix('user.')
-    || roleHasAnyPermissionPrefix('users.');
+    || roleHasPermission('user.manage');
 
 if (!$canViewUsers) {
     http_response_code(403);
