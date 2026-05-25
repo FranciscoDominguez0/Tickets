@@ -141,13 +141,21 @@ try {
 } catch (Throwable $e) {
 }
 
-// Auto-close: after 24h in Resolved, move to Closed
+// Auto-close: (DESHABILITADO por solicitud del usuario para que todo el cierre sea manual)
+/*
 try {
     if (isset($mysqli) && $mysqli && $statusIdResolved > 0 && $statusIdClosed > 0) {
+        $hasSigReqCol = false;
+        try {
+            $hasSigReqCol = dbColumnExists('tickets', 'signature_requested');
+        } catch (Throwable $e) {}
+
+        $extraWhere = $hasSigReqCol ? ' AND (signature_requested IS NULL OR signature_requested = 0)' : '';
+
         $stmtAutoClose = $mysqli->prepare(
             'UPDATE tickets '
             . 'SET status_id = ?, closed = NOW(), updated = NOW() '
-            . 'WHERE empresa_id = ? AND status_id = ? AND (closed IS NULL) AND updated <= (NOW() - INTERVAL 1 DAY)'
+            . 'WHERE empresa_id = ? AND status_id = ? AND (closed IS NULL)' . $extraWhere . ' AND updated <= (NOW() - INTERVAL 1 DAY)'
         );
         if ($stmtAutoClose) {
             $stmtAutoClose->bind_param('iii', $statusIdClosed, $eid, $statusIdResolved);
@@ -156,6 +164,7 @@ try {
     }
 } catch (Throwable $e) {
 }
+*/
 
 $threadsHasEmpresa = false;
 $entriesHasEmpresa = false;
