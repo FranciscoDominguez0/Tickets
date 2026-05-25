@@ -310,24 +310,23 @@ ob_start();
         </div>
     </div>
     <?php if ($totalPages > 1): ?>
-    <div class="card-footer bg-white py-3 border-top" style="border-top: 1px solid #f1f5f9 !important;">
+    <div class="card-footer py-3">
         <nav aria-label="Page navigation">
             <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
                 <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page - 1; ?>" style="background: #f8fafc; color: #64748b;">
+                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page - 1; ?>">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                     <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                        <a class="page-link border-0 rounded-3 fw-bold" href="?p=<?php echo $i; ?>" 
-                           style="<?php echo ($i == $page) ? 'background: #2563eb; color: white;' : 'background: #f8fafc; color: #64748b;'; ?>">
+                        <a class="page-link border-0 rounded-3 fw-bold" href="?p=<?php echo $i; ?>">
                             <?php echo $i; ?>
                         </a>
                     </li>
                 <?php endfor; ?>
                 <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
-                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page + 1; ?>" style="background: #f8fafc; color: #64748b;">
+                    <a class="page-link border-0 rounded-3" href="?p=<?php echo $page + 1; ?>">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
@@ -670,14 +669,27 @@ body.dark-mode .table td a .fw-bold {
     color: #3b82f6;
 }
 
-.pagination .page-link {
+.card-footer {
     background: var(--del-card-bg) !important;
+    border-top: 1px solid var(--del-card-border) !important;
+}
+.pagination .page-link {
+    background: var(--del-bg-main) !important;
     color: var(--del-text-muted) !important;
-    border-color: var(--del-card-border) !important;
+    border: none !important;
+    transition: all 0.2s ease;
+}
+.pagination .page-link:hover {
+    background: var(--del-row-hover) !important;
+    color: var(--del-text-main) !important;
 }
 .pagination .page-item.active .page-link {
     background: #2563eb !important;
     color: #ffffff !important;
+}
+.pagination .page-item.disabled .page-link {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* ── Modal Dark Mode ── */
