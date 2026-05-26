@@ -20,15 +20,31 @@ if (isset($mysqli) && $mysqli) {
     ensureNotificationRecipientsTable();
 }
 
-// Candidatos de destinatarios (agentes/admins activos con email válido)
+// Detectar si staff tiene empresa_id (necesario para filtrar candidatos)
+$staffHasEmpresaId = false;
+if (isset($mysqli) && $mysqli) {
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresaId = ($res && $res->num_rows > 0);
+    } catch (Throwable $e) {
+        $staffHasEmpresaId = false;
+    }
+}
+
+// Candidatos de destinatarios (staff activos con email válido, filtrados por empresa)
 $notificationCandidates = [];
 if (isset($mysqli) && $mysqli) {
-    $sqlCandidates = 'SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1';
-    if (true) /* empresa_id se filtra más abajo */ $sqlCandidates .= ' AND role IN (\'agent\',\'admin\')';
+    $sqlCandidates = "SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1";
+    if ($staffHasEmpresaId) {
+        $sqlCandidates .= ' AND empresa_id = ?';
+    }
     $sqlCandidates .= ' ORDER BY firstname ASC, lastname ASC, email ASC';
 
     $stmtC = $mysqli->prepare($sqlCandidates);
     if ($stmtC) {
+        if ($staffHasEmpresaId) {
+            $stmtC->bind_param('i', $eid);
+        }
         if ($stmtC->execute()) {
             $rsC = $stmtC->get_result();
             while ($rsC && ($r = $rsC->fetch_assoc())) {
@@ -55,15 +71,7 @@ if (isset($mysqli) && $mysqli && ensureNotificationRecipientsTable()) {
         }
     }
 }
-$staffHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $staffHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $staffHasEmpresaId = false;
-    }
-}
+// $staffHasEmpresaId ya se detectó arriba
 
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
@@ -126,7 +134,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($ticketArr as $sid => $val) { if (is_numeric($sid)) $staffIds[(int)$sid] = true; }
         foreach ($taskArr  as $sid => $val) { if (is_numeric($sid)) $staffIds[(int)$sid] = true; }
 
-        $resAll = $mysqli->query("SELECT id FROM staff WHERE is_active = 1 AND role IN ('agent','admin') ORDER BY firstname, lastname");
+        $sqlAll = "SELECT id FROM staff WHERE is_active = 1";
+        if ($staffHasEmpresaId) {
+            $sqlAll .= ' AND empresa_id = ' . (int)$eid;
+        }
+        $sqlAll .= ' ORDER BY firstname, lastname';
+        $resAll = $mysqli->query($sqlAll);
         if ($resAll) {
             while ($row = $resAll->fetch_assoc()) {
                 $sid = (int)($row['id'] ?? 0);
@@ -179,9 +192,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Listar agentes + administradores
+// Listar todo el staff activo de la empresa
 $agents = [];
-$sqlStaff = "SELECT id, firstname, lastname, email, role FROM staff WHERE is_active = 1 AND role IN ('agent','admin')";
+$sqlStaff = "SELECT id, firstname, lastname, email, role FROM staff WHERE is_active = 1";
 if ($staffHasEmpresaId) {
     $sqlStaff .= ' AND empresa_id = ' . (int)$eid;
 }

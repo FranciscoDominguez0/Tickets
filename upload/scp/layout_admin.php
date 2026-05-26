@@ -522,10 +522,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         (function() {
             var unlock = function() {
                 if (window.scpNotificationAudio) {
+                    var originalVolume = window.scpNotificationAudio.volume;
+                    window.scpNotificationAudio.volume = 0;
                     window.scpNotificationAudio.play().then(function() {
                         window.scpNotificationAudio.pause();
                         window.scpNotificationAudio.currentTime = 0;
+                        window.scpNotificationAudio.volume = originalVolume;
                     }).catch(function(e) {
+                        window.scpNotificationAudio.volume = originalVolume;
                         console.log('Audio unlock failed:', e);
                     });
                 }
