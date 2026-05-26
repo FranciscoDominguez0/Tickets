@@ -109,6 +109,24 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
         .scp-custom-notif.proceso .n-btn { background: #8b5cf6; color: white !important; text-decoration: none !important; }
         .scp-custom-notif.proceso .n-btn:hover { background: #7c3aed; color: white !important; text-decoration: none !important; }
         .scp-custom-notif .n-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; padding: 0 4px; }
+        
+        /* Fix para evitar que botones y links rojos cambien a azul en hover */
+        .dropdown-item.text-danger:hover, .dropdown-item.text-danger:focus {
+            background-color: #fee2e2 !important;
+            color: #dc2626 !important;
+        }
+        .dark-mode .dropdown-item.text-danger:hover, .dark-mode .dropdown-item.text-danger:focus {
+            background-color: rgba(220, 38, 38, 0.15) !important;
+            color: #ef4444 !important;
+        }
+        .btn-outline-danger:hover {
+            background-color: #dc2626 !important;
+            border-color: #dc2626 !important;
+            color: #ffffff !important;
+        }
+        .btn-link.text-danger:hover {
+            color: #b91c1c !important;
+        }
     </style>
 </head>
 <?php

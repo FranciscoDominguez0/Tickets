@@ -10,6 +10,7 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 requireLogin('agente');
+requireRolePermission('admin.access');
 $staff = getCurrentUser();
 $currentRoute = 'emails';
 $emailTab = 'test';

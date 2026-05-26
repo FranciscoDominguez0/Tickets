@@ -1492,6 +1492,9 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
 
     $subject = trim((string)$subject);
     if ($subject === '') $subject = '(Sin asunto)';
+    if (mb_strlen($subject) > 255) {
+        $subject = mb_substr($subject, 0, 252) . '...';
+    }
 
     $stmt = $mysqli->prepare(
         "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"

@@ -288,7 +288,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 </div>
 
                 <?php $roleName = function_exists('getCurrentStaffRoleName') ? (string)getCurrentStaffRoleName() : (string)($staff['role'] ?? ''); ?>
-                <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
+                <?php if (roleHasPermission('admin.access')): ?>
                     <a href="settings.php?t=pages" class="scp-admin-pill scp-admin-pill-lg d-none d-md-inline-flex">Administrador</a>
                 <?php endif; ?>
                 <div class="dropdown">
@@ -313,7 +313,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end scp-profile-menu">
                         <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person"></i>Mi perfil</a></li>
-                        <?php if (in_array($roleName, ['admin', 'supervisor'], true)): ?>
+                        <?php if (roleHasPermission('admin.access')): ?>
                             <li class="d-md-none">
                                 <a class="dropdown-item" href="settings.php?t=pages"><i class="bi bi-gear"></i>Administrador</a>
                             </li>
@@ -535,6 +535,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             Mi perfil
                         </a>
                     </li>
+                    <?php if (roleHasPermission('stats.view')): ?>
                     <li>
                         <a href="statics.php" class="sidebar-link <?php echo $currentRoute === 'statistics' ? 'active' : ''; ?>">
                             <span class="icon">
@@ -548,6 +549,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             Estadísticas
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </div>
 

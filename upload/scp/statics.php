@@ -14,6 +14,7 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 requireLogin('agente');
+requireRolePermission('stats.view');
 $staff = getCurrentUser();
 $currentRoute = 'statistics';
 

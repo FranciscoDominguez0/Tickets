@@ -9,6 +9,7 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 requireLogin('agente');
+requireRolePermission('admin.access');
 $staff = getCurrentUser();
 $currentRoute = 'roles';
 
@@ -169,12 +170,16 @@ $permissionGroups = [
         'task.assign' => ['title' => 'Asignar', 'desc' => 'Asignar tareas'],
         'task.delete' => ['title' => 'Eliminar', 'desc' => 'Eliminar tareas'],
     ],
-    'Directorio / Mapa' => [
+    'Directorio, Mapa y Estadísticas' => [
         'user.view' => ['title' => 'Ver usuarios', 'desc' => 'Habilidad para ver el directorio de usuarios'],
         'user.manage' => ['title' => 'Gestionar usuarios', 'desc' => 'Habilidad para crear, editar, eliminar y realizar acciones en usuarios'],
         'org.view' => ['title' => 'Ver organizaciones', 'desc' => 'Habilidad para ver el listado y detalles de organizaciones'],
         'org.manage' => ['title' => 'Gestionar organizaciones', 'desc' => 'Habilidad para crear, editar y eliminar organizaciones'],
         'agent.map' => ['title' => 'Ver mapa de agentes', 'desc' => 'Habilidad para acceder al mapa de agentes en tiempo real'],
+        'stats.view' => ['title' => 'Ver estadísticas', 'desc' => 'Habilidad para visualizar el panel de estadísticas.'],
+    ],
+    'Administración' => [
+        'admin.access' => ['title' => 'Acceso al Panel de Administración', 'desc' => 'Habilidad para acceder a la configuración, agentes, roles y configuraciones de correo electrónico.'],
     ],
 ];
 
@@ -278,10 +283,14 @@ if (!function_exists('renderPermissionGroupCard')) {
             $icon = 'bi-check2-square';
             $headerColor = '#10b981';
             $bgColor = 'rgba(16, 185, 129, 0.04)';
-        } elseif ($groupTitle === 'Directorio / Mapa') {
+        } elseif ($groupTitle === 'Directorio, Mapa y Estadísticas') {
             $icon = 'bi-compass-fill';
             $headerColor = '#8b5cf6';
             $bgColor = 'rgba(139, 92, 246, 0.04)';
+        } elseif ($groupTitle === 'Administración') {
+            $icon = 'bi-sliders';
+            $headerColor = '#dc2626';
+            $bgColor = 'rgba(220, 38, 38, 0.04)';
         }
         $groupId = 'group_' . preg_replace('/[^a-z0-9]/', '', strtolower($groupTitle));
         ?>
@@ -455,8 +464,11 @@ ob_start();
                     if (isset($permissionGroups['Tareas'])) {
                         renderPermissionGroupCard('Tareas', $permissionGroups['Tareas'], $enabledPerms);
                     }
-                    if (isset($permissionGroups['Directorio / Mapa'])) {
-                        renderPermissionGroupCard('Directorio / Mapa', $permissionGroups['Directorio / Mapa'], $enabledPerms);
+                    if (isset($permissionGroups['Directorio, Mapa y Estadísticas'])) {
+                        renderPermissionGroupCard('Directorio, Mapa y Estadísticas', $permissionGroups['Directorio, Mapa y Estadísticas'], $enabledPerms);
+                    }
+                    if (isset($permissionGroups['Administración'])) {
+                        renderPermissionGroupCard('Administración', $permissionGroups['Administración'], $enabledPerms);
                     }
                     ?>
                 </div>
