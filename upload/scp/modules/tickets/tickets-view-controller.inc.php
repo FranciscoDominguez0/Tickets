@@ -226,6 +226,10 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         }
         $thread_id = (int) $threadRow['id'];
 
+        if ($thread_id > 0 && $sidForSeen > 0 && function_exists('markThreadEntriesReadByStaff')) {
+            markThreadEntriesReadByStaff($mysqli, $thread_id, $sidForSeen, $eid);
+        }
+
         // Descarga de adjuntos
         if (isset($_GET['download']) && is_numeric($_GET['download'])) {
             $aid = (int) $_GET['download'];
@@ -1642,6 +1646,15 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 if (!isset($attachmentsByEntry[$eid])) $attachmentsByEntry[$eid] = [];
                 $attachmentsByEntry[$eid][] = $a;
             }
+        }
+
+        $entryReadMap = [];
+        if (!empty($ticketView['thread_entries']) && function_exists('getThreadEntryReadStatusMap')) {
+            $entryReadMap = getThreadEntryReadStatusMap(
+                $mysqli,
+                array_map(static fn($e) => (int)($e['id'] ?? 0), $ticketView['thread_entries']),
+                $eid
+            );
         }
 
         // Último mensaje y última respuesta (agente)

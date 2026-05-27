@@ -128,30 +128,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Token de seguridad inválido.';
     } else {
         $ticketArr = isset($_POST['email_ticket_assigned']) && is_array($_POST['email_ticket_assigned']) ? $_POST['email_ticket_assigned'] : [];
-        $taskArr   = isset($_POST['email_task_assigned'])  && is_array($_POST['email_task_assigned'])  ? $_POST['email_task_assigned']  : [];
+        $taskArr   = isset($_POST['email_task_assigned']) && is_array($_POST['email_task_assigned']) ? $_POST['email_task_assigned'] : [];
 
-        $staffIds = [];
-        foreach ($ticketArr as $sid => $val) { if (is_numeric($sid)) $staffIds[(int)$sid] = true; }
-        foreach ($taskArr  as $sid => $val) { if (is_numeric($sid)) $staffIds[(int)$sid] = true; }
-
-        $sqlAll = "SELECT id FROM staff WHERE is_active = 1";
+        $sqlAll = 'SELECT id FROM staff WHERE is_active = 1';
         if ($staffHasEmpresaId) {
-            $sqlAll .= ' AND empresa_id = ' . (int)$eid;
+            $sqlAll .= ' AND empresa_id = ?';
         }
         $sqlAll .= ' ORDER BY firstname, lastname';
-        $resAll = $mysqli->query($sqlAll);
-        if ($resAll) {
-            while ($row = $resAll->fetch_assoc()) {
-                $sid = (int)($row['id'] ?? 0);
-                if ($sid > 0) $staffIds[$sid] = true;
+        $stmtAll = $mysqli->prepare($sqlAll);
+        if ($stmtAll) {
+            if ($staffHasEmpresaId) {
+                $stmtAll->bind_param('i', $eid);
             }
-        }
-
-        foreach (array_keys($staffIds) as $sid) {
-            $tEnabled   = isset($ticketArr[$sid]) && (string)$ticketArr[$sid] === '1';
-            $taskEnabled = isset($taskArr[$sid])  && (string)$taskArr[$sid]  === '1';
-            setAppSetting('staff.' . (int)$sid . '.email_ticket_assigned', $tEnabled   ? '1' : '0');
-            setAppSetting('staff.' . (int)$sid . '.email_task_assigned',   $taskEnabled ? '1' : '0');
+            if ($stmtAll->execute()) {
+                $resAll = $stmtAll->get_result();
+                while ($resAll && ($row = $resAll->fetch_assoc())) {
+                    $sid = (int)($row['id'] ?? 0);
+                    if ($sid <= 0) {
+                        continue;
+                    }
+                    $tEnabled = isset($ticketArr[$sid]) && (string)$ticketArr[$sid] === '1';
+                    $taskEnabled = isset($taskArr[$sid]) && (string)$taskArr[$sid] === '1';
+                    setAppSetting('staff.' . $sid . '.email_ticket_assigned', $tEnabled ? '1' : '0');
+                    setAppSetting('staff.' . $sid . '.email_task_assigned', $taskEnabled ? '1' : '0');
+                }
+            }
         }
 
         // Guardar destinatarios de notificación (notification_recipients)
@@ -535,7 +536,8 @@ ob_start();
                                     <tr><td colspan="4" class="text-center text-muted py-4">No hay registros.</td></tr>
                                 <?php endif; ?>
                                 <?php foreach ($agents as $a): ?>
-                                    <tr>
+                                    <?php $agentSid = (int)($a['id'] ?? 0); ?>
+                                    <tr data-staff-id="<?php echo $agentSid; ?>">
                                         <!-- VISTA MÓVIL (Tarjeta Premium) -->
                                         <td class="d-md-none p-0">
                                             <div style="padding: 16px; background: #ffffff;">
@@ -569,8 +571,8 @@ ob_start();
                                                         <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
                                                             <i class="bi bi-ticket-detailed me-2" style="color: #ef4444;"></i>Nuevos Tickets
                                                         </div>
-                                                        <div class="form-check form-switch m-0" style="padding-left: 0;">
-                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                                        <div class="form-check form-switch m-0 notif-switch-mobile" style="padding-left: 0;">
+                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo $agentSid; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
                                                         </div>
                                                     </div>
 
@@ -578,8 +580,8 @@ ob_start();
                                                         <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
                                                             <i class="bi bi-list-check me-2" style="color: #10b981;"></i>Nuevas Tareas
                                                         </div>
-                                                        <div class="form-check form-switch m-0" style="padding-left: 0;">
-                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                                        <div class="form-check form-switch m-0 notif-switch-mobile" style="padding-left: 0;">
+                                                            <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo $agentSid; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -606,13 +608,13 @@ ob_start();
                                         </td>
                                         <td class="d-none d-md-table-cell align-middle" style="color: #64748b; font-weight: 500;"><?php echo html($a['email']); ?></td>
                                         <td class="d-none d-md-table-cell align-middle">
-                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2 notif-switch-desktop">
+                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_ticket_assigned[<?php echo $agentSid; ?>]" value="1" <?php echo $a['ticket'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
                                             </div>
                                         </td>
                                         <td class="d-none d-md-table-cell align-middle">
-                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
-                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo (int)$a['id']; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
+                                            <div class="form-check form-switch m-0 d-flex align-items-center gap-2 notif-switch-desktop">
+                                                <input class="form-check-input ms-0 shadow-sm" type="checkbox" role="switch" name="email_task_assigned[<?php echo $agentSid; ?>]" value="1" <?php echo $a['task'] ? 'checked' : ''; ?> style="width: 2.8em; height: 1.4em; cursor: pointer;">
                                             </div>
                                         </td>
                                     </tr>
@@ -658,6 +660,25 @@ ob_start();
     border-color: #ef4444 !important;
 }
 </style>
+
+<script>
+(function () {
+    function syncStaffNotifInputs() {
+        var isDesktop = window.matchMedia('(min-width: 768px)').matches;
+        document.querySelectorAll('.notif-switch-mobile input[type="checkbox"]').forEach(function (el) {
+            el.disabled = isDesktop;
+        });
+        document.querySelectorAll('.notif-switch-desktop input[type="checkbox"]').forEach(function (el) {
+            el.disabled = !isDesktop;
+        });
+    }
+    syncStaffNotifInputs();
+    window.addEventListener('resize', syncStaffNotifInputs);
+    document.querySelectorAll('form[action*="notifications_admin"]').forEach(function (form) {
+        form.addEventListener('submit', syncStaffNotifInputs);
+    });
+})();
+</script>
 
 <?php
 $content = ob_get_clean();

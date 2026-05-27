@@ -737,6 +737,152 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300) {
     return $ok;
 }
 
+/**
+ * Tabla de acuses de lectura por mensaje (estilo WhatsApp).
+ */
+function ensureThreadEntryReadsTable($mysqli): void
+{
+    if (!isset($mysqli) || !$mysqli) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    @$mysqli->query(
+        "CREATE TABLE IF NOT EXISTS thread_entry_reads (\n"
+        . "  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+        . "  empresa_id INT UNSIGNED NOT NULL DEFAULT 1,\n"
+        . "  thread_entry_id INT UNSIGNED NOT NULL,\n"
+        . "  read_by ENUM('user','staff') NOT NULL,\n"
+        . "  reader_id INT UNSIGNED NOT NULL DEFAULT 0,\n"
+        . "  read_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  PRIMARY KEY (id),\n"
+        . "  UNIQUE KEY uk_entry_read (thread_entry_id, read_by, reader_id),\n"
+        . "  KEY idx_empresa (empresa_id),\n"
+        . "  KEY idx_thread_entry (thread_entry_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+    unset($_SESSION['_dbmeta_cache']['tbl:thread_entry_reads']);
+}
+
+/** Marca mensajes del agente como leídos por el cliente. */
+function markThreadEntriesReadByUser($mysqli, int $threadId, int $userId, int $empresaId): void
+{
+    if ($threadId <= 0 || $userId <= 0 || !isset($mysqli) || !$mysqli) {
+        return;
+    }
+    ensureThreadEntryReadsTable($mysqli);
+    if (!dbTableExists('thread_entry_reads')) {
+        return;
+    }
+    $hasEmpresaTe = dbColumnExists('thread_entries', 'empresa_id');
+    $sql = "INSERT IGNORE INTO thread_entry_reads (empresa_id, thread_entry_id, read_by, reader_id, read_at)\n"
+        . "SELECT ?, te.id, 'user', ?, NOW()\n"
+        . "FROM thread_entries te\n"
+        . "WHERE te.thread_id = ? AND te.staff_id IS NOT NULL AND COALESCE(te.is_internal, 0) = 0";
+    if ($hasEmpresaTe) {
+        $sql .= " AND te.empresa_id = ?";
+    }
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return;
+    }
+    if ($hasEmpresaTe) {
+        $stmt->bind_param('iiii', $empresaId, $userId, $threadId, $empresaId);
+    } else {
+        $stmt->bind_param('iii', $empresaId, $userId, $threadId);
+    }
+    $stmt->execute();
+}
+
+/** Marca mensajes del cliente como leídos por el agente. */
+function markThreadEntriesReadByStaff($mysqli, int $threadId, int $staffId, int $empresaId): void
+{
+    if ($threadId <= 0 || $staffId <= 0 || !isset($mysqli) || !$mysqli) {
+        return;
+    }
+    ensureThreadEntryReadsTable($mysqli);
+    if (!dbTableExists('thread_entry_reads')) {
+        return;
+    }
+    $hasEmpresaTe = dbColumnExists('thread_entries', 'empresa_id');
+    $sql = "INSERT IGNORE INTO thread_entry_reads (empresa_id, thread_entry_id, read_by, reader_id, read_at)\n"
+        . "SELECT ?, te.id, 'staff', 0, NOW()\n"
+        . "FROM thread_entries te\n"
+        . "WHERE te.thread_id = ? AND te.user_id IS NOT NULL AND COALESCE(te.is_internal, 0) = 0";
+    if ($hasEmpresaTe) {
+        $sql .= " AND te.empresa_id = ?";
+    }
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return;
+    }
+    if ($hasEmpresaTe) {
+        $stmt->bind_param('iii', $empresaId, $threadId, $empresaId);
+    } else {
+        $stmt->bind_param('ii', $empresaId, $threadId);
+    }
+    $stmt->execute();
+}
+
+/**
+ * @return array<int, array{user: bool, staff: bool}>
+ */
+function getThreadEntryReadStatusMap($mysqli, array $entryIds, int $empresaId): array
+{
+    $map = [];
+    $entryIds = array_values(array_unique(array_filter(array_map('intval', $entryIds), static fn($id) => $id > 0)));
+    if (empty($entryIds) || !isset($mysqli) || !$mysqli) {
+        return $map;
+    }
+    ensureThreadEntryReadsTable($mysqli);
+    if (!dbTableExists('thread_entry_reads')) {
+        return $map;
+    }
+    $placeholders = implode(',', array_fill(0, count($entryIds), '?'));
+    $types = str_repeat('i', count($entryIds));
+    $sql = "SELECT thread_entry_id, read_by FROM thread_entry_reads WHERE thread_entry_id IN ($placeholders) AND empresa_id = ?";
+    $types .= 'i';
+    $entryIds[] = $empresaId;
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return $map;
+    }
+    $stmt->bind_param($types, ...$entryIds);
+    if (!$stmt->execute()) {
+        return $map;
+    }
+    $res = $stmt->get_result();
+    while ($res && ($row = $res->fetch_assoc())) {
+        $eid = (int)($row['thread_entry_id'] ?? 0);
+        if ($eid <= 0) {
+            continue;
+        }
+        if (!isset($map[$eid])) {
+            $map[$eid] = ['user' => false, 'staff' => false];
+        }
+        $readBy = (string)($row['read_by'] ?? '');
+        if ($readBy === 'user' || $readBy === 'staff') {
+            $map[$eid][$readBy] = true;
+        }
+    }
+    return $map;
+}
+
+function threadEntryReadReceiptHtml(bool $isRead, bool $iconFirst = true): string
+{
+    $icon = $isRead
+        ? '<i class="bi bi-check2-all" style="color:#34b7f1;font-weight:bold;" title="Leído"></i>'
+        : '<i class="bi bi-check2-all" style="color:#9ca3af;" title="Enviado"></i>';
+    $label = 'Enviado';
+    if ($iconFirst) {
+        return $icon . ' ' . $label;
+    }
+    return $label . ' ' . $icon;
+}
+
 // Validar CSRF
 function validateCSRF() {
     if ($_POST && !Auth::validateCSRF($_POST['csrf_token'] ?? '')) {

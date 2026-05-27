@@ -3,6 +3,7 @@ if (!isset($ticketView) || !is_array($ticketView)) return;
  $t = $ticketView;
 $tid = (int) $t['id'];
 $entries = $t['thread_entries'] ?? [];
+$entryReadMap = (isset($entryReadMap) && is_array($entryReadMap)) ? $entryReadMap : [];
 $countPublic = count(array_filter($entries, function ($e) { return (int)($e['is_internal'] ?? 0) === 0; }));
 
 $isWalkinTicket = (!empty($t['walkin_phone']) || !empty($t['walkin_address']));
@@ -1404,7 +1405,10 @@ if ($ticketClientSignaturePath !== '') {
                             <div class="entry-footer">
                                 <?php if ($isInternal): ?> <span class="badge bg-warning text-dark me-2">Nota interna</span><?php endif; ?>
                                 <?php if ($isStaff): ?>
-                                    <i class="bi bi-check2-all" style="color: #34b7f1; font-weight: bold;"></i> Enviado
+                                    <?php
+                                    $entryReadByUser = !empty($entryReadMap[(int)($e['id'] ?? 0)]['user']);
+                                    echo threadEntryReadReceiptHtml($entryReadByUser, true);
+                                    ?>
                                 <?php endif; ?>
                             </div>
                         </div>

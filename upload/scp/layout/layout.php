@@ -342,8 +342,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 <div class="sidebar-section-title">Principal</div>
                 <ul class="sidebar-nav">
                     <li class="sidebar-group">
-                        <?php 
-                        $isPanelRoute = in_array($currentRoute, ['dashboard','directory','mapa']);
+                        <?php
+                        $canViewDirectory = roleHasPermission('agent.directory');
+                        $isPanelRoute = in_array($currentRoute, ['dashboard', 'mapa'], true)
+                            || ($currentRoute === 'directory' && $canViewDirectory);
                         $expandPanel = ($isPanelRoute && $allowExpandedGroups);
                         ?>
                         <button type="button"
@@ -373,6 +375,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Resumen
                                 </a>
                             </li>
+                            <?php if ($canViewDirectory): ?>
                             <li>
                                 <a href="directory.php" class="sidebar-link <?php echo $currentRoute === 'directory' ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -384,6 +387,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Directorio del agente
                                 </a>
                             </li>
+                            <?php endif; ?>
                             <?php
                             $canViewMap = roleHasPermission('agent.map');
                             if ($canViewMap):

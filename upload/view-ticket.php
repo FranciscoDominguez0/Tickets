@@ -119,6 +119,10 @@ $stmt->execute();
 $threadRow = $stmt->get_result()->fetch_assoc();
 $thread_id = (int)($threadRow['id'] ?? 0);
 
+if ($thread_id > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && function_exists('markThreadEntriesReadByUser')) {
+    markThreadEntriesReadByUser($mysqli, $thread_id, $uid, $eid);
+}
+
 $reply_error = '';
 $replyBodyPrefill = '';
 
@@ -425,11 +429,26 @@ if ($thread_id > 0) {
         $resA = $stmtA->get_result();
         while ($a = $resA->fetch_assoc()) {
             $entryId = (int) ($a['thread_entry_id'] ?? 0);
-            if ($entryId <= 0) continue;
-            if (!isset($attachmentsByEntry[$entryId])) $attachmentsByEntry[$entryId] = [];
+            if ($entryId <= 0) {
+                continue;
+            }
+            if (!isset($attachmentsByEntry[$entryId])) {
+                $attachmentsByEntry[$entryId] = [];
+            }
             $attachmentsByEntry[$entryId][] = $a;
         }
     }
+
+    if (function_exists('getThreadEntryReadStatusMap')) {
+        $entryReadMap = getThreadEntryReadStatusMap(
+            $mysqli,
+            array_map(static fn($e) => (int)($e['id'] ?? 0), $entries),
+            $eid
+        );
+    }
+}
+if (!isset($entryReadMap) || !is_array($entryReadMap)) {
+    $entryReadMap = [];
 }
 
 function humanSize($bytes) {
@@ -1771,7 +1790,10 @@ function humanSize($bytes) {
                                     </div>
                                     <div class="entry-footer text-end">
                                         <?php if (!$isStaff): ?>
-                                            Enviado <i class="bi bi-check2-all" style="color: #34b7f1; font-weight: bold;"></i>
+                                            <?php
+                                            $entryReadByStaff = !empty($entryReadMap[(int)($e['id'] ?? 0)]['staff']);
+                                            echo threadEntryReadReceiptHtml($entryReadByStaff, false);
+                                            ?>
                                         <?php endif; ?>
                                     </div>
                                 </div>

@@ -2,6 +2,10 @@
 // Módulo: Directorio de agentes
 // Muestra lista de agentes con búsqueda, filtros y estadísticas
 
+requireRolePermission('agent.directory', function_exists('toAppAbsoluteUrl')
+    ? toAppAbsoluteUrl('upload/scp/index.php')
+    : 'index.php');
+
 // Parámetros de búsqueda y filtros
 $search = trim($_GET['q'] ?? '');
 $deptFilter = isset($_GET['did']) && is_numeric($_GET['did']) ? (int)$_GET['did'] : 0;
