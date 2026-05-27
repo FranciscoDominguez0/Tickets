@@ -380,12 +380,10 @@ if ($mobileInitials === '') $mobileInitials = 'U';
     </div>
 
     <header class="user-view-header">
-        <h1 class="user-view-title">
-            <a href="users.php?id=<?php echo $uid; ?>" title="Recargar">
-                <i class="bi bi-arrow-clockwise"></i>
-                <?php echo html($viewUserName); ?>
-            </a>
-        </h1>
+        <div class="user-view-header-nav">
+            <a href="users.php" class="uvp-breadcrumb-link"><i class="bi bi-arrow-left"></i> Usuarios</a>
+            <a href="users.php?id=<?php echo $uid; ?>" class="uvp-refresh-link" title="Recargar página"><i class="bi bi-arrow-clockwise"></i></a>
+        </div>
         <div class="user-view-actions">
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser"><i class="bi bi-trash"></i> Eliminar usuario</button>
             <div class="dropdown">
@@ -521,63 +519,81 @@ if ($mobileInitials === '') $mobileInitials = 'U';
     </script>
 
     <div class="user-view-card">
-        <div class="user-view-profile">
-            <div class="user-view-avatar">
-                <i class="bi bi-person-fill"></i>
+        <div class="user-view-profile user-view-profile-premium">
+            <div class="uvp-hero">
+                <div class="user-view-avatar uvp-avatar" aria-hidden="true"><?php echo html($mobileInitials); ?></div>
+                <div class="uvp-hero-info">
+                    <div class="uvp-hero-title-row">
+                        <h2 class="uvp-display-name"><?php echo html($viewUserName); ?></h2>
+                        <span class="user-view-status-badge <?php echo html($statusKey); ?> uvp-hero-badge"><?php echo html($statusLabel); ?></span>
+                    </div>
+                    <p class="uvp-email">
+                        <i class="bi bi-envelope-at" aria-hidden="true"></i>
+                        <a href="mailto:<?php echo html($viewUser['email']); ?>"><?php echo html($viewUser['email']); ?></a>
+                    </p>
+                    <?php if (!empty($viewUser['company'])): ?>
+                        <p class="uvp-hero-org">
+                            <i class="bi bi-building" aria-hidden="true"></i>
+                            <?php echo html($viewUser['company']); ?>
+                        </p>
+                    <?php endif; ?>
+                </div>
+                <div class="uvp-hero-actions">
+                    <button type="button" class="uvp-edit-profile-btn" data-bs-toggle="modal" data-bs-target="#modalEditUser">
+                        <i class="bi bi-pencil-square"></i> Editar perfil
+                    </button>
+                </div>
             </div>
-            <div class="user-view-details">
-                <div class="user-view-detail">
-                    <label>Nombre</label>
-                    <div class="value">
-                        <a href="#"><?php echo html($viewUserName); ?></a>
-                        <a href="javascript:void(0)" class="edit-icon" data-bs-toggle="modal" data-bs-target="#modalEditUser" title="Editar perfil"><i class="bi bi-pencil"></i></a>
+            <div class="uvp-body">
+                <div class="uvp-fields">
+                    <div class="user-view-detail uvp-field">
+                        <label><i class="bi bi-telephone uvp-field-icon" aria-hidden="true"></i> Teléfono</label>
+                        <div class="value">
+                            <?php if (!empty($viewUser['phone'])): ?>
+                                <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" class="uvp-value-link"><?php echo html((string)$viewUser['phone']); ?></a>
+                            <?php else: ?>
+                                <span class="uvp-empty">Sin registrar</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Email</label>
-                    <div class="value"><?php echo html($viewUser['email']); ?></div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Teléfono</label>
-                    <div class="value">
-                        <?php if (!empty($viewUser['phone'])): ?>
-                            <a href="tel:<?php echo html((string)$viewUser['phone']); ?>" style="color:inherit;text-decoration:none;">
-                                <i class="bi bi-telephone me-1"></i><?php echo html((string)$viewUser['phone']); ?>
+                    <div class="user-view-detail uvp-field">
+                        <label><i class="bi bi-geo-alt uvp-field-icon" aria-hidden="true"></i> Dirección</label>
+                        <div class="value"><?php echo html(trim((string)($viewUser['address'] ?? '')) !== '' ? (string)$viewUser['address'] : '—'); ?></div>
+                    </div>
+                    <div class="user-view-detail uvp-field">
+                        <label><i class="bi bi-building uvp-field-icon" aria-hidden="true"></i> Organización</label>
+                        <div class="value uvp-value-actions">
+                            <?php if (!empty($viewUser['company'])): ?>
+                                <span class="uvp-org-name"><?php echo html($viewUser['company']); ?></span>
+                                <a href="#" class="uvp-action-link uvp-action-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">
+                                    <i class="bi bi-x-lg"></i> Remover
+                                </a>
+                            <?php else: ?>
+                                <a href="#" class="uvp-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">
+                                    <i class="bi bi-plus-circle"></i> Asignar organización
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="user-view-detail uvp-field">
+                        <label><i class="bi bi-shield-check uvp-field-icon" aria-hidden="true"></i> Estado</label>
+                        <div class="value uvp-value-actions">
+                            <span class="user-view-status-badge <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
+                            <a href="#" class="uvp-action-link" data-bs-toggle="modal" data-bs-target="#modalUserStatus">
+                                <i class="bi bi-arrow-repeat"></i> Cambiar
                             </a>
-                        <?php else: ?>
-                            <span class="text-muted" style="font-size:0.88rem;">—</span>
-                        <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-                <div class="user-view-detail">
-                    <label>Dirección</label>
-                    <div class="value"><?php echo html($viewUser['address'] ?? '—'); ?></div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Organización</label>
-                    <div class="value">
-                        <?php if (!empty($viewUser['company'])): ?>
-                            <span><?php echo html($viewUser['company']); ?></span>
-                            <a href="#" class="ms-2 text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal"><i class="bi bi-x-circle"></i> Remover</a>
-                        <?php else: ?>
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</a>
-                        <?php endif; ?>
+                <div class="uvp-meta">
+                    <div class="user-view-detail uvp-meta-item">
+                        <label>Creado</label>
+                        <div class="value"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></div>
                     </div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Estado</label>
-                    <div class="value">
-                        <span class="user-view-status-badge <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>
-                        <a href="#" class="ms-2" data-bs-toggle="modal" data-bs-target="#modalUserStatus"><i class="bi bi-pencil-square"></i> Cambiar</a>
+                    <div class="user-view-detail uvp-meta-item">
+                        <label>Actualizado</label>
+                        <div class="value"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></div>
                     </div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Creado</label>
-                    <div class="value"><?php echo $viewUser['created'] ? date('d/m/y h:i A', strtotime($viewUser['created'])) : '—'; ?></div>
-                </div>
-                <div class="user-view-detail">
-                    <label>Actualizado</label>
-                    <div class="value"><?php echo $viewUser['updated'] ? date('d/m/y h:i A', strtotime($viewUser['updated'])) : '—'; ?></div>
                 </div>
             </div>
         </div>
