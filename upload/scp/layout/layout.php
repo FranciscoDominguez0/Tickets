@@ -385,7 +385,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 </a>
                             </li>
                             <?php
-                            $canViewMap = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('agent.map');
+                            $canViewMap = roleHasPermission('agent.map');
                             if ($canViewMap):
                             ?>
                             <li>
@@ -437,7 +437,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 </a>
                             </li>
                             <?php
-                            $canViewReports = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('ticket.reports');
+                            $canViewReports = roleHasPermission('ticket.reports');
                             if ($canViewReports):
                             ?>
                             <li>
@@ -454,8 +454,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         </ul>
                     </li>
                     <?php
-                    $canViewUsers = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('user.view');
-                    $canViewOrgs = in_array($roleName, ['admin', 'supervisor', 'agent'], true) || roleHasPermission('org.view');
+                    $canViewUsers = roleHasPermission('user.view');
+                    $canViewOrgs = roleHasPermission('org.view');
                     if ($canViewUsers || $canViewOrgs):
                     ?>
                     <li class="sidebar-group">
