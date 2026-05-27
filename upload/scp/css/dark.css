@@ -1523,6 +1523,60 @@ body.dark-mode .user-view-tickets-table tbody td a {
     color: #60a5fa !important;
 }
 
+/* Premium ticket table – dark mode */
+body.dark-mode .user-view-tickets-table.uvt-premium thead th {
+    background: linear-gradient(180deg, #18181b, #111113) !important;
+}
+body.dark-mode .user-view-tickets-table.uvt-premium .uvt-row:hover {
+    background: linear-gradient(90deg, rgba(239,68,68,0.04), rgba(59,130,246,0.03)) !important;
+}
+body.dark-mode .user-view-tickets-table.uvt-premium .uvt-row:hover td {
+    border-bottom-color: #3f3f46 !important;
+}
+body.dark-mode .uvt-ticket-number {
+    color: #f87171 !important;
+    background: rgba(239,68,68,0.1) !important;
+}
+body.dark-mode .uvt-row:hover .uvt-ticket-number {
+    background: rgba(239,68,68,0.18) !important;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.15) !important;
+}
+body.dark-mode .uvt-subject-link {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .uvt-row:hover .uvt-subject-link {
+    color: #f87171 !important;
+}
+body.dark-mode .uvt-date-text {
+    color: #71717a !important;
+}
+/* Dark status badges */
+body.dark-mode .uvt-status-open {
+    background: linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.1)) !important;
+    color: #4ade80 !important;
+    border-color: rgba(74,222,128,0.2) !important;
+}
+body.dark-mode .uvt-status-closed {
+    background: linear-gradient(135deg, rgba(161,161,170,0.1), rgba(161,161,170,0.06)) !important;
+    color: #a1a1aa !important;
+    border-color: rgba(161,161,170,0.2) !important;
+}
+body.dark-mode .uvt-status-pending {
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08)) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(251,191,36,0.2) !important;
+}
+body.dark-mode .uvt-status-overdue {
+    background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08)) !important;
+    color: #f87171 !important;
+    border-color: rgba(248,113,113,0.2) !important;
+}
+body.dark-mode .uvt-status-default {
+    background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.08)) !important;
+    color: #a78bfa !important;
+    border-color: rgba(167,139,250,0.2) !important;
+}
+
 /* Mobile overrides for User/Org specific tables */
 @media (max-width: 768px) {
     body.dark-mode .user-view-tickets-table tbody tr {
