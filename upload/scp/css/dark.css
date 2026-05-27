@@ -287,16 +287,36 @@ body.dark-mode .chat-att-download {
 
 /* === OVERVIEW DESKTOP === */
 body.dark-mode .ticket-view-overview-desktop {
-    background: #141414 !important;
+    background: #111113 !important;
 }
-body.dark-mode .ticket-view-overview .field label {
-    color: #555 !important;
+@media (min-width: 768px) {
+    body.dark-mode .ticket-view-overview-desktop .field label {
+        color: #a1a1aa !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field label i {
+        color: #f87171 !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field .value {
+        color: #e4e4e7 !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field .value.title,
+    body.dark-mode .ticket-view-overview-desktop .field .value.title a {
+        color: #fafafa !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .divider {
+        background: linear-gradient(90deg, transparent, #3f3f46, transparent) !important;
+    }
 }
-body.dark-mode .ticket-view-overview .field .value {
-    color: #ddd !important;
-}
-body.dark-mode .ticket-view-overview .divider {
-    background: #222 !important;
+@media (max-width: 767px) {
+    body.dark-mode .ticket-view-overview .field label {
+        color: #71717a !important;
+    }
+    body.dark-mode .ticket-view-overview .field .value {
+        color: #f4f4f5 !important;
+    }
+    body.dark-mode .ticket-view-overview .divider {
+        background: #27272a !important;
+    }
 }
 
 /* === TICKET OVERVIEW MÓVIL === */
@@ -1322,13 +1342,28 @@ body.dark-mode .ticket-view-overview {
 body.dark-mode .ticket-view-overview .field {
     background: transparent !important;
 }
-body.dark-mode .ticket-view-overview .field label,
-body.dark-mode .ticket-view-overview .field .label {
-    color: #555 !important;
+@media (max-width: 767px) {
+    body.dark-mode .ticket-view-overview .field label,
+    body.dark-mode .ticket-view-overview .field .label {
+        color: #71717a !important;
+    }
+    body.dark-mode .ticket-view-overview .field .value,
+    body.dark-mode .ticket-view-overview .field .val {
+        color: #f4f4f5 !important;
+    }
 }
-body.dark-mode .ticket-view-overview .field .value,
-body.dark-mode .ticket-view-overview .field .val {
-    color: #ddd !important;
+@media (min-width: 768px) {
+    body.dark-mode .ticket-view-overview-desktop .field label,
+    body.dark-mode .ticket-view-overview-desktop .field .label {
+        color: #a1a1aa !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field label i {
+        color: #f87171 !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field .value,
+    body.dark-mode .ticket-view-overview-desktop .field .val {
+        color: #e4e4e7 !important;
+    }
 }
 /* Borde entre celdas en desktop */
 body.dark-mode .ticket-view-overview > div {
@@ -2247,13 +2282,7 @@ body.dark-mode .custom-option:has(input:checked) {
     border-color: #2563eb !important;
 }
 
-/* Mobile grid and overview in reports */
-body.dark-mode .ticket-view-overview-desktop label {
-    color: #71717a !important;
-}
-body.dark-mode .ticket-view-overview-desktop .value.title {
-    color: #f4f4f5 !important;
-}
+/* Mobile grid in reports (labels solo móvil; desktop en bloque @media min-width 768 arriba) */
 
 /* Sticky footer fix */
 body.dark-mode .form-footer-sticky {

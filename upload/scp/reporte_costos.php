@@ -442,16 +442,38 @@ body.dark-mode .items-table-wrap .item-desc::placeholder,
 body.dark-mode .items-table-wrap .item-price::placeholder {
     color: #52525b !important;
 }
-/* Card de overview móvil (Depto, Técnico, etc.) */
-body.dark-mode .ticket-view-overview .field {
-    background: #18181b !important;
-    border-color: #27272a !important;
+/* Card de overview móvil (Depto, Técnico, etc.) — solo celular */
+@media (max-width: 767px) {
+    body.dark-mode .ticket-view-overview .field {
+        background: #18181b !important;
+        border-color: #27272a !important;
+    }
+    body.dark-mode .ticket-view-overview .d-md-none label {
+        color: #71717a !important;
+    }
+    body.dark-mode .ticket-view-overview .d-md-none .value,
+    body.dark-mode .ticket-view-overview .d-md-none .val {
+        color: #f4f4f5 !important;
+    }
 }
-body.dark-mode .ticket-view-overview label {
-    color: #71717a !important;
-}
-body.dark-mode .ticket-view-overview .value {
-    color: #f4f4f5 !important;
+/* Overview escritorio (3 columnas) */
+@media (min-width: 768px) {
+    body.dark-mode .ticket-view-overview-desktop .field label {
+        color: #a1a1aa !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field label i {
+        color: #f87171 !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field .value {
+        color: #e4e4e7 !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .field .value.title,
+    body.dark-mode .ticket-view-overview-desktop .field .value.title a {
+        color: #fafafa !important;
+    }
+    body.dark-mode .ticket-view-overview-desktop .divider {
+        background: linear-gradient(90deg, transparent, #3f3f46, transparent) !important;
+    }
 }
 /* Sección usuario móvil */
 body.dark-mode .mobile-user-section {
