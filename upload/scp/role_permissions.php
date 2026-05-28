@@ -161,7 +161,7 @@ $permissionGroups = [
         'ticket.post' => ['title' => 'Publicado', 'desc' => 'Habilidad para realizar una asignación de ticket'],
         'ticket.transfer' => ['title' => 'Transferir', 'desc' => 'Transferir tickets entre departamentos'],
         'ticket.view_all' => ['title' => 'Ver todo', 'desc' => 'Habilidad para ver todos los tickets (si está desactivado, el agente solo verá los asignados a él)'],
-        'ticket.reports' => ['title' => 'Reportes de tickets', 'desc' => 'Habilidad para acceder a la página de reportes de tickets (reporte_tickets.php)'],
+        'ticket.reports' => ['title' => 'Reportes de tickets', 'desc' => 'Habilidad para acceder a la página de reportes de tickets'],
     ],
     'Tareas' => [
         'task.create' => ['title' => 'Crear', 'desc' => 'Crear tareas'],

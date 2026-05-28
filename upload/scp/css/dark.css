@@ -294,7 +294,7 @@ body.dark-mode .ticket-view-overview-desktop {
         color: #a1a1aa !important;
     }
     body.dark-mode .ticket-view-overview-desktop .field label i {
-        color: #f87171 !important;
+        color: #94a3b8 !important;
     }
     body.dark-mode .ticket-view-overview-desktop .field .value {
         color: #e4e4e7 !important;
@@ -329,7 +329,7 @@ body.dark-mode .mobile-user-section {
 }
 body.dark-mode .mobile-avatar {
     background: #1e1e1e !important;
-    color: #ffffff !important;
+    color: #94a3b8 !important;
 }
 body.dark-mode .mobile-user-info .name {
     color: #e5e5e5 !important;
@@ -1358,7 +1358,7 @@ body.dark-mode .ticket-view-overview .field {
         color: #a1a1aa !important;
     }
     body.dark-mode .ticket-view-overview-desktop .field label i {
-        color: #f87171 !important;
+        color: #94a3b8 !important;
     }
     body.dark-mode .ticket-view-overview-desktop .field .value,
     body.dark-mode .ticket-view-overview-desktop .field .val {
@@ -2208,6 +2208,59 @@ body.dark-mode .settings-card .card-header {
 body.dark-mode .settings-card .card-body {
     background: #111113 !important;
     color: #d4d4d8 !important;
+}
+
+/* Icon colors in field labels and other elements */
+body.dark-mode .field label i,
+body.dark-mode .mobile-grid-item label i,
+body.dark-mode .card-header i,
+body.dark-mode .mobile-avatar i,
+body.dark-mode .mobile-user-info .sub i,
+body.dark-mode .settings-card i,
+body.dark-mode .settings-card strong i,
+body.dark-mode h6 i,
+body.dark-mode .alert i,
+body.dark-mode .btn i,
+body.dark-mode .tickets-header i,
+body.dark-mode .ticket-view-overview-desktop .field label i,
+body.dark-mode .ticket-view-overview .field label i,
+body.dark-mode .ticket-view-overview-desktop label i,
+body.dark-mode .ticket-view-overview label i,
+body.dark-mode .ticket-view-overview-desktop .field i,
+body.dark-mode .ticket-view-overview .field i,
+body.dark-mode .d-md-grid .field label i,
+body.dark-mode .d-none.d-md-grid .field label i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .field label i,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi,
+body.dark-mode .ticket-view-overview .field label i.bi,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop label i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .field i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .field label i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop div .field label i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop > div > .field > label > i,
+body.dark-mode .ticket-view-overview-desktop > div > .field > label > i,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-info-circle,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-building,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-calendar-check,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-person,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-bookmark,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-envelope,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-person-check,
+body.dark-mode .ticket-view-overview-desktop .field label i.bi-file-earmark-bar-graph,
+body.dark-mode .ticket-view-overview-desktop .field label i[class*="bi-"],
+body.dark-mode .ticket-view-overview-desktop label i[class*="bi-"],
+body.dark-mode .ticket-view-overview label i[class*="bi-"],
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop label i[class*="bi-"],
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .field label i[class*="bi-"],
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop > div > .field > label > i[class*="bi-"],
+body.dark-mode .ticket-view-overview-desktop > div > .field > label > i[class*="bi-"],
+body.dark-mode .ticket-view-overview-desktop .field label i,
+body.dark-mode .ticket-view-overview-desktop label i,
+body.dark-mode .ticket-view-overview-desktop .field i,
+body.dark-mode .ticket-view-overview-desktop i,
+body.dark-mode .ticket-view-overview i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop i {
+    color: #94a3b8 !important;
 }
 
 /* Alerts refinement */

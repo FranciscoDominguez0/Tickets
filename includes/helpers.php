@@ -1813,16 +1813,17 @@ function roleHasPermission($permKey) {
     $role = getCurrentStaffRoleName();
     if ($role === '') return false;
 
-    // Protected fallback: admin and administrator roles always have full access to prevent accidental lockout
-    // This is a safety mechanism to ensure critical system features remain accessible
-    if ($role === 'admin' || $role === 'administrator') {
+    // Protected fallback: admin and administrator roles always have access to admin.access to prevent accidental lockout
+    // This is a safety mechanism to ensure the admin panel remains accessible
+    if (($role === 'admin' || $role === 'administrator') && $permKey === 'admin.access') {
         return true;
     }
 
     // Centralized admin permission override: admin.access grants access to all admin-related features
-    // Admin-related permissions include: admin.*, user.*, ticket.*, task.*, org.*, stats.*, email.*, helptopic.*, banlist.*, department.*, role.*, staff.*, notification.*, log.*, billing.*, sequence.*, setting.*
+    // Admin-related permissions include: admin.*, user.*, task.*, org.*, email.*, helptopic.*, banlist.*, department.*, role.*, staff.*, notification.*, log.*, billing.*, sequence.*, setting.*
+    // Note: ticket.*, agent.*, and stats.* permissions are NOT auto-granted to allow granular control over these features
     if (roleHasPermissionDirect('admin.access')) {
-        $adminPrefixes = ['admin.', 'user.', 'ticket.', 'task.', 'org.', 'stats.', 'email.', 'helptopic.', 'banlist.', 'department.', 'role.', 'staff.', 'notification.', 'log.', 'billing.', 'sequence.', 'setting.'];
+        $adminPrefixes = ['admin.', 'user.', 'task.', 'org.', 'email.', 'helptopic.', 'banlist.', 'department.', 'role.', 'staff.', 'notification.', 'log.', 'billing.', 'sequence.', 'setting.'];
         foreach ($adminPrefixes as $prefix) {
             if (strpos($permKey, $prefix) === 0) {
                 return true;
