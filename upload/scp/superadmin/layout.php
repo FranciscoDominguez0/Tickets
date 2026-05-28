@@ -95,7 +95,11 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                             </svg>
                         </span>
                         Agentes
-                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        <span class="arrow" aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 5L12 10L7 15" stroke="<?php echo $expandAgents ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
                     </button>
                     <ul id="superadmin-agents-subnav" class="sidebar-subnav <?php echo $expandAgents ? 'open' : ''; ?>">
                         <li>
@@ -118,7 +122,11 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                             </svg>
                         </span>
                         Empresa
-                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        <span class="arrow" aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 5L12 10L7 15" stroke="<?php echo $expandEmpresas ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
                     </button>
                     <ul id="superadmin-empresas-subnav" class="sidebar-subnav <?php echo $expandEmpresas ? 'open' : ''; ?>">
                         <li>
@@ -152,7 +160,11 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                     <button type="button" class="sidebar-toggle <?php echo $expandConfig ? 'active expanded' : ''; ?>" data-subnav="superadmin-config-subnav" aria-controls="superadmin-config-subnav" aria-expanded="<?php echo $expandConfig ? 'true' : 'false'; ?>">
                         <span class="icon"><i class="bi bi-gear"></i></span>
                         Configuración
-                        <span class="arrow" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                        <span class="arrow" aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 5L12 10L7 15" stroke="<?php echo $expandConfig ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
                     </button>
                     <ul id="superadmin-config-subnav" class="sidebar-subnav <?php echo $expandConfig ? 'open' : ''; ?>">
                         <li>
