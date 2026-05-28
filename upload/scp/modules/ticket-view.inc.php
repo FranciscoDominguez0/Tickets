@@ -738,28 +738,27 @@ if ($ticketClientSignaturePath !== '') {
     <div class="modal fade" id="modalDelete" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <?php 
-                $roleName = function_exists('getCurrentStaffRoleName') ? getCurrentStaffRoleName() : ($staff['role'] ?? '');
-                $isAdmin = in_array($roleName, ['admin', 'supervisor'], true);
+                <?php
+                $canDeleteTicket = roleHasPermission('ticket.delete');
                 ?>
                 <form method="post" action="tickets.php?id=<?php echo $tid; ?>">
-                    <input type="hidden" name="action" value="<?php echo $isAdmin ? 'delete' : 'delete_request'; ?>">
+                    <input type="hidden" name="action" value="<?php echo $canDeleteTicket ? 'delete' : 'delete_request'; ?>">
                     <input type="hidden" name="confirm" value="1">
                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                     <div class="modal-header">
-                        <h5 class="modal-title"><?php echo $isAdmin ? 'Borrar Ticket' : 'Solicitar Borrado'; ?></h5>
+                        <h5 class="modal-title"><?php echo $canDeleteTicket ? 'Borrar Ticket' : 'Solicitar Borrado'; ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <?php if (!$isAdmin): ?>
+                        <?php if (!$canDeleteTicket): ?>
                             <div class="alert alert-warning">
                                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                Como agente, tu solicitud debe ser aprobada por un administrador.
+                                Tu solicitud debe ser aprobada por un administrador.
                             </div>
                         <?php else: ?>
                             <p class="text-danger">¿Eliminar este ticket y todo su historial? Esta acción no se puede deshacer.</p>
                         <?php endif; ?>
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Motivo del borrado</label>
                             <textarea name="delete_reason" class="form-control" rows="3" required placeholder="Escribe el motivo aquí..."></textarea>
@@ -767,7 +766,7 @@ if ($ticketClientSignaturePath !== '') {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger"><?php echo $isAdmin ? 'Borrar permanentemente' : 'Enviar Solicitud'; ?></button>
+                        <button type="submit" class="btn btn-danger"><?php echo $canDeleteTicket ? 'Borrar permanentemente' : 'Enviar Solicitud'; ?></button>
                     </div>
                 </form>
             </div>
@@ -955,13 +954,12 @@ if ($ticketClientSignaturePath !== '') {
                 <?php endif; ?>
             </div>
 
-            <?php 
+            <?php
             $bstatus = $t['billing_status'] ?? 'pending';
-            $billingRoleName = function_exists('getCurrentStaffRoleName') ? getCurrentStaffRoleName() : ($staff['role'] ?? '');
-            $isAdminBilling = in_array($billingRoleName, ['admin', 'supervisor'], true);
+            $canConfirmBilling = roleHasPermission('admin.access');
             if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
                 <div class="mobile-header" style="margin-top: 8px;">
-                    <?php if ($isAdminBilling): ?>
+                    <?php if ($canConfirmBilling): ?>
                         <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
                             <i class="bi bi-clock-history"></i> Pendiente Facturación
                         </a>

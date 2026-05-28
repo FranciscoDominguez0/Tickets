@@ -168,13 +168,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         }
     }
 
-    // Acción: Confirmar facturación (solo admin)
+    // Acción: Confirmar facturación
     if ($ticketView && isset($_GET['action']) && $_GET['action'] === 'confirm_billing') {
-        if (getCurrentStaffRoleName() === 'admin') {
+        if (roleHasPermission('admin.access')) {
             $stmtConf = $mysqli->prepare("UPDATE ticket_reports SET billing_status = 'confirmed' WHERE ticket_id = ? AND empresa_id = ?");
             $stmtConf->bind_param('ii', $tid, $eid);
             if ($stmtConf->execute()) {
-                addLog('billing_confirmed', 'Facturación confirmada por admin', 'ticket', $tid, 'staff', (int)($_SESSION['staff_id'] ?? 0));
+                addLog('billing_confirmed', 'Facturación confirmada', 'ticket', $tid, 'staff', (int)($_SESSION['staff_id'] ?? 0));
                 header("Location: tickets.php?id=$tid&msg=billing_confirmed");
                 exit;
             }

@@ -1812,10 +1812,6 @@ function roleHasPermission($permKey) {
 
     $role = getCurrentStaffRoleName();
     if ($role === '') return false;
-    
-    // Fallback de seguridad: El rol 'admin' siempre puede entrar a la administración
-    // para evitar bloqueos del sistema, pero el resto de permisos dependen de la DB.
-    if ($role === 'admin' && $permKey === 'admin.access') return true;
 
     if (!isset($mysqli) || !$mysqli) return false;
     ensureRolePermissionsTable();
@@ -1847,12 +1843,9 @@ function roleHasAnyPermissionPrefix($prefix) {
     global $mysqli;
     $prefix = (string)$prefix;
     if ($prefix === '') return false;
-    
+
     $role = getCurrentStaffRoleName();
     if ($role === '') return false;
-
-    // Fallback de seguridad
-    if ($role === 'admin' && strpos($prefix, 'admin.') === 0) return true;
 
     if (!isset($mysqli) || !$mysqli) return false;
     ensureRolePermissionsTable();

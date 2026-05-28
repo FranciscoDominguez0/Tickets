@@ -31,13 +31,6 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
-$roleName = getCurrentStaffRoleName();
-if (!in_array($roleName, ['admin', 'supervisor'], true)) {
-    http_response_code(403);
-    $_SESSION['flash_error'] = 'No tienes permiso para administrar temas de ayuda.';
-    header('Location: index.php');
-    exit;
-}
 
 // Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)
 $collapseSidebarMenu = false;

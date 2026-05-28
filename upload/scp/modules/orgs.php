@@ -8,10 +8,8 @@ $action_type = null;
 $eid = empresaId();
 
 $roleName = getCurrentStaffRoleName();
-$canViewOrgs = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
-    || roleHasPermission('org.view');
-$canManageOrgs = in_array($roleName, ['admin', 'supervisor'], true)
-    || roleHasPermission('org.manage');
+$canViewOrgs = roleHasPermission('org.view');
+$canManageOrgs = roleHasPermission('org.manage');
 
 if (!$canViewOrgs) {
     http_response_code(403);

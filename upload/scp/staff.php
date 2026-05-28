@@ -1055,7 +1055,7 @@ body.dark-mode .advanced-filters-panel select {
     <div class="card-header d-flex justify-content-between align-items-center">
         <strong><i class="bi bi-person-badge"></i> Lista de Agentes</strong>
         <div class="d-flex gap-2">
-            <?php if ($currentStaffRole === 'admin'): ?>
+            <?php if (roleHasPermission('admin.access')): ?>
                 <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#agentCreateModal">
                     <i class="bi bi-plus-circle"></i> Nuevo Agente
                 </button>
@@ -1123,7 +1123,7 @@ body.dark-mode .advanced-filters-panel select {
                                             <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
                                             <?php endif; ?>
                                         </div>
-                                        <?php if ($currentStaffRole === 'admin'): ?>
+                                        <?php if (roleHasPermission('admin.access')): ?>
                                         <div class="dropdown">
                                             <button type="button" class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
                                                 <i class="bi bi-three-dots-vertical text-secondary"></i>
@@ -1262,7 +1262,7 @@ body.dark-mode .advanced-filters-panel select {
                                 <?php endif; ?>
                             </td>
                             <td class="text-end d-none d-md-table-cell" style="vertical-align: middle; padding-right: 20px;">
-                                <?php if ($currentStaffRole === 'admin'): ?>
+                                <?php if (roleHasPermission('admin.access')): ?>
                                     <div class="d-flex align-items-center justify-content-end gap-2">
                                         <button type="button" class="btn-action edit agent-edit-btn"
                                             data-id="<?php echo (int)$a['id']; ?>"

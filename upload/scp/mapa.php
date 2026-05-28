@@ -13,8 +13,7 @@ $staff = getCurrentUser();
 $currentRoute = 'mapa';
 
 $roleName = getCurrentStaffRoleName();
-$canViewMap = in_array($roleName, ['admin', 'supervisor', 'agent'], true)
-    || roleHasPermission('agent.map');
+$canViewMap = roleHasPermission('agent.map');
 
 if (!$canViewMap) {
     $_SESSION['flash_error'] = 'No tienes permiso para ver el mapa de agentes.';

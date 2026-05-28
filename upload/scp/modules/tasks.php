@@ -13,8 +13,7 @@ if (!isset($_SESSION['staff_id'])) {
 }
 
 $roleName = getCurrentStaffRoleName();
-$canTasks = in_array($roleName, ['admin', 'supervisor'], true)
-    || roleHasAnyPermissionPrefix('task.')
+$canTasks = roleHasAnyPermissionPrefix('task.')
     || roleHasAnyPermissionPrefix('tasks.');
 $tasksReadOnly = !$canTasks;
 

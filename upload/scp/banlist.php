@@ -26,7 +26,7 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $roleName = getCurrentStaffRoleName();
-$canManageBanlist = in_array($roleName, ['admin', 'supervisor'], true) || roleHasPermission('user.edit');
+$canManageBanlist = roleHasPermission('user.edit');
 if (!$canManageBanlist) {
     http_response_code(403);
     $_SESSION['flash_error'] = 'No tienes permiso para gestionar la lista de prohibidos.';
