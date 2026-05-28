@@ -1813,6 +1813,57 @@ function roleHasPermission($permKey) {
     $role = getCurrentStaffRoleName();
     if ($role === '') return false;
 
+    // Protected fallback: admin and administrator roles always have full access to prevent accidental lockout
+    // This is a safety mechanism to ensure critical system features remain accessible
+    if ($role === 'admin' || $role === 'administrator') {
+        return true;
+    }
+
+    // Centralized admin permission override: admin.access grants access to all admin-related features
+    // Admin-related permissions include: admin.*, user.*, ticket.*, task.*, org.*, stats.*, email.*, helptopic.*, banlist.*, department.*, role.*, staff.*, notification.*, log.*, billing.*, sequence.*, setting.*
+    if (roleHasPermissionDirect('admin.access')) {
+        $adminPrefixes = ['admin.', 'user.', 'ticket.', 'task.', 'org.', 'stats.', 'email.', 'helptopic.', 'banlist.', 'department.', 'role.', 'staff.', 'notification.', 'log.', 'billing.', 'sequence.', 'setting.'];
+        foreach ($adminPrefixes as $prefix) {
+            if (strpos($permKey, $prefix) === 0) {
+                return true;
+            }
+        }
+    }
+
+    if (!isset($mysqli) || !$mysqli) return false;
+    ensureRolePermissionsTable();
+
+    $eid = empresaId();
+    $hasEmpresa = false;
+    try {
+        $hasEmpresa = dbColumnExists('role_permissions', 'empresa_id');
+    } catch (Throwable $e) {
+        $hasEmpresa = false;
+    }
+
+    $stmt = $hasEmpresa
+        ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
+        : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
+    if (!$stmt) return false;
+
+    if ($hasEmpresa) {
+        $stmt->bind_param('iss', $eid, $role, $permKey);
+    } else {
+        $stmt->bind_param('ss', $role, $permKey);
+    }
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return (bool)$row;
+}
+
+function roleHasPermissionDirect($permKey) {
+    global $mysqli;
+    $permKey = trim((string)$permKey);
+    if ($permKey === '') return false;
+
+    $role = getCurrentStaffRoleName();
+    if ($role === '') return false;
+
     if (!isset($mysqli) || !$mysqli) return false;
     ensureRolePermissionsTable();
 

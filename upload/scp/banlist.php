@@ -25,15 +25,6 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
-$roleName = getCurrentStaffRoleName();
-$canManageBanlist = roleHasPermission('user.edit');
-if (!$canManageBanlist) {
-    http_response_code(403);
-    $_SESSION['flash_error'] = 'No tienes permiso para gestionar la lista de prohibidos.';
-    header('Location: index.php');
-    exit;
-}
-
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
