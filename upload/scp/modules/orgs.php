@@ -1121,103 +1121,109 @@ if (!empty($_GET['org'])) {
 
         <!-- ─── DESKTOP HEADER AND DETAILS (hidden on mobile via ID CSS) ─── -->
         <div id="org-detail-desktop">
-        <div class="user-view-header" style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid #e2e8f0; margin-bottom:24px;">
-            <div>
+            <div class="mb-3">
                 <a href="<?php echo html($orgsBaseUrl); ?>" class="org-back-link"><i class="bi bi-arrow-left"></i> Volver al listado</a>
-                <h1 class="user-view-title">
-                    <i class="bi bi-building"></i>
-                    <?php echo html($orgInfo['name']); ?>
-                </h1>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button type="button" class="btn btn-edit-premium" data-bs-toggle="modal" data-bs-target="#editOrgModal">
-                    <i class="bi bi-pencil-square" style="margin-right:4px;"></i> Editar
-                </button>
-                <button type="button" class="btn btn-delete-premium btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
-                    <i class="bi bi-trash3" style="margin-right:4px;"></i> Eliminar organización
-                </button>
-            </div>
-        </div>
 
-        <div class="user-view-card mb-4">
-            <div class="user-view-profile">
-                <div class="user-view-avatar">
-                    <i class="bi bi-building"></i>
+            <div class="user-view-profile-premium mb-4">
+                <div class="uvp-hero">
+                    <div class="uvp-avatar" aria-hidden="true"><i class="bi bi-building"></i></div>
+                    <div class="uvp-hero-info">
+                        <div class="uvp-hero-title-row">
+                            <h2 class="uvp-display-name"><?php echo html($orgInfo['name']); ?></h2>
+                        </div>
+                        <?php if (!empty($orgInfo['website'])): ?>
+                            <p class="uvp-email">
+                                <i class="bi bi-globe" aria-hidden="true"></i>
+                                <a href="<?php echo html($orgInfo['website']); ?>" target="_blank" rel="noopener"><?php echo html($orgInfo['website']); ?></a>
+                            </p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="uvp-hero-actions">
+                        <button type="button" class="uvp-edit-profile-btn" data-bs-toggle="modal" data-bs-target="#editOrgModal">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </button>
+                        <button type="button" class="uvp-edit-profile-btn uvp-action-danger ms-2 btn-delete-org" data-org-name="<?php echo html($orgInfo['name']); ?>">
+                            <i class="bi bi-trash3"></i> Eliminar
+                        </button>
+                    </div>
                 </div>
-                <div class="user-view-details">
-                    <div class="user-view-detail">
-                        <label>Nombre</label>
-                        <div class="value"><?php echo html($orgInfo['name']); ?></div>
+                <div class="uvp-body">
+                    <div class="uvp-fields">
+                        <div class="uvp-field">
+                            <label><i class="bi bi-telephone uvp-field-icon" aria-hidden="true"></i> Teléfono</label>
+                            <div class="value">
+                                <?php
+                                $phone2 = html($orgInfo['phone'] ?? '');
+                                $ext2   = html($orgInfo['phone_ext'] ?? '');
+                                $fullPhone = $phone2 ? $phone2 . ($ext2 ? ' ext. ' . $ext2 : '') : '';
+                                ?>
+                                <?php if ($fullPhone): ?>
+                                    <span class="uvp-value-link text-dark"><?php echo $fullPhone; ?></span>
+                                <?php else: ?>
+                                    <span class="uvp-empty">Sin registrar</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="uvp-field">
+                            <label><i class="bi bi-geo-alt uvp-field-icon" aria-hidden="true"></i> Dirección</label>
+                            <div class="value"><?php echo html(trim((string)($orgInfo['address'] ?? '')) !== '' ? (string)$orgInfo['address'] : '—'); ?></div>
+                        </div>
+                        <?php if (!empty($orgInfo['notes'])): ?>
+                        <div class="uvp-field" style="grid-column: 1 / -1;">
+                            <label><i class="bi bi-journal-text uvp-field-icon" aria-hidden="true"></i> Notas internas</label>
+                            <div class="value" style="white-space: pre-wrap; font-style: italic;"><?php echo html($orgInfo['notes']); ?></div>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <?php if (!empty($orgInfo['address'])): ?>
-                    <div class="user-view-detail">
-                        <label>Dirección</label>
-                        <div class="value"><?php echo nl2br(html($orgInfo['address'])); ?></div>
-                    </div>
-                    <?php endif; ?>
-                    <div class="user-view-detail">
-                        <label>Teléfono</label>
-                        <div class="value">
-                            <?php
-                            $phone2 = html($orgInfo['phone'] ?? '');
-                            $ext2   = html($orgInfo['phone_ext'] ?? '');
-                            echo $phone2 ? $phone2 . ($ext2 ? ' ext. ' . $ext2 : '') : '—';
-                            ?>
+                    <div class="uvp-meta">
+                        <div class="uvp-meta-item">
+                            <label>Creado</label>
+                            <div class="value"><?php echo !empty($orgInfo['created']) ? date('d/m/y h:i A', strtotime($orgInfo['created'])) : '—'; ?></div>
+                        </div>
+                        <div class="uvp-meta-item">
+                            <label>Actualizado</label>
+                            <div class="value"><?php echo !empty($orgInfo['updated']) ? date('d/m/y h:i A', strtotime($orgInfo['updated'])) : '—'; ?></div>
                         </div>
                     </div>
-                    <?php if (!empty($orgInfo['website'])): ?>
-                    <div class="user-view-detail">
-                        <label>Sitio Web</label>
-                        <div class="value">
-                            <a href="<?php echo html($orgInfo['website']); ?>" target="_blank" rel="noopener"><?php echo html($orgInfo['website']); ?></a>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php if (!empty($orgInfo['notes'])): ?>
-                    <div class="user-view-detail" style="grid-column: 1 / -1;">
-                        <label>Notas internas</label>
-                        <div class="value" style="white-space: pre-wrap;"><?php echo html($orgInfo['notes']); ?></div>
-                    </div>
-                    <?php endif; ?>
                 </div>
             </div>
-        </div>
 
         <div class="row g-4 mb-4">
             <div class="col-md-3">
                 <div class="org-stat-card org-stat-users">
-                    <div class="org-stat-icon"><i class="bi bi-people"></i></div>
-                    <div class="org-stat-content">
-                        <div class="org-stat-value"><?php echo (int)($orgInfo['user_count'] ?? 0); ?></div>
+                    <div class="org-stat-header">
+                        <div class="org-stat-icon"><i class="bi bi-people-fill"></i></div>
                         <div class="org-stat-label">Usuarios</div>
                     </div>
+                    <div class="org-stat-value"><?php echo (int)($orgInfo['user_count'] ?? 0); ?></div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="org-stat-card org-stat-tickets">
-                    <div class="org-stat-icon"><i class="bi bi-ticket"></i></div>
-                    <div class="org-stat-content">
-                        <div class="org-stat-value"><?php echo (int)($orgInfo['ticket_count'] ?? 0); ?></div>
+                    <div class="org-stat-header">
+                        <div class="org-stat-icon"><i class="bi bi-ticket-detailed-fill"></i></div>
                         <div class="org-stat-label">Tickets totales</div>
                     </div>
+                    <div class="org-stat-value"><?php echo (int)($orgInfo['ticket_count'] ?? 0); ?></div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="org-stat-card org-stat-open">
-                    <div class="org-stat-icon"><i class="bi bi-clock-history"></i></div>
-                    <div class="org-stat-content">
-                        <div class="org-stat-value"><?php echo (int)($orgInfo['open_tickets'] ?? 0); ?></div>
+                    <div class="org-stat-header">
+                        <div class="org-stat-icon"><i class="bi bi-clock-fill"></i></div>
                         <div class="org-stat-label">Tickets abiertos</div>
                     </div>
+                    <div class="org-stat-value"><?php echo (int)($orgInfo['open_tickets'] ?? 0); ?></div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="org-stat-card org-stat-date">
-                    <div class="org-stat-icon"><i class="bi bi-calendar-event"></i></div>
-                    <div class="org-stat-content">
-                        <div class="org-stat-value"><?php echo !empty($orgInfo['since']) ? date('d/m/Y', strtotime($orgInfo['since'])) : '—'; ?></div>
+                    <div class="org-stat-header">
+                        <div class="org-stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
                         <div class="org-stat-label">Desde</div>
                     </div>
+                    <div class="org-stat-value"><?php echo !empty($orgInfo['since']) ? date('d/m/Y', strtotime($orgInfo['since'])) : '—'; ?></div>
                 </div>
             </div>
         </div>
