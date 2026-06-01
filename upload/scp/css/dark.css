@@ -243,6 +243,18 @@ body.dark-mode .btn-close {
     filter: invert(1) grayscale(100%) brightness(1.4) !important;
 }
 
+/* AnyDesk Copy Button */
+body.dark-mode .btn-copy-anydesk {
+    background: #1e293b !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode .btn-copy-anydesk:hover {
+    background: #334155 !important;
+    color: #f8fafc !important;
+}
+
 /* === TICKET VIEW ENTRIES (burbujas de chat) === */
 /* Ticket view entry footer (sent text) */
 body.dark-mode .ticket-view-entry .entry-footer {
@@ -1694,6 +1706,44 @@ body.dark-mode .ticket-view-back a:hover {
 body.dark-mode .badge-status,
 body.dark-mode .badge-priority {
     filter: brightness(0.8) !important;
+}
+
+/* --- Billing status badges (ticket view) --- */
+body.dark-mode .billing-badge-confirmed {
+    background: #052e16 !important;
+    color: #4ade80 !important;
+    border: 1px solid #166534 !important;
+}
+
+body.dark-mode .billing-badge-visita {
+    background: #082f49 !important;
+    color: #38bdf8 !important;
+    border: 1px solid #0369a1 !important;
+}
+
+body.dark-mode .billing-badge-cotizacion {
+    background: #1e1b4b !important;
+    color: #a5b4fc !important;
+    border: 1px solid #4338ca !important;
+}
+
+body.dark-mode .billing-badge-pending {
+    background: #422006 !important;
+    color: #fbbf24 !important;
+    border: 1px solid #854d0e !important;
+}
+
+/* Billing icon-only links (mobile compact) */
+body.dark-mode .billing-icon-confirmed {
+    color: #4ade80 !important;
+}
+
+body.dark-mode .billing-icon-visita {
+    color: #38bdf8 !important;
+}
+
+body.dark-mode .billing-icon-cotizacion {
+    color: #a5b4fc !important;
 }
 
 /* --- Summernote dark (toolbar dropdown menus) --- */

@@ -139,6 +139,21 @@
     margin-bottom: 4px;
 }
 
+.btn-copy-anydesk {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-copy-anydesk:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
 .ticket-view-overview .divider {
     height: 1px;
     background: linear-gradient(90deg, rgba(203,213,225,0) 0%, rgba(148,163,184,0.2) 50%, rgba(203,213,225,0) 100%);

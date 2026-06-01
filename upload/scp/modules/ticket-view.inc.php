@@ -932,11 +932,11 @@ if ($ticketClientSignaturePath !== '') {
                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                         <?php $bstatus = $t['billing_status'] ?? 'pending'; ?>
                         <?php if ($bstatus === 'confirmed'): ?>
-                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #16a34a; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Facturado - Ver reporte"><i class="bi bi-patch-check-fill"></i></a>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-icon billing-icon-confirmed" style="color: #16a34a; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Facturado - Ver reporte"><i class="bi bi-patch-check-fill"></i></a>
                         <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #0284c7; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Visita Técnica - Ver reporte"><i class="bi bi-geo-alt-fill"></i></a>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-icon billing-icon-visita" style="color: #0284c7; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Visita Técnica - Ver reporte"><i class="bi bi-geo-alt-fill"></i></a>
                         <?php elseif ($bstatus === 'cotizacion'): ?>
-                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="color: #4f46e5; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Cotización - Ver reporte"><i class="bi bi-file-earmark-text-fill"></i></a>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-icon billing-icon-cotizacion" style="color: #4f46e5; font-size: 1.35rem; line-height: 1; transition: transform 0.2s;" title="Cotización - Ver reporte"><i class="bi bi-file-earmark-text-fill"></i></a>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>
@@ -960,11 +960,11 @@ if ($ticketClientSignaturePath !== '') {
             if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
                 <div class="mobile-header" style="margin-top: 8px;">
                     <?php if ($canConfirmBilling): ?>
-                        <a href="#" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                        <a href="#" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
                             <i class="bi bi-clock-history"></i> Pendiente Facturación
                         </a>
                     <?php else: ?>
-                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
                             <i class="bi bi-clock-history"></i> Pendiente Facturación
                         </a>
                     <?php endif; ?>
@@ -1060,23 +1060,23 @@ if ($ticketClientSignaturePath !== '') {
                             <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                 <?php $bstatus = $t['billing_status'] ?? 'pending'; ?>
                                 <?php if ($bstatus === 'confirmed'): ?>
-                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-patch-check-fill" style="font-size:0.9rem;"></i> FACTURADO</a>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-badge billing-badge-confirmed" style="display:inline-flex; align-items:center; gap:6px; background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-patch-check-fill" style="font-size:0.9rem;"></i> FACTURADO</a>
                                 <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-geo-alt-fill" style="font-size:0.9rem;"></i> VISITA TÉCNICA</a>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-badge billing-badge-visita" style="display:inline-flex; align-items:center; gap:6px; background: #e0f2fe; color: #0284c7; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-geo-alt-fill" style="font-size:0.9rem;"></i> VISITA TÉCNICA</a>
                                 <?php elseif ($bstatus === 'cotizacion'): ?>
-                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" style="display:inline-flex; align-items:center; gap:6px; background: #eef2ff; color: #4f46e5; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-file-earmark-text-fill" style="font-size:0.9rem;"></i> COTIZACIÓN</a>
+                                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="billing-badge billing-badge-cotizacion" style="display:inline-flex; align-items:center; gap:6px; background: #eef2ff; color: #4f46e5; padding: 4px 12px; border-radius: 50rem; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; text-decoration: none; transition: transform 0.2s;" title="Ver reporte" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';"><i class="bi bi-file-earmark-text-fill" style="font-size:0.9rem;"></i> COTIZACIÓN</a>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
                         <?php 
                         $bstatus = $t['billing_status'] ?? 'pending';
                         if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
-                            <?php if ($isAdminBilling): ?>
-                                <a href="#" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                            <?php if ($canConfirmBilling): ?>
+                                <a href="#" class="badge-status billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none; cursor: pointer;" title="Confirmar Facturación" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
                                     <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
                                 </a>
                             <?php else: ?>
-                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente">
+                                <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="badge-status billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" title="Ver reporte pendiente">
                                     <i class="bi bi-clock-history me-2"></i> Pendiente Facturación
                                 </a>
                             <?php endif; ?>
@@ -1189,7 +1189,7 @@ if ($ticketClientSignaturePath !== '') {
                         <span style="font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 0.02em; user-select: all;" title="Haz clic para seleccionar todo">
                             <?php echo html($t['anydesk']); ?>
                         </span>
-                        <button type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($t['anydesk'], ENT_QUOTES); ?>').then(() => { let i = this.querySelector('i'); i.className = 'bi bi-check2 text-success'; setTimeout(() => i.className='bi bi-copy', 2000); })" style="background: #f8fafc; color: #64748b; border: 1px solid #f1f5f9; border-radius: 10px; padding: 6px 12px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.background='#f8fafc'; this.style.color='#64748b';" title="Copiar AnyDesk">
+                        <button type="button" class="btn-copy-anydesk" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($t['anydesk'], ENT_QUOTES); ?>').then(() => { let i = this.querySelector('i'); i.className = 'bi bi-check2 text-success'; setTimeout(() => i.className='bi bi-copy', 2000); })" title="Copiar AnyDesk">
                             <i class="bi bi-copy" style="font-size: 1rem;"></i>
                         </button>
                     </div>

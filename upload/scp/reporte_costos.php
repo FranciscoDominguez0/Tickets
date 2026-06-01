@@ -626,6 +626,13 @@ body.dark-mode .btn-back-creative:hover {
     color: #f4f4f5 !important;
     border-color: #3f3f46 !important;
 }
+/* Ticket number link */
+body.dark-mode .reporte-ticket-link {
+    color: #60a5fa !important;
+}
+body.dark-mode .reporte-ticket-link:hover {
+    color: #93bbfd !important;
+}
 </style>
 
 <div class="tickets-shell">
@@ -734,7 +741,7 @@ body.dark-mode .btn-back-creative:hover {
                 <div class="mobile-grid-item">
                     <label><i class="bi bi-hash"></i> TICKET #</label>
                     <div class="val">
-                        <a href="tickets.php?id=<?php echo $ticketId; ?>" style="color: #ef4444; font-weight: 700; text-decoration: none;">
+                        <a href="tickets.php?id=<?php echo $ticketId; ?>" class="reporte-ticket-link" style="color: #2563eb; font-weight: 700; text-decoration: none;">
                             <?php echo htmlspecialchars($ticket['ticket_number']); ?>
                             <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem; margin-left: 4px; opacity: 0.7;"></i>
                         </a>
@@ -750,7 +757,7 @@ body.dark-mode .btn-back-creative:hover {
                 <div class="field">
                     <label><i class="bi bi-info-circle"></i> NÚMERO DE TICKET</label>
                     <div class="value title highlight">
-                        <a href="tickets.php?id=<?php echo $ticketId; ?>" style="text-decoration:none; color:inherit;">#<?php echo htmlspecialchars($ticket['ticket_number']); ?></a>
+                        <a href="tickets.php?id=<?php echo $ticketId; ?>" class="reporte-ticket-link" style="text-decoration:none; color: #2563eb; transition: color 0.2s;">#<?php echo htmlspecialchars($ticket['ticket_number']); ?> <i class="bi bi-box-arrow-up-right" style="font-size: 0.7em; opacity: 0.6;"></i></a>
                     </div>
                 </div>
                 <div class="field">
