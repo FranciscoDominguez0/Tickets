@@ -1335,7 +1335,7 @@ if (!empty($_GET['org'])) {
                                                 <span class="uvt-status-badge" style="color: <?php echo html($statusColor); ?>; border-bottom: 2px solid <?php echo html($statusColor); ?>;">
                                                     <?php echo html($tkt['status_name'] ?? '—'); ?>
                                                 </span>
-                                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 6px; font-weight: 500;">
+                                                <div class="org-hide-mobile" style="font-size: 0.8rem; color: #64748b; margin-top: 6px; font-weight: 500;">
                                                     <i class="bi bi-diagram-3" style="color: #94a3b8; margin-right: 4px;"></i><?php echo html($tkt['dept_name'] ?? '—'); ?>
                                                 </div>
                                             </td>
@@ -1509,7 +1509,7 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
         <?php endif; ?>
     <?php endif; ?>
 
-    <div class="org-search-card">
+    <div style="margin-bottom: 24px;">
         <form method="get" action="<?php echo html($orgsBaseUrl); ?>" class="org-search-form">
             <div class="org-search-input-wrapper">
                 <i class="bi bi-search org-search-icon"></i>
@@ -1545,8 +1545,8 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
             <?php endif; ?>
         </div>
     <?php else: ?>
-        <div class="table-card">
-            <div class="org-grid">
+        <div>
+            <div class="org-grid" style="padding: 0;">
                 <?php foreach ($orgs as $o): ?>
                     <div class="org-card">
                         <div class="org-card-header">
@@ -1586,7 +1586,7 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
             </div>
 
             <?php if ($totalPages > 1): ?>
-                <div class="mt-4">
+                <div class="mt-4 mb-4">
                     <?php
                     $urlParams = '';
                     if ($search !== '') $urlParams .= '&q=' . urlencode($search);

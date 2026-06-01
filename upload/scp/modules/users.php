@@ -1541,8 +1541,8 @@ $statusBadges = [
             </form>
 
             <!-- Pie de tabla: paginación -->
-            <div class="table-footer-bar">
-                <div class="pagination-wrap w-100 d-flex align-items-center justify-content-center">
+            <div class="table-footer-bar" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                <div class="w-100 d-flex align-items-center justify-content-center" style="margin-top: -10px;">
                     <?php
                     $baseParams = $queryParams;
                     $baseParams['sort'] = $currentSort;
