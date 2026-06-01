@@ -142,7 +142,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
                     }
 
                     $bodyHtml = (string)($e['body'] ?? '');
-                    $text = trim(html_entity_decode(strip_tags($bodyHtml), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                    // Convert block-level and <br> tags to newlines before stripping
+                    $bodyText = preg_replace('/<br\s*\/?>/i', "\n", $bodyHtml);
+                    $bodyText = preg_replace('/<\/(p|div|li|tr|h[1-6])>/i', "\n", $bodyText);
+                    $text = trim(html_entity_decode(strip_tags($bodyText), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                    // Collapse 3+ consecutive newlines into 2
+                    $text = preg_replace('/\n{3,}/', "\n\n", $text);
                     if (mb_strlen($text) > 900) {
                         $text = mb_substr($text, 0, 900) . '…';
                     }
