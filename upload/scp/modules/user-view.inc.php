@@ -592,12 +592,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <?php foreach ($userTickets as $t): ?>
                             <?php
                                 $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
-                                $tStatusRaw = strtolower(trim($t['status_name'] ?? ''));
-                                $tStatusClass = 'uvt-status-default';
-                                if (in_array($tStatusRaw, ['abierto','open','nuevo','new'])) $tStatusClass = 'uvt-status-open';
-                                elseif (in_array($tStatusRaw, ['cerrado','closed','resuelto','resolved'])) $tStatusClass = 'uvt-status-closed';
-                                elseif (in_array($tStatusRaw, ['en camino','en curso','in progress','pendiente','pending','en espera'])) $tStatusClass = 'uvt-status-pending';
-                                elseif (in_array($tStatusRaw, ['vencido','overdue','expirado'])) $tStatusClass = 'uvt-status-overdue';
+                                $tStatusColor = $t['status_color'] ?: '#64748b';
                             ?>
                             <tr class="uvt-row" onclick="window.location.href='<?php echo html($ticketHref); ?>'" style="cursor:pointer;">
                                 <td class="uvt-cell-num">
@@ -607,7 +602,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                     <a href="<?php echo html($ticketHref); ?>" class="uvt-subject-link" title="<?php echo html($t['subject']); ?>"><?php echo html($t['subject']); ?></a>
                                 </td>
                                 <td class="uvt-cell-status">
-                                    <span class="uvt-status-badge <?php echo $tStatusClass; ?>"><?php echo html($t['status_name'] ?? '—'); ?></span>
+                                    <span class="uvt-status-badge" style="color: <?php echo html($tStatusColor); ?>; border-bottom: 2px solid <?php echo html($tStatusColor); ?>;"><?php echo html($t['status_name'] ?? '—'); ?></span>
                                 </td>
                                 <td class="uvt-cell-date">
                                     <span class="uvt-date-text"><i class="bi bi-clock me-1" style="font-size:0.75rem;opacity:0.5;"></i><?php echo $t['created'] ? date('d/m/y h:i A', strtotime($t['created'])) : '—'; ?></span>

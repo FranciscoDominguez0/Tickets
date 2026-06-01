@@ -1920,29 +1920,33 @@ body.dark-mode .user-view-tickets-table:not(.uvt-premium) tbody td a {
     color: #fca5a5 !important;
 }
 
-/* Dark status badges */
+/* Dark status badges - Modern Underline */
 body.dark-mode .uvt-status-open {
-    background: linear-gradient(135deg, rgba(22, 163, 74, 0.15), rgba(22, 163, 74, 0.1)) !important;
+    background: transparent !important;
     color: #4ade80 !important;
-    border-color: rgba(74, 222, 128, 0.2) !important;
+    border-bottom: 2px solid #22c55e !important;
+    border-color: #22c55e !important;
 }
 
 body.dark-mode .uvt-status-closed {
-    background: linear-gradient(135deg, rgba(161, 161, 170, 0.1), rgba(161, 161, 170, 0.06)) !important;
+    background: transparent !important;
     color: #a1a1aa !important;
-    border-color: rgba(161, 161, 170, 0.2) !important;
+    border-bottom: 2px solid #a1a1aa !important;
+    border-color: #a1a1aa !important;
 }
 
 body.dark-mode .uvt-status-pending {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.08)) !important;
+    background: transparent !important;
     color: #fbbf24 !important;
-    border-color: rgba(251, 191, 36, 0.2) !important;
+    border-bottom: 2px solid #fbbf24 !important;
+    border-color: #fbbf24 !important;
 }
 
 body.dark-mode .uvt-status-overdue {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08)) !important;
+    background: transparent !important;
     color: #f87171 !important;
-    border-color: rgba(248, 113, 113, 0.2) !important;
+    border-bottom: 2px solid #f87171 !important;
+    border-color: #f87171 !important;
 }
 
 body.dark-mode .uvt-status-default {

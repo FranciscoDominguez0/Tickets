@@ -261,7 +261,7 @@ if (!empty($_GET['org'])) {
 
     $tickets = [];
     $stmt = $mysqli->prepare("
-        SELECT t.id, t.ticket_number, t.subject, ts.name AS status_name, p.name AS priority_name, d.name AS dept_name, t.created
+        SELECT t.id, t.ticket_number, t.subject, ts.name AS status_name, ts.color AS status_color, p.name AS priority_name, d.name AS dept_name, t.created
         FROM tickets t
         JOIN users u ON t.user_id = u.id
         JOIN departments d ON t.dept_id = d.id
@@ -1252,12 +1252,16 @@ if (!empty($_GET['org'])) {
                                                 <a href="users.php?id=<?php echo (int)$u['id']; ?>" style="display:block; font-weight:700; text-decoration:none; margin-bottom:2px;" class="uvt-subject-link">
                                                     <?php echo html(trim((string)($u['firstname'] ?? '') . ' ' . (string)($u['lastname'] ?? ''))); ?>
                                                 </a>
-                                                <span style="font-size: 0.85rem; color: #64748b;" class="uvt-date-text">
-                                                    <i class="bi bi-envelope" style="margin-right:4px;"></i><?php echo html($u['email']); ?>
+                                                <div style="font-size: 0.85rem; color: #64748b;" class="uvt-date-text d-block d-md-flex">
+                                                    <div class="d-inline-block">
+                                                        <i class="bi bi-envelope" style="margin-right:4px;"></i><?php echo html($u['email']); ?>
+                                                    </div>
                                                     <?php if(!empty($u['phone'])): ?>
-                                                        <span class="ms-2"><i class="bi bi-telephone ms-1" style="margin-right:2px;"></i><?php echo html($u['phone']); ?></span>
+                                                        <div class="d-block d-md-inline-block ms-md-2 mt-1 mt-md-0">
+                                                            <i class="bi bi-telephone ms-1" style="margin-right:2px;"></i><?php echo html($u['phone']); ?>
+                                                        </div>
                                                     <?php endif; ?>
-                                                </span>
+                                                </div>
                                             </td>
                                             <td data-label="Estado" style="vertical-align: middle;">
                                                 <span class="user-view-status-badge <?php echo html($u['status']); ?>">
@@ -1290,55 +1294,48 @@ if (!empty($_GET['org'])) {
                             <p>No hay tickets para esta organización.</p>
                         </div>
                     <?php else: ?>
-                        <div class="table-card d-none d-md-block">
+                        <div class="table-responsive">
                             <table class="user-view-tickets-table uvt-premium">
                                 <thead>
                                     <tr>
                                         <th class="uvt-col-num" style="width: 100px;">Nº Ticket</th>
                                         <th class="uvt-col-subject" style="width: auto;">Asunto</th>
                                         <th class="uvt-col-status" style="width: 180px;">Estado / Depto</th>
-                                        <th class="uvt-col-date" style="width: 150px;">Apertura</th>
+                                        <th class="uvt-col-date org-hide-mobile" style="width: 150px;">Apertura</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($tickets as $tkt): ?>
                                         <?php
-                                        // Determinar clase de estado premium
-                                        $s = strtolower(trim((string)($tkt['status_name'] ?? '')));
-                                        if (in_array($s, ['abierto', 'open'])) $statusClass = 'uvt-status-open';
-                                        elseif (in_array($s, ['cerrado', 'closed'])) $statusClass = 'uvt-status-closed';
-                                        elseif (in_array($s, ['en progreso', 'in progress'])) $statusClass = 'uvt-status-progress';
-                                        elseif (in_array($s, ['esperando usuario', 'waiting'])) $statusClass = 'uvt-status-waiting';
-                                        else $statusClass = 'uvt-status-default';
+                                        $statusColor = $tkt['status_color'] ?: '#64748b';
                                         ?>
                                         <tr class="uvt-row">
-                                            <td>
+                                            <td data-label="Nº Ticket">
                                                 <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>" class="uvt-ticket-number">
                                                     #<?php echo html($tkt['ticket_number']); ?>
                                                 </a>
                                             </td>
-                                            <td class="uvt-cell-subject">
+                                            <td class="uvt-cell-subject" data-label="Asunto">
                                                 <a href="<?php echo html($ticketsBaseUrl); ?>?id=<?php echo (int)$tkt['id']; ?>&back=<?php echo urlencode($backToOrgTickets); ?>" class="uvt-subject-link">
                                                     <?php echo html($tkt['subject']); ?>
                                                 </a>
                                                 <?php if (!empty($tkt['priority_name'])): ?>
-                                                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    <div class="d-none d-md-block" style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                                         <i class="bi bi-flag-fill"></i> <?php echo html($tkt['priority_name']); ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td>
-                                                <span class="uvt-status <?php echo $statusClass; ?>">
+                                            <td data-label="Estado">
+                                                <span class="uvt-status-badge" style="color: <?php echo html($statusColor); ?>; border-bottom: 2px solid <?php echo html($statusColor); ?>;">
                                                     <?php echo html($tkt['status_name'] ?? '—'); ?>
                                                 </span>
                                                 <div style="font-size: 0.8rem; color: #64748b; margin-top: 6px; font-weight: 500;">
                                                     <i class="bi bi-diagram-3" style="color: #94a3b8; margin-right: 4px;"></i><?php echo html($tkt['dept_name'] ?? '—'); ?>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td data-label="Apertura" class="org-hide-mobile">
                                                 <div class="uvt-date-text">
-                                                    <i class="bi bi-calendar-event"></i>
-                                                    <?php echo $tkt['created'] ? date('d/m/Y', strtotime($tkt['created'])) : '—'; ?>
+                                                    <?php echo $tkt['created'] ? date('d M Y', strtotime($tkt['created'])) : '—'; ?>
                                                 </div>
                                                 <div class="uvt-date-text" style="font-size: 0.8rem; margin-top: 2px;">
                                                     <i class="bi bi-clock"></i>

@@ -976,43 +976,40 @@
     color: #ef4444 !important;
 }
 
-/* Status badge */
+/* Status badge - Modern Underline */
 .uvt-status-badge {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 12px;
-    border-radius: 20px;
+    padding: 2px 0 4px 0;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
-    line-height: 1.4;
+    text-transform: uppercase;
+    background: transparent !important;
+    border: none;
+    border-radius: 0;
 }
 .uvt-status-open {
-    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
     color: #15803d;
-    border: 1px solid rgba(21,128,61,0.15);
+    border-bottom: 2px solid #22c55e !important;
 }
 .uvt-status-closed {
-    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
     color: #475569;
-    border: 1px solid rgba(71,85,105,0.12);
+    border-bottom: 2px solid #94a3b8 !important;
 }
 .uvt-status-pending {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
     color: #92400e;
-    border: 1px solid rgba(146,64,14,0.12);
+    border-bottom: 2px solid #f59e0b !important;
 }
 .uvt-status-overdue {
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
     color: #b91c1c;
-    border: 1px solid rgba(185,28,28,0.15);
+    border-bottom: 2px solid #ef4444 !important;
 }
 .uvt-status-default {
-    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
     color: #6d28d9;
-    border: 1px solid rgba(109,40,217,0.12);
+    border-bottom: 2px solid #8b5cf6 !important;
 }
 
 /* Date */
@@ -1027,4 +1024,62 @@
 .uvt-date-text i {
     color: #94a3b8;
     font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .user-view-tickets-table.uvt-premium thead {
+        display: none;
+    }
+    .user-view-tickets-table.uvt-premium tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .user-view-tickets-table.uvt-premium tbody tr {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-top: 3px solid #ef4444;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        margin-bottom: 0;
+    }
+    .user-view-tickets-table.uvt-premium tbody td {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 8px 0;
+        border: none;
+        border-bottom: 1px dashed #f1f5f9;
+        width: 100% !important;
+    }
+    .user-view-tickets-table.uvt-premium tbody td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .user-view-tickets-table.uvt-premium tbody td:first-child {
+        padding-top: 0;
+    }
+    .user-view-tickets-table.uvt-premium tbody td::before {
+        content: attr(data-label);
+        font-weight: 800;
+        color: #64748b;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+        display: block;
+    }
+    .user-view-tickets-table.uvt-premium .uvt-cell-subject {
+        white-space: normal;
+        max-width: none;
+        word-break: break-word;
+        text-align: center;
+    }
+    .user-view-tickets-table.uvt-premium .uvt-subject-link {
+        white-space: normal;
+    }
 }
