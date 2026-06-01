@@ -795,81 +795,62 @@ body.dark-mode .uvm-empty {
 
 /* ── Dark mode: nuevas cards de usuarios rediseñadas ── */
 body.dark-mode .users-mobile-card {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #18181b !important;
     border-color: #27272a !important;
 }
 
-body.dark-mode .users-mobile-avatar {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(99, 102, 241, 0.15)) !important;
-    border-color: rgba(239, 68, 68, 0.30) !important;
+body.dark-mode .umc-avatar {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
     color: #f87171 !important;
 }
 
-body.dark-mode .users-mobile-name {
+body.dark-mode .umc-name a {
     color: #f4f4f5 !important;
 }
-
-body.dark-mode .users-mobile-name:hover {
+body.dark-mode .umc-name a:hover {
     color: #f87171 !important;
 }
 
-body.dark-mode .users-mobile-email {
+body.dark-mode .umc-contact {
     color: #a1a1aa !important;
 }
 
-body.dark-mode .umc-company {
+body.dark-mode .umc-body {
+    background: #111113 !important;
+    border-color: #27272a !important;
+}
+
+body.dark-mode .umc-stat-label {
     color: #71717a !important;
 }
 
-/* KPI strip */
-body.dark-mode .umc-kpi-strip {
-    border-top-color: rgba(255, 255, 255, 0.07) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.07) !important;
-}
-
-body.dark-mode .umc-kpi-div {
-    background: rgba(255, 255, 255, 0.08) !important;
-}
-
-body.dark-mode .umc-kpi-label {
-    color: #52525b !important;
-}
-
-body.dark-mode .umc-kpi-value {
+body.dark-mode .umc-stat-val {
     color: #d4d4d8 !important;
 }
-
-body.dark-mode .umc-kpi-value.umc-kpi-active {
+body.dark-mode .umc-stat-val.text-success {
     color: #4ade80 !important;
 }
-
-body.dark-mode .umc-kpi-value.umc-kpi-zero {
-    color: #52525b !important;
+body.dark-mode .umc-stat-val.text-muted {
+    color: #71717a !important;
 }
 
-/* Botones */
-body.dark-mode .umc-btn-view {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    box-shadow: none !important;
-    color: #cbd5e1 !important;
+body.dark-mode .btn-umc-primary {
+    background: #dc2626 !important;
+    color: #fff !important;
+}
+body.dark-mode .btn-umc-primary:hover {
+    background: #b91c1c !important;
 }
 
-body.dark-mode .umc-btn-view:hover {
-    background: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .umc-btn-mail {
-    background: #1c1c1e !important;
+body.dark-mode .btn-umc-icon {
+    background: #27272a !important;
     border-color: #3f3f46 !important;
     color: #a1a1aa !important;
 }
-
-body.dark-mode .umc-btn-mail:hover {
-    background: #1e2d46 !important;
-    border-color: #1d4ed8 !important;
-    color: #93c5fd !important;
+body.dark-mode .btn-umc-icon:hover {
+    background: #3f3f46 !important;
+    color: #f4f4f5 !important;
 }
 
 /* Botón Buscar en Modo Oscuro */
@@ -887,43 +868,52 @@ body.dark-mode .users-directory .search-card .btn-search:hover {
 
 /* === MOBILE PAGINATION DARK MODE === */
 body.dark-mode .users-mobile-pagination {
-    background: #141414 !important;
-    border-color: #222 !important;
+    background: #18181b !important;
+    border-color: #27272a !important;
     box-shadow: none !important;
 }
 
-body.dark-mode a.ump-nav-btn {
-    background: #1c1c1e !important;
-    border-color: #27272a !important;
-    color: #f87171 !important;
-}
-
-body.dark-mode a.ump-nav-btn:hover,
-body.dark-mode a.ump-nav-btn:active {
-    background: #27272a !important;
-}
-
-body.dark-mode .ump-nav-btn.ump-disabled {
-    background: #141414 !important;
-    border-color: #1a1a1a !important;
-    color: #52525b !important;
-}
-
-body.dark-mode .ump-page-indicator {
-    color: #a1a1aa !important;
-}
-
-body.dark-mode .ump-page-indicator strong {
-    color: #f4f4f5 !important;
-}
-
-body.dark-mode .ump-meta-row {
-    border-top-color: #222 !important;
+body.dark-mode .ump-info-row {
     color: #71717a !important;
 }
 
 body.dark-mode .ump-export-btn {
     color: #f87171 !important;
+}
+
+body.dark-mode a.ump-nav-btn {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #f87171 !important;
+}
+
+body.dark-mode a.ump-nav-btn:hover,
+body.dark-mode a.ump-nav-btn:active {
+    background: #3f3f46 !important;
+}
+
+body.dark-mode .ump-nav-btn.ump-disabled {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #3f3f46 !important;
+}
+
+body.dark-mode .ump-page-num {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #a1a1aa !important;
+}
+
+body.dark-mode a.ump-page-num:hover {
+    background: #3f3f46 !important;
+    color: #f4f4f5 !important;
+}
+
+body.dark-mode .ump-page-num.ump-page-active {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #fff !important;
+    box-shadow: 0 3px 8px rgba(220, 38, 38, 0.3) !important;
 }
 
 /* === SINGLE USER MOBILE VIEW OVERRIDES === */

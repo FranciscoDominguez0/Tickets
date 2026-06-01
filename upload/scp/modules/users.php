@@ -1359,56 +1359,52 @@ $statusBadges = [
                 if ($initials === '') $initials = 'U';
                 ?>
                 <div class="users-mobile-card umc-status-<?php echo html($status); ?>">
-                    <div class="users-mobile-top">
-                        <div class="users-mobile-avatar" aria-hidden="true"><?php echo html($initials); ?></div>
-                        <div class="users-mobile-main">
-                            <div class="users-mobile-name-row">
-                                <a class="users-mobile-name" href="users.php?id=<?php echo (int)$u['id']; ?>">
-                                    <?php echo html($fullName); ?>
-                                </a>
-                                <span class="badge <?php echo html($badgeClass); ?> umc-status-badge">
-                                    <?php echo html($label); ?>
-                                </span>
+                    <div class="umc-header">
+                        <div class="umc-avatar">
+                            <?php echo html($initials); ?>
+                        </div>
+                        <div class="umc-info">
+                            <h4 class="umc-name">
+                                <a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html($fullName); ?></a>
+                            </h4>
+                            <div class="umc-contact">
+                                <span><i class="bi bi-envelope"></i> <?php echo html($email !== '' ? $email : 'Sin correo'); ?></span>
+                                <?php if ($company !== ''): ?>
+                                    <span class="umc-company-badge"><i class="bi bi-building"></i> <?php echo html($company); ?></span>
+                                <?php endif; ?>
                             </div>
-                            <div class="users-mobile-email">
-                                <i class="bi bi-envelope-at" style="opacity:0.55; margin-right:3px;"></i><?php echo html($email !== '' ? $email : 'Sin correo'); ?>
-                            </div>
-                            <?php if ($company !== ''): ?>
-                            <div class="umc-company">
-                                <i class="bi bi-building" style="opacity:0.55; margin-right:3px;"></i><?php echo html($company); ?>
-                            </div>
-                            <?php endif; ?>
+                        </div>
+                        <div class="umc-badge">
+                            <span class="badge <?php echo html($badgeClass); ?>"><?php echo html($label); ?></span>
                         </div>
                     </div>
 
-                    <div class="umc-kpi-strip">
-                        <div class="umc-kpi">
-                            <span class="umc-kpi-label"><i class="bi bi-ticket-perforated"></i> Tickets</span>
-                            <span class="umc-kpi-value <?php echo $ticketCount > 0 ? 'umc-kpi-active' : 'umc-kpi-zero'; ?>"><?php echo $ticketCount; ?></span>
+                    <div class="umc-body">
+                        <div class="umc-stat">
+                            <span class="umc-stat-label">TICKETS</span>
+                            <span class="umc-stat-val <?php echo $ticketCount > 0 ? 'text-success' : 'text-muted'; ?>"><?php echo $ticketCount; ?></span>
                         </div>
-                        <div class="umc-kpi-div"></div>
-                        <div class="umc-kpi">
-                            <span class="umc-kpi-label"><i class="bi bi-calendar-plus"></i> Registrado</span>
-                            <span class="umc-kpi-value"><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '—'; ?></span>
+                        <div class="umc-stat">
+                            <span class="umc-stat-label">REGISTRADO</span>
+                            <span class="umc-stat-val"><?php echo $u['created'] ? date('d/m/y', strtotime($u['created'])) : '—'; ?></span>
                         </div>
-                        <div class="umc-kpi-div"></div>
-                        <div class="umc-kpi">
-                            <span class="umc-kpi-label"><i class="bi bi-clock-history"></i> Actualizado</span>
-                            <span class="umc-kpi-value"><?php echo $u['updated'] ? date('d/m/y', strtotime($u['updated'])) : '—'; ?></span>
+                        <div class="umc-stat">
+                            <span class="umc-stat-label">ACTUALIZADO</span>
+                            <span class="umc-stat-val"><?php echo $u['updated'] ? date('d/m/y', strtotime($u['updated'])) : '—'; ?></span>
                         </div>
                     </div>
 
-                    <div class="users-mobile-actions">
-                        <a class="umc-btn-view" href="users.php?id=<?php echo (int)$u['id']; ?>">
-                            <i class="bi bi-person-lines-fill"></i> Ver perfil
+                    <div class="umc-footer">
+                        <a class="btn-umc-primary" href="users.php?id=<?php echo (int)$u['id']; ?>">
+                            <i class="bi bi-person-badge"></i> Ver perfil
                         </a>
                         <?php if ($email !== ''): ?>
-                            <a class="umc-btn-mail" href="mailto:<?php echo html($email); ?>" title="Enviar correo">
-                                <i class="bi bi-envelope"></i>
+                            <a class="btn-umc-icon" href="mailto:<?php echo html($email); ?>">
+                                <i class="bi bi-envelope-paper"></i>
                             </a>
                         <?php endif; ?>
+                    </div>
                 </div>
-            </div>
         <?php endforeach; ?>
     </div>
 
@@ -1418,31 +1414,43 @@ $statusBadges = [
             $prevQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => max(1, $pageNum - 1)]);
             $nextQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => min($totalPages, $pageNum + 1)]);
             ?>
-            <div class="ump-nav-row">
-                <?php if ($pageNum > 1): ?>
-                    <a class="ump-nav-btn" href="users.php?<?php echo http_build_query($prevQp); ?>">
-                        <i class="bi bi-chevron-left"></i> Anterior
-                    </a>
-                <?php else: ?>
-                    <span class="ump-nav-btn ump-disabled"><i class="bi bi-chevron-left"></i> Anterior</span>
-                <?php endif; ?>
-
-                <span class="ump-page-indicator">Pág. <strong><?php echo $pageNum; ?></strong> de <?php echo $totalPages; ?></span>
-
-                <?php if ($pageNum < $totalPages): ?>
-                    <a class="ump-nav-btn" href="users.php?<?php echo http_build_query($nextQp); ?>">
-                        Siguiente <i class="bi bi-chevron-right"></i>
-                    </a>
-                <?php else: ?>
-                    <span class="ump-nav-btn ump-disabled">Siguiente <i class="bi bi-chevron-right"></i></span>
-                <?php endif; ?>
-            </div>
-            
-            <div class="ump-meta-row">
-                <span class="ump-showing">Mostrando <?php echo $totalRows ? $offset + 1 : 0; ?> - <?php echo min($offset + $perPage, $totalRows); ?> de <?php echo $totalRows; ?></span>
+            <div class="ump-info-row">
+                <span class="ump-showing">Mostrando <?php echo $totalRows ? $offset + 1 : 0; ?>–<?php echo min($offset + $perPage, $totalRows); ?> de <?php echo $totalRows; ?></span>
                 <a class="ump-export-btn" href="users.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => $pageNum, 'a' => 'export'])); ?>">
                     <i class="bi bi-download"></i> Exportar
                 </a>
+            </div>
+            <div class="ump-nav-row">
+                <?php if ($pageNum > 1): ?>
+                    <a class="ump-nav-btn" href="users.php?<?php echo http_build_query($prevQp); ?>">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="ump-nav-btn ump-disabled"><i class="bi bi-chevron-left"></i></span>
+                <?php endif; ?>
+
+                <div class="ump-pages">
+                    <?php
+                    $startPage = max(1, $pageNum - 2);
+                    $endPage = min($totalPages, $pageNum + 2);
+                    for ($pg = $startPage; $pg <= $endPage; $pg++):
+                        $pgQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => $pg]);
+                    ?>
+                        <?php if ($pg === $pageNum): ?>
+                            <span class="ump-page-num ump-page-active"><?php echo $pg; ?></span>
+                        <?php else: ?>
+                            <a class="ump-page-num" href="users.php?<?php echo http_build_query($pgQp); ?>"><?php echo $pg; ?></a>
+                        <?php endif; ?>
+                    <?php endfor; ?>
+                </div>
+
+                <?php if ($pageNum < $totalPages): ?>
+                    <a class="ump-nav-btn" href="users.php?<?php echo http_build_query($nextQp); ?>">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                <?php else: ?>
+                    <span class="ump-nav-btn ump-disabled"><i class="bi bi-chevron-right"></i></span>
+                <?php endif; ?>
             </div>
         </div>
 

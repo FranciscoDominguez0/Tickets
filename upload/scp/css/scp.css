@@ -169,216 +169,215 @@ body {
         padding: 0 2px;
     }
 
-    /* ── Card base ── */
+    /* ── NEW MOBILE CARD DESIGN ── */
     .users-mobile-card {
-        background: #fff;
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        border-radius: 18px;
-        padding: 16px 16px 14px;
-        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07), 0 1px 4px rgba(15,23,42,0.04);
-        position: relative;
-        overflow: hidden;
-        transition: transform .1s ease, box-shadow .15s ease;
-    }
-    .users-mobile-card:active { transform: scale(0.985); }
-
-    /* ── Top row ── */
-    .users-mobile-top {
+        background: #ffffff;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
         display: flex;
-        gap: 12px;
-        align-items: flex-start;
-        padding-left: 0;
+        flex-direction: column;
+        gap: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    .users-mobile-card:active { transform: scale(0.98); }
 
-    /* Avatar */
-    .users-mobile-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        background: linear-gradient(135deg, rgba(239,68,68,0.13), rgba(99,102,241,0.13));
-        border: 1.5px solid rgba(239,68,68,0.22);
+    .umc-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .umc-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(99, 102, 241, 0.1));
+        border: 1px solid rgba(239, 68, 68, 0.2);
         color: #ef4444;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 900;
-        font-size: 1rem;
-        letter-spacing: 0.04em;
-        flex: 0 0 48px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        flex-shrink: 0;
     }
 
-    .users-mobile-main {
+    .umc-info {
         flex: 1;
         min-width: 0;
     }
 
-    .users-mobile-name-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .users-mobile-name {
-        font-weight: 900;
-        color: #0f172a;
-        text-decoration: none;
+    .umc-name {
+        margin: 0 0 4px 0;
         font-size: 1.05rem;
-        line-height: 1.25;
+        font-weight: 800;
+        line-height: 1.2;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        max-width: 170px;
     }
-    .users-mobile-name:hover { color: #ef4444; }
-
-    .umc-status-badge {
-        padding: 4px 10px !important;
-        border-radius: 20px !important;
-        font-size: 0.7rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.03em;
-        flex-shrink: 0;
+    
+    .umc-name a {
+        color: #0f172a;
+        text-decoration: none;
     }
 
-    .users-mobile-email {
-        margin-top: 5px;
-        color: #64748b;
-        font-size: 0.84rem;
-        overflow-wrap: anywhere;
-        display: flex;
-        align-items: center;
-    }
-
-    .umc-company {
-        margin-top: 3px;
-        color: #475569;
-        font-size: 0.82rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-    }
-
-    /* ── KPI strip ── */
-    .umc-kpi-strip {
-        display: flex;
-        align-items: stretch;
-        gap: 0;
-        margin: 14px 0 0;
-        padding: 10px 0 10px 6px;
-        border-top: 1px solid rgba(226,232,240,0.8);
-        border-bottom: 1px solid rgba(226,232,240,0.8);
-    }
-
-    .umc-kpi {
-        flex: 1;
+    .umc-contact {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 3px;
-        padding: 0 4px;
+        gap: 4px;
+        font-size: 0.82rem;
+        color: #64748b;
     }
 
-    .umc-kpi-div {
-        width: 1px;
-        background: rgba(226,232,240,0.9);
-        margin: 0 4px;
-    }
-
-    .umc-kpi-label {
-        font-size: 0.67rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: #94a3b8;
+    .umc-contact span {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .umc-kpi-value {
-        font-weight: 900;
-        font-size: 0.92rem;
-        color: #334155;
-        line-height: 1.1;
+    .umc-badge .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
     }
-    .umc-kpi-value.umc-kpi-active { color: #16a34a; }
-    .umc-kpi-value.umc-kpi-zero   { color: #94a3b8; }
 
-    /* ── Action bar ── */
-    .users-mobile-actions {
-        margin-top: 12px;
-        padding-left: 6px;
+    .umc-body {
         display: flex;
-        gap: 8px;
-        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.6);
     }
 
-    .umc-btn-view {
+    .umc-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
         flex: 1;
-        display: inline-flex;
+    }
+
+    .umc-stat-label {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+    }
+
+    .umc-stat-val {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #334155;
+    }
+
+    .umc-footer {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-umc-primary {
+        flex: 1;
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: flex;
         align-items: center;
         justify-content: center;
-        gap: 7px;
-        padding: 9px 14px;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 0.88rem;
+        gap: 8px;
         text-decoration: none;
+        transition: background 0.2s ease;
+    }
+    .btn-umc-primary:hover {
+        background: #dc2626;
+        color: #fff;
+    }
+
+    .btn-umc-icon {
+        width: 44px;
+        height: 44px;
         background: #f1f5f9;
         color: #475569;
+        border-radius: 10px;
         border: 1px solid #e2e8f0;
-        transition: all .15s;
-        box-shadow: 0 2px 4px rgba(15,23,42,0.02);
-    }
-    .umc-btn-view:hover { background: #e2e8f0; color: #334155; box-shadow: 0 3px 6px rgba(15,23,42,0.05); }
-
-    .umc-btn-mail {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        font-size: 1rem;
         text-decoration: none;
-        border: 1.5px solid rgba(226,232,240,0.9);
-        background: #f8fafc;
-        color: #475569;
-        transition: background .15s, border-color .15s, color .15s;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
     }
-    .umc-btn-mail:hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+    .btn-umc-icon:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
 
     /* ── Mobile Pagination Card ── */
     .users-mobile-pagination {
         background: #fff;
         border: 1px solid rgba(226, 232, 240, 0.9);
-        border-radius: 18px;
-        padding: 16px;
-        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15,23,42,0.03);
+        border-radius: 16px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
         margin: 14px 2px 24px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
     }
-    .ump-nav-row {
+
+    .ump-info-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        font-size: 0.82rem;
+        color: #64748b;
     }
+    .ump-showing {
+        font-weight: 600;
+    }
+    .ump-export-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #ef4444;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.82rem;
+    }
+    .ump-export-btn:active {
+        text-decoration: underline;
+    }
+
+    .ump-nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
     .ump-nav-btn {
+        width: 40px;
+        height: 40px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
-        padding: 10px 16px;
-        border-radius: 12px;
-        font-size: 0.9rem;
-        font-weight: 600;
+        border-radius: 10px;
+        font-size: 1rem;
         text-decoration: none;
-        transition: background-color 0.15s, border-color 0.15s;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
     }
     a.ump-nav-btn {
         background: #f1f5f9;
@@ -394,35 +393,37 @@ body {
         color: #cbd5e1;
         cursor: not-allowed;
     }
-    .ump-page-indicator {
-        font-size: 0.9rem;
-        color: #475569;
-    }
-    .ump-page-indicator strong {
-        color: #0f172a;
-    }
-    .ump-meta-row {
+
+    .ump-pages {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        border-top: 1px solid #f1f5f9;
-        padding-top: 12px;
-        font-size: 0.85rem;
-        color: #64748b;
+        gap: 6px;
     }
-    .ump-showing {
-        font-weight: 500;
-    }
-    .ump-export-btn {
+
+    .ump-page-num {
+        width: 38px;
+        height: 38px;
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        color: #ef4444;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
         text-decoration: none;
-        font-weight: 600;
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.15s ease;
     }
-    .ump-export-btn:active {
-        text-decoration: underline;
+    a.ump-page-num:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .ump-page-num.ump-page-active {
+        background: #ef4444;
+        color: #fff;
+        border-color: #dc2626;
+        box-shadow: 0 3px 8px rgba(239, 68, 68, 0.25);
     }
 
     /* legacy selectors kept for non-redesigned code */
@@ -456,27 +457,14 @@ body {
     /* ── Cabecera Premium ── */
     .user-view-mobile-head {
         background: #fff;
-        border: 1px solid rgba(226, 232, 240, 0.9);
-        border-radius: 18px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        border-radius: 16px;
         padding: 16px;
-        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15,23,42,0.03);
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
         display: flex;
         align-items: center;
         gap: 12px;
-        position: relative;
-        overflow: hidden;
     }
-    .user-view-mobile-head::before {
-        content: '';
-        position: absolute;
-        left: 0; top: 18px; bottom: 18px;
-        width: 4px;
-        border-radius: 0 6px 6px 0;
-        background: #94a3b8;
-    }
-    .user-view-mobile-head.uvm-status-active::before  { background: #16a34a; }
-    .user-view-mobile-head.uvm-status-inactive::before { background: #94a3b8; }
-    .user-view-mobile-head.uvm-status-banned::before   { background: #ef4444; }
 
     .uvm-back-btn {
         width: 36px;
