@@ -415,19 +415,12 @@ body.dark-mode .text-muted {
         <div class="open-section">
             <div class="section-title"><i class="bi bi-ticket-perforated"></i> Información del Ticket</div>
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-12">
                     <label class="form-label"><?php echo $walkinSelected ? 'Nombre del cliente' : 'Asunto'; ?> <span class="required">*</span></label>
                     <input type="text" name="subject" class="form-control" placeholder="<?php echo $walkinSelected ? 'Nombre del cliente no recurrente' : 'Describe brevemente el problema'; ?>" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
+                    <input type="hidden" name="source" value="web">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Fuente:</label>
-                    <select class="form-select" name="source" id="open_source">
-                        <option value="web">Web</option>
-                        <option value="phone">Teléfono</option>
-                        <option value="email">Email</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Tema:</label>
                     <select name="topic_id" class="form-select" id="open_topic_id">
                         <option value="0" <?php echo $selected_topic_id === 0 ? 'selected' : ''; ?>>— General —</option>
@@ -438,7 +431,7 @@ body.dark-mode .text-muted {
                         <?php endif; ?>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Prioridad:</label>
                     <select name="priority_id" class="form-select">
                         <?php foreach ($open_priorities as $p): ?>
@@ -446,19 +439,13 @@ body.dark-mode .text-muted {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Asignar a:</label>
                     <select name="staff_id" class="form-select" id="open_staff_id" <?php echo $selected_dept_id > 0 ? '' : 'disabled'; ?>>
                         <option value="0">— Sin asignar —</option>
                         <?php foreach ($open_staff as $s): ?>
                             <option value="<?php echo (int)$s['id']; ?>" data-dept-id="<?php echo (int)($s['dept_id'] ?? 0); ?>" <?php echo (int)$s['id'] === $selected_staff_id ? 'selected' : ''; ?>><?php echo html(trim($s['firstname'] . ' ' . $s['lastname'])); ?></option>
                         <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Aviso de Ticket:</label>
-                    <select class="form-select" disabled>
-                        <option>Alertar a todos</option>
                     </select>
                 </div>
             </div>
