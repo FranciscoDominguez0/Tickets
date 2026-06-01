@@ -1089,16 +1089,24 @@ body.dark-mode .uvm-card-title {
 
 body.dark-mode .uvm-detail-item {
     border-bottom-color: #222 !important;
+    border-bottom: 1px dashed #3f3f46 !important;
+    padding: 12px 0 !important;
 }
 
 body.dark-mode .uvm-detail-icon {
     background: #1c1c1e !important;
-    border-color: #27272a !important;
-    color: #a1a1aa !important;
+    border-color: #3f3f46 !important;
+    color: #ef4444 !important;
 }
 
 body.dark-mode .uvm-detail-label {
-    color: #52525b !important;
+    color: #ef4444 !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-weight: 800 !important;
+    margin-bottom: 4px !important;
+    display: block !important;
 }
 
 body.dark-mode .uvm-detail-val {
@@ -3459,5 +3467,29 @@ body.dark-mode .modern-pagination .page-item.disabled .page-link {
     background: #18181b;
     color: #52525b;
     border-color: #27272a !important;
+}
+
+/* === USER/ORG DESKTOP PREMIUM FIELDS === */
+body.dark-mode .user-view-profile-premium .uvp-field {
+    background: #1c1c1e !important;
+    border: 1px solid #27272a !important;
+    border-radius: 12px !important;
+    padding: 14px 16px !important;
+}
+
+body.dark-mode .user-view-profile-premium .uvp-field:hover {
+    border-color: #3f3f46 !important;
+    background: #202022 !important;
+}
+
+body.dark-mode .user-view-profile-premium .uvp-field label {
+    color: #94a3b8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.72rem !important;
+}
+
+body.dark-mode .user-view-profile-premium .uvp-field-icon {
+    color: #71717a !important;
 }
 
