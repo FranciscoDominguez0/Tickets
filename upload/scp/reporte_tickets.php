@@ -73,9 +73,9 @@ if (empty($filterMonths)) {
     $filterMonths[] = date('Y-m');
 }
 
-// Validar que el mes seleccionado exista, si no, usar el primero disponible o 'all'
-if ($monthFilter !== 'all' && !in_array($monthFilter, $filterMonths)) {
-    $monthFilter = $filterMonths[0];
+// Validar formato YYYY-MM
+if ($monthFilter !== 'all' && !preg_match('/^\d{4}-\d{2}$/', $monthFilter)) {
+    $monthFilter = date('Y-m');
 }
 
 // Paginación
@@ -321,17 +321,20 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
     <div class="tickets-panel" style="margin-bottom: 16px;">
         <div class="tickets-toolbar">
             <div class="tickets-filters">
-                <select name="month" class="form-select form-select-sm" id="monthSelect" style="min-width: 170px; font-weight: 600; color: #475569; border-radius: 8px;">
-                    <option value="all" <?php echo $monthFilter === 'all' ? 'selected' : ''; ?>>Todos los meses</option>
-                    <?php
-                    $monthsEs = ['January'=>'Enero','February'=>'Febrero','March'=>'Marzo','April'=>'Abril','May'=>'Mayo','June'=>'Junio','July'=>'Julio','August'=>'Agosto','September'=>'Septiembre','October'=>'Octubre','November'=>'Noviembre','December'=>'Diciembre'];
-                    foreach ($filterMonths as $mDate) {
-                        $mLabel = str_replace(array_keys($monthsEs), array_values($monthsEs), date('F Y', strtotime($mDate . '-01')));
-                        $selected = ($mDate === $monthFilter) ? 'selected' : '';
-                        echo "<option value=\"$mDate\" $selected>$mLabel</option>";
-                    }
-                    ?>
-                </select>
+                <div class="d-flex align-items-center gap-2">
+                    <style>
+                        body.dark-mode #monthInput {
+                            color-scheme: dark;
+                            background-color: #1e293b;
+                            color: #f8fafc !important;
+                            border-color: #334155;
+                        }
+                    </style>
+                    <input type="month" name="month" id="monthInput" lang="es" class="form-control" style="font-weight: 600; color: #475569; border-radius: 8px; max-width: 180px;" value="<?php echo $monthFilter === 'all' ? '' : htmlspecialchars($monthFilter); ?>" title="Elegir mes">
+                    <?php if ($monthFilter !== 'all'): ?>
+                        <a href="?month=all" class="btn btn-outline-secondary" style="border-radius: 8px;" title="Ver todos los meses"><i class="bi bi-x-lg"></i></a>
+                    <?php endif; ?>
+                </div>
             </div>
             <div class="tickets-search">
                 <form method="GET" action="" class="input-group">
@@ -588,11 +591,15 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
 
 <script>
 (function() {
-    const monthSelect = document.getElementById('monthSelect');
-    if (monthSelect) {
-        monthSelect.addEventListener('change', function() {
+    const monthInput = document.getElementById('monthInput');
+    if (monthInput) {
+        monthInput.addEventListener('change', function() {
             var url = new URL(window.location.href);
-            url.searchParams.set('month', this.value);
+            if (this.value) {
+                url.searchParams.set('month', this.value);
+            } else {
+                url.searchParams.set('month', 'all');
+            }
             url.searchParams.delete('page');
             window.location.href = url.toString();
         });
