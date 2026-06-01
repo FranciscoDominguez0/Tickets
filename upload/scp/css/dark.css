@@ -970,13 +970,13 @@ body.dark-mode .uvm-status-badge.banned {
 
 /* Acciones */
 body.dark-mode .uvm-btn-edit {
-    background: #e2e8f0 !important;
-    color: #0f172a !important;
-    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.05) !important;
+    background: #ef4444 !important;
+    color: #fff !important;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.22) !important;
 }
 
 body.dark-mode .uvm-btn-edit:hover {
-    background: #f8fafc !important;
+    background: #dc2626 !important;
 }
 
 body.dark-mode .uvm-btn-gear {

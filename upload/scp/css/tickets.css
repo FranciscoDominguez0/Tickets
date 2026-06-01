@@ -2602,7 +2602,17 @@ tr.ticket-row.is-selected td {
         line-height: 1.4;
     }
     .ticket-view-entry .entry-footer {
-        display: none;
+        display: flex;
+        font-size: 0.7rem;
+        margin-top: 4px;
+        gap: 3px;
+        opacity: 0.85;
+        padding-left: 4px;
+        justify-content: flex-start;
+    }
+    .ticket-view-entry.user .entry-footer {
+        padding-right: 4px;
+        justify-content: flex-end;
     }
     .ticket-view-reply {
         padding: 14px;

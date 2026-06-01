@@ -477,13 +477,13 @@ ob_start();
         </div>
 
         <!-- Barra de acciones -->
-        <div class="d-flex align-items-center justify-content-between gap-3 mt-4 p-4 action-bar-container" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-            <div>
+        <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center justify-content-between gap-3 mt-4 p-3 p-md-4 action-bar-container" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+            <div class="order-2 order-md-1 text-center text-md-start">
                 <a href="roles.php" class="btn btn-link text-decoration-none text-muted fw-bold px-3 py-2" style="font-size: 0.9rem;"><i class="bi bi-arrow-left me-2"></i> Cancelar y Volver</a>
             </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-reset-custom px-4 py-2 fw-bold" onclick="confirmReset()" style="font-size: 0.9rem;">Restablecer</button>
-                <button type="submit" class="btn btn-primary btn-save-custom px-4 py-2 fw-bold" style="font-size: 0.9rem;">Guardar cambios</button>
+            <div class="order-1 order-md-2 d-flex flex-column flex-sm-row gap-2">
+                <button type="button" class="btn btn-reset-custom px-4 py-2 fw-bold w-100" onclick="confirmReset()" style="font-size: 0.9rem;">Restablecer</button>
+                <button type="submit" class="btn btn-primary btn-save-custom px-4 py-2 fw-bold w-100" style="font-size: 0.9rem;">Guardar cambios</button>
             </div>
         </div>
     </form>
