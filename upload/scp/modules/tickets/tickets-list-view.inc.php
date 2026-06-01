@@ -167,7 +167,12 @@
                         });
                         ['dateFromInput','dateToInput'].forEach(function(id){
                             var el = document.getElementById(id);
-                            if (el) el.addEventListener('keydown', function(e){ if (e.key==='Enter') btn.click(); });
+                            if (el) el.addEventListener('keydown', function(e){ 
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    btn.click(); 
+                                }
+                            });
                         });
                     })();
                     </script>

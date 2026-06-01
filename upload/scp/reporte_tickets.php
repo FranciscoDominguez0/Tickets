@@ -323,16 +323,60 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
             <div class="tickets-filters">
                 <div class="d-flex align-items-center gap-2">
                     <style>
+                        #monthInput {
+                            font-weight: 600;
+                            color: #334155;
+                            border-radius: 10px;
+                            border: 1px solid #cbd5e1;
+                            background-color: #f8fafc;
+                            padding: 8px 14px;
+                            height: 42px;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                            transition: all 0.2s ease;
+                            cursor: pointer;
+                        }
+                        #monthInput:hover {
+                            border-color: #94a3b8;
+                            background-color: #ffffff;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                        }
+                        #monthInput:focus {
+                            border-color: #3b82f6;
+                            background-color: #ffffff;
+                            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+                            outline: none;
+                        }
+                        #monthInput::-webkit-calendar-picker-indicator {
+                            cursor: pointer;
+                            opacity: 0.5;
+                            transition: 0.2s;
+                        }
+                        #monthInput:hover::-webkit-calendar-picker-indicator {
+                            opacity: 0.8;
+                        }
+
                         body.dark-mode #monthInput {
                             color-scheme: dark;
                             background-color: #1e293b;
-                            color: #f8fafc !important;
+                            color: #f1f5f9 !important;
                             border-color: #334155;
                         }
+                        body.dark-mode #monthInput:hover {
+                            background-color: #0f172a;
+                            border-color: #475569;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                        }
+                        body.dark-mode #monthInput:focus {
+                            border-color: #3b82f6;
+                            background-color: #0f172a;
+                            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+                        }
                     </style>
-                    <input type="month" name="month" id="monthInput" lang="es" class="form-control" style="font-weight: 600; color: #475569; border-radius: 8px; max-width: 180px;" value="<?php echo $monthFilter === 'all' ? '' : htmlspecialchars($monthFilter); ?>" title="Elegir mes">
+                    <input type="month" name="month" id="monthInput" lang="es" class="form-control" style="max-width: 200px;" value="<?php echo $monthFilter === 'all' ? '' : htmlspecialchars($monthFilter); ?>" title="Elegir mes">
                     <?php if ($monthFilter !== 'all'): ?>
-                        <a href="?month=all" class="btn btn-outline-secondary" style="border-radius: 8px;" title="Ver todos los meses"><i class="bi bi-x-lg"></i></a>
+                        <a href="?month=all" class="btn btn-outline-danger d-flex align-items-center justify-content-center" style="border-radius: 10px; width: 42px; height: 42px; border-color: #fecaca; color: #ef4444; background: #fef2f2;" title="Limpiar filtro" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='#fef2f2'; this.style.color='#ef4444';">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
                     <?php endif; ?>
                 </div>
             </div>
