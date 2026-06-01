@@ -2527,8 +2527,10 @@ body.dark-mode .org-modal-title {
     color: #f4f4f5 !important;
 }
 
-body.dark-mode .org-modal-title i {
+body.dark-mode .org-modal-title i,
+body.dark-mode .modal-title.org-modal-title i {
     color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 
 body.dark-mode .org-modal-body {

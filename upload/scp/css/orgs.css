@@ -562,7 +562,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: white !important;
     font-size: 1.1rem;
     box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
 }
@@ -570,6 +570,11 @@
 
 .org-modal-danger .org-modal-title i {
     background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.modal-title.org-modal-title i {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
 }
 
 .org-modal-body {
