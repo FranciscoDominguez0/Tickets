@@ -374,11 +374,15 @@ body.dark-mode .text-muted {
             <div class="mb-0">
                 <label class="form-label">Usuario solicitante <span class="required">*</span></label>
                 <div class="user-select-card">
-                    <div class="user-avatar" id="open_user_avatar"><?php echo html($initials); ?></div>
+                    <div class="user-avatar" id="open_user_avatar"><?php echo $walkinSelected ? 'ND' : html($initials); ?></div>
                     <div class="user-info" id="open_user_display">
                         <?php if ($preUser): ?>
-                            <div class="user-name"><?php echo html($userName); ?></div>
-                            <div class="user-email"><?php echo html($userEmail); ?></div>
+                            <?php if ($walkinSelected): ?>
+                                <div class="user-name" style="color: #ef4444; font-size: 1rem;">No recurrente</div>
+                            <?php else: ?>
+                                <div class="user-name"><?php echo html($userName); ?></div>
+                                <div class="user-email"><?php echo html($userEmail); ?></div>
+                            <?php endif; ?>
                         <?php else: ?>
                             <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un usuario</div>
                         <?php endif; ?>
@@ -567,13 +571,20 @@ body.dark-mode .text-muted {
         var nm = (btnWalkin.getAttribute('data-user-name') || '').toString();
         var em = (btnWalkin.getAttribute('data-user-email') || '').toString();
 
-        userIdInput.value = uid;
-        userDisplay.innerHTML = '<div class="user-name">' + nm.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
-          + '<div class="user-email">' + em.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
-        userAvatar.textContent = makeInitials(nm);
-
         var defaultId = walkinDefaultUserId ? (walkinDefaultUserId.value || '').toString() : '';
-        showWalkin(uid !== '' && defaultId !== '' && uid === defaultId);
+        var isWalkin = (uid !== '' && defaultId !== '' && uid === defaultId);
+
+        userIdInput.value = uid;
+        if (isWalkin) {
+          userDisplay.innerHTML = '<div class="user-name" style="color: #ef4444; font-size: 1rem;">No recurrente</div>';
+          userAvatar.textContent = 'ND';
+        } else {
+          userDisplay.innerHTML = '<div class="user-name">' + nm.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+            + '<div class="user-email">' + em.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+          userAvatar.textContent = makeInitials(nm);
+        }
+
+        showWalkin(isWalkin);
       });
     }
     if (form && btnSubmit) {
@@ -641,41 +652,107 @@ body.dark-mode .text-muted {
             <i class="bi bi-info-circle me-1"></i> Busca usuarios por email, teléfono o nombre.
         </div>
 
-        <form method="get" action="tickets.php" class="mb-3">
+        <form method="get" action="tickets.php" class="mb-3" id="openUserSearchForm" onsubmit="event.preventDefault();">
           <input type="hidden" name="a" value="open">
           <div class="input-group">
             <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search text-muted"></i></span>
-            <input type="text" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>">
-            <button class="btn btn-primary" type="submit" style="border-radius: 0 10px 10px 0; margin-left: 6px; background: linear-gradient(135deg,#dc2626,#ef4444); border: none;">Buscar</button>
+            <input type="text" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" name="uq" id="open_user_query" placeholder="Buscar por email, teléfono o nombre" value="<?php echo html($open_user_query); ?>" autocomplete="off">
           </div>
         </form>
 
-        <?php if ($open_user_query !== '' && empty($open_user_results)): ?>
-          <div class="text-muted text-center py-3"><i class="bi bi-inbox" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No se encontraron usuarios.</div>
-        <?php endif; ?>
+        <div id="user_search_results_container">
+            <!-- Los resultados se cargarán aquí dinámicamente -->
+            <?php if ($open_user_query !== '' && empty($open_user_results)): ?>
+            <div class="text-muted text-center py-3"><i class="bi bi-inbox" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No se encontraron usuarios.</div>
+            <?php endif; ?>
 
-        <?php if (!empty($open_user_results)): ?>
-          <div class="list-group" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
-            <?php foreach ($open_user_results as $u):
-                $uParts = preg_split('/\s+/', trim($u['firstname'] . ' ' . $u['lastname']));
-                $ui1 = strtoupper((string)($uParts[0][0] ?? ''));
-                $ui2 = count($uParts) > 1 ? strtoupper((string)($uParts[1][0] ?? '')) : (strlen(trim($u['firstname'] . ' ' . $u['lastname'])) > 1 ? strtoupper(substr(trim($u['firstname'] . ' ' . $u['lastname']), 1, 1)) : '');
-                $uInitials = trim($ui1 . $ui2) ?: 'U';
-                $uColor = $avatarColors[($u['id'] ?? 0) % count($avatarColors)];
-            ?>
-              <div class="list-group-item d-flex justify-content-between align-items-center" style="border: none; border-bottom: 1px solid #f1f5f9; padding: 12px 16px;">
-                <div class="d-flex align-items-center gap-3">
-                  <div style="width: 36px; height: 36px; border-radius: 50%; background: <?php echo html($uColor); ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;"><?php echo html($uInitials); ?></div>
-                  <div>
-                    <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;"><?php echo html(trim($u['firstname'] . ' ' . $u['lastname'])); ?></div>
-                    <div style="font-size: 0.82rem; color: #64748b;"><?php echo html($u['email']); ?><?php if (!empty($u['phone'])): ?> · <?php echo html($u['phone']); ?><?php endif; ?></div>
-                  </div>
+            <?php if (!empty($open_user_results)): ?>
+            <div class="list-group" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+                <?php foreach ($open_user_results as $u):
+                    $uParts = preg_split('/\s+/', trim($u['firstname'] . ' ' . $u['lastname']));
+                    $ui1 = strtoupper((string)($uParts[0][0] ?? ''));
+                    $ui2 = count($uParts) > 1 ? strtoupper((string)($uParts[1][0] ?? '')) : (strlen(trim($u['firstname'] . ' ' . $u['lastname'])) > 1 ? strtoupper(substr(trim($u['firstname'] . ' ' . $u['lastname']), 1, 1)) : '');
+                    $uInitials = trim($ui1 . $ui2) ?: 'U';
+                    $uColor = $avatarColors[($u['id'] ?? 0) % count($avatarColors)];
+                ?>
+                <div class="list-group-item d-flex justify-content-between align-items-center gap-2" style="border: none; border-bottom: 1px solid #f1f5f9; padding: 12px 16px;">
+                    <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: <?php echo html($uColor); ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;"><?php echo html($uInitials); ?></div>
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo html(trim($u['firstname'] . ' ' . $u['lastname'])); ?></div>
+                            <div style="font-size: 0.82rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo html($u['email']); ?><?php if (!empty($u['phone'])): ?> · <?php echo html($u['phone']); ?><?php endif; ?></div>
+                        </div>
+                    </div>
+                    <a class="btn btn-sm btn-outline-danger" style="border-radius: 8px; font-weight: 600; flex-shrink: 0;" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
                 </div>
-                <a class="btn btn-sm btn-outline-danger" style="border-radius: 8px; font-weight: 600;" href="tickets.php?a=open&uid=<?php echo (int)$u['id']; ?>">Seleccionar</a>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <script>
+        (function() {
+            var input = document.getElementById('open_user_query');
+            var container = document.getElementById('user_search_results_container');
+            var avatarColors = ['#ef4444','#7c3aed','#db2777','#ea580c','#16a34a','#0891b2'];
+            var timeout = null;
+
+            if (!input || !container) return;
+
+            function makeInitials(name) {
+                var parts = (name || '').trim().split(/\s+/).filter(Boolean);
+                if (parts.length === 0) return 'U';
+                var i1 = parts[0].charAt(0).toUpperCase();
+                var i2 = parts.length > 1 ? parts[1].charAt(0).toUpperCase() : (parts[0].length > 1 ? parts[0].charAt(1).toUpperCase() : '');
+                return i1 + i2 || 'U';
+            }
+
+            input.addEventListener('input', function() {
+                var q = this.value.trim();
+                if (timeout) clearTimeout(timeout);
+                
+                if (q.length < 2) {
+                    container.innerHTML = ''; // Limpiar si es muy corto
+                    return;
+                }
+
+                timeout = setTimeout(function() {
+                    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger" role="status" style="width: 1.5rem; height: 1.5rem; border-width: 0.2rem;"></div><div class="mt-2 text-muted" style="font-size: 0.85rem; font-weight: 500;">Buscando clientes...</div></div>';
+
+                    fetch('tickets.php?action=user_search&q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok || !data.items || data.items.length === 0) {
+                            container.innerHTML = '<div class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i><br><div class="mt-2" style="font-weight: 500;">No se encontraron usuarios que coincidan con "'+q.replace(/</g, "&lt;").replace(/>/g, "&gt;")+'".</div></div>';
+                            return;
+                        }
+
+                        var html = '<div class="list-group" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">';
+                        data.items.forEach(function(u) {
+                            var initials = makeInitials(u.name);
+                            var color = avatarColors[(parseInt(u.id, 10) || 0) % avatarColors.length];
+                            
+                            html += '<div class="list-group-item d-flex justify-content-between align-items-center gap-2" style="border: none; border-bottom: 1px solid #f1f5f9; padding: 12px 16px;">';
+                            html += '  <div class="d-flex align-items-center gap-3" style="min-width: 0; flex: 1;">';
+                            html += '    <div style="width: 36px; height: 36px; border-radius: 50%; background: ' + color + '; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;">' + initials + '</div>';
+                            html += '    <div style="min-width: 0; flex: 1;">';
+                            html += '      <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + (u.name || 'Sin nombre').replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</div>';
+                            html += '      <div style="font-size: 0.82rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + (u.email || '').replace(/</g, "&lt;").replace(/>/g, "&gt;") + '</div>';
+                            html += '    </div>';
+                            html += '  </div>';
+                            html += '  <a class="btn btn-sm btn-outline-danger" style="border-radius: 8px; font-weight: 600; flex-shrink: 0;" href="tickets.php?a=open&uid=' + u.id + '">Seleccionar</a>';
+                            html += '</div>';
+                        });
+                        html += '</div>';
+                        container.innerHTML = html;
+                    })
+                    .catch(err => {
+                        container.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error al buscar usuarios.</div>';
+                    });
+                }, 400); // 400ms debounce
+            });
+        })();
+        </script>
       </div>
       <div class="modal-footer" style="border-top: 1px solid #f1f5f9;">
         <button type="button" class="btn btn-secondary" style="border-radius: 10px;" data-bs-dismiss="modal">Cerrar</button>
