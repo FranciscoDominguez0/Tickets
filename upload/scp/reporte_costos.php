@@ -229,6 +229,37 @@ ob_start();
     }
 }
 
+/* ── Botón Volver Creativo ── */
+.btn-back-creative {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    border-radius: 50rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-back-creative:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.btn-back-creative i {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.btn-back-creative:hover i {
+    transform: translateX(-3px);
+}
+
 /* Cards */
 .settings-card {
     border-radius: 14px;
@@ -584,6 +615,17 @@ body.dark-mode .mat-read-item .mat-qty {
     background: #27272a !important;
     color: #a1a1aa !important;
 }
+body.dark-mode .btn-back-creative {
+    background: #18181b !important;
+    color: #a1a1aa !important;
+    border-color: #27272a !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+body.dark-mode .btn-back-creative:hover {
+    background: #27272a !important;
+    color: #f4f4f5 !important;
+    border-color: #3f3f46 !important;
+}
 </style>
 
 <div class="tickets-shell">
@@ -593,7 +635,7 @@ body.dark-mode .mat-read-item .mat-qty {
                 <h1>Facturación</h1>
             </div>
             <div>
-                <a href="reporte_tickets.php" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
+                <a href="reporte_tickets.php" class="btn-back-creative"><i class="bi bi-arrow-left"></i> Volver a Reportes</a>
             </div>
         </div>
     </div>

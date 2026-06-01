@@ -1044,9 +1044,9 @@ function humanSize($bytes) {
                 font-size: 0.72rem;
                 color: #94a3b8;
                 margin-top: 4px;
-                padding-left: 46px;
+                padding-left: 4px;
             }
-            .ticket-view-entry.user .entry-footer { text-align: right; padding-left: 0; padding-right: 46px; }
+            .ticket-view-entry.user .entry-footer { text-align: right; padding-left: 0; padding-right: 4px; }
 
             .att-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
             .att-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; flex-wrap: wrap; }
@@ -1674,15 +1674,12 @@ function humanSize($bytes) {
                 <div class="head py-3 px-4">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <h5 class="mb-0" style="font-weight: 800; color: #0f172a;"><i class="bi bi-chat-left-text-fill text-muted me-2"></i> Hilo del ticket</h5>
-                        <div class="preview-hint" id="previewHintTip" style="margin-bottom: 0;">
-                            <i class="bi bi-info-circle-fill"></i>
-                            <span>Tip: <span class="d-none d-md-inline">Pasa el ratón</span><span class="d-md-none">Deja presionado</span> sobre una imagen para verla</span>
-                        </div>
+                        
                     </div>
                 </div>
                 <div class="body p-3 p-md-4" style="background: #fafafa;">
                     <div class="thread mt-0">
-                        <script>(function(){ var h = document.getElementById('previewHintTip'); if (!h) return; setTimeout(function(){ h.style.opacity = '0'; h.style.transform = 'translateY(-6px)'; setTimeout(function(){ h.style.display = 'none'; }, 800); }, 4000); })();</script>
+
 
                 <?php if (empty($entries)): ?>
                     <div class="text-muted">Aún no hay mensajes.</div>

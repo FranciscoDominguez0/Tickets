@@ -3336,8 +3336,7 @@ body.dark-mode .js-delete-entry i {
 }
 
 body.dark-mode .btn-publish i {
-    color: #1c1917 !important;
-    /* Mantener contraste oscuro sobre el botón amarillo */
+    color: #ffffff !important;
 }
 
 body.dark-mode #btnCloseTicketBottom i,

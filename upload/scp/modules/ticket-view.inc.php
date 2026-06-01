@@ -1477,11 +1477,11 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
                 <div class="reply-buttons">
                     <button type="submit" name="do" value="reply" class="btn btn-reply btn-publish">
-                        <i class="bi bi-send"></i> Publicar Respuesta
+                        <i class="bi bi-send"></i> Responder
                     </button>
                     <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
                     <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
-                        <i class="bi bi-check2-circle"></i> Cerrar ticket
+                        <i class="bi bi-check2-circle"></i> Cerrar
                     </button>
                     <?php endif; ?>
                 </div>
