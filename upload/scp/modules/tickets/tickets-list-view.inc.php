@@ -293,12 +293,20 @@
                                         <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                             <?php 
                                             $bstatus = $t['billing_status'] ?? 'pending';
-                                            if ($bstatus !== 'pending'): ?>
-                                                <span class="chip" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                            if ($bstatus === 'confirmed'): ?>
+                                                <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                                     <i class="bi bi-patch-check-fill"></i> Facturado
                                                 </span>
+                                            <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                                <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-geo-alt-fill"></i> Visita Técnica
+                                                </span>
+                                            <?php elseif ($bstatus === 'cotizacion'): ?>
+                                                <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-file-earmark-text-fill"></i> Cotización
+                                                </span>
                                             <?php else: ?>
-                                                <span class="chip" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <span class="chip billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                                     <i class="bi bi-clock-history"></i> Pendiente Facturación
                                                 </span>
                                             <?php endif; ?>
@@ -329,12 +337,20 @@
                                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                         <?php 
                                         $bstatus = $t['billing_status'] ?? 'pending';
-                                        if ($bstatus !== 'pending'): ?>
-                                            <span class="chip" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                        if ($bstatus === 'confirmed'): ?>
+                                            <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                 <i class="bi bi-patch-check-fill"></i> Facturado
                                             </span>
+                                        <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                            <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                                <i class="bi bi-geo-alt-fill"></i> Visita Técnica
+                                            </span>
+                                        <?php elseif ($bstatus === 'cotizacion'): ?>
+                                            <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                                <i class="bi bi-file-earmark-text-fill"></i> Cotización
+                                            </span>
                                         <?php else: ?>
-                                            <span class="chip" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
+                                            <span class="chip billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                 <i class="bi bi-clock-history"></i> Pendiente Facturación
                                             </span>
                                         <?php endif; ?>
@@ -365,45 +381,12 @@
     if ($deptFilterAvailable && $selectedDeptId > 0) $basePageParams['dept_id'] = (int)$selectedDeptId;
     if ($dateFrom !== '') $basePageParams['date_from'] = $dateFrom;
     if ($dateTo   !== '') $basePageParams['date_to']   = $dateTo;
-    $prevUrl = '';
-    $nextUrl = '';
-    if ($page > 1) {
-        $prevParams = $basePageParams;
-        $prevParams['p'] = $page - 1;
-        $prevUrl = 'tickets.php?' . http_build_query($prevParams);
+    $urlParams = '';
+    foreach ($basePageParams as $k => $v) {
+        $urlParams .= '&' . urlencode($k) . '=' . urlencode($v);
     }
-    if ($page < $totalPages) {
-        $nextParams = $basePageParams;
-        $nextParams['p'] = $page + 1;
-        $nextUrl = 'tickets.php?' . http_build_query($nextParams);
-    }
+    echo renderModernPagination($page, $totalPages, $urlParams, 'p');
     ?>
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
-        <div class="text-muted" style="font-size:0.9rem;">
-            Página <?php echo $page; ?> de <?php echo $totalPages; ?>
-        </div>
-        <div class="d-flex gap-2">
-            <?php if ($prevUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>">
-                    <i class="bi bi-chevron-left"></i> Anterior
-                </a>
-            <?php else: ?>
-                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
-                    <i class="bi bi-chevron-left"></i> Anterior
-                </button>
-            <?php endif; ?>
-
-            <?php if ($nextUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">
-                    Siguiente <i class="bi bi-chevron-right"></i>
-                </a>
-            <?php else: ?>
-                <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
-                    Siguiente <i class="bi bi-chevron-right"></i>
-                </button>
-            <?php endif; ?>
-        </div>
-    </div>
 
     <div class="ticket-hover-preview d-none" id="ticketHoverPreview" role="dialog" aria-hidden="true">
         <div class="ticket-hover-preview-inner">

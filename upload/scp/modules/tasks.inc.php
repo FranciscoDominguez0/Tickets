@@ -506,69 +506,14 @@ body.dark-mode #tasksTable thead th {
     </div>
 
     <!-- Paginación -->
-    <?php
-    $basePaging = array_filter([
-        'status'   => $status_filter !== '' ? $status_filter : null,
-        'assigned' => $assigned_filter !== '' ? $assigned_filter : null,
-    ], function ($v) { return $v !== null && $v !== ''; });
-
-    $prevUrl = '';
-    $nextUrl = '';
-    if (($pageNum ?? 1) > 1) {
-        $prevParams = $basePaging;
-        $prevParams['p'] = $pageNum - 1;
-        $prevUrl = 'tasks.php?' . http_build_query($prevParams);
-    }
-    if (($pageNum ?? 1) < ($totalPages ?? 1)) {
-        $nextParams = $basePaging;
-        $nextParams['p'] = $pageNum + 1;
-        $nextUrl = 'tasks.php?' . http_build_query($nextParams);
-    }
-    $showStart = ((int)($totalRows ?? 0) > 0) ? (((int)($offset ?? 0)) + 1) : 0;
-    $showEnd   = min(((int)($offset ?? 0) + (int)($perPage ?? 10)), (int)($totalRows ?? 0));
-    ?>
     <?php if ($totalPages > 1): ?>
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
-        <div class="text-muted" style="font-size:0.9rem;">
-            Mostrando <?php echo $showStart; ?>-<?php echo $showEnd; ?> de <?php echo (int)($totalRows ?? 0); ?>
-            · Página <?php echo (int)($pageNum ?? 1); ?> de <?php echo (int)($totalPages ?? 1); ?>
-        </div>
-        <div class="d-flex gap-2">
-            <?php if ($prevUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($prevUrl); ?>"><i class="bi bi-chevron-left"></i> Anterior</a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
-            <?php endif; ?>
-
-            <?php
-            $range = 2;
-            $start = max(1, $pageNum - $range);
-            $end   = min($totalPages, $pageNum + $range);
-            ?>
-            <div class="d-none d-sm-flex gap-1">
-                <?php if ($start > 1): ?>
-                    <a href="tasks.php?<?php echo http_build_query(array_merge($basePaging, ['p' => 1])); ?>" class="btn btn-sm btn-outline-secondary">1</a>
-                    <?php if ($start > 2): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
-                <?php endif; ?>
-                <?php for ($i = $start; $i <= $end; $i++): ?>
-                    <a href="tasks.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $i])); ?>"
-                       class="btn btn-sm <?php echo $i === $pageNum ? 'btn-primary' : 'btn-outline-secondary'; ?>"
-                       <?php echo $i === $pageNum ? 'style="background:linear-gradient(135deg,#ef4444,#991b1b);border:none;"' : ''; ?>>
-                        <?php echo $i; ?>
-                    </a>
-                <?php endfor; ?>
-                <?php if ($end < $totalPages): ?>
-                    <?php if ($end < $totalPages - 1): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
-                    <a href="tasks.php?<?php echo http_build_query(array_merge($basePaging, ['p' => $totalPages])); ?>" class="btn btn-sm btn-outline-secondary"><?php echo $totalPages; ?></a>
-                <?php endif; ?>
-            </div>
-
-            <?php if ($nextUrl !== ''): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="<?php echo html($nextUrl); ?>">Siguiente <i class="bi bi-chevron-right"></i></a>
-            <?php else: ?>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
-            <?php endif; ?>
-        </div>
+    <div class="mt-4">
+        <?php
+        $urlParams = '';
+        if ($status_filter !== '') $urlParams .= '&status=' . urlencode($status_filter);
+        if ($assigned_filter !== '') $urlParams .= '&assigned=' . urlencode($assigned_filter);
+        echo renderModernPagination($pageNum, $totalPages, $urlParams, 'p');
+        ?>
     </div>
     <?php endif; ?>
 </div>

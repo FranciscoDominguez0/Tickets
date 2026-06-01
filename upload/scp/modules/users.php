@@ -1540,36 +1540,20 @@ $statusBadges = [
 
             </form>
 
-            <!-- Pie de tabla: selección, paginación, mostrando -->
+            <!-- Pie de tabla: paginación -->
             <div class="table-footer-bar">
-                <div class="select-links">
-                    Seleccionar:
-                    <a href="#" data-select="all">Todos</a>
-                    <a href="#" data-select="none">Ninguno</a>
-                </div>
-                <div class="pagination-wrap">
+                <div class="pagination-wrap w-100 d-flex align-items-center justify-content-center">
                     <?php
-                    $prevQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => max(1, $pageNum - 1)]);
-                    $nextQp = array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => min($totalPages, $pageNum + 1)]);
+                    $baseParams = $queryParams;
+                    $baseParams['sort'] = $currentSort;
+                    $baseParams['order'] = $currentOrder;
+                    unset($baseParams['p']);
+                    $urlParams = '';
+                    foreach ($baseParams as $k => $v) {
+                        $urlParams .= '&' . urlencode($k) . '=' . urlencode($v);
+                    }
+                    echo renderModernPagination($pageNum, $totalPages, $urlParams, 'p');
                     ?>
-                    <?php if ($pageNum > 1): ?>
-                        <a href="users.php?<?php echo http_build_query($prevQp); ?>">Anterior</a>
-                    <?php else: ?>
-                        <span class="text-muted">Anterior</span>
-                    <?php endif; ?>
-
-                    <span>Página <?php echo $pageNum; ?> de <?php echo $totalPages; ?></span>
-
-                    <?php if ($pageNum < $totalPages): ?>
-                        <a href="users.php?<?php echo http_build_query($nextQp); ?>">Siguiente</a>
-                    <?php else: ?>
-                        <span class="text-muted">Siguiente</span>
-                    <?php endif; ?>
-
-                    <a href="users.php?<?php echo http_build_query(array_merge($queryParams, ['sort' => $currentSort, 'order' => $currentOrder, 'p' => $pageNum, 'a' => 'export'])); ?>">Exportar</a>
-                </div>
-                <div class="showing-text">
-                    Mostrando <?php echo $totalRows ? $offset + 1 : 0; ?> - <?php echo min($offset + $perPage, $totalRows); ?> de <?php echo $totalRows; ?>
                 </div>
             </div>
         </div>

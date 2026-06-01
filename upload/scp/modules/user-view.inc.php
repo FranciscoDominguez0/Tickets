@@ -328,50 +328,11 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <?php endforeach; ?>
                     </div>
                     <?php if (isset($tTotalPages) && $tTotalPages > 1): ?>
-                        <div class="uvm-pagination-wrap">
-                            <div class="uvm-showing-text text-center">
-                                Mostrando <?php echo $userTicketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $userTicketTotal); ?> de <?php echo $userTicketTotal; ?>
-                            </div>
-                            <div class="uvm-pagination justify-content-center">
-                                <?php if ($tp > 1): ?>
-                                    <a class="uvm-page-btn" href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
-                                <?php else: ?>
-                                    <span class="uvm-page-btn disabled"><i class="bi bi-chevron-left"></i></span>
-                                <?php endif; ?>
-                                
-                                <?php 
-                                $startPage = max(1, $tp - 1);
-                                $endPage = min($tTotalPages, $tp + 1);
-                                
-                                if ($startPage > 1) {
-                                    echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => 1]) . '">1</a>';
-                                    if ($startPage > 2) {
-                                        echo '<span class="uvm-page-dots">...</span>';
-                                    }
-                                }
-                                
-                                for ($i = $startPage; $i <= $endPage; $i++) {
-                                    if ($i === $tp) {
-                                        echo '<strong class="uvm-page-btn active">' . $i . '</strong>';
-                                    } else {
-                                        echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $i]) . '">' . $i . '</a>';
-                                    }
-                                }
-                                
-                                if ($endPage < $tTotalPages) {
-                                    if ($endPage < $tTotalPages - 1) {
-                                        echo '<span class="uvm-page-dots">...</span>';
-                                    }
-                                    echo '<a class="uvm-page-btn" href="users.php?' . http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tTotalPages]) . '">' . $tTotalPages . '</a>';
-                                }
-                                ?>
-                                
-                                <?php if ($tp < $tTotalPages): ?>
-                                    <a class="uvm-page-btn" href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
-                                <?php else: ?>
-                                    <span class="uvm-page-btn disabled"><i class="bi bi-chevron-right"></i></span>
-                                <?php endif; ?>
-                            </div>
+                        <div class="mt-3">
+                            <?php 
+                            $urlParams = '&id=' . $uid . '&t=tickets';
+                            echo renderModernPagination($tp, $tTotalPages, $urlParams, 'tp'); 
+                            ?>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
@@ -656,25 +617,11 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                     </tbody>
                 </table>
                 <?php if (isset($tTotalPages) && $tTotalPages > 1): ?>
-                    <div class="table-footer-bar" style="border-top: none; padding: 15px;">
-                        <div class="showing-text">
-                            Mostrando <?php echo $userTicketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $userTicketTotal); ?> de <?php echo $userTicketTotal; ?>
-                        </div>
-                        <div class="pagination-wrap">
-                            <?php if ($tp > 1): ?>
-                                <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
-                            <?php endif; ?>
-                            <?php for ($i = max(1, $tp - 2); $i <= min($tTotalPages, $tp + 2); $i++): ?>
-                                <?php if ($i === $tp): ?>
-                                    <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
-                                <?php else: ?>
-                                    <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
-                                <?php endif; ?>
-                            <?php endfor; ?>
-                            <?php if ($tp < $tTotalPages): ?>
-                                <a href="users.php?<?php echo http_build_query(['id' => $uid, 't' => 'tickets', 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
-                            <?php endif; ?>
-                        </div>
+                    <div class="mt-4">
+                        <?php 
+                        $urlParams = '&id=' . $uid . '&t=tickets';
+                        echo renderModernPagination($tp, $tTotalPages, $urlParams, 'tp'); 
+                        ?>
                     </div>
                 <?php endif; ?>
                 <p class="mt-3 mb-0">

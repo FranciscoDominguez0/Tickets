@@ -3422,3 +3422,28 @@ body.dark-mode .btn-remove-item i {
     color: #f87171 !important;
     /* Rojo brillante para el botón de eliminar ítem */
 }
+/* -- Modern Pagination (Dark Mode) -- */
+body.dark-mode .modern-pagination .page-link {
+    background: #18181b;
+    color: #a1a1aa;
+    border-color: #27272a !important;
+}
+body.dark-mode .modern-pagination .page-link:hover {
+    background: #27272a;
+    color: #ef4444;
+    border-color: #3f3f46 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+body.dark-mode .modern-pagination .page-item.active .page-link,
+body.dark-mode .modern-pagination .page-item .page-link.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+body.dark-mode .modern-pagination .page-item.disabled .page-link {
+    background: #18181b;
+    color: #52525b;
+    border-color: #27272a !important;
+}
+

@@ -1970,6 +1970,75 @@ function getPostMaxSize() {
     return $res;
 }
 
+/**
+ * Genera el HTML para una paginación moderna estandarizada.
+ * @param int $page Página actual
+ * @param int $totalPages Total de páginas
+ * @param string $urlParams Parámetros GET adicionales para los enlaces (ej: '&q=busqueda')
+ * @param string $pageParamName Nombre del parámetro de la página en la URL (ej: 'page' o 'p')
+ * @return string HTML de la paginación
+ */
+function renderModernPagination($page, $totalPages, $urlParams = '', $pageParamName = 'page') {
+    if ($totalPages <= 1) return '';
+    $html = '<div class="pagination-wrap mt-4 mb-2 d-flex justify-content-center">';
+    $html .= '<nav aria-label="Page navigation">';
+    $html .= '<ul class="pagination pagination-sm justify-content-center mb-0 gap-1 modern-pagination">';
+
+    // Anterior
+    $html .= '<li class="page-item ' . ($page <= 1 ? 'disabled' : '') . '">';
+    if ($page > 1) {
+        $html .= '<a class="page-link border-0 rounded-3 shadow-sm" href="?' . $pageParamName . '=' . ($page - 1) . $urlParams . '" title="Anterior"><i class="bi bi-chevron-left"></i></a>';
+    } else {
+        $html .= '<span class="page-link border-0 rounded-3 shadow-sm"><i class="bi bi-chevron-left"></i></span>';
+    }
+    $html .= '</li>';
+
+    // Números
+    $range = 2;
+    $start = max(1, $page - $range);
+    $end = min($totalPages, $page + $range);
+
+    if ($start > 1) {
+        $html .= '<li class="page-item"><a class="page-link border-0 rounded-3 fw-bold shadow-sm" href="?' . $pageParamName . '=1' . $urlParams . '">1</a></li>';
+        if ($start > 2) {
+            $html .= '<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="pointer-events: none;">&hellip;</span></li>';
+        }
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        $activeClass = ($i == $page) ? 'active' : '';
+        $html .= '<li class="page-item ' . $activeClass . '">';
+        if ($i == $page) {
+            $html .= '<span class="page-link border-0 rounded-3 fw-bold shadow-sm">' . $i . '</span>';
+        } else {
+            $html .= '<a class="page-link border-0 rounded-3 fw-bold shadow-sm" href="?' . $pageParamName . '=' . $i . $urlParams . '">' . $i . '</a>';
+        }
+        $html .= '</li>';
+    }
+
+    if ($end < $totalPages) {
+        if ($end < $totalPages - 1) {
+            $html .= '<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="pointer-events: none;">&hellip;</span></li>';
+        }
+        $html .= '<li class="page-item"><a class="page-link border-0 rounded-3 fw-bold shadow-sm" href="?' . $pageParamName . '=' . $totalPages . $urlParams . '">' . $totalPages . '</a></li>';
+    }
+
+    // Siguiente
+    $html .= '<li class="page-item ' . ($page >= $totalPages ? 'disabled' : '') . '">';
+    if ($page < $totalPages) {
+        $html .= '<a class="page-link border-0 rounded-3 shadow-sm" href="?' . $pageParamName . '=' . ($page + 1) . $urlParams . '" title="Siguiente"><i class="bi bi-chevron-right"></i></a>';
+    } else {
+        $html .= '<span class="page-link border-0 rounded-3 shadow-sm"><i class="bi bi-chevron-right"></i></span>';
+    }
+    $html .= '</li>';
+
+    $html .= '</ul>';
+    $html .= '</nav>';
+    $html .= '</div>';
+
+    return $html;
+}
+
 function getUploadMaxSize() {
     $val = trim(ini_get('upload_max_filesize'));
     if ($val === '') return 2 * 1024 * 1024; // default

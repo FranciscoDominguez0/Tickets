@@ -1274,25 +1274,11 @@ if (!empty($_GET['org'])) {
                             </table>
                         </div>
                         <?php if ($uTotalPages > 1): ?>
-                            <div class="table-footer-bar" style="border-top: none; padding: 15px;">
-                                <div class="showing-text">
-                                    Mostrando <?php echo $userTotal ? ($uOffset + 1) : 0; ?> – <?php echo min($uOffset + $perPageLimit, $userTotal); ?> de <?php echo $userTotal; ?>
-                                </div>
-                                <div class="pagination-wrap">
-                                    <?php if ($up > 1): ?>
-                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $up - 1, 'tp' => $tp]); ?>"><i class="bi bi-chevron-left"></i></a>
-                                    <?php endif; ?>
-                                    <?php for ($i = max(1, $up - 2); $i <= min($uTotalPages, $up + 2); $i++): ?>
-                                        <?php if ($i === $up): ?>
-                                            <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
-                                        <?php else: ?>
-                                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $i, 'tp' => $tp]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
-                                        <?php endif; ?>
-                                    <?php endfor; ?>
-                                    <?php if ($up < $uTotalPages): ?>
-                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'users', 'up' => $up + 1, 'tp' => $tp]); ?>"><i class="bi bi-chevron-right"></i></a>
-                                    <?php endif; ?>
-                                </div>
+                            <div class="mt-4">
+                                <?php
+                                $urlParams = '&org=' . urlencode($orgName) . '&t=users&tp=' . $tp;
+                                echo renderModernPagination($up, $uTotalPages, $urlParams, 'up');
+                                ?>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -1348,25 +1334,11 @@ if (!empty($_GET['org'])) {
                             </table>
                         </div>
                         <?php if ($tTotalPages > 1): ?>
-                            <div class="table-footer-bar" style="border-top: none; padding: 15px;">
-                                <div class="showing-text">
-                                    Mostrando <?php echo $ticketTotal ? ($tOffset + 1) : 0; ?> – <?php echo min($tOffset + $perPageLimit, $ticketTotal); ?> de <?php echo $ticketTotal; ?>
-                                </div>
-                                <div class="pagination-wrap">
-                                    <?php if ($tp > 1): ?>
-                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $tp - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
-                                    <?php endif; ?>
-                                    <?php for ($i = max(1, $tp - 2); $i <= min($tTotalPages, $tp + 2); $i++): ?>
-                                        <?php if ($i === $tp): ?>
-                                            <strong style="margin: 0 4px; color:var(--bs-primary);"><?php echo $i; ?></strong>
-                                        <?php else: ?>
-                                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
-                                        <?php endif; ?>
-                                    <?php endfor; ?>
-                                    <?php if ($tp < $tTotalPages): ?>
-                                        <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['org' => $orgName, 't' => 'tickets', 'up' => $up, 'tp' => $tp + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
-                                    <?php endif; ?>
-                                </div>
+                            <div class="mt-4">
+                                <?php
+                                $urlParams = '&org=' . urlencode($orgName) . '&t=tickets&up=' . $up;
+                                echo renderModernPagination($tp, $tTotalPages, $urlParams, 'tp');
+                                ?>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -1594,25 +1566,12 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
             </div>
 
             <?php if ($totalPages > 1): ?>
-                <div class="table-footer-bar">
-                    <div class="showing-text">
-                        Mostrando <?php echo $totalRows ? ($offset + 1) : 0; ?> – <?php echo min($offset + $perPage, $totalRows); ?> de <?php echo $totalRows; ?>
-                    </div>
-                    <div class="pagination-wrap">
-                        <?php if ($pageNum > 1): ?>
-                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $pageNum - 1]); ?>"><i class="bi bi-chevron-left"></i></a>
-                        <?php endif; ?>
-                        <?php for ($i = max(1, $pageNum - 2); $i <= min($totalPages, $pageNum + 2); $i++): ?>
-                            <?php if ($i === $pageNum): ?>
-                                <strong style="margin: 0 4px;"><?php echo $i; ?></strong>
-                            <?php else: ?>
-                                <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $i]); ?>" style="margin: 0 4px;"><?php echo $i; ?></a>
-                            <?php endif; ?>
-                        <?php endfor; ?>
-                        <?php if ($pageNum < $totalPages): ?>
-                            <a href="<?php echo html($orgsBaseUrl); ?>?<?php echo http_build_query(['q' => $search, 'p' => $pageNum + 1]); ?>"><i class="bi bi-chevron-right"></i></a>
-                        <?php endif; ?>
-                    </div>
+                <div class="mt-4">
+                    <?php
+                    $urlParams = '';
+                    if ($search !== '') $urlParams .= '&q=' . urlencode($search);
+                    echo renderModernPagination($pageNum, $totalPages, $urlParams, 'p');
+                    ?>
                 </div>
             <?php endif; ?>
         </div>

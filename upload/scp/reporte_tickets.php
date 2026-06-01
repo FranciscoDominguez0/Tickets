@@ -414,9 +414,17 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                         <?php if ($hasReport): ?>
                                             <?php 
                                             $bstatus = $t['billing_status'] ?? 'pending';
-                                            if ($bstatus !== 'pending'): ?>
-                                                <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
-                                                    <i class="bi bi-check-all"></i> Facturado
+                                            if ($bstatus === 'confirmed'): ?>
+                                                <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-patch-check-fill"></i> Facturado
+                                                </span>
+                                            <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                                <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-geo-alt-fill"></i> Visita Técnica
+                                                </span>
+                                            <?php elseif ($bstatus === 'cotizacion'): ?>
+                                                <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                    <i class="bi bi-file-earmark-text-fill"></i> Cotización
                                                 </span>
                                             <?php else: ?>
                                                 <span class="chip" style="background: #16a34a15; color: #16a34a; border: 1px solid #16a34a33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
@@ -441,16 +449,22 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
                                     <?php if ($hasReport): ?>
                                         <?php 
                                         $bstatus = $t['billing_status'] ?? 'pending';
-                                        if ($bstatus !== 'pending'): ?>
-                                            <span class="chip chip-report-done" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
-                                                <i class="bi bi-check-all" style="margin-right: 4px;"></i>Facturado
+                                        if ($bstatus === 'confirmed'): ?>
+                                            <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                                <i class="bi bi-patch-check-fill" style="margin-right: 4px;"></i>Facturado
                                             </span>
-
+                                        <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                            <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                                <i class="bi bi-geo-alt-fill" style="margin-right: 4px;"></i>Visita Técnica
+                                            </span>
+                                        <?php elseif ($bstatus === 'cotizacion'): ?>
+                                            <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
+                                                <i class="bi bi-file-earmark-text-fill" style="margin-right: 4px;"></i>Cotización
+                                            </span>
                                         <?php else: ?>
                                             <span class="chip chip-report-done" style="background: #16a34a15; color: #065f46; border: 1px solid #a7f3d0; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
                                                 <i class="bi bi-check-circle-fill" style="margin-right: 4px;"></i>Completado
                                             </span>
-
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <span class="chip chip-report-pending" style="background: #fffbeb; color: #92400e; border: 1px solid #fde68a; padding: 6px 14px; font-weight: 700; font-size: 0.8rem; border-radius: 8px;">
@@ -567,52 +581,8 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
     $qParam = $search !== '' ? '&q=' . urlencode($search) : '';
     $mParam = '&month=' . urlencode($monthFilter);
     $allParams = $mParam . $qParam;
+    echo renderModernPagination($page, $totalPages, $allParams, 'page');
     ?>
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
-        <div class="text-muted" style="font-size:0.9rem;">
-            Página <?php echo $page; ?> de <?php echo $totalPages; ?> · <?php echo $totalTickets; ?> ticket<?php echo $totalTickets !== 1 ? 's' : ''; ?>
-        </div>
-        <div class="d-flex gap-2">
-            <?php if ($page > 1): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="?page=<?php echo $page - 1; ?><?php echo $allParams; ?>">
-                    <i class="bi bi-chevron-left"></i> Anterior
-                </a>
-            <?php else: ?>
-                <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Anterior</button>
-            <?php endif; ?>
-
-            <?php
-            $range = 2;
-            $start = max(1, $page - $range);
-            $end   = min($totalPages, $page + $range);
-            ?>
-            <div class="d-none d-sm-flex gap-1">
-                <?php if ($start > 1): ?>
-                    <a href="?page=1<?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary">1</a>
-                    <?php if ($start > 2): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
-                <?php endif; ?>
-                <?php for ($i = $start; $i <= $end; $i++): ?>
-                    <a href="?page=<?php echo $i; ?><?php echo $allParams; ?>"
-                       class="btn btn-sm <?php echo $i === $page ? 'btn-primary' : 'btn-outline-secondary'; ?>"
-                       <?php echo $i === $page ? 'style="background:linear-gradient(135deg,#ef4444,#991b1b);border:none;"' : ''; ?>>
-                        <?php echo $i; ?>
-                    </a>
-                <?php endfor; ?>
-                <?php if ($end < $totalPages): ?>
-                    <?php if ($end < $totalPages - 1): ?><span class="text-muted small px-1" style="align-self:center;">&hellip;</span><?php endif; ?>
-                    <a href="?page=<?php echo $totalPages; ?><?php echo $allParams; ?>" class="btn btn-sm btn-outline-secondary"><?php echo $totalPages; ?></a>
-                <?php endif; ?>
-            </div>
-
-            <?php if ($page < $totalPages): ?>
-                <a class="btn btn-outline-secondary btn-sm" href="?page=<?php echo $page + 1; ?><?php echo $allParams; ?>">
-                    Siguiente <i class="bi bi-chevron-right"></i>
-                </a>
-            <?php else: ?>
-                <button class="btn btn-outline-secondary btn-sm" disabled>Siguiente <i class="bi bi-chevron-right"></i></button>
-            <?php endif; ?>
-        </div>
-    </div>
     <?php endif; ?>
 </div>
 
