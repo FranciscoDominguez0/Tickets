@@ -504,6 +504,15 @@
     color: #64748b;
 }
 
+@media (min-width: 768px) {
+    .table-footer-bar {
+        padding: 18px 26px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 -4px 15px rgba(0,0,0,0.01);
+        border-radius: 0 0 16px 16px;
+    }
+}
+
 .table-footer-bar .showing-text {
     font-weight: 500;
     color: #475569;
@@ -880,4 +889,142 @@
         flex-direction: column;
         text-align: center;
     }
+}
+
+/* ── Premium Ticket Table (user-view) ── */
+.user-view-tickets-table.uvt-premium {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.user-view-tickets-table.uvt-premium .uvt-col-num     { width: 100px; }
+.user-view-tickets-table.uvt-premium .uvt-col-subject  { width: auto; }
+.user-view-tickets-table.uvt-premium .uvt-col-status   { width: 120px; }
+.user-view-tickets-table.uvt-premium .uvt-col-date     { width: 170px; }
+
+.user-view-tickets-table.uvt-premium thead th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+    font-weight: 700;
+    padding: 14px 18px;
+    border-bottom: 2px solid #e2e8f0;
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+    white-space: nowrap;
+}
+
+/* Row */
+.user-view-tickets-table.uvt-premium .uvt-row {
+    transition: all 0.2s ease;
+    position: relative;
+}
+.user-view-tickets-table.uvt-premium .uvt-row:hover {
+    background: linear-gradient(90deg, rgba(239,68,68,0.03), rgba(59,130,246,0.02));
+}
+.user-view-tickets-table.uvt-premium .uvt-row td {
+    padding: 16px 18px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    transition: border-color 0.2s;
+}
+.user-view-tickets-table.uvt-premium .uvt-row:last-child td {
+    border-bottom: none;
+}
+.user-view-tickets-table.uvt-premium .uvt-row:hover td {
+    border-bottom-color: #e2e8f0;
+}
+
+/* Ticket number */
+.uvt-ticket-number {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #ef4444 !important;
+    text-decoration: none !important;
+    letter-spacing: -0.01em;
+    padding: 4px 10px;
+    background: rgba(239,68,68,0.06);
+    border-radius: 8px;
+    display: inline-block;
+    transition: all 0.2s;
+}
+.uvt-row:hover .uvt-ticket-number {
+    background: rgba(239,68,68,0.12);
+    box-shadow: 0 2px 8px rgba(239,68,68,0.1);
+}
+
+/* Subject – truncate with ellipsis */
+.uvt-cell-subject {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 0;
+}
+.uvt-subject-link {
+    color: #1e293b !important;
+    font-weight: 600;
+    font-size: 0.92rem;
+    text-decoration: none !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    transition: color 0.2s;
+}
+.uvt-row:hover .uvt-subject-link {
+    color: #ef4444 !important;
+}
+
+/* Status badge */
+.uvt-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+.uvt-status-open {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #15803d;
+    border: 1px solid rgba(21,128,61,0.15);
+}
+.uvt-status-closed {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    color: #475569;
+    border: 1px solid rgba(71,85,105,0.12);
+}
+.uvt-status-pending {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1px solid rgba(146,64,14,0.12);
+}
+.uvt-status-overdue {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #b91c1c;
+    border: 1px solid rgba(185,28,28,0.15);
+}
+.uvt-status-default {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    color: #6d28d9;
+    border: 1px solid rgba(109,40,217,0.12);
+}
+
+/* Date */
+.uvt-date-text {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.uvt-date-text i {
+    color: #94a3b8;
+    font-size: 0.8rem;
 }
