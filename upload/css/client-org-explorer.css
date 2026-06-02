@@ -884,3 +884,13 @@ body.dark-mode .org-explorer-wrap .modern-pagination .page-item.disabled .page-l
     color: #52525b;
     border-color: #27272a !important;
 }
+
+/* Filtro por mes (picker) */
+.org-month-filter-wrap {
+    padding: 12px 20px 16px;
+    border-bottom: 1px solid var(--org-border);
+}
+
+.org-month-filter-wrap .ticket-month-picker {
+    max-width: 100%;
+}

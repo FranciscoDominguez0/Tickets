@@ -1,0 +1,324 @@
+/* Selector de mes — cuadrícula tipo calendario */
+.ticket-month-picker {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+}
+
+.ticket-month-picker__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
+}
+
+.ticket-month-picker__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ticket-month-picker__trigger:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.ticket-month-picker__trigger[aria-expanded="true"] {
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.ticket-month-picker__trigger-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fef2f2, #fff);
+    color: #ef4444;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.ticket-month-picker__trigger-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+    text-align: left;
+}
+
+.ticket-month-picker__trigger-kicker {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+}
+
+.ticket-month-picker__trigger-value {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.ticket-month-picker__trigger-chevron {
+    margin-left: auto;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+}
+
+.ticket-month-picker__trigger[aria-expanded="true"] .ticket-month-picker__trigger-chevron {
+    transform: rotate(180deg);
+}
+
+.ticket-month-picker__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 120;
+    width: min(320px, calc(100vw - 32px));
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+}
+
+.ticket-month-picker__panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.ticket-month-picker__panel.is-open {
+    position: fixed;
+    z-index: 1050;
+}
+
+.ticket-month-picker__panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ticket-month-picker__panel-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0;
+}
+
+.ticket-month-picker__year-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ticket-month-picker__year-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+
+.ticket-month-picker__year-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.ticket-month-picker__year-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.ticket-month-picker__year-label {
+    min-width: 52px;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.ticket-month-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ticket-month-picker__month {
+    aspect-ratio: 1.15;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fafafa;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.1s;
+    padding: 4px;
+}
+
+.ticket-month-picker__month-num {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #94a3b8;
+}
+
+.ticket-month-picker__month:hover:not(:disabled) {
+    border-color: #fca5a5;
+    background: #fff5f5;
+    color: #b91c1c;
+    transform: translateY(-1px);
+}
+
+.ticket-month-picker__month.is-selected {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+.ticket-month-picker__month.is-selected .ticket-month-picker__month-num {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.ticket-month-picker__month:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ticket-month-picker__all {
+    width: 100%;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.ticket-month-picker__all:hover {
+    background: #fff;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.ticket-month-picker__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.ticket-month-picker__clear {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    text-decoration: none;
+    padding: 6px 4px;
+}
+
+.ticket-month-picker__clear:hover {
+    color: #ef4444;
+}
+
+body.dark-mode .ticket-month-picker__trigger {
+    background: #18181b;
+    border-color: #3f3f46;
+    color: #f4f4f5;
+}
+
+body.dark-mode .ticket-month-picker__trigger-icon {
+    background: linear-gradient(135deg, #27272a, #18181b);
+}
+
+body.dark-mode .ticket-month-picker__trigger-value {
+    color: #f4f4f5;
+}
+
+body.dark-mode .ticket-month-picker__panel {
+    background: #18181b;
+    border-color: #3f3f46;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+body.dark-mode .ticket-month-picker__year-label {
+    color: #f4f4f5;
+}
+
+body.dark-mode .ticket-month-picker__year-btn {
+    background: #27272a;
+    color: #a1a1aa;
+}
+
+body.dark-mode .ticket-month-picker__month {
+    background: #27272a;
+    border-color: #3f3f46;
+    color: #e4e4e7;
+}
+
+body.dark-mode .ticket-month-picker__month:hover:not(:disabled) {
+    background: #3f3f46;
+    border-color: #ef4444;
+    color: #fecaca;
+}
+
+body.dark-mode .ticket-month-picker__all {
+    background: #27272a;
+    border-color: #52525b;
+    color: #a1a1aa;
+}
+
+body.dark-mode .ticket-month-picker__chip {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+

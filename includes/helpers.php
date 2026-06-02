@@ -1252,12 +1252,118 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
 }
 
-function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName): int
+/**
+ * Filtro por mes (YYYY-MM) para listados de tickets del portal.
+ *
+ * @return array{param: string, year: int, month: int, start: string, end: string, label: string}|null
+ */
+function parseTicketMonthFilter(?string $raw): ?array
+{
+    $raw = trim((string)$raw);
+    if (!preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $raw, $m)) {
+        return null;
+    }
+    $year = (int)$m[1];
+    $month = (int)$m[2];
+    if ($year < 2000 || $year > 2100) {
+        return null;
+    }
+    $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+    if ($month === 12) {
+        $end = sprintf('%04d-01-01 00:00:00', $year + 1);
+    } else {
+        $end = sprintf('%04d-%02d-01 00:00:00', $year, $month + 1);
+    }
+    $labels = [
+        1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+        5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+        9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+    ];
+    $label = ucfirst($labels[$month] ?? '') . ' ' . $year;
+
+    return [
+        'param' => $raw,
+        'year' => $year,
+        'month' => $month,
+        'start' => $start,
+        'end' => $end,
+        'label' => $label,
+    ];
+}
+
+/** @return array<int, array{value: string, label: string}> */
+function listTicketMonthFilterOptions(int $count = 36): array
+{
+    $count = max(1, min(120, $count));
+    $labels = [
+        1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+        5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+        9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+    ];
+    $options = [];
+    try {
+        $dt = new DateTimeImmutable('first day of this month');
+    } catch (Throwable $e) {
+        return [];
+    }
+    for ($i = 0; $i < $count; $i++) {
+        $y = (int)$dt->format('Y');
+        $m = (int)$dt->format('m');
+        $value = $dt->format('Y-m');
+        $options[] = [
+            'value' => $value,
+            'label' => ucfirst($labels[$m] ?? '') . ' ' . $y,
+        ];
+        $dt = $dt->modify('-1 month');
+    }
+    return $options;
+}
+
+/** @param array{start: string, end: string}|null $monthFilter */
+function ticketMonthFilterSqlClause(?array $monthFilter): string
+{
+    if (!$monthFilter || empty($monthFilter['start']) || empty($monthFilter['end'])) {
+        return '';
+    }
+    return ' AND t.created >= ? AND t.created < ?';
+}
+
+/** @param array{param: string}|null $monthFilter */
+function ticketMonthFilterQueryString(?array $monthFilter): string
+{
+    if (!$monthFilter || empty($monthFilter['param'])) {
+        return '';
+    }
+    return '&month=' . rawurlencode((string)$monthFilter['param']);
+}
+
+/**
+ * @param array<int, mixed> $baseParams
+ * @param array<int, mixed> $monthParams
+ */
+function mysqliBindParams(mysqli_stmt $stmt, string $types, array $baseParams, array $monthParams = []): bool
+{
+    $params = array_merge($baseParams, $monthParams);
+    if ($types === '' || $params === []) {
+        return true;
+    }
+    $refs = [];
+    foreach ($params as $k => $v) {
+        $refs[$k] = &$params[$k];
+    }
+    array_unshift($refs, $types);
+    return (bool)call_user_func_array([$stmt, 'bind_param'], $refs);
+}
+
+function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, ?array $monthFilter = null): int
 {
     if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
         return 0;
     }
     $orgName = trim($orgName);
+    $monthSql = ticketMonthFilterSqlClause($monthFilter);
+    $monthTypes = $monthSql !== '' ? 'ss' : '';
+    $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
 
     if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
         $sql = "SELECT COUNT(DISTINCT t.id) AS c
@@ -1276,21 +1382,26 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
                         WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
                     )
                 )
-            )";
+            )" . $monthSql;
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return 0;
         }
-        $stmt->bind_param('iiiisi', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId);
+        mysqliBindParams(
+            $stmt,
+            'iiiisi' . $monthTypes,
+            [$empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId],
+            $monthParams
+        );
     } else {
         $sql = 'SELECT COUNT(*) AS c FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
-            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?';
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?' . $monthSql;
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return 0;
         }
-        $stmt->bind_param('iis', $empresaId, $empresaId, $orgName);
+        mysqliBindParams($stmt, 'iis' . $monthTypes, [$empresaId, $empresaId, $orgName], $monthParams);
     }
     if (!$stmt->execute()) {
         return 0;
@@ -1303,7 +1414,7 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
  *
  * @return array<int, array<string, mixed>>
  */
-function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset): array
+function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset, ?array $monthFilter = null): array
 {
     if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
         return [];
@@ -1311,6 +1422,9 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     $orgName = trim($orgName);
     $limit = max(1, $limit);
     $offset = max(0, $offset);
+    $monthSql = ticketMonthFilterSqlClause($monthFilter);
+    $monthTypes = $monthSql !== '' ? 'ss' : '';
+    $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
 
     if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
@@ -1332,14 +1446,19 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
                         WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
                     )
                 )
-            )
+            )" . $monthSql . "
             ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return [];
         }
-        $stmt->bind_param('iiiisiii', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId, $limit, $offset);
+        mysqliBindParams(
+            $stmt,
+            'iiiisi' . $monthTypes . 'ii',
+            [$empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId],
+            array_merge($monthParams, [$limit, $offset])
+        );
     } else {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
                 u.firstname AS owner_firstname, u.lastname AS owner_lastname, u.email AS owner_email,
@@ -1347,14 +1466,19 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
             FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
             LEFT JOIN ticket_status ts ON t.status_id = ts.id
-            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?" . $monthSql . "
             ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return [];
         }
-        $stmt->bind_param('iisii', $empresaId, $empresaId, $orgName, $limit, $offset);
+        mysqliBindParams(
+            $stmt,
+            'iis' . $monthTypes . 'ii',
+            [$empresaId, $empresaId, $orgName],
+            array_merge($monthParams, [$limit, $offset])
+        );
     }
     if (!$stmt->execute()) {
         return [];

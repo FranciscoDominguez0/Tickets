@@ -27,8 +27,11 @@ $orgAllTicketsTotal = (int)($orgAllTicketsTotal ?? 0);
 $orgAllTicketsPage = max(1, (int)($orgAllTicketsPage ?? 1));
 $orgAllTicketsTotalPages = max(1, (int)($orgAllTicketsTotalPages ?? 1));
 $orgExplorerAllTickets = isset($orgExplorerAllTickets) && is_array($orgExplorerAllTickets) ? $orgExplorerAllTickets : [];
-$orgAllTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all';
+$orgMonthQuery = isset($ticketMonthQuery) ? (string)$ticketMonthQuery : '';
+$orgAllTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all' . $orgMonthQuery;
+$orgTicketsPaginationParams .= $orgMonthQuery;
 $orgOrgBaseUrl = 'tickets.php?view=org&amp;org_id=' . (int)$orgExplorerOrgId;
+$orgOrgBaseUrlAll = $orgOrgBaseUrl . '&amp;list=all' . str_replace('&', '&amp;', $orgMonthQuery);
 $orgCssV = (int)@filemtime(__DIR__ . '/../css/client-org-explorer.css');
 if ($orgCssV <= 0) {
     $orgCssV = 1;
@@ -105,23 +108,35 @@ if ($orgCssV <= 0) {
                 <a href="<?php echo $orgOrgBaseUrl; ?>" class="org-view-tab <?php echo $orgExplorerListMode === 'users' ? 'active' : ''; ?>">
                     <i class="bi bi-people"></i> Por usuario
                 </a>
-                <a href="<?php echo $orgOrgBaseUrl; ?>&amp;list=all" class="org-view-tab <?php echo $orgExplorerListMode === 'all' ? 'active' : ''; ?>">
+                <a href="<?php echo $orgOrgBaseUrlAll; ?>" class="org-view-tab <?php echo $orgExplorerListMode === 'all' ? 'active' : ''; ?>">
                     <i class="bi bi-collection"></i> Todos los tickets
                 </a>
             </div>
 
             <?php if ($orgExplorerListMode === 'all'): ?>
+                <?php
+                $ticketMonthFilterHidden = [
+                    'view' => 'org',
+                    'org_id' => (string)$orgExplorerOrgId,
+                    'list' => 'all',
+                ];
+                $ticketMonthFilterResetUrl = 'tickets.php?view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all';
+                $ticketMonthFilterResetPage = 'oat';
+                ?>
+                <div class="org-month-filter-wrap">
+                    <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
+                </div>
                 <?php if ($orgAllTicketsTotal <= 0): ?>
                     <div class="org-empty">
                         <i class="bi bi-inbox" aria-hidden="true"></i>
-                        <p class="text-muted mb-0">No hay tickets en esta organización.</p>
+                        <p class="text-muted mb-0"><?php echo !empty($ticketMonthFilter) ? 'No hay tickets en el mes seleccionado.' : 'No hay tickets en esta organización.'; ?></p>
                     </div>
                 <?php else: ?>
                     <div class="org-list-section">
                         <div class="org-panel-head">
                             <div>
                                 <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Todos los tickets</h3>
-                                <div class="org-panel-meta"><?php echo html($orgExplorerOrgName); ?></div>
+                                <div class="org-panel-meta"><?php echo html($orgExplorerOrgName); ?><?php if (!empty($ticketMonthFilter['label'])): ?> · <?php echo html((string)$ticketMonthFilter['label']); ?><?php endif; ?></div>
                             </div>
                             <span class="org-count-badge"><?php echo $orgAllTicketsTotal; ?></span>
                         </div>
@@ -138,6 +153,9 @@ if ($orgCssV <= 0) {
                                 $href = 'view-ticket.php?id=' . $tid . '&from=org&org_id=' . $orgExplorerOrgId . '&list=all&member_id=' . $ownerId;
                                 if ($orgAllTicketsPage > 1) {
                                     $href .= '&oat=' . $orgAllTicketsPage;
+                                }
+                                if ($orgMonthQuery !== '') {
+                                    $href .= $orgMonthQuery;
                                 }
                                 ?>
                                 <a href="<?php echo html($href); ?>" class="list-group-item list-group-item-action org-explorer-row org-explorer-row-ticket">
@@ -207,17 +225,29 @@ if ($orgCssV <= 0) {
             <?php endif; ?>
 
         <?php else: ?>
+            <?php
+            $ticketMonthFilterHidden = [
+                'view' => 'org',
+                'org_id' => (string)$orgExplorerOrgId,
+                'member_id' => (string)$orgExplorerMemberId,
+            ];
+            $ticketMonthFilterResetUrl = 'tickets.php?view=org&org_id=' . (int)$orgExplorerOrgId . '&member_id=' . (int)$orgExplorerMemberId;
+            $ticketMonthFilterResetPage = 'otp';
+            ?>
+            <div class="org-month-filter-wrap">
+                <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
+            </div>
             <?php if ($orgTicketsTotal <= 0): ?>
                 <div class="org-empty">
                     <i class="bi bi-inbox" aria-hidden="true"></i>
-                    <p class="text-muted mb-0">Este usuario no tiene tickets registrados.</p>
+                    <p class="text-muted mb-0"><?php echo !empty($ticketMonthFilter) ? 'No hay tickets en el mes seleccionado.' : 'Este usuario no tiene tickets registrados.'; ?></p>
                 </div>
             <?php else: ?>
                 <div class="org-list-section">
                     <div class="org-panel-head">
                         <div>
                             <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Tickets</h3>
-                            <div class="org-panel-meta"><?php echo html($orgExplorerMemberName); ?> · <?php echo html($orgExplorerOrgName); ?></div>
+                            <div class="org-panel-meta"><?php echo html($orgExplorerMemberName); ?> · <?php echo html($orgExplorerOrgName); ?><?php if (!empty($ticketMonthFilter['label'])): ?> · <?php echo html((string)$ticketMonthFilter['label']); ?><?php endif; ?></div>
                         </div>
                         <span class="org-count-badge"><?php echo $orgTicketsTotal; ?></span>
                     </div>
@@ -226,6 +256,12 @@ if ($orgCssV <= 0) {
                             <?php
                             $tid = (int)($tk['id'] ?? 0);
                             $href = 'view-ticket.php?id=' . $tid . '&from=org&org_id=' . $orgExplorerOrgId . '&member_id=' . $orgExplorerMemberId;
+                            if ($orgTicketsPage > 1) {
+                                $href .= '&otp=' . $orgTicketsPage;
+                            }
+                            if ($orgMonthQuery !== '') {
+                                $href .= $orgMonthQuery;
+                            }
                             ?>
                             <a href="<?php echo html($href); ?>" class="list-group-item list-group-item-action org-explorer-row org-explorer-row-ticket">
                                 <span class="org-ticket-num">#<?php echo html((string)($tk['ticket_number'] ?? '')); ?></span>

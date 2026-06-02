@@ -112,6 +112,10 @@ if ($orgViewFromExplorer) {
                 $orgViewBackUrl .= '&otp=' . $bOtp;
             }
         }
+        $bMonth = parseTicketMonthFilter($_GET['month'] ?? null);
+        if ($bMonth) {
+            $orgViewBackUrl .= '&month=' . rawurlencode($bMonth['param']);
+        }
         $viewTicketBackUrl = $orgViewBackUrl;
     }
 }
