@@ -213,14 +213,21 @@ $orgAllTicketsPage = max(1, (int)($_GET['oat'] ?? 1));
 $orgAllTicketsTotal = 0;
 $orgAllTicketsTotalPages = 1;
 $orgExplorerAllTickets = [];
-$ticketMonthFilter = parseTicketMonthFilter($_GET['month'] ?? null);
-$ticketMonthOptions = listTicketMonthFilterOptions(36);
-$ticketMonthSql = ticketMonthFilterSqlClause($ticketMonthFilter);
-$ticketMonthTypes = $ticketMonthSql !== '' ? 'ss' : '';
-$ticketMonthParams = $ticketMonthSql !== '' ? [$ticketMonthFilter['start'], $ticketMonthFilter['end']] : [];
-$ticketMonthQuery = ticketMonthFilterQueryString($ticketMonthFilter);
+$ticketMonthFilter = null;
+$ticketMonthOptions = [];
+$ticketMonthSql = '';
+$ticketMonthTypes = '';
+$ticketMonthParams = [];
+$ticketMonthQuery = '';
 
 if ($isOrgExplorer) {
+    $ticketMonthFilter = parseTicketMonthFilter($_GET['month'] ?? null);
+    $ticketMonthOptions = listTicketMonthFilterOptions(36);
+    $ticketMonthSql = ticketMonthFilterSqlClause($ticketMonthFilter);
+    $ticketMonthTypes = $ticketMonthSql !== '' ? 'ss' : '';
+    $ticketMonthParams = $ticketMonthSql !== '' ? [$ticketMonthFilter['start'], $ticketMonthFilter['end']] : [];
+    $ticketMonthQuery = ticketMonthFilterQueryString($ticketMonthFilter);
+
     if (!$canOrgTicketsView) {
         header('Location: tickets.php');
         exit;
@@ -504,26 +511,15 @@ $sql = '
 if ($q !== '') {
     $sql .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
 }
-$sql .= $ticketMonthSql;
 $sql .= ' ORDER BY COALESCE(t.updated, t.created) DESC, t.created DESC';
 $sql .= ' LIMIT ? OFFSET ?';
 
 $stmt = $mysqli->prepare($sql);
 if ($q !== '') {
     $like = '%' . $q . '%';
-    mysqliBindParams(
-        $stmt,
-        'iiss' . $ticketMonthTypes . 'ii',
-        [$uid, $eid, $like, $like],
-        array_merge($ticketMonthParams, [$perPage, $offset])
-    );
+    $stmt->bind_param('iissii', $uid, $eid, $like, $like, $perPage, $offset);
 } else {
-    mysqliBindParams(
-        $stmt,
-        'ii' . $ticketMonthTypes . 'ii',
-        [$uid, $eid],
-        array_merge($ticketMonthParams, [$perPage, $offset])
-    );
+    $stmt->bind_param('iiii', $uid, $eid, $perPage, $offset);
 }
 $stmt->execute();
 $result = $stmt->get_result();
@@ -535,13 +531,12 @@ while ($row = $result->fetch_assoc()) {
 $totalFiltered = 0;
 $sqlCount = 'SELECT COUNT(*) c FROM tickets t WHERE ' . $where;
 if ($q !== '') $sqlCount .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
-$sqlCount .= $ticketMonthSql;
 $stmtCount = $mysqli->prepare($sqlCount);
 if ($q !== '') {
     $like2 = '%' . $q . '%';
-    mysqliBindParams($stmtCount, 'iiss' . $ticketMonthTypes, [$uid, $eid, $like2, $like2], $ticketMonthParams);
+    $stmtCount->bind_param('iiss', $uid, $eid, $like2, $like2);
 } else {
-    mysqliBindParams($stmtCount, 'ii' . $ticketMonthTypes, [$uid, $eid], $ticketMonthParams);
+    $stmtCount->bind_param('ii', $uid, $eid);
 }
 $stmtCount->execute();
 $totalFiltered = (int)($stmtCount->get_result()->fetch_assoc()['c'] ?? 0);
@@ -749,22 +744,6 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .tabs a:hover { color: #0f172a; background: rgba(15,23,42,0.03); }
         .tabs a.active { color: #ef4444; border-bottom-color: #ef4444; background: #fff; border-radius: 10px 10px 0 0; }
         .tabs .count { background: #e2e8f0; color: #0f172a; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; }
-
-        .panel-head-filters {
-            flex-wrap: wrap;
-            gap: 14px;
-        }
-        .panel-head-filters__left {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            flex: 1;
-            min-width: 0;
-        }
-        .panel-head-filters .ticket-month-picker {
-            max-width: 420px;
-        }
 
         .panel-head {
             padding: 16px 18px;
@@ -1264,7 +1243,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <?php if (!empty($canOrgTicketsView)): ?>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php?view=org">
-                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-diagram-3"></i></div> Tickets por organización
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-diagram-3"></i></div> Por organización
                             </a>
                         </li>
                         <?php endif; ?>
@@ -1363,37 +1342,25 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     <?php endif; ?>
 
                     <div class="tabs">
-                        <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?><?php echo $ticketMonthQuery; ?>">
+                        <a class="<?php echo $filter === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
                             Abiertos <span class="count"><?php echo (int)$countOpen; ?></span>
                         </a>
-                        <a class="<?php echo $filter === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?><?php echo $ticketMonthQuery; ?>">
+                        <a class="<?php echo $filter === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
                             Cerrados <span class="count"><?php echo (int)$countClosed; ?></span>
                         </a>
-                        <a class="<?php echo $filter === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?><?php echo $ticketMonthQuery; ?>">
+                        <a class="<?php echo $filter === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $q !== '' ? '&q=' . urlencode($q) : ''; ?>">
                             Todos <span class="count"><?php echo (int)($countOpen + $countClosed); ?></span>
                         </a>
                     </div>
 
-                    <div class="panel-head panel-head-filters">
-                        <div class="panel-head-filters__left">
+                    <div class="panel-head">
+                        <div>
                             <span style="font-size:.78rem;font-weight:600;color:#94a3b8;">
                                 <i class="bi bi-layout-three-columns me-1"></i> Mostrando 10 por página
                             </span>
-                            <?php
-                            $ticketMonthFilterHidden = ['filter' => $filter];
-                            if ($q !== '') {
-                                $ticketMonthFilterHidden['q'] = $q;
-                            }
-                            $ticketMonthFilterResetUrl = 'tickets.php?filter=' . rawurlencode($filter) . ($q !== '' ? '&q=' . rawurlencode($q) : '');
-                            $ticketMonthFilterResetPage = 'p';
-                            require __DIR__ . '/partials/ticket-month-filter.inc.php';
-                            ?>
                         </div>
                         <form method="get" class="search">
                             <input type="hidden" name="filter" value="<?php echo html($filter); ?>">
-                            <?php if ($ticketMonthFilter): ?>
-                                <input type="hidden" name="month" value="<?php echo html($ticketMonthFilter['param']); ?>">
-                            <?php endif; ?>
                             <input type="hidden" name="p" value="1">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -1405,7 +1372,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                     <?php if (empty($tickets)): ?>
                         <div class="text-center py-5">
-                            <div class="text-muted mb-3"><?php echo $ticketMonthFilter ? 'No hay tickets en el mes seleccionado.' : 'No hay tickets para este filtro.'; ?></div>
+                            <div class="text-muted mb-3">No hay tickets para este filtro.</div>
                             <a href="open.php" 
                                class="btn btn-primary" 
                                style="border-radius: 999px; font-weight: 800; padding: 10px 24px;"
@@ -1474,7 +1441,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <?php if ($perPage > 0 && $totalPages > 1): ?>
                         <div class="pagination-bar">
                             <?php
-                                $baseUrl = 'tickets.php?filter=' . urlencode($filter) . ($q !== '' ? '&q=' . urlencode($q) : '') . $ticketMonthQuery;
+                                $baseUrl = 'tickets.php?filter=' . urlencode($filter) . ($q !== '' ? '&q=' . urlencode($q) : '');
                                 $showWindow = 2; // páginas a cada lado de la actual
                             ?>
                             <div class="pagination-info">

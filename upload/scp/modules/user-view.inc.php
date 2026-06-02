@@ -598,23 +598,6 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         </div>
                     </div>
                     <div class="user-view-detail uvp-field">
-                        <label><i class="bi bi-diagram-3 uvp-field-icon" aria-hidden="true"></i> Vista tickets org.</label>
-                        <div class="value uvp-value-actions">
-                            <span class="user-view-status-badge <?php echo $viewUserOrgTicketsView ? 'active' : 'inactive'; ?>">
-                                <?php echo $viewUserOrgTicketsView ? 'Activa' : 'Inactiva'; ?>
-                            </span>
-                            <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline">
-                                <input type="hidden" name="do" value="toggle_org_tickets_view">
-                                <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
-                                <input type="hidden" name="enable" value="<?php echo $viewUserOrgTicketsView ? '0' : '1'; ?>">
-                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <button type="submit" class="uvp-action-link border-0 bg-transparent p-0" style="cursor:pointer;">
-                                    <i class="bi bi-arrow-repeat"></i> <?php echo $viewUserOrgTicketsView ? 'Desactivar' : 'Activar'; ?>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="user-view-detail uvp-field">
                         <label><i class="bi bi-shield-check uvp-field-icon" aria-hidden="true"></i> Estado</label>
                         <div class="value uvp-value-actions">
                             <span class="user-view-status-badge <?php echo html($statusKey); ?>"><?php echo html($statusLabel); ?></span>

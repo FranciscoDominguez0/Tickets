@@ -36,6 +36,7 @@ $orgCssV = (int)@filemtime(__DIR__ . '/../css/client-org-explorer.css');
 if ($orgCssV <= 0) {
     $orgCssV = 1;
 }
+$orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
 ?>
 <link rel="stylesheet" href="css/client-org-explorer.css?v=<?php echo $orgCssV; ?>">
 
@@ -150,6 +151,7 @@ if ($orgCssV <= 0) {
                                 if ($ownerName === '') {
                                     $ownerName = (string)($tk['owner_email'] ?? 'Usuario');
                                 }
+                                $ownerIsYou = ($orgLoggedUserId > 0 && $ownerId === $orgLoggedUserId);
                                 $href = 'view-ticket.php?id=' . $tid . '&from=org&org_id=' . $orgExplorerOrgId . '&list=all&member_id=' . $ownerId;
                                 if ($orgAllTicketsPage > 1) {
                                     $href .= '&oat=' . $orgAllTicketsPage;
@@ -164,7 +166,7 @@ if ($orgCssV <= 0) {
                                         <span class="org-explorer-row-title"><?php echo html((string)($tk['subject'] ?? '')); ?></span>
                                         <span class="org-explorer-row-sub org-ticket-owner">
                                             <i class="bi bi-person" aria-hidden="true"></i>
-                                            <?php echo html($ownerName); ?>
+                                            <?php echo html($ownerName); ?><?php if ($ownerIsYou): ?><span class="org-you-badge org-you-badge--inline">Tú</span><?php endif; ?>
                                             <?php if (!empty($tk['created'])): ?>
                                                 <span class="org-ticket-owner-sep">·</span>
                                                 <?php echo html(formatDate((string)($tk['created'] ?? ''))); ?>
@@ -207,14 +209,20 @@ if ($orgCssV <= 0) {
                             if ($mid <= 0) continue;
                             $mName = trim((string)($m['firstname'] ?? '') . ' ' . (string)($m['lastname'] ?? ''));
                             if ($mName === '') $mName = (string)($m['email'] ?? 'Usuario');
+                            $isOrgLoggedUser = ($orgLoggedUserId > 0 && $mid === $orgLoggedUserId);
                             ?>
-                            <a href="tickets.php?view=org&amp;org_id=<?php echo $orgExplorerOrgId; ?>&amp;member_id=<?php echo $mid; ?>" class="list-group-item list-group-item-action org-explorer-row">
-                                <span class="org-explorer-icon org-explorer-icon-user"><i class="bi bi-person"></i></span>
+                            <a href="tickets.php?view=org&amp;org_id=<?php echo $orgExplorerOrgId; ?>&amp;member_id=<?php echo $mid; ?>" class="list-group-item list-group-item-action org-explorer-row<?php echo $isOrgLoggedUser ? ' org-explorer-row--self' : ''; ?>">
+                                <span class="org-explorer-icon org-explorer-icon-user<?php echo $isOrgLoggedUser ? ' org-explorer-icon--self' : ''; ?>"><i class="bi bi-<?php echo $isOrgLoggedUser ? 'person-check' : 'person'; ?>"></i></span>
                                 <span class="org-explorer-row-body">
-                                    <span class="org-explorer-row-title"><?php echo html($mName); ?></span>
+                                    <span class="org-explorer-row-title">
+                                        <?php echo html($mName); ?>
+                                        <?php if ($isOrgLoggedUser): ?>
+                                            <span class="org-you-badge">Tú</span>
+                                        <?php endif; ?>
+                                    </span>
                                     <span class="org-explorer-row-sub"><?php echo html((string)($m['email'] ?? '')); ?></span>
                                 </span>
-                                <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-ticket-perforated"></i> Ver tickets</span>
+                                <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-ticket-perforated"></i> <?php echo $isOrgLoggedUser ? 'Mis tickets' : 'Ver tickets'; ?></span>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -240,7 +248,12 @@ if ($orgCssV <= 0) {
                     <div class="org-panel-head__left">
                         <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Tickets</h3>
                         <?php if ($orgExplorerMemberName !== ''): ?>
-                            <div class="org-panel-meta"><?php echo html($orgExplorerMemberName); ?></div>
+                            <div class="org-panel-meta">
+                                <?php echo html($orgExplorerMemberName); ?>
+                                <?php if ($orgLoggedUserId > 0 && $orgExplorerMemberId === $orgLoggedUserId): ?>
+                                    <span class="org-you-badge">Tú</span>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                     <div class="org-panel-head__actions">

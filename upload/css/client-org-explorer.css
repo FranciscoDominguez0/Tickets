@@ -688,6 +688,60 @@ body.dark-mode .org-empty i {
     color: #475569;
 }
 
+.org-you-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.org-you-badge--inline {
+    margin-left: 6px;
+    font-size: 0.62rem;
+    padding: 1px 6px;
+}
+
+.org-panel-meta .org-you-badge {
+    margin-left: 6px;
+    vertical-align: 0.1em;
+}
+
+.org-explorer-list .list-group-item.org-explorer-row--self {
+    border-color: rgba(239, 68, 68, 0.45);
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.06), #fff 28%);
+    box-shadow: inset 3px 0 0 #ef4444;
+}
+
+.org-explorer-list .list-group-item.org-explorer-row--self:hover {
+    border-color: rgba(239, 68, 68, 0.55);
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.09), #fff 32%);
+}
+
+.org-explorer-icon--self {
+    background: var(--org-accent-soft) !important;
+    color: var(--org-accent-dark) !important;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+body.dark-mode .org-explorer-list .list-group-item.org-explorer-row--self {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.14), #18181b 32%);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+body.dark-mode .org-explorer-list .list-group-item.org-explorer-row--self:hover {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.2), #1f1f1f 35%);
+}
+
 .org-explorer-row-ticket {
     flex-wrap: wrap;
     align-items: flex-start;

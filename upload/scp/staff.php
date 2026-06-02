@@ -796,6 +796,51 @@ body.dark-mode .btn-action.delete:hover {
     border-color: rgba(239, 68, 68, 0.3) !important;
 }
 
+.staff-you-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.staff-row--self .agent-mobile-card {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    box-shadow: inset 3px 0 0 #ef4444, 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+.staff-row--self > td.d-md-none .agent-mobile-card {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), #fff 24%);
+}
+
+body.dark-mode .staff-row--self > td.d-md-none .agent-mobile-card {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), #18181b 28%);
+}
+
+.settings-card .table tbody tr.staff-row--self > td.d-none.d-md-table-cell {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.06), transparent 120px);
+}
+
+body.dark-mode .settings-card .table tbody tr.staff-row--self > td.d-none.d-md-table-cell {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent 120px);
+}
+
+.btn-action--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+}
+
 /* Dark mode for desktop table text */
 body.dark-mode .agent-desktop-name {
     color: #f1f5f9 !important;
@@ -1110,8 +1155,9 @@ body.dark-mode .advanced-filters-panel select {
 
                         $avatarColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
                         $avatarColor = $avatarColors[($a['id'] ?? 0) % count($avatarColors)];
+                        $isCurrentStaff = ($currentStaffId > 0 && (int)($a['id'] ?? 0) === $currentStaffId);
                         ?>
-                        <tr>
+                        <tr class="<?php echo $isCurrentStaff ? 'staff-row--self' : ''; ?>">
                             <!-- VISTA MÓVIL (Tarjeta Premium) -->
                             <td class="d-md-none p-0">
                                 <div class="agent-mobile-card">
@@ -1153,6 +1199,7 @@ body.dark-mode .advanced-filters-panel select {
                                                         </button>
                                                     </form>
                                                 </li>
+                                                <?php if (!$isCurrentStaff): ?>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     <a class="dropdown-item py-2 text-danger fw-bold agent-delete-btn" href="#"
@@ -1162,6 +1209,7 @@ body.dark-mode .advanced-filters-panel select {
                                                         <i class="bi bi-trash me-2"></i> Eliminar
                                                     </a>
                                                 </li>
+                                                <?php endif; ?>
                                             </ul>
                                         </div>
                                         <?php endif; ?>
@@ -1169,6 +1217,7 @@ body.dark-mode .advanced-filters-panel select {
 
                                     <div class="agent-card-title" style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin-bottom: 2px; line-height: 1.2;">
                                         <?php echo html($name); ?>
+                                        <?php if ($isCurrentStaff): ?><span class="staff-you-badge">Tú</span><?php endif; ?>
                                     </div>
                                     <div class="agent-card-username" style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px; font-weight: 600;">
                                         @<?php echo html((string)($a['username'] ?? '')); ?>
@@ -1218,7 +1267,7 @@ body.dark-mode .advanced-filters-panel select {
                                         <?php echo html($initials); ?>
                                     </div>
                                     <div style="min-width: 0; flex: 1;">
-                                        <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;" class="agent-desktop-name"><?php echo html($name); ?></div>
+                                        <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;" class="agent-desktop-name"><?php echo html($name); ?><?php if ($isCurrentStaff): ?><span class="staff-you-badge">Tú</span><?php endif; ?></div>
                                         <div style="font-size: 0.8rem; color: #64748b;" class="agent-desktop-meta">@<?php echo html((string)($a['username'] ?? '')); ?> · <a class="text-decoration-none" href="mailto:<?php echo html((string)($a['email'] ?? '')); ?>" style="color: inherit;"><?php echo html((string)($a['email'] ?? '')); ?></a></div>
                                     </div>
                                 </div>
@@ -1287,6 +1336,7 @@ body.dark-mode .advanced-filters-panel select {
                                             </button>
                                         </form>
 
+                                        <?php if (!$isCurrentStaff): ?>
                                         <button type="button" class="btn-action delete agent-delete-btn"
                                             data-id="<?php echo (int)$a['id']; ?>"
                                             data-name="<?php echo htmlspecialchars($name, ENT_QUOTES, 'UTF-8'); ?>"
@@ -1294,6 +1344,11 @@ body.dark-mode .advanced-filters-panel select {
                                             title="Eliminar Agente">
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
+                                        <?php else: ?>
+                                        <span class="btn-action btn-action--disabled" title="No puedes eliminar tu propio usuario">
+                                            <i class="bi bi-shield-lock"></i>
+                                        </span>
+                                        <?php endif; ?>
                                     </div>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
@@ -1551,6 +1606,8 @@ body.dark-mode .advanced-filters-panel select {
 
 <script>
     (function () {
+        var STAFF_CURRENT_ID = <?php echo (int)$currentStaffId; ?>;
+
         // --- Funciones del Widget de Departamentos ---
         function initDeptWidgets() {
             var toggleBtns = document.querySelectorAll('.dept-toggle-btn');
@@ -1762,14 +1819,31 @@ body.dark-mode .advanced-filters-panel select {
         var delBtns = document.querySelectorAll('.agent-delete-btn');
         if (delBtns && delBtns.length) {
             delBtns.forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var id = this.getAttribute('data-id') || '';
+                btn.addEventListener('click', function (e) {
+                    var id = parseInt(this.getAttribute('data-id') || '0', 10) || 0;
+                    if (STAFF_CURRENT_ID > 0 && id === STAFF_CURRENT_ID) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
                     var name = this.getAttribute('data-name') || '';
                     var idEl = document.getElementById('delete_id');
                     var nameEl = document.getElementById('delete_agent_name');
-                    if (idEl) idEl.value = id;
+                    if (idEl) idEl.value = String(id);
                     if (nameEl) nameEl.textContent = name || '—';
                 });
+            });
+        }
+
+        var deleteForm = document.querySelector('#agentDeleteModal form');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function (e) {
+                var idEl = document.getElementById('delete_id');
+                var id = parseInt(idEl && idEl.value ? idEl.value : '0', 10) || 0;
+                if (STAFF_CURRENT_ID > 0 && id === STAFF_CURRENT_ID) {
+                    e.preventDefault();
+                    alert('No puedes eliminar tu propio usuario.');
+                }
             });
         }
     })();
