@@ -7,6 +7,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
 $mobileName = (string)($viewUserName ?? '');
 $mobileEmail = (string)($viewUser['email'] ?? '');
 $viewUserOrganizations = (isset($viewUserOrganizations) && is_array($viewUserOrganizations)) ? $viewUserOrganizations : [];
+$viewUserOrgTicketsView = !empty($viewUserOrgTicketsView);
 $nameForInitials = trim($mobileName !== '' ? $mobileName : $mobileEmail);
 $parts = preg_split('/\s+/', $nameForInitials);
 $i1 = strtoupper((string)($parts[0][0] ?? ''));
@@ -34,6 +35,9 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             case 'org_already': $alertMsg = 'El usuario ya pertenece a esa organización.'; break;
             case 'org_removed': $alertMsg = 'Organización removida correctamente.'; break;
             case 'org_error': $alertMsg = 'No se pudo actualizar la organización. Intente de nuevo.'; break;
+            case 'org_view_on': $alertMsg = 'Vista de tickets por organización activada para este usuario.'; break;
+            case 'org_view_off': $alertMsg = 'Vista de tickets por organización desactivada.'; break;
+            case 'org_view_error': $alertMsg = 'No se pudo cambiar la vista de tickets por organización.'; break;
         }
     }
     if ($alertMsg): ?>
@@ -90,6 +94,22 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                                 <span class="uvm-item-desc">Activar, suspender o bloquear</span>
                             </span>
                         </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>">
+                            <input type="hidden" name="do" value="toggle_org_tickets_view">
+                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                            <input type="hidden" name="enable" value="<?php echo $viewUserOrgTicketsView ? '0' : '1'; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                            <button type="submit" class="dropdown-item">
+                                <span class="uvm-item-icon-wrap"><i class="bi bi-diagram-3"></i></span>
+                                <span class="uvm-item-text-wrap">
+                                    <span class="uvm-item-title"><?php echo $viewUserOrgTicketsView ? 'Desactivar vista org.' : 'Activar vista org.'; ?></span>
+                                    <span class="uvm-item-desc">Tickets de sus organizaciones en el portal</span>
+                                </span>
+                            </button>
+                        </form>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
@@ -371,6 +391,18 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                             <button type="submit" class="dropdown-item" id="btnSendUserReset"><i class="bi bi-envelope"></i> Enviar restablecer contraseña</button>
                         </form>
                     </li>
+                    <li>
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline w-100">
+                            <input type="hidden" name="do" value="toggle_org_tickets_view">
+                            <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                            <input type="hidden" name="enable" value="<?php echo $viewUserOrgTicketsView ? '0' : '1'; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                            <button type="submit" class="dropdown-item">
+                                <i class="bi bi-diagram-3"></i>
+                                <?php echo $viewUserOrgTicketsView ? 'Desactivar vista org.' : 'Activar vista org.'; ?>
+                            </button>
+                        </form>
+                    </li>
                     <li><a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalEditUser"><i class="bi bi-pencil"></i> Editar perfil</a></li>
                 </ul>
             </div>
@@ -563,6 +595,23 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                             <a href="#" class="uvp-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">
                                 <i class="bi bi-plus-circle"></i> <?php echo empty($viewUserOrganizations) ? 'Asignar organización' : 'Añadir otra'; ?>
                             </a>
+                        </div>
+                    </div>
+                    <div class="user-view-detail uvp-field">
+                        <label><i class="bi bi-diagram-3 uvp-field-icon" aria-hidden="true"></i> Vista tickets org.</label>
+                        <div class="value uvp-value-actions">
+                            <span class="user-view-status-badge <?php echo $viewUserOrgTicketsView ? 'active' : 'inactive'; ?>">
+                                <?php echo $viewUserOrgTicketsView ? 'Activa' : 'Inactiva'; ?>
+                            </span>
+                            <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline">
+                                <input type="hidden" name="do" value="toggle_org_tickets_view">
+                                <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
+                                <input type="hidden" name="enable" value="<?php echo $viewUserOrgTicketsView ? '0' : '1'; ?>">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <button type="submit" class="uvp-action-link border-0 bg-transparent p-0" style="cursor:pointer;">
+                                    <i class="bi bi-arrow-repeat"></i> <?php echo $viewUserOrgTicketsView ? 'Desactivar' : 'Activar'; ?>
+                                </button>
+                            </form>
                         </div>
                     </div>
                     <div class="user-view-detail uvp-field">

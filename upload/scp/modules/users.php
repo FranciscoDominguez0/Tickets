@@ -650,6 +650,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
+// Activar / desactivar vista de tickets por organización (portal cliente)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'toggle_org_tickets_view' && isset($_POST['user_id'])) {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $user_id = (int)$_POST['user_id'];
+        $enable = isset($_POST['enable']) && (string)$_POST['enable'] === '1';
+        if ($user_id > 0 && setUserOrgTicketsView($mysqli, $user_id, $eid, $enable)) {
+            header('Location: users.php?id=' . $user_id . '&msg=' . ($enable ? 'org_view_on' : 'org_view_off'));
+            exit;
+        }
+        header('Location: users.php?id=' . $user_id . '&msg=org_view_error');
+        exit;
+    }
+}
+
 // Remover una organización del usuario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'remove_org' && isset($_POST['user_id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
@@ -881,12 +895,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
 // Vista de un usuario concreto (users.php?id=X)
 $viewUser = null;
+$usersHasOrgTicketsView = ensureUserOrgTicketsViewColumn($mysqli);
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $uid = (int) $_GET['id'];
+    $orgViewCol = $usersHasOrgTicketsView ? ', org_tickets_view' : '';
     if ($usersHasPhone) {
-        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, phone, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, phone, company, status, created, updated{$orgViewCol} FROM users WHERE id = ? AND empresa_id = ?");
     } else {
-        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, company, status, created, updated FROM users WHERE id = ? AND empresa_id = ?");
+        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, company, status, created, updated{$orgViewCol} FROM users WHERE id = ? AND empresa_id = ?");
     }
     $stmt->bind_param('ii', $uid, $eid);
     $stmt->execute();
@@ -932,6 +948,7 @@ if ($viewUser) {
     $statusLabels = ['active' => 'Activo', 'inactive' => 'Inactivo', 'banned' => 'Bloqueado'];
     $viewUserName = trim($viewUser['firstname'] . ' ' . $viewUser['lastname']) ?: $viewUser['email'];
     ensureUserOrganizationsTable($mysqli);
+    $viewUserOrgTicketsView = $usersHasOrgTicketsView && ((int)($viewUser['org_tickets_view'] ?? 0) === 1);
     $viewUserOrganizations = getUserOrganizations($mysqli, $uid2, $eid);
     if (empty($viewUserOrganizations) && trim((string)($viewUser['company'] ?? '')) !== '' && dbTableExists('organizations')) {
         $legacyName = trim((string)$viewUser['company']);

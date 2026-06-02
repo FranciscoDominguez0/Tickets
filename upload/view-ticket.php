@@ -63,9 +63,9 @@ if (function_exists('dbColumnExists') && function_exists('dbTableExists')
     $topicJoin = "LEFT JOIN help_topics ht ON ht.id = t.topic_id AND ht.empresa_id = t.empresa_id\n";
 }
 
-// Cargar ticket y validar pertenencia
+// Cargar ticket y validar pertenencia (propio o vista por organización)
 $stmt = $mysqli->prepare(
-    "SELECT t.id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
+    "SELECT t.id, t.user_id, t.ticket_number, t.subject, t.created, t.updated, t.closed, t.status_id, t.staff_id, t.signature_token, t.signature_requested, t.client_signature,\n"
     . "       ts.name AS status_name, ts.color AS status_color,\n"
     . "       p.name AS priority_name, p.color AS priority_color,\n"
     . "       d.name AS dept_name,\n"
@@ -77,15 +77,46 @@ $stmt = $mysqli->prepare(
     . "JOIN departments d ON t.dept_id = d.id\n"
     . "LEFT JOIN staff s ON t.staff_id = s.id\n"
     . $topicJoin
-    . "WHERE t.id = ? AND t.user_id = ? AND t.empresa_id = ?\n"
+    . "WHERE t.id = ? AND t.empresa_id = ?\n"
     . "LIMIT 1"
 );
-$stmt->bind_param('iii', $tid, $uid, $eid);
+$stmt->bind_param('ii', $tid, $eid);
 $stmt->execute();
 $t = $stmt->get_result()->fetch_assoc();
-if (!$t) {
+$ticketOwnerId = (int)($t['user_id'] ?? 0);
+if (!$t || !clientUserCanAccessTicket($mysqli, $uid, $ticketOwnerId, $eid)) {
     header('Location: tickets.php');
     exit;
+}
+
+$isOrgPeerView = ($ticketOwnerId !== $uid);
+$orgViewBackUrl = 'tickets.php?view=org';
+if ($isOrgPeerView && (($_GET['from'] ?? '') === 'org')) {
+    $bOrg = isset($_GET['org_id']) && is_numeric($_GET['org_id']) ? (int)$_GET['org_id'] : 0;
+    $bMem = isset($_GET['member_id']) && is_numeric($_GET['member_id']) ? (int)$_GET['member_id'] : 0;
+    if ($bOrg > 0) {
+        $orgViewBackUrl .= '&org_id=' . $bOrg;
+        if ($bMem > 0) {
+            $orgViewBackUrl .= '&member_id=' . $bMem;
+        }
+    }
+}
+
+$ticketOwnerName = '';
+if ($isOrgPeerView) {
+    $stmtOwn = $mysqli->prepare('SELECT firstname, lastname, email FROM users WHERE id = ? AND empresa_id = ? LIMIT 1');
+    if ($stmtOwn) {
+        $stmtOwn->bind_param('ii', $ticketOwnerId, $eid);
+        if ($stmtOwn->execute()) {
+            $rowOwn = $stmtOwn->get_result()->fetch_assoc();
+            if ($rowOwn) {
+                $ticketOwnerName = trim((string)($rowOwn['firstname'] ?? '') . ' ' . (string)($rowOwn['lastname'] ?? ''));
+                if ($ticketOwnerName === '') {
+                    $ticketOwnerName = (string)($rowOwn['email'] ?? '');
+                }
+            }
+        }
+    }
 }
 
 $ticketClientSignatureUrl = '';
@@ -119,7 +150,7 @@ $stmt->execute();
 $threadRow = $stmt->get_result()->fetch_assoc();
 $thread_id = (int)($threadRow['id'] ?? 0);
 
-if ($thread_id > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && function_exists('markThreadEntriesReadByUser')) {
+if (!$isOrgPeerView && $thread_id > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && function_exists('markThreadEntriesReadByUser')) {
     markThreadEntriesReadByUser($mysqli, $thread_id, $uid, $eid);
 }
 
@@ -134,7 +165,9 @@ if (isset($_SESSION[$replySessionKey]) && is_array($_SESSION[$replySessionKey]))
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'reply') {
-    if (!validateCSRF()) {
+    if ($isOrgPeerView) {
+        $reply_error = 'No puedes responder en tickets de otros usuarios.';
+    } elseif (!validateCSRF()) {
         $reply_error = 'Token de seguridad inválido';
     } elseif (!empty($t['closed'])) {
         $reply_error = 'Este ticket está cerrado y no admite nuevas respuestas.';
@@ -1846,8 +1879,18 @@ function humanSize($bytes) {
                     </script>
                 <?php endif; ?>
 
+                <?php if (!empty($isOrgPeerView)): ?>
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-eye me-1"></i>
+                        Vista de solo lectura — ticket de <strong><?php echo html($ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario'); ?></strong>.
+                        <a href="<?php echo html($orgViewBackUrl); ?>" class="alert-link ms-1">Volver al listado</a>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (!empty($t['closed'])): ?>
                     <div class="alert alert-warning mb-3">Este ticket está cerrado y no admite nuevas respuestas.</div>
+                <?php elseif (!empty($isOrgPeerView)): ?>
+                    <div class="alert alert-secondary mb-3">No puedes enviar respuestas en tickets de otros usuarios de tu organización.</div>
                 <?php else: ?>
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">

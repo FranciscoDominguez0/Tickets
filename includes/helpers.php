@@ -1252,6 +1252,141 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
 }
 
+/** Columna users.org_tickets_view (portal: ver tickets de la organización). */
+function ensureUserOrgTicketsViewColumn($mysqli): bool
+{
+    if (!isset($mysqli) || !$mysqli || !dbTableExists('users')) {
+        return false;
+    }
+    if (dbColumnExists('users', 'org_tickets_view')) {
+        return true;
+    }
+    $ok = (bool)@$mysqli->query(
+        'ALTER TABLE users ADD COLUMN org_tickets_view TINYINT(1) NOT NULL DEFAULT 0'
+    );
+    unset($_SESSION['_dbmeta_cache']['col:users:org_tickets_view']);
+    return $ok;
+}
+
+function userOrgTicketsViewEnabled($mysqli, int $userId, int $empresaId): bool
+{
+    if ($userId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if (!ensureUserOrgTicketsViewColumn($mysqli) || !dbColumnExists('users', 'org_tickets_view')) {
+        return false;
+    }
+    $stmt = $mysqli->prepare('SELECT org_tickets_view FROM users WHERE id = ? AND empresa_id = ? LIMIT 1');
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('ii', $userId, $empresaId);
+    if (!$stmt->execute()) {
+        return false;
+    }
+    $row = $stmt->get_result()->fetch_assoc();
+    return ((int)($row['org_tickets_view'] ?? 0)) === 1;
+}
+
+function setUserOrgTicketsView($mysqli, int $userId, int $empresaId, bool $enabled): bool
+{
+    if ($userId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if (!ensureUserOrgTicketsViewColumn($mysqli)) {
+        return false;
+    }
+    $val = $enabled ? 1 : 0;
+    $stmt = $mysqli->prepare('UPDATE users SET org_tickets_view = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('iii', $val, $userId, $empresaId);
+    return $stmt->execute();
+}
+
+/** ¿Dos usuarios comparten al menos una organización? */
+function usersShareOrganization($mysqli, int $userIdA, int $userIdB, int $empresaId): bool
+{
+    if ($userIdA <= 0 || $userIdB <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if ($userIdA === $userIdB) {
+        return true;
+    }
+    if (organizationMembershipEnabled($mysqli)) {
+        $stmt = $mysqli->prepare(
+            'SELECT 1 FROM user_organizations a
+             INNER JOIN user_organizations b
+                ON b.organization_id = a.organization_id AND b.empresa_id = a.empresa_id
+             WHERE a.user_id = ? AND b.user_id = ? AND a.empresa_id = ?
+             LIMIT 1'
+        );
+        if ($stmt) {
+            $stmt->bind_param('iii', $userIdA, $userIdB, $empresaId);
+            if ($stmt->execute() && $stmt->get_result()->fetch_assoc()) {
+                return true;
+            }
+        }
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT 1 FROM users ua
+         INNER JOIN users ub ON ub.empresa_id = ua.empresa_id
+            AND TRIM(COALESCE(ua.company, '')) <> ''
+            AND ua.company = ub.company
+         WHERE ua.id = ? AND ub.id = ? AND ua.empresa_id = ?
+         LIMIT 1"
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('iii', $userIdA, $userIdB, $empresaId);
+    if (!$stmt->execute()) {
+        return false;
+    }
+    return (bool)$stmt->get_result()->fetch_assoc();
+}
+
+/** Acceso del cliente a un ticket (propio o vista por organización). */
+function clientUserCanAccessTicket($mysqli, int $viewerUserId, int $ticketOwnerUserId, int $empresaId): bool
+{
+    if ($viewerUserId <= 0 || $ticketOwnerUserId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if ($viewerUserId === $ticketOwnerUserId) {
+        return true;
+    }
+    if (!userOrgTicketsViewEnabled($mysqli, $viewerUserId, $empresaId)) {
+        return false;
+    }
+    return usersShareOrganization($mysqli, $viewerUserId, $ticketOwnerUserId, $empresaId);
+}
+
+/**
+ * @return array<int, array{organization_id:int, name:string}>
+ */
+function getPortalOrganizationsForUser($mysqli, int $userId, int $empresaId): array
+{
+    $orgs = getUserOrganizations($mysqli, $userId, $empresaId);
+    if (!empty($orgs)) {
+        return $orgs;
+    }
+    $stmt = $mysqli->prepare(
+        'SELECT id AS organization_id, name FROM organizations WHERE empresa_id = ? AND name = (
+            SELECT company FROM users WHERE id = ? AND empresa_id = ? LIMIT 1
+        ) LIMIT 1'
+    );
+    if (!$stmt) {
+        return [];
+    }
+    $stmt->bind_param('iii', $empresaId, $userId, $empresaId);
+    if (!$stmt->execute()) {
+        return [];
+    }
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row ? [['organization_id' => (int)$row['organization_id'], 'name' => (string)$row['name']]] : [];
+}
+
 function removeOrganizationMembershipsByName($mysqli, int $empresaId, string $orgName): void
 {
     if ($empresaId <= 0 || trim($orgName) === '' || !isset($mysqli) || !$mysqli) {

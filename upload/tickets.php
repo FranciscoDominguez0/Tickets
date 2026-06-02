@@ -190,6 +190,68 @@ if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_co
 
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
+$uid = (int)($_SESSION['user_id'] ?? 0);
+
+$canOrgTicketsView = userOrgTicketsViewEnabled($mysqli, $uid, $eid);
+$isOrgExplorer = $canOrgTicketsView && (($_GET['view'] ?? '') === 'org');
+$orgExplorerOrgId = isset($_GET['org_id']) && is_numeric($_GET['org_id']) ? (int)$_GET['org_id'] : 0;
+$orgExplorerMemberId = isset($_GET['member_id']) && is_numeric($_GET['member_id']) ? (int)$_GET['member_id'] : 0;
+$orgExplorerOrgs = [];
+$orgExplorerMembers = [];
+$orgExplorerTickets = [];
+$orgExplorerOrgName = '';
+$orgExplorerMemberName = '';
+
+if ($isOrgExplorer) {
+    if (!$canOrgTicketsView) {
+        header('Location: tickets.php');
+        exit;
+    }
+    $orgExplorerOrgs = getPortalOrganizationsForUser($mysqli, $uid, $eid);
+    if ($orgExplorerOrgId > 0) {
+        foreach ($orgExplorerOrgs as $oRow) {
+            if ((int)($oRow['organization_id'] ?? 0) === $orgExplorerOrgId) {
+                $orgExplorerOrgName = (string)($oRow['name'] ?? '');
+                break;
+            }
+        }
+        if ($orgExplorerOrgName === '') {
+            $orgExplorerOrgId = 0;
+        } else {
+            $orgExplorerMembers = fetchOrganizationUsers($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName, 500, 0);
+            if ($orgExplorerMemberId > 0) {
+                foreach ($orgExplorerMembers as $mRow) {
+                    if ((int)($mRow['id'] ?? 0) === $orgExplorerMemberId) {
+                        $orgExplorerMemberName = trim((string)($mRow['firstname'] ?? '') . ' ' . (string)($mRow['lastname'] ?? ''));
+                        if ($orgExplorerMemberName === '') {
+                            $orgExplorerMemberName = (string)($mRow['email'] ?? 'Usuario');
+                        }
+                        break;
+                    }
+                }
+                if ($orgExplorerMemberName === '') {
+                    $orgExplorerMemberId = 0;
+                } else {
+                    $stmtOt = $mysqli->prepare(
+                        'SELECT t.id, t.ticket_number, t.subject, t.created, t.closed,
+                                ts.name AS status_name, ts.color AS status_color
+                         FROM tickets t
+                         LEFT JOIN ticket_status ts ON t.status_id = ts.id
+                         WHERE t.user_id = ? AND t.empresa_id = ?
+                         ORDER BY COALESCE(t.updated, t.created) DESC
+                         LIMIT 200'
+                    );
+                    if ($stmtOt) {
+                        $stmtOt->bind_param('ii', $orgExplorerMemberId, $eid);
+                        if ($stmtOt->execute()) {
+                            $orgExplorerTickets = $stmtOt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 if (!isset($_SESSION['client_dark_mode'])) {
     $_SESSION['client_dark_mode'] = 0;
@@ -292,9 +354,17 @@ $sigBlockPortal = ($blockNewIfSignaturePending && $pendingSignCount > 0);
 
 // Paginación fija: 10 tickets por página (mejor rendimiento)
 $perPage = 10;
-$page    = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
-$offset  = ($page - 1) * $perPage;
+$tickets = [];
+$countOpen = 0;
+$countClosed = 0;
+$totalFiltered = 0;
+$totalPages = 1;
+$page = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$offset = ($page - 1) * $perPage;
 
+if ($isOrgExplorer) {
+    // El explorador por organización usa su propia vista (partials/client-org-tickets.inc.php)
+} else {
 $where = 't.user_id = ? AND t.empresa_id = ?';
 if ($filter === 'open') {
     $where .= ' AND t.closed IS NULL';
@@ -328,7 +398,6 @@ $sql .= ' ORDER BY COALESCE(t.updated, t.created) DESC, t.created DESC';
 $sql .= ' LIMIT ? OFFSET ?';
 
 $stmt = $mysqli->prepare($sql);
-$uid = (int) ($_SESSION['user_id'] ?? 0);
 if ($q !== '') {
     $like = '%' . $q . '%';
     $stmt->bind_param('iissii', $uid, $eid, $like, $like, $perPage, $offset);
@@ -360,14 +429,13 @@ if ($page > $totalPages) {
     $offset = ($page - 1) * $perPage;
 }
 
-$countOpen = 0;
-$countClosed = 0;
 $stmtC = $mysqli->prepare('SELECT SUM(closed IS NULL) AS c_open, SUM(closed IS NOT NULL) AS c_closed FROM tickets WHERE user_id = ? AND empresa_id = ?');
 $stmtC->bind_param('ii', $uid, $eid);
 $stmtC->execute();
 if ($r = $stmtC->get_result()->fetch_assoc()) {
     $countOpen = (int) ($r['c_open'] ?? 0);
     $countClosed = (int) ($r['c_closed'] ?? 0);
+}
 }
 ?>
 <!DOCTYPE html>
@@ -1052,6 +1120,13 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-inboxes"></i></div> Mis Tickets
                             </a>
                         </li>
+                        <?php if (!empty($canOrgTicketsView)): ?>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php?view=org">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-diagram-3"></i></div> Tickets por organización
+                            </a>
+                        </li>
+                        <?php endif; ?>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php" <?php if (!empty($sigBlockPortal)): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>>
                                 <div class="profile-dd-icon profile-dd-icon-success"><i class="bi bi-plus-circle"></i></div> Crear Ticket
@@ -1077,13 +1152,21 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <div class="container-main">
         <div class="shell">
             <main class="panel-soft" style="padding: 18px;">
+                <?php if (!empty($isOrgExplorer)): ?>
+                    <?php require __DIR__ . '/partials/client-org-tickets.inc.php'; ?>
+                <?php else: ?>
                 <div class="page-header" style="margin-top: 0;">
                     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                         <div>
                             <h2 class="mb-1">Mis Tickets</h2>
                             <div class="sub">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
                         </div>
-                        <div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <?php if (!empty($canOrgTicketsView)): ?>
+                            <a href="tickets.php?view=org" class="btn btn-outline-secondary btn-sm" style="border-radius:999px;font-weight:700;">
+                                <i class="bi bi-diagram-3"></i> Por organización
+                            </a>
+                            <?php endif; ?>
                             <a href="open.php" class="btn btn-primary btn-sm" style="border-radius: 999px; font-weight: 800; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>
                         </div>
                     </div>
@@ -1285,6 +1368,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>
