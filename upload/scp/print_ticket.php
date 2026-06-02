@@ -287,10 +287,10 @@ if (defined('TICKET_PDF_RENDER')) {
             </tr>
             <tr>
                 <td class="kv"><span class="k">Asignado</span><span class="v"><?php echo html($staffName); ?></span></td>
-                <td class="kv"><span class="k">Creado</span><span class="v"><?php echo !empty($t['created']) ? html(date('d/m/Y H:i', strtotime((string)$t['created']))) : '—'; ?></span></td>
+                <td class="kv"><span class="k">Creado</span><span class="v"><?php echo !empty($t['created']) ? html(date('d/m/Y h:i A', strtotime((string)$t['created']))) : '—'; ?></span></td>
             </tr>
             <tr>
-                <td class="kv"><span class="k">Cerrado</span><span class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y H:i', strtotime((string)$t['closed']))) : '—'; ?></span></td>
+                <td class="kv"><span class="k">Cerrado</span><span class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y h:i A', strtotime((string)$t['closed']))) : '—'; ?></span></td>
                 <td></td>
             </tr>
         </table>
@@ -320,7 +320,7 @@ if (defined('TICKET_PDF_RENDER')) {
                                     <?php endif; ?>
                                 </td>
                                 <td class="when" style="vertical-align:middle; width:150px; text-align:right;">
-                                    <?php echo !empty($e['created']) ? html(date('d/m/Y H:i', strtotime((string)$e['created']))) : ''; ?>
+                                    <?php echo !empty($e['created']) ? html(date('d/m/Y h:i A', strtotime((string)$e['created']))) : ''; ?>
                                 </td>
                             </tr>
                         </table>

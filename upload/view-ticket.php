@@ -1102,6 +1102,83 @@ function humanSize($bytes) {
             .att-item .size { color: #64748b; font-size: 0.85rem; }
 
         .reply-card { margin-top: 16px; padding: 18px; border-radius: 16px; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .org-readonly-notice {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+        }
+        .org-readonly-notice__main {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+        .org-readonly-notice__icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #2563eb;
+            font-size: 1.1rem;
+        }
+        .org-readonly-notice__title {
+            margin: 0 0 2px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e40af;
+            letter-spacing: -0.01em;
+        }
+        .org-readonly-notice__text {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #3b82f6;
+            line-height: 1.4;
+        }
+        .org-readonly-notice__back {
+            flex-shrink: 0;
+            font-weight: 500;
+            background: #fff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
+        }
+        .org-readonly-notice__back:hover {
+            background: #dbeafe;
+            border-color: #60a5fa;
+            color: #1e40af;
+        }
+        body.dark-mode .org-readonly-notice {
+            border-color: #334155;
+            background: #1e1e1e;
+        }
+        body.dark-mode .org-readonly-notice__icon {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: #3f3f46;
+            color: #a1a1aa;
+        }
+        body.dark-mode .org-readonly-notice__title { color: #f4f4f5; }
+        body.dark-mode .org-readonly-notice__text { color: #a1a1aa; }
+        body.dark-mode .org-readonly-notice__back {
+            background: #262626;
+            border-color: #52525b;
+            color: #e4e4e7;
+        }
+        body.dark-mode .org-readonly-notice__back:hover {
+            background: #333333;
+            border-color: #71717a;
+            color: #fafafa;
+        }
         .attach-zone {
             border: 2px dashed #cbd5e1;
             border-radius: 12px;
@@ -1770,7 +1847,7 @@ function humanSize($bytes) {
                                     
                                     <div class="entry-content">
                                         <div class="entry-meta-top">
-                                            <?php echo !empty($e['created']) ? date('d/m/y h:i A', strtotime($e['created'])) : ''; ?>
+                                            <?php echo !empty($e['created']) ? formatDate($e['created']) : ''; ?>
                                         </div>
 
                                         <div class="entry-body"><?php
@@ -1851,12 +1928,24 @@ function humanSize($bytes) {
 
             <div class="reply-card" id="reply-section">
                 <?php if (!empty($isOrgPeerView)): ?>
-                    <div class="alert alert-info mb-0">
-                        <i class="bi bi-eye me-1"></i>
-                        <strong>Solo lectura.</strong>
-                        Ticket de <strong><?php echo html($ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario'); ?></strong>.
-                        No puedes enviar respuestas en tickets de otros usuarios de tu organización.
-                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="alert-link ms-1">Volver al listado</a>
+                    <?php
+                    $orgReadonlyOwner = $ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario';
+                    ?>
+                    <div class="org-readonly-notice" role="status">
+                        <div class="org-readonly-notice__main">
+                            <div class="org-readonly-notice__icon" aria-hidden="true">
+                                <i class="bi bi-eye"></i>
+                            </div>
+                            <div>
+                                <p class="org-readonly-notice__title">Solo lectura</p>
+                                <p class="org-readonly-notice__text">
+                                    Ticket de <?php echo html($orgReadonlyOwner); ?>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-sm btn-outline-secondary org-readonly-notice__back">
+                            <i class="bi bi-arrow-left me-1"></i>Volver al listado
+                        </a>
                     </div>
                 <?php else: ?>
                 <h5 class="mb-3">Escriba una respuesta</h5>

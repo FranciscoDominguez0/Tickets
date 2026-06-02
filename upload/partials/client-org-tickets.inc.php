@@ -149,7 +149,7 @@ if ($orgCssV <= 0) {
                                             <?php echo html($ownerName); ?>
                                             <?php if (!empty($tk['created'])): ?>
                                                 <span class="org-ticket-owner-sep">·</span>
-                                                <?php echo html(date('d/m/Y H:i', strtotime((string)$tk['created']))); ?>
+                                                <?php echo html(formatDate((string)($tk['created'] ?? ''))); ?>
                                             <?php endif; ?>
                                         </span>
                                     </span>
@@ -232,7 +232,7 @@ if ($orgCssV <= 0) {
                                 <span class="org-explorer-row-body">
                                     <span class="org-explorer-row-title"><?php echo html((string)($tk['subject'] ?? '')); ?></span>
                                     <span class="org-explorer-row-sub">
-                                        <?php echo !empty($tk['created']) ? html(date('d/m/Y H:i', strtotime((string)$tk['created']))) : ''; ?>
+                                        <?php echo !empty($tk['created']) ? html(formatDate((string)$tk['created'])) : ''; ?>
                                     </span>
                                 </span>
                                 <?php if (!empty($tk['status_name'])): ?>
