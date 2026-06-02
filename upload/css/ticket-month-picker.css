@@ -99,6 +99,7 @@
     box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14);
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
     transform: translateY(-6px);
     transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
 }
@@ -107,11 +108,7 @@
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
-}
-
-.ticket-month-picker__panel.is-open {
-    position: fixed;
-    z-index: 1050;
+    pointer-events: auto;
 }
 
 .ticket-month-picker__panel-head {
@@ -320,5 +317,66 @@ body.dark-mode .ticket-month-picker__chip {
     background: rgba(239, 68, 68, 0.12);
     color: #fca5a5;
     border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Compacto — cabecera de listado de tickets org */
+.ticket-month-picker--compact {
+    width: auto;
+    max-width: none;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__bar {
+    gap: 4px;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__trigger {
+    padding: 5px 8px 5px 6px;
+    gap: 6px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    box-shadow: none;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__trigger-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    font-size: 0.85rem;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__trigger-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__trigger-chevron {
+    font-size: 0.65rem;
+    margin-left: 0;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__clear-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: background 0.12s, color 0.12s;
+}
+
+.ticket-month-picker--compact .ticket-month-picker__clear-compact:hover {
+    background: #f1f5f9;
+    color: #ef4444;
+}
+
+body.dark-mode .ticket-month-picker--compact .ticket-month-picker__clear-compact:hover {
+    background: #27272a;
+    color: #fca5a5;
 }
 

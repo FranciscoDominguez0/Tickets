@@ -20,6 +20,7 @@
         var nextBtn = root.querySelector('[data-picker-next]');
         var monthBtns = root.querySelectorAll('[data-picker-month]');
         var allBtn = root.querySelector('[data-picker-all]');
+        var panelHome = panel ? panel.parentNode : null;
 
         if (!form || !trigger || !panel || !hidden) {
             return;
@@ -47,9 +48,17 @@
         }
 
         var selected = root.getAttribute('data-selected') || hidden.value || '';
+        var outsideHandler = null;
 
         function monthKey(year, monthIndex) {
             return String(year) + '-' + pad2(monthIndex);
+        }
+
+        function isInsidePicker(target) {
+            if (!target) {
+                return false;
+            }
+            return root.contains(target) || panel.contains(target);
         }
 
         function syncYearUI() {
@@ -85,31 +94,67 @@
                 left = 12;
             }
             var top = rect.bottom + 8;
+            var maxTop = window.innerHeight - 20;
+            if (top + 280 > maxTop) {
+                top = Math.max(12, rect.top - 8 - 280);
+            }
             panel.style.position = 'fixed';
             panel.style.left = left + 'px';
             panel.style.top = top + 'px';
             panel.style.width = width + 'px';
             panel.style.right = 'auto';
+            panel.style.zIndex = '1050';
         }
 
-        function resetPanelPosition() {
+        function restorePanelHome() {
+            if (panelHome && panel.parentNode !== panelHome) {
+                panelHome.appendChild(panel);
+            }
             panel.style.position = '';
             panel.style.left = '';
             panel.style.top = '';
             panel.style.width = '';
             panel.style.right = '';
+            panel.style.zIndex = '';
+        }
+
+        function unbindOutsideClick() {
+            if (!outsideHandler) {
+                return;
+            }
+            document.removeEventListener('mousedown', outsideHandler, true);
+            document.removeEventListener('touchstart', outsideHandler, true);
+            outsideHandler = null;
+        }
+
+        function bindOutsideClick() {
+            unbindOutsideClick();
+            outsideHandler = function (e) {
+                if (isInsidePicker(e.target)) {
+                    return;
+                }
+                closePanel();
+            };
+            document.addEventListener('mousedown', outsideHandler, true);
+            document.addEventListener('touchstart', outsideHandler, true);
         }
 
         function openPanel() {
+            if (!panelHome) {
+                panelHome = panel.parentNode;
+            }
+            document.body.appendChild(panel);
             positionPanel();
             panel.classList.add('is-open');
             trigger.setAttribute('aria-expanded', 'true');
+            setTimeout(bindOutsideClick, 0);
         }
 
         function closePanel() {
+            unbindOutsideClick();
             panel.classList.remove('is-open');
             trigger.setAttribute('aria-expanded', 'false');
-            resetPanelPosition();
+            restorePanelHome();
         }
 
         function submitMonth(value) {
@@ -119,6 +164,11 @@
             form.submit();
         }
 
+        function stopInside(e) {
+            e.stopPropagation();
+        }
+
+        trigger.addEventListener('mousedown', stopInside);
         trigger.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -129,9 +179,13 @@
             }
         });
 
+        panel.addEventListener('mousedown', stopInside);
+        panel.addEventListener('click', stopInside);
+
         if (prevBtn) {
             prevBtn.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 var idx = years.indexOf(currentYear);
                 if (idx > 0) {
                     currentYear = years[idx - 1];
@@ -143,6 +197,7 @@
         if (nextBtn) {
             nextBtn.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 var idx = years.indexOf(currentYear);
                 if (idx >= 0 && idx < years.length - 1) {
                     currentYear = years[idx + 1];
@@ -154,6 +209,7 @@
         monthBtns.forEach(function (btn) {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 if (btn.disabled) {
                     return;
                 }
@@ -164,18 +220,18 @@
         if (allBtn) {
             allBtn.addEventListener('click', function (e) {
                 e.preventDefault();
+                e.stopPropagation();
                 submitMonth('');
             });
         }
 
-        document.addEventListener('click', function (e) {
-            if (!root.contains(e.target)) {
-                closePanel();
-            }
-        });
+        var clearCompact = root.querySelector('.ticket-month-picker__clear-compact');
+        if (clearCompact) {
+            clearCompact.addEventListener('mousedown', stopInside);
+        }
 
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
+            if (e.key === 'Escape' && panel.classList.contains('is-open')) {
                 closePanel();
             }
         });

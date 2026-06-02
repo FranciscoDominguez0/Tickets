@@ -34,7 +34,8 @@ if (!in_array($pickerInitialYear, $pickerYears, true)) {
     $pickerInitialYear = (int)$pickerYears[count($pickerYears) - 1];
 }
 
-$triggerValue = $selectedLabel !== '' ? $selectedLabel : 'Todos los meses';
+$ticketMonthPickerCompact = !empty($ticketMonthPickerCompact);
+$triggerValue = $selectedLabel !== '' ? $selectedLabel : ($ticketMonthPickerCompact ? 'Mes' : 'Todos los meses');
 
 static $ticketMonthPickerAssetsLoaded = false;
 if (!$ticketMonthPickerAssetsLoaded) {
@@ -47,7 +48,7 @@ if (!$ticketMonthPickerAssetsLoaded) {
     echo '<script src="js/ticket-month-picker.js?v=' . $pickerJsV . '" defer></script>' . "\n";
 }
 ?>
-<div class="ticket-month-picker"
+<div class="ticket-month-picker<?php echo $ticketMonthPickerCompact ? ' ticket-month-picker--compact' : ''; ?>"
      data-years="<?php echo html(json_encode(array_values($pickerYears), JSON_UNESCAPED_UNICODE)); ?>"
      data-available="<?php echo html(json_encode($availableMap, JSON_UNESCAPED_UNICODE)); ?>"
      data-initial-year="<?php echo (int)$pickerInitialYear; ?>"
@@ -65,13 +66,15 @@ if (!$ticketMonthPickerAssetsLoaded) {
             <button type="button" class="ticket-month-picker__trigger" data-picker-trigger aria-expanded="false" aria-haspopup="dialog">
                 <span class="ticket-month-picker__trigger-icon" aria-hidden="true"><i class="bi bi-calendar3"></i></span>
                 <span class="ticket-month-picker__trigger-text">
-                    <span class="ticket-month-picker__trigger-kicker">Período</span>
+                    <?php if (!$ticketMonthPickerCompact): ?>
+                        <span class="ticket-month-picker__trigger-kicker">Período</span>
+                    <?php endif; ?>
                     <span class="ticket-month-picker__trigger-value"><?php echo html($triggerValue); ?></span>
                 </span>
                 <i class="bi bi-chevron-down ticket-month-picker__trigger-chevron" aria-hidden="true"></i>
             </button>
 
-            <?php if ($selectedMonth !== ''): ?>
+            <?php if (!$ticketMonthPickerCompact && $selectedMonth !== ''): ?>
                 <span class="ticket-month-picker__chip">
                     <i class="bi bi-funnel" aria-hidden="true"></i>
                     <?php echo html($selectedLabel !== '' ? $selectedLabel : $selectedMonth); ?>
@@ -79,6 +82,8 @@ if (!$ticketMonthPickerAssetsLoaded) {
                 <?php if ($ticketMonthFilterResetUrl !== ''): ?>
                     <a href="<?php echo html($ticketMonthFilterResetUrl); ?>" class="ticket-month-picker__clear">Quitar</a>
                 <?php endif; ?>
+            <?php elseif ($ticketMonthPickerCompact && $selectedMonth !== '' && $ticketMonthFilterResetUrl !== ''): ?>
+                <a href="<?php echo html($ticketMonthFilterResetUrl); ?>" class="ticket-month-picker__clear-compact" title="Quitar filtro" aria-label="Quitar filtro de mes"><i class="bi bi-x-lg"></i></a>
             <?php endif; ?>
         </div>
 

@@ -122,24 +122,24 @@ if ($orgCssV <= 0) {
                 ];
                 $ticketMonthFilterResetUrl = 'tickets.php?view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all';
                 $ticketMonthFilterResetPage = 'oat';
+                $ticketMonthPickerCompact = true;
                 ?>
-                <div class="org-month-filter-wrap">
-                    <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
-                </div>
+                <div class="org-list-section">
+                    <div class="org-panel-head org-panel-head--tickets">
+                        <div class="org-panel-head__left">
+                            <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Todos los tickets</h3>
+                        </div>
+                        <div class="org-panel-head__actions">
+                            <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
+                            <span class="org-count-badge"><?php echo $orgAllTicketsTotal; ?></span>
+                        </div>
+                    </div>
                 <?php if ($orgAllTicketsTotal <= 0): ?>
                     <div class="org-empty">
                         <i class="bi bi-inbox" aria-hidden="true"></i>
                         <p class="text-muted mb-0"><?php echo !empty($ticketMonthFilter) ? 'No hay tickets en el mes seleccionado.' : 'No hay tickets en esta organización.'; ?></p>
                     </div>
                 <?php else: ?>
-                    <div class="org-list-section">
-                        <div class="org-panel-head">
-                            <div>
-                                <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Todos los tickets</h3>
-                                <div class="org-panel-meta"><?php echo html($orgExplorerOrgName); ?><?php if (!empty($ticketMonthFilter['label'])): ?> · <?php echo html((string)$ticketMonthFilter['label']); ?><?php endif; ?></div>
-                            </div>
-                            <span class="org-count-badge"><?php echo $orgAllTicketsTotal; ?></span>
-                        </div>
                         <div class="list-group list-group-flush org-explorer-list org-explorer-list-tickets">
                             <?php foreach ($orgExplorerAllTickets as $tk): ?>
                                 <?php
@@ -183,8 +183,8 @@ if ($orgCssV <= 0) {
                         <?php if ($orgAllTicketsTotalPages > 1 && function_exists('renderModernPagination')): ?>
                             <?php echo renderModernPagination($orgAllTicketsPage, $orgAllTicketsTotalPages, $orgAllTicketsPaginationParams, 'oat'); ?>
                         <?php endif; ?>
-                    </div>
                 <?php endif; ?>
+                </div>
 
             <?php elseif ($orgUsersTotal <= 0): ?>
                 <div class="org-empty">
@@ -233,24 +233,27 @@ if ($orgCssV <= 0) {
             ];
             $ticketMonthFilterResetUrl = 'tickets.php?view=org&org_id=' . (int)$orgExplorerOrgId . '&member_id=' . (int)$orgExplorerMemberId;
             $ticketMonthFilterResetPage = 'otp';
+            $ticketMonthPickerCompact = true;
             ?>
-            <div class="org-month-filter-wrap">
-                <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
-            </div>
+            <div class="org-list-section">
+                <div class="org-panel-head org-panel-head--tickets">
+                    <div class="org-panel-head__left">
+                        <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Tickets</h3>
+                        <?php if ($orgExplorerMemberName !== ''): ?>
+                            <div class="org-panel-meta"><?php echo html($orgExplorerMemberName); ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="org-panel-head__actions">
+                        <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
+                        <span class="org-count-badge"><?php echo $orgTicketsTotal; ?></span>
+                    </div>
+                </div>
             <?php if ($orgTicketsTotal <= 0): ?>
                 <div class="org-empty">
                     <i class="bi bi-inbox" aria-hidden="true"></i>
                     <p class="text-muted mb-0"><?php echo !empty($ticketMonthFilter) ? 'No hay tickets en el mes seleccionado.' : 'Este usuario no tiene tickets registrados.'; ?></p>
                 </div>
             <?php else: ?>
-                <div class="org-list-section">
-                    <div class="org-panel-head">
-                        <div>
-                            <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Tickets</h3>
-                            <div class="org-panel-meta"><?php echo html($orgExplorerMemberName); ?> · <?php echo html($orgExplorerOrgName); ?><?php if (!empty($ticketMonthFilter['label'])): ?> · <?php echo html((string)$ticketMonthFilter['label']); ?><?php endif; ?></div>
-                        </div>
-                        <span class="org-count-badge"><?php echo $orgTicketsTotal; ?></span>
-                    </div>
                     <div class="list-group list-group-flush org-explorer-list org-explorer-list-tickets">
                         <?php foreach ($orgExplorerTickets as $tk): ?>
                             <?php
@@ -283,8 +286,8 @@ if ($orgCssV <= 0) {
                     <?php if ($orgTicketsTotalPages > 1 && function_exists('renderModernPagination')): ?>
                         <?php echo renderModernPagination($orgTicketsPage, $orgTicketsTotalPages, $orgTicketsPaginationParams, 'otp'); ?>
                     <?php endif; ?>
-                </div>
             <?php endif; ?>
+            </div>
         <?php endif; ?>
     </div>
 </div>

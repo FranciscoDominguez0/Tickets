@@ -885,12 +885,23 @@ body.dark-mode .org-explorer-wrap .modern-pagination .page-item.disabled .page-l
     border-color: #27272a !important;
 }
 
-/* Filtro por mes (picker) */
-.org-month-filter-wrap {
-    padding: 12px 20px 16px;
-    border-bottom: 1px solid var(--org-border);
+/* Cabecera tickets con filtro de mes */
+.org-panel-head--tickets {
+    align-items: center;
 }
 
-.org-month-filter-wrap .ticket-month-picker {
-    max-width: 100%;
+.org-panel-head--tickets .org-panel-head__left {
+    flex: 1;
+    min-width: 0;
+}
+
+.org-panel-head--tickets .org-panel-head__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.org-panel-head--tickets + .org-empty {
+    border-top: none;
 }
