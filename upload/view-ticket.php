@@ -90,15 +90,29 @@ if (!$t || !clientUserCanAccessTicket($mysqli, $uid, $ticketOwnerId, $eid)) {
 }
 
 $isOrgPeerView = ($ticketOwnerId !== $uid);
+$orgViewFromExplorer = (($_GET['from'] ?? '') === 'org');
+$viewTicketBackUrl = 'tickets.php';
 $orgViewBackUrl = 'tickets.php?view=org';
-if ($isOrgPeerView && (($_GET['from'] ?? '') === 'org')) {
+
+if ($orgViewFromExplorer) {
     $bOrg = isset($_GET['org_id']) && is_numeric($_GET['org_id']) ? (int)$_GET['org_id'] : 0;
     $bMem = isset($_GET['member_id']) && is_numeric($_GET['member_id']) ? (int)$_GET['member_id'] : 0;
     if ($bOrg > 0) {
         $orgViewBackUrl .= '&org_id=' . $bOrg;
-        if ($bMem > 0) {
+        if ((string)($_GET['list'] ?? '') === 'all') {
+            $orgViewBackUrl .= '&list=all';
+            $bOat = isset($_GET['oat']) && is_numeric($_GET['oat']) ? (int)$_GET['oat'] : 0;
+            if ($bOat > 1) {
+                $orgViewBackUrl .= '&oat=' . $bOat;
+            }
+        } elseif ($bMem > 0) {
             $orgViewBackUrl .= '&member_id=' . $bMem;
+            $bOtp = isset($_GET['otp']) && is_numeric($_GET['otp']) ? (int)$_GET['otp'] : 0;
+            if ($bOtp > 1) {
+                $orgViewBackUrl .= '&otp=' . $bOtp;
+            }
         }
+        $viewTicketBackUrl = $orgViewBackUrl;
     }
 }
 
@@ -1600,7 +1614,7 @@ function humanSize($bytes) {
                         <h2 class="mb-0" style="font-weight: 900; color: #0f172a;"><?php echo html($t['subject']); ?></h2>
                     </div>
                     <div class="text-end">
-                        <a href="tickets.php" class="btn btn-light btn-sm px-4" style="border-radius: 999px; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-arrow-left"></i> Volver</a>
+                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-light btn-sm px-4" style="border-radius: 999px; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-arrow-left"></i> Volver</a>
                     </div>
                 </div>
 
@@ -1836,6 +1850,15 @@ function humanSize($bytes) {
             </div>
 
             <div class="reply-card" id="reply-section">
+                <?php if (!empty($isOrgPeerView)): ?>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-eye me-1"></i>
+                        <strong>Solo lectura.</strong>
+                        Ticket de <strong><?php echo html($ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario'); ?></strong>.
+                        No puedes enviar respuestas en tickets de otros usuarios de tu organización.
+                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="alert-link ms-1">Volver al listado</a>
+                    </div>
+                <?php else: ?>
                 <h5 class="mb-3">Escriba una respuesta</h5>
 
                 <?php if ($reply_error !== ''): ?>
@@ -1879,18 +1902,8 @@ function humanSize($bytes) {
                     </script>
                 <?php endif; ?>
 
-                <?php if (!empty($isOrgPeerView)): ?>
-                    <div class="alert alert-info mb-3">
-                        <i class="bi bi-eye me-1"></i>
-                        Vista de solo lectura — ticket de <strong><?php echo html($ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario'); ?></strong>.
-                        <a href="<?php echo html($orgViewBackUrl); ?>" class="alert-link ms-1">Volver al listado</a>
-                    </div>
-                <?php endif; ?>
-
                 <?php if (!empty($t['closed'])): ?>
                     <div class="alert alert-warning mb-3">Este ticket está cerrado y no admite nuevas respuestas.</div>
-                <?php elseif (!empty($isOrgPeerView)): ?>
-                    <div class="alert alert-secondary mb-3">No puedes enviar respuestas en tickets de otros usuarios de tu organización.</div>
                 <?php else: ?>
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
@@ -1916,6 +1929,7 @@ function humanSize($bytes) {
                             <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando…</span>
                         </button>
                     </form>
+                <?php endif; ?>
                 <?php endif; ?>
             </div>
 

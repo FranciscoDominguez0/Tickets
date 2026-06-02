@@ -1252,6 +1252,116 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
 }
 
+function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName): int
+{
+    if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
+        return 0;
+    }
+    $orgName = trim($orgName);
+
+    if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
+        $sql = "SELECT COUNT(DISTINCT t.id) AS c
+            FROM tickets t
+            INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+            WHERE t.empresa_id = ? AND u.empresa_id = ?
+            AND (
+                EXISTS (
+                    SELECT 1 FROM user_organizations uo
+                    WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                )
+                OR (
+                    TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo2
+                        WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                    )
+                )
+            )";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+        $stmt->bind_param('iiiisi', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId);
+    } else {
+        $sql = 'SELECT COUNT(*) AS c FROM tickets t
+            INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?';
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return 0;
+        }
+        $stmt->bind_param('iis', $empresaId, $empresaId, $orgName);
+    }
+    if (!$stmt->execute()) {
+        return 0;
+    }
+    return (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+}
+
+/**
+ * Tickets de todos los usuarios de la organización (portal cliente).
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset): array
+{
+    if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
+        return [];
+    }
+    $orgName = trim($orgName);
+    $limit = max(1, $limit);
+    $offset = max(0, $offset);
+
+    if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
+        $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
+                u.firstname AS owner_firstname, u.lastname AS owner_lastname, u.email AS owner_email,
+                ts.name AS status_name, ts.color AS status_color
+            FROM tickets t
+            INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+            LEFT JOIN ticket_status ts ON t.status_id = ts.id
+            WHERE t.empresa_id = ? AND u.empresa_id = ?
+            AND (
+                EXISTS (
+                    SELECT 1 FROM user_organizations uo
+                    WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                )
+                OR (
+                    TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo2
+                        WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                    )
+                )
+            )
+            ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
+            LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('iiiisiii', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId, $limit, $offset);
+    } else {
+        $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
+                u.firstname AS owner_firstname, u.lastname AS owner_lastname, u.email AS owner_email,
+                ts.name AS status_name, ts.color AS status_color
+            FROM tickets t
+            INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+            LEFT JOIN ticket_status ts ON t.status_id = ts.id
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
+            ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
+            LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('iisii', $empresaId, $empresaId, $orgName, $limit, $offset);
+    }
+    if (!$stmt->execute()) {
+        return [];
+    }
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
+}
+
 /** Columna users.org_tickets_view (portal: ver tickets de la organización). */
 function ensureUserOrgTicketsViewColumn($mysqli): bool
 {

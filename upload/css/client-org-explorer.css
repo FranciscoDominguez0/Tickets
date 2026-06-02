@@ -532,6 +532,58 @@ body.dark-mode .org-empty i {
 }
 
 /* —— Lista (markup actual del partial) —— */
+.org-view-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 14px 0;
+    border-bottom: 1px solid var(--org-border);
+    background: linear-gradient(180deg, #ffffff, var(--org-head));
+}
+
+.org-view-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    font-weight: 800;
+    text-decoration: none;
+    color: var(--org-muted);
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.org-view-tab:hover {
+    color: var(--org-text);
+    background: #fff;
+    border-color: var(--org-border);
+}
+
+.org-view-tab.active {
+    background: var(--org-accent-soft);
+    color: var(--org-accent-dark);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+.org-ticket-owner {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.org-ticket-owner .bi-person {
+    color: var(--org-accent-dark);
+    font-size: 0.85rem;
+}
+
+.org-ticket-owner-sep {
+    opacity: 0.5;
+    margin: 0 2px;
+}
+
 .org-explorer-wrap .org-panel.panel {
     background: var(--org-surface);
     border: 1px solid var(--org-border);
@@ -706,6 +758,25 @@ body.dark-mode .org-empty i {
         margin-left: 0;
         margin-top: 6px;
     }
+}
+
+body.dark-mode .org-view-tabs {
+    background: linear-gradient(180deg, #1f1f23, #111113);
+    border-bottom-color: #27272a;
+}
+
+body.dark-mode .org-view-tab:hover {
+    background: #27272a;
+    color: #f4f4f5;
+}
+
+body.dark-mode .org-view-tab.active {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}
+
+body.dark-mode .org-ticket-owner .bi-person {
+    color: #f87171;
 }
 
 body.dark-mode .org-explorer-wrap .org-panel.panel {

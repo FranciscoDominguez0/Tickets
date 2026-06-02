@@ -22,6 +22,13 @@ $orgTicketsTotalPages = max(1, (int)($orgTicketsTotalPages ?? 1));
 $orgListPerPage = max(1, (int)($orgListPerPage ?? 10));
 $orgUsersPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId;
 $orgTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&member_id=' . (int)$orgExplorerMemberId;
+$orgExplorerListMode = (isset($orgExplorerListMode) && (string)$orgExplorerListMode === 'all') ? 'all' : 'users';
+$orgAllTicketsTotal = (int)($orgAllTicketsTotal ?? 0);
+$orgAllTicketsPage = max(1, (int)($orgAllTicketsPage ?? 1));
+$orgAllTicketsTotalPages = max(1, (int)($orgAllTicketsTotalPages ?? 1));
+$orgExplorerAllTickets = isset($orgExplorerAllTickets) && is_array($orgExplorerAllTickets) ? $orgExplorerAllTickets : [];
+$orgAllTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all';
+$orgOrgBaseUrl = 'tickets.php?view=org&amp;org_id=' . (int)$orgExplorerOrgId;
 $orgCssV = (int)@filemtime(__DIR__ . '/../css/client-org-explorer.css');
 if ($orgCssV <= 0) {
     $orgCssV = 1;
@@ -48,13 +55,16 @@ if ($orgCssV <= 0) {
                 <a href="tickets.php?view=org">Organizaciones</a>
             </li>
             <?php if ($orgExplorerOrgId > 0 && $orgExplorerOrgName !== ''): ?>
-            <li class="breadcrumb-item <?php echo $orgExplorerMemberId <= 0 ? 'active' : ''; ?>">
-                <?php if ($orgExplorerMemberId > 0): ?>
-                    <a href="tickets.php?view=org&amp;org_id=<?php echo $orgExplorerOrgId; ?>"><?php echo html($orgExplorerOrgName); ?></a>
+            <li class="breadcrumb-item <?php echo ($orgExplorerMemberId <= 0 && $orgExplorerListMode !== 'all') ? 'active' : ''; ?>">
+                <?php if ($orgExplorerMemberId > 0 || $orgExplorerListMode === 'all'): ?>
+                    <a href="<?php echo $orgOrgBaseUrl; ?>"><?php echo html($orgExplorerOrgName); ?></a>
                 <?php else: ?>
                     <?php echo html($orgExplorerOrgName); ?>
                 <?php endif; ?>
             </li>
+            <?php endif; ?>
+            <?php if ($orgExplorerOrgId > 0 && $orgExplorerMemberId <= 0 && $orgExplorerListMode === 'all'): ?>
+            <li class="breadcrumb-item active">Todos los tickets</li>
             <?php endif; ?>
             <?php if ($orgExplorerMemberId > 0 && $orgExplorerMemberName !== ''): ?>
             <li class="breadcrumb-item active"><?php echo html($orgExplorerMemberName); ?></li>
@@ -91,7 +101,74 @@ if ($orgCssV <= 0) {
             <?php endif; ?>
 
         <?php elseif ($orgExplorerMemberId <= 0): ?>
-            <?php if ($orgUsersTotal <= 0): ?>
+            <div class="org-view-tabs">
+                <a href="<?php echo $orgOrgBaseUrl; ?>" class="org-view-tab <?php echo $orgExplorerListMode === 'users' ? 'active' : ''; ?>">
+                    <i class="bi bi-people"></i> Por usuario
+                </a>
+                <a href="<?php echo $orgOrgBaseUrl; ?>&amp;list=all" class="org-view-tab <?php echo $orgExplorerListMode === 'all' ? 'active' : ''; ?>">
+                    <i class="bi bi-collection"></i> Todos los tickets
+                </a>
+            </div>
+
+            <?php if ($orgExplorerListMode === 'all'): ?>
+                <?php if ($orgAllTicketsTotal <= 0): ?>
+                    <div class="org-empty">
+                        <i class="bi bi-inbox" aria-hidden="true"></i>
+                        <p class="text-muted mb-0">No hay tickets en esta organización.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="org-list-section">
+                        <div class="org-panel-head">
+                            <div>
+                                <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Todos los tickets</h3>
+                                <div class="org-panel-meta"><?php echo html($orgExplorerOrgName); ?></div>
+                            </div>
+                            <span class="org-count-badge"><?php echo $orgAllTicketsTotal; ?></span>
+                        </div>
+                        <div class="list-group list-group-flush org-explorer-list org-explorer-list-tickets">
+                            <?php foreach ($orgExplorerAllTickets as $tk): ?>
+                                <?php
+                                $tid = (int)($tk['id'] ?? 0);
+                                if ($tid <= 0) continue;
+                                $ownerId = (int)($tk['owner_user_id'] ?? 0);
+                                $ownerName = trim((string)($tk['owner_firstname'] ?? '') . ' ' . (string)($tk['owner_lastname'] ?? ''));
+                                if ($ownerName === '') {
+                                    $ownerName = (string)($tk['owner_email'] ?? 'Usuario');
+                                }
+                                $href = 'view-ticket.php?id=' . $tid . '&from=org&org_id=' . $orgExplorerOrgId . '&list=all&member_id=' . $ownerId;
+                                if ($orgAllTicketsPage > 1) {
+                                    $href .= '&oat=' . $orgAllTicketsPage;
+                                }
+                                ?>
+                                <a href="<?php echo html($href); ?>" class="list-group-item list-group-item-action org-explorer-row org-explorer-row-ticket">
+                                    <span class="org-ticket-num">#<?php echo html((string)($tk['ticket_number'] ?? '')); ?></span>
+                                    <span class="org-explorer-row-body">
+                                        <span class="org-explorer-row-title"><?php echo html((string)($tk['subject'] ?? '')); ?></span>
+                                        <span class="org-explorer-row-sub org-ticket-owner">
+                                            <i class="bi bi-person" aria-hidden="true"></i>
+                                            <?php echo html($ownerName); ?>
+                                            <?php if (!empty($tk['created'])): ?>
+                                                <span class="org-ticket-owner-sep">·</span>
+                                                <?php echo html(date('d/m/Y H:i', strtotime((string)$tk['created']))); ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    </span>
+                                    <?php if (!empty($tk['status_name'])): ?>
+                                        <span class="org-status-badge" style="background:<?php echo html((string)($tk['status_color'] ?? '#64748b')); ?>;">
+                                            <?php echo html((string)$tk['status_name']); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-eye"></i> Ver hilo</span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if ($orgAllTicketsTotalPages > 1 && function_exists('renderModernPagination')): ?>
+                            <?php echo renderModernPagination($orgAllTicketsPage, $orgAllTicketsTotalPages, $orgAllTicketsPaginationParams, 'oat'); ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+
+            <?php elseif ($orgUsersTotal <= 0): ?>
                 <div class="org-empty">
                     <i class="bi bi-person-x" aria-hidden="true"></i>
                     <p class="text-muted mb-0">No hay usuarios en esta organización.</p>

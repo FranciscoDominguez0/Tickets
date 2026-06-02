@@ -208,6 +208,11 @@ $orgUsersTotal = 0;
 $orgUsersTotalPages = 1;
 $orgTicketsTotal = 0;
 $orgTicketsTotalPages = 1;
+$orgExplorerListMode = (isset($_GET['list']) && (string)$_GET['list'] === 'all') ? 'all' : 'users';
+$orgAllTicketsPage = max(1, (int)($_GET['oat'] ?? 1));
+$orgAllTicketsTotal = 0;
+$orgAllTicketsTotalPages = 1;
+$orgExplorerAllTickets = [];
 
 if ($isOrgExplorer) {
     if (!$canOrgTicketsView) {
@@ -230,7 +235,20 @@ if ($isOrgExplorer) {
             $orgUsersPage = min($orgUsersPage, max(1, $orgUsersTotalPages));
             $orgUsersOffset = ($orgUsersPage - 1) * $orgListPerPage;
 
-            if ($orgExplorerMemberId <= 0) {
+            if ($orgExplorerMemberId <= 0 && $orgExplorerListMode === 'all') {
+                $orgAllTicketsTotal = countPortalOrganizationTickets($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName);
+                $orgAllTicketsTotalPages = $orgAllTicketsTotal > 0 ? (int)ceil($orgAllTicketsTotal / $orgListPerPage) : 1;
+                $orgAllTicketsPage = min($orgAllTicketsPage, max(1, $orgAllTicketsTotalPages));
+                $orgAllTicketsOffset = ($orgAllTicketsPage - 1) * $orgListPerPage;
+                $orgExplorerAllTickets = fetchPortalOrganizationTickets(
+                    $mysqli,
+                    $eid,
+                    $orgExplorerOrgId,
+                    $orgExplorerOrgName,
+                    $orgListPerPage,
+                    $orgAllTicketsOffset
+                );
+            } elseif ($orgExplorerMemberId <= 0) {
                 $orgExplorerMembers = fetchOrganizationUsers(
                     $mysqli,
                     $eid,
