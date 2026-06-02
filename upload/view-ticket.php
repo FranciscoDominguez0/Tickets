@@ -524,6 +524,7 @@ function humanSize($bytes) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
+    <link rel="stylesheet" href="css/client-ticket-view.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client-ticket-view.css'); ?>">
     <style>
         body {
             background: #f6f7fb;
@@ -1684,113 +1685,142 @@ function humanSize($bytes) {
 <div class="container-main">
     <div class="center-wrap">
         <div class="panel-soft">
-            <div class="page-header" style="margin-top: 0; padding: 24px;">
-                <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-                    <div>
-                        <div class="d-flex align-items-center gap-3 mb-2">
-                            <span style="background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 0.9rem; letter-spacing: 0.05em; border: 1px solid rgba(239, 68, 68, 0.25); display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.05);">
-                                <i class="bi bi-hash" style="font-size: 1rem; opacity: 0.85;"></i> TICKET #<?php echo html($t['ticket_number']); ?>
-                            </span>
+            <?php
+            $clientStatusColor = (string)($t['status_color'] ?? '#64748b');
+            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $clientStatusColor)) {
+                $clientStatusColor = '#64748b';
+            }
+            $clientPriorityColor = (string)($t['priority_color'] ?? '#64748b');
+            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $clientPriorityColor)) {
+                $clientPriorityColor = '#64748b';
+            }
+            $clientTopicName = trim((string)($t['topic_name'] ?? ''));
+            if ($clientTopicName === '') {
+                $clientTopicName = 'General';
+            }
+            $clientIsClosed = !empty($t['closed']);
+            $clientCreatedAt = formatDate((string)$t['created']);
+            $clientUpdatedAt = !empty($t['updated']) ? formatDate((string)$t['updated']) : $clientCreatedAt;
+            $clientClosedAt = $clientIsClosed ? formatDate((string)$t['closed']) : '';
+            $clientStatusStyle = 'background:' . $clientStatusColor . '18;color:' . $clientStatusColor . ';border-color:' . $clientStatusColor . '35;';
+            $clientPriorityStyle = 'background:' . $clientPriorityColor . '18;color:' . $clientPriorityColor . ';border-color:' . $clientPriorityColor . '35;';
+            ?>
+
+            <div class="client-ticket-hero">
+                <div class="client-ticket-hero__ticket-card">
+                    <div class="client-ticket-hero__ticket-accent" aria-hidden="true"></div>
+                    <div class="client-ticket-hero__ticket-body">
+                        <div class="client-ticket-hero__main">
+                            <div class="client-ticket-hero__headline">
+                                <span class="client-ticket-hero__number" aria-label="Número <?php echo html($t['ticket_number']); ?>">
+                                    <span class="client-ticket-hero__number-mark">#</span><span class="client-ticket-hero__number-val"><?php echo html($t['ticket_number']); ?></span>
+                                </span>
+                                <h1 class="client-ticket-hero__title"><?php echo html($t['subject']); ?></h1>
+                            </div>
                         </div>
-                        <h2 class="mb-0" style="font-weight: 900; color: #0f172a;"><?php echo html($t['subject']); ?></h2>
-                    </div>
-                    <div class="text-end">
-                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-light btn-sm px-4" style="border-radius: 999px; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-arrow-left"></i> Volver</a>
+                        <div class="client-ticket-hero__actions">
+                            <a href="<?php echo html($viewTicketBackUrl); ?>" class="client-ticket-hero__back">
+                                <i class="bi bi-arrow-left"></i> Volver
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-
+                <?php if ($isOrgPeerView && $ticketOwnerName !== ''): ?>
+                    <div class="client-ticket-hero__meta">
+                        <i class="bi bi-eye"></i> Consulta de ticket de <?php echo html($ticketOwnerName); ?> · solo lectura
+                    </div>
+                <?php endif; ?>
             </div>
 
-            <div class="ticket-view-overview">
-                <?php 
-                    $pColor = $t['priority_color'] ?: '#64748b'; 
-                    $pStyle = "background: {$pColor}15; color: {$pColor}; border: 1px solid {$pColor}30;";
-                    $sColor = $t['status_color'] ?: '#64748b';
-                    $sStyle = "background: {$sColor}22; color: {$sColor}; border: 1px solid {$sColor}30;";
-                ?>
-
-                <!-- DISEÑO MÓVIL (Premium Dashboard similar a tickets.php) -->
-                <div class="d-md-none">
-                    <div class="mobile-header">
-                        <div class="mobile-badge" style="<?php echo $sStyle; ?>">
-                            <span class="dot" style="background: <?php echo $sColor; ?>;"></span>
-                            <?php echo html($t['status_name']); ?>
-                        </div>
-                        <div class="mobile-badge" style="<?php echo $pStyle; ?>">
-                            <i class="bi bi-flag-fill"></i>
-                            <?php echo html($t['priority_name']); ?>
-                        </div>
-                    </div>
-
-                    <div class="mobile-grid">
-                        <div class="mobile-grid-item">
-                            <label><i class="bi bi-bookmark"></i> TEMA</label>
-                            <div class="val"><?php echo html($t['topic_name'] ?? '—'); ?></div>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <label><i class="bi bi-calendar-event"></i> CREADO EL</label>
-                            <div class="val"><?php echo date('d/m/Y h:i A', strtotime($t['created'])); ?></div>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <label><i class="bi bi-clock-history"></i> ACTUALIZADO</label>
-                            <div class="val"><?php echo !empty($t['updated']) ? date('d/m/Y h:i A', strtotime($t['updated'])) : '—'; ?></div>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <label><i class="bi bi-hash"></i> TICKET #</label>
-                            <div class="val"><?php echo html($t['ticket_number']); ?></div>
-                        </div>
-                    </div>
+            <div class="client-ticket-overview">
+                <div class="client-ticket-overview__pills d-md-none">
+                    <span class="client-ticket-pill" style="<?php echo html($clientStatusStyle); ?>">
+                        <span class="client-ticket-pill__dot" style="background:<?php echo html($clientStatusColor); ?>;"></span>
+                        <?php echo html($t['status_name']); ?>
+                    </span>
+                    <span class="client-ticket-pill" style="<?php echo html($clientPriorityStyle); ?>">
+                        <i class="bi bi-flag-fill"></i>
+                        <?php echo html($t['priority_name']); ?>
+                    </span>
                 </div>
 
-                <!-- DISEÑO DESKTOP (3 Columnas) -->
-                <div class="d-none d-md-grid ticket-view-overview-desktop">
-                    <!-- Columna 1 -->
-                    <div>
-                        <div class="field">
-                            <label><i class="bi bi-info-circle"></i> ESTADO</label>
-                            <div class="value">
-                                <span class="badge" style="background-color: <?php echo html($t['status_color']); ?>; padding: 6px 12px; border-radius: 8px;">
+                <div class="client-ticket-overview__grid d-md-none">
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-bookmark"></i> Tema</div>
+                        <div class="client-ticket-field__value"><?php echo html($clientTopicName); ?></div>
+                    </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-building"></i> Departamento</div>
+                        <div class="client-ticket-field__value"><?php echo html($t['dept_name']); ?></div>
+                    </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-calendar-event"></i> Creado</div>
+                        <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientCreatedAt); ?></div>
+                    </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-clock-history"></i> Actualizado</div>
+                        <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientUpdatedAt); ?></div>
+                    </div>
+                    <?php if ($clientIsClosed): ?>
+                    <div class="client-ticket-overview__grid-item" style="grid-column: 1 / -1;">
+                        <div class="client-ticket-field__label"><i class="bi bi-check-circle"></i> Cerrado</div>
+                        <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientClosedAt); ?></div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="client-ticket-overview__desktop d-none d-md-grid">
+                    <div class="client-ticket-overview__col">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-info-circle"></i> Estado</div>
+                            <div class="client-ticket-field__value">
+                                <span class="client-ticket-field__badge" style="<?php echo html($clientStatusStyle); ?>">
+                                    <span class="client-ticket-pill__dot" style="background:<?php echo html($clientStatusColor); ?>;"></span>
                                     <?php echo html($t['status_name']); ?>
                                 </span>
                             </div>
                         </div>
-                        <div class="divider"></div>
-                        <div class="field">
-                            <label><i class="bi bi-diagram-3"></i> DEPARTAMENTO</label>
-                            <div class="value"><?php echo html($t['dept_name']); ?></div>
+                        <hr class="client-ticket-field__divider">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-building"></i> Departamento</div>
+                            <div class="client-ticket-field__value"><?php echo html($t['dept_name']); ?></div>
+                        </div>
+                        <?php if ($clientIsClosed): ?>
+                        <hr class="client-ticket-field__divider">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-check-circle"></i> Cerrado</div>
+                            <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientClosedAt); ?></div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="client-ticket-overview__col">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-bookmark"></i> Tema de ayuda</div>
+                            <div class="client-ticket-field__value"><?php echo html($clientTopicName); ?></div>
+                        </div>
+                        <hr class="client-ticket-field__divider">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-calendar-event"></i> Fecha de creación</div>
+                            <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientCreatedAt); ?></div>
                         </div>
                     </div>
 
-                    <!-- Columna 2 -->
-                    <div>
-                        <div class="field">
-                            <label><i class="bi bi-bookmark"></i> TEMA DE AYUDA</label>
-                            <div class="value"><?php echo html($t['topic_name'] ?? '—'); ?></div>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="field">
-                            <label><i class="bi bi-calendar-event"></i> FECHA DE CREACIÓN</label>
-                            <div class="value"><?php echo date('d/m/Y h:i A', strtotime($t['created'])); ?></div>
-                        </div>
-                    </div>
-
-                    <!-- Columna 3 -->
-                    <div>
-                        <div class="field">
-                            <label><i class="bi bi-flag"></i> PRIORIDAD</label>
-                            <div class="value">
-                                <span class="badge" style="<?php echo $pStyle; ?> padding: 6px 12px; border-radius: 8px;">
+                    <div class="client-ticket-overview__col">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-flag"></i> Prioridad</div>
+                            <div class="client-ticket-field__value">
+                                <span class="client-ticket-field__badge" style="<?php echo html($clientPriorityStyle); ?>">
+                                    <i class="bi bi-bar-chart-fill"></i>
                                     <?php echo html($t['priority_name']); ?>
                                 </span>
                             </div>
                         </div>
-                        <div class="divider"></div>
-                        <div class="field">
-                            <label><i class="bi bi-clock-history"></i> ÚLTIMA ACTUALIZACIÓN</label>
-                            <div class="value" style="font-size: 0.9rem; color: #64748b;">
-                                <?php echo !empty($t['updated']) ? date('d/m/Y h:i A', strtotime($t['updated'])) : date('d/m/Y h:i A', strtotime($t['created'])); ?>
-                            </div>
+                        <hr class="client-ticket-field__divider">
+                        <div class="client-ticket-field">
+                            <div class="client-ticket-field__label"><i class="bi bi-clock-history"></i> Última actualización</div>
+                            <div class="client-ticket-field__value client-ticket-field__value--muted"><?php echo html($clientUpdatedAt); ?></div>
                         </div>
                     </div>
                 </div>
@@ -1799,13 +1829,10 @@ function humanSize($bytes) {
             <div class="body">
             
             <div class="card-soft mt-4">
-                <div class="head py-3 px-4">
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <h5 class="mb-0" style="font-weight: 800; color: #0f172a;"><i class="bi bi-chat-left-text-fill text-muted me-2"></i> Hilo del ticket</h5>
-                        
-                    </div>
+                <div class="client-ticket-thread-head">
+                    <h5><i class="bi bi-chat-left-text-fill me-2"></i> Hilo del ticket</h5>
                 </div>
-                <div class="body p-3 p-md-4" style="background: #fafafa;">
+                <div class="body p-3 p-md-4 client-ticket-thread-body">
                     <div class="thread mt-0">
 
 
@@ -1816,7 +1843,7 @@ function humanSize($bytes) {
                         <?php
                         $isStaff = !empty($e['staff_id']);
                         $author = $isStaff
-                            ? (trim(($e['staff_first'] ?? '') . ' ' . ($e['staff_last'] ?? '')) ?: 'Agente')
+                            ? 'Soporte técnico'
                             : (trim(($e['user_first'] ?? '') . ' ' . ($e['user_last'] ?? '')) ?: 'Usuario');
                         $cssClass = $isStaff ? 'staff' : 'user';
                         $initials = '';
