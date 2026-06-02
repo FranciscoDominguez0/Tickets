@@ -883,6 +883,398 @@ function threadEntryReadReceiptHtml(bool $isRead, bool $iconFirst = true): strin
     return $label . ' ' . $icon;
 }
 
+/** Tabla usuario ↔ organizaciones (muchos a muchos). */
+function ensureUserOrganizationsTable($mysqli): bool
+{
+    if (!isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    static $done = false;
+    if ($done) {
+        return true;
+    }
+    $done = true;
+    $ok = (bool)@$mysqli->query(
+        "CREATE TABLE IF NOT EXISTS user_organizations (\n"
+        . "  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+        . "  empresa_id INT UNSIGNED NOT NULL DEFAULT 1,\n"
+        . "  user_id INT UNSIGNED NOT NULL,\n"
+        . "  organization_id INT UNSIGNED NOT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  PRIMARY KEY (id),\n"
+        . "  UNIQUE KEY uk_user_org (user_id, organization_id),\n"
+        . "  KEY idx_empresa_user (empresa_id, user_id),\n"
+        . "  KEY idx_org (organization_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+    unset($_SESSION['_dbmeta_cache']['tbl:user_organizations']);
+    return $ok;
+}
+
+/**
+ * @return array<int, array{organization_id:int, name:string, created_at:?string}>
+ */
+function getUserOrganizations($mysqli, int $userId, int $empresaId): array
+{
+    if ($userId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return [];
+    }
+    if (!ensureUserOrganizationsTable($mysqli) || !dbTableExists('organizations')) {
+        return [];
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT uo.organization_id, o.name, uo.created_at\n"
+        . "FROM user_organizations uo\n"
+        . "INNER JOIN organizations o ON o.id = uo.organization_id AND o.empresa_id = uo.empresa_id\n"
+        . "WHERE uo.user_id = ? AND uo.empresa_id = ?\n"
+        . "ORDER BY o.name ASC"
+    );
+    if (!$stmt) {
+        return [];
+    }
+    $stmt->bind_param('ii', $userId, $empresaId);
+    if (!$stmt->execute()) {
+        return [];
+    }
+    $rows = [];
+    $res = $stmt->get_result();
+    while ($res && ($row = $res->fetch_assoc())) {
+        $rows[] = [
+            'organization_id' => (int)($row['organization_id'] ?? 0),
+            'name' => (string)($row['name'] ?? ''),
+            'created_at' => $row['created_at'] ?? null,
+        ];
+    }
+    return $rows;
+}
+
+function syncUserCompanyFromOrganizations($mysqli, int $userId, int $empresaId): void
+{
+    if ($userId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return;
+    }
+    $orgs = getUserOrganizations($mysqli, $userId, $empresaId);
+    $primary = !empty($orgs) ? (string)($orgs[0]['name'] ?? '') : '';
+    $primary = trim($primary);
+    $stmt = $mysqli->prepare('UPDATE users SET company = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
+    if (!$stmt) {
+        return;
+    }
+    if ($primary === '') {
+        $null = null;
+        $stmt->bind_param('sii', $null, $userId, $empresaId);
+    } else {
+        $stmt->bind_param('sii', $primary, $userId, $empresaId);
+    }
+    $stmt->execute();
+}
+
+function addUserToOrganization($mysqli, int $userId, int $organizationId, int $empresaId): bool
+{
+    if ($userId <= 0 || $organizationId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if (!ensureUserOrganizationsTable($mysqli) || !dbTableExists('organizations')) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        'SELECT u.id FROM users u WHERE u.id = ? AND u.empresa_id = ? LIMIT 1'
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('ii', $userId, $empresaId);
+    $stmt->execute();
+    if (!$stmt->get_result()->fetch_assoc()) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        'SELECT o.id FROM organizations o WHERE o.id = ? AND o.empresa_id = ? LIMIT 1'
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('ii', $organizationId, $empresaId);
+    $stmt->execute();
+    if (!$stmt->get_result()->fetch_assoc()) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        'INSERT IGNORE INTO user_organizations (empresa_id, user_id, organization_id, created_at) VALUES (?, ?, ?, NOW())'
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('iii', $empresaId, $userId, $organizationId);
+    if (!$stmt->execute()) {
+        return false;
+    }
+    syncUserCompanyFromOrganizations($mysqli, $userId, $empresaId);
+    return true;
+}
+
+function removeUserFromOrganization($mysqli, int $userId, int $organizationId, int $empresaId): bool
+{
+    if ($userId <= 0 || $organizationId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    if (!ensureUserOrganizationsTable($mysqli)) {
+        return false;
+    }
+    $stmt = $mysqli->prepare(
+        'DELETE FROM user_organizations WHERE user_id = ? AND organization_id = ? AND empresa_id = ?'
+    );
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('iii', $userId, $organizationId, $empresaId);
+    if (!$stmt->execute()) {
+        return false;
+    }
+    syncUserCompanyFromOrganizations($mysqli, $userId, $empresaId);
+    return true;
+}
+
+/** Tabla puente lista para consultas de organizaciones. */
+function organizationMembershipEnabled($mysqli): bool
+{
+    return ensureUserOrganizationsTable($mysqli) && dbTableExists('organizations');
+}
+
+/**
+ * JOIN users ↔ organization (user_organizations + fallback users.company).
+ */
+function sqlJoinOrganizationMembers($mysqli, string $orgAlias = 'o', string $userAlias = 'u'): string
+{
+    if (!organizationMembershipEnabled($mysqli)) {
+        return "LEFT JOIN users {$userAlias} ON {$userAlias}.company = {$orgAlias}.name AND {$userAlias}.empresa_id = {$orgAlias}.empresa_id";
+    }
+    return "LEFT JOIN (
+        SELECT uo.empresa_id, uo.organization_id, uo.user_id
+        FROM user_organizations uo
+        UNION
+        SELECT u.empresa_id, org_l.id, u.id
+        FROM users u
+        INNER JOIN organizations org_l ON org_l.name = u.company AND org_l.empresa_id = u.empresa_id
+        WHERE TRIM(COALESCE(u.company, '')) <> ''
+        AND NOT EXISTS (
+            SELECT 1 FROM user_organizations uo2
+            WHERE uo2.user_id = u.id AND uo2.empresa_id = u.empresa_id
+        )
+    ) org_members ON org_members.organization_id = {$orgAlias}.id AND org_members.empresa_id = {$orgAlias}.empresa_id
+    LEFT JOIN users {$userAlias} ON {$userAlias}.id = org_members.user_id AND {$userAlias}.empresa_id = org_members.empresa_id";
+}
+
+/**
+ * @return array{user_count:int,ticket_count:int,open_tickets:int,since:?string}
+ */
+function getOrganizationMembershipStats($mysqli, int $empresaId, int $organizationId, string $orgName): array
+{
+    $empty = ['user_count' => 0, 'ticket_count' => 0, 'open_tickets' => 0, 'since' => null];
+    if ($empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return $empty;
+    }
+    $orgName = trim($orgName);
+
+    if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
+        $sql = "SELECT COUNT(DISTINCT u.id) AS user_count, COUNT(DISTINCT t.id) AS ticket_count,
+                SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
+                MIN(u.created) AS since
+            FROM users u
+            LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
+            LEFT JOIN ticket_status ts ON ts.id = t.status_id
+            WHERE u.empresa_id = ?
+            AND (
+                EXISTS (
+                    SELECT 1 FROM user_organizations uo
+                    WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                )
+                OR (
+                    TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo2
+                        WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                    )
+                )
+            )";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return $empty;
+        }
+        $stmt->bind_param('iiiisi', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId);
+    } else {
+        $sql = "SELECT COUNT(DISTINCT u.id) AS user_count, COUNT(DISTINCT t.id) AS ticket_count,
+                SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
+                MIN(u.created) AS since
+            FROM users u
+            LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
+            LEFT JOIN ticket_status ts ON ts.id = t.status_id
+            WHERE u.empresa_id = ? AND u.company = ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return $empty;
+        }
+        $stmt->bind_param('iis', $empresaId, $empresaId, $orgName);
+    }
+    if (!$stmt->execute()) {
+        return $empty;
+    }
+    $row = $stmt->get_result()->fetch_assoc();
+    if (!$row) {
+        return $empty;
+    }
+    return [
+        'user_count' => (int)($row['user_count'] ?? 0),
+        'ticket_count' => (int)($row['ticket_count'] ?? 0),
+        'open_tickets' => (int)($row['open_tickets'] ?? 0),
+        'since' => $row['since'] ?? null,
+    ];
+}
+
+function countOrganizationUsers($mysqli, int $empresaId, int $organizationId, string $orgName): int
+{
+    return getOrganizationMembershipStats($mysqli, $empresaId, $organizationId, $orgName)['user_count'];
+}
+
+/**
+ * @return array<int, array<string, mixed>>
+ */
+function fetchOrganizationUsers($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset): array
+{
+    if ($empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return [];
+    }
+    $orgName = trim($orgName);
+    $limit = max(1, $limit);
+    $offset = max(0, $offset);
+
+    if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
+        $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, u.phone, u.status, u.created
+            FROM users u
+            WHERE u.empresa_id = ?
+            AND (
+                EXISTS (
+                    SELECT 1 FROM user_organizations uo
+                    WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                )
+                OR (
+                    TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo2
+                        WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                    )
+                )
+            )
+            ORDER BY u.firstname, u.lastname
+            LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('iiisiii', $empresaId, $organizationId, $empresaId, $orgName, $empresaId, $limit, $offset);
+    } else {
+        $sql = "SELECT id, firstname, lastname, email, phone, status, created
+            FROM users WHERE empresa_id = ? AND company = ?
+            ORDER BY firstname, lastname LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('isii', $empresaId, $orgName, $limit, $offset);
+    }
+    if (!$stmt->execute()) {
+        return [];
+    }
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
+}
+
+/**
+ * @return array<int, array<string, mixed>>
+ */
+function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset): array
+{
+    if ($empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return [];
+    }
+    $orgName = trim($orgName);
+    $limit = max(1, $limit);
+    $offset = max(0, $offset);
+
+    if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
+        $sql = "SELECT t.id, t.ticket_number, t.subject, ts.name AS status_name, ts.color AS status_color,
+                p.name AS priority_name, d.name AS dept_name, t.created
+            FROM tickets t
+            JOIN users u ON t.user_id = u.id
+            JOIN departments d ON t.dept_id = d.id
+            JOIN ticket_status ts ON t.status_id = ts.id
+            JOIN priorities p ON t.priority_id = p.id
+            WHERE t.empresa_id = ? AND u.empresa_id = ?
+            AND (
+                EXISTS (
+                    SELECT 1 FROM user_organizations uo
+                    WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                )
+                OR (
+                    TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                    AND NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo2
+                        WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                    )
+                )
+            )
+            ORDER BY t.created DESC
+            LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('iiiisiii', $empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId, $limit, $offset);
+    } else {
+        $sql = "SELECT t.id, t.ticket_number, t.subject, ts.name AS status_name, ts.color AS status_color,
+                p.name AS priority_name, d.name AS dept_name, t.created
+            FROM tickets t
+            JOIN users u ON t.user_id = u.id
+            JOIN departments d ON t.dept_id = d.id
+            JOIN ticket_status ts ON t.status_id = ts.id
+            JOIN priorities p ON t.priority_id = p.id
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
+            ORDER BY t.created DESC
+            LIMIT ? OFFSET ?";
+        $stmt = $mysqli->prepare($sql);
+        if (!$stmt) {
+            return [];
+        }
+        $stmt->bind_param('iisii', $empresaId, $empresaId, $orgName, $limit, $offset);
+    }
+    if (!$stmt->execute()) {
+        return [];
+    }
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
+}
+
+function removeOrganizationMembershipsByName($mysqli, int $empresaId, string $orgName): void
+{
+    if ($empresaId <= 0 || trim($orgName) === '' || !isset($mysqli) || !$mysqli) {
+        return;
+    }
+    if (organizationMembershipEnabled($mysqli)) {
+        $stmt = $mysqli->prepare(
+            'DELETE uo FROM user_organizations uo
+             INNER JOIN organizations o ON o.id = uo.organization_id AND o.empresa_id = uo.empresa_id
+             WHERE o.empresa_id = ? AND o.name = ?'
+        );
+        if ($stmt) {
+            $stmt->bind_param('is', $empresaId, $orgName);
+            $stmt->execute();
+        }
+    }
+    $stmt = $mysqli->prepare('UPDATE users SET company = NULL WHERE empresa_id = ? AND company = ?');
+    if ($stmt) {
+        $stmt->bind_param('is', $empresaId, $orgName);
+        $stmt->execute();
+    }
+}
+
 // Validar CSRF
 function validateCSRF() {
     if ($_POST && !Auth::validateCSRF($_POST['csrf_token'] ?? '')) {

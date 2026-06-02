@@ -33,16 +33,36 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])
     header('Content-Type: application/json; charset=UTF-8');
     header('X-Content-Type-Options: nosniff');
 
+    ensureUserOrganizationsTable($mysqli);
+
     $query = trim($_GET['q']);
+    $excludeUserId = isset($_GET['user_id']) && is_numeric($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
     $results = [];
-    if (strlen($query) >= 2) {
-        $stmt = $mysqli->prepare("SELECT name FROM organizations WHERE empresa_id = ? AND name LIKE ? ORDER BY name LIMIT 10");
-        $like = '%' . $query . '%';
-        $stmt->bind_param('is', $eid, $like);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            $results[] = $row;
+    if (strlen($query) >= 2 && dbTableExists('organizations')) {
+        $sql = "SELECT o.id, o.name FROM organizations o WHERE o.empresa_id = ? AND o.name LIKE ?";
+        if ($excludeUserId > 0 && dbTableExists('user_organizations')) {
+            $sql .= " AND NOT EXISTS (
+                SELECT 1 FROM user_organizations uo
+                WHERE uo.user_id = ? AND uo.organization_id = o.id AND uo.empresa_id = o.empresa_id
+            )";
+        }
+        $sql .= ' ORDER BY o.name LIMIT 10';
+        $stmt = $mysqli->prepare($sql);
+        if ($stmt) {
+            $like = '%' . $query . '%';
+            if ($excludeUserId > 0 && dbTableExists('user_organizations')) {
+                $stmt->bind_param('isi', $eid, $like, $excludeUserId);
+            } else {
+                $stmt->bind_param('is', $eid, $like);
+            }
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($res && ($row = $res->fetch_assoc())) {
+                $results[] = [
+                    'id' => (int)($row['id'] ?? 0),
+                    'name' => (string)($row['name'] ?? ''),
+                ];
+            }
         }
     }
     echo json_encode($results, JSON_UNESCAPED_UNICODE);
@@ -593,38 +613,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     }
 }
 
-// Asignar organización a usuario
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'assign_org' && isset($_POST['user_id']) && isset($_POST['org_name'])) {
+// Asignar organización a usuario (puede tener varias)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'assign_org' && isset($_POST['user_id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
-        $user_id = (int) $_POST['user_id'];
-        $org_name = trim($_POST['org_name']);
-        // Verificar que la organización existe
-        $stmt = $mysqli->prepare("SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1");
-        if ($stmt) {
-            $stmt->bind_param('is', $eid, $org_name);
-            $stmt->execute();
-            if ($stmt->get_result()->fetch_assoc()) {
-                $stmt = $mysqli->prepare("UPDATE users SET company = ? WHERE id = ? AND empresa_id = ?");
-                $stmt->bind_param('sii', $org_name, $user_id, $eid);
-                if ($stmt->execute()) {
-                    header('Location: users.php?id=' . $user_id . '&msg=org_assigned');
-                    exit;
-                }
+        $user_id = (int)$_POST['user_id'];
+        $org_id = (int)($_POST['organization_id'] ?? 0);
+        $org_name = trim((string)($_POST['org_name'] ?? ''));
+
+        if ($org_id <= 0 && $org_name !== '' && dbTableExists('organizations')) {
+            $stmt = $mysqli->prepare('SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
+            if ($stmt) {
+                $stmt->bind_param('is', $eid, $org_name);
+                $stmt->execute();
+                $row = $stmt->get_result()->fetch_assoc();
+                $org_id = (int)($row['id'] ?? 0);
             }
         }
+
+        if ($user_id > 0 && $org_id > 0) {
+            $before = getUserOrganizations($mysqli, $user_id, $eid);
+            $had = false;
+            foreach ($before as $o) {
+                if ((int)($o['organization_id'] ?? 0) === $org_id) {
+                    $had = true;
+                    break;
+                }
+            }
+            if (addUserToOrganization($mysqli, $user_id, $org_id, $eid)) {
+                $msg = $had ? 'org_already' : 'org_assigned';
+                header('Location: users.php?id=' . $user_id . '&msg=' . $msg);
+                exit;
+            }
+        }
+        header('Location: users.php?id=' . $user_id . '&msg=org_error');
+        exit;
     }
 }
 
-// Remover organización de usuario
+// Remover una organización del usuario
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'remove_org' && isset($_POST['user_id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
-        $user_id = (int) $_POST['user_id'];
-        $stmt = $mysqli->prepare("UPDATE users SET company = NULL WHERE id = ? AND empresa_id = ?");
-        $stmt->bind_param('ii', $user_id, $eid);
-        if ($stmt->execute()) {
+        $user_id = (int)$_POST['user_id'];
+        $org_id = (int)($_POST['organization_id'] ?? 0);
+        if ($user_id > 0 && $org_id > 0 && removeUserFromOrganization($mysqli, $user_id, $org_id, $eid)) {
             header('Location: users.php?id=' . $user_id . '&msg=org_removed');
             exit;
         }
+        header('Location: users.php?id=' . $user_id . '&msg=org_error');
+        exit;
     }
 }
 
@@ -895,6 +931,21 @@ if ($viewUser) {
 
     $statusLabels = ['active' => 'Activo', 'inactive' => 'Inactivo', 'banned' => 'Bloqueado'];
     $viewUserName = trim($viewUser['firstname'] . ' ' . $viewUser['lastname']) ?: $viewUser['email'];
+    ensureUserOrganizationsTable($mysqli);
+    $viewUserOrganizations = getUserOrganizations($mysqli, $uid2, $eid);
+    if (empty($viewUserOrganizations) && trim((string)($viewUser['company'] ?? '')) !== '' && dbTableExists('organizations')) {
+        $legacyName = trim((string)$viewUser['company']);
+        $stmtLeg = $mysqli->prepare('SELECT id, name FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
+        if ($stmtLeg) {
+            $stmtLeg->bind_param('is', $eid, $legacyName);
+            if ($stmtLeg->execute()) {
+                $leg = $stmtLeg->get_result()->fetch_assoc();
+                if ($leg && addUserToOrganization($mysqli, $uid2, (int)$leg['id'], $eid)) {
+                    $viewUserOrganizations = getUserOrganizations($mysqli, $uid2, $eid);
+                }
+            }
+        }
+    }
     require __DIR__ . '/user-view.inc.php';
     return;
 }
@@ -962,29 +1013,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
         $stmtO->bind_param('is', $eid, $org_name);
         $stmtO->execute();
-        if (!$stmtO->get_result()->fetch_assoc()) {
+        $orgRow = $stmtO->get_result()->fetch_assoc();
+        if (!$orgRow) {
             header('Location: users.php?msg=org_bulk_error');
             exit;
         }
-
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sqlU = "UPDATE users SET company = ?, updated = NOW() WHERE empresa_id = ? AND id IN ($placeholders)";
-        $stmtU = $mysqli->prepare($sqlU);
-        if (!$stmtU) {
-            header('Location: users.php?msg=org_bulk_error');
-            exit;
+        $orgIdBulk = (int)($orgRow['id'] ?? 0);
+        ensureUserOrganizationsTable($mysqli);
+        $affected = 0;
+        foreach ($ids as $uidBulk) {
+            if (addUserToOrganization($mysqli, (int)$uidBulk, $orgIdBulk, $eid)) {
+                $affected++;
+            }
         }
-        $types = 'si' . str_repeat('i', count($ids));
-        $params = array_merge([$org_name, $eid], $ids);
-        $stmtU->bind_param($types, ...$params);
-        if ($stmtU->execute()) {
-            $affected = (int)$stmtU->affected_rows;
-            unset($_SESSION['bulk_org_ids']);
-            header('Location: users.php?msg=org_bulk_assigned&count=' . $affected);
-            exit;
-        }
-
-        header('Location: users.php?msg=org_bulk_error');
+        unset($_SESSION['bulk_org_ids']);
+        header('Location: users.php?msg=org_bulk_assigned&count=' . $affected);
         exit;
     }
 }

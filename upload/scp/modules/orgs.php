@@ -1,6 +1,6 @@
 <?php
 // Módulo: Organizaciones (estilo osTicket)
-// Listado desde tabla organizations + usuarios con company (compatibilidad)
+// Usuarios por organización vía user_organizations (varias orgs por usuario)
 
 $action_msg = null;
 $action_type = null;
@@ -93,9 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $stmt = $mysqli->prepare("DELETE FROM organizations WHERE empresa_id = ? AND name = ?");
             $stmt->bind_param('is', $eid, $org_name);
             if ($stmt->execute()) {
-                $stmt2 = $mysqli->prepare("UPDATE users SET company = NULL WHERE empresa_id = ? AND company = ?");
-                $stmt2->bind_param('is', $eid, $org_name);
-                $stmt2->execute();
+                removeOrganizationMembershipsByName($mysqli, $eid, $org_name);
                 header('Location: orgs.php?msg=org_deleted');
                 exit;
             }
@@ -216,21 +214,11 @@ if (!empty($_GET['org'])) {
         return;
     }
 
+    $orgId = (int)($orgData['id'] ?? 0);
     $orgInfo = $orgData;
-    if (!isset($orgInfo['user_count'])) {
-        $stmt = $mysqli->prepare("
-            SELECT COUNT(DISTINCT u.id) AS user_count, COUNT(DISTINCT t.id) AS ticket_count,
-                   SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
-                   MIN(u.created) AS since
-            FROM users u
-            LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
-            LEFT JOIN ticket_status ts ON ts.id = t.status_id
-            WHERE u.empresa_id = ? AND u.company = ?
-        ");
-        $stmt->bind_param('iis', $eid, $eid, $orgName);
-        $stmt->execute();
-        $stats = $stmt->get_result()->fetch_assoc();
-        $orgInfo = array_merge($orgData, $stats ?: ['user_count' => 0, 'ticket_count' => 0, 'open_tickets' => 0, 'since' => null]);
+    if (!isset($orgInfo['user_count']) || $orgId > 0) {
+        $stats = getOrganizationMembershipStats($mysqli, $eid, $orgId, $orgName);
+        $orgInfo = array_merge($orgData, $stats);
     }
     $orgInfo['address'] = $orgInfo['address'] ?? '';
     $orgInfo['phone'] = $orgInfo['phone'] ?? '';
@@ -247,10 +235,7 @@ if (!empty($_GET['org'])) {
     $up = min($up, max(1, $uTotalPages));
     $uOffset = ($up - 1) * $perPageLimit;
 
-    $stmt = $mysqli->prepare("SELECT id, firstname, lastname, email, phone, status, created FROM users WHERE empresa_id = ? AND company = ? ORDER BY firstname, lastname LIMIT ? OFFSET ?");
-    $stmt->bind_param('isii', $eid, $orgName, $perPageLimit, $uOffset);
-    $stmt->execute();
-    $orgUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $orgUsers = fetchOrganizationUsers($mysqli, $eid, $orgId, $orgName, $perPageLimit, $uOffset);
 
     // Paginación para Tickets
     $tp = max(1, (int)($_GET['tp'] ?? 1));
@@ -259,21 +244,7 @@ if (!empty($_GET['org'])) {
     $tp = min($tp, max(1, $tTotalPages));
     $tOffset = ($tp - 1) * $perPageLimit;
 
-    $tickets = [];
-    $stmt = $mysqli->prepare("
-        SELECT t.id, t.ticket_number, t.subject, ts.name AS status_name, ts.color AS status_color, p.name AS priority_name, d.name AS dept_name, t.created
-        FROM tickets t
-        JOIN users u ON t.user_id = u.id
-        JOIN departments d ON t.dept_id = d.id
-        JOIN ticket_status ts ON t.status_id = ts.id
-        JOIN priorities p ON t.priority_id = p.id
-        WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
-        ORDER BY t.created DESC
-        LIMIT ? OFFSET ?
-    ");
-    $stmt->bind_param('iisii', $eid, $eid, $orgName, $perPageLimit, $tOffset);
-    $stmt->execute();
-    $tickets = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $tickets = fetchOrganizationTickets($mysqli, $eid, $orgId, $orgName, $perPageLimit, $tOffset);
 
     $activeTab = $_GET['t'] ?? 'users';
     if ($activeTab !== 'users' && $activeTab !== 'tickets') $activeTab = 'users';
@@ -1451,6 +1422,9 @@ $orgsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/orgs.php');
 
 $like = $search !== '' ? '%' . $search . '%' : '';
 
+ensureUserOrganizationsTable($mysqli);
+$orgMembersJoin = sqlJoinOrganizationMembers($mysqli, 'o', 'u');
+
 // Organizaciones de la tabla organizations
 $sql1 = "
     SELECT o.*,
@@ -1459,14 +1433,13 @@ $sql1 = "
            SUM(CASE WHEN ts.name IN ('Abierto','En Progreso','Esperando Usuario') THEN 1 ELSE 0 END) AS open_tickets,
            MIN(u.created) AS since
     FROM organizations o
-    LEFT JOIN users u ON u.company = o.name AND u.empresa_id = ?
+    {$orgMembersJoin}
     LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
     LEFT JOIN ticket_status ts ON ts.id = t.status_id
     WHERE o.empresa_id = ?
 ";
 $params1 = [];
-$types1 = 'iii';
-$params1[] = $eid;
+$types1 = 'ii';
 $params1[] = $eid;
 $params1[] = $eid;
 if ($search !== '') {

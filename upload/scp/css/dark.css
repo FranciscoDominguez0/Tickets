@@ -2400,6 +2400,20 @@ body.dark-mode .user-view-profile-premium .uvp-org-name {
     color: #f4f4f5 !important;
 }
 
+body.dark-mode .user-view-profile-premium .uvp-org-chip {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+}
+
+body.dark-mode .user-view-profile-premium .uvp-org-chip-remove {
+    color: #a1a1aa !important;
+}
+
+body.dark-mode .user-view-profile-premium .uvp-org-chip-remove:hover {
+    background: #450a0a !important;
+    color: #fca5a5 !important;
+}
+
 body.dark-mode .user-view-profile-premium .uvp-action-link {
     background: #18181b !important;
     border-color: #3f3f46 !important;

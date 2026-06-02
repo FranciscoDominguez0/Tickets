@@ -6,7 +6,7 @@ $statusLabel = $statusLabels[$statusKey] ?? ucfirst($statusKey);
 
 $mobileName = (string)($viewUserName ?? '');
 $mobileEmail = (string)($viewUser['email'] ?? '');
-$mobileCompany = trim((string)($viewUser['company'] ?? ''));
+$viewUserOrganizations = (isset($viewUserOrganizations) && is_array($viewUserOrganizations)) ? $viewUserOrganizations : [];
 $nameForInitials = trim($mobileName !== '' ? $mobileName : $mobileEmail);
 $parts = preg_split('/\s+/', $nameForInitials);
 $i1 = strtoupper((string)($parts[0][0] ?? ''));
@@ -31,7 +31,9 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             case 'user_updated':
             case 'profile_updated': $alertMsg = 'Perfil de usuario actualizado correctamente.'; break;
             case 'org_assigned': $alertMsg = 'Organización asignada correctamente.'; break;
+            case 'org_already': $alertMsg = 'El usuario ya pertenece a esa organización.'; break;
             case 'org_removed': $alertMsg = 'Organización removida correctamente.'; break;
+            case 'org_error': $alertMsg = 'No se pudo actualizar la organización. Intente de nuevo.'; break;
         }
     }
     if ($alertMsg): ?>
@@ -150,14 +152,24 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <div class="uvm-detail-item">
                             <div class="uvm-detail-icon"><i class="bi bi-building"></i></div>
                             <div class="uvm-detail-content">
-                                <span class="uvm-detail-label">Organización</span>
+                                <span class="uvm-detail-label">Organizaciones</span>
                                 <span class="uvm-detail-val">
-                                    <?php if ($mobileCompany !== ''): ?>
-                                        <strong class="text-dark"><?php echo html($mobileCompany); ?></strong>
-                                        <button type="button" class="uvm-action-link text-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">(Remover)</button>
-                                    <?php else: ?>
-                                        <button type="button" class="uvm-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">Asignar organización</button>
+                                    <?php if (!empty($viewUserOrganizations)): ?>
+                                        <ul class="uv-user-org-list list-unstyled mb-2">
+                                            <?php foreach ($viewUserOrganizations as $uo): ?>
+                                            <li class="uv-user-org-item d-flex align-items-center flex-wrap gap-1 mb-1">
+                                                <strong class="text-dark"><?php echo html((string)($uo['name'] ?? '')); ?></strong>
+                                                <button type="button" class="uvm-action-link text-danger border-0 bg-transparent p-0 btn-remove-org"
+                                                    data-bs-toggle="modal" data-bs-target="#removeOrgModal"
+                                                    data-org-id="<?php echo (int)($uo['organization_id'] ?? 0); ?>"
+                                                    data-org-name="<?php echo html((string)($uo['name'] ?? '')); ?>">(Quitar)</button>
+                                            </li>
+                                            <?php endforeach; ?>
+                                        </ul>
                                     <?php endif; ?>
+                                    <button type="button" class="uvm-action-link border-0 bg-transparent p-0" data-bs-toggle="modal" data-bs-target="#assignOrgModal">
+                                        <i class="bi bi-plus-circle"></i> <?php echo empty($viewUserOrganizations) ? 'Asignar organización' : 'Añadir otra'; ?>
+                                    </button>
                                 </span>
                             </div>
                         </div>
@@ -492,10 +504,19 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <i class="bi bi-envelope-at" aria-hidden="true"></i>
                         <a href="mailto:<?php echo html($viewUser['email']); ?>"><?php echo html($viewUser['email']); ?></a>
                     </p>
-                    <?php if (!empty($viewUser['company'])): ?>
+                    <?php if (!empty($viewUserOrganizations)): ?>
                         <p class="uvp-hero-org">
                             <i class="bi bi-building" aria-hidden="true"></i>
-                            <?php echo html($viewUser['company']); ?>
+                            <?php
+                            $heroOrgNames = [];
+                            foreach ($viewUserOrganizations as $uo) {
+                                $n = trim((string)($uo['name'] ?? ''));
+                                if ($n !== '') {
+                                    $heroOrgNames[] = $n;
+                                }
+                            }
+                            echo html(implode(' · ', $heroOrgNames));
+                            ?>
                         </p>
                     <?php endif; ?>
                 </div>
@@ -522,18 +543,26 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <div class="value"><?php echo html(trim((string)($viewUser['address'] ?? '')) !== '' ? (string)$viewUser['address'] : '—'); ?></div>
                     </div>
                     <div class="user-view-detail uvp-field">
-                        <label><i class="bi bi-building uvp-field-icon" aria-hidden="true"></i> Organización</label>
-                        <div class="value uvp-value-actions">
-                            <?php if (!empty($viewUser['company'])): ?>
-                                <span class="uvp-org-name"><?php echo html($viewUser['company']); ?></span>
-                                <a href="#" class="uvp-action-link uvp-action-danger" data-bs-toggle="modal" data-bs-target="#removeOrgModal">
-                                    <i class="bi bi-x-lg"></i> Remover
-                                </a>
-                            <?php else: ?>
-                                <a href="#" class="uvp-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">
-                                    <i class="bi bi-plus-circle"></i> Asignar organización
-                                </a>
+                        <label><i class="bi bi-building uvp-field-icon" aria-hidden="true"></i> Organizaciones</label>
+                        <div class="value uvp-value-actions uvp-org-block">
+                            <?php if (!empty($viewUserOrganizations)): ?>
+                                <div class="uvp-org-chips">
+                                    <?php foreach ($viewUserOrganizations as $uo): ?>
+                                    <span class="uvp-org-chip">
+                                        <span class="uvp-org-name"><?php echo html((string)($uo['name'] ?? '')); ?></span>
+                                        <button type="button" class="uvp-org-chip-remove btn-remove-org" title="Quitar"
+                                            data-bs-toggle="modal" data-bs-target="#removeOrgModal"
+                                            data-org-id="<?php echo (int)($uo['organization_id'] ?? 0); ?>"
+                                            data-org-name="<?php echo html((string)($uo['name'] ?? '')); ?>">
+                                            <i class="bi bi-x-lg" aria-hidden="true"></i>
+                                        </button>
+                                    </span>
+                                    <?php endforeach; ?>
+                                </div>
                             <?php endif; ?>
+                            <a href="#" class="uvp-action-link" data-bs-toggle="modal" data-bs-target="#assignOrgModal">
+                                <i class="bi bi-plus-circle"></i> <?php echo empty($viewUserOrganizations) ? 'Asignar organización' : 'Añadir otra'; ?>
+                            </a>
                         </div>
                     </div>
                     <div class="user-view-detail uvp-field">
@@ -857,16 +886,18 @@ if ($mobileInitials === '') $mobileInitials = 'U';
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-bottom">
-                    <h5 class="modal-title" id="assignOrgModalLabel"><i class="bi bi-building me-2"></i>Asignar organización</h5>
+                    <h5 class="modal-title" id="assignOrgModalLabel"><i class="bi bi-building me-2"></i>Añadir organización</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <form method="post" action="users.php?id=<?php echo $uid; ?>">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="orgSearch" class="form-label">Buscar organización</label>
-                            <input type="text" class="form-control" id="orgSearch" name="org_name" placeholder="Escribe el nombre de la organización..." autocomplete="off">
+                            <input type="text" class="form-control" id="orgSearch" name="org_name" placeholder="Escribe el nombre de la organización..." autocomplete="off" required>
                             <div id="orgSuggestions" class="list-group mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+                            <p class="form-text text-muted small mb-0 mt-2">El usuario puede pertenecer a varias organizaciones.</p>
                         </div>
+                        <input type="hidden" name="organization_id" id="orgIdInput" value="">
                         <input type="hidden" name="do" value="assign_org">
                         <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
@@ -889,13 +920,14 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">¿Está seguro de que desea remover la organización <strong><?php echo html($viewUser['company']); ?></strong> de este usuario?</p>
-                    <p class="text-muted small mt-2 mb-0">El usuario quedará sin organización asignada.</p>
+                    <p class="mb-0">¿Quitar la organización <strong id="removeOrgNameLabel">—</strong> de este usuario?</p>
+                    <p class="text-muted small mt-2 mb-0">Las demás organizaciones asignadas no se modifican.</p>
                 </div>
                 <div class="modal-footer border-top">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline">
+                    <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline" id="removeOrgForm">
                         <input type="hidden" name="do" value="remove_org">
+                        <input type="hidden" name="organization_id" id="removeOrgIdInput" value="">
                         <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                         <button type="submit" class="btn btn-warning"><i class="bi bi-x-circle me-1"></i> Remover</button>
@@ -908,11 +940,22 @@ if ($mobileInitials === '') $mobileInitials = 'U';
 
 <script>
 (function(){
+    var viewUserId = <?php echo (int)$uid; ?>;
+
     function wireOrgAutocomplete(){
         try {
             var input = document.getElementById('orgSearch');
             var suggestions = document.getElementById('orgSuggestions');
+            var orgIdInput = document.getElementById('orgIdInput');
             if (!input || !suggestions) return;
+
+            function clearOrgPick(){
+                if (orgIdInput) orgIdInput.value = '';
+            }
+
+            input.addEventListener('input', function(){
+                clearOrgPick();
+            });
 
             var lastController = null;
             input.addEventListener('input', function(){
@@ -927,22 +970,25 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                 }
                 lastController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
 
-                var url = 'users.php?ajax=search_orgs&q=' + encodeURIComponent(query);
+                var url = 'users.php?ajax=search_orgs&q=' + encodeURIComponent(query) + '&user_id=' + viewUserId;
                 fetch(url, lastController ? { signal: lastController.signal } : undefined)
                     .then(function(r){ return r.json(); })
                     .then(function(data){
                         suggestions.innerHTML = '';
                         if (!Array.isArray(data)) return;
-                        
+
                         data.forEach(function(org){
                             var item = document.createElement('a');
                             item.href = '#';
                             item.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2';
                             item.innerHTML = '<i class="bi bi-building text-primary"></i> ' + (org && org.name ? org.name : '');
-                            
+
                             item.addEventListener('click', function(ev){
                                 ev.preventDefault();
                                 input.value = (org && org.name ? org.name : '');
+                                if (orgIdInput) {
+                                    orgIdInput.value = (org && org.id) ? String(org.id) : '';
+                                }
                                 suggestions.innerHTML = '';
                             });
                             suggestions.appendChild(item);
@@ -955,21 +1001,48 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                     });
             });
 
-            // Cerrar sugerencias al hacer clic fuera
             document.addEventListener('click', function(e){
                 if (e.target !== input && e.target !== suggestions && !suggestions.contains(e.target)) {
                     suggestions.innerHTML = '';
                 }
             });
+
+            var assignModal = document.getElementById('assignOrgModal');
+            if (assignModal) {
+                assignModal.addEventListener('hidden.bs.modal', function(){
+                    input.value = '';
+                    clearOrgPick();
+                    suggestions.innerHTML = '';
+                });
+            }
         } catch (e) {
             console.error('Autocomplete error:', e);
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', wireOrgAutocomplete);
-    } else {
+    function wireRemoveOrgModal(){
+        var modal = document.getElementById('removeOrgModal');
+        var idInput = document.getElementById('removeOrgIdInput');
+        var nameLabel = document.getElementById('removeOrgNameLabel');
+        if (!modal || !idInput || !nameLabel) return;
+
+        document.querySelectorAll('.btn-remove-org').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                idInput.value = btn.getAttribute('data-org-id') || '';
+                nameLabel.textContent = btn.getAttribute('data-org-name') || '—';
+            });
+        });
+    }
+
+    function init(){
         wireOrgAutocomplete();
+        wireRemoveOrgModal();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();
 </script>
