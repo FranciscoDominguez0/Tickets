@@ -1876,6 +1876,79 @@ function formatDate($date) {
     return date('d/m/Y h:i A', strtotime($date));
 }
 
+function normalizeTicketHexColor(string $color, string $fallback = '#64748b'): string {
+    $color = trim($color);
+    if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $color)) {
+        return $fallback;
+    }
+    if (preg_match('~^#([0-9a-f])([0-9a-f])([0-9a-f])$~i', $color, $m)) {
+        return '#' . strtolower($m[1] . $m[1] . $m[2] . $m[2] . $m[3] . $m[3]);
+    }
+    return strtolower($color);
+}
+
+function parseTicketHexRgb(string $color): ?array {
+    $color = normalizeTicketHexColor($color, '');
+    if ($color === '' || !preg_match('~^#([0-9a-f]{6})$~i', $color, $m)) {
+        return null;
+    }
+    return [
+        hexdec(substr($color, 1, 2)),
+        hexdec(substr($color, 3, 2)),
+        hexdec(substr($color, 5, 2)),
+    ];
+}
+
+function clientTicketBadgeStyle(string $color, bool $darkMode = false): string {
+    $hex = normalizeTicketHexColor($color);
+    $rgb = parseTicketHexRgb($hex);
+    if ($rgb === null) {
+        return $darkMode
+            ? 'background:rgba(100,116,139,0.14);color:#cbd5e1;border:1px solid rgba(100,116,139,0.28);'
+            : 'background-color:#64748b;color:#fff;';
+    }
+    [$r, $g, $b] = $rgb;
+    if ($darkMode) {
+        $textR = (int)round($r * 0.42 + 212 * 0.58);
+        $textG = (int)round($g * 0.42 + 212 * 0.58);
+        $textB = (int)round($b * 0.42 + 216 * 0.58);
+        return sprintf(
+            'background:rgba(%d,%d,%d,0.14);color:rgb(%d,%d,%d);border:1px solid rgba(%d,%d,%d,0.26);',
+            $r,
+            $g,
+            $b,
+            $textR,
+            $textG,
+            $textB,
+            $r,
+            $g,
+            $b
+        );
+    }
+    return sprintf(
+        'background:rgba(%d,%d,%d,0.12);color:%s;border:1px solid rgba(%d,%d,%d,0.24);',
+        $r,
+        $g,
+        $b,
+        $hex,
+        $r,
+        $g,
+        $b
+    );
+}
+
+function clientTicketBadgeDotStyle(string $color, bool $darkMode = false): string {
+    $hex = normalizeTicketHexColor($color);
+    $rgb = parseTicketHexRgb($hex);
+    if ($rgb === null) {
+        return 'background:#64748b;';
+    }
+    if ($darkMode) {
+        return sprintf('background:rgba(%d,%d,%d,0.72);', $rgb[0], $rgb[1], $rgb[2]);
+    }
+    return 'background:' . $hex . ';';
+}
+
 // Redirect
 function redirect($url) {
     header("Location: $url");

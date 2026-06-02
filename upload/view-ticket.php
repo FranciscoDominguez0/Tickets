@@ -1686,14 +1686,8 @@ function humanSize($bytes) {
     <div class="center-wrap">
         <div class="panel-soft">
             <?php
-            $clientStatusColor = (string)($t['status_color'] ?? '#64748b');
-            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $clientStatusColor)) {
-                $clientStatusColor = '#64748b';
-            }
-            $clientPriorityColor = (string)($t['priority_color'] ?? '#64748b');
-            if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $clientPriorityColor)) {
-                $clientPriorityColor = '#64748b';
-            }
+            $clientStatusColor = normalizeTicketHexColor((string)($t['status_color'] ?? ''), '#64748b');
+            $clientPriorityColor = normalizeTicketHexColor((string)($t['priority_color'] ?? ''), '#64748b');
             $clientTopicName = trim((string)($t['topic_name'] ?? ''));
             if ($clientTopicName === '') {
                 $clientTopicName = 'General';
@@ -1702,8 +1696,9 @@ function humanSize($bytes) {
             $clientCreatedAt = formatDate((string)$t['created']);
             $clientUpdatedAt = !empty($t['updated']) ? formatDate((string)$t['updated']) : $clientCreatedAt;
             $clientClosedAt = $clientIsClosed ? formatDate((string)$t['closed']) : '';
-            $clientStatusStyle = 'background:' . $clientStatusColor . '18;color:' . $clientStatusColor . ';border-color:' . $clientStatusColor . '35;';
-            $clientPriorityStyle = 'background:' . $clientPriorityColor . '18;color:' . $clientPriorityColor . ';border-color:' . $clientPriorityColor . '35;';
+            $clientStatusStyle = clientTicketBadgeStyle($clientStatusColor, $isDarkMode);
+            $clientPriorityStyle = clientTicketBadgeStyle($clientPriorityColor, $isDarkMode);
+            $clientStatusDotStyle = clientTicketBadgeDotStyle($clientStatusColor, $isDarkMode);
             ?>
 
             <div class="client-ticket-hero">
@@ -1736,7 +1731,7 @@ function humanSize($bytes) {
             <div class="client-ticket-overview">
                 <div class="client-ticket-overview__pills d-md-none">
                     <span class="client-ticket-pill" style="<?php echo html($clientStatusStyle); ?>">
-                        <span class="client-ticket-pill__dot" style="background:<?php echo html($clientStatusColor); ?>;"></span>
+                        <span class="client-ticket-pill__dot" style="<?php echo html($clientStatusDotStyle); ?>;"></span>
                         <?php echo html($t['status_name']); ?>
                     </span>
                     <span class="client-ticket-pill" style="<?php echo html($clientPriorityStyle); ?>">
@@ -1776,7 +1771,7 @@ function humanSize($bytes) {
                             <div class="client-ticket-field__label"><i class="bi bi-info-circle"></i> Estado</div>
                             <div class="client-ticket-field__value">
                                 <span class="client-ticket-field__badge" style="<?php echo html($clientStatusStyle); ?>">
-                                    <span class="client-ticket-pill__dot" style="background:<?php echo html($clientStatusColor); ?>;"></span>
+                                    <span class="client-ticket-pill__dot" style="<?php echo html($clientStatusDotStyle); ?>;"></span>
                                     <?php echo html($t['status_name']); ?>
                                 </span>
                             </div>

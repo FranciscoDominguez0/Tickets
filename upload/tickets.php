@@ -782,7 +782,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             margin-left: 10px; 
         }
 
-        .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; }
+        .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; border: 1px solid transparent; }
         .mono { font-variant-numeric: tabular-nums; }
         .dropdown-menu .notif-item:hover { background: #f1f5f9; }
 
@@ -1387,14 +1387,10 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <?php foreach ($tickets as $ticket): ?>
                                 <?php $isNew = ($newTicketId > 0 && (int)$ticket['id'] === (int)$newTicketId); ?>
                                 <?php
-                                    $statusColor = (string)($ticket['status_color'] ?? '');
-                                    if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $statusColor)) {
-                                        $statusColor = '#ef4444';
-                                    }
-                                    $priorityColor = (string)($ticket['priority_color'] ?? '');
-                                    if ($priorityColor === '' || !preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $priorityColor)) {
-                                        $priorityColor = '#64748b';
-                                    }
+                                    $statusColor = normalizeTicketHexColor((string)($ticket['status_color'] ?? ''), '#ef4444');
+                                    $priorityColor = normalizeTicketHexColor((string)($ticket['priority_color'] ?? ''), '#64748b');
+                                    $statusBadgeStyle = clientTicketBadgeStyle($statusColor, $isDarkMode);
+                                    $priorityBadgeStyle = clientTicketBadgeStyle($priorityColor, $isDarkMode);
                                 ?>
                                 <div id="ticket-row-<?php echo (int)$ticket['id']; ?>" class="ticket-card <?php echo $isNew ? 'ticket-new-highlight' : ''; ?>">
                                     <div class="ticket-card-top">
@@ -1415,10 +1411,10 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                     <p class="ticket-card-subject"><?php echo html($ticket['subject']); ?></p>
 
                                     <div class="ticket-card-meta">
-                                        <span class="badge-soft" style="background-color: <?php echo html($statusColor); ?>; color: #fff;">
+                                        <span class="badge-soft" style="<?php echo html($statusBadgeStyle); ?>">
                                             <?php echo html($ticket['status_name']); ?>
                                         </span>
-                                        <span class="badge-soft" style="background-color: <?php echo html($priorityColor); ?>; color: #fff;">
+                                        <span class="badge-soft" style="<?php echo html($priorityBadgeStyle); ?>">
                                             <?php echo html($ticket['priority_name']); ?>
                                         </span>
                                     </div>
