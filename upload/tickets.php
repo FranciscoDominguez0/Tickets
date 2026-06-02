@@ -201,6 +201,13 @@ $orgExplorerMembers = [];
 $orgExplorerTickets = [];
 $orgExplorerOrgName = '';
 $orgExplorerMemberName = '';
+$orgListPerPage = 10;
+$orgUsersPage = max(1, (int)($_GET['oup'] ?? 1));
+$orgTicketsPage = max(1, (int)($_GET['otp'] ?? 1));
+$orgUsersTotal = 0;
+$orgUsersTotalPages = 1;
+$orgTicketsTotal = 0;
+$orgTicketsTotalPages = 1;
 
 if ($isOrgExplorer) {
     if (!$canOrgTicketsView) {
@@ -218,20 +225,88 @@ if ($isOrgExplorer) {
         if ($orgExplorerOrgName === '') {
             $orgExplorerOrgId = 0;
         } else {
-            $orgExplorerMembers = fetchOrganizationUsers($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName, 500, 0);
-            if ($orgExplorerMemberId > 0) {
-                foreach ($orgExplorerMembers as $mRow) {
-                    if ((int)($mRow['id'] ?? 0) === $orgExplorerMemberId) {
-                        $orgExplorerMemberName = trim((string)($mRow['firstname'] ?? '') . ' ' . (string)($mRow['lastname'] ?? ''));
-                        if ($orgExplorerMemberName === '') {
-                            $orgExplorerMemberName = (string)($mRow['email'] ?? 'Usuario');
+            $orgUsersTotal = countOrganizationUsers($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName);
+            $orgUsersTotalPages = $orgUsersTotal > 0 ? (int)ceil($orgUsersTotal / $orgListPerPage) : 1;
+            $orgUsersPage = min($orgUsersPage, max(1, $orgUsersTotalPages));
+            $orgUsersOffset = ($orgUsersPage - 1) * $orgListPerPage;
+
+            if ($orgExplorerMemberId <= 0) {
+                $orgExplorerMembers = fetchOrganizationUsers(
+                    $mysqli,
+                    $eid,
+                    $orgExplorerOrgId,
+                    $orgExplorerOrgName,
+                    $orgListPerPage,
+                    $orgUsersOffset
+                );
+            } else {
+                $memberRow = null;
+                if (organizationMembershipEnabled($mysqli)) {
+                    $stmtM = $mysqli->prepare(
+                        "SELECT u.id, u.firstname, u.lastname, u.email FROM users u
+                         WHERE u.id = ? AND u.empresa_id = ?
+                         AND (
+                            EXISTS (
+                                SELECT 1 FROM user_organizations uo
+                                WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.empresa_id = ?
+                            )
+                            OR (
+                                TRIM(COALESCE(u.company, '')) <> '' AND u.company = ?
+                                AND NOT EXISTS (
+                                    SELECT 1 FROM user_organizations uo2
+                                    WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
+                                )
+                            )
+                         ) LIMIT 1"
+                    );
+                    if ($stmtM) {
+                        $stmtM->bind_param('iiiisi', $orgExplorerMemberId, $eid, $orgExplorerOrgId, $eid, $orgExplorerOrgName, $eid);
+                        if ($stmtM->execute()) {
+                            $memberRow = $stmtM->get_result()->fetch_assoc();
                         }
-                        break;
+                    }
+                } else {
+                    $stmtM = $mysqli->prepare(
+                        'SELECT id, firstname, lastname, email FROM users
+                         WHERE id = ? AND empresa_id = ? AND company = ? LIMIT 1'
+                    );
+                    if ($stmtM) {
+                        $stmtM->bind_param('iis', $orgExplorerMemberId, $eid, $orgExplorerOrgName);
+                        if ($stmtM->execute()) {
+                            $memberRow = $stmtM->get_result()->fetch_assoc();
+                        }
                     }
                 }
-                if ($orgExplorerMemberName === '') {
+
+                if (!$memberRow) {
                     $orgExplorerMemberId = 0;
+                    $orgExplorerMembers = fetchOrganizationUsers(
+                        $mysqli,
+                        $eid,
+                        $orgExplorerOrgId,
+                        $orgExplorerOrgName,
+                        $orgListPerPage,
+                        $orgUsersOffset
+                    );
                 } else {
+                    $orgExplorerMemberName = trim((string)($memberRow['firstname'] ?? '') . ' ' . (string)($memberRow['lastname'] ?? ''));
+                    if ($orgExplorerMemberName === '') {
+                        $orgExplorerMemberName = (string)($memberRow['email'] ?? 'Usuario');
+                    }
+
+                    $stmtTc = $mysqli->prepare(
+                        'SELECT COUNT(*) AS c FROM tickets WHERE user_id = ? AND empresa_id = ?'
+                    );
+                    if ($stmtTc) {
+                        $stmtTc->bind_param('ii', $orgExplorerMemberId, $eid);
+                        if ($stmtTc->execute()) {
+                            $orgTicketsTotal = (int)($stmtTc->get_result()->fetch_assoc()['c'] ?? 0);
+                        }
+                    }
+                    $orgTicketsTotalPages = $orgTicketsTotal > 0 ? (int)ceil($orgTicketsTotal / $orgListPerPage) : 1;
+                    $orgTicketsPage = min($orgTicketsPage, max(1, $orgTicketsTotalPages));
+                    $orgTicketsOffset = ($orgTicketsPage - 1) * $orgListPerPage;
+
                     $stmtOt = $mysqli->prepare(
                         'SELECT t.id, t.ticket_number, t.subject, t.created, t.closed,
                                 ts.name AS status_name, ts.color AS status_color
@@ -239,10 +314,10 @@ if ($isOrgExplorer) {
                          LEFT JOIN ticket_status ts ON t.status_id = ts.id
                          WHERE t.user_id = ? AND t.empresa_id = ?
                          ORDER BY COALESCE(t.updated, t.created) DESC
-                         LIMIT 200'
+                         LIMIT ? OFFSET ?'
                     );
                     if ($stmtOt) {
-                        $stmtOt->bind_param('ii', $orgExplorerMemberId, $eid);
+                        $stmtOt->bind_param('iiii', $orgExplorerMemberId, $eid, $orgListPerPage, $orgTicketsOffset);
                         if ($stmtOt->execute()) {
                             $orgExplorerTickets = $stmtOt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
                         }
@@ -971,6 +1046,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         .text-primary { color: #ef4444 !important; }
     </style>
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
+    <?php if (!empty($canOrgTicketsView)): ?>
+    <link rel="stylesheet" href="css/client-org-explorer.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client-org-explorer.css'); ?>">
+    <?php endif; ?>
     <?php if ($preventOpenBack || $flashMsg !== ''): ?>
     <script>
         (function(){
@@ -1163,7 +1241,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         </div>
                         <div class="d-flex gap-2 flex-wrap">
                             <?php if (!empty($canOrgTicketsView)): ?>
-                            <a href="tickets.php?view=org" class="btn btn-outline-secondary btn-sm" style="border-radius:999px;font-weight:700;">
+                            <a href="tickets.php?view=org" class="btn-org-ghost">
                                 <i class="bi bi-diagram-3"></i> Por organización
                             </a>
                             <?php endif; ?>
