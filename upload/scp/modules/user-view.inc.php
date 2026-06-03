@@ -105,8 +105,8 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                             <button type="submit" class="dropdown-item">
                                 <span class="uvm-item-icon-wrap"><i class="bi bi-diagram-3"></i></span>
                                 <span class="uvm-item-text-wrap">
-                                    <span class="uvm-item-title"><?php echo $viewUserOrgTicketsView ? 'Desactivar vista org.' : 'Activar vista org.'; ?></span>
-                                    <span class="uvm-item-desc">Tickets de sus organizaciones en el portal</span>
+                                    <span class="uvm-item-title"><?php echo $viewUserOrgTicketsView ? 'Quitar Encargado de Org.' : 'Hacer Encargado de Org.'; ?></span>
+                                    <span class="uvm-item-desc">Verá todos los tickets de su organización</span>
                                 </span>
                             </button>
                         </form>
@@ -381,29 +381,171 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteUser"><i class="bi bi-trash"></i> Eliminar usuario</button>
             <div class="dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="bi bi-gear"></i> Más <i class="bi bi-chevron-down" style="font-size:0.7rem;"></i></button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end" id="userViewGearMenu">
+                    <style>
+                        #userViewGearMenu {
+                            min-width: 280px;
+                            padding: 10px;
+                            border: none;
+                            border-radius: 16px;
+                            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+                            background: #ffffff;
+                            margin-top: 8px !important;
+                            animation: uvgmFade 0.2s cubic-bezier(0.16,1,0.3,1) forwards;
+                        }
+                        @keyframes uvgmFade {
+                            from { opacity:0; transform: translateY(8px) scale(0.97); }
+                            to { opacity:1; transform: translateY(0) scale(1); }
+                        }
+                        #userViewGearMenu .uvgm-header {
+                            font-size: 0.62rem;
+                            font-weight: 800;
+                            color: #94a3b8;
+                            text-transform: uppercase;
+                            letter-spacing: 0.06em;
+                            padding: 2px 10px 8px;
+                            border-bottom: 1px solid #f1f5f9;
+                            margin-bottom: 6px;
+                        }
+                        #userViewGearMenu .uvgm-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 9px 12px;
+                            border-radius: 10px;
+                            color: #334155;
+                            text-decoration: none !important;
+                            transition: all 0.2s;
+                            font-weight: 600;
+                            font-size: 0.82rem;
+                            border: none;
+                            background: transparent;
+                            width: 100%;
+                            text-align: left;
+                            cursor: pointer;
+                        }
+                        #userViewGearMenu .uvgm-item:hover {
+                            background: #f8fafc;
+                            transform: translateX(3px);
+                        }
+                        #userViewGearMenu .uvgm-icon {
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 1.05rem;
+                            flex-shrink: 0;
+                        }
+                        #userViewGearMenu .uvgm-icon.blue {
+                            background: rgba(59,130,246,0.1);
+                            color: #3b82f6;
+                        }
+                        #userViewGearMenu .uvgm-icon.green {
+                            background: rgba(16,185,129,0.1);
+                            color: #10b981;
+                        }
+                        #userViewGearMenu .uvgm-icon.amber {
+                            background: rgba(245,158,11,0.1);
+                            color: #f59e0b;
+                        }
+                        #userViewGearMenu .uvgm-item:hover .uvgm-icon {
+                            transform: scale(1.08);
+                            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                        }
+                        #userViewGearMenu .uvgm-label {
+                            font-weight: 700;
+                            line-height: 1.2;
+                        }
+                        #userViewGearMenu .uvgm-desc {
+                            font-size: 0.7rem;
+                            color: #94a3b8;
+                            font-weight: 500;
+                        }
+                        #userViewGearMenu .uvgm-sep {
+                            height: 1px;
+                            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+                            margin: 6px 10px;
+                            border: none;
+                        }
+                        /* Dark mode */
+                        body.dark-mode #userViewGearMenu {
+                            background: #111113;
+                            border: 1px solid #27272a;
+                            box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-header {
+                            color: #4b5563;
+                            border-color: #27272a;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-item {
+                            color: #e2e8f0;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-item:hover {
+                            background: rgba(255,255,255,0.04);
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-icon.blue {
+                            background: rgba(59,130,246,0.15);
+                            color: #60a5fa;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-icon.green {
+                            background: rgba(16,185,129,0.15);
+                            color: #34d399;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-icon.amber {
+                            background: rgba(245,158,11,0.15);
+                            color: #fbbf24;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-desc {
+                            color: #52525b;
+                        }
+                        body.dark-mode #userViewGearMenu .uvgm-sep {
+                            background: linear-gradient(90deg, transparent 0%, #27272a 50%, transparent 100%);
+                        }
+                    </style>
+                    <div class="uvgm-header">Opciones de Usuario</div>
                     <li>
-                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline" id="formSendUserReset">
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="w-100" id="formSendUserReset">
                             <input type="hidden" name="do" value="send_user_reset">
                             <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
                             <input type="hidden" name="tab" value="<?php echo html((string)($_GET['t'] ?? 'tickets')); ?>">
                             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                            <button type="submit" class="dropdown-item" id="btnSendUserReset"><i class="bi bi-envelope"></i> Enviar restablecer contraseña</button>
+                            <button type="submit" class="uvgm-item" id="btnSendUserReset">
+                                <div class="uvgm-icon blue"><i class="bi bi-envelope-fill"></i></div>
+                                <div>
+                                    <div class="uvgm-label">Restablecer contraseña</div>
+                                    <div class="uvgm-desc">Enviar enlace por email</div>
+                                </div>
+                            </button>
                         </form>
                     </li>
+                    <div class="uvgm-sep"></div>
                     <li>
-                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="d-inline w-100">
+                        <form method="post" action="users.php?id=<?php echo $uid; ?>" class="w-100">
                             <input type="hidden" name="do" value="toggle_org_tickets_view">
                             <input type="hidden" name="user_id" value="<?php echo $uid; ?>">
                             <input type="hidden" name="enable" value="<?php echo $viewUserOrgTicketsView ? '0' : '1'; ?>">
                             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                            <button type="submit" class="dropdown-item">
-                                <i class="bi bi-diagram-3"></i>
-                                <?php echo $viewUserOrgTicketsView ? 'Desactivar vista org.' : 'Activar vista org.'; ?>
+                            <button type="submit" class="uvgm-item">
+                                <div class="uvgm-icon green"><i class="bi bi-diagram-3-fill"></i></div>
+                                <div>
+                                    <div class="uvgm-label"><?php echo $viewUserOrgTicketsView ? 'Quitar Encargado de Org.' : 'Hacer Encargado de Org.'; ?></div>
+                                    <div class="uvgm-desc">Verá todos los tickets de su organización</div>
+                                </div>
                             </button>
                         </form>
                     </li>
-                    <li><a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalEditUser"><i class="bi bi-pencil"></i> Editar perfil</a></li>
+                    <div class="uvgm-sep"></div>
+                    <li>
+                        <a class="uvgm-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalEditUser">
+                            <div class="uvgm-icon amber"><i class="bi bi-pencil-fill"></i></div>
+                            <div>
+                                <div class="uvgm-label">Editar perfil</div>
+                                <div class="uvgm-desc">Nombre, correo, teléfono y más</div>
+                            </div>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

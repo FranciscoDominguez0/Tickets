@@ -2810,11 +2810,18 @@ body.dark-mode .creative-dropdown-item:hover .creative-dropdown-avatar {
     border-color: #ef4444;
 }
 body.dark-mode .creative-dropdown-icon {
-    background: #18181b;
-    color: #64748b;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+body.dark-mode .creative-dropdown-icon i[style*="color"] {
+    filter: brightness(1.2) !important;
 }
 body.dark-mode .creative-dropdown-item:hover .creative-dropdown-icon {
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+button.creative-dropdown-item {
+    cursor: pointer;
 }
 
 /* -- Modern Pagination -- */
