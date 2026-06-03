@@ -537,8 +537,8 @@ if ($ticketClientSignaturePath !== '') {
                     
                     <?php if ($hasOrgManager && $ticketApprovalStatus === 'none' && empty($t['closed'])): ?>
                     <a class="creative-dropdown-item" href="#" onclick="document.getElementById('form-request-approval').submit(); return false;">
-                        <div class="creative-dropdown-icon text-warning" style="background: rgba(245, 158, 11, 0.1);"><i class="bi bi-shield-lock-fill"></i></div>
-                        <span style="font-weight: 700;">Solicitar revisión ejecutiva</span>
+                        <div class="creative-dropdown-icon"><i class="bi bi-shield-lock"></i></div>
+                        <span>Solicitar revisión ejecutiva</span>
                     </a>
                     <form id="form-request-approval" method="post" action="tickets.php?id=<?php echo $tid; ?>" style="display: none;" onsubmit="return confirm('¿Solicitar revisión ejecutiva del jefe de la organización?');">
                         <input type="hidden" name="action" value="request_approval">
