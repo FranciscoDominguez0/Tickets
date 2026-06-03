@@ -1343,7 +1343,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
     <div class="container-main">
         <div class="shell">
-            <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0): ?>
+            <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0 && empty($isOrgExplorer)): ?>
             <style>
                 .exec-review-alert {
                     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;

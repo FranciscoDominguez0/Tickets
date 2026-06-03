@@ -4,21 +4,22 @@
  */
 
 // Proteger página (requiere login)
-function requireLogin($type = 'user') {
+function requireLogin($type = 'user')
+{
     global $mysqli;
-    if ((string)getAppSetting('system.force_https', '0') === '1') {
+    if ((string) getAppSetting('system.force_https', '0') === '1') {
         $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || ((string)($_SERVER['SERVER_PORT'] ?? '') === '443')
-            || (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https');
+            || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443')
+            || (strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https');
         if (!$isHttps && !headers_sent() && !empty($_SERVER['HTTP_HOST']) && !empty($_SERVER['REQUEST_URI'])) {
             header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
             exit;
         }
     }
     if ($type === 'cliente') {
-        $status = (string)getAppSetting('system.helpdesk_status', 'online');
+        $status = (string) getAppSetting('system.helpdesk_status', 'online');
         if ($status === 'offline') {
-            $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+            $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
             if (strpos($currentPath, '/upload/') !== false) {
                 header('Location: login.php?msg=offline');
             } else {
@@ -43,7 +44,7 @@ function requireLogin($type = 'user') {
     }
 
     if ($type === 'cliente' && isset($_SESSION['user_id'])) {
-        $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
+        $empresaId = (int) ($_SESSION['empresa_id'] ?? 0);
         if ($empresaId > 0 && isset($mysqli) && $mysqli) {
             try {
                 $hasEmpresas = dbTableExists('empresas');
@@ -53,17 +54,17 @@ function requireLogin($type = 'user') {
                         $q->bind_param('i', $empresaId);
                         if ($q->execute()) {
                             $row = $q->get_result()->fetch_assoc();
-                            $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
+                            $isBlocked = (int) ($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
-                                $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
-                                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                                $motivo = (string) ($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
                                 $basePrefix = '';
                                 $posUpload = strpos($currentPath, '/upload/');
                                 if ($posUpload !== false) {
                                     $basePrefix = substr($currentPath, 0, $posUpload);
                                 }
                                 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+                                $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
                                 $logoutPath = $basePrefix . '/upload/logout.php';
                                 $logoutHref = ($host !== '') ? ($scheme . '://' . $host . $logoutPath) : $logoutPath;
                                 http_response_code(403);
@@ -106,8 +107,8 @@ function requireLogin($type = 'user') {
         }
 
         if (!empty($_SESSION['session_fp'])) {
-            $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
-            $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
             $ipPrefix = '';
             if ($ip !== '') {
                 if (strpos($ip, ':') !== false) {
@@ -118,29 +119,29 @@ function requireLogin($type = 'user') {
                     $ipPrefix = implode('.', array_slice($parts, 0, 3));
                 }
             }
-            $bindIp = (string)getAppSetting('users.bind_session_ip', '0') === '1';
+            $bindIp = (string) getAppSetting('users.bind_session_ip', '0') === '1';
             $ipPrefix = $bindIp ? $ipPrefix : 'no-ip';
-            
+
             $fpNow = hash('sha256', 'cliente|' . $ua . '|' . $ipPrefix);
             $browser = 'unknown';
             if (preg_match('~edg/(\d+)~i', $ua, $m)) {
-                $browser = 'edge-' . (string)$m[1];
+                $browser = 'edge-' . (string) $m[1];
             } elseif (preg_match('~chrome/(\d+)~i', $ua, $m)) {
-                $browser = 'chrome-' . (string)$m[1];
+                $browser = 'chrome-' . (string) $m[1];
             } elseif (preg_match('~firefox/(\d+)~i', $ua, $m)) {
-                $browser = 'firefox-' . (string)$m[1];
+                $browser = 'firefox-' . (string) $m[1];
             } elseif (preg_match('~version/(\d+).+safari~i', $ua, $m)) {
-                $browser = 'safari-' . (string)$m[1];
+                $browser = 'safari-' . (string) $m[1];
             } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
-                $browser = 'safari-' . (string)$m[1];
+                $browser = 'safari-' . (string) $m[1];
             }
             $fpNowRelaxed = hash('sha256', 'cliente|' . $browser . '|' . $ipPrefix);
-            $fpStored = (string)($_SESSION['session_fp'] ?? '');
-            $fpStoredRelaxed = (string)($_SESSION['session_fp_relaxed'] ?? '');
-            
+            $fpStored = (string) ($_SESSION['session_fp'] ?? '');
+            $fpStoredRelaxed = (string) ($_SESSION['session_fp_relaxed'] ?? '');
+
             $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
             $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
-            
+
             // Si falla el fingerprint, solo cerramos sesion si no hay coincidencia relajada
             // y no destruimos la sesion de inmediato para evitar bugs en moviles con pre-fetch
             if (!$fpStrictOk && !$fpRelaxedOk) {
@@ -151,7 +152,7 @@ function requireLogin($type = 'user') {
                     if (session_status() === PHP_SESSION_ACTIVE) {
                         session_destroy();
                     }
-                    $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                    $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
                     if (strpos($currentPath, '/upload/') !== false) {
                         header('Location: login.php?msg=timeout');
                     } else {
@@ -162,18 +163,18 @@ function requireLogin($type = 'user') {
             }
         }
 
-        $timeoutMin = (int)getAppSetting('users.session_timeout_minutes', '30');
-        if (!isset($_SESSION['user_last_activity']) || (int)($_SESSION['user_last_activity'] ?? 0) <= 0) {
+        $timeoutMin = (int) getAppSetting('users.session_timeout_minutes', '30');
+        if (!isset($_SESSION['user_last_activity']) || (int) ($_SESSION['user_last_activity'] ?? 0) <= 0) {
             $_SESSION['user_last_activity'] = time();
         }
         if ($timeoutMin > 0) {
-            $last = (int)($_SESSION['user_last_activity'] ?? 0);
+            $last = (int) ($_SESSION['user_last_activity'] ?? 0);
             if ($last > 0 && (time() - $last) > ($timeoutMin * 60)) {
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
                 }
-                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
                 if (strpos($currentPath, '/upload/') !== false) {
                     header('Location: login.php?msg=timeout');
                 } else {
@@ -188,7 +189,7 @@ function requireLogin($type = 'user') {
     if ($type === 'agente' && !isset($_SESSION['staff_id'])) {
         // Detectar si estamos en upload/scp/ o en otro lugar
         $currentPath = $_SERVER['PHP_SELF'];
-        $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
+        $isSuperadmin = (strpos((string) $currentPath, '/upload/scp/superadmin/') !== false);
         if (strpos($currentPath, '/upload/scp/') !== false) {
             header('Location: ' . ($isSuperadmin ? '../login.php' : 'login.php'));
         } else {
@@ -205,19 +206,21 @@ function requireLogin($type = 'user') {
             $_SESSION['read_only_reason'] = '';
         }
 
-        $empresaId = (int)($_SESSION['empresa_id'] ?? 0);
+        $empresaId = (int) ($_SESSION['empresa_id'] ?? 0);
         if ($empresaId > 0) {
             syncEmpresaBillingStatus($empresaId);
         }
 
-        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysRaw = trim((string) getAppSetting('billing.always_active_empresas', '1'));
         $alwaysIds = [];
         if ($alwaysRaw !== '') {
             foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
-                if ($v === '') continue;
+                if ($v === '')
+                    continue;
                 if (is_numeric($v)) {
-                    $n = (int)$v;
-                    if ($n > 0) $alwaysIds[$n] = true;
+                    $n = (int) $v;
+                    if ($n > 0)
+                        $alwaysIds[$n] = true;
                 }
             }
         }
@@ -237,17 +240,17 @@ function requireLogin($type = 'user') {
                         $q->bind_param('i', $empresaId);
                         if ($q->execute()) {
                             $row = $q->get_result()->fetch_assoc();
-                            $isBlocked = (int)($row['bloqueada'] ?? 0) === 1;
+                            $isBlocked = (int) ($row['bloqueada'] ?? 0) === 1;
                             if ($isBlocked) {
-                                $motivo = (string)($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
-                                $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                                $motivo = (string) ($row['motivo_bloqueo'] ?? 'Servicio suspendido por falta de pago');
+                                $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
                                 $basePrefix = '';
                                 $posUpload = strpos($currentPath, '/upload/');
                                 if ($posUpload !== false) {
                                     $basePrefix = substr($currentPath, 0, $posUpload);
                                 }
                                 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                                $host = (string)($_SERVER['HTTP_HOST'] ?? '');
+                                $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
                                 $logoutPath = $basePrefix . '/upload/scp/logout.php';
                                 $logoutHref = ($host !== '') ? ($scheme . '://' . $host . $logoutPath) : $logoutPath;
                                 http_response_code(403);
@@ -284,8 +287,8 @@ function requireLogin($type = 'user') {
                                 exit;
                             }
 
-                            $estadoPago = (string)($row['estado_pago'] ?? '');
-                            $fechaVenc = (string)($row['fecha_vencimiento'] ?? '');
+                            $estadoPago = (string) ($row['estado_pago'] ?? '');
+                            $fechaVenc = (string) ($row['fecha_vencimiento'] ?? '');
                             $isVencida = false;
                             if ($estadoPago === 'vencido') {
                                 $isVencida = true;
@@ -306,22 +309,22 @@ function requireLogin($type = 'user') {
             }
         }
 
-        $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+        $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
         $isScp = (strpos($currentPath, '/upload/scp/') !== false);
         $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
-        if ($isScp && (int)($_SESSION['read_only'] ?? 0) === 1) {
-            $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        if ($isScp && (int) ($_SESSION['read_only'] ?? 0) === 1) {
+            $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
             if ($method === 'POST') {
                 http_response_code(403);
-                $motivo = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.');
+                $motivo = (string) ($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.');
                 echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modo lectura</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"></head><body class="bg-light"><div class="container py-5" style="max-width:720px"><div class="alert alert-warning"><strong>Modo lectura.</strong><div class="mt-2">' . html($motivo) . '</div></div><a class="btn btn-outline-secondary" href="javascript:history.back()">Volver</a></div></body></html>';
                 exit;
             }
         }
 
         if (!empty($_SESSION['session_fp'])) {
-            $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
-            $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+            $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
+            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
             $ipPrefix = '';
             if ($ip !== '') {
                 if (strpos($ip, ':') !== false) {
@@ -332,25 +335,25 @@ function requireLogin($type = 'user') {
                     $ipPrefix = implode('.', array_slice($parts, 0, 3));
                 }
             }
-            $bindIp = (string)getAppSetting('agents.bind_session_ip', '0') === '1';
+            $bindIp = (string) getAppSetting('agents.bind_session_ip', '0') === '1';
             $ipPrefix = $bindIp ? $ipPrefix : 'no-ip';
 
             $fpNow = hash('sha256', 'agente|' . $ua . '|' . $ipPrefix);
             $browser = 'unknown';
             if (preg_match('~edg/(\d+)~i', $ua, $m)) {
-                $browser = 'edge-' . (string)$m[1];
+                $browser = 'edge-' . (string) $m[1];
             } elseif (preg_match('~chrome/(\d+)~i', $ua, $m)) {
-                $browser = 'chrome-' . (string)$m[1];
+                $browser = 'chrome-' . (string) $m[1];
             } elseif (preg_match('~firefox/(\d+)~i', $ua, $m)) {
-                $browser = 'firefox-' . (string)$m[1];
+                $browser = 'firefox-' . (string) $m[1];
             } elseif (preg_match('~version/(\d+).+safari~i', $ua, $m)) {
-                $browser = 'safari-' . (string)$m[1];
+                $browser = 'safari-' . (string) $m[1];
             } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
-                $browser = 'safari-' . (string)$m[1];
+                $browser = 'safari-' . (string) $m[1];
             }
             $fpNowRelaxed = hash('sha256', 'agente|' . $browser . '|' . $ipPrefix);
-            $fpStored = (string)($_SESSION['session_fp'] ?? '');
-            $fpStoredRelaxed = (string)($_SESSION['session_fp_relaxed'] ?? '');
+            $fpStored = (string) ($_SESSION['session_fp'] ?? '');
+            $fpStoredRelaxed = (string) ($_SESSION['session_fp_relaxed'] ?? '');
             $fpStrictOk = ($fpStored !== '' && hash_equals($fpStored, $fpNow));
             $fpRelaxedOk = ($fpStoredRelaxed !== '' && hash_equals($fpStoredRelaxed, $fpNowRelaxed));
             if (!$fpStrictOk && !$fpRelaxedOk) {
@@ -359,7 +362,7 @@ function requireLogin($type = 'user') {
                     if (session_status() === PHP_SESSION_ACTIVE) {
                         session_destroy();
                     }
-                    $currentPath = (string)($_SERVER['PHP_SELF'] ?? '');
+                    $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
                     $isSuperadmin = (strpos($currentPath, '/upload/scp/superadmin/') !== false);
                     if (strpos($currentPath, '/upload/scp/') !== false) {
                         header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
@@ -371,19 +374,19 @@ function requireLogin($type = 'user') {
             }
         }
 
-        $timeoutMin = (int)getAppSetting('agents.session_timeout_minutes', '30');
-        if (!isset($_SESSION['staff_last_activity']) || (int)($_SESSION['staff_last_activity'] ?? 0) <= 0) {
+        $timeoutMin = (int) getAppSetting('agents.session_timeout_minutes', '30');
+        if (!isset($_SESSION['staff_last_activity']) || (int) ($_SESSION['staff_last_activity'] ?? 0) <= 0) {
             $_SESSION['staff_last_activity'] = time();
         }
         if ($timeoutMin > 0) {
-            $last = (int)($_SESSION['staff_last_activity'] ?? 0);
+            $last = (int) ($_SESSION['staff_last_activity'] ?? 0);
             if ($last > 0 && (time() - $last) > ($timeoutMin * 60)) {
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
                 }
                 $currentPath = $_SERVER['PHP_SELF'];
-                $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
+                $isSuperadmin = (strpos((string) $currentPath, '/upload/scp/superadmin/') !== false);
                 if (strpos($currentPath, '/upload/scp/') !== false) {
                     header('Location: ' . ($isSuperadmin ? '../login.php?msg=timeout' : 'login.php?msg=timeout'));
                 } else {
@@ -393,17 +396,17 @@ function requireLogin($type = 'user') {
             }
         }
 
-        $bindIp = (string)getAppSetting('agents.bind_session_ip', '0') === '1';
+        $bindIp = (string) getAppSetting('agents.bind_session_ip', '0') === '1';
         if ($bindIp) {
-            $currentIp = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-            $loginIp = (string)($_SESSION['staff_login_ip'] ?? '');
+            $currentIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $loginIp = (string) ($_SESSION['staff_login_ip'] ?? '');
             if ($loginIp !== '' && $currentIp !== '' && $loginIp !== $currentIp) {
                 $_SESSION = [];
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
                 }
                 $currentPath = $_SERVER['PHP_SELF'];
-                $isSuperadmin = (strpos((string)$currentPath, '/upload/scp/superadmin/') !== false);
+                $isSuperadmin = (strpos((string) $currentPath, '/upload/scp/superadmin/') !== false);
                 if (strpos($currentPath, '/upload/scp/') !== false) {
                     header('Location: ' . ($isSuperadmin ? '../login.php?msg=ip' : 'login.php?msg=ip'));
                 } else {
@@ -417,45 +420,56 @@ function requireLogin($type = 'user') {
     }
 }
 
-function syncEmpresaBillingStatus($empresaId) {
+function syncEmpresaBillingStatus($empresaId)
+{
     global $mysqli;
-    $empresaId = (int)$empresaId;
-    if ($empresaId <= 0) return false;
-    if (!isset($mysqli) || !$mysqli) return false;
+    $empresaId = (int) $empresaId;
+    if ($empresaId <= 0)
+        return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
 
-    $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+    $alwaysRaw = trim((string) getAppSetting('billing.always_active_empresas', '1'));
     $alwaysIds = [];
     if ($alwaysRaw !== '') {
         foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
-            if ($v === '') continue;
+            if ($v === '')
+                continue;
             if (is_numeric($v)) {
-                $n = (int)$v;
-                if ($n > 0) $alwaysIds[$n] = true;
+                $n = (int) $v;
+                if ($n > 0)
+                    $alwaysIds[$n] = true;
             }
         }
     }
     if (isset($alwaysIds[$empresaId])) {
         try {
             $mysqli->query("UPDATE empresas SET estado_pago = 'al_dia', bloqueada = 0, motivo_bloqueo = NULL WHERE id = {$empresaId}");
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
         return true;
     }
 
     try {
         $hasEmpresas = dbTableExists('empresas');
-        if (!$hasEmpresas) return false;
+        if (!$hasEmpresas)
+            return false;
 
         $stmt = $mysqli->prepare('SELECT estado_pago, bloqueada, fecha_vencimiento FROM empresas WHERE id = ? LIMIT 1');
-        if (!$stmt) return false;
+        if (!$stmt)
+            return false;
         $stmt->bind_param('i', $empresaId);
-        if (!$stmt->execute()) return false;
+        if (!$stmt->execute())
+            return false;
         $row = $stmt->get_result()->fetch_assoc();
-        if (!$row) return false;
+        if (!$row)
+            return false;
 
-        $estadoPago = (string)($row['estado_pago'] ?? '');
-        $bloqueada = (int)($row['bloqueada'] ?? 0) === 1;
-        $fechaVenc = (string)($row['fecha_vencimiento'] ?? '');
-        if ($fechaVenc === '') return true;
+        $estadoPago = (string) ($row['estado_pago'] ?? '');
+        $bloqueada = (int) ($row['bloqueada'] ?? 0) === 1;
+        $fechaVenc = (string) ($row['fecha_vencimiento'] ?? '');
+        if ($fechaVenc === '')
+            return true;
 
         $hoy = date('Y-m-d');
 
@@ -471,7 +485,7 @@ function syncEmpresaBillingStatus($empresaId) {
 
         // Si sigue suspendido y pasaron 3 días desde el vencimiento: bloquear
         if (!$bloqueada && $estadoPago === 'suspendido') {
-            $daysPast = (int)floor((strtotime($hoy) - strtotime($fechaVenc)) / 86400);
+            $daysPast = (int) floor((strtotime($hoy) - strtotime($fechaVenc)) / 86400);
             if ($daysPast >= 3) {
                 $u2 = $mysqli->prepare("UPDATE empresas SET bloqueada = 1, motivo_bloqueo = COALESCE(NULLIF(motivo_bloqueo,''), 'Servicio suspendido por falta de pago') WHERE id = ? AND estado_pago = 'suspendido' AND bloqueada = 0");
                 if ($u2) {
@@ -487,9 +501,11 @@ function syncEmpresaBillingStatus($empresaId) {
     }
 }
 
-function ensureBillingNoticeLogTable() {
+function ensureBillingNoticeLogTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     $sql = "CREATE TABLE IF NOT EXISTS billing_notice_log (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL,\n"
@@ -499,24 +515,29 @@ function ensureBillingNoticeLogTable() {
         . "  UNIQUE KEY uq_billing_notice (empresa_id, days_before, fecha_vencimiento),\n"
         . "  KEY idx_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-    return (bool)$mysqli->query($sql);
+    return (bool) $mysqli->query($sql);
 }
 
-function syncAllEmpresasBillingStatus() {
+function syncAllEmpresasBillingStatus()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     try {
         $hasEmpresas = dbTableExists('empresas');
-        if (!$hasEmpresas) return false;
+        if (!$hasEmpresas)
+            return false;
 
-        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysRaw = trim((string) getAppSetting('billing.always_active_empresas', '1'));
         $alwaysIds = [];
         if ($alwaysRaw !== '') {
             foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
-                if ($v === '') continue;
+                if ($v === '')
+                    continue;
                 if (is_numeric($v)) {
-                    $n = (int)$v;
-                    if ($n > 0) $alwaysIds[$n] = true;
+                    $n = (int) $v;
+                    if ($n > 0)
+                        $alwaysIds[$n] = true;
                 }
             }
         }
@@ -552,84 +573,101 @@ function syncAllEmpresasBillingStatus() {
     }
 }
 
-function sendBillingDueNotifications() {
+function sendBillingDueNotifications()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
 
     try {
-        $enabled = (string)getAppSetting('billing.notice_enabled', '1');
-        if ($enabled !== '1') return true;
+        $enabled = (string) getAppSetting('billing.notice_enabled', '1');
+        if ($enabled !== '1')
+            return true;
 
-        $alwaysRaw = trim((string)getAppSetting('billing.always_active_empresas', '1'));
+        $alwaysRaw = trim((string) getAppSetting('billing.always_active_empresas', '1'));
         $alwaysIds = [];
         if ($alwaysRaw !== '') {
             foreach (preg_split('/\s*,\s*/', $alwaysRaw) as $v) {
-                if ($v === '') continue;
+                if ($v === '')
+                    continue;
                 if (is_numeric($v)) {
-                    $n = (int)$v;
-                    if ($n > 0) $alwaysIds[$n] = true;
+                    $n = (int) $v;
+                    if ($n > 0)
+                        $alwaysIds[$n] = true;
                 }
             }
         }
 
-        if (!ensureBillingNoticeLogTable()) return false;
+        if (!ensureBillingNoticeLogTable())
+            return false;
 
-        if (!dbTableExists('empresas')) return false;
-        if (!dbTableExists('staff')) return false;
-        if (!dbTableExists('notifications')) return false;
+        if (!dbTableExists('empresas'))
+            return false;
+        if (!dbTableExists('staff'))
+            return false;
+        if (!dbTableExists('notifications'))
+            return false;
 
-        $daysRaw = trim((string)getAppSetting('billing.notice_days', '3'));
+        $daysRaw = trim((string) getAppSetting('billing.notice_days', '3'));
         $daysList = [];
         foreach (preg_split('/\s*,\s*/', $daysRaw) as $d) {
-            if ($d === '') continue;
+            if ($d === '')
+                continue;
             if (is_numeric($d)) {
-                $n = (int)$d;
-                if ($n > 0 && $n <= 365) $daysList[$n] = true;
+                $n = (int) $d;
+                if ($n > 0 && $n <= 365)
+                    $daysList[$n] = true;
             }
         }
         $days = array_keys($daysList);
-        if (empty($days)) return true;
+        if (empty($days))
+            return true;
 
-        $subjectTpl = trim((string)getAppSetting('billing.notice_subject', 'Aviso: vencimiento próximo'));
-        $msgTpl = trim((string)getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
+        $subjectTpl = trim((string) getAppSetting('billing.notice_subject', 'Aviso: vencimiento próximo'));
+        $msgTpl = trim((string) getAppSetting('billing.notice_message', 'Tu plan vence en {dias} día(s) ({vencimiento}).'));
 
         $hasStaffEmpresa = false;
         $hasStaffEmpresa = dbColumnExists('staff', 'empresa_id');
-        if (!$hasStaffEmpresa) return false;
+        if (!$hasStaffEmpresa)
+            return false;
 
         $in = implode(',', array_map('intval', $days));
         $sql = "SELECT id, nombre, fecha_vencimiento, DATEDIFF(fecha_vencimiento, CURDATE()) dias\n"
-             . "FROM empresas\n"
-             . "WHERE fecha_vencimiento IS NOT NULL\n"
-             . "  AND estado_pago = 'al_dia'\n"
-             . "  AND bloqueada = 0\n"
-             . (!empty($alwaysIds) ? ('  AND id NOT IN (' . implode(',', array_map('intval', array_keys($alwaysIds))) . ')\n') : '')
-             . "  AND DATEDIFF(fecha_vencimiento, CURDATE()) IN ($in)";
+            . "FROM empresas\n"
+            . "WHERE fecha_vencimiento IS NOT NULL\n"
+            . "  AND estado_pago = 'al_dia'\n"
+            . "  AND bloqueada = 0\n"
+            . (!empty($alwaysIds) ? ('  AND id NOT IN (' . implode(',', array_map('intval', array_keys($alwaysIds))) . ')\n') : '')
+            . "  AND DATEDIFF(fecha_vencimiento, CURDATE()) IN ($in)";
 
         $res = $mysqli->query($sql);
-        if (!$res) return true;
+        if (!$res)
+            return true;
 
         $stmtStaff = $mysqli->prepare("SELECT id FROM staff WHERE is_active = 1 AND role = 'admin' AND empresa_id = ? ORDER BY id");
         $stmtLogIns = $mysqli->prepare("INSERT IGNORE INTO billing_notice_log (empresa_id, days_before, fecha_vencimiento, created_at) VALUES (?, ?, ?, NOW())");
         $stmtIns = $mysqli->prepare("INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
-        if (!$stmtStaff || !$stmtLogIns || !$stmtIns) return false;
+        if (!$stmtStaff || !$stmtLogIns || !$stmtIns)
+            return false;
 
         $type = 'billing_due';
 
         while ($e = $res->fetch_assoc()) {
-            $empresaId = (int)($e['id'] ?? 0);
-            if ($empresaId <= 0) continue;
-            $dias = (int)($e['dias'] ?? 0);
-            $empresaNombre = (string)($e['nombre'] ?? '');
-            $venc = (string)($e['fecha_vencimiento'] ?? '');
+            $empresaId = (int) ($e['id'] ?? 0);
+            if ($empresaId <= 0)
+                continue;
+            $dias = (int) ($e['dias'] ?? 0);
+            $empresaNombre = (string) ($e['nombre'] ?? '');
+            $venc = (string) ($e['fecha_vencimiento'] ?? '');
 
-            if ($venc === '') continue;
+            if ($venc === '')
+                continue;
 
             $stmtLogIns->bind_param('iis', $empresaId, $dias, $venc);
             if (!$stmtLogIns->execute()) {
                 continue;
             }
-            if ((int)$stmtLogIns->affected_rows <= 0) {
+            if ((int) $stmtLogIns->affected_rows <= 0) {
                 continue;
             }
 
@@ -637,7 +675,7 @@ function sendBillingDueNotifications() {
             $message = $msgTpl;
             $repl = [
                 '{empresa}' => $empresaNombre,
-                '{dias}' => (string)$dias,
+                '{dias}' => (string) $dias,
                 '{vencimiento}' => $venc,
             ];
             $subject = strtr($subject, $repl);
@@ -645,12 +683,15 @@ function sendBillingDueNotifications() {
             $final = $subject !== '' ? ('[' . $subject . '] ' . $message) : $message;
 
             $stmtStaff->bind_param('i', $empresaId);
-            if (!$stmtStaff->execute()) continue;
+            if (!$stmtStaff->execute())
+                continue;
             $rsStaff = $stmtStaff->get_result();
-            if (!$rsStaff) continue;
+            if (!$rsStaff)
+                continue;
             while ($s = $rsStaff->fetch_assoc()) {
-                $sid = (int)($s['id'] ?? 0);
-                if ($sid <= 0) continue;
+                $sid = (int) ($s['id'] ?? 0);
+                if ($sid <= 0)
+                    continue;
 
                 $stmtIns->bind_param('issi', $sid, $final, $type, $empresaId);
                 $stmtIns->execute();
@@ -663,24 +704,29 @@ function sendBillingDueNotifications() {
     }
 }
 
-function empresaId() {
-    $eid = (int)($_SESSION['empresa_id'] ?? 1);
-    if ($eid <= 0) $eid = 1;
+function empresaId()
+{
+    $eid = (int) ($_SESSION['empresa_id'] ?? 1);
+    if ($eid <= 0)
+        $eid = 1;
     return $eid;
 }
 
-function dbTableExists($tableName, $ttlSeconds = 300) {
+function dbTableExists($tableName, $ttlSeconds = 300)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    $tableName = trim((string)$tableName);
-    if ($tableName === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) return false;
-    $ttlSeconds = max(5, (int)$ttlSeconds);
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    $tableName = trim((string) $tableName);
+    if ($tableName === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName))
+        return false;
+    $ttlSeconds = max(5, (int) $ttlSeconds);
 
     static $runtimeCache = [];
     $cacheKey = 'tbl:' . strtolower($tableName);
     $now = time();
-    if (isset($runtimeCache[$cacheKey]) && ($now - (int)$runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
-        return (bool)$runtimeCache[$cacheKey]['ok'];
+    if (isset($runtimeCache[$cacheKey]) && ($now - (int) $runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
+        return (bool) $runtimeCache[$cacheKey]['ok'];
     }
 
     if (!isset($_SESSION['_dbmeta_cache']) || !is_array($_SESSION['_dbmeta_cache'])) {
@@ -688,34 +734,38 @@ function dbTableExists($tableName, $ttlSeconds = 300) {
     }
     if (isset($_SESSION['_dbmeta_cache'][$cacheKey])) {
         $hit = $_SESSION['_dbmeta_cache'][$cacheKey];
-        if (is_array($hit) && ($now - (int)($hit['ts'] ?? 0)) <= $ttlSeconds) {
-            $ok = (bool)($hit['ok'] ?? false);
+        if (is_array($hit) && ($now - (int) ($hit['ts'] ?? 0)) <= $ttlSeconds) {
+            $ok = (bool) ($hit['ok'] ?? false);
             $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
             return $ok;
         }
     }
 
     $res = $mysqli->query("SHOW TABLES LIKE '" . $mysqli->real_escape_string($tableName) . "'");
-    $ok = (bool)($res && $res->num_rows > 0);
+    $ok = (bool) ($res && $res->num_rows > 0);
     $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
     $_SESSION['_dbmeta_cache'][$cacheKey] = ['ts' => $now, 'ok' => $ok];
     return $ok;
 }
 
-function dbColumnExists($tableName, $columnName, $ttlSeconds = 300) {
+function dbColumnExists($tableName, $columnName, $ttlSeconds = 300)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    $tableName = trim((string)$tableName);
-    $columnName = trim((string)$columnName);
-    if ($tableName === '' || $columnName === '') return false;
-    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName) || !preg_match('/^[a-zA-Z0-9_]+$/', $columnName)) return false;
-    $ttlSeconds = max(5, (int)$ttlSeconds);
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    $tableName = trim((string) $tableName);
+    $columnName = trim((string) $columnName);
+    if ($tableName === '' || $columnName === '')
+        return false;
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName) || !preg_match('/^[a-zA-Z0-9_]+$/', $columnName))
+        return false;
+    $ttlSeconds = max(5, (int) $ttlSeconds);
 
     static $runtimeCache = [];
     $cacheKey = 'col:' . strtolower($tableName) . ':' . strtolower($columnName);
     $now = time();
-    if (isset($runtimeCache[$cacheKey]) && ($now - (int)$runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
-        return (bool)$runtimeCache[$cacheKey]['ok'];
+    if (isset($runtimeCache[$cacheKey]) && ($now - (int) $runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
+        return (bool) $runtimeCache[$cacheKey]['ok'];
     }
 
     if (!isset($_SESSION['_dbmeta_cache']) || !is_array($_SESSION['_dbmeta_cache'])) {
@@ -723,15 +773,15 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300) {
     }
     if (isset($_SESSION['_dbmeta_cache'][$cacheKey])) {
         $hit = $_SESSION['_dbmeta_cache'][$cacheKey];
-        if (is_array($hit) && ($now - (int)($hit['ts'] ?? 0)) <= $ttlSeconds) {
-            $ok = (bool)($hit['ok'] ?? false);
+        if (is_array($hit) && ($now - (int) ($hit['ts'] ?? 0)) <= $ttlSeconds) {
+            $ok = (bool) ($hit['ok'] ?? false);
             $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
             return $ok;
         }
     }
 
     $res = $mysqli->query("SHOW COLUMNS FROM `" . $mysqli->real_escape_string($tableName) . "` LIKE '" . $mysqli->real_escape_string($columnName) . "'");
-    $ok = (bool)($res && $res->num_rows > 0);
+    $ok = (bool) ($res && $res->num_rows > 0);
     $runtimeCache[$cacheKey] = ['ts' => $now, 'ok' => $ok];
     $_SESSION['_dbmeta_cache'][$cacheKey] = ['ts' => $now, 'ok' => $ok];
     return $ok;
@@ -856,14 +906,14 @@ function getThreadEntryReadStatusMap($mysqli, array $entryIds, int $empresaId): 
     }
     $res = $stmt->get_result();
     while ($res && ($row = $res->fetch_assoc())) {
-        $eid = (int)($row['thread_entry_id'] ?? 0);
+        $eid = (int) ($row['thread_entry_id'] ?? 0);
         if ($eid <= 0) {
             continue;
         }
         if (!isset($map[$eid])) {
             $map[$eid] = ['user' => false, 'staff' => false];
         }
-        $readBy = (string)($row['read_by'] ?? '');
+        $readBy = (string) ($row['read_by'] ?? '');
         if ($readBy === 'user' || $readBy === 'staff') {
             $map[$eid][$readBy] = true;
         }
@@ -894,7 +944,7 @@ function ensureUserOrganizationsTable($mysqli): bool
         return true;
     }
     $done = true;
-    $ok = (bool)@$mysqli->query(
+    $ok = (bool) @$mysqli->query(
         "CREATE TABLE IF NOT EXISTS user_organizations (\n"
         . "  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n"
         . "  empresa_id INT UNSIGNED NOT NULL DEFAULT 1,\n"
@@ -940,8 +990,8 @@ function getUserOrganizations($mysqli, int $userId, int $empresaId): array
     $res = $stmt->get_result();
     while ($res && ($row = $res->fetch_assoc())) {
         $rows[] = [
-            'organization_id' => (int)($row['organization_id'] ?? 0),
-            'name' => (string)($row['name'] ?? ''),
+            'organization_id' => (int) ($row['organization_id'] ?? 0),
+            'name' => (string) ($row['name'] ?? ''),
             'created_at' => $row['created_at'] ?? null,
         ];
     }
@@ -954,7 +1004,7 @@ function syncUserCompanyFromOrganizations($mysqli, int $userId, int $empresaId):
         return;
     }
     $orgs = getUserOrganizations($mysqli, $userId, $empresaId);
-    $primary = !empty($orgs) ? (string)($orgs[0]['name'] ?? '') : '';
+    $primary = !empty($orgs) ? (string) ($orgs[0]['name'] ?? '') : '';
     $primary = trim($primary);
     $stmt = $mysqli->prepare('UPDATE users SET company = ?, updated = NOW() WHERE id = ? AND empresa_id = ?');
     if (!$stmt) {
@@ -1124,9 +1174,9 @@ function getOrganizationMembershipStats($mysqli, int $empresaId, int $organizati
         return $empty;
     }
     return [
-        'user_count' => (int)($row['user_count'] ?? 0),
-        'ticket_count' => (int)($row['ticket_count'] ?? 0),
-        'open_tickets' => (int)($row['open_tickets'] ?? 0),
+        'user_count' => (int) ($row['user_count'] ?? 0),
+        'ticket_count' => (int) ($row['ticket_count'] ?? 0),
+        'open_tickets' => (int) ($row['open_tickets'] ?? 0),
         'since' => $row['since'] ?? null,
     ];
 }
@@ -1259,12 +1309,12 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
  */
 function parseTicketMonthFilter(?string $raw): ?array
 {
-    $raw = trim((string)$raw);
+    $raw = trim((string) $raw);
     if (!preg_match('/^(\d{4})-(0[1-9]|1[0-2])$/', $raw, $m)) {
         return null;
     }
-    $year = (int)$m[1];
-    $month = (int)$m[2];
+    $year = (int) $m[1];
+    $month = (int) $m[2];
     if ($year < 2000 || $year > 2100) {
         return null;
     }
@@ -1275,9 +1325,18 @@ function parseTicketMonthFilter(?string $raw): ?array
         $end = sprintf('%04d-%02d-01 00:00:00', $year, $month + 1);
     }
     $labels = [
-        1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
-        5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
-        9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+        1 => 'enero',
+        2 => 'febrero',
+        3 => 'marzo',
+        4 => 'abril',
+        5 => 'mayo',
+        6 => 'junio',
+        7 => 'julio',
+        8 => 'agosto',
+        9 => 'septiembre',
+        10 => 'octubre',
+        11 => 'noviembre',
+        12 => 'diciembre',
     ];
     $label = ucfirst($labels[$month] ?? '') . ' ' . $year;
 
@@ -1296,9 +1355,18 @@ function listTicketMonthFilterOptions(int $count = 36): array
 {
     $count = max(1, min(120, $count));
     $labels = [
-        1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
-        5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
-        9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre',
+        1 => 'enero',
+        2 => 'febrero',
+        3 => 'marzo',
+        4 => 'abril',
+        5 => 'mayo',
+        6 => 'junio',
+        7 => 'julio',
+        8 => 'agosto',
+        9 => 'septiembre',
+        10 => 'octubre',
+        11 => 'noviembre',
+        12 => 'diciembre',
     ];
     $options = [];
     try {
@@ -1307,8 +1375,8 @@ function listTicketMonthFilterOptions(int $count = 36): array
         return [];
     }
     for ($i = 0; $i < $count; $i++) {
-        $y = (int)$dt->format('Y');
-        $m = (int)$dt->format('m');
+        $y = (int) $dt->format('Y');
+        $m = (int) $dt->format('m');
         $value = $dt->format('Y-m');
         $options[] = [
             'value' => $value,
@@ -1334,7 +1402,7 @@ function ticketMonthFilterQueryString(?array $monthFilter): string
     if (!$monthFilter || empty($monthFilter['param'])) {
         return '';
     }
-    return '&month=' . rawurlencode((string)$monthFilter['param']);
+    return '&month=' . rawurlencode((string) $monthFilter['param']);
 }
 
 /**
@@ -1352,7 +1420,7 @@ function mysqliBindParams(mysqli_stmt $stmt, string $types, array $baseParams, a
         $refs[$k] = &$params[$k];
     }
     array_unshift($refs, $types);
-    return (bool)call_user_func_array([$stmt, 'bind_param'], $refs);
+    return (bool) call_user_func_array([$stmt, 'bind_param'], $refs);
 }
 
 function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, ?array $monthFilter = null): int
@@ -1406,7 +1474,7 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     if (!$stmt->execute()) {
         return 0;
     }
-    return (int)($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+    return (int) ($stmt->get_result()->fetch_assoc()['c'] ?? 0);
 }
 
 /**
@@ -1497,7 +1565,7 @@ function ensureUserOrgTicketsViewColumn($mysqli): bool
     if (dbColumnExists('users', 'org_tickets_view')) {
         return true;
     }
-    $ok = (bool)@$mysqli->query(
+    $ok = (bool) @$mysqli->query(
         'ALTER TABLE users ADD COLUMN org_tickets_view TINYINT(1) NOT NULL DEFAULT 0'
     );
     unset($_SESSION['_dbmeta_cache']['col:users:org_tickets_view']);
@@ -1521,7 +1589,7 @@ function userOrgTicketsViewEnabled($mysqli, int $userId, int $empresaId): bool
         return false;
     }
     $row = $stmt->get_result()->fetch_assoc();
-    return ((int)($row['org_tickets_view'] ?? 0)) === 1;
+    return ((int) ($row['org_tickets_view'] ?? 0)) === 1;
 }
 
 function setUserOrgTicketsView($mysqli, int $userId, int $empresaId, bool $enabled): bool
@@ -1580,7 +1648,7 @@ function usersShareOrganization($mysqli, int $userIdA, int $userIdB, int $empres
     if (!$stmt->execute()) {
         return false;
     }
-    return (bool)$stmt->get_result()->fetch_assoc();
+    return (bool) $stmt->get_result()->fetch_assoc();
 }
 
 /** Acceso del cliente a un ticket (propio o vista por organización). */
@@ -1620,7 +1688,7 @@ function getPortalOrganizationsForUser($mysqli, int $userId, int $empresaId): ar
         return [];
     }
     $row = $stmt->get_result()->fetch_assoc();
-    return $row ? [['organization_id' => (int)$row['organization_id'], 'name' => (string)$row['name']]] : [];
+    return $row ? [['organization_id' => (int) $row['organization_id'], 'name' => (string) $row['name']]] : [];
 }
 
 function removeOrganizationMembershipsByName($mysqli, int $empresaId, string $orgName): void
@@ -1647,7 +1715,8 @@ function removeOrganizationMembershipsByName($mysqli, int $empresaId, string $or
 }
 
 // Validar CSRF
-function validateCSRF() {
+function validateCSRF()
+{
     if ($_POST && !Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
         return false;
     }
@@ -1655,13 +1724,15 @@ function validateCSRF() {
 }
 
 // Campo CSRF en formulario
-function csrfField() {
-    echo '<input type="hidden" name="csrf_token" value="' . 
-         htmlspecialchars($_SESSION['csrf_token']) . '">';
+function csrfField()
+{
+    echo '<input type="hidden" name="csrf_token" value="' .
+        htmlspecialchars($_SESSION['csrf_token']) . '">';
 }
 
 // Escapar output (XSS prevention)
-function html($text) {
+function html($text)
+{
     return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 }
 
@@ -1670,7 +1741,8 @@ function html($text) {
  * (ej: asunto del ticket con &nbsp; insertado por teclado móvil).
  * Decodifica entidades HTML, elimina tags, y retorna texto seguro para re-escapar.
  */
-function cleanPlainText(string $text): string {
+function cleanPlainText(string $text): string
+{
     // Decodificar entidades HTML (incluye &nbsp; → espacio normal)
     $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     // Eliminar cualquier etiqueta HTML residual
@@ -1681,9 +1753,11 @@ function cleanPlainText(string $text): string {
     return trim($text);
 }
 
-function sanitizeRichText($inputHtml) {
-    $inputHtml = (string)$inputHtml;
-    if ($inputHtml === '') return '';
+function sanitizeRichText($inputHtml)
+{
+    $inputHtml = (string) $inputHtml;
+    if ($inputHtml === '')
+        return '';
     if (stripos($inputHtml, '<') === false) {
         // Decodificar entidades HTML literales (ej: &nbsp; insertado por teclado móvil/editor)
         // antes de re-escapar, para que no aparezcan como texto "&nbsp;" en pantalla.
@@ -1716,7 +1790,8 @@ function sanitizeRichText($inputHtml) {
 
     $stripDisallowed = function ($html) use ($allowed) {
         $allowedTags = '';
-        foreach (array_keys($allowed) as $t) $allowedTags .= '<' . $t . '>';
+        foreach (array_keys($allowed) as $t)
+            $allowedTags .= '<' . $t . '>';
         return strip_tags($html, $allowedTags);
     };
 
@@ -1732,7 +1807,7 @@ function sanitizeRichText($inputHtml) {
     libxml_clear_errors();
 
     $normalizeProtocolRelative = function ($url) {
-        $url = trim((string)$url);
+        $url = trim((string) $url);
         if (strpos($url, '//') === 0) {
             return 'https:' . $url;
         }
@@ -1740,38 +1815,49 @@ function sanitizeRichText($inputHtml) {
     };
 
     $isSafeUrl = function ($url) use ($normalizeProtocolRelative) {
-        $url = trim((string)$url);
-        if ($url === '') return false;
-        if (strpos($url, '#') === 0) return true;
-        if (preg_match('~^mailto:~i', $url)) return true;
+        $url = trim((string) $url);
+        if ($url === '')
+            return false;
+        if (strpos($url, '#') === 0)
+            return true;
+        if (preg_match('~^mailto:~i', $url))
+            return true;
         $url = $normalizeProtocolRelative($url);
-        if (preg_match('~^https?://~i', $url)) return true;
+        if (preg_match('~^https?://~i', $url))
+            return true;
         return false;
     };
 
     $isSafeImgSrc = function ($url) use ($normalizeProtocolRelative) {
-        $url = trim((string)$url);
-        if ($url === '') return false;
+        $url = trim((string) $url);
+        if ($url === '')
+            return false;
         $url = $normalizeProtocolRelative($url);
-        if (preg_match('~^https?://~i', $url)) return true;
-        if (preg_match('~^data:image/(png|jpe?g|gif|webp);base64,~i', $url)) return true;
+        if (preg_match('~^https?://~i', $url))
+            return true;
+        if (preg_match('~^data:image/(png|jpe?g|gif|webp);base64,~i', $url))
+            return true;
         return false;
     };
 
     $isSafeIframeSrc = function ($url) use ($normalizeProtocolRelative) {
-        $url = trim((string)$url);
-        if ($url === '') return false;
+        $url = trim((string) $url);
+        if ($url === '')
+            return false;
         $url = $normalizeProtocolRelative($url);
-        if (!preg_match('~^https?://~i', $url)) return false;
-        return (bool)preg_match('~^https?://(www\.)?(youtube\.com/embed/|youtube-nocookie\.com/embed/|player\.vimeo\.com/video/)~i', $url);
+        if (!preg_match('~^https?://~i', $url))
+            return false;
+        return (bool) preg_match('~^https?://(www\.)?(youtube\.com/embed/|youtube-nocookie\.com/embed/|player\.vimeo\.com/video/)~i', $url);
     };
 
     $walker = function ($node) use (&$walker, $allowed, $isSafeUrl, $isSafeImgSrc, $isSafeIframeSrc) {
-        if (!$node || !$node->childNodes) return;
+        if (!$node || !$node->childNodes)
+            return;
         // Iterate backwards because we may remove nodes
         for ($i = $node->childNodes->length - 1; $i >= 0; $i--) {
             $child = $node->childNodes->item($i);
-            if (!$child) continue;
+            if (!$child)
+                continue;
 
             if ($child->nodeType === XML_ELEMENT_NODE) {
                 $tag = strtolower($child->nodeName);
@@ -1801,7 +1887,8 @@ function sanitizeRichText($inputHtml) {
                             continue;
                         }
                     }
-                    foreach ($toRemove as $rm) $child->removeAttribute($rm);
+                    foreach ($toRemove as $rm)
+                        $child->removeAttribute($rm);
                 }
 
                 // Tag-specific attribute sanitization
@@ -1861,24 +1948,27 @@ function sanitizeRichText($inputHtml) {
     } else {
         $out = $doc->saveHTML();
         // Eliminar la declaración xml y posibles wrappers html/body
-        $out = preg_replace('~^<\?xml[^>]*>~i', '', (string)$out);
+        $out = preg_replace('~^<\?xml[^>]*>~i', '', (string) $out);
         $out = preg_replace('~^<!DOCTYPE[^>]*>~i', '', $out);
         $out = preg_replace('~<html[^>]*>|</html>|<body[^>]*>|</body>|<head[^>]*>.*?</head>~is', '', $out);
     }
 
     // DOMDocument::saveHTML convierte &nbsp; (\xc2\xa0) a &#160; — restaurar a &nbsp; para renderizado correcto
-    $out = str_replace(['&#160;', "\xc2\xa0"], '&nbsp;', (string)$out);
+    $out = str_replace(['&#160;', "\xc2\xa0"], '&nbsp;', (string) $out);
 
-    return trim((string)$out);
+    return trim((string) $out);
 }
 
 // Formatear fecha
-function formatDate($date) {
-    if (!$date) return '-';
+function formatDate($date)
+{
+    if (!$date)
+        return '-';
     return date('d/m/Y h:i A', strtotime($date));
 }
 
-function normalizeTicketHexColor(string $color, string $fallback = '#64748b'): string {
+function normalizeTicketHexColor(string $color, string $fallback = '#64748b'): string
+{
     $color = trim($color);
     if (!preg_match('~^#([0-9a-f]{3}|[0-9a-f]{6})$~i', $color)) {
         return $fallback;
@@ -1889,7 +1979,8 @@ function normalizeTicketHexColor(string $color, string $fallback = '#64748b'): s
     return strtolower($color);
 }
 
-function parseTicketHexRgb(string $color): ?array {
+function parseTicketHexRgb(string $color): ?array
+{
     $color = normalizeTicketHexColor($color, '');
     if ($color === '' || !preg_match('~^#([0-9a-f]{6})$~i', $color, $m)) {
         return null;
@@ -1901,41 +1992,51 @@ function parseTicketHexRgb(string $color): ?array {
     ];
 }
 
-function clientTicketBadgeStyle(string $color, bool $darkMode = false): string {
+function clientTicketBadgeStyle(string $color, bool $darkMode = false): string
+{
     $hex = normalizeTicketHexColor($color);
     $rgb = parseTicketHexRgb($hex);
     if ($rgb === null) {
         return '--badge-bg-light:rgb(232,235,239);--badge-color-light:#64748b;--badge-bg-dark:rgb(33,39,53);--badge-color-dark:#cbd5e1;--badge-border-dark:rgb(46,54,72);';
     }
     [$r, $g, $b] = $rgb;
-    
-    $bgLightR = (int)round($r * 0.15 + 255 * 0.85);
-    $bgLightG = (int)round($g * 0.15 + 255 * 0.85);
-    $bgLightB = (int)round($b * 0.15 + 255 * 0.85);
 
-    $textDarkR = (int)round($r * 0.42 + 212 * 0.58);
-    $textDarkG = (int)round($g * 0.42 + 212 * 0.58);
-    $textDarkB = (int)round($b * 0.42 + 216 * 0.58);
-    
-    $bgDarkR = (int)round($r * 0.14 + 24 * 0.86);
-    $bgDarkG = (int)round($g * 0.14 + 24 * 0.86);
-    $bgDarkB = (int)round($b * 0.14 + 27 * 0.86);
-    
-    $borderDarkR = (int)round($r * 0.26 + 24 * 0.74);
-    $borderDarkG = (int)round($g * 0.26 + 24 * 0.74);
-    $borderDarkB = (int)round($b * 0.26 + 27 * 0.74);
+    $bgLightR = (int) round($r * 0.15 + 255 * 0.85);
+    $bgLightG = (int) round($g * 0.15 + 255 * 0.85);
+    $bgLightB = (int) round($b * 0.15 + 255 * 0.85);
+
+    $textDarkR = (int) round($r * 0.42 + 212 * 0.58);
+    $textDarkG = (int) round($g * 0.42 + 212 * 0.58);
+    $textDarkB = (int) round($b * 0.42 + 216 * 0.58);
+
+    $bgDarkR = (int) round($r * 0.14 + 24 * 0.86);
+    $bgDarkG = (int) round($g * 0.14 + 24 * 0.86);
+    $bgDarkB = (int) round($b * 0.14 + 27 * 0.86);
+
+    $borderDarkR = (int) round($r * 0.26 + 24 * 0.74);
+    $borderDarkG = (int) round($g * 0.26 + 24 * 0.74);
+    $borderDarkB = (int) round($b * 0.26 + 27 * 0.74);
 
     return sprintf(
         '--badge-bg-light:rgb(%d,%d,%d);--badge-color-light:%s;--badge-bg-dark:rgb(%d,%d,%d);--badge-color-dark:rgb(%d,%d,%d);--badge-border-dark:rgb(%d,%d,%d);',
-        $bgLightR, $bgLightG, $bgLightB,
+        $bgLightR,
+        $bgLightG,
+        $bgLightB,
         $hex,
-        $bgDarkR, $bgDarkG, $bgDarkB,
-        $textDarkR, $textDarkG, $textDarkB,
-        $borderDarkR, $borderDarkG, $borderDarkB
+        $bgDarkR,
+        $bgDarkG,
+        $bgDarkB,
+        $textDarkR,
+        $textDarkG,
+        $textDarkB,
+        $borderDarkR,
+        $borderDarkG,
+        $borderDarkB
     );
 }
 
-function clientTicketBadgeDotStyle(string $color, bool $darkMode = false): string {
+function clientTicketBadgeDotStyle(string $color, bool $darkMode = false): string
+{
     $hex = normalizeTicketHexColor($color);
     $rgb = parseTicketHexRgb($hex);
     if ($rgb === null) {
@@ -1948,23 +2049,27 @@ function clientTicketBadgeDotStyle(string $color, bool $darkMode = false): strin
 }
 
 // Redirect
-function redirect($url) {
+function redirect($url)
+{
     header("Location: $url");
     exit;
 }
 
 // GET seguro
-function getQuery($key, $default = null) {
+function getQuery($key, $default = null)
+{
     return $_GET[$key] ?? $default;
 }
 
 // POST seguro
-function getPost($key, $default = null) {
+function getPost($key, $default = null)
+{
     return $_POST[$key] ?? $default;
 }
 
 // Obtener usuario actual
-function getCurrentUser() {
+function getCurrentUser()
+{
     if (isset($_SESSION['user_id'])) {
         return [
             'id' => $_SESSION['user_id'],
@@ -1984,23 +2089,27 @@ function getCurrentUser() {
 }
 
 // Validar email
-function isValidEmail($email) {
+function isValidEmail($email)
+{
     return filter_var($email, FILTER_VALIDATE_EMAIL) ? true : false;
 }
 
 // Generar número de ticket
-function generateTicketNumber() {
-    return strtoupper(substr(md5(uniqid()), 0, 3)) . '-' . date('Ymd') . '-' . 
-           str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
+function generateTicketNumber()
+{
+    return strtoupper(substr(md5(uniqid()), 0, 3)) . '-' . date('Ymd') . '-' .
+        str_pad(mt_rand(1, 999999), 6, '0', STR_PAD_LEFT);
 }
 
-function ensureAppSettingsTable() {
+function ensureAppSettingsTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
 
     static $ensured = null;
     if ($ensured !== null) {
-        return (bool)$ensured;
+        return (bool) $ensured;
     }
 
     $sql = "CREATE TABLE IF NOT EXISTS app_settings (\n"
@@ -2028,7 +2137,7 @@ function ensureAppSettingsTable() {
         $idx = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'PRIMARY'");
         if ($idx) {
             while ($r = $idx->fetch_assoc()) {
-                $primaryCols[] = (string)($r['Column_name'] ?? '');
+                $primaryCols[] = (string) ($r['Column_name'] ?? '');
             }
         }
         $primaryCols = array_values(array_filter(array_unique($primaryCols)));
@@ -2055,11 +2164,14 @@ function ensureAppSettingsTable() {
     return true;
 }
 
-function getAppSetting($key, $default = null) {
+function getAppSetting($key, $default = null)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return $default;
-    if (!ensureAppSettingsTable()) return $default;
-    $key = (string)$key;
+    if (!isset($mysqli) || !$mysqli)
+        return $default;
+    if (!ensureAppSettingsTable())
+        return $default;
+    $key = (string) $key;
 
     static $hasEmpresa = null;
     if ($hasEmpresa === null) {
@@ -2076,26 +2188,32 @@ function getAppSetting($key, $default = null) {
     if ($hasEmpresa) {
         $eid = empresaId();
         $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `empresa_id` = ? AND `key` = ? LIMIT 1');
-        if (!$stmt) return $default;
+        if (!$stmt)
+            return $default;
         $stmt->bind_param('is', $eid, $key);
     } else {
         $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `key` = ? LIMIT 1');
-        if (!$stmt) return $default;
+        if (!$stmt)
+            return $default;
         $stmt->bind_param('s', $key);
     }
-    if (!$stmt) return $default;
+    if (!$stmt)
+        return $default;
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $valueCache[$cacheKey] = $row ? ($row['value'] ?? $default) : $default;
     return $valueCache[$cacheKey];
 }
 
-function setAppSetting($key, $value) {
+function setAppSetting($key, $value)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    if (!ensureAppSettingsTable()) return false;
-    $key = (string)$key;
-    $value = $value !== null ? (string)$value : null;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    if (!ensureAppSettingsTable())
+        return false;
+    $key = (string) $key;
+    $value = $value !== null ? (string) $value : null;
 
     static $hasEmpresa = null;
     if ($hasEmpresa === null) {
@@ -2106,39 +2224,48 @@ function setAppSetting($key, $value) {
     if ($hasEmpresa) {
         $eid = empresaId();
         $stmt = $mysqli->prepare('INSERT INTO app_settings (`empresa_id`, `key`, `value`, `updated`) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
-        if (!$stmt) return false;
+        if (!$stmt)
+            return false;
         $stmt->bind_param('iss', $eid, $key, $value);
         $ok = $stmt->execute();
-        if ($ok) $valueCache['e' . $eid . ':' . $key] = $value;
+        if ($ok)
+            $valueCache['e' . $eid . ':' . $key] = $value;
         return $ok;
     }
 
     $stmt = $mysqli->prepare('INSERT INTO app_settings (`key`, `value`, `updated`) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `updated` = NOW()');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
     $stmt->bind_param('ss', $key, $value);
     $ok = $stmt->execute();
-    if ($ok) $valueCache['global:' . $key] = $value;
+    if ($ok)
+        $valueCache['global:' . $key] = $value;
     return $ok;
 }
 
-function toAppAbsoluteUrl($path) {
-    $path = (string)$path;
-    if ($path === '') return '';
-    if (preg_match('~^https?://~i', $path)) return $path;
-    if ($path[0] === '/') return rtrim((string)APP_URL, '/') . $path;
+function toAppAbsoluteUrl($path)
+{
+    $path = (string) $path;
+    if ($path === '')
+        return '';
+    if (preg_match('~^https?://~i', $path))
+        return $path;
+    if ($path[0] === '/')
+        return rtrim((string) APP_URL, '/') . $path;
 
     $p = $path;
     while (strpos($p, '../') === 0) {
         $p = substr($p, 3);
     }
     $p = ltrim($p, '/');
-    return rtrim((string)APP_URL, '/') . '/' . $p;
+    return rtrim((string) APP_URL, '/') . '/' . $p;
 }
 
-function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
-    $val = (string)getAppSetting($settingKey, '');
+function getBrandAssetUrl($settingKey, $fallbackRelativePath)
+{
+    $val = (string) getAppSetting($settingKey, '');
     if ($val === '' && function_exists('empresaId')) {
-        $eid = (int)empresaId();
+        $eid = (int) empresaId();
         if ($eid !== 1) {
             global $mysqli;
             if (isset($mysqli) && $mysqli) {
@@ -2146,11 +2273,11 @@ function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
                     if (ensureAppSettingsTable()) {
                         $stmt = $mysqli->prepare('SELECT `value` FROM app_settings WHERE `empresa_id` = 1 AND `key` = ? LIMIT 1');
                         if ($stmt) {
-                            $k = (string)$settingKey;
+                            $k = (string) $settingKey;
                             $stmt->bind_param('s', $k);
                             if ($stmt->execute()) {
                                 $row = $stmt->get_result()->fetch_assoc();
-                                $val = (string)($row['value'] ?? '');
+                                $val = (string) ($row['value'] ?? '');
                             }
                         }
                     }
@@ -2165,7 +2292,8 @@ function getBrandAssetUrl($settingKey, $fallbackRelativePath) {
     return toAppAbsoluteUrl($fallbackRelativePath);
 }
 
-function getDefaultCompanyLogoRelativePath() {
+function getDefaultCompanyLogoRelativePath()
+{
     $candidates = [
         'publico/img/vigitec-logo.webp',
         'publico/img/vigitec-logo.png',
@@ -2177,7 +2305,7 @@ function getDefaultCompanyLogoRelativePath() {
 
     $rootAbs = realpath(__DIR__ . '/..');
     if ($rootAbs) {
-        $rootAbs = rtrim((string)$rootAbs, '/\\');
+        $rootAbs = rtrim((string) $rootAbs, '/\\');
         foreach ($candidates as $candidate) {
             $fs = $rootAbs . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $candidate);
             if (is_file($fs)) {
@@ -2189,16 +2317,17 @@ function getDefaultCompanyLogoRelativePath() {
     return $candidates[0];
 }
 
-function getCompanyLogoUrl($fallbackRelativePath = '') {
-    $mode = (string)getAppSetting('company.logo_mode', '');
-    $logo = (string)getAppSetting('company.logo', '');
-    $fallbackRelativePath = (string)$fallbackRelativePath;
+function getCompanyLogoUrl($fallbackRelativePath = '')
+{
+    $mode = (string) getAppSetting('company.logo_mode', '');
+    $logo = (string) getAppSetting('company.logo', '');
+    $fallbackRelativePath = (string) $fallbackRelativePath;
     if ($fallbackRelativePath === '' || preg_match('~^publico/img/vigitec-logo\.(?:png|webp|jpg|jpeg|gif|svg)$~i', $fallbackRelativePath)) {
         $fallbackRelativePath = getDefaultCompanyLogoRelativePath();
     }
 
     if (($mode === '' && $logo === '') && function_exists('empresaId')) {
-        $eid = (int)empresaId();
+        $eid = (int) empresaId();
         if ($eid !== 1) {
             global $mysqli;
             if (isset($mysqli) && $mysqli) {
@@ -2208,10 +2337,12 @@ function getCompanyLogoUrl($fallbackRelativePath = '') {
                         if ($stmt && $stmt->execute()) {
                             $res = $stmt->get_result();
                             while ($row = $res->fetch_assoc()) {
-                                $k = (string)($row['key'] ?? '');
-                                $v = (string)($row['value'] ?? '');
-                                if ($k === 'company.logo_mode' && $mode === '') $mode = $v;
-                                if ($k === 'company.logo' && $logo === '') $logo = $v;
+                                $k = (string) ($row['key'] ?? '');
+                                $v = (string) ($row['value'] ?? '');
+                                if ($k === 'company.logo_mode' && $mode === '')
+                                    $mode = $v;
+                                if ($k === 'company.logo' && $logo === '')
+                                    $logo = $v;
                             }
                         }
                     }
@@ -2233,11 +2364,11 @@ function getCompanyLogoUrl($fallbackRelativePath = '') {
     }
 
     try {
-        $path = (string)parse_url($finalUrl, PHP_URL_PATH);
+        $path = (string) parse_url($finalUrl, PHP_URL_PATH);
         if ($path !== '') {
             $rootAbs = realpath(__DIR__ . '/..');
-            $publicAbs = $rootAbs ? (rtrim((string)$rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'publico') : '';
-            $uploadAbs = $rootAbs ? (rtrim((string)$rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'upload') : '';
+            $publicAbs = $rootAbs ? (rtrim((string) $rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'publico') : '';
+            $uploadAbs = $rootAbs ? (rtrim((string) $rootAbs, '/\\') . DIRECTORY_SEPARATOR . 'upload') : '';
 
             $ver = 1;
             $posPub = strpos($path, '/publico/');
@@ -2245,8 +2376,9 @@ function getCompanyLogoUrl($fallbackRelativePath = '') {
                 $rel = substr($path, $posPub + 9);
                 $fs = rtrim($publicAbs, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
                 if (is_file($fs)) {
-                    $ver = (int)@filemtime($fs);
-                    if ($ver <= 0) $ver = 1;
+                    $ver = (int) @filemtime($fs);
+                    if ($ver <= 0)
+                        $ver = 1;
                 }
             } else {
                 $posUp = strpos($path, '/upload/');
@@ -2254,14 +2386,15 @@ function getCompanyLogoUrl($fallbackRelativePath = '') {
                     $rel = substr($path, $posUp + 7);
                     $fs = rtrim($uploadAbs, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($rel, '/'));
                     if (is_file($fs)) {
-                        $ver = (int)@filemtime($fs);
-                        if ($ver <= 0) $ver = 1;
+                        $ver = (int) @filemtime($fs);
+                        if ($ver <= 0)
+                            $ver = 1;
                     }
                 }
             }
 
             if ($ver > 1) {
-                $finalUrl .= (strpos($finalUrl, '?') !== false ? '&' : '?') . 'v=' . (string)$ver;
+                $finalUrl .= (strpos($finalUrl, '?') !== false ? '&' : '?') . 'v=' . (string) $ver;
             }
         }
     } catch (Throwable $e) {
@@ -2270,18 +2403,21 @@ function getCompanyLogoUrl($fallbackRelativePath = '') {
     return $finalUrl;
 }
 
-function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null) {
+function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    $action = trim((string)$action);
-    if ($action === '') return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    $action = trim((string) $action);
+    if ($action === '')
+        return false;
 
-    $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
-    $details = $details !== null ? (string)$details : null;
-    $object_type = $object_type !== null ? (string)$object_type : null;
-    $object_id = ($object_id !== null && is_numeric($object_id)) ? (int)$object_id : null;
-    $user_type = $user_type !== null ? (string)$user_type : null;
-    $user_id = ($user_id !== null && is_numeric($user_id)) ? (int)$user_id : null;
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $details = $details !== null ? (string) $details : null;
+    $object_type = $object_type !== null ? (string) $object_type : null;
+    $object_id = ($object_id !== null && is_numeric($object_id)) ? (int) $object_id : null;
+    $user_type = $user_type !== null ? (string) $user_type : null;
+    $user_id = ($user_id !== null && is_numeric($user_id)) ? (int) $user_id : null;
 
     $hasEmpresa = false;
     $hasEmpresa = dbColumnExists('logs', 'empresa_id');
@@ -2289,13 +2425,15 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     if ($hasEmpresa) {
         $eid = empresaId();
         $stmt = $mysqli->prepare('INSERT INTO logs (empresa_id, action, object_type, object_id, user_type, user_id, details, ip_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
-        if (!$stmt) return false;
+        if (!$stmt)
+            return false;
         $stmt->bind_param('ississss', $eid, $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
         return $stmt->execute();
     }
 
     $stmt = $mysqli->prepare('INSERT INTO logs (action, object_type, object_id, user_type, user_id, details, ip_address, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
     $stmt->bind_param('ssissss', $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
     return $stmt->execute();
 }
@@ -2304,26 +2442,29 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
  * Notifica a los agentes configurados en "Destinatarios de notificaciones" (emailsettings.php)
  * sobre un cambio de estado importante (En Camino, En Proceso, etc.) vía campana.
  */
-function notifyStatusChangeToAdminRecipients($tid, $statusName) {
+function notifyStatusChangeToAdminRecipients($tid, $statusName)
+{
     global $mysqli;
     $eid = empresaId();
-    $tid = (int)$tid;
-    
+    $tid = (int) $tid;
+
     // Obtener info básica del ticket
     $stmtT = $mysqli->prepare("SELECT ticket_number, subject FROM tickets WHERE id = ? AND empresa_id = ?");
-    if (!$stmtT) return;
+    if (!$stmtT)
+        return;
     $stmtT->bind_param('ii', $tid, $eid);
     $stmtT->execute();
     $tRes = $stmtT->get_result();
     $tRow = $tRes ? $tRes->fetch_assoc() : null;
-    if (!$tRow) return;
-    
-    $tNo = (string)($tRow['ticket_number'] ?? ('#' . $tid));
-    $tSub = (string)($tRow['subject'] ?? '');
+    if (!$tRow)
+        return;
+
+    $tNo = (string) ($tRow['ticket_number'] ?? ('#' . $tid));
+    $tSub = (string) ($tRow['subject'] ?? '');
     // Mensaje simplificado: Ticket #123456 en camino
     $message = "Ticket #$tNo " . mb_strtolower($statusName);
     $type = 'ticket_assigned'; // Redirige a tickets.php?id=X
-    
+
     // Obtener destinatarios configurados
     $recipients = [];
     $stmtR = $mysqli->prepare("SELECT staff_id FROM notification_recipients WHERE empresa_id = ?");
@@ -2332,17 +2473,19 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName) {
         if ($stmtR->execute()) {
             $resR = $stmtR->get_result();
             while ($r = $resR->fetch_assoc()) {
-                $sid = (int)($r['staff_id'] ?? 0);
-                if ($sid > 0) $recipients[] = $sid;
+                $sid = (int) ($r['staff_id'] ?? 0);
+                if ($sid > 0)
+                    $recipients[] = $sid;
             }
         }
     }
-    
-    if (empty($recipients)) return;
-    
+
+    if (empty($recipients))
+        return;
+
     // Evitar duplicados en la misma ejecución
     $recipients = array_unique($recipients);
-    
+
     // Insertar notificaciones
     $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
     if ($stmtN) {
@@ -2353,9 +2496,11 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName) {
     }
 }
 
-function ensureEmailQueueTable() {
+function ensureEmailQueueTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
 
     $sql = "CREATE TABLE IF NOT EXISTS email_queue (\n"
         . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
@@ -2378,7 +2523,8 @@ function ensureEmailQueueTable() {
         . "  KEY idx_email_queue_empresa (empresa_id),\n"
         . "  KEY idx_email_queue_context (context_type, context_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql)) return false;
+    if (!$mysqli->query($sql))
+        return false;
 
     if (!dbColumnExists('email_queue', 'empresa_id')) {
         @$mysqli->query("ALTER TABLE email_queue ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
@@ -2387,9 +2533,11 @@ function ensureEmailQueueTable() {
     return true;
 }
 
-function ensureEmailLogsTable() {
+function ensureEmailLogsTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     $sql = "CREATE TABLE IF NOT EXISTS email_logs (\n"
         . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
@@ -2402,13 +2550,16 @@ function ensureEmailLogsTable() {
         . "  KEY idx_email_logs_queue (queue_id),\n"
         . "  KEY idx_email_logs_status (status)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql)) return false;
+    if (!$mysqli->query($sql))
+        return false;
     return true;
 }
 
-function ensureNotificationRecipientsTable() {
+function ensureNotificationRecipientsTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     $sql = "CREATE TABLE IF NOT EXISTS notification_recipients (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
@@ -2418,26 +2569,32 @@ function ensureNotificationRecipientsTable() {
         . "  KEY idx_notification_staff (staff_id),\n"
         . "  KEY idx_notification_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql)) return false;
+    if (!$mysqli->query($sql))
+        return false;
     return true;
 }
 
-function parseEmailList($rawEmails) {
+function parseEmailList($rawEmails)
+{
     $out = [
         'valid' => [],
         'invalid' => [],
     ];
-    $raw = (string)$rawEmails;
-    if ($raw === '') return $out;
+    $raw = (string) $rawEmails;
+    if ($raw === '')
+        return $out;
 
     $parts = preg_split('/[;,]+/', $raw);
-    if (!is_array($parts)) return $out;
+    if (!is_array($parts))
+        return $out;
 
     $seen = [];
     foreach ($parts as $item) {
-        $email = strtolower(trim((string)$item));
-        if ($email === '') continue;
-        if (isset($seen[$email])) continue;
+        $email = strtolower(trim((string) $item));
+        if ($email === '')
+            continue;
+        if (isset($seen[$email]))
+            continue;
         $seen[$email] = true;
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $out['valid'][] = $email;
@@ -2448,28 +2605,37 @@ function parseEmailList($rawEmails) {
     return $out;
 }
 
-function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta = []) {
+function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta = [])
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    if (!ensureEmailQueueTable()) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    if (!ensureEmailQueueTable())
+        return false;
 
-    $to = strtolower(trim((string)$to));
-    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) return false;
+    $to = strtolower(trim((string) $to));
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL))
+        return false;
 
     $eid = isset($meta['empresa_id']) && is_numeric($meta['empresa_id'])
-        ? (int)$meta['empresa_id']
-        : (function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1));
-    if ($eid <= 0) $eid = 1;
+        ? (int) $meta['empresa_id']
+        : (function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1));
+    if ($eid <= 0)
+        $eid = 1;
 
-    $contextType = isset($meta['context_type']) ? trim((string)$meta['context_type']) : null;
-    if ($contextType === '') $contextType = null;
-    $contextId = isset($meta['context_id']) && is_numeric($meta['context_id']) ? (int)$meta['context_id'] : null;
-    $maxAttempts = isset($meta['max_attempts']) && is_numeric($meta['max_attempts']) ? (int)$meta['max_attempts'] : 5;
-    if ($maxAttempts < 1) $maxAttempts = 1;
-    if ($maxAttempts > 15) $maxAttempts = 15;
+    $contextType = isset($meta['context_type']) ? trim((string) $meta['context_type']) : null;
+    if ($contextType === '')
+        $contextType = null;
+    $contextId = isset($meta['context_id']) && is_numeric($meta['context_id']) ? (int) $meta['context_id'] : null;
+    $maxAttempts = isset($meta['max_attempts']) && is_numeric($meta['max_attempts']) ? (int) $meta['max_attempts'] : 5;
+    if ($maxAttempts < 1)
+        $maxAttempts = 1;
+    if ($maxAttempts > 15)
+        $maxAttempts = 15;
 
-    $subject = trim((string)$subject);
-    if ($subject === '') $subject = '(Sin asunto)';
+    $subject = trim((string) $subject);
+    if ($subject === '')
+        $subject = '(Sin asunto)';
     if (mb_strlen($subject) > 255) {
         $subject = mb_substr($subject, 0, 252) . '...';
     }
@@ -2478,44 +2644,56 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
         "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"
         . "VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, NOW(), ?, ?, NOW(), NOW())"
     );
-    if (!$stmt) return false;
-    $htmlBody = (string)$bodyHtml;
-    $textBody = (string)$bodyText;
+    if (!$stmt)
+        return false;
+    $htmlBody = (string) $bodyHtml;
+    $textBody = (string) $bodyText;
     $stmt->bind_param('issssisi', $eid, $to, $subject, $htmlBody, $textBody, $maxAttempts, $contextType, $contextId);
-    return (bool)$stmt->execute();
+    return (bool) $stmt->execute();
 }
 
-function addEmailLog($status, $errorMessage = '', array $meta = []) {
+function addEmailLog($status, $errorMessage = '', array $meta = [])
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
-    if (!ensureEmailLogsTable()) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
+    if (!ensureEmailLogsTable())
+        return false;
 
-    $status = trim((string)$status);
-    if ($status === '') $status = 'unknown';
-    $error = trim((string)$errorMessage);
-    if ($error === '') $error = null;
+    $status = trim((string) $status);
+    if ($status === '')
+        $status = 'unknown';
+    $error = trim((string) $errorMessage);
+    if ($error === '')
+        $error = null;
 
     $eid = isset($meta['empresa_id']) && is_numeric($meta['empresa_id'])
-        ? (int)$meta['empresa_id']
-        : (function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1));
-    if ($eid <= 0) $eid = 1;
+        ? (int) $meta['empresa_id']
+        : (function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1));
+    if ($eid <= 0)
+        $eid = 1;
 
-    $queueId = isset($meta['queue_id']) && is_numeric($meta['queue_id']) ? (int)$meta['queue_id'] : null;
-    $recipient = isset($meta['recipient_email']) ? trim((string)$meta['recipient_email']) : null;
-    if ($recipient === '') $recipient = null;
+    $queueId = isset($meta['queue_id']) && is_numeric($meta['queue_id']) ? (int) $meta['queue_id'] : null;
+    $recipient = isset($meta['recipient_email']) ? trim((string) $meta['recipient_email']) : null;
+    if ($recipient === '')
+        $recipient = null;
 
     $stmt = $mysqli->prepare('INSERT INTO email_logs (empresa_id, queue_id, recipient_email, status, error_message, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
     $stmt->bind_param('iisss', $eid, $queueId, $recipient, $status, $error);
-    return (bool)$stmt->execute();
+    return (bool) $stmt->execute();
 }
 
-function triggerEmailQueueWorkerAsync($limit = 30) {
-    $limit = (int)$limit;
-    if ($limit < 1) $limit = 1;
-    if ($limit > 100) $limit = 100;
+function triggerEmailQueueWorkerAsync($limit = 30)
+{
+    $limit = (int) $limit;
+    if ($limit < 1)
+        $limit = 1;
+    if ($limit > 100)
+        $limit = 100;
 
-    $token = trim((string)getAppSetting('mail.queue_worker_token', ''));
+    $token = trim((string) getAppSetting('mail.queue_worker_token', ''));
     if ($token === '') {
         try {
             $token = bin2hex(random_bytes(24));
@@ -2526,24 +2704,26 @@ function triggerEmailQueueWorkerAsync($limit = 30) {
         }
     }
 
-      $appUrl = defined('APP_URL') ? APP_URL : '';
-      if ($appUrl !== '') {
-          $basePath = (string)parse_url($appUrl, PHP_URL_PATH);
-          $baseDir = rtrim($basePath, '/');
-      } else {
-          $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '/upload/open.php');
-          $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
-          $baseDir = preg_replace('#/(upload|agente)(/.*)?$#i', '', $baseDir);
-      }
-      $workerPath = $baseDir . '/upload/process_mail_queue.php';
-    $eid = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 1);
-    if ($eid <= 0) $eid = 1;
+    $appUrl = defined('APP_URL') ? APP_URL : '';
+    if ($appUrl !== '') {
+        $basePath = (string) parse_url($appUrl, PHP_URL_PATH);
+        $baseDir = rtrim($basePath, '/');
+    } else {
+        $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '/upload/open.php');
+        $baseDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+        $baseDir = preg_replace('#/(upload|agente)(/.*)?$#i', '', $baseDir);
+    }
+    $workerPath = $baseDir . '/upload/process_mail_queue.php';
+    $eid = function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1);
+    if ($eid <= 0)
+        $eid = 1;
     $qs = http_build_query(['token' => $token, 'limit' => $limit, 'eid' => $eid]);
     $path = $workerPath . '?' . $qs;
 
-    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
     $hostOnly = preg_replace('/:\d+$/', '', $host);
-    if ($hostOnly === '') $hostOnly = 'localhost';
+    if ($hostOnly === '')
+        $hostOnly = 'localhost';
     $port = 80;
     $scheme = 'http';
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
@@ -2551,7 +2731,7 @@ function triggerEmailQueueWorkerAsync($limit = 30) {
         $port = 443;
     }
     if (preg_match('/:(\d+)$/', $host, $m)) {
-        $port = (int)$m[1];
+        $port = (int) $m[1];
     }
 
     $transport = ($scheme === 'https') ? 'ssl://' : '';
@@ -2572,9 +2752,11 @@ function triggerEmailQueueWorkerAsync($limit = 30) {
     return true;
 }
 
-function ensureRolePermissionsTable() {
+function ensureRolePermissionsTable()
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     $sql = "CREATE TABLE IF NOT EXISTS role_permissions (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
@@ -2588,7 +2770,7 @@ function ensureRolePermissionsTable() {
         . "  KEY idx_perm (perm_key),\n"
         . "  KEY idx_role_perm_empresa (empresa_id, role_name)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    $ok = (bool)$mysqli->query($sql);
+    $ok = (bool) $mysqli->query($sql);
 
     try {
         $hasEmpresaId = dbColumnExists('role_permissions', 'empresa_id');
@@ -2612,11 +2794,13 @@ function ensureRolePermissionsTable() {
     return $ok;
 }
 
-function getCurrentStaffRoleName() {
+function getCurrentStaffRoleName()
+{
     global $mysqli;
     static $cached = null;
-    if ($cached !== null) return $cached;
-    $sid = (int)($_SESSION['staff_id'] ?? 0);
+    if ($cached !== null)
+        return $cached;
+    $sid = (int) ($_SESSION['staff_id'] ?? 0);
     if ($sid <= 0) {
         $cached = '';
         return $cached;
@@ -2633,17 +2817,20 @@ function getCurrentStaffRoleName() {
     $stmt->bind_param('i', $sid);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    $cached = trim((string)($row['role'] ?? ''));
+    $cached = trim((string) ($row['role'] ?? ''));
     return $cached;
 }
 
-function roleHasPermission($permKey) {
+function roleHasPermission($permKey)
+{
     global $mysqli;
-    $permKey = trim((string)$permKey);
-    if ($permKey === '') return false;
+    $permKey = trim((string) $permKey);
+    if ($permKey === '')
+        return false;
 
     $role = getCurrentStaffRoleName();
-    if ($role === '') return false;
+    if ($role === '')
+        return false;
 
     // Protected fallback: admin and administrator roles always have access to admin.access to prevent accidental lockout
     // This is a safety mechanism to ensure the admin panel remains accessible
@@ -2663,7 +2850,8 @@ function roleHasPermission($permKey) {
         }
     }
 
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     ensureRolePermissionsTable();
 
     $eid = empresaId();
@@ -2677,7 +2865,8 @@ function roleHasPermission($permKey) {
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $permKey);
@@ -2686,18 +2875,22 @@ function roleHasPermission($permKey) {
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool)$row;
+    return (bool) $row;
 }
 
-function roleHasPermissionDirect($permKey) {
+function roleHasPermissionDirect($permKey)
+{
     global $mysqli;
-    $permKey = trim((string)$permKey);
-    if ($permKey === '') return false;
+    $permKey = trim((string) $permKey);
+    if ($permKey === '')
+        return false;
 
     $role = getCurrentStaffRoleName();
-    if ($role === '') return false;
+    if ($role === '')
+        return false;
 
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     ensureRolePermissionsTable();
 
     $eid = empresaId();
@@ -2711,7 +2904,8 @@ function roleHasPermissionDirect($permKey) {
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $permKey);
@@ -2720,18 +2914,22 @@ function roleHasPermissionDirect($permKey) {
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool)$row;
+    return (bool) $row;
 }
 
-function roleHasAnyPermissionPrefix($prefix) {
+function roleHasAnyPermissionPrefix($prefix)
+{
     global $mysqli;
-    $prefix = (string)$prefix;
-    if ($prefix === '') return false;
+    $prefix = (string) $prefix;
+    if ($prefix === '')
+        return false;
 
     $role = getCurrentStaffRoleName();
-    if ($role === '') return false;
+    if ($role === '')
+        return false;
 
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
     ensureRolePermissionsTable();
 
     $like = $prefix . '%';
@@ -2747,7 +2945,8 @@ function roleHasAnyPermissionPrefix($prefix) {
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt) return false;
+    if (!$stmt)
+        return false;
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $like);
@@ -2756,15 +2955,17 @@ function roleHasAnyPermissionPrefix($prefix) {
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool)$row;
+    return (bool) $row;
 }
 
-function requireRolePermission($permKey, $redirectUrl = null) {
+function requireRolePermission($permKey, $redirectUrl = null)
+{
     $ok = roleHasPermission($permKey);
-    if ($ok) return true;
+    if ($ok)
+        return true;
 
     $_SESSION['flash_error'] = 'No tienes permiso para hacer esta acción.';
-    addLog('permission_denied', (string)$permKey, null, null, 'staff', (int)($_SESSION['staff_id'] ?? 0));
+    addLog('permission_denied', (string) $permKey, null, null, 'staff', (int) ($_SESSION['staff_id'] ?? 0));
 
     if ($redirectUrl) {
         header('Location: ' . $redirectUrl);
@@ -2772,12 +2973,12 @@ function requireRolePermission($permKey, $redirectUrl = null) {
     }
 
     $fallback = toAppAbsoluteUrl('upload/scp/index.php');
-    $ref = (string)($_SERVER['HTTP_REFERER'] ?? '');
+    $ref = (string) ($_SERVER['HTTP_REFERER'] ?? '');
     if ($ref !== '') {
-        $refHost = (string)parse_url($ref, PHP_URL_HOST);
-        $curHost = (string)($_SERVER['HTTP_HOST'] ?? '');
+        $refHost = (string) parse_url($ref, PHP_URL_HOST);
+        $curHost = (string) ($_SERVER['HTTP_HOST'] ?? '');
         if ($refHost === '' || $refHost === $curHost) {
-            $refPath = (string)parse_url($ref, PHP_URL_PATH);
+            $refPath = (string) parse_url($ref, PHP_URL_PATH);
             if ($refPath !== '' && strpos($refPath, '/upload/scp/') !== false) {
                 $fallback = $ref;
             }
@@ -2789,15 +2990,20 @@ function requireRolePermission($permKey, $redirectUrl = null) {
     exit;
 }
 
-function getPostMaxSize() {
+function getPostMaxSize()
+{
     $val = trim(ini_get('post_max_size'));
-    if ($val === '') return 8 * 1024 * 1024; // default
-    $last = strtolower($val[strlen($val)-1]);
-    $res = (int)$val;
-    switch($last) {
-        case 'g': $res *= 1024;
-        case 'm': $res *= 1024;
-        case 'k': $res *= 1024;
+    if ($val === '')
+        return 8 * 1024 * 1024; // default
+    $last = strtolower($val[strlen($val) - 1]);
+    $res = (int) $val;
+    switch ($last) {
+        case 'g':
+            $res *= 1024;
+        case 'm':
+            $res *= 1024;
+        case 'k':
+            $res *= 1024;
     }
     return $res;
 }
@@ -2810,8 +3016,10 @@ function getPostMaxSize() {
  * @param string $pageParamName Nombre del parámetro de la página en la URL (ej: 'page' o 'p')
  * @return string HTML de la paginación
  */
-function renderModernPagination($page, $totalPages, $urlParams = '', $pageParamName = 'page') {
-    if ($totalPages <= 1) return '';
+function renderModernPagination($page, $totalPages, $urlParams = '', $pageParamName = 'page')
+{
+    if ($totalPages <= 1)
+        return '';
     $html = '<div class="pagination-wrap mt-4 mb-2 d-flex justify-content-center">';
     $html .= '<nav aria-label="Page navigation">';
     $html .= '<ul class="pagination pagination-sm justify-content-center mb-0 gap-1 modern-pagination">';
@@ -2871,15 +3079,20 @@ function renderModernPagination($page, $totalPages, $urlParams = '', $pageParamN
     return $html;
 }
 
-function getUploadMaxSize() {
+function getUploadMaxSize()
+{
     $val = trim(ini_get('upload_max_filesize'));
-    if ($val === '') return 2 * 1024 * 1024; // default
-    $last = strtolower($val[strlen($val)-1]);
-    $res = (int)$val;
-    switch($last) {
-        case 'g': $res *= 1024;
-        case 'm': $res *= 1024;
-        case 'k': $res *= 1024;
+    if ($val === '')
+        return 2 * 1024 * 1024; // default
+    $last = strtolower($val[strlen($val) - 1]);
+    $res = (int) $val;
+    switch ($last) {
+        case 'g':
+            $res *= 1024;
+        case 'm':
+            $res *= 1024;
+        case 'k':
+            $res *= 1024;
     }
     return $res;
 }
@@ -2887,42 +3100,46 @@ function getUploadMaxSize() {
 /**
  * Notifica a los administradores configurados cuando un cliente aprueba un ticket
  */
-function notifyApprovalToAdminRecipients($tid, $statusName) {
+function notifyApprovalToAdminRecipients($tid, $statusName)
+{
     global $mysqli;
     $eid = empresaId();
-    $tid = (int)$tid;
-    
+    $tid = (int) $tid;
+
     // Obtener info básica del ticket
     $stmtT = $mysqli->prepare("SELECT ticket_number, subject FROM tickets WHERE id = ? AND empresa_id = ?");
-    if (!$stmtT) return;
+    if (!$stmtT)
+        return;
     $stmtT->bind_param('ii', $tid, $eid);
     $stmtT->execute();
     $tRes = $stmtT->get_result();
     $tRow = $tRes ? $tRes->fetch_assoc() : null;
-    if (!$tRow) return;
-    
-    $tNo = (string)($tRow['ticket_number'] ?? ('#' . $tid));
-    $tSub = (string)($tRow['subject'] ?? '');
-    
+    if (!$tRow)
+        return;
+
+    $tNo = (string) ($tRow['ticket_number'] ?? ('#' . $tid));
+    $tSub = (string) ($tRow['subject'] ?? '');
+
     $message = "Ticket #$tNo fue $statusName por el cliente.";
     $type = 'ticket_assigned'; // Campana
-    
+
     // Obtener destinatarios configurados (ID y Email)
     $recipientsIds = [];
     $recipientsEmails = [];
-    
+
     // Check if staff has empresa_id column
     $staffHasEmpresa = false;
     try {
         $chk = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
         $staffHasEmpresa = ($chk && $chk->num_rows > 0);
-    } catch (Throwable $e) {}
+    } catch (Throwable $e) {
+    }
 
     $sqlAdmin = "SELECT s.id, s.email FROM notification_recipients nr INNER JOIN staff s ON s.id = nr.staff_id WHERE nr.empresa_id = ? AND s.is_active = 1";
     if ($staffHasEmpresa) {
         $sqlAdmin .= " AND s.empresa_id = ?";
     }
-    
+
     $stmtR = $mysqli->prepare($sqlAdmin);
     if ($stmtR) {
         if ($staffHasEmpresa) {
@@ -2933,17 +3150,18 @@ function notifyApprovalToAdminRecipients($tid, $statusName) {
         if ($stmtR->execute()) {
             $resR = $stmtR->get_result();
             while ($r = $resR->fetch_assoc()) {
-                $sid = (int)($r['id'] ?? 0);
-                if ($sid > 0) $recipientsIds[] = $sid;
-                
-                $em = strtolower(trim((string)($r['email'] ?? '')));
+                $sid = (int) ($r['id'] ?? 0);
+                if ($sid > 0)
+                    $recipientsIds[] = $sid;
+
+                $em = strtolower(trim((string) ($r['email'] ?? '')));
                 if ($em !== '' && filter_var($em, FILTER_VALIDATE_EMAIL)) {
                     $recipientsEmails[$em] = true;
                 }
             }
         }
     }
-    
+
     // 1. Notificación de campana
     if (!empty($recipientsIds)) {
         $recipientsIds = array_unique($recipientsIds);
@@ -2953,42 +3171,6 @@ function notifyApprovalToAdminRecipients($tid, $statusName) {
                 $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
                 $stmtN->execute();
             }
-        }
-    }
-    
-    // 2. Notificación por Email (Asíncrona)
-    if (!empty($recipientsEmails) && class_exists('Mailer')) {
-        $appName = getAppSetting('core.name', 'Sistema de Tickets');
-        $adminSubj = '[Aprobación] Ticket ' . $tNo . ' - ' . $tSub;
-        $adminBodyHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
-            . '<h2 style="margin:0 0 10px;color:#b91c1c;">Ticket Aprobado</h2>'
-            . '<p>El cliente ha emitido una aprobación para el ticket.</p>'
-            . '<table style="width:100%;border-collapse:collapse;margin:10px 0 14px;">'
-            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Número:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($tNo) . '</td></tr>'
-            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Asunto:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($tSub) . '</td></tr>'
-            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Acción:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($statusName) . '</td></tr>'
-            . '</table>'
-            . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($appName) . '</p>'
-            . '</div>';
-            
-        $adminBodyText = "Ticket Aprobado\n\n"
-            . "El cliente ha emitido una aprobación para el ticket.\n\n"
-            . "Numero: " . $tNo . "\n"
-            . "Asunto: " . $tSub . "\n"
-            . "Acción: " . $statusName . "\n";
-            
-        $emailsQueued = false;
-        foreach (array_keys($recipientsEmails) as $adminEmail) {
-            if (function_exists('enqueueEmailJob')) {
-                enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
-                $emailsQueued = true;
-            } else {
-                Mailer::send($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
-            }
-        }
-        
-        if ($emailsQueued && function_exists('triggerEmailQueueWorkerAsync')) {
-            triggerEmailQueueWorkerAsync();
         }
     }
 }
