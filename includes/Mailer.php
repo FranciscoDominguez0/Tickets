@@ -13,6 +13,15 @@ class Mailer {
 
     protected static $defaultAccountCache = [];
 
+    /**
+     * Limpia la caché estática de cuentas SMTP.
+     * Necesario cuando el worker procesa correos de múltiples empresas
+     * para que cada empresa use su propia configuración SMTP.
+     */
+    public static function resetCache() {
+        self::$defaultAccountCache = [];
+    }
+
     protected static function getDefaultEmailAccount($empresaId = null) {
         $eid = 0;
         if ($empresaId !== null) {
@@ -187,6 +196,76 @@ class Mailer {
             'smtp' => is_array($sys['smtp'] ?? null) ? $sys['smtp'] : [],
         ];
         return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $opts);
+    }
+
+    /**
+     * Envía un correo usando la configuración SMTP de una empresa específica.
+     * Usado por el worker de la cola para no depender de la sesión.
+     */
+    public static function sendWithEmpresa($to, $subject, $bodyHtml, $bodyText = null, $empresaId = null) {
+        self::$lastError = '';
+        $to = trim($to);
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            self::$lastError = 'Email destinatario inválido';
+            return false;
+        }
+
+        // Cargar cuenta SMTP específica de esta empresa
+        $acc = self::getDefaultEmailAccount($empresaId);
+        $sys = self::buildSystemDefaultsFromAccount($acc);
+        $opts = [
+            'from' => (string)($sys['from'] ?? 'noreply@localhost'),
+            'fromName' => (string)($sys['fromName'] ?? 'Sistema'),
+            'smtp' => is_array($sys['smtp'] ?? null) ? $sys['smtp'] : [],
+        ];
+        return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $opts);
+    }
+
+    /**
+     * Construye los defaults del sistema a partir de una cuenta.
+     * Extracción de lógica de getSystemDefaults() para reutilización.
+     */
+    protected static function buildSystemDefaultsFromAccount($acc) {
+        $from = '';
+        $fromName = '';
+        $smtp = [
+            'host' => '',
+            'port' => 587,
+            'secure' => 'tls',
+            'user' => '',
+            'pass' => '',
+        ];
+
+        if (is_array($acc)) {
+            $from = trim((string)($acc['email'] ?? ''));
+            $fromName = trim((string)($acc['name'] ?? ''));
+            $smtp['host'] = trim((string)($acc['smtp_host'] ?? ''));
+            $smtp['port'] = ($acc['smtp_port'] ?? '') !== '' ? (int)$acc['smtp_port'] : 587;
+            $smtp['secure'] = strtolower(trim((string)($acc['smtp_secure'] ?? 'tls')));
+            $smtp['user'] = trim((string)($acc['smtp_user'] ?? ''));
+            $smtp['pass'] = (string)($acc['smtp_pass'] ?? '');
+        }
+
+        if ($from === '') {
+            $from = (string)getAppSetting('mail.from', defined('MAIL_FROM') ? (string)MAIL_FROM : 'noreply@localhost');
+        }
+        if ($fromName === '') {
+            $fromName = (string)getAppSetting('mail.from_name', defined('MAIL_FROM_NAME') ? (string)MAIL_FROM_NAME : 'Sistema');
+        }
+
+        if ($smtp['host'] === '') {
+            $smtp['host'] = defined('SMTP_HOST') ? (string)SMTP_HOST : '';
+            $smtp['port'] = defined('SMTP_PORT') ? (int)SMTP_PORT : 587;
+            $smtp['secure'] = defined('SMTP_SECURE') ? strtolower((string)SMTP_SECURE) : 'tls';
+            $smtp['user'] = defined('SMTP_USER') ? (string)SMTP_USER : '';
+            $smtp['pass'] = defined('SMTP_PASS') ? (string)SMTP_PASS : '';
+        }
+
+        return [
+            'from' => $from,
+            'fromName' => $fromName,
+            'smtp' => $smtp,
+        ];
     }
 
     public static function sendWithOptions($to, $subjectRaw, $bodyHtml, $bodyText = null, array $options = []) {

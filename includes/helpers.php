@@ -2734,20 +2734,36 @@ function triggerEmailQueueWorkerAsync($limit = 30)
         $port = (int) $m[1];
     }
 
-    $transport = ($scheme === 'https') ? 'ssl://' : '';
     $errno = 0;
     $errstr = '';
-    $fp = @fsockopen($transport . $hostOnly, $port, $errno, $errstr, 1.5);
+
+    $context = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
+    
+    $fp = @stream_socket_client(
+        ($scheme === 'https' ? 'ssl://' : 'tcp://') . $hostOnly . ':' . $port,
+        $errno,
+        $errstr,
+        1.5,
+        STREAM_CLIENT_CONNECT,
+        $context
+    );
+
     if (!$fp) {
         error_log('[mail_queue] async trigger failed: ' . $hostOnly . ':' . $port . ' ' . $errstr . ' (' . $errno . ')');
         return false;
     }
 
-    stream_set_blocking($fp, false);
     $out = "GET " . $path . " HTTP/1.1\r\n";
     $out .= "Host: " . $host . "\r\n";
     $out .= "Connection: Close\r\n\r\n";
+    
     @fwrite($fp, $out);
+    
+    // Esperar hasta 50ms (0.05 segundos) leyendo el socket para evitar que Apache cancele la peticion prematuramente en Windows
+    stream_set_blocking($fp, true);
+    stream_set_timeout($fp, 0, 50000); 
+    @fread($fp, 128); 
+    
     @fclose($fp);
     return true;
 }

@@ -1,10 +1,24 @@
 <?php
 require_once '../config.php';
+// Cerrar sesión INMEDIATAMENTE para no bloquear al usuario que disparó el worker
+if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
 require_once '../includes/helpers.php';
 require_once '../includes/Mailer.php';
 
 ignore_user_abort(true);
 @set_time_limit(0);
+
+// --- Lock de concurrencia: solo un worker a la vez ---
+$lockFile = sys_get_temp_dir() . '/mail_queue_worker.lock';
+$lockFp = @fopen($lockFile, 'c');
+if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
+    // Otro worker ya está corriendo, salir sin error
+    if ($lockFp) fclose($lockFp);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['ok' => true, 'skipped' => 'another_worker_running'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+// El lock se libera al cerrar $lockFp o al terminar el script
 
 $isCli = (PHP_SAPI === 'cli');
 $requestToken = trim((string)($_REQUEST['token'] ?? ''));
@@ -56,7 +70,8 @@ ensureEmailLogsTable();
 $staleMinutes = 5;
 $stmtStale = $mysqli->prepare(
     "UPDATE email_queue\n"
-    . "SET status = 'retry',\n"
+    . "SET status = IF(attempts + 1 >= max_attempts, 'failed', 'retry'),\n"
+    . "    attempts = attempts + 1,\n"
     . "    last_error = COALESCE(NULLIF(last_error, ''), 'Worker interrumpido; reintentando'),\n"
     . "    next_attempt_at = NOW(),\n"
     . "    updated_at = NOW()\n"
@@ -133,10 +148,14 @@ foreach ($jobs as $job) {
         continue;
     }
 
+    // Limpiar caché estático de Mailer para que use la cuenta SMTP correcta por empresa
+    Mailer::resetCache();
+
     $ok = false;
     $lastError = '';
     try {
-        $ok = Mailer::send($to, $subject, $bodyHtml, $bodyText);
+        // Usar sendWithEmpresa para que cargue la config SMTP de la empresa correcta
+        $ok = Mailer::sendWithEmpresa($to, $subject, $bodyHtml, $bodyText, $empresaId);
         if (!$ok) $lastError = (string)(Mailer::$lastError ?? 'Error de envío');
     } catch (Throwable $e) {
         $ok = false;
@@ -187,3 +206,9 @@ echo json_encode([
     'retried' => $retried,
 ], JSON_UNESCAPED_UNICODE);
 error_log('[mail_queue] worker end processed=' . $processed . ' sent=' . $sent . ' failed=' . $failed . ' retried=' . $retried);
+
+// Liberar lock de concurrencia
+if (isset($lockFp) && $lockFp) {
+    flock($lockFp, LOCK_UN);
+    fclose($lockFp);
+}
