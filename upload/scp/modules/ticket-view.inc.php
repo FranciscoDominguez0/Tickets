@@ -333,13 +333,6 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
     <header class="ticket-view-header">
-        <h1 class="ticket-view-title" style="margin-bottom: 0;">
-            <a href="tickets.php?id=<?php echo $tid; ?>" title="Recargar">
-                <i class="bi bi-arrow-clockwise"></i>
-            </a>
-            Ticket #<?php echo html($t['ticket_number']); ?>
-        </h1>
-        
         <?php
         $hasOrgManager = false;
         $ticketApprovalStatus = 'none';
@@ -366,17 +359,26 @@ if ($ticketClientSignaturePath !== '') {
             }
         }
         ?>
-        <?php if ($ticketApprovalStatus !== 'none'): ?>
-            <div style="margin-top: 8px; margin-bottom: 8px; font-size: 0.85rem; font-weight: 800;">
-                <?php if ($ticketApprovalStatus === 'pending'): ?>
-                    <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
-                <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
-                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> APROBADO BAJO APROBACIÓN</span>
-                <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
-                    <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h1 class="ticket-view-title" style="margin-bottom: 0;">
+                <a href="tickets.php?id=<?php echo $tid; ?>" title="Recargar">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </a>
+                Ticket #<?php echo html($t['ticket_number']); ?>
+            </h1>
+            
+            <?php if ($ticketApprovalStatus !== 'none'): ?>
+                <div style="font-size: 0.70rem; font-weight: 800; display: inline-flex;">
+                    <?php if ($ticketApprovalStatus === 'pending'): ?>
+                        <span class="badge bg-warning text-dark px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
+                    <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
+                        <span class="badge text-white px-2 py-1" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 2px 5px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> APROBADO BAJO APROBACIÓN</span>
+                    <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
+                        <span class="badge bg-success px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
         <?php
         $canTicketEdit = roleHasPermission('ticket.edit');
         $canTicketClose = roleHasPermission('ticket.close');

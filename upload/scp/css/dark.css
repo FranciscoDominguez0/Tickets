@@ -2671,13 +2671,25 @@ body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop i {
 body.dark-mode .ticket-view-overview .btn-waze-premium,
 body.dark-mode .ticket-view-overview .btn-waze-premium:hover,
 body.dark-mode .ticket-view-overview .btn-waze-mobile,
-body.dark-mode .ticket-view-overview .btn-waze-mobile:hover {
+body.dark-mode .ticket-view-overview .btn-waze-mobile:hover,
+body.dark-mode .ticket-view-overview-desktop .btn-waze-premium,
+body.dark-mode .ticket-view-overview-desktop .btn-waze-mobile {
     color: #ffffff !important;
 }
 
 body.dark-mode .ticket-view-overview .btn-waze-premium i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-premium i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-mobile i,
+body.dark-mode .ticket-view-overview .btn-waze-premium i,
 body.dark-mode .ticket-view-overview .btn-waze-mobile i {
     color: #ffffff !important;
+}
+
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .field .badge-status i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .badge-status i,
+body.dark-mode .ticket-view-overview .badge-status i,
+body.dark-mode .ticket-view-overview .mobile-badge i {
+    color: inherit !important;
 }
 
 body.dark-mode .ticket-view-overview .field .value.sub-info {
