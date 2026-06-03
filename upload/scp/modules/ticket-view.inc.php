@@ -371,9 +371,9 @@ if ($ticketClientSignaturePath !== '') {
                 <?php if ($ticketApprovalStatus === 'pending'): ?>
                     <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
                 <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
-                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> PROCEDER BAJO APROBACIÓN</span>
+                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> APROBADO BAJO APROBACIÓN</span>
                 <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
-                    <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> PROCEDER</span>
+                    <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

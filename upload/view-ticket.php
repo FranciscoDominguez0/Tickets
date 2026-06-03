@@ -2179,7 +2179,7 @@ function humanSize($bytes) {
                                 <div>
                                     <p class="org-readonly-notice__title">Aprobado</p>
                                     <p class="org-readonly-notice__text">
-                                        <?php echo $ticketApprovalStatus === 'aprobar_solo' ? 'Proceder' : 'Proceder bajo aprobación'; ?>
+                                        <?php echo $ticketApprovalStatus === 'aprobar_solo' ? 'Aprobado' : 'Aprobado bajo aprobación'; ?>
                                     </p>
                                 </div>
                             </div>
