@@ -194,7 +194,7 @@ if ($stmtA) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['aprobar_bajo_aprobacion', 'aprobar_solo'])) {
-    if ($isOrgPeerView && $ticketApprovalStatus === 'pending' && !empty($user['org_tickets_view'])) {
+    if ($ticketApprovalStatus === 'pending' && !empty($user['org_tickets_view'])) {
         if (validateCSRF()) {
             $newStatus = $_POST['action'];
             $stmtUpd = $mysqli->prepare("UPDATE ticket_approvals SET status = ?, manager_id = ?, resolved_at = NOW() WHERE ticket_id = ? AND status = 'pending'");
@@ -2147,35 +2147,37 @@ function humanSize($bytes) {
             </div>
 
             <div class="reply-card" id="reply-section">
+                <?php if (!empty($user['org_tickets_view']) && $ticketApprovalStatus === 'pending'): ?>
+                    <div class="org-readonly-notice org-readonly-notice--warning <?php echo empty($isOrgPeerView) ? 'mb-4' : ''; ?>" role="status">
+                        <div class="org-readonly-notice__main">
+                            <div class="org-readonly-notice__icon" aria-hidden="true">
+                                <i class="bi bi-shield-lock-fill"></i>
+                            </div>
+                            <div>
+                                <p class="org-readonly-notice__title">Autorización Requerida</p>
+                                <p class="org-readonly-notice__text">
+                                    Este ticket requiere su revisión y aprobación para proceder.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
+                            <form method="post" style="margin: 0; display: inline-flex;">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn"><i class="bi bi-check2 me-1"></i>Aprobar bajo aprobación</button>
+                            </form>
+                            <form method="post" style="margin: 0; display: inline-flex;">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success"><i class="bi bi-check-circle-fill me-1"></i>Aprobar</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (!empty($isOrgPeerView)): ?>
                     <?php
                     $orgReadonlyOwner = $ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario';
                     ?>
-                    <?php if (!empty($user['org_tickets_view']) && $ticketApprovalStatus === 'pending'): ?>
-                        <div class="org-readonly-notice org-readonly-notice--warning" role="status">
-                            <div class="org-readonly-notice__main">
-                                <div class="org-readonly-notice__icon" aria-hidden="true">
-                                    <i class="bi bi-shield-lock-fill"></i>
-                                </div>
-                                <div>
-                                    <p class="org-readonly-notice__title">Autorización Requerida</p>
-                                    <p class="org-readonly-notice__text">
-                                        Este ticket requiere su revisión y aprobación para proceder.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
-                                <form method="post" style="margin: 0; display: inline-flex;">
-                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn"><i class="bi bi-check2 me-1"></i>Aprobar bajo aprobación</button>
-                                </form>
-                                <form method="post" style="margin: 0; display: inline-flex;">
-                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success"><i class="bi bi-check-circle-fill me-1"></i>Aprobar</button>
-                                </form>
-                            </div>
-                        </div>
-                    <?php elseif (!empty($user['org_tickets_view']) && in_array($ticketApprovalStatus, ['aprobar_bajo_aprobacion', 'aprobar_solo'])): ?>
+                    <?php if (!empty($user['org_tickets_view']) && in_array($ticketApprovalStatus, ['aprobar_bajo_aprobacion', 'aprobar_solo'])): ?>
                         <div class="org-readonly-notice org-readonly-notice--success" role="status">
                             <div class="org-readonly-notice__main">
                                 <div class="org-readonly-notice__icon" aria-hidden="true">
@@ -2192,7 +2194,7 @@ function humanSize($bytes) {
                                 <i class="bi bi-arrow-left me-1"></i>Volver al listado
                             </a>
                         </div>
-                    <?php else: ?>
+                    <?php elseif (empty($user['org_tickets_view']) || $ticketApprovalStatus !== 'pending'): ?>
                         <div class="org-readonly-notice" role="status">
                             <div class="org-readonly-notice__main">
                                 <div class="org-readonly-notice__icon" aria-hidden="true">
