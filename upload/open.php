@@ -1690,8 +1690,7 @@ if ($blockNewIfSignaturePending) {
                 <div class="page-header" style="margin-top: 0;">
                     <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                         <div>
-                            <h2 class="mb-1">Abrir un nuevo Ticket</h2>
-                            <div class="sub">Completa el formulario para crear una nueva solicitud.</div>
+                            <h2 class="mb-1" style="font-weight: 800;">Abrir un nuevo Ticket</h2>
                         </div>
                         <div>
                             <a href="tickets.php" class="btn btn-light btn-sm" style="border-radius: 999px; font-weight: 800;"><i class="bi bi-arrow-left"></i> Volver</a>
