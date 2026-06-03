@@ -35,9 +35,9 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             case 'org_already': $alertMsg = 'El usuario ya pertenece a esa organización.'; break;
             case 'org_removed': $alertMsg = 'Organización removida correctamente.'; break;
             case 'org_error': $alertMsg = 'No se pudo actualizar la organización. Intente de nuevo.'; break;
-            case 'org_view_on': $alertMsg = 'Vista de tickets por organización activada para este usuario.'; break;
-            case 'org_view_off': $alertMsg = 'Vista de tickets por organización desactivada.'; break;
-            case 'org_view_error': $alertMsg = 'No se pudo cambiar la vista de tickets por organización.'; break;
+            case 'org_view_on': $alertMsg = 'El usuario ha sido asignado como Encargado de su Organización.'; break;
+            case 'org_view_off': $alertMsg = 'El usuario ha sido removido como Encargado de Organización.'; break;
+            case 'org_view_error': $alertMsg = 'No se pudo actualizar el rol de encargado. Intente de nuevo.'; break;
         }
     }
     if ($alertMsg): ?>

@@ -207,7 +207,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                     notifyApprovalToAdminRecipients($tid, $statusLabelNotif);
                 }
                 
-                header('Location: view-ticket.php?id=' . $tid . '&from=org&msg=approved');
+                $redirectParams = $_GET;
+                $redirectParams['id'] = $tid;
+                $redirectParams['from'] = 'org';
+                $redirectParams['msg'] = 'approved';
+                header('Location: view-ticket.php?' . http_build_query($redirectParams));
                 exit;
             }
         }
@@ -388,7 +392,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 // El sistema ya registra la respuesta sin necesidad de enviar correos
 
                 $_SESSION['reply_success'] = true;
-                header('Location: view-ticket.php?id=' . (int) $tid);
+                $redirectParams = $_GET;
+                $redirectParams['id'] = (int)$tid;
+                header('Location: view-ticket.php?' . http_build_query($redirectParams));
                 exit;
             }
             $reply_error = 'No se pudo enviar la respuesta.';
@@ -400,7 +406,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             'error' => $reply_error,
             'body' => $replyBodyPrefill,
         ];
-        header('Location: view-ticket.php?id=' . (int)$tid);
+        $redirectParams = $_GET;
+        $redirectParams['id'] = (int)$tid;
+        header('Location: view-ticket.php?' . http_build_query($redirectParams));
         exit;
     }
 }
