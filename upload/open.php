@@ -1436,6 +1436,7 @@ if ($blockNewIfSignaturePending) {
             border-top-color: #27272a;
         }
 
+
         @media (max-width: 576px) {
             body .container-main {
                 padding: 0 10px !important;
@@ -1486,20 +1487,6 @@ if ($blockNewIfSignaturePending) {
             }
             body .section-title .help {
                 display: none !important;
-            }
-            body .form-section-header {
-                margin-top: 20px !important;
-                margin-bottom: 12px !important;
-                padding-bottom: 8px !important;
-            }
-            body .form-section-header h5 {
-                font-size: 0.95rem !important;
-            }
-            body .step-badge {
-                width: 20px !important;
-                height: 20px !important;
-                font-size: 0.72rem !important;
-                border-radius: 6px !important;
             }
         }
     </style>
@@ -1718,8 +1705,7 @@ if ($blockNewIfSignaturePending) {
                             <i class="bi bi-chat-left-text"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h4>Detalles del Ticket</h4>
-                            <div class="help mb-0 mt-1">Completa los datos para crear una nueva solicitud.</div>
+                            <h4 style="margin: 0; font-weight: 800; font-size: 1.1rem;">Detalles del Ticket</h4>
                         </div>
                     </div>
 
@@ -1738,10 +1724,6 @@ if ($blockNewIfSignaturePending) {
             <?php endif; ?>
 
             <form id="open-ticket-form" method="post" enctype="multipart/form-data">
-                <div class="form-section-header" style="margin-top: 0;">
-                    <span class="step-badge">1</span>
-                    <h5>Clasificación de la Solicitud</h5>
-                </div>
 
                 <div class="mb-3">
                     <label for="subject" class="form-label">Asunto</label>
@@ -1780,10 +1762,6 @@ if ($blockNewIfSignaturePending) {
                 </div>
                 <?php endif; ?>
 
-                <div class="form-section-header">
-                    <span class="step-badge">2</span>
-                    <h5>Información de Conexión</h5>
-                </div>
 
                 <div id="contact-fields-row" class="contact-fields-row">
                     <div class="contact-field telefono-field">
@@ -1797,10 +1775,6 @@ if ($blockNewIfSignaturePending) {
                     </div>
                 </div>
 
-                <div class="form-section-header">
-                    <span class="step-badge">3</span>
-                    <h5>Detalles del Problema</h5>
-                </div>
 
                 <div class="mb-3">
                     <label for="body" class="form-label">Descripción</label>

@@ -1904,36 +1904,38 @@ function clientTicketBadgeStyle(string $color, bool $darkMode = false): string {
     $rgb = parseTicketHexRgb($hex);
     if ($rgb === null) {
         return $darkMode
-            ? 'background:rgba(100,116,139,0.14);color:#cbd5e1;border:1px solid rgba(100,116,139,0.28);'
-            : 'background-color:#64748b;color:#fff;';
+            ? 'background:rgb(33,39,53);color:#cbd5e1;border:1px solid rgb(46,54,72);'
+            : 'background-color:rgb(232,235,239);color:#64748b;';
     }
     [$r, $g, $b] = $rgb;
     if ($darkMode) {
         $textR = (int)round($r * 0.42 + 212 * 0.58);
         $textG = (int)round($g * 0.42 + 212 * 0.58);
         $textB = (int)round($b * 0.42 + 216 * 0.58);
+        
+        $bgR = (int)round($r * 0.14 + 24 * 0.86);
+        $bgG = (int)round($g * 0.14 + 24 * 0.86);
+        $bgB = (int)round($b * 0.14 + 27 * 0.86);
+        
+        $borderR = (int)round($r * 0.26 + 24 * 0.74);
+        $borderG = (int)round($g * 0.26 + 24 * 0.74);
+        $borderB = (int)round($b * 0.26 + 27 * 0.74);
+
         return sprintf(
-            'background:rgba(%d,%d,%d,0.14);color:rgb(%d,%d,%d);border:1px solid rgba(%d,%d,%d,0.26);',
-            $r,
-            $g,
-            $b,
-            $textR,
-            $textG,
-            $textB,
-            $r,
-            $g,
-            $b
+            'background:rgb(%d,%d,%d);color:rgb(%d,%d,%d);border:1px solid rgb(%d,%d,%d);',
+            $bgR, $bgG, $bgB,
+            $textR, $textG, $textB,
+            $borderR, $borderG, $borderB
         );
     }
+    
+    $bgR = (int)round($r * 0.15 + 255 * 0.85);
+    $bgG = (int)round($g * 0.15 + 255 * 0.85);
+    $bgB = (int)round($b * 0.15 + 255 * 0.85);
+    
     return sprintf(
-        'background:rgba(%d,%d,%d,0.12);color:%s;border:1px solid rgba(%d,%d,%d,0.24);',
-        $r,
-        $g,
-        $b,
-        $hex,
-        $r,
-        $g,
-        $b
+        'background-color:rgb(%d,%d,%d);color:%s;',
+        $bgR, $bgG, $bgB, $hex
     );
 }
 
