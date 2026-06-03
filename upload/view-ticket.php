@@ -1167,10 +1167,11 @@ function humanSize($bytes) {
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
-            padding: 14px 16px;
-            border-radius: 12px;
+            padding: 16px 20px;
+            border-radius: 16px;
             border: 1px solid #bfdbfe;
             background: #eff6ff;
+            transition: all 0.3s ease;
         }
         .org-readonly-notice__main {
             display: flex;
@@ -1241,19 +1242,28 @@ function humanSize($bytes) {
 
         /* Modificadores de aviso de organización (Aprobaciones) */
         .org-readonly-notice--warning {
-            background-color: #fffbeb !important;
-            border-color: #fde68a !important;
+            background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%) !important;
+            border: 1px solid #fca5a5 !important;
+            box-shadow: 0 4px 15px rgba(185, 28, 28, 0.08) !important;
         }
         .org-readonly-notice--warning .org-readonly-notice__icon {
-            background-color: #fef3c7 !important;
-            border-color: #fcd34d !important;
-            color: #d97706 !important;
+            background: #b91c1c !important;
+            border-color: #b91c1c !important;
+            color: #ffffff !important;
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 12px !important;
+            font-size: 1.3rem !important;
+            box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25) !important;
         }
         .org-readonly-notice--warning .org-readonly-notice__title {
-            color: #92400e !important;
+            color: #000000 !important;
+            font-weight: 700 !important;
+            font-size: 1rem !important;
         }
         .org-readonly-notice--warning .org-readonly-notice__text {
-            color: #b45309 !important;
+            color: #444444 !important;
+            font-size: 0.9rem !important;
         }
 
         .org-readonly-notice--success {
@@ -1271,48 +1281,57 @@ function humanSize($bytes) {
         .org-readonly-notice--success .org-readonly-notice__text {
             color: #15803d !important;
         }
-
         .btn-approval-warn {
-            background-color: #f59e0b !important;
-            border: 1px solid #d97706 !important;
+            background-color: #000000 !important;
+            border: 1px solid #000000 !important;
             color: #ffffff !important;
             font-weight: 600 !important;
+            border-radius: 999px !important;
+            padding: 8px 20px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
             transition: all 0.2s ease;
         }
         .btn-approval-warn:hover {
-            background-color: #d97706 !important;
-            border-color: #b45309 !important;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+            background-color: #333333 !important;
+            border-color: #333333 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
         }
 
         .btn-approval-success {
-            background-color: #10b981 !important;
-            border: 1px solid #059669 !important;
+            background-color: #b91c1c !important;
+            border: 1px solid #991b1b !important;
             color: #ffffff !important;
             font-weight: 600 !important;
+            border-radius: 999px !important;
+            padding: 8px 20px !important;
+            box-shadow: 0 2px 6px rgba(185, 28, 28, 0.2) !important;
             transition: all 0.2s ease;
         }
         .btn-approval-success:hover {
-            background-color: #059669 !important;
-            border-color: #047857 !important;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+            background-color: #991b1b !important;
+            border-color: #7f1d1d !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3) !important;
         }
 
         /* Dark Mode para modificadores */
         body.dark-mode .org-readonly-notice--warning {
-            background-color: #272115 !important;
-            border-color: #453015 !important;
+            background: linear-gradient(135deg, rgba(185, 28, 28, 0.12) 0%, rgba(120, 20, 20, 0.08) 100%) !important;
+            border-color: rgba(185, 28, 28, 0.35) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
         }
         body.dark-mode .org-readonly-notice--warning .org-readonly-notice__icon {
-            background-color: #3b2e1a !important;
-            border-color: #574121 !important;
-            color: #f59e0b !important;
+            background: rgba(185, 28, 28, 0.25) !important;
+            border: 1px solid rgba(220, 38, 38, 0.4) !important;
+            color: #fca5a5 !important;
+            box-shadow: none !important;
         }
         body.dark-mode .org-readonly-notice--warning .org-readonly-notice__title {
-            color: #fcd34d !important;
+            color: #fecaca !important;
         }
         body.dark-mode .org-readonly-notice--warning .org-readonly-notice__text {
-            color: #fbbf24 !important;
+            color: #d4d4d8 !important;
         }
 
         body.dark-mode .org-readonly-notice--success {
@@ -1332,21 +1351,26 @@ function humanSize($bytes) {
         }
 
         body.dark-mode .btn-approval-warn {
-            background-color: #d97706 !important;
-            border-color: #b45309 !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: #e4e4e7 !important;
         }
         body.dark-mode .btn-approval-warn:hover {
-            background-color: #b45309 !important;
-            border-color: #92400e !important;
+            background-color: rgba(255, 255, 255, 0.18) !important;
+            border-color: rgba(255, 255, 255, 0.35) !important;
+            color: #ffffff !important;
         }
 
         body.dark-mode .btn-approval-success {
-            background-color: #059669 !important;
-            border-color: #047857 !important;
+            background-color: #b91c1c !important;
+            border-color: #dc2626 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 8px rgba(185, 28, 28, 0.3) !important;
         }
         body.dark-mode .btn-approval-success:hover {
-            background-color: #047857 !important;
-            border-color: #065f46 !important;
+            background-color: #dc2626 !important;
+            border-color: #ef4444 !important;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
         }
 
         .attach-zone {
@@ -2126,7 +2150,7 @@ function humanSize($bytes) {
                         <div class="org-readonly-notice org-readonly-notice--warning" role="status">
                             <div class="org-readonly-notice__main">
                                 <div class="org-readonly-notice__icon" aria-hidden="true">
-                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <i class="bi bi-shield-lock-fill"></i>
                                 </div>
                                 <div>
                                     <p class="org-readonly-notice__title">Autorización Requerida</p>
@@ -2136,13 +2160,13 @@ function humanSize($bytes) {
                                 </div>
                             </div>
                             <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
-                                <form method="post" style="margin: 0; display: inline-block;">
+                                <form method="post" style="margin: 0; display: inline-flex;">
                                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn">Aprobar bajo aprobación</button>
+                                    <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn"><i class="bi bi-check2 me-1"></i>Aprobar bajo aprobación</button>
                                 </form>
-                                <form method="post" style="margin: 0; display: inline-block;">
+                                <form method="post" style="margin: 0; display: inline-flex;">
                                     <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success">Aprobar</button>
+                                    <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success"><i class="bi bi-check-circle-fill me-1"></i>Aprobar</button>
                                 </form>
                             </div>
                         </div>

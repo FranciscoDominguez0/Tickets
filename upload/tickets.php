@@ -1348,46 +1348,46 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 .exec-review-alert {
                     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
                     padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;
-                    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
-                    border: 1px solid #fecdd3;
-                    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.1);
+                    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+                    border: 1px solid #fca5a5;
+                    box-shadow: 0 4px 15px rgba(185, 28, 28, 0.08);
                     transition: all 0.3s ease;
                 }
                 .exec-review-alert__main { display: flex; align-items: center; gap: 16px; }
                 .exec-review-alert__icon {
                     display: flex; align-items: center; justify-content: center;
                     width: 44px; height: 44px; border-radius: 12px;
-                    background: #e11d48; color: #fff; font-size: 1.3rem;
-                    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+                    background: #b91c1c; color: #ffffff; font-size: 1.3rem;
+                    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);
                 }
-                .exec-review-alert__text { color: #9f1239; font-size: 1rem; line-height: 1.4; margin: 0; }
-                .exec-review-alert__text strong { color: #881337; font-weight: 700; }
+                .exec-review-alert__text { color: #262626; font-size: 1rem; line-height: 1.4; margin: 0; }
+                .exec-review-alert__text strong { color: #000000; font-weight: 700; }
                 .exec-review-alert__btn {
-                    background: #fff; color: #e11d48; border: 1px solid #fda4af;
+                    background: #000000; color: #ffffff; border: 1px solid #000000;
                     font-weight: 600; padding: 8px 20px; border-radius: 999px;
                     text-decoration: none; transition: all 0.2s ease;
-                    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15);
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
                     display: inline-flex; align-items: center; gap: 6px;
                 }
-                .exec-review-alert__btn:hover { background: #fff1f2; color: #be123c; border-color: #fb7185; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(225, 29, 72, 0.2); }
+                .exec-review-alert__btn:hover { background: #b91c1c; color: #ffffff; border-color: #b91c1c; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3); }
 
                 body.dark-mode .exec-review-alert {
-                    background: linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(159, 18, 57, 0.1) 100%);
-                    border-color: rgba(225, 29, 72, 0.3);
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                    background: linear-gradient(135deg, #171717 0%, #262626 100%);
+                    border-color: rgba(185, 28, 28, 0.4);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
                 }
                 body.dark-mode .exec-review-alert__icon {
-                    background: rgba(225, 29, 72, 0.2); color: #fb7185;
-                    box-shadow: none; border: 1px solid rgba(225, 29, 72, 0.3);
+                    background: rgba(185, 28, 28, 0.2); color: #fca5a5;
+                    box-shadow: none; border: 1px solid rgba(185, 28, 28, 0.4);
                 }
-                body.dark-mode .exec-review-alert__text { color: #fda4af; }
-                body.dark-mode .exec-review-alert__text strong { color: #ffe4e6; }
+                body.dark-mode .exec-review-alert__text { color: #d4d4d4; }
+                body.dark-mode .exec-review-alert__text strong { color: #ffffff; }
                 body.dark-mode .exec-review-alert__btn {
-                    background: rgba(225, 29, 72, 0.15); color: #fb7185; border-color: rgba(225, 29, 72, 0.4);
+                    background: rgba(185, 28, 28, 0.15); color: #fca5a5; border-color: rgba(185, 28, 28, 0.5);
                     box-shadow: none;
                 }
                 body.dark-mode .exec-review-alert__btn:hover {
-                    background: rgba(225, 29, 72, 0.25); color: #ffe4e6; border-color: rgba(225, 29, 72, 0.6);
+                    background: rgba(185, 28, 28, 0.3); color: #ffffff; border-color: rgba(185, 28, 28, 0.8);
                 }
             </style>
             <div class="exec-review-alert">
