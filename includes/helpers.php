@@ -1429,7 +1429,8 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
                 u.firstname AS owner_firstname, u.lastname AS owner_lastname, u.email AS owner_email,
-                ts.name AS status_name, ts.color AS status_color
+                ts.name AS status_name, ts.color AS status_color,
+                (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
             FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
             LEFT JOIN ticket_status ts ON t.status_id = ts.id
@@ -1462,7 +1463,8 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     } else {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
                 u.firstname AS owner_firstname, u.lastname AS owner_lastname, u.email AS owner_email,
-                ts.name AS status_name, ts.color AS status_color
+                ts.name AS status_name, ts.color AS status_color,
+                (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
             FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
             LEFT JOIN ticket_status ts ON t.status_id = ts.id
@@ -1903,39 +1905,33 @@ function clientTicketBadgeStyle(string $color, bool $darkMode = false): string {
     $hex = normalizeTicketHexColor($color);
     $rgb = parseTicketHexRgb($hex);
     if ($rgb === null) {
-        return $darkMode
-            ? 'background:rgb(33,39,53);color:#cbd5e1;border:1px solid rgb(46,54,72);'
-            : 'background-color:rgb(232,235,239);color:#64748b;';
+        return '--badge-bg-light:rgb(232,235,239);--badge-color-light:#64748b;--badge-bg-dark:rgb(33,39,53);--badge-color-dark:#cbd5e1;--badge-border-dark:rgb(46,54,72);';
     }
     [$r, $g, $b] = $rgb;
-    if ($darkMode) {
-        $textR = (int)round($r * 0.42 + 212 * 0.58);
-        $textG = (int)round($g * 0.42 + 212 * 0.58);
-        $textB = (int)round($b * 0.42 + 216 * 0.58);
-        
-        $bgR = (int)round($r * 0.14 + 24 * 0.86);
-        $bgG = (int)round($g * 0.14 + 24 * 0.86);
-        $bgB = (int)round($b * 0.14 + 27 * 0.86);
-        
-        $borderR = (int)round($r * 0.26 + 24 * 0.74);
-        $borderG = (int)round($g * 0.26 + 24 * 0.74);
-        $borderB = (int)round($b * 0.26 + 27 * 0.74);
+    
+    $bgLightR = (int)round($r * 0.15 + 255 * 0.85);
+    $bgLightG = (int)round($g * 0.15 + 255 * 0.85);
+    $bgLightB = (int)round($b * 0.15 + 255 * 0.85);
 
-        return sprintf(
-            'background:rgb(%d,%d,%d);color:rgb(%d,%d,%d);border:1px solid rgb(%d,%d,%d);',
-            $bgR, $bgG, $bgB,
-            $textR, $textG, $textB,
-            $borderR, $borderG, $borderB
-        );
-    }
+    $textDarkR = (int)round($r * 0.42 + 212 * 0.58);
+    $textDarkG = (int)round($g * 0.42 + 212 * 0.58);
+    $textDarkB = (int)round($b * 0.42 + 216 * 0.58);
     
-    $bgR = (int)round($r * 0.15 + 255 * 0.85);
-    $bgG = (int)round($g * 0.15 + 255 * 0.85);
-    $bgB = (int)round($b * 0.15 + 255 * 0.85);
+    $bgDarkR = (int)round($r * 0.14 + 24 * 0.86);
+    $bgDarkG = (int)round($g * 0.14 + 24 * 0.86);
+    $bgDarkB = (int)round($b * 0.14 + 27 * 0.86);
     
+    $borderDarkR = (int)round($r * 0.26 + 24 * 0.74);
+    $borderDarkG = (int)round($g * 0.26 + 24 * 0.74);
+    $borderDarkB = (int)round($b * 0.26 + 27 * 0.74);
+
     return sprintf(
-        'background-color:rgb(%d,%d,%d);color:%s;',
-        $bgR, $bgG, $bgB, $hex
+        '--badge-bg-light:rgb(%d,%d,%d);--badge-color-light:%s;--badge-bg-dark:rgb(%d,%d,%d);--badge-color-dark:rgb(%d,%d,%d);--badge-border-dark:rgb(%d,%d,%d);',
+        $bgLightR, $bgLightG, $bgLightB,
+        $hex,
+        $bgDarkR, $bgDarkG, $bgDarkB,
+        $textDarkR, $textDarkG, $textDarkB,
+        $borderDarkR, $borderDarkG, $borderDarkB
     );
 }
 

@@ -173,14 +173,21 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                             <?php endif; ?>
                                         </span>
                                     </span>
-                                    <?php if (!empty($tk['status_name'])): ?>
-                                        <?php
-                                            $orgStatusColor = normalizeTicketHexColor((string)($tk['status_color'] ?? ''), '#64748b');
-                                            $orgStatusBadgeStyle = clientTicketBadgeStyle($orgStatusColor, !empty($isDarkMode));
-                                        ?>
-                                        <span class="org-status-badge" style="<?php echo html($orgStatusBadgeStyle); ?>">
-                                            <?php echo html((string)$tk['status_name']); ?>
+                                    <?php if (($tk['approval_status'] ?? '') === 'pending'): ?>
+                                        <span class="org-status-badge" style="background: #fef3c7; color: #d97706; border: 1px solid #fcd34d;">
+                                            <i class="bi bi-shield-lock-fill"></i> Revisión Pendiente
                                         </span>
+                                    <?php else: ?>
+                                        <?php if (!empty($tk['status_name'])): ?>
+                                            <?php
+                                                $orgStatusColor = normalizeTicketHexColor((string)($tk['status_color'] ?? ''), '#64748b');
+                                                $orgStatusBadgeStyle = clientTicketBadgeStyle($orgStatusColor, !empty($isDarkMode));
+                                            ?>
+                                            <span class="org-status-badge" style="<?php echo html($orgStatusBadgeStyle); ?>">
+                                                <?php echo html((string)$tk['status_name']); ?>
+                                            </span>
+                                        <?php endif; ?>
+
                                     <?php endif; ?>
                                     <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-eye"></i> Ver hilo</span>
                                 </a>
@@ -291,14 +298,21 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                         <?php echo !empty($tk['created']) ? html(formatDate((string)$tk['created'])) : ''; ?>
                                     </span>
                                 </span>
-                                <?php if (!empty($tk['status_name'])): ?>
-                                    <?php
-                                        $orgStatusColor = normalizeTicketHexColor((string)($tk['status_color'] ?? ''), '#64748b');
-                                        $orgStatusBadgeStyle = clientTicketBadgeStyle($orgStatusColor, !empty($isDarkMode));
-                                    ?>
-                                    <span class="org-status-badge" style="<?php echo html($orgStatusBadgeStyle); ?>">
-                                        <?php echo html((string)$tk['status_name']); ?>
+                                <?php if (($tk['approval_status'] ?? '') === 'pending'): ?>
+                                    <span class="org-status-badge" style="background: #fef3c7; color: #d97706; border: 1px solid #fcd34d;">
+                                        <i class="bi bi-shield-lock-fill"></i> Revisión Pendiente
                                     </span>
+                                <?php else: ?>
+                                    <?php if (!empty($tk['status_name'])): ?>
+                                        <?php
+                                            $orgStatusColor = normalizeTicketHexColor((string)($tk['status_color'] ?? ''), '#64748b');
+                                            $orgStatusBadgeStyle = clientTicketBadgeStyle($orgStatusColor, !empty($isDarkMode));
+                                        ?>
+                                        <span class="org-status-badge" style="<?php echo html($orgStatusBadgeStyle); ?>">
+                                            <?php echo html((string)$tk['status_name']); ?>
+                                        </span>
+                                    <?php endif; ?>
+
                                 <?php endif; ?>
                                 <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-eye"></i> Ver hilo</span>
                             </a>

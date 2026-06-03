@@ -346,7 +346,8 @@ if ($isOrgExplorer) {
 
                     $stmtOt = $mysqli->prepare(
                         'SELECT t.id, t.ticket_number, t.subject, t.created, t.closed,
-                                ts.name AS status_name, ts.color AS status_color
+                                ts.name AS status_name, ts.color AS status_color,
+                                (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
                          FROM tickets t
                          LEFT JOIN ticket_status ts ON t.status_id = ts.id
                          WHERE t.user_id = ? AND t.empresa_id = ?' . $ticketMonthSql . '
@@ -469,6 +470,64 @@ try {
 $blockNewIfSignaturePending = ((string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1');
 $sigBlockPortal = ($blockNewIfSignaturePending && $pendingSignCount > 0);
 
+// Aprobaciones pendientes (si es jefe)
+$pendingApprovalCount = 0;
+$pendingApprovalFirstOrgId = 0;
+if ($canOrgTicketsView) {
+    $orgs = getPortalOrganizationsForUser($mysqli, $uid, $eid);
+    if (!empty($orgs)) {
+        $orgConds = [];
+        if (organizationMembershipEnabled($mysqli)) {
+            $orgConds[] = "EXISTS (
+                SELECT 1 FROM user_organizations uo1 
+                INNER JOIN user_organizations uo2 ON uo1.organization_id = uo2.organization_id 
+                WHERE uo1.user_id = t.user_id AND uo2.user_id = ? AND uo1.empresa_id = t.empresa_id
+            )";
+        }
+        $orgConds[] = "(TRIM(COALESCE(u.company, '')) <> '' AND u.company = (SELECT company FROM users WHERE id = ?))";
+        
+        $sqlApprCount = "SELECT COUNT(DISTINCT t.id) as c FROM tickets t 
+                    INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+                    INNER JOIN ticket_approvals ta ON ta.ticket_id = t.id
+                    WHERE t.empresa_id = ? AND ta.status = 'pending' AND t.closed IS NULL AND (" . implode(" OR ", $orgConds) . ")";
+        $stmtApprCount = $mysqli->prepare($sqlApprCount);
+        if ($stmtApprCount) {
+            if (organizationMembershipEnabled($mysqli)) {
+                $stmtApprCount->bind_param('iii', $eid, $uid, $uid);
+            } else {
+                $stmtApprCount->bind_param('ii', $eid, $uid);
+            }
+            if ($stmtApprCount->execute()) {
+                $pendingApprovalCount = (int)($stmtApprCount->get_result()->fetch_assoc()['c'] ?? 0);
+            }
+        }
+
+        // Buscar la organización que realmente tiene tickets pendientes de aprobación
+        if ($pendingApprovalCount > 0 && organizationMembershipEnabled($mysqli)) {
+            $sqlFirstOrg = "SELECT uo1.organization_id FROM tickets t
+                INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
+                INNER JOIN ticket_approvals ta ON ta.ticket_id = t.id
+                INNER JOIN user_organizations uo1 ON uo1.user_id = t.user_id AND uo1.empresa_id = t.empresa_id
+                INNER JOIN user_organizations uo2 ON uo2.organization_id = uo1.organization_id AND uo2.user_id = ?
+                WHERE t.empresa_id = ? AND ta.status = 'pending' AND t.closed IS NULL
+                ORDER BY ta.created_at DESC LIMIT 1";
+            $stmtFirstOrg = $mysqli->prepare($sqlFirstOrg);
+            if ($stmtFirstOrg) {
+                $stmtFirstOrg->bind_param('ii', $uid, $eid);
+                if ($stmtFirstOrg->execute()) {
+                    $rowFirstOrg = $stmtFirstOrg->get_result()->fetch_assoc();
+                    if ($rowFirstOrg) {
+                        $pendingApprovalFirstOrgId = (int)$rowFirstOrg['organization_id'];
+                    }
+                }
+            }
+        }
+        if ($pendingApprovalFirstOrgId <= 0 && !empty($orgs)) {
+            $pendingApprovalFirstOrgId = (int)($orgs[0]['organization_id'] ?? 0);
+        }
+    }
+}
+
 // Paginación fija: 10 tickets por página (mejor rendimiento)
 $perPage = 10;
 $tickets = [];
@@ -569,6 +628,19 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding-top: 62px;
+        }
+
+        /* Dynamic badge styles */
+        [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-light) !important;
+            color: var(--badge-color-light) !important;
+            border: 1px solid transparent !important;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        body.dark-mode [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-dark) !important;
+            color: var(--badge-color-dark) !important;
+            border-color: var(--badge-border-dark) !important;
         }
 
         body::before {
@@ -1271,6 +1343,69 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
     <div class="container-main">
         <div class="shell">
+            <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0): ?>
+            <style>
+                .exec-review-alert {
+                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+                    padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;
+                    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+                    border: 1px solid #fecdd3;
+                    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.1);
+                    transition: all 0.3s ease;
+                }
+                .exec-review-alert__main { display: flex; align-items: center; gap: 16px; }
+                .exec-review-alert__icon {
+                    display: flex; align-items: center; justify-content: center;
+                    width: 44px; height: 44px; border-radius: 12px;
+                    background: #e11d48; color: #fff; font-size: 1.3rem;
+                    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+                }
+                .exec-review-alert__text { color: #9f1239; font-size: 1rem; line-height: 1.4; margin: 0; }
+                .exec-review-alert__text strong { color: #881337; font-weight: 700; }
+                .exec-review-alert__btn {
+                    background: #fff; color: #e11d48; border: 1px solid #fda4af;
+                    font-weight: 600; padding: 8px 20px; border-radius: 999px;
+                    text-decoration: none; transition: all 0.2s ease;
+                    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15);
+                    display: inline-flex; align-items: center; gap: 6px;
+                }
+                .exec-review-alert__btn:hover { background: #fff1f2; color: #be123c; border-color: #fb7185; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(225, 29, 72, 0.2); }
+
+                body.dark-mode .exec-review-alert {
+                    background: linear-gradient(135deg, rgba(225, 29, 72, 0.15) 0%, rgba(159, 18, 57, 0.1) 100%);
+                    border-color: rgba(225, 29, 72, 0.3);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                }
+                body.dark-mode .exec-review-alert__icon {
+                    background: rgba(225, 29, 72, 0.2); color: #fb7185;
+                    box-shadow: none; border: 1px solid rgba(225, 29, 72, 0.3);
+                }
+                body.dark-mode .exec-review-alert__text { color: #fda4af; }
+                body.dark-mode .exec-review-alert__text strong { color: #ffe4e6; }
+                body.dark-mode .exec-review-alert__btn {
+                    background: rgba(225, 29, 72, 0.15); color: #fb7185; border-color: rgba(225, 29, 72, 0.4);
+                    box-shadow: none;
+                }
+                body.dark-mode .exec-review-alert__btn:hover {
+                    background: rgba(225, 29, 72, 0.25); color: #ffe4e6; border-color: rgba(225, 29, 72, 0.6);
+                }
+            </style>
+            <div class="exec-review-alert">
+                <div class="exec-review-alert__main">
+                    <div class="exec-review-alert__icon">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div>
+                        <p class="exec-review-alert__text">
+                            <strong>Revisión Ejecutiva:</strong> Tienes <strong><?php echo $pendingApprovalCount; ?></strong> <?php echo $pendingApprovalCount === 1 ? 'ticket pendiente' : 'tickets pendientes'; ?> de aprobación.
+                        </p>
+                    </div>
+                </div>
+                <a href="tickets.php?view=org<?php echo $pendingApprovalFirstOrgId > 0 ? '&amp;org_id=' . $pendingApprovalFirstOrgId . '&amp;list=all' : ''; ?>" class="exec-review-alert__btn">
+                    Ver tickets <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <?php endif; ?>
             <main class="panel-soft" style="padding: 18px;">
                 <?php if (!empty($isOrgExplorer)): ?>
                     <?php require __DIR__ . '/partials/client-org-tickets.inc.php'; ?>

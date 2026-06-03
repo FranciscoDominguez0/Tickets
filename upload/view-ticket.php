@@ -13,7 +13,7 @@ $eid = (int)empresaId();
 
 // Cargar info del usuario
 $user = null;
-$stmtU = $mysqli->prepare("SELECT firstname, lastname, email FROM users WHERE id = ? AND empresa_id = ?");
+$stmtU = $mysqli->prepare("SELECT firstname, lastname, email, org_tickets_view FROM users WHERE id = ? AND empresa_id = ?");
 if ($stmtU) {
     $stmtU->bind_param('ii', $uid, $eid);
     $stmtU->execute();
@@ -24,13 +24,26 @@ if ($stmtU) {
     }
 }
 if (!$user) {
-    $user = ['name' => 'Usuario', 'email' => ''];
+    $user = ['name' => 'Usuario', 'email' => '', 'org_tickets_view' => 0];
 }
 
 $user = getCurrentUser();
 $uid = (int) ($_SESSION['user_id'] ?? 0);
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
+
+// Re-cargar org_tickets_view ya que getCurrentUser() no lo trae
+$user['org_tickets_view'] = 0;
+if ($uid > 0 && $eid > 0) {
+    $stmtOtv = $mysqli->prepare("SELECT org_tickets_view FROM users WHERE id = ? AND empresa_id = ? LIMIT 1");
+    if ($stmtOtv) {
+        $stmtOtv->bind_param('ii', $uid, $eid);
+        if ($stmtOtv->execute()) {
+            $rowOtv = $stmtOtv->get_result()->fetch_assoc();
+            $user['org_tickets_view'] = (int)($rowOtv['org_tickets_view'] ?? 0);
+        }
+    }
+}
 
 if (!isset($_SESSION['client_dark_mode'])) {
     $_SESSION['client_dark_mode'] = 0;
@@ -167,6 +180,34 @@ $stmt->bind_param('ii', $tid, $eid);
 $stmt->execute();
 $threadRow = $stmt->get_result()->fetch_assoc();
 $thread_id = (int)($threadRow['id'] ?? 0);
+
+// Estado de aprobación
+$ticketApprovalStatus = 'none';
+$stmtA = $mysqli->prepare("SELECT status FROM ticket_approvals WHERE ticket_id = ? ORDER BY id DESC LIMIT 1");
+if ($stmtA) {
+    $stmtA->bind_param('i', $tid);
+    $stmtA->execute();
+    $resA = $stmtA->get_result();
+    if ($rowA = $resA->fetch_assoc()) {
+        $ticketApprovalStatus = $rowA['status'];
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['aprobar_bajo_aprobacion', 'aprobar_solo'])) {
+    if ($isOrgPeerView && $ticketApprovalStatus === 'pending' && !empty($user['org_tickets_view'])) {
+        if (validateCSRF()) {
+            $newStatus = $_POST['action'];
+            $stmtUpd = $mysqli->prepare("UPDATE ticket_approvals SET status = ?, manager_id = ?, resolved_at = NOW() WHERE ticket_id = ? AND status = 'pending'");
+            $stmtUpd->bind_param('sii', $newStatus, $uid, $tid);
+            if ($stmtUpd->execute()) {
+                $ticketApprovalStatus = $newStatus;
+                
+                header('Location: view-ticket.php?id=' . $tid . '&from=org&msg=approved');
+                exit;
+            }
+        }
+    }
+}
 
 if (!$isOrgPeerView && $thread_id > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST' && function_exists('markThreadEntriesReadByUser')) {
     markThreadEntriesReadByUser($mysqli, $thread_id, $uid, $eid);
@@ -530,6 +571,19 @@ function humanSize($bytes) {
             background: #f6f7fb;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding-top: 62px;
+        }
+
+        /* Dynamic badge styles */
+        [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-light) !important;
+            color: var(--badge-color-light) !important;
+            border: 1px solid transparent !important;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        body.dark-mode [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-dark) !important;
+            color: var(--badge-color-dark) !important;
+            border-color: var(--badge-border-dark) !important;
         }
 
         body::before {
@@ -1184,6 +1238,117 @@ function humanSize($bytes) {
             border-color: #71717a;
             color: #fafafa;
         }
+
+        /* Modificadores de aviso de organización (Aprobaciones) */
+        .org-readonly-notice--warning {
+            background-color: #fffbeb !important;
+            border-color: #fde68a !important;
+        }
+        .org-readonly-notice--warning .org-readonly-notice__icon {
+            background-color: #fef3c7 !important;
+            border-color: #fcd34d !important;
+            color: #d97706 !important;
+        }
+        .org-readonly-notice--warning .org-readonly-notice__title {
+            color: #92400e !important;
+        }
+        .org-readonly-notice--warning .org-readonly-notice__text {
+            color: #b45309 !important;
+        }
+
+        .org-readonly-notice--success {
+            background-color: #f0fdf4 !important;
+            border-color: #bbf7d0 !important;
+        }
+        .org-readonly-notice--success .org-readonly-notice__icon {
+            background-color: #dcfce7 !important;
+            border-color: #86efac !important;
+            color: #16a34a !important;
+        }
+        .org-readonly-notice--success .org-readonly-notice__title {
+            color: #166534 !important;
+        }
+        .org-readonly-notice--success .org-readonly-notice__text {
+            color: #15803d !important;
+        }
+
+        .btn-approval-warn {
+            background-color: #f59e0b !important;
+            border: 1px solid #d97706 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease;
+        }
+        .btn-approval-warn:hover {
+            background-color: #d97706 !important;
+            border-color: #b45309 !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+        }
+
+        .btn-approval-success {
+            background-color: #10b981 !important;
+            border: 1px solid #059669 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease;
+        }
+        .btn-approval-success:hover {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+        }
+
+        /* Dark Mode para modificadores */
+        body.dark-mode .org-readonly-notice--warning {
+            background-color: #272115 !important;
+            border-color: #453015 !important;
+        }
+        body.dark-mode .org-readonly-notice--warning .org-readonly-notice__icon {
+            background-color: #3b2e1a !important;
+            border-color: #574121 !important;
+            color: #f59e0b !important;
+        }
+        body.dark-mode .org-readonly-notice--warning .org-readonly-notice__title {
+            color: #fcd34d !important;
+        }
+        body.dark-mode .org-readonly-notice--warning .org-readonly-notice__text {
+            color: #fbbf24 !important;
+        }
+
+        body.dark-mode .org-readonly-notice--success {
+            background-color: #142d1e !important;
+            border-color: #1b4d2c !important;
+        }
+        body.dark-mode .org-readonly-notice--success .org-readonly-notice__icon {
+            background-color: #1b432a !important;
+            border-color: #245e3b !important;
+            color: #4ade80 !important;
+        }
+        body.dark-mode .org-readonly-notice--success .org-readonly-notice__title {
+            color: #86efac !important;
+        }
+        body.dark-mode .org-readonly-notice--success .org-readonly-notice__text {
+            color: #a7f3d0 !important;
+        }
+
+        body.dark-mode .btn-approval-warn {
+            background-color: #d97706 !important;
+            border-color: #b45309 !important;
+        }
+        body.dark-mode .btn-approval-warn:hover {
+            background-color: #b45309 !important;
+            border-color: #92400e !important;
+        }
+
+        body.dark-mode .btn-approval-success {
+            background-color: #059669 !important;
+            border-color: #047857 !important;
+        }
+        body.dark-mode .btn-approval-success:hover {
+            background-color: #047857 !important;
+            border-color: #065f46 !important;
+        }
+
         .attach-zone {
             border: 2px dashed #cbd5e1;
             border-radius: 12px;
@@ -1957,22 +2122,65 @@ function humanSize($bytes) {
                     <?php
                     $orgReadonlyOwner = $ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario';
                     ?>
-                    <div class="org-readonly-notice" role="status">
-                        <div class="org-readonly-notice__main">
-                            <div class="org-readonly-notice__icon" aria-hidden="true">
-                                <i class="bi bi-eye"></i>
+                    <?php if (!empty($user['org_tickets_view']) && $ticketApprovalStatus === 'pending'): ?>
+                        <div class="org-readonly-notice org-readonly-notice--warning" role="status">
+                            <div class="org-readonly-notice__main">
+                                <div class="org-readonly-notice__icon" aria-hidden="true">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                </div>
+                                <div>
+                                    <p class="org-readonly-notice__title">Autorización Requerida</p>
+                                    <p class="org-readonly-notice__text">
+                                        Este ticket requiere su revisión y aprobación para proceder.
+                                    </p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="org-readonly-notice__title">Solo lectura</p>
-                                <p class="org-readonly-notice__text">
-                                    Ticket de <?php echo html($orgReadonlyOwner); ?>
-                                </p>
+                            <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                    <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn">Aprobar bajo aprobación</button>
+                                </form>
+                                <form method="post" style="margin: 0; display: inline-block;">
+                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                    <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success">Aprobar</button>
+                                </form>
                             </div>
                         </div>
-                        <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-sm btn-outline-secondary org-readonly-notice__back">
-                            <i class="bi bi-arrow-left me-1"></i>Volver al listado
-                        </a>
-                    </div>
+                    <?php elseif (!empty($user['org_tickets_view']) && in_array($ticketApprovalStatus, ['aprobar_bajo_aprobacion', 'aprobar_solo'])): ?>
+                        <div class="org-readonly-notice org-readonly-notice--success" role="status">
+                            <div class="org-readonly-notice__main">
+                                <div class="org-readonly-notice__icon" aria-hidden="true">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div>
+                                    <p class="org-readonly-notice__title">Aprobado</p>
+                                    <p class="org-readonly-notice__text">
+                                        <?php echo $ticketApprovalStatus === 'aprobar_solo' ? 'Proceder' : 'Proceder bajo aprobación'; ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-sm btn-outline-secondary org-readonly-notice__back">
+                                <i class="bi bi-arrow-left me-1"></i>Volver al listado
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <div class="org-readonly-notice" role="status">
+                            <div class="org-readonly-notice__main">
+                                <div class="org-readonly-notice__icon" aria-hidden="true">
+                                    <i class="bi bi-eye"></i>
+                                </div>
+                                <div>
+                                    <p class="org-readonly-notice__title">Solo lectura</p>
+                                    <p class="org-readonly-notice__text">
+                                        Ticket de <?php echo html($orgReadonlyOwner); ?>
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="<?php echo html($viewTicketBackUrl); ?>" class="btn btn-sm btn-outline-secondary org-readonly-notice__back">
+                                <i class="bi bi-arrow-left me-1"></i>Volver al listado
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 <?php else: ?>
                 <h5 class="mb-3">Escriba una respuesta</h5>
 

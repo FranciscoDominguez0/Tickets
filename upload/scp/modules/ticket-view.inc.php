@@ -333,12 +333,50 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
     <header class="ticket-view-header">
-        <h1 class="ticket-view-title">
+        <h1 class="ticket-view-title" style="margin-bottom: 0;">
             <a href="tickets.php?id=<?php echo $tid; ?>" title="Recargar">
                 <i class="bi bi-arrow-clockwise"></i>
             </a>
             Ticket #<?php echo html($t['ticket_number']); ?>
         </h1>
+        
+        <?php
+        $hasOrgManager = false;
+        $ticketApprovalStatus = 'none';
+
+        if (isset($mysqli) && $mysqli && !empty($t['user_id'])) {
+            $stmtA = $mysqli->prepare("SELECT status FROM ticket_approvals WHERE ticket_id = ? ORDER BY id DESC LIMIT 1");
+            if ($stmtA) {
+                $stmtA->bind_param('i', $tid);
+                $stmtA->execute();
+                $resA = $stmtA->get_result();
+                if ($rowA = $resA->fetch_assoc()) {
+                    $ticketApprovalStatus = $rowA['status'];
+                }
+            }
+
+            $stmtM = $mysqli->prepare("SELECT 1 FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = (SELECT organization_id FROM user_organizations WHERE user_id = ? LIMIT 1) AND u.org_tickets_view = 1 LIMIT 1");
+            if ($stmtM) {
+                $stmtM->bind_param('i', $t['user_id']);
+                $stmtM->execute();
+                $resM = $stmtM->get_result();
+                if ($resM->num_rows > 0) {
+                    $hasOrgManager = true;
+                }
+            }
+        }
+        ?>
+        <?php if ($ticketApprovalStatus !== 'none'): ?>
+            <div style="margin-top: 8px; margin-bottom: 8px; font-size: 0.85rem; font-weight: 800;">
+                <?php if ($ticketApprovalStatus === 'pending'): ?>
+                    <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
+                <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
+                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> PROCEDER BAJO APROBACIÓN</span>
+                <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
+                    <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> PROCEDER</span>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
         <?php
         $canTicketEdit = roleHasPermission('ticket.edit');
         $canTicketClose = roleHasPermission('ticket.close');
@@ -488,10 +526,7 @@ if ($ticketClientSignaturePath !== '') {
                         <span>Administrar referidos</span>
                     </a>
                     
-                    <a class="creative-dropdown-item" href="#">
-                        <div class="creative-dropdown-icon"><i class="bi bi-file-text"></i></div>
-                        <span>Gestionar formularios</span>
-                    </a>
+
                     
                     <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalCollaborators"' : 'onclick="showNoPermissionAlert(\'gestionar colaboradores\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon"><i class="bi bi-people"></i></div>
@@ -500,6 +535,17 @@ if ($ticketClientSignaturePath !== '') {
 
                     <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
                     
+                    <?php if ($hasOrgManager && $ticketApprovalStatus === 'none' && empty($t['closed'])): ?>
+                    <a class="creative-dropdown-item" href="#" onclick="document.getElementById('form-request-approval').submit(); return false;">
+                        <div class="creative-dropdown-icon text-warning" style="background: rgba(245, 158, 11, 0.1);"><i class="bi bi-shield-lock-fill"></i></div>
+                        <span style="font-weight: 700;">Solicitar revisión ejecutiva</span>
+                    </a>
+                    <form id="form-request-approval" method="post" action="tickets.php?id=<?php echo $tid; ?>" style="display: none;" onsubmit="return confirm('¿Solicitar revisión ejecutiva del jefe de la organización?');">
+                        <input type="hidden" name="action" value="request_approval">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    </form>
+                    <?php endif; ?>
+
                     <a class="creative-dropdown-item text-danger <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalBlockEmail"' : 'onclick="showNoPermissionAlert(\'bloquear el correo del usuario\'); return false;"'; ?>>
                         <div class="creative-dropdown-icon text-danger" style="background: rgba(239, 68, 68, 0.1);"><i class="bi bi-envelope-x"></i></div>
                         <span>Bloquear Email</span>

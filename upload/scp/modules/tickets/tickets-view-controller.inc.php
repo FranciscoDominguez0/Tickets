@@ -335,7 +335,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['request_approval', 'owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -646,6 +646,62 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         triggerEmailQueueWorkerAsync(40);
                     }
                 }
+            } elseif ($action === 'request_approval') {
+                // Solicitar revisión del jefe
+                $stmtBoss = $mysqli->prepare("SELECT u.id, u.email, u.firstname, u.lastname FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = (SELECT organization_id FROM user_organizations WHERE user_id = ? LIMIT 1) AND u.org_tickets_view = 1 AND u.empresa_id = ? LIMIT 1");
+                if ($stmtBoss) {
+                    $stmtBoss->bind_param('ii', $ticketView['user_id'], $eid);
+                    $stmtBoss->execute();
+                    $resBoss = $stmtBoss->get_result();
+                    if ($bossRow = $resBoss->fetch_assoc()) {
+                        // Insertar en ticket_approvals
+                        $staffId = (int)$_SESSION['staff_id'];
+                        $stmtIns = $mysqli->prepare("INSERT INTO ticket_approvals (ticket_id, requested_by_staff_id, status, created_at) VALUES (?, ?, 'pending', NOW())");
+                        if ($stmtIns) {
+                            $stmtIns->bind_param('ii', $tid, $staffId);
+                            $stmtIns->execute();
+                        }
+                        
+                        // Enviar correo al jefe
+                        $bossEmail = $bossRow['email'];
+                        if (filter_var($bossEmail, FILTER_VALIDATE_EMAIL)) {
+                            $ticketNo = $ticketView['ticket_number'];
+                            $bossName = trim($bossRow['firstname'] . ' ' . $bossRow['lastname']);
+                            $subjBoss = "[Revisión requerida] Ticket #" . $ticketNo . " requiere autorización";
+                            
+                            $orgPortalUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?from=org&id=' . $tid;
+                            
+                            $bossBodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Autorización Requerida</h2>'
+                                . '<p style="color:#475569; margin: 0 0 12px;">Estimado/a <strong>' . htmlspecialchars($bossName) . '</strong>, un agente requiere su revisión y autorización ejecutiva para proceder con el siguiente ticket:</p>'
+                                . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee; width: 100px;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars($ticketNo) . '</td></tr>'
+                                . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticketView['subject']) . '</td></tr>'
+                                . '</table>'
+                                . '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($orgPortalUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Revisar y Autorizar</a></p>'
+                                . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                . '</div>';
+                            
+                            $bossBodyText = "Autorización Requerida\n\nTicket: #" . $ticketNo . "\nAsunto: " . $ticketView['subject'] . "\n\nPor favor revise y autorice este ticket accediendo al siguiente enlace:\n" . $orgPortalUrl;
+                            
+                            if (function_exists('enqueueEmailJob')) {
+                                enqueueEmailJob($bossEmail, $subjBoss, $bossBodyHtml, $bossBodyText, [
+                                    'empresa_id' => (int)$eid,
+                                    'context_type' => 'ticket_approval_request',
+                                    'context_id' => (int)$tid,
+                                ]);
+                                if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                    triggerEmailQueueWorkerAsync();
+                                }
+                            } else {
+                                Mailer::send($bossEmail, $subjBoss, $bossBodyHtml, $bossBodyText);
+                            }
+                        }
+                    }
+                }
+                $msg = 'approval_requested';
+                header("Location: tickets.php?id=$tid&msg=$msg");
+                exit;
             } elseif ($action === 'assign') {
                 requireRolePermission('ticket.assign', 'tickets.php?id=' . $tid);
                 $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
