@@ -1389,6 +1389,23 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 body.dark-mode .exec-review-alert__btn:hover {
                     background: rgba(185, 28, 28, 0.3); color: #ffffff; border-color: rgba(185, 28, 28, 0.8);
                 }
+
+                @media (max-width: 767.98px) {
+                    .exec-review-alert {
+                        flex-direction: column; align-items: stretch; gap: 12px;
+                        padding: 14px 16px; border-radius: 14px; margin-bottom: 16px;
+                    }
+                    .exec-review-alert__main { gap: 12px; }
+                    .exec-review-alert__icon {
+                        width: 38px; height: 38px; border-radius: 10px; font-size: 1.1rem;
+                        flex-shrink: 0;
+                    }
+                    .exec-review-alert__text { font-size: 0.88rem; line-height: 1.4; }
+                    .exec-review-alert__btn {
+                        width: 100%; justify-content: center;
+                        padding: 10px 16px; font-size: 0.88rem; border-radius: 10px;
+                    }
+                }
             </style>
             <div class="exec-review-alert">
                 <div class="exec-review-alert__main">
