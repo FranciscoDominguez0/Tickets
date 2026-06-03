@@ -1398,42 +1398,72 @@ if ($blockNewIfSignaturePending) {
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.22);
             flex-shrink: 0;
         }
+        .form-card {
+            border-left: 4px solid #ef4444 !important;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+            padding: 32px !important;
+        }
+        body.dark-mode .form-card,
+        body.dark-mode .form-card:hover {
+            border-left-color: #ef4444 !important;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35) !important;
+        }
         .form-card .form-label {
-            font-weight: 700;
-            color: #475569;
-            font-size: 0.88rem;
-            margin-bottom: 6px;
-            letter-spacing: -0.1px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.92rem;
+            margin-bottom: 8px;
         }
         body.dark-mode .form-card .form-label {
             color: #cbd5e1;
         }
         .form-card .form-control,
         .form-card .form-select {
-            border-radius: 12px;
-            padding: 11px 14px;
-            border-color: #cbd5e1;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
         }
         body.dark-mode .form-card .form-control,
         body.dark-mode .form-card .form-select {
             border-color: #3f3f46;
+            background-color: #18181b;
         }
         .form-card .form-control:focus,
         .form-card .form-select:focus {
+            background-color: #ffffff;
             border-color: #ef4444;
-            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
+        body.dark-mode .form-card .form-control:focus,
+        body.dark-mode .form-card .form-select:focus {
+            background-color: #27272a;
+        }
+
         .btn-row-submit {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-top: 28px;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 20px;
+            margin-top: 32px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 24px;
         }
         body.dark-mode .btn-row-submit {
             border-top-color: #27272a;
+        }
+        #open-ticket-submit, .btn-row-submit .btn-outline-secondary {
+            border-radius: 8px !important;
+            padding: 12px 24px !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+            transition: all 0.2s ease;
+        }
+        #open-ticket-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
         }
 
 
