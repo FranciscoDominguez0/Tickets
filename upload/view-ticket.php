@@ -202,6 +202,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
             if ($stmtUpd->execute()) {
                 $ticketApprovalStatus = $newStatus;
                 
+                if (function_exists('notifyApprovalToAdminRecipients')) {
+                    $statusLabelNotif = ($newStatus === 'aprobar_solo') ? 'Aprobado' : 'Aprobado bajo aprobación';
+                    notifyApprovalToAdminRecipients($tid, $statusLabelNotif);
+                }
+                
                 header('Location: view-ticket.php?id=' . $tid . '&from=org&msg=approved');
                 exit;
             }

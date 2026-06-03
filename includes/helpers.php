@@ -2883,3 +2883,112 @@ function getUploadMaxSize() {
     }
     return $res;
 }
+
+/**
+ * Notifica a los administradores configurados cuando un cliente aprueba un ticket
+ */
+function notifyApprovalToAdminRecipients($tid, $statusName) {
+    global $mysqli;
+    $eid = empresaId();
+    $tid = (int)$tid;
+    
+    // Obtener info básica del ticket
+    $stmtT = $mysqli->prepare("SELECT ticket_number, subject FROM tickets WHERE id = ? AND empresa_id = ?");
+    if (!$stmtT) return;
+    $stmtT->bind_param('ii', $tid, $eid);
+    $stmtT->execute();
+    $tRes = $stmtT->get_result();
+    $tRow = $tRes ? $tRes->fetch_assoc() : null;
+    if (!$tRow) return;
+    
+    $tNo = (string)($tRow['ticket_number'] ?? ('#' . $tid));
+    $tSub = (string)($tRow['subject'] ?? '');
+    
+    $message = "Ticket #$tNo fue $statusName por el cliente.";
+    $type = 'ticket_assigned'; // Campana
+    
+    // Obtener destinatarios configurados (ID y Email)
+    $recipientsIds = [];
+    $recipientsEmails = [];
+    
+    // Check if staff has empresa_id column
+    $staffHasEmpresa = false;
+    try {
+        $chk = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
+        $staffHasEmpresa = ($chk && $chk->num_rows > 0);
+    } catch (Throwable $e) {}
+
+    $sqlAdmin = "SELECT s.id, s.email FROM notification_recipients nr INNER JOIN staff s ON s.id = nr.staff_id WHERE nr.empresa_id = ? AND s.is_active = 1";
+    if ($staffHasEmpresa) {
+        $sqlAdmin .= " AND s.empresa_id = ?";
+    }
+    
+    $stmtR = $mysqli->prepare($sqlAdmin);
+    if ($stmtR) {
+        if ($staffHasEmpresa) {
+            $stmtR->bind_param('ii', $eid, $eid);
+        } else {
+            $stmtR->bind_param('i', $eid);
+        }
+        if ($stmtR->execute()) {
+            $resR = $stmtR->get_result();
+            while ($r = $resR->fetch_assoc()) {
+                $sid = (int)($r['id'] ?? 0);
+                if ($sid > 0) $recipientsIds[] = $sid;
+                
+                $em = strtolower(trim((string)($r['email'] ?? '')));
+                if ($em !== '' && filter_var($em, FILTER_VALIDATE_EMAIL)) {
+                    $recipientsEmails[$em] = true;
+                }
+            }
+        }
+    }
+    
+    // 1. Notificación de campana
+    if (!empty($recipientsIds)) {
+        $recipientsIds = array_unique($recipientsIds);
+        $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
+        if ($stmtN) {
+            foreach ($recipientsIds as $sid) {
+                $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
+                $stmtN->execute();
+            }
+        }
+    }
+    
+    // 2. Notificación por Email (Asíncrona)
+    if (!empty($recipientsEmails) && class_exists('Mailer')) {
+        $appName = getAppSetting('core.name', 'Sistema de Tickets');
+        $adminSubj = '[Aprobación] Ticket ' . $tNo . ' - ' . $tSub;
+        $adminBodyHtml = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+            . '<h2 style="margin:0 0 10px;color:#b91c1c;">Ticket Aprobado</h2>'
+            . '<p>El cliente ha emitido una aprobación para el ticket.</p>'
+            . '<table style="width:100%;border-collapse:collapse;margin:10px 0 14px;">'
+            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Número:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($tNo) . '</td></tr>'
+            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Asunto:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($tSub) . '</td></tr>'
+            . '<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><strong>Acción:</strong></td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">' . html($statusName) . '</td></tr>'
+            . '</table>'
+            . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html($appName) . '</p>'
+            . '</div>';
+            
+        $adminBodyText = "Ticket Aprobado\n\n"
+            . "El cliente ha emitido una aprobación para el ticket.\n\n"
+            . "Numero: " . $tNo . "\n"
+            . "Asunto: " . $tSub . "\n"
+            . "Acción: " . $statusName . "\n";
+            
+        $emailsQueued = false;
+        foreach (array_keys($recipientsEmails) as $adminEmail) {
+            if (function_exists('enqueueEmailJob')) {
+                enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
+                $emailsQueued = true;
+            } else {
+                Mailer::send($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
+            }
+        }
+        
+        if ($emailsQueued && function_exists('triggerEmailQueueWorkerAsync')) {
+            triggerEmailQueueWorkerAsync();
+        }
+    }
+}
