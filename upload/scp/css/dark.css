@@ -3556,3 +3556,23 @@ body.dark-mode .user-view-profile-premium .uvp-field-icon {
     color: #71717a !important;
 }
 
+/* === NAV TABS (Dark Mode) === */
+body.dark-mode .nav-tabs {
+    border-bottom-color: #27272a !important;
+}
+body.dark-mode .nav-tabs .nav-link {
+    color: #a1a1aa !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+body.dark-mode .nav-tabs .nav-link:hover {
+    color: #f4f4f5 !important;
+    border-color: #27272a #27272a transparent !important;
+}
+body.dark-mode .nav-tabs .nav-link.active {
+    background-color: #18181b !important;
+    border-color: #27272a #27272a #18181b !important;
+    color: #ef4444 !important;
+}
+
+
