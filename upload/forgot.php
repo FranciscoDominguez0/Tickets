@@ -111,7 +111,16 @@ if ($_POST) {
                         "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
                         "Si no solicitaste este cambio, puedes ignorar este correo.";
 
-                    Mailer::send($u['email'], $subject, $bodyHtml, $bodyText);
+                    if (function_exists('enqueueEmailJob')) {
+                        $uidQueue = (int)$u['id'];
+                        $currentEmpresaId = function_exists('empresaId') ? empresaId() : 1;
+                        enqueueEmailJob($u['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $currentEmpresaId, 'context_type' => 'forgot_reset', 'context_id' => $uidQueue]);
+                        if (function_exists('triggerEmailQueueWorkerAsync')) {
+                            triggerEmailQueueWorkerAsync();
+                        }
+                    } else {
+                        Mailer::send($u['email'], $subject, $bodyHtml, $bodyText);
+                    }
                 }
             }
 

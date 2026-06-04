@@ -885,7 +885,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
             "Si no solicitaste este cambio, puedes ignorar este correo.";
 
-        Mailer::send((string)$userRow['email'], $subject, $bodyHtml, $bodyText);
+        if (function_exists('enqueueEmailJob')) {
+            enqueueEmailJob((string)$userRow['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'user_reset', 'context_id' => (int)($userRow['id'] ?? 0)]);
+            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                triggerEmailQueueWorkerAsync();
+            }
+        } else {
+            Mailer::send((string)$userRow['email'], $subject, $bodyHtml, $bodyText);
+        }
     }
 
     header('Location: users.php?id=' . $user_id . $tabParam . '&msg=reset_sent');

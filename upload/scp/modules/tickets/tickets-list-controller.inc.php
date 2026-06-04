@@ -490,7 +490,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                                             . '</div>';
 
                                         $bodyText = 'Se te asignó un ticket: ' . $ticketNo . "\n" . 'Asunto: ' . (string)($trow['subject'] ?? '') . "\n" . 'Ver: ' . $viewUrl;
-                                        Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                        if (function_exists('enqueueEmailJob')) {
+                                            enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'ticket_assigned_bulk', 'context_id' => (int)$tid0]);
+                                            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                                triggerEmailQueueWorkerAsync();
+                                            }
+                                        } else {
+                                            Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                        }
                                     }
                                 }
                             }

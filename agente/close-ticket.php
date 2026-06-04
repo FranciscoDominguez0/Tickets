@@ -273,12 +273,20 @@ if ($client_email !== '' && filter_var($client_email, FILTER_VALIDATE_EMAIL)) {
         . "Tu ticket " . $ticket_no . " fue marcado como " . $status_label . ".\n"
         . "Asunto: " . $ticket_subject . "\n\n"
         . $company_name;
-    if (!empty($pdf_attachment)) {
-        Mailer::sendWithOptions($client_email, $client_subject, $client_body_html, $client_body_text, [
-            'attachments' => $pdf_attachment,
-        ]);
+    if (function_exists('enqueueEmailJob')) {
+        $options = ['empresa_id' => $eid_mail, 'context_type' => 'ticket_closed', 'context_id' => (int)$ticket_id];
+        if (!empty($pdf_attachment)) {
+            $options['attachments'] = $pdf_attachment;
+        }
+        enqueueEmailJob($client_email, $client_subject, $client_body_html, $client_body_text, $options);
     } else {
-        Mailer::send($client_email, $client_subject, $client_body_html, $client_body_text);
+        if (!empty($pdf_attachment)) {
+            Mailer::sendWithOptions($client_email, $client_subject, $client_body_html, $client_body_text, [
+                'attachments' => $pdf_attachment,
+            ]);
+        } else {
+            Mailer::send($client_email, $client_subject, $client_body_html, $client_body_text);
+        }
     }
 }
 
@@ -340,12 +348,20 @@ if (!empty($admin_recipients)) {
         . $company_name;
 
     foreach (array_keys($admin_recipients) as $admin_email) {
-        if (!empty($pdf_attachment)) {
-            Mailer::sendWithOptions($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
-                'attachments' => $pdf_attachment,
-            ]);
+        if (function_exists('enqueueEmailJob')) {
+            $options = ['empresa_id' => $eid_mail, 'context_type' => 'ticket_closed_admin', 'context_id' => (int)$ticket_id];
+            if (!empty($pdf_attachment)) {
+                $options['attachments'] = $pdf_attachment;
+            }
+            enqueueEmailJob($admin_email, $admin_subject, $admin_body_html, $admin_body_text, $options);
         } else {
-            Mailer::send($admin_email, $admin_subject, $admin_body_html, $admin_body_text);
+            if (!empty($pdf_attachment)) {
+                Mailer::sendWithOptions($admin_email, $admin_subject, $admin_body_html, $admin_body_text, [
+                    'attachments' => $pdf_attachment,
+                ]);
+            } else {
+                Mailer::send($admin_email, $admin_subject, $admin_body_html, $admin_body_text);
+            }
         }
     }
 }

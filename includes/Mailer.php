@@ -202,7 +202,7 @@ class Mailer {
      * Envía un correo usando la configuración SMTP de una empresa específica.
      * Usado por el worker de la cola para no depender de la sesión.
      */
-    public static function sendWithEmpresa($to, $subject, $bodyHtml, $bodyText = null, $empresaId = null) {
+    public static function sendWithEmpresa($to, $subject, $bodyHtml, $bodyText = null, $empresaId = null, array $extraOptions = []) {
         self::$lastError = '';
         $to = trim($to);
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -218,6 +218,9 @@ class Mailer {
             'fromName' => (string)($sys['fromName'] ?? 'Sistema'),
             'smtp' => is_array($sys['smtp'] ?? null) ? $sys['smtp'] : [],
         ];
+        if (!empty($extraOptions)) {
+            $opts = array_merge($opts, $extraOptions);
+        }
         return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $opts);
     }
 

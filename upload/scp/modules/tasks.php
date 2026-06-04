@@ -242,12 +242,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                             . '</div>';
 
                                         $bodyText = 'Se te asignó una tarea: #' . $taskId . "\n" . 'Título: ' . (string)$title . "\n" . 'Ver: ' . $viewUrl;
-                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                        if (!$mailOk) {
-                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                            addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
-                                            $errors[] = 'No se pudo enviar el correo al agente asignado.';
-                                            $mailProblem = true;
+                                        if (function_exists('enqueueEmailJob')) {
+                                            $mailOk = enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'task_assigned', 'context_id' => $taskId]);
+                                            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                                triggerEmailQueueWorkerAsync();
+                                            }
+                                        } else {
+                                            $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                            if (!$mailOk) {
+                                                $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
+                                                $errors[] = 'No se pudo enviar el correo al agente asignado.';
+                                                $mailProblem = true;
+                                            }
                                         }
                                     } else {
                                         addLog('task_assign_email_missing', 'Agente sin email válido', 'task', $taskId, 'staff', $newAssignedTo);
@@ -398,12 +405,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do'])) {
                                             . '</div>';
 
                                         $bodyText = 'Se te asignó una tarea: #' . $taskId . "\n" . 'Título: ' . $taskTitle . "\n" . 'Ver: ' . $viewUrl;
-                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                        if (!$mailOk) {
-                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                            addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
-                                            $errors[] = 'No se pudo enviar el correo al agente asignado.';
-                                            $mailProblem = true;
+                                        if (function_exists('enqueueEmailJob')) {
+                                            $mailOk = enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'task_assigned', 'context_id' => $taskId]);
+                                            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                                triggerEmailQueueWorkerAsync();
+                                            }
+                                        } else {
+                                            $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                            if (!$mailOk) {
+                                                $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                addLog('task_assign_email_failed', $err, 'task', $taskId, 'staff', $newAssignedTo);
+                                                $errors[] = 'No se pudo enviar el correo al agente asignado.';
+                                                $mailProblem = true;
+                                            }
                                         }
                                     } else {
                                         addLog('task_assign_email_missing', 'Agente sin email válido', 'task', $taskId, 'staff', $newAssignedTo);

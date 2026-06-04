@@ -368,7 +368,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $bodyText = "Hola $name\n\nUn administrador te envió un enlace para configurar tu contraseña de agente.\n\nEnlace (vence en 1 hora):\n$resetUrl\n";
 
-                    Mailer::send($email, $subject, $bodyHtml, $bodyText);
+                    if (function_exists('enqueueEmailJob')) {
+                        enqueueEmailJob($email, $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_create', 'context_id' => $newId]);
+                        if (function_exists('triggerEmailQueueWorkerAsync')) {
+                            triggerEmailQueueWorkerAsync();
+                        }
+                    } else {
+                        Mailer::send($email, $subject, $bodyHtml, $bodyText);
+                    }
                 }
             }
         }
@@ -531,7 +538,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             . '</div>';
 
         $bodyText = "Hola $name\n\nEnlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n";
-        Mailer::send((string)$s['email'], $subject, $bodyHtml, $bodyText);
+        if (function_exists('enqueueEmailJob')) {
+            enqueueEmailJob((string)$s['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_reset', 'context_id' => $id]);
+            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                triggerEmailQueueWorkerAsync();
+            }
+        } else {
+            Mailer::send((string)$s['email'], $subject, $bodyHtml, $bodyText);
+        }
 
         $_SESSION['flash_msg'] = 'Correo de reseteo enviado.';
         header('Location: staff.php');

@@ -87,8 +87,14 @@ if ($limit < 1) $limit = 1;
 if ($limit > 100) $limit = 100;
 error_log('[mail_queue] worker start limit=' . $limit . ' sapi=' . PHP_SAPI);
 
+$hasAttCol = dbColumnExists('email_queue', 'attachments_json');
+$selectCols = "id, empresa_id, recipient_email, subject, body_html, body_text, attempts, max_attempts";
+if ($hasAttCol) {
+    $selectCols .= ", attachments_json";
+}
+
 $stmt = $mysqli->prepare(
-    "SELECT id, empresa_id, recipient_email, subject, body_html, body_text, attempts, max_attempts\n"
+    "SELECT " . $selectCols . "\n"
     . "FROM email_queue\n"
     . "WHERE status IN ('pending', 'retry') AND next_attempt_at <= NOW()\n"
     . "ORDER BY id ASC\n"
@@ -154,8 +160,23 @@ foreach ($jobs as $job) {
     $ok = false;
     $lastError = '';
     try {
+        $extraOptions = [];
+        if (isset($job['attachments_json']) && trim((string)$job['attachments_json']) !== '') {
+            $attsDecoded = json_decode($job['attachments_json'], true);
+            if (is_array($attsDecoded) && !empty($attsDecoded)) {
+                $extraOptions['attachments'] = [];
+                foreach ($attsDecoded as $att) {
+                    if (!is_array($att)) continue;
+                    $extraOptions['attachments'][] = [
+                        'filename' => (string)($att['filename'] ?? 'adjunto'),
+                        'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
+                        'content' => isset($att['content_b64']) ? base64_decode($att['content_b64']) : '',
+                    ];
+                }
+            }
+        }
         // Usar sendWithEmpresa para que cargue la config SMTP de la empresa correcta
-        $ok = Mailer::sendWithEmpresa($to, $subject, $bodyHtml, $bodyText, $empresaId);
+        $ok = Mailer::sendWithEmpresa($to, $subject, $bodyHtml, $bodyText, $empresaId, $extraOptions);
         if (!$ok) $lastError = (string)(Mailer::$lastError ?? 'Error de envío');
     } catch (Throwable $e) {
         $ok = false;
@@ -211,4 +232,14 @@ error_log('[mail_queue] worker end processed=' . $processed . ' sent=' . $sent .
 if (isset($lockFp) && $lockFp) {
     flock($lockFp, LOCK_UN);
     fclose($lockFp);
+    unset($lockFp);
+}
+
+// Auto re-trigger si quedan correos pendientes o listos para reintentar
+if (function_exists('triggerEmailQueueWorkerAsync')) {
+    $remaining = $mysqli->query("SELECT COUNT(*) AS c FROM email_queue WHERE status IN ('pending', 'retry') AND next_attempt_at <= NOW()");
+    if ($remaining && ($rr = $remaining->fetch_assoc()) && (int)($rr['c'] ?? 0) > 0) {
+        error_log('[mail_queue] more jobs remaining, re-triggering worker with limit ' . $limit);
+        triggerEmailQueueWorkerAsync($limit);
+    }
 }

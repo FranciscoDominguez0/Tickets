@@ -380,10 +380,17 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                                                         . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
                                                         . '</div>';
                                                     $bodyText = 'Se te asignó un ticket: ' . (string)$ticket_number . "\n" . 'Asunto: ' . (string)$subject . "\n" . 'Ver: ' . $viewUrl;
-                                                    $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
-                                                    if (!$mailOk) {
-                                                        $err = (string)(Mailer::$lastError ?? 'Error desconocido');
-                                                        addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                                    if (function_exists('enqueueEmailJob')) {
+                                                        $mailOk = enqueueEmailJob($to, $subj, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'ticket_assigned', 'context_id' => $new_tid]);
+                                                        if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                                            triggerEmailQueueWorkerAsync();
+                                                        }
+                                                    } else {
+                                                        $mailOk = Mailer::send($to, $subj, $bodyHtml, $bodyText);
+                                                        if (!$mailOk) {
+                                                            $err = (string)(Mailer::$lastError ?? 'Error desconocido');
+                                                            addLog('ticket_assign_email_failed', $err, 'ticket', $new_tid, 'staff', $val);
+                                                        }
                                                     }
                                                 }
                                             }

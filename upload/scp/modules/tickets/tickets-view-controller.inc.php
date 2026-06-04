@@ -518,17 +518,26 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             'context_id'   => (int)$tid,
                         ];
                         if ($pdfBytesClient !== null) {
-                            Mailer::sendWithOptions($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, [
-                                'attachments' => [[
-                                    'filename'    => 'Ticket_' . $safeTicketNo . '.pdf',
-                                    'contentType' => 'application/pdf',
-                                    'content'     => $pdfBytesClient,
-                                ]],
-                            ]);
-                        } elseif (function_exists('enqueueEmailJob')) {
+                            $clientMailOpts['attachments'] = [[
+                                'filename'    => 'Ticket_' . $safeTicketNo . '.pdf',
+                                'contentType' => 'application/pdf',
+                                'content'     => $pdfBytesClient,
+                            ]];
+                        }
+                        if (function_exists('enqueueEmailJob')) {
                             enqueueEmailJob($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, $clientMailOpts);
                         } else {
-                            Mailer::send($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText);
+                            if ($pdfBytesClient !== null) {
+                                Mailer::sendWithOptions($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText, [
+                                    'attachments' => [[
+                                        'filename'    => 'Ticket_' . $safeTicketNo . '.pdf',
+                                        'contentType' => 'application/pdf',
+                                        'content'     => $pdfBytesClient,
+                                    ]],
+                                ]);
+                            } else {
+                                Mailer::send($clientEmail, $clientSubj, $clientBodyHtml, $clientBodyText);
+                            }
                         }
                     }
 
@@ -626,18 +635,24 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         }
 
                         foreach (array_keys($adminRecipients) as $adminEmail) {
+                            $adminMailOpts = [
+                                'empresa_id' => (int)$eid,
+                                'context_type' => 'ticket_closed_admin',
+                                'context_id' => (int)$tid,
+                            ];
                             if ($pdfAttachment !== null) {
-                                Mailer::sendWithOptions($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
-                                    'attachments' => [$pdfAttachment],
-                                ]);
-                            } elseif (function_exists('enqueueEmailJob')) {
-                                enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
-                                    'empresa_id' => (int)$eid,
-                                    'context_type' => 'ticket_closed_admin',
-                                    'context_id' => (int)$tid,
-                                ]);
+                                $adminMailOpts['attachments'] = [$pdfAttachment];
+                            }
+                            if (function_exists('enqueueEmailJob')) {
+                                enqueueEmailJob($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, $adminMailOpts);
                             } else {
-                                Mailer::send($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
+                                if ($pdfAttachment !== null) {
+                                    Mailer::sendWithOptions($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText, [
+                                        'attachments' => [$pdfAttachment],
+                                    ]);
+                                } else {
+                                    Mailer::send($adminEmail, $adminSubj, $adminBodyHtml, $adminBodyText);
+                                }
                             }
                         }
                     }

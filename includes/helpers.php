@@ -2509,6 +2509,7 @@ function ensureEmailQueueTable()
         . "  subject VARCHAR(255) NOT NULL,\n"
         . "  body_html MEDIUMTEXT NULL,\n"
         . "  body_text MEDIUMTEXT NULL,\n"
+        . "  attachments_json MEDIUMTEXT NULL,\n"
         . "  status VARCHAR(20) NOT NULL DEFAULT 'pending',\n"
         . "  attempts INT NOT NULL DEFAULT 0,\n"
         . "  max_attempts INT NOT NULL DEFAULT 5,\n"
@@ -2529,6 +2530,10 @@ function ensureEmailQueueTable()
     if (!dbColumnExists('email_queue', 'empresa_id')) {
         @$mysqli->query("ALTER TABLE email_queue ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
         @$mysqli->query("ALTER TABLE email_queue ADD INDEX idx_email_queue_empresa (empresa_id)");
+    }
+    // Asegurar columna de adjuntos para correos con PDF/archivos
+    if (!dbColumnExists('email_queue', 'attachments_json')) {
+        @$mysqli->query("ALTER TABLE email_queue ADD COLUMN attachments_json MEDIUMTEXT NULL AFTER body_text");
     }
     return true;
 }
@@ -2640,15 +2645,49 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
         $subject = mb_substr($subject, 0, 252) . '...';
     }
 
-    $stmt = $mysqli->prepare(
-        "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"
-        . "VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, NOW(), ?, ?, NOW(), NOW())"
-    );
-    if (!$stmt)
-        return false;
-    $htmlBody = (string) $bodyHtml;
-    $textBody = (string) $bodyText;
-    $stmt->bind_param('issssisi', $eid, $to, $subject, $htmlBody, $textBody, $maxAttempts, $contextType, $contextId);
+    // Serializar adjuntos si existen (PDF bytes como base64)
+    $attachmentsJson = null;
+    if (isset($meta['attachments']) && is_array($meta['attachments']) && !empty($meta['attachments'])) {
+        $serializable = [];
+        foreach ($meta['attachments'] as $att) {
+            if (!is_array($att)) continue;
+            $item = [
+                'filename' => (string)($att['filename'] ?? 'adjunto'),
+                'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
+            ];
+            if (isset($att['content']) && $att['content'] !== '' && $att['content'] !== null) {
+                // Codificar bytes binarios como base64 para almacenar en JSON
+                $item['content_b64'] = base64_encode($att['content']);
+            }
+            $serializable[] = $item;
+        }
+        if (!empty($serializable)) {
+            $attachmentsJson = json_encode($serializable, JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    $hasAttCol = dbColumnExists('email_queue', 'attachments_json');
+    if ($hasAttCol) {
+        $stmt = $mysqli->prepare(
+            "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, attachments_json, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"
+            . "VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, NOW(), ?, ?, NOW(), NOW())"
+        );
+        if (!$stmt)
+            return false;
+        $htmlBody = (string) $bodyHtml;
+        $textBody = (string) $bodyText;
+        $stmt->bind_param('isssssisi', $eid, $to, $subject, $htmlBody, $textBody, $attachmentsJson, $maxAttempts, $contextType, $contextId);
+    } else {
+        $stmt = $mysqli->prepare(
+            "INSERT INTO email_queue (empresa_id, recipient_email, subject, body_html, body_text, status, attempts, max_attempts, next_attempt_at, context_type, context_id, created_at, updated_at)\n"
+            . "VALUES (?, ?, ?, ?, ?, 'pending', 0, ?, NOW(), ?, ?, NOW(), NOW())"
+        );
+        if (!$stmt)
+            return false;
+        $htmlBody = (string) $bodyHtml;
+        $textBody = (string) $bodyText;
+        $stmt->bind_param('issssisi', $eid, $to, $subject, $htmlBody, $textBody, $maxAttempts, $contextType, $contextId);
+    }
     return (bool) $stmt->execute();
 }
 
