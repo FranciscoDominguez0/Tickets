@@ -8,6 +8,21 @@ require_once '../includes/Mailer.php';
 ignore_user_abort(true);
 @set_time_limit(0);
 
+// --- Trick para liberar la conexión HTTP prematuramente y seguir en background (vital en Windows/XAMPP) ---
+if (!empty($_REQUEST['async'])) {
+    @ob_end_clean();
+    header("Connection: close");
+    header("Content-Encoding: none");
+    header("Content-Length: 0");
+    @ob_start();
+    echo "";
+    @ob_end_flush();
+    @flush();
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+}
+
 // --- Lock de concurrencia: solo un worker a la vez ---
 $lockFile = sys_get_temp_dir() . '/mail_queue_worker.lock';
 $lockFp = @fopen($lockFile, 'c');
@@ -218,14 +233,16 @@ foreach ($jobs as $job) {
     }
 }
 
-header('Content-Type: application/json; charset=utf-8');
-echo json_encode([
-    'ok' => true,
-    'processed' => $processed,
-    'sent' => $sent,
-    'failed' => $failed,
-    'retried' => $retried,
-], JSON_UNESCAPED_UNICODE);
+if (empty($_REQUEST['async'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'ok' => true,
+        'processed' => $processed,
+        'sent' => $sent,
+        'failed' => $failed,
+        'retried' => $retried,
+    ], JSON_UNESCAPED_UNICODE);
+}
 error_log('[mail_queue] worker end processed=' . $processed . ' sent=' . $sent . ' failed=' . $failed . ' retried=' . $retried);
 
 // Liberar lock de concurrencia

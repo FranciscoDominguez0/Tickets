@@ -2650,10 +2650,11 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
     if (isset($meta['attachments']) && is_array($meta['attachments']) && !empty($meta['attachments'])) {
         $serializable = [];
         foreach ($meta['attachments'] as $att) {
-            if (!is_array($att)) continue;
+            if (!is_array($att))
+                continue;
             $item = [
-                'filename' => (string)($att['filename'] ?? 'adjunto'),
-                'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
+                'filename' => (string) ($att['filename'] ?? 'adjunto'),
+                'contentType' => (string) ($att['contentType'] ?? 'application/octet-stream'),
             ];
             if (isset($att['content']) && $att['content'] !== '' && $att['content'] !== null) {
                 // Codificar bytes binarios como base64 para almacenar en JSON
@@ -2756,55 +2757,62 @@ function triggerEmailQueueWorkerAsync($limit = 30)
     $eid = function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1);
     if ($eid <= 0)
         $eid = 1;
-    $qs = http_build_query(['token' => $token, 'limit' => $limit, 'eid' => $eid]);
+    $qs = http_build_query(['token' => $token, 'limit' => $limit, 'eid' => $eid, 'async' => 1]);
     $path = $workerPath . '?' . $qs;
 
-    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
-    $hostOnly = preg_replace('/:\d+$/', '', $host);
-    if ($hostOnly === '')
-        $hostOnly = 'localhost';
-    $port = 80;
-    $scheme = 'http';
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-        $scheme = 'https';
-        $port = 443;
-    }
-    if (preg_match('/:(\d+)$/', $host, $m)) {
-        $port = (int) $m[1];
+    $appUrl = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
+    if ($appUrl === '') {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $appUrl = $scheme . '://' . $host . $baseDir;
     }
 
-    $errno = 0;
-    $errstr = '';
+    $fullUrl = $appUrl . '/upload/process_mail_queue.php?' . $qs;
+
+    if (function_exists('curl_init')) {
+        $ch = curl_init($fullUrl);
+        curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1500); // 1.5s timeout para permitir Handshake SSL
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SistemaTickets/1.0');
+        @curl_exec($ch);
+        // curl_close() está obsoleto en PHP 8.0+ ya que $ch es un objeto que se destruye automáticamente
+        unset($ch);
+        return true;
+    }
+
+    // Fallback si cURL no existe (muy raro)
+    $host = (string) parse_url($fullUrl, PHP_URL_HOST);
+    $port = parse_url($fullUrl, PHP_URL_PORT);
+    $scheme = parse_url($fullUrl, PHP_URL_SCHEME);
+    if (!$port) {
+        $port = ($scheme === 'https') ? 443 : 80;
+    }
+    $path = parse_url($fullUrl, PHP_URL_PATH) . '?' . parse_url($fullUrl, PHP_URL_QUERY);
 
     $context = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
-    
     $fp = @stream_socket_client(
-        ($scheme === 'https' ? 'ssl://' : 'tcp://') . $hostOnly . ':' . $port,
+        ($scheme === 'https' ? 'ssl://' : 'tcp://') . $host . ':' . $port,
         $errno,
         $errstr,
-        1.5,
+        0.5,
         STREAM_CLIENT_CONNECT,
         $context
     );
 
-    if (!$fp) {
-        error_log('[mail_queue] async trigger failed: ' . $hostOnly . ':' . $port . ' ' . $errstr . ' (' . $errno . ')');
-        return false;
+    if ($fp) {
+        $out = "GET " . $path . " HTTP/1.1\r\n";
+        $out .= "Host: " . $host . "\r\n";
+        $out .= "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) SistemaTickets/1.0\r\n";
+        $out .= "Connection: Close\r\n\r\n";
+        @fwrite($fp, $out);
+        stream_set_blocking($fp, true);
+        stream_set_timeout($fp, 0, 50000);
+        @fread($fp, 128);
+        @fclose($fp);
     }
 
-    $out = "GET " . $path . " HTTP/1.1\r\n";
-    $out .= "Host: " . $host . "\r\n";
-    $out .= "Connection: Close\r\n\r\n";
-    
-    @fwrite($fp, $out);
-    
-    // Esperar hasta 50ms (0.05 segundos) leyendo el socket para evitar que Apache cancele la peticion prematuramente en Windows
-    stream_set_blocking($fp, true);
-    stream_set_timeout($fp, 0, 50000); 
-    @fread($fp, 128); 
-    
-    @fclose($fp);
-    return true;
 }
 
 function ensureRolePermissionsTable()
