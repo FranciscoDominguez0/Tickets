@@ -733,6 +733,7 @@ body.dark-mode .mobile-deletion-icon-box {
     color: var(--del-text-main); 
     margin-bottom: 14px; 
     line-height: 1.4;
+    word-break: break-word;
 }
 .mobile-deletion-meta-block {
     background: var(--del-bg-main); 
@@ -765,6 +766,7 @@ body.dark-mode .mobile-deletion-icon-box {
     color: var(--del-text-main); 
     font-weight: 500; 
     line-height: 1.5;
+    word-break: break-word;
 }
 .mobile-deletion-reason-label {
     color: var(--del-text-muted); 

@@ -539,11 +539,6 @@ if ($ticketClientSignaturePath !== '') {
                         <span>Tickets vinculados</span>
                     </a>
                     
-                    <a class="creative-dropdown-item <?php echo $canTicketMark ? '' : 'disabled'; ?>" href="<?php echo $canTicketMark ? ('tickets.php?id=' . $tid . '&action=mark_answered') : '#'; ?>" style="<?php echo $canTicketMark ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketMark ? '' : 'onclick="showNoPermissionAlert(\'marcar este ticket como contestado\'); return false;"'; ?>>
-                        <div class="creative-dropdown-icon"><i class="bi bi-check-circle"></i></div>
-                        <span>Marcar como contestados</span>
-                    </a>
-
                     <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
                     
                     <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalSupportTimes"' : 'onclick="showNoPermissionAlert(\'editar tiempos de soporte\'); return false;"'; ?>>
@@ -1100,6 +1095,20 @@ if ($ticketClientSignaturePath !== '') {
                         <i class="bi bi-geo-alt"></i> 
                         <span class="location-text" title="<?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?>"><?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?></span>
                     </div>
+                    <?php 
+                        $hasCoords = (!$isWalkinTicket) && !empty($t['user_latitude']) && !empty($t['user_longitude']);
+                        if ($hasCoords): 
+                            $lat = (float)$t['user_latitude'];
+                            $lng = (float)$t['user_longitude'];
+                            $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                            $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
+                    ?>
+                    <div style="margin-top: 4px; margin-bottom: 6px;">
+                        <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')" class="btn-waze-premium">
+                            <i class="bi bi-geo-alt-fill"></i> Abrir en Waze
+                        </a>
+                    </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                     <?php if (!empty($t['walkin_phone'] ?? '') || !empty($t['user_phone'] ?? '')): ?>
                     <div class="sub">
@@ -1108,18 +1117,6 @@ if ($ticketClientSignaturePath !== '') {
                     </div>
                     <?php endif; ?>
                 </div>
-                <?php 
-                    $hasCoords = (!$isWalkinTicket) && !empty($t['user_latitude']) && !empty($t['user_longitude']);
-                    if ($hasCoords): 
-                        $lat = (float)$t['user_latitude'];
-                        $lng = (float)$t['user_longitude'];
-                        $wazeApp = 'waze://?ll=' . $lat . ',' . $lng . '&navigate=yes';
-                        $wazeWeb = 'https://waze.com/ul?ll=' . $lat . ',' . $lng . '&navigate=yes';
-                ?>
-                <a href="#" onclick="abrirWazeInteligente(event, '<?php echo $wazeApp; ?>', '<?php echo $wazeWeb; ?>')" class="btn-waze-mobile">
-                    <i class="bi bi-compass"></i> Waze
-                </a>
-                <?php endif; ?>
             </div>
 
             <!-- Grilla Inferior: Tema, Asignado y Tiempos -->

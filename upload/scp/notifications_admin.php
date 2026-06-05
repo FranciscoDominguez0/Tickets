@@ -546,11 +546,11 @@ ob_start();
                                                         <div style="background: rgba(239,68,68,0.1); color: #ef4444; width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
                                                             <?php echo strtoupper(substr($a['name'] !== '' ? $a['name'] : 'U', 0, 1)); ?>
                                                         </div>
-                                                        <div style="line-height: 1.2;">
-                                                            <div style="font-weight: 800; color: #0f172a; font-size: 1.05rem;">
+                                                        <div style="line-height: 1.2; flex: 1; min-width: 0;">
+                                                            <div style="font-weight: 800; color: #0f172a; font-size: 1.05rem; word-break: break-word;">
                                                                 <?php echo html($a['name'] !== '' ? $a['name'] : ('Usuario #' . (int)$a['id'])); ?>
                                                             </div>
-                                                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">
+                                                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500; word-break: break-all;">
                                                                 <?php echo html($a['email']); ?>
                                                             </div>
                                                         </div>

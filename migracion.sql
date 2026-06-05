@@ -1,12 +1,14 @@
-CREATE TABLE IF NOT EXISTS ticket_approvals (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_id INT NOT NULL,
-    requested_by_staff_id INT NOT NULL, 
-    manager_id INT NULL, 
-    status ENUM('pending', 'aprobar_bajo_aprobacion', 'aprobar_solo') DEFAULT 'pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    resolved_at DATETIME NULL
-);
+-- 1. Modificar la columna ENUM para que acepte los nuevos valores
+ALTER TABLE ticket_approvals 
+MODIFY COLUMN status ENUM('pending', 'cotizacion', 'aprobado', 'rechazado') DEFAULT 'pending';
 
-ALTER TABLE tickets ADD COLUMN IF NOT EXISTS support_start DATETIME NULL;
-ALTER TABLE tickets ADD COLUMN IF NOT EXISTS support_end DATETIME NULL;
+-- 2. (Opcional pero recomendado) Actualizar cualquier registro viejo que tuviera los estados anteriores
+UPDATE ticket_approvals SET status = 'cotizacion' WHERE status = 'aprobar_bajo_aprobacion';
+UPDATE ticket_approvals SET status = 'aprobado' WHERE status = 'aprobar_solo';
+
+
+ALTER TABLE tickets
+ADD COLUMN support_start DATETIME NULL;
+
+ALTER TABLE tickets
+ADD COLUMN support_end DATETIME NULL;
