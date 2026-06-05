@@ -371,10 +371,12 @@ if ($ticketClientSignaturePath !== '') {
                 <div style="font-size: 0.70rem; font-weight: 800; display: inline-flex;">
                     <?php if ($ticketApprovalStatus === 'pending'): ?>
                         <span class="badge bg-warning text-dark px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> PENDIENTE</span>
-                    <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
-                        <span class="badge text-white px-2 py-1" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 2px 5px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> PRE-APROBADO</span>
-                    <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
+                    <?php elseif ($ticketApprovalStatus === 'cotizacion'): ?>
+                        <span class="badge text-white px-2 py-1" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 2px 5px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> COTIZACIÓN</span>
+                    <?php elseif ($ticketApprovalStatus === 'aprobado'): ?>
                         <span class="badge bg-success px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
+                    <?php elseif ($ticketApprovalStatus === 'rechazado'): ?>
+                        <span class="badge bg-danger px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.2);"><i class="bi bi-x-circle-fill me-1"></i> RECHAZADO</span>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -391,10 +393,12 @@ if ($ticketClientSignaturePath !== '') {
             <div class="d-none d-md-block" style="margin-top: 8px; margin-bottom: 8px; font-size: 0.85rem; font-weight: 800;">
                 <?php if ($ticketApprovalStatus === 'pending'): ?>
                     <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
-                <?php elseif ($ticketApprovalStatus === 'aprobar_bajo_aprobacion'): ?>
-                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> PRE-APROBADO</span>
-                <?php elseif ($ticketApprovalStatus === 'aprobar_solo'): ?>
+                <?php elseif ($ticketApprovalStatus === 'cotizacion'): ?>
+                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> COTIZACIÓN</span>
+                <?php elseif ($ticketApprovalStatus === 'aprobado'): ?>
                     <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
+                <?php elseif ($ticketApprovalStatus === 'rechazado'): ?>
+                    <span class="badge bg-danger px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);"><i class="bi bi-x-circle-fill me-1"></i> RECHAZADO</span>
                 <?php endif; ?>
             </div>
         <?php endif; ?>

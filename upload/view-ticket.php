@@ -193,7 +193,7 @@ if ($stmtA) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['aprobar_bajo_aprobacion', 'aprobar_solo'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['cotizacion', 'aprobado', 'rechazado'])) {
     if ($ticketApprovalStatus === 'pending' && !empty($user['org_tickets_view'])) {
         if (validateCSRF()) {
             $newStatus = $_POST['action'];
@@ -203,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                 $ticketApprovalStatus = $newStatus;
                 
                 if (function_exists('notifyApprovalToAdminRecipients')) {
-                    $statusLabelNotif = ($newStatus === 'aprobar_solo') ? 'Aprobado' : 'Aprobado bajo aprobación';
+                    $statusLabelNotif = ($newStatus === 'cotizacion') ? 'Cotización' : (($newStatus === 'aprobado') ? 'Aprobado' : 'Rechazado');
                     notifyApprovalToAdminRecipients($tid, $statusLabelNotif);
                 }
                 
@@ -1312,20 +1312,37 @@ function humanSize($bytes) {
         }
 
         .btn-approval-success {
-            background-color: #b91c1c !important;
-            border: 1px solid #991b1b !important;
+            background-color: #10b981 !important;
+            border: 1px solid #059669 !important;
             color: #ffffff !important;
             font-weight: 600 !important;
             border-radius: 999px !important;
             padding: 8px 20px !important;
-            box-shadow: 0 2px 6px rgba(185, 28, 28, 0.2) !important;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2) !important;
             transition: all 0.2s ease;
         }
         .btn-approval-success:hover {
-            background-color: #991b1b !important;
-            border-color: #7f1d1d !important;
+            background-color: #059669 !important;
+            border-color: #047857 !important;
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3) !important;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .btn-approval-danger {
+            background-color: #ef4444 !important;
+            border: 1px solid #dc2626 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            border-radius: 999px !important;
+            padding: 8px 20px !important;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2) !important;
+            transition: all 0.2s ease;
+        }
+        .btn-approval-danger:hover {
+            background-color: #dc2626 !important;
+            border-color: #b91c1c !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
         }
 
         /* Dark Mode para modificadores */
@@ -1375,15 +1392,54 @@ function humanSize($bytes) {
         }
 
         body.dark-mode .btn-approval-success {
-            background-color: #b91c1c !important;
-            border-color: #dc2626 !important;
+            background-color: #059669 !important;
+            border-color: #047857 !important;
             color: #ffffff !important;
-            box-shadow: 0 2px 8px rgba(185, 28, 28, 0.3) !important;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3) !important;
         }
         body.dark-mode .btn-approval-success:hover {
+            background-color: #10b981 !important;
+            border-color: #059669 !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+        }
+
+        body.dark-mode .btn-approval-danger {
+            background-color: #ef4444 !important;
+            border-color: #dc2626 !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25) !important;
+        }
+        body.dark-mode .btn-approval-danger:hover {
             background-color: #dc2626 !important;
-            border-color: #ef4444 !important;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
+            border-color: #b91c1c !important;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35) !important;
+        }
+
+        /* Modal specific dark mode fixes */
+        body.dark-mode #approvalConfirmModal .modal-content {
+            background-color: #18181b !important;
+            border: 1px solid #27272a !important;
+        }
+        body.dark-mode #approvalConfirmModal .modal-header {
+            border-bottom-color: #27272a !important;
+        }
+        body.dark-mode #approvalConfirmModal .modal-title {
+            color: #f4f4f5 !important;
+        }
+        body.dark-mode #approvalConfirmModal #approvalModalMsg {
+            color: #a1a1aa !important;
+        }
+        body.dark-mode #approvalConfirmModal .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        body.dark-mode #approvalConfirmModal .btn-light {
+            background-color: #27272a !important;
+            border-color: #3f3f46 !important;
+            color: #e4e4e7 !important;
+        }
+        body.dark-mode #approvalConfirmModal .btn-light:hover {
+            background-color: #3f3f46 !important;
+            color: #ffffff !important;
         }
 
         .attach-zone {
@@ -2169,13 +2225,20 @@ function humanSize($bytes) {
                             </div>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
-                            <form method="post" style="margin: 0; display: inline-flex;">
+                            <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-cotizacion">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <button type="submit" name="action" value="aprobar_bajo_aprobacion" class="btn btn-sm btn-approval-warn"><i class="bi bi-check2 me-1"></i>Aprobar bajo aprobación</button>
+                                <input type="hidden" name="action" value="cotizacion">
+                                <button type="button" class="btn btn-sm btn-approval-warn" onclick="showApprovalModal('form-aprob-cotizacion', 'Enviar Cotización', '¿Confirma que desea enviar la Cotización?', 'btn-approval-warn', 'bi-file-earmark-text')"><i class="bi bi-file-earmark-text me-1"></i>Cotización</button>
                             </form>
-                            <form method="post" style="margin: 0; display: inline-flex;">
+                            <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-aprobado">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <button type="submit" name="action" value="aprobar_solo" class="btn btn-sm btn-approval-success"><i class="bi bi-check-circle-fill me-1"></i>Aprobar</button>
+                                <input type="hidden" name="action" value="aprobado">
+                                <button type="button" class="btn btn-sm btn-approval-success" onclick="showApprovalModal('form-aprob-aprobado', 'Aprobar Solicitud', '¿Confirma que desea APROBAR esta solicitud?', 'btn-approval-success', 'bi-check-circle-fill')"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</button>
+                            </form>
+                            <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-rechazado">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <input type="hidden" name="action" value="rechazado">
+                                <button type="button" class="btn btn-sm btn-approval-danger" onclick="showApprovalModal('form-aprob-rechazado', 'Rechazar Solicitud', '¿Confirma que desea RECHAZAR esta solicitud? Esta acción es definitiva.', 'btn-approval-danger', 'bi-x-circle-fill')"><i class="bi bi-x-circle-fill me-1"></i>Rechazado</button>
                             </form>
                         </div>
                     </div>
@@ -2185,16 +2248,30 @@ function humanSize($bytes) {
                     <?php
                     $orgReadonlyOwner = $ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario';
                     ?>
-                    <?php if (!empty($user['org_tickets_view']) && in_array($ticketApprovalStatus, ['aprobar_bajo_aprobacion', 'aprobar_solo'])): ?>
-                        <div class="org-readonly-notice org-readonly-notice--success" role="status">
+                    <?php if (!empty($user['org_tickets_view']) && in_array($ticketApprovalStatus, ['cotizacion', 'aprobado', 'rechazado'])): ?>
+                        <?php 
+                        $noticeClass = 'org-readonly-notice--success';
+                        $noticeIcon = 'bi-check-circle-fill';
+                        $noticeTitle = 'Respuesta enviada';
+                        if ($ticketApprovalStatus === 'cotizacion') {
+                            $noticeClass = 'org-readonly-notice--warning';
+                            $noticeIcon = 'bi-file-earmark-text';
+                            $noticeTitle = 'Cotización';
+                        } elseif ($ticketApprovalStatus === 'rechazado') {
+                            $noticeClass = 'org-readonly-notice--danger';
+                            $noticeIcon = 'bi-x-circle-fill';
+                            $noticeTitle = 'Rechazado';
+                        }
+                        ?>
+                        <div class="org-readonly-notice <?php echo $noticeClass; ?>" role="status">
                             <div class="org-readonly-notice__main">
                                 <div class="org-readonly-notice__icon" aria-hidden="true">
-                                    <i class="bi bi-check-circle-fill"></i>
+                                    <i class="bi <?php echo $noticeIcon; ?>"></i>
                                 </div>
                                 <div>
-                                    <p class="org-readonly-notice__title">Aprobado</p>
+                                    <p class="org-readonly-notice__title"><?php echo $noticeTitle; ?></p>
                                     <p class="org-readonly-notice__text">
-                                        <?php echo $ticketApprovalStatus === 'aprobar_solo' ? 'Aprobado' : 'Aprobado bajo aprobación'; ?>
+                                        <?php echo $ticketApprovalStatus === 'cotizacion' ? 'Cotización' : ($ticketApprovalStatus === 'aprobado' ? 'Aprobado' : 'Rechazado'); ?>
                                     </p>
                                 </div>
                             </div>
@@ -3326,6 +3403,55 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 
+
+<!-- Modal de confirmación para aprobación -->
+<div class="modal fade" id="approvalConfirmModal" tabindex="-1" aria-labelledby="approvalConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 16px 16px 0 0;">
+        <h5 class="modal-title" id="approvalConfirmModalLabel" style="font-weight: 800; display: flex; align-items: center;">
+            <i id="approvalModalIcon" class="bi me-2"></i><span id="approvalModalTitle">Confirmar Acción</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="approvalModalMsg" style="font-size: 1rem; margin: 0; padding: 10px 0; color: #475569;"></p>
+      </div>
+      <div class="modal-footer" style="border-top: none; padding-top: 0;">
+        <button type="button" class="btn btn-light" style="border-radius: 999px; font-weight: 600;" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn" id="approvalModalConfirmBtn" style="border-radius: 999px; font-weight: 600; padding: 6px 20px;">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentApprovalFormId = null;
+function showApprovalModal(formId, title, msg, btnClass, iconClass) {
+    currentApprovalFormId = formId;
+    document.getElementById('approvalModalTitle').textContent = title;
+    document.getElementById('approvalModalMsg').textContent = msg;
+    
+    var iconEl = document.getElementById('approvalModalIcon');
+    iconEl.className = 'bi me-2 ' + iconClass;
+    
+    var btnEl = document.getElementById('approvalModalConfirmBtn');
+    btnEl.className = 'btn ' + btnClass;
+    
+    var modalEl = document.getElementById('approvalConfirmModal');
+    var modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+document.getElementById('approvalModalConfirmBtn').addEventListener('click', function() {
+    if (currentApprovalFormId) {
+        var form = document.getElementById(currentApprovalFormId);
+        if (form) {
+            form.submit();
+        }
+    }
+});
+</script>
 
 </body>
 </html>
