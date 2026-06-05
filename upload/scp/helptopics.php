@@ -27,8 +27,16 @@ if (isset($mysqli) && $mysqli) {
         $res = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
         $departmentsHasEmpresaId = ($res && $res->num_rows > 0);
     } catch (Throwable $e) {
+    } catch (Throwable $e) {
         $departmentsHasEmpresaId = false;
     }
+
+    try {
+        $res = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'is_public'");
+        if ($res && $res->num_rows === 0) {
+            $mysqli->query("ALTER TABLE help_topics ADD COLUMN is_public TINYINT(1) DEFAULT 1");
+        }
+    } catch (Throwable $e) {}
 }
 
 
@@ -72,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $description = trim($_POST['description'] ?? '');
             $deptId = !empty($_POST['dept_id']) ? (int)$_POST['dept_id'] : null;
             $isActive = isset($_POST['isactive']) ? 1 : 0;
+            $isPublic = isset($_POST['ispublic']) ? 1 : 0;
 
             if (empty($name)) {
                 $error = 'El nombre del tema es requerido';
@@ -90,17 +99,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($helpTopicsHasEmpresaId) {
-                    $sql = "INSERT INTO help_topics (empresa_id, name, description, dept_id, is_active, created) 
-                            VALUES (?, ?, ?, ?, ?, NOW())";
+                    $sql = "INSERT INTO help_topics (empresa_id, name, description, dept_id, is_active, is_public, created) 
+                            VALUES (?, ?, ?, ?, ?, ?, NOW())";
                 } else {
-                    $sql = "INSERT INTO help_topics (name, description, dept_id, is_active, created) 
-                            VALUES (?, ?, ?, ?, NOW())";
+                    $sql = "INSERT INTO help_topics (name, description, dept_id, is_active, is_public, created) 
+                            VALUES (?, ?, ?, ?, ?, NOW())";
                 }
                 $stmt = $mysqli->prepare($sql);
                 if ($helpTopicsHasEmpresaId) {
-                    $stmt->bind_param('issii', $eid, $name, $description, $deptId, $isActive);
+                    $stmt->bind_param('issiii', $eid, $name, $description, $deptId, $isActive, $isPublic);
                 } else {
-                    $stmt->bind_param('ssii', $name, $description, $deptId, $isActive);
+                    $stmt->bind_param('ssiii', $name, $description, $deptId, $isActive, $isPublic);
                 }
                 if ($stmt->execute()) {
                     $msg = 'Tema de ayuda creado exitosamente';
@@ -116,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $description = trim($_POST['description'] ?? '');
             $deptId = !empty($_POST['dept_id']) ? (int)$_POST['dept_id'] : null;
             $isActive = isset($_POST['isactive']) ? 1 : 0;
+            $isPublic = isset($_POST['ispublic']) ? 1 : 0;
 
             if (empty($name)) {
                 $error = 'El nombre del tema es requerido';
@@ -135,15 +145,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                $sql = "UPDATE help_topics SET name = ?, description = ?, dept_id = ?, is_active = ? WHERE id = ?";
+                $sql = "UPDATE help_topics SET name = ?, description = ?, dept_id = ?, is_active = ?, is_public = ? WHERE id = ?";
                 if ($helpTopicsHasEmpresaId) {
                     $sql .= ' AND empresa_id = ?';
                 }
                 $stmt = $mysqli->prepare($sql);
                 if ($helpTopicsHasEmpresaId) {
-                    $stmt->bind_param('ssiiii', $name, $description, $deptId, $isActive, $topicId, $eid);
+                    $stmt->bind_param('ssiiiii', $name, $description, $deptId, $isActive, $isPublic, $topicId, $eid);
                 } else {
-                    $stmt->bind_param('ssiii', $name, $description, $deptId, $isActive, $topicId);
+                    $stmt->bind_param('ssiiii', $name, $description, $deptId, $isActive, $isPublic, $topicId);
                 }
                 if ($stmt->execute()) {
                     $msg = 'Tema de ayuda actualizado exitosamente';
@@ -407,6 +417,11 @@ ob_start();
                                                     <?php else: ?>
                                                     <span style="background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #e2e8f0;"><i class="bi bi-pause-circle-fill me-1"></i>Inactivo</span>
                                                     <?php endif; ?>
+                                                    <?php if (!isset($topic['is_public']) || $topic['is_public']): ?>
+                                                    <span class="badge badge-public rounded-pill" style="padding: 4px 10px; font-size: 0.7rem; font-weight: 800;"><i class="bi bi-globe me-1"></i>Público</span>
+                                                    <?php else: ?>
+                                                    <span class="badge badge-private rounded-pill" style="padding: 4px 10px; font-size: 0.7rem; font-weight: 800;"><i class="bi bi-lock-fill me-1"></i>Privado</span>
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="dropdown">
                                                     <button type="button" class="btn btn-sm btn-light border-0" data-bs-toggle="dropdown" aria-expanded="false" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: #f8fafc;">
@@ -487,9 +502,15 @@ ob_start();
                                     </td>
                                     <td class="d-none d-md-table-cell">
                                         <?php if ($topic['is_active']): ?>
-                                        <span class="badge bg-success">Activo</span>
+                                        <span class="badge bg-success mb-1">Activo</span>
                                         <?php else: ?>
-                                        <span class="badge bg-secondary">Inactivo</span>
+                                        <span class="badge bg-secondary mb-1">Inactivo</span>
+                                        <?php endif; ?>
+                                        <br>
+                                        <?php if (!isset($topic['is_public']) || $topic['is_public']): ?>
+                                        <span class="badge badge-public"><i class="bi bi-globe me-1"></i>Público</span>
+                                        <?php else: ?>
+                                        <span class="badge badge-private"><i class="bi bi-lock-fill me-1"></i>Privado</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="d-none d-md-table-cell">
@@ -709,6 +730,14 @@ ob_start();
                                 <div class="form-check form-switch mt-4">
                                     <input class="form-check-input" type="checkbox" name="isactive" id="editIsactive" <?php echo $editingTopic['is_active'] ? 'checked' : ''; ?> >
                                     <label class="form-check-label" for="editIsactive">Tema Activo</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" name="ispublic" id="editIspublic" <?php echo (!isset($editingTopic['is_public']) || $editingTopic['is_public']) ? 'checked' : ''; ?> >
+                                    <label class="form-check-label" for="editIspublic">Tema Público</label>
                                 </div>
                             </div>
                         </div>

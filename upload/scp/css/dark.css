@@ -3575,4 +3575,54 @@ body.dark-mode .nav-tabs .nav-link.active {
     color: #ef4444 !important;
 }
 
+/* === SUMMERNOTE MODALS (Dark Mode) === */
+body.dark-mode .note-modal-content {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+    color: #e5e5e5 !important;
+    border-radius: 12px !important;
+}
+
+body.dark-mode .note-modal-header {
+    border-bottom: 1px solid #27272a !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+body.dark-mode .note-modal-footer {
+    border-top: 1px solid #27272a !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+body.dark-mode .note-modal .modal-title {
+    color: #e5e5e5 !important;
+}
+
+body.dark-mode .note-modal .close {
+    color: #fff !important;
+    text-shadow: none !important;
+    opacity: 0.8 !important;
+}
+
+body.dark-mode .note-modal .form-control {
+    background: #111113 !important;
+    border-color: #3f3f46 !important;
+    color: #eee !important;
+}
+
+body.dark-mode .note-modal .checkbox label {
+    color: #a1a1aa !important;
+}
+
+/* === BADGES HELPTOPICS === */
+body.dark-mode .badge-public {
+    background-color: rgba(2, 132, 199, 0.25) !important;
+    color: #7dd3fc !important;
+    border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+body.dark-mode .badge-private {
+    background-color: rgba(217, 119, 6, 0.25) !important;
+    color: #fcd34d !important;
+    border: 1px solid rgba(251, 191, 36, 0.4) !important;
+}
+
 

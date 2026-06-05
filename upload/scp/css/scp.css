@@ -3539,3 +3539,34 @@ body.sidebar-collapsed .scp-footer-brand {
     cursor: not-allowed;
     transform: none;
 }
+
+/* === SUMMERNOTE MODALS === */
+.note-modal-content {
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.15) !important;
+}
+
+.note-modal-header {
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.note-modal-footer {
+    border-radius: 0 0 12px 12px !important;
+}
+
+.note-modal .btn {
+    border-radius: 8px !important;
+}
+
+/* === BADGES PARA HELPTOPICS (Público / Privado) === */
+.badge-public {
+    background-color: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+}
+.badge-private {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}

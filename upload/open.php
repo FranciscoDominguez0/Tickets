@@ -796,10 +796,20 @@ if ($checkTopics && $checkTopics->num_rows > 0) {
         if ($cd && $cd->num_rows > 0) {
             $hasTopicDescCol = true;
         }
+        $hasIsPublicCol = false;
+        try {
+            $cPub = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'is_public'");
+            if ($cPub && $cPub->num_rows > 0) {
+                $hasIsPublicCol = true;
+            }
+        } catch (Throwable $e) {}
+        
+        $pubCond = $hasIsPublicCol ? ' AND ht.is_public = 1' : '';
+
         if ($hasTopicDescCol) {
-            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id, IFNULL(ht.description, \'\') AS description FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1 ORDER BY ht.name');
+            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id, IFNULL(ht.description, \'\') AS description FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1' . $pubCond . ' ORDER BY ht.name');
         } else {
-            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1 ORDER BY ht.name');
+            $stmt = $mysqli->query('SELECT ht.id, ht.name, ht.dept_id FROM help_topics ht WHERE ht.empresa_id = ' . (int)$eid . ' AND ht.is_active = 1' . $pubCond . ' ORDER BY ht.name');
         }
         while ($row = $stmt->fetch_assoc()) {
             if (!$hasTopicDescCol) {
