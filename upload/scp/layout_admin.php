@@ -800,9 +800,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     });
                 }
 
-                // Sonido usando el audio global previamente desbloqueado
+            }
+
+            // Reproducir sonido UNA sola vez (se llama desde pollNotifications, no por cada notif)
+            function playNotificationSound() {
                 try {
                     if (window.scpNotificationAudio) {
+                        // Detener cualquier reproducción en curso
+                        window.scpNotificationAudio.pause();
                         window.scpNotificationAudio.currentTime = 0;
                         window.scpNotificationAudio.play().catch(function(e){
                             console.log('Audio play blocked or failed:', e);
@@ -815,20 +820,30 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 document.addEventListener('click', function() { Notification.requestPermission(); }, { once: true });
             }
 
+            var _pollRunning = false;
             function pollNotifications() {
+                if (_pollRunning) return;
+                _pollRunning = true;
                 var url = 'notifications_poll.php?last_id=' + lastNotifId + '&_t=' + Date.now();
                 fetch(url).then(r => r.json()).then(data => {
                     if (data.ok) {
                         if (data.notifications && data.notifications.length > 0) {
+                            var firstShown = false;
                             data.notifications.forEach(function(n) {
-                                showNotificationToast(n);
+                                if (!firstShown) {
+                                    showNotificationToast(n);
+                                    firstShown = true;
+                                }
                                 addNotificationToDropdown(n);
                                 if (n.id > lastNotifId) lastNotifId = n.id;
                             });
+                            // Reproducir sonido UNA sola vez por ciclo de polling
+                            playNotificationSound();
                         }
                         updateBellBadge(data.total_unread);
                     }
-                }).catch(e => console.error('Poll error', e));
+                }).catch(e => console.error('Poll error', e))
+                  .finally(function(){ _pollRunning = false; });
             }
 
             setInterval(pollNotifications, pollInterval);

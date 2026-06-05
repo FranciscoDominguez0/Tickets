@@ -1019,9 +1019,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     } catch(e) {}
                 }
 
-                // Sonido usando el audio global previamente desbloqueado
+            }
+
+            // Reproducir sonido UNA sola vez (se llama desde pollNotifications, no por cada notif)
+            function playNotificationSound() {
                 try {
                     if (window.scpNotificationAudio) {
+                        // Detener cualquier reproducción en curso
+                        window.scpNotificationAudio.pause();
                         window.scpNotificationAudio.currentTime = 0;
                         window.scpNotificationAudio.play().catch(function(e){
                             console.log('Audio play blocked or failed:', e);
@@ -1037,7 +1042,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 }, { once: true });
             }
 
+            var _pollRunning = false;
             function pollNotifications() {
+                if (_pollRunning) return; // Evitar polls simultáneos
+                _pollRunning = true;
                 var url = 'notifications_poll.php?last_id=' + lastNotifId + '&_t=' + Date.now();
                 fetch(url)
                     .then(function(r){ return r.json(); })
@@ -1045,11 +1053,18 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         if (data.ok) {
                             if (data.notifications && data.notifications.length > 0) {
                                 console.log('Nuevas notificaciones encontradas:', data.notifications.length);
+                                // Mostrar la primera como toast, todas al dropdown
+                                var firstShown = false;
                                 data.notifications.forEach(function(n) {
-                                    showNotificationToast(n);
+                                    if (!firstShown) {
+                                        showNotificationToast(n);
+                                        firstShown = true;
+                                    }
                                     addNotificationToDropdown(n);
                                     if (n.id > lastNotifId) lastNotifId = n.id;
                                 });
+                                // Reproducir sonido UNA sola vez por ciclo de polling
+                                playNotificationSound();
                             }
                             updateBellBadge(data.total_unread);
                         } else {
@@ -1058,11 +1073,11 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     })
                     .catch(function(e){ 
                         console.error('Error en el polling de notificaciones:', e); 
-                    });
+                    })
+                    .finally(function(){ _pollRunning = false; });
             }
 
             if (<?php echo isset($_SESSION['staff_id']) ? 'true' : 'false'; ?>) {
-                window.setTimeout(pollNotifications, 5000);
                 window.setInterval(pollNotifications, pollInterval);
             }
         });
