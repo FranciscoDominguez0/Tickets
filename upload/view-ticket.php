@@ -1415,31 +1415,37 @@ function humanSize($bytes) {
             box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35) !important;
         }
 
-        /* Modal specific dark mode fixes */
-        body.dark-mode #approvalConfirmModal .modal-content {
+        /* Custom Soft Modal */
+        .custom-modal-soft {
+            border-radius: 24px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+        }
+        body.dark-mode .custom-modal-soft {
             background-color: #18181b !important;
-            border: 1px solid #27272a !important;
+            border-color: #27272a !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: rgba(24, 24, 27, 0.95) !important;
         }
-        body.dark-mode #approvalConfirmModal .modal-header {
-            border-bottom-color: #27272a !important;
-        }
-        body.dark-mode #approvalConfirmModal .modal-title {
+        body.dark-mode .custom-modal-soft .modal-title {
             color: #f4f4f5 !important;
         }
-        body.dark-mode #approvalConfirmModal #approvalModalMsg {
+        body.dark-mode .custom-modal-soft #approvalModalMsg {
             color: #a1a1aa !important;
         }
-        body.dark-mode #approvalConfirmModal .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%);
-        }
-        body.dark-mode #approvalConfirmModal .btn-light {
+        body.dark-mode .custom-modal-soft .btn-light {
             background-color: #27272a !important;
             border-color: #3f3f46 !important;
             color: #e4e4e7 !important;
         }
-        body.dark-mode #approvalConfirmModal .btn-light:hover {
+        body.dark-mode .custom-modal-soft .btn-light:hover {
             background-color: #3f3f46 !important;
             color: #ffffff !important;
+        }
+        body.dark-mode .custom-modal-soft .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
         }
 
         .attach-zone {
@@ -1943,6 +1949,38 @@ function humanSize($bytes) {
 <div class="container-main">
     <div class="center-wrap">
         <div class="panel-soft">
+            <?php if (($_GET['msg'] ?? '') === 'approved'): ?>
+                <style>
+                    #flash-msg-approved {
+                        border-radius: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
+                    }
+                    #flash-msg-approved i { color: #16a34a; }
+                    body.dark-mode #flash-msg-approved {
+                        background: rgba(22, 101, 52, 0.15); border-color: rgba(22, 101, 52, 0.4); color: #86efac;
+                    }
+                    body.dark-mode #flash-msg-approved i { color: #4ade80; }
+                </style>
+                <div class="alert d-flex align-items-center mb-4" role="alert" id="flash-msg-approved">
+                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
+                    <div>
+                        <strong style="display: block; font-size: 1.05rem; font-weight: 800; margin-bottom: 2px;">¡Acción completada!</strong> 
+                        <span style="font-size: 0.95rem;">La respuesta de revisión ejecutiva se ha procesado correctamente.</span>
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+                <script>
+                    (function(){
+                        setTimeout(function(){
+                            var el = document.getElementById('flash-msg-approved');
+                            if(el) {
+                                el.style.transition = 'opacity 0.4s ease';
+                                el.style.opacity = '0';
+                                setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 400);
+                            }
+                        }, 5000);
+                    })();
+                </script>
+            <?php endif; ?>
             <?php
             $clientStatusColor = normalizeTicketHexColor((string)($t['status_color'] ?? ''), '#64748b');
             $clientPriorityColor = normalizeTicketHexColor((string)($t['priority_color'] ?? ''), '#64748b');
@@ -2228,7 +2266,7 @@ function humanSize($bytes) {
                             <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-cotizacion">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action" value="cotizacion">
-                                <button type="button" class="btn btn-sm btn-approval-warn" onclick="showApprovalModal('form-aprob-cotizacion', 'Enviar Cotización', '¿Confirma que desea enviar la Cotización?', 'btn-approval-warn', 'bi-file-earmark-text')"><i class="bi bi-file-earmark-text me-1"></i>Cotización</button>
+                                <button type="button" class="btn btn-sm btn-approval-warn" onclick="showApprovalModal('form-aprob-cotizacion', 'Solicitar Cotización', '¿Confirma que desea solicitar la Cotización?', 'btn-approval-warn', 'bi-file-earmark-text')"><i class="bi bi-file-earmark-text me-1"></i>Cotización</button>
                             </form>
                             <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-aprobado">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
@@ -3406,20 +3444,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Modal de confirmación para aprobación -->
 <div class="modal fade" id="approvalConfirmModal" tabindex="-1" aria-labelledby="approvalConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-      <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 16px 16px 0 0;">
-        <h5 class="modal-title" id="approvalConfirmModalLabel" style="font-weight: 800; display: flex; align-items: center;">
-            <i id="approvalModalIcon" class="bi me-2"></i><span id="approvalModalTitle">Confirmar Acción</span>
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 360px;">
+    <div class="modal-content custom-modal-soft" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0 justify-content-end">
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center pt-0 px-3 px-sm-4 pb-3">
+        <div id="approvalModalIconWrap" class="mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 50%; background: #f8fafc; font-size: 1.5rem;">
+            <i id="approvalModalIcon" class="bi"></i>
+        </div>
+        <h5 class="modal-title mb-2" id="approvalConfirmModalLabel" style="font-weight: 800; color: #0f172a;">
+            <span id="approvalModalTitle">Confirmar Acción</span>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <p id="approvalModalMsg" style="font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.4;"></p>
       </div>
-      <div class="modal-body">
-        <p id="approvalModalMsg" style="font-size: 1rem; margin: 0; padding: 10px 0; color: #475569;"></p>
-      </div>
-      <div class="modal-footer" style="border-top: none; padding-top: 0;">
-        <button type="button" class="btn btn-light" style="border-radius: 999px; font-weight: 600;" data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn" id="approvalModalConfirmBtn" style="border-radius: 999px; font-weight: 600; padding: 6px 20px;">Confirmar</button>
+      <div class="modal-footer border-0 d-flex flex-nowrap justify-content-center gap-2 pb-3 px-3 px-sm-4">
+        <button type="button" class="btn btn-light w-50" style="border-radius: 10px; font-weight: 600; padding: 8px;" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn w-50" id="approvalModalConfirmBtn" style="border-radius: 10px; font-weight: 600; padding: 8px;">Confirmar</button>
       </div>
     </div>
   </div>
@@ -3433,10 +3474,26 @@ function showApprovalModal(formId, title, msg, btnClass, iconClass) {
     document.getElementById('approvalModalMsg').textContent = msg;
     
     var iconEl = document.getElementById('approvalModalIcon');
-    iconEl.className = 'bi me-2 ' + iconClass;
+    iconEl.className = 'bi ' + iconClass;
+    
+    var iconWrap = document.getElementById('approvalModalIconWrap');
+    if (btnClass.includes('warn')) {
+        iconWrap.style.background = 'rgba(15, 23, 42, 0.05)';
+        iconWrap.style.color = '#0f172a';
+        if(document.body.classList.contains('dark-mode')) {
+            iconWrap.style.background = 'rgba(255, 255, 255, 0.1)';
+            iconWrap.style.color = '#fff';
+        }
+    } else if (btnClass.includes('success')) {
+        iconWrap.style.background = 'rgba(16, 185, 129, 0.1)';
+        iconWrap.style.color = '#10b981';
+    } else {
+        iconWrap.style.background = 'rgba(239, 68, 68, 0.1)';
+        iconWrap.style.color = '#ef4444';
+    }
     
     var btnEl = document.getElementById('approvalModalConfirmBtn');
-    btnEl.className = 'btn ' + btnClass;
+    btnEl.className = 'btn ' + btnClass + ' w-50';
     
     var modalEl = document.getElementById('approvalConfirmModal');
     var modal = new bootstrap.Modal(modalEl);

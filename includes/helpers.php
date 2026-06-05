@@ -1272,7 +1272,8 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
                     )
                 )
             )
-            ORDER BY t.created DESC
+            ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
+                t.created DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
@@ -1288,7 +1289,8 @@ function fetchOrganizationTickets($mysqli, int $empresaId, int $organizationId, 
             JOIN ticket_status ts ON t.status_id = ts.id
             JOIN priorities p ON t.priority_id = p.id
             WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?
-            ORDER BY t.created DESC
+            ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
+                t.created DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
@@ -1516,7 +1518,8 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
                     )
                 )
             )" . $monthSql . "
-            ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
+            ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
+                COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
@@ -1537,7 +1540,8 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
             LEFT JOIN ticket_status ts ON t.status_id = ts.id
             WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?" . $monthSql . "
-            ORDER BY COALESCE(t.updated, t.created) DESC, t.id DESC
+            ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
+                COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
