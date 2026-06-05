@@ -434,11 +434,16 @@ if ($ticketClientSignaturePath !== '') {
                         elseif ($isClosing) $statusIcon = 'bi-check-circle-fill';
                         elseif (str_contains($stName, 'espera') || str_contains($stName, 'wait')) $statusIcon = 'bi-pause-circle-fill';
                         elseif (str_contains($stName, 'pendient')) $statusIcon = 'bi-clock-fill';
+                        
+                        $isOpening = (str_contains($stName, 'abiert') || str_contains($stName, 'open'));
+                        $ticketIsClosed = !empty($t['closed']);
                         ?>
                         <a class="creative-dropdown-item <?php echo (int)$row['id'] === (int)$t['status_id'] ? 'active' : ''; ?> <?php echo $allowed ? '' : 'disabled'; ?> <?php echo ($allowed && $isClosing) ? 'js-status-close' : ''; ?>"
                            <?php
                            if ($allowed && $isClosing) {
                                echo 'href="#" data-close-status-id="' . (int)$row['id'] . '" data-close-status-name="' . html($row['name']) . '"';
+                           } elseif ($allowed && $isOpening && $ticketIsClosed) {
+                               echo 'href="#" data-bs-toggle="modal" data-bs-target="#modalReopenTicket"';
                            } elseif ($allowed) {
                                echo 'href="tickets.php?id=' . $tid . '&action=status&status_id=' . (int)$row['id'] . '"';
                            } else {
@@ -3056,11 +3061,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </p>
                     <div class="mb-4">
                         <label class="form-label" style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-bottom: 8px;">Hora de Inicio</label>
-                        <input type="datetime-local" class="form-control" name="support_start" value="<?php echo !empty($t['support_start']) ? html(date('Y-m-d\TH:i', strtotime($t['support_start']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
+                        <input type="datetime-local" step="60" class="form-control" name="support_start" value="<?php echo !empty($t['support_start']) ? html(date('Y-m-d\TH:i', strtotime($t['support_start']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
                     </div>
                     <div class="mb-3">
                         <label class="form-label" style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-bottom: 8px;">Hora de Fin</label>
-                        <input type="datetime-local" class="form-control" name="support_end" value="<?php echo !empty($t['support_end']) ? html(date('Y-m-d\TH:i', strtotime($t['support_end']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
+                        <input type="datetime-local" step="60" class="form-control" name="support_end" value="<?php echo !empty($t['support_end']) ? html(date('Y-m-d\TH:i', strtotime($t['support_end']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
                     </div>
                 </div>
                 <div class="modal-footer border-0" style="padding: 0 24px 24px; background: transparent;">
@@ -3071,3 +3076,27 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<script>
+// Prevenir que la rueda del ratón desplace el modal al usar el calendario nativo
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInputs = document.querySelectorAll('input[type="datetime-local"]');
+    var modal = document.getElementById('modalSupportTimes');
+    
+    dateInputs.forEach(function(input) {
+        // Bloquear scroll del modal cuando el input está activo (calendario abierto)
+        input.addEventListener('focus', function() {
+            if (modal) modal.style.overflow = 'hidden';
+        });
+        
+        input.addEventListener('blur', function() {
+            if (modal) modal.style.overflow = 'auto'; // restaurar
+        });
+
+        // Prevenir cambiar el valor por error al hacer scroll sobre la caja de texto
+        input.addEventListener('wheel', function(e) {
+            e.preventDefault();
+        });
+    });
+});
+</script>
