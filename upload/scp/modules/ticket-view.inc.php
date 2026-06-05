@@ -541,6 +541,13 @@ if ($ticketClientSignaturePath !== '') {
 
                     <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
                     
+                    <a class="creative-dropdown-item <?php echo $canTicketEdit ? '' : 'disabled'; ?>" href="#" style="<?php echo $canTicketEdit ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canTicketEdit ? 'data-bs-toggle="modal" data-bs-target="#modalSupportTimes"' : 'onclick="showNoPermissionAlert(\'editar tiempos de soporte\'); return false;"'; ?>>
+                        <div class="creative-dropdown-icon"><i class="bi bi-clock-history"></i></div>
+                        <span>Editar horas de soporte</span>
+                    </a>
+
+                    <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
+                    
                     <a class="creative-dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalReferrals">
                         <div class="creative-dropdown-icon"><i class="bi bi-share"></i></div>
                         <span>Administrar referidos</span>
@@ -597,6 +604,20 @@ if ($ticketClientSignaturePath !== '') {
         <script>
             setTimeout(function() {
                 var alertEl = document.getElementById('signatureSuccessAlert');
+                if (alertEl) {
+                    var bsAlert = new bootstrap.Alert(alertEl);
+                    bsAlert.close();
+                }
+            }, 5000);
+        </script>
+    <?php elseif (isset($_GET['msg']) && $_GET['msg'] === 'times_updated'): ?>
+        <div class="alert alert-success mx-4 mt-3 alert-dismissible fade show" id="timesSuccessAlert" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> Tiempos de soporte actualizados correctamente.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <script>
+            setTimeout(function() {
+                var alertEl = document.getElementById('timesSuccessAlert');
                 if (alertEl) {
                     var bsAlert = new bootstrap.Alert(alertEl);
                     bsAlert.close();
@@ -3009,6 +3030,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     <?php endif; ?>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Support Times -->
+<div class="modal fade" id="modalSupportTimes" tabindex="-1" aria-labelledby="modalSupportTimesLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <div class="modal-header border-0 bg-light" style="padding: 24px; border-bottom: 1px solid #e2e8f0 !important;">
+                <h5 class="modal-title" id="modalSupportTimesLabel" style="font-weight: 800; color: #0f172a; font-size: 1.15rem; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: #e0e7ff; color: #4f46e5; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    Tiempos de Soporte
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: #f1f5f9; border-radius: 50%; padding: 10px;"></button>
+            </div>
+            <form action="tickets.php?id=<?php echo $tid; ?>" method="post">
+                <input type="hidden" name="action" value="update_support_times">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <div class="modal-body" style="padding: 24px;">
+                    <p style="color: #475569; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.5;">
+                        Ingresa la hora de inicio y fin del soporte para que consten en el reporte PDF.
+                    </p>
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-bottom: 8px;">Hora de Inicio</label>
+                        <input type="datetime-local" class="form-control" name="support_start" value="<?php echo !empty($t['support_start']) ? html(date('Y-m-d\TH:i', strtotime($t['support_start']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-bottom: 8px;">Hora de Fin</label>
+                        <input type="datetime-local" class="form-control" name="support_end" value="<?php echo !empty($t['support_end']) ? html(date('Y-m-d\TH:i', strtotime($t['support_end']))) : ''; ?>" style="border-radius: 10px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease;">
+                    </div>
+                </div>
+                <div class="modal-footer border-0" style="padding: 0 24px 24px; background: transparent;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; padding: 10px 20px; color: #64748b; background: #f1f5f9; border: none; transition: all 0.2s;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-weight: 600; padding: 10px 24px; box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2); transition: all 0.2s;">Guardar tiempos</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

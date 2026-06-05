@@ -335,7 +335,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['request_approval', 'owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['update_support_times', 'request_approval', 'owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -862,6 +862,17 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 $stmt->bind_param('iii', $uid, $tid, $eid);
                 $ok = $stmt->execute();
                 $msg = 'owner';
+            } elseif ($action === 'update_support_times' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
+                $supportStart = !empty($_POST['support_start']) ? $_POST['support_start'] : null;
+                $supportEnd = !empty($_POST['support_end']) ? $_POST['support_end'] : null;
+                
+                $stmt = $mysqli->prepare("UPDATE tickets SET support_start = ?, support_end = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                if ($stmt) {
+                    $stmt->bind_param('ssii', $supportStart, $supportEnd, $tid, $eid);
+                    $ok = $stmt->execute();
+                    $msg = 'times_updated';
+                }
             } elseif ($action === 'referral_add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $refStaffId = isset($_POST['ref_staff_id']) && is_numeric($_POST['ref_staff_id']) ? (int)$_POST['ref_staff_id'] : null;

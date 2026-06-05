@@ -293,6 +293,12 @@ if (defined('TICKET_PDF_RENDER')) {
                 <td class="kv"><span class="k">Cerrado</span><span class="v"><?php echo !empty($t['closed']) ? html(date('d/m/Y h:i A', strtotime((string)$t['closed']))) : '—'; ?></span></td>
                 <td></td>
             </tr>
+            <?php if (!empty($t['support_start']) || !empty($t['support_end'])): ?>
+            <tr>
+                <td class="kv"><span class="k">Inicio Soporte</span><span class="v"><?php echo !empty($t['support_start']) ? html(date('d/m/Y h:i A', strtotime((string)$t['support_start']))) : '—'; ?></span></td>
+                <td class="kv"><span class="k">Fin Soporte</span><span class="v"><?php echo !empty($t['support_end']) ? html(date('d/m/Y h:i A', strtotime((string)$t['support_end']))) : '—'; ?></span></td>
+            </tr>
+            <?php endif; ?>
         </table>
     </div>
 
