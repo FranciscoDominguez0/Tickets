@@ -189,26 +189,22 @@
 .ticket-view-overview .btn-waze-premium {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: #00aaff;
-    color: #fff;
+    gap: 6px;
+    background: #f1f5f9;
+    color: #475569;
     border: none;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 0.82rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.78rem;
     text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 10px rgba(0, 170, 255, 0.2);
+    transition: all 0.2s ease;
     width: fit-content;
 }
 
 .ticket-view-overview .btn-waze-premium:hover {
-    background: #0088cc;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 170, 255, 0.35);
-    color: #fff;
+    background: #e2e8f0;
+    color: #1e293b;
 }
 
 @media (max-width: 992px) {

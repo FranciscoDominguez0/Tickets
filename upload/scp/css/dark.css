@@ -2669,18 +2669,27 @@ body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop i {
 
 /* Excepciones: botones con fondo de color (Waze, submit, etc.) */
 body.dark-mode .ticket-view-overview .btn-waze-premium,
+body.dark-mode .ticket-view-overview-desktop .btn-waze-premium {
+    color: #94a3b8 !important;
+    background: #1e293b !important;
+    border: none !important;
+}
 body.dark-mode .ticket-view-overview .btn-waze-premium:hover,
+body.dark-mode .ticket-view-overview-desktop .btn-waze-premium:hover {
+    color: #cbd5e1 !important;
+    background: #334155 !important;
+}
 body.dark-mode .ticket-view-overview .btn-waze-mobile,
 body.dark-mode .ticket-view-overview .btn-waze-mobile:hover,
-body.dark-mode .ticket-view-overview-desktop .btn-waze-premium,
 body.dark-mode .ticket-view-overview-desktop .btn-waze-mobile {
     color: #ffffff !important;
 }
 
 body.dark-mode .ticket-view-overview .btn-waze-premium i,
-body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-premium i,
+body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-premium i {
+    color: inherit !important;
+}
 body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-mobile i,
-body.dark-mode .ticket-view-overview .btn-waze-premium i,
 body.dark-mode .ticket-view-overview .btn-waze-mobile i {
     color: #ffffff !important;
 }
