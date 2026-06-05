@@ -358,6 +358,17 @@ if ($ticketClientSignaturePath !== '') {
                 }
             }
         }
+        
+        $apprColor = '#64748b';
+        if ($ticketApprovalStatus === 'pending') $apprColor = '#f59e0b';
+        elseif ($ticketApprovalStatus === 'cotizacion') $apprColor = '#0ea5e9';
+        elseif ($ticketApprovalStatus === 'aprobado') $apprColor = '#10b981';
+        elseif ($ticketApprovalStatus === 'rechazado') $apprColor = '#ef4444';
+        
+        $apprTitle = 'Pendiente';
+        if ($ticketApprovalStatus === 'cotizacion') $apprTitle = 'Cotización';
+        elseif ($ticketApprovalStatus === 'aprobado') $apprTitle = 'Aprobado';
+        elseif ($ticketApprovalStatus === 'rechazado') $apprTitle = 'Rechazado';
         ?>
         <!-- Mobile: título + badge en línea -->
         <div class="d-md-none" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
@@ -368,40 +379,24 @@ if ($ticketClientSignaturePath !== '') {
                 Ticket #<?php echo html($t['ticket_number']); ?>
             </h1>
             <?php if ($ticketApprovalStatus !== 'none'): ?>
-                <div style="font-size: 0.70rem; font-weight: 800; display: inline-flex;">
-                    <?php if ($ticketApprovalStatus === 'pending'): ?>
-                        <span class="badge bg-warning text-dark px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> PENDIENTE</span>
-                    <?php elseif ($ticketApprovalStatus === 'cotizacion'): ?>
-                        <span class="badge text-white px-2 py-1" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 2px 5px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> COTIZACIÓN</span>
-                    <?php elseif ($ticketApprovalStatus === 'aprobado'): ?>
-                        <span class="badge bg-success px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
-                    <?php elseif ($ticketApprovalStatus === 'rechazado'): ?>
-                        <span class="badge bg-danger px-2 py-1" style="border-radius: 999px; box-shadow: 0 2px 5px rgba(239, 68, 68, 0.2);"><i class="bi bi-x-circle-fill me-1"></i> RECHAZADO</span>
-                    <?php endif; ?>
-                </div>
+                <span style="font-weight: 800; font-size: 0.75rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 10px; border-radius: 999px;">
+                    <i class="bi bi-shield-check"></i> <?php echo $apprTitle; ?>
+                </span>
             <?php endif; ?>
         </div>
         <!-- Desktop: título normal -->
-        <h1 class="ticket-view-title d-none d-md-inline-flex" style="margin-bottom: 0;">
+        <h1 class="ticket-view-title d-none d-md-inline-flex" style="margin-bottom: 0; align-items: center; gap: 12px;">
             <a href="tickets.php?id=<?php echo $tid; ?>" title="Recargar">
                 <i class="bi bi-arrow-clockwise"></i>
             </a>
-            Ticket #<?php echo html($t['ticket_number']); ?>
+            <span>Ticket #<?php echo html($t['ticket_number']); ?></span>
+            
+            <?php if ($ticketApprovalStatus !== 'none'): ?>
+                <span style="font-weight: 800; font-size: 0.8rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.02em;">
+                    <i class="bi bi-shield-check" style="font-size: 0.9rem;"></i> <?php echo $apprTitle; ?>
+                </span>
+            <?php endif; ?>
         </h1>
-        <!-- Desktop: badge centrado y grande -->
-        <?php if ($ticketApprovalStatus !== 'none'): ?>
-            <div class="d-none d-md-block" style="margin-top: 8px; margin-bottom: 8px; font-size: 0.85rem; font-weight: 800;">
-                <?php if ($ticketApprovalStatus === 'pending'): ?>
-                    <span class="badge bg-warning text-dark px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);"><i class="bi bi-hourglass-split me-1"></i> Aprobación: PENDIENTE</span>
-                <?php elseif ($ticketApprovalStatus === 'cotizacion'): ?>
-                    <span class="badge text-white px-3 py-2" style="border-radius: 999px; background: #0d9488 !important; box-shadow: 0 4px 10px rgba(13, 148, 136, 0.25);"><i class="bi bi-file-earmark-text me-1"></i> COTIZACIÓN</span>
-                <?php elseif ($ticketApprovalStatus === 'aprobado'): ?>
-                    <span class="badge bg-success px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);"><i class="bi bi-check-circle-fill me-1"></i> APROBADO</span>
-                <?php elseif ($ticketApprovalStatus === 'rechazado'): ?>
-                    <span class="badge bg-danger px-3 py-2" style="border-radius: 999px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);"><i class="bi bi-x-circle-fill me-1"></i> RECHAZADO</span>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
         <?php
         $canTicketEdit = roleHasPermission('ticket.edit');
         $canTicketClose = roleHasPermission('ticket.close');
@@ -982,6 +977,8 @@ if ($ticketClientSignaturePath !== '') {
 
     <!-- Resumen del ticket -->
 
+
+
     <div class="ticket-view-overview">
         <?php 
             // Estilos compartidos para badges
@@ -1101,6 +1098,7 @@ if ($ticketClientSignaturePath !== '') {
 
             <!-- Grilla Inferior: Tema, Asignado y Tiempos -->
             <div class="mobile-grid">
+
                 <div class="mobile-grid-item">
                     <label><i class="bi bi-bookmark"></i> TEMA</label>
                     <div class="val"><?php echo html($t['topic_name'] ?: 'General'); ?></div>
@@ -1154,6 +1152,8 @@ if ($ticketClientSignaturePath !== '') {
                         <?php endif; ?>
                     </div>
                 </div>
+
+
                 
                 <div class="field">
                     <label>PRIORIDAD</label>
@@ -1246,6 +1246,7 @@ if ($ticketClientSignaturePath !== '') {
 
             <!-- Columna 3: Asignación y Actividad -->
             <div>
+
                 <div class="field">
                     <label><i class="bi bi-person-check"></i> ASIGNADO A</label>
                     <div class="value" style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">
