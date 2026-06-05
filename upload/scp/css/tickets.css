@@ -137,6 +137,17 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 4px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.ticket-view-overview .field .value.sub-info .location-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+    display: inline-block;
+    cursor: help;
 }
 
 .btn-copy-anydesk {
@@ -2557,6 +2568,16 @@ tr.ticket-row.is-selected td {
         align-items: center;
         gap: 6px;
         margin-bottom: 2px;
+        max-width: 100%;
+        overflow: hidden;
+    }
+    .ticket-view-overview .mobile-user-info .sub .location-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 200px;
+        display: inline-block;
+        cursor: help;
     }
     .ticket-view-overview .btn-waze-mobile {
         background: #2563eb;

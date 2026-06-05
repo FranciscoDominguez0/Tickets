@@ -1071,7 +1071,7 @@ if ($ticketClientSignaturePath !== '') {
                     <?php if (!empty($t['walkin_address'] ?? '') || !empty($t['user_address'] ?? '')): ?>
                     <div class="sub">
                         <i class="bi bi-geo-alt"></i> 
-                        <?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?>
+                        <span class="location-text" title="<?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?>"><?php echo html($isWalkinTicket ? ($t['walkin_address'] ?? '') : ($t['user_address'] ?? '')); ?></span>
                     </div>
                     <?php endif; ?>
                     <?php if (!empty($t['walkin_phone'] ?? '') || !empty($t['user_phone'] ?? '')): ?>
@@ -1200,14 +1200,14 @@ if ($ticketClientSignaturePath !== '') {
                             <div class="value sub-info"><i class="bi bi-telephone text-muted"></i><strong>Tel:</strong> <?php echo html($t['walkin_phone']); ?></div>
                         <?php endif; ?>
                         <?php if (!empty($t['walkin_address'])): ?>
-                            <div class="value sub-info"><i class="bi bi-geo-alt text-muted"></i><strong>UBICACIÓN:</strong> <?php echo html($t['walkin_address']); ?></div>
+                            <div class="value sub-info"><i class="bi bi-geo-alt text-muted"></i><strong>UBICACIÓN:</strong> <span class="location-text" title="<?php echo html($t['walkin_address']); ?>"><?php echo html($t['walkin_address']); ?></span></div>
                         <?php endif; ?>
                     <?php else: ?>
                         <?php if (!empty($t['user_phone'])): ?>
                             <div class="value sub-info"><i class="bi bi-telephone text-muted"></i><strong>Tel:</strong> <?php echo html($t['user_phone']); ?></div>
                         <?php endif; ?>
                         <?php if (!empty($t['user_address'])): ?>
-                            <div class="value sub-info"><i class="bi bi-geo-alt text-muted"></i><strong>UBICACIÓN:</strong> <?php echo html($t['user_address']); ?></div>
+                            <div class="value sub-info"><i class="bi bi-geo-alt text-muted"></i><strong>UBICACIÓN:</strong> <span class="location-text" title="<?php echo html($t['user_address']); ?>"><?php echo html($t['user_address']); ?></span></div>
                         <?php endif; ?>
                     <?php endif; ?>
 
