@@ -303,6 +303,19 @@ $stCol = $stInfo['color'];
             font-size: 1rem;
         }
 
+        .ticket-view-entry .author-role {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+            margin-left: 4px;
+        }
+
         .ticket-view-entry .entry-content {
             border-radius: 16px;
             padding: 16px 20px;
@@ -356,6 +369,12 @@ $stCol = $stInfo['color'];
 
         body.dark-mode .ticket-view-entry .author-name {
             color: #f4f4f5;
+        }
+
+        body.dark-mode .ticket-view-entry .author-role {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         }
 
         body.dark-mode .ticket-view-entry .entry-meta-top {

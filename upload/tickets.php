@@ -1466,94 +1466,8 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
     <div class="container-main">
         <div class="shell">
-            <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0 && empty($isOrgExplorer)): ?>
-            <style>
-                .exec-review-alert {
-                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-                    padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;
-                    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
-                    border: 1px solid #fca5a5;
-                    box-shadow: 0 4px 15px rgba(185, 28, 28, 0.08);
-                    transition: all 0.3s ease;
-                }
-                .exec-review-alert__main { display: flex; align-items: center; gap: 16px; }
-                .exec-review-alert__icon {
-                    display: flex; align-items: center; justify-content: center;
-                    width: 44px; height: 44px; border-radius: 12px;
-                    background: #b91c1c; color: #ffffff; font-size: 1.3rem;
-                    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);
-                }
-                .exec-review-alert__text { color: #262626; font-size: 1rem; line-height: 1.4; margin: 0; }
-                .exec-review-alert__text strong { color: #000000; font-weight: 700; }
-                .exec-review-alert__btn {
-                    background: #000000; color: #ffffff; border: 1px solid #000000;
-                    font-weight: 600; padding: 8px 20px; border-radius: 999px;
-                    text-decoration: none; transition: all 0.2s ease;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-                    display: inline-flex; align-items: center; gap: 6px;
-                }
-                .exec-review-alert__btn:hover { background: #b91c1c; color: #ffffff; border-color: #b91c1c; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(185, 28, 28, 0.3); }
-
-                body.dark-mode .exec-review-alert {
-                    background: linear-gradient(135deg, #171717 0%, #262626 100%);
-                    border-color: rgba(185, 28, 28, 0.4);
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-                }
-                body.dark-mode .exec-review-alert__icon {
-                    background: rgba(185, 28, 28, 0.2); color: #fca5a5;
-                    box-shadow: none; border: 1px solid rgba(185, 28, 28, 0.4);
-                }
-                body.dark-mode .exec-review-alert__text { color: #d4d4d4; }
-                body.dark-mode .exec-review-alert__text strong { color: #ffffff; }
-                body.dark-mode .exec-review-alert__btn {
-                    background: rgba(185, 28, 28, 0.15); color: #fca5a5; border-color: rgba(185, 28, 28, 0.5);
-                    box-shadow: none;
-                }
-                body.dark-mode .exec-review-alert__btn:hover {
-                    background: rgba(185, 28, 28, 0.3); color: #ffffff; border-color: rgba(185, 28, 28, 0.8);
-                }
-
-                @media (max-width: 767.98px) {
-                    .exec-review-alert {
-                        flex-direction: column; align-items: stretch; gap: 12px;
-                        padding: 14px 16px; border-radius: 14px; margin-bottom: 16px;
-                    }
-                    .exec-review-alert__main { gap: 12px; }
-                    .exec-review-alert__icon {
-                        width: 38px; height: 38px; border-radius: 10px; font-size: 1.1rem;
-                        flex-shrink: 0;
-                    }
-                    .exec-review-alert__text { font-size: 0.88rem; line-height: 1.4; }
-                    .exec-review-alert__btn {
-                        width: 100%; justify-content: center;
-                        padding: 10px 16px; font-size: 0.88rem; border-radius: 10px;
-                    }
-                }
-            </style>
-            <div class="exec-review-alert">
-                <div class="exec-review-alert__main">
-                    <div class="exec-review-alert__icon">
-                        <i class="bi bi-shield-lock-fill"></i>
-                    </div>
-                    <div>
-                        <p class="exec-review-alert__text">
-                            <strong>Revisión Ejecutiva:</strong> Tienes <strong><?php echo $pendingApprovalCount; ?></strong> <?php echo $pendingApprovalCount === 1 ? 'ticket pendiente' : 'tickets pendientes'; ?> de aprobación.
-                        </p>
-                    </div>
-                </div>
-                <a href="tickets.php?view=org<?php echo $pendingApprovalFirstOrgId > 0 ? '&amp;org_id=' . $pendingApprovalFirstOrgId . '&amp;list=all' : ''; ?>" class="exec-review-alert__btn">
-                    Ver tickets <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-            <?php endif; ?>
-
-            <?php 
-                $unreadReportsCount = 0;
-                if (!empty($canOrgTicketsView) && empty($isOrgExplorer)) {
-                    $unreadReportsCount = countUnreadOrgBossReportsForUser($mysqli, $uid, $eid);
-                }
-            ?>
-            <?php if ($unreadReportsCount > 0): ?>
+            <div class="alerts-container" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; width: 100%;">
+            <?php if ((!empty($canOrgTicketsView) && $pendingApprovalCount > 0 && empty($isOrgExplorer)) || ($pendingQuotesCount > 0)): ?>
             <style>
                 .reports-mini-toast {
                     display: inline-flex; align-items: center; gap: 12px;
@@ -1561,7 +1475,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     border: 1px solid #fca5a5;
                     color: #262626; padding: 8px 16px; border-radius: 999px;
                     text-decoration: none; font-size: 0.9rem; font-weight: 500;
-                    margin-bottom: 20px; transition: all 0.2s ease;
+                    margin-bottom: 0; transition: all 0.2s ease;
                     box-shadow: 0 4px 15px rgba(185, 28, 28, 0.08);
                 }
                 .reports-mini-toast:hover {
@@ -1574,6 +1488,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     width: 28px; height: 28px; border-radius: 50%;
                     background: #b91c1c; color: #ffffff;
                     font-size: 0.9rem; box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25);
+                    flex-shrink: 0;
                 }
                 .reports-mini-toast strong { font-weight: 800; color: #000000; margin-right: 4px; }
                 
@@ -1591,19 +1506,70 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     border: 1px solid rgba(185, 28, 28, 0.4); box-shadow: none;
                 }
                 body.dark-mode .reports-mini-toast strong { color: #ffffff; }
+
+                @media (max-width: 767.98px) {
+                    .alerts-container {
+                        flex-direction: column !important;
+                        gap: 10px !important;
+                    }
+                    .alerts-container > div {
+                        width: 100%;
+                        margin-left: 0 !important;
+                    }
+                    .reports-mini-toast {
+                        width: 100%;
+                        justify-content: flex-start;
+                        font-size: 0.8rem;
+                        padding: 8px 14px;
+                        border-radius: 12px;
+                        gap: 10px;
+                    }
+                    .reports-mini-toast__icon {
+                        width: 24px; height: 24px; font-size: 0.8rem;
+                    }
+                }
             </style>
-            <div>
-                <a href="tickets.php?view=org&amp;list=reports" class="reports-mini-toast">
-                    <div class="reports-mini-toast__icon">
-                        <i class="bi bi-file-earmark-text-fill"></i>
-                    </div>
-                    <div>
-                        <strong>Nuevos Informes:</strong> Tienes <?php echo $unreadReportsCount; ?> sin leer
-                    </div>
-                    <i class="bi bi-arrow-right" style="margin-left: 4px; font-size: 1.1rem; color: #b91c1c;"></i>
-                </a>
-            </div>
             <?php endif; ?>
+
+            <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0 && empty($isOrgExplorer)): ?>
+                <div style="flex-shrink: 0;">
+                    <a href="tickets.php?view=org<?php echo $pendingApprovalFirstOrgId > 0 ? '&amp;org_id=' . $pendingApprovalFirstOrgId . '&amp;list=quotes' : '&amp;list=quotes'; ?>" class="reports-mini-toast">
+                        <div class="reports-mini-toast__icon" style="background: #334155; box-shadow: 0 2px 8px rgba(51, 65, 85, 0.25);">
+                            <i class="bi bi-shield-lock-fill"></i>
+                        </div>
+                        <div>
+                            <strong>Revisión Ejecutiva:</strong> Tienes <?php echo $pendingApprovalCount; ?> pendiente(s)
+                        </div>
+                        <i class="bi bi-arrow-right" style="margin-left: 4px; font-size: 1.1rem; color: #b91c1c;"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <?php 
+                $unreadReportsCount = 0;
+                if (!empty($canOrgTicketsView) && empty($isOrgExplorer)) {
+                    $unreadReportsCount = countUnreadOrgBossReportsForUser($mysqli, $uid, $eid);
+                }
+            ?>
+            <?php if ($pendingQuotesCount > 0 && empty($isOrgExplorer)): ?>
+                <?php 
+                    $targetQuotesOrgId = ($pendingQuotesFirstOrgId > 0) ? $pendingQuotesFirstOrgId : (!empty($orgIds) ? $orgIds[0] : 0);
+                    $targetQuotesParam = $targetQuotesOrgId > 0 ? '&amp;org_id=' . $targetQuotesOrgId : '';
+                ?>
+                <div style="flex-shrink: 0; margin-left: auto;">
+                    <a href="tickets.php?view=org<?php echo $targetQuotesParam; ?>&amp;list=quotes" class="reports-mini-toast">
+                        <div class="reports-mini-toast__icon">
+                            <i class="bi bi-file-earmark-text-fill"></i>
+                        </div>
+                        <div>
+                            <strong>Nuevas Cotizaciones:</strong> Tienes <?php echo $pendingQuotesCount; ?> pendiente(s)
+                        </div>
+                        <i class="bi bi-arrow-right" style="margin-left: 4px; font-size: 1.1rem; color: #b91c1c;"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+            </div>
+
             <main class="panel-soft" style="padding: 18px;">
                 <?php if (!empty($isOrgExplorer)): ?>
                     <?php require __DIR__ . '/partials/client-org-tickets.inc.php'; ?>
@@ -1619,11 +1585,11 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <a href="tickets.php?view=org" class="btn-org-ghost">
                                 <i class="bi bi-diagram-3"></i> Por organización
                             </a>
-                            <a href="informes-jefes.php" class="btn-org-ghost position-relative">
-                                <i class="bi bi-file-earmark-text"></i> Informes
-                                <?php if (($unreadReportsCount ?? 0) > 0): ?>
+                            <a href="tickets.php?view=org<?php echo $targetQuotesParam ?? (!empty($orgIds) ? '&amp;org_id=' . $orgIds[0] : ''); ?>&amp;list=quotes" class="btn-org-ghost position-relative">
+                                <i class="bi bi-file-earmark-text"></i> Cotizaciones
+                                <?php if (($pendingQuotesCount ?? 0) > 0): ?>
                                 <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                                    <span class="visually-hidden">Nuevos informes</span>
+                                    <span class="visually-hidden">Nuevas cotizaciones</span>
                                 </span>
                                 <?php endif; ?>
                             </a>
