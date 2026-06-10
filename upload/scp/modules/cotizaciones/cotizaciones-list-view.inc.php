@@ -64,7 +64,7 @@
                 <tr>
                     <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Cotización</th>
                     <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Organización</th>
-                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado / Monto</th>
+                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
                     <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Fecha</th>
                     <th style="width: 80px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;"></th>
                 </tr>
@@ -84,7 +84,9 @@
                         <?php
                         $statusColors = [
                             'draft' => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
-                            'pending' => ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Pendiente'],
+                            'pending' => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
+                            'requested' => ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
+                            'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'Esperando Aprobación'],
                             'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
                             'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
                         ];
@@ -120,9 +122,6 @@
                                 <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
                                     <span class="chip chip-status" style="background: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
                                         <?php echo $st['label']; ?>
-                                    </span>
-                                    <span style="font-weight: 700; color: #334155; font-size: 0.9rem; margin-top: 4px;">
-                                        $<?php echo number_format($q['amount'], 2); ?>
                                     </span>
                                 </div>
                             </td>

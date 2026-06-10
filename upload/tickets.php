@@ -1547,102 +1547,62 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             </div>
             <?php endif; ?>
 
-            <?php if (!empty($canOrgTicketsView) && empty($isOrgExplorer)): ?>
+            <?php 
+                $unreadReportsCount = 0;
+                if (!empty($canOrgTicketsView) && empty($isOrgExplorer)) {
+                    $unreadReportsCount = countUnreadOrgBossReportsForUser($mysqli, $uid, $eid);
+                }
+            ?>
+            <?php if ($unreadReportsCount > 0): ?>
             <style>
-                .new-feature-alert {
-                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-                    padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;
-                    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-                    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
-                    color: #ffffff;
-                    position: relative;
-                    overflow: hidden;
-                    transition: opacity 0.4s ease, transform 0.4s ease;
+                .reports-mini-toast {
+                    display: inline-flex; align-items: center; gap: 12px;
+                    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+                    border: 1px solid #fca5a5;
+                    color: #262626; padding: 8px 16px; border-radius: 999px;
+                    text-decoration: none; font-size: 0.9rem; font-weight: 500;
+                    margin-bottom: 20px; transition: all 0.2s ease;
+                    box-shadow: 0 4px 15px rgba(185, 28, 28, 0.08);
                 }
-                .new-feature-alert::before {
-                    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-                    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
-                    animation: featurePulse 8s linear infinite; pointer-events: none;
+                .reports-mini-toast:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(185, 28, 28, 0.15);
+                    color: #000000; border-color: #ef4444;
                 }
-                @keyframes featurePulse {
-                    0% { transform: translate(0, 0) scale(1); }
-                    50% { transform: translate(2%, 2%) scale(1.05); }
-                    100% { transform: translate(0, 0) scale(1); }
-                }
-                .new-feature-alert__main { display: flex; align-items: center; gap: 16px; z-index: 1; }
-                .new-feature-alert__icon {
+                .reports-mini-toast__icon {
                     display: flex; align-items: center; justify-content: center;
-                    width: 48px; height: 48px; border-radius: 14px;
-                    background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);
-                    font-size: 1.5rem;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    width: 28px; height: 28px; border-radius: 50%;
+                    background: #b91c1c; color: #ffffff;
+                    font-size: 0.9rem; box-shadow: 0 2px 8px rgba(185, 28, 28, 0.25);
                 }
-                .new-feature-alert__text { font-size: 0.95rem; line-height: 1.5; margin: 0; color: #e0e7ff; }
-                .new-feature-alert__text strong { font-weight: 800; font-size: 1.05rem; display: block; margin-bottom: 2px; color: #ffffff; }
-                .new-feature-alert__actions { display: flex; align-items: center; gap: 12px; z-index: 1; }
-                .new-feature-alert__btn {
-                    background: #ffffff; color: #4f46e5; border: none;
-                    font-weight: 700; padding: 10px 24px; border-radius: 999px;
-                    text-decoration: none; transition: all 0.2s ease;
-                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                    display: inline-flex; align-items: center; gap: 6px;
+                .reports-mini-toast strong { font-weight: 800; color: #000000; margin-right: 4px; }
+                
+                body.dark-mode .reports-mini-toast {
+                    background: linear-gradient(135deg, #171717 0%, #262626 100%);
+                    border-color: rgba(185, 28, 28, 0.4);
+                    color: #d4d4d4;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
                 }
-                .new-feature-alert__btn:hover {
-                    transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); color: #4338ca;
+                body.dark-mode .reports-mini-toast:hover {
+                    border-color: rgba(185, 28, 28, 0.8); color: #ffffff;
                 }
-                .new-feature-alert__close {
-                    background: rgba(255,255,255,0.15); color: #ffffff; border: none;
-                    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                    cursor: pointer; transition: background 0.2s;
+                body.dark-mode .reports-mini-toast__icon {
+                    background: rgba(185, 28, 28, 0.2); color: #fca5a5;
+                    border: 1px solid rgba(185, 28, 28, 0.4); box-shadow: none;
                 }
-                .new-feature-alert__close:hover { background: rgba(255,255,255,0.3); }
-
-                @media (max-width: 767.98px) {
-                    .new-feature-alert { flex-direction: column; align-items: stretch; padding: 16px; }
-                    .new-feature-alert__actions { justify-content: space-between; width: 100%; }
-                    .new-feature-alert__btn { flex-grow: 1; justify-content: center; }
-                }
+                body.dark-mode .reports-mini-toast strong { color: #ffffff; }
             </style>
-            <div class="new-feature-alert" id="reports-feature-alert" style="display: none;">
-                <div class="new-feature-alert__main">
-                    <div class="new-feature-alert__icon">
-                        <i class="bi bi-stars"></i>
+            <div>
+                <a href="tickets.php?view=org&amp;list=reports" class="reports-mini-toast">
+                    <div class="reports-mini-toast__icon">
+                        <i class="bi bi-file-earmark-text-fill"></i>
                     </div>
                     <div>
-                        <p class="new-feature-alert__text">
-                            <strong>¡Nuevo Módulo de Informes!</strong>
-                            Ahora tienes un espacio para revisar reportes y métricas de tu organización.
-                        </p>
+                        <strong>Nuevos Informes:</strong> Tienes <?php echo $unreadReportsCount; ?> sin leer
                     </div>
-                </div>
-                <div class="new-feature-alert__actions">
-                    <a href="informes-jefes.php" class="new-feature-alert__btn">
-                        Ver Informes <i class="bi bi-arrow-right"></i>
-                    </a>
-                    <button class="new-feature-alert__close" id="reports-feature-close" title="Entendido">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
+                    <i class="bi bi-arrow-right" style="margin-left: 4px; font-size: 1.1rem; color: #b91c1c;"></i>
+                </a>
             </div>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const alertEl = document.getElementById('reports-feature-alert');
-                    const closeBtn = document.getElementById('reports-feature-close');
-                    
-                    if (localStorage.getItem('reportsFeatureSeen') !== 'true') {
-                        alertEl.style.display = 'flex';
-                    }
-                    
-                    if (closeBtn) {
-                        closeBtn.addEventListener('click', function() {
-                            localStorage.setItem('reportsFeatureSeen', 'true');
-                            alertEl.style.opacity = '0';
-                            alertEl.style.transform = 'scale(0.95)';
-                            setTimeout(() => { alertEl.style.display = 'none'; }, 400);
-                        });
-                    }
-                });
-            </script>
             <?php endif; ?>
             <main class="panel-soft" style="padding: 18px;">
                 <?php if (!empty($isOrgExplorer)): ?>
@@ -1661,9 +1621,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             </a>
                             <a href="informes-jefes.php" class="btn-org-ghost position-relative">
                                 <i class="bi bi-file-earmark-text"></i> Informes
-                                <?php if (($totalReportsCount ?? 0) > 0): ?>
+                                <?php if (($unreadReportsCount ?? 0) > 0): ?>
                                 <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                                    <span class="visually-hidden">Informes disponibles</span>
+                                    <span class="visually-hidden">Nuevos informes</span>
                                 </span>
                                 <?php endif; ?>
                             </a>

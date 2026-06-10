@@ -556,23 +556,6 @@ $stCol = $stInfo['color'];
                                     <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
                                 </a>
                             <?php endif; ?>
-                            
-                            <?php if ($quote['status'] === 'answered'): ?>
-                                <form method="POST" style="margin:0;" class="d-inline-block">
-                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <input type="hidden" name="action_type" value="accept_quote">
-                                    <button type="submit" class="btn btn-action-success">
-                                        <i class="bi bi-check-lg"></i> Aceptar
-                                    </button>
-                                </form>
-                                <form method="POST" style="margin:0;" class="d-inline-block">
-                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                    <input type="hidden" name="action_type" value="reject_quote">
-                                    <button type="submit" class="btn btn-action-danger">
-                                        <i class="bi bi-x-lg"></i> Rechazar
-                                    </button>
-                                </form>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -651,6 +634,50 @@ $stCol = $stInfo['color'];
                 </div>
             </div>
             
+            <?php if ($quote['status'] === 'pending' || $quote['status'] === 'answered'): ?>
+            <!-- Quote Actions -->
+            <style>
+                .quote-action-panel { background: #f8fafc; border: 1px dashed #cbd5e1; }
+                body.dark-mode .quote-action-panel { background: #1e293b; border-color: #334155; }
+                body.dark-mode .quote-action-panel h5 { color: #f8fafc; }
+                body.dark-mode .quote-action-panel p { color: #94a3b8 !important; }
+            </style>
+            <div class="card-soft mt-4 quote-action-panel">
+                <div class="body p-4 text-center">
+                    <?php if ($quote['status'] === 'pending'): ?>
+                        <h5 class="fw-bold mb-3">Acción Requerida</h5>
+                        <p class="text-muted mb-4">Se ha registrado la solicitud de cotización. Por favor, apruébala para continuar con la generación formal del documento.</p>
+                        <form method="POST" class="d-inline-block">
+                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                            <input type="hidden" name="action_type" value="request_quote">
+                            <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                                <i class="bi bi-check2-circle"></i> Aprobar Cotización
+                            </button>
+                        </form>
+                    <?php elseif ($quote['status'] === 'answered'): ?>
+                        <h5 class="fw-bold mb-3">Resolución de Cotización</h5>
+                        <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes aceptar o rechazar esta cotización.</p>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <form method="POST" style="margin:0;" class="d-inline-block">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <input type="hidden" name="action_type" value="accept_quote">
+                                <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #16a34a; border-color: #16a34a; color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);">
+                                    <i class="bi bi-check-lg"></i> Aceptar Cotización
+                                </button>
+                            </form>
+                            <form method="POST" style="margin:0;" class="d-inline-block">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <input type="hidden" name="action_type" value="reject_quote">
+                                <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #dc2626; border-color: #dc2626; color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+                                    <i class="bi bi-x-lg"></i> Rechazar Cotización
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (!in_array($quote['status'], ['accepted', 'rejected'])): ?>
             <!-- Reply box -->
             <div class="card-soft mt-4">

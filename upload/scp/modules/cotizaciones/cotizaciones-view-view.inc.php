@@ -82,14 +82,7 @@ if ($sn !== '') {
             </div>
             <!-- Col 3: Estado & Fechas -->
             <div>
-                <div class="field">
-                    <label><i class="bi bi-flag"></i> ESTADO</label>
-                    <div class="value">
-                        <span class="badge-status" style="background: <?php echo $stInfo['bg']; ?>; color: <?php echo $stInfo['color']; ?>; border: 1px solid <?php echo $stInfo['color']; ?>33;">
-                            <i class="bi <?php echo $stInfo['icon']; ?>"></i> <?php echo $stInfo['label']; ?>
-                        </span>
-                    </div>
-                </div>
+
                 <div class="field">
                     <label><i class="bi bi-calendar-event"></i> CREADA</label>
                     <div class="value"><?php echo date('d/m/Y h:i A', strtotime($quote['created_at'])); ?></div>
@@ -137,7 +130,7 @@ if ($sn !== '') {
                             <span class="author-role"><?php echo $isStaff ? 'Agente' : 'Cliente'; ?></span>
                         </div>
                         <div class="entry-content">
-                            <span class="entry-meta-top"><i class="bi bi-clock me-1"></i><?php echo date('d/m/Y h:i A', strtotime($m['created_at'])); ?></span>
+
                             <div class="entry-body" style="white-space: pre-wrap;"><?php echo html($m['message']); ?></div>
                             <?php if (!empty($m['file_path'])):
                                 $fileName = basename($m['file_path']);
