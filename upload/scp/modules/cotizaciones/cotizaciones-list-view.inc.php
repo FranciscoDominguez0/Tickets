@@ -1,3 +1,38 @@
+<style>
+    /* Dark mode overrides for cotizaciones list */
+    body.dark-mode .tickets-table thead.table-light {
+        background-color: #1e293b !important;
+        border-bottom-color: #334155 !important;
+    }
+    body.dark-mode .tickets-table thead.table-light th {
+        color: #cbd5e1 !important;
+    }
+    body.dark-mode .ticket-row {
+        background: #111111 !important;
+        border-bottom: 1px solid #333 !important;
+    }
+    body.dark-mode .ticket-row:hover {
+        background: #1a1a1a !important;
+    }
+    body.dark-mode .ticket-title {
+        color: #60a5fa !important;
+    }
+    body.dark-mode .ticket-subject {
+        color: #f8fafc !important;
+    }
+    body.dark-mode .ticket-row td span[style*="#334155"],
+    body.dark-mode .ticket-row td strong[style*="#475569"] {
+        color: #e2e8f0 !important;
+    }
+    body.dark-mode .ticket-row td div[style*="#64748b"],
+    body.dark-mode .ticket-row td i[style*="#94a3b8"] {
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .ticket-row td div[style*="#f1f5f9"] {
+        background: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+</style>
 <div class="tickets-shell">
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">

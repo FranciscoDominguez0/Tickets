@@ -22,9 +22,7 @@ if ($sn !== '') {
         <h1 class="ticket-view-title">
             <a href="cotizaciones.php?id=<?php echo $quote['id']; ?>" title="Recargar"><i class="bi bi-arrow-clockwise"></i></a>
             <span>Cotización #<?php echo $quote['id']; ?></span>
-            <span style="font-weight: 800; font-size: 0.8rem; color: <?php echo $stInfo['color']; ?>; background: <?php echo $stInfo['bg']; ?>; padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid <?php echo $stInfo['color']; ?>33;">
-                <i class="bi <?php echo $stInfo['icon']; ?>" style="font-size: 0.9rem;"></i> <?php echo $stInfo['label']; ?>
-            </span>
+
         </h1>
         <div class="ticket-view-actions">
             <a href="cotizaciones.php" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
@@ -57,6 +55,14 @@ if ($sn !== '') {
                 <div class="field">
                     <label><i class="bi bi-file-earmark-text"></i> COTIZACIÓN</label>
                     <div class="value title"><?php echo html($quote['title']); ?></div>
+                </div>
+                <div class="field">
+                    <label><i class="bi bi-flag"></i> ESTADO</label>
+                    <div class="value">
+                        <span class="badge-status" style="font-weight: 800; font-size: 0.8rem; background: <?php echo $stInfo['bg']; ?>; color: <?php echo $stInfo['color']; ?>; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid <?php echo $stInfo['color']; ?>33;">
+                            <i class="bi <?php echo $stInfo['icon']; ?>"></i> <?php echo $stInfo['label']; ?>
+                        </span>
+                    </div>
                 </div>
 
                 <?php if ($quote['ticket_id']): ?>

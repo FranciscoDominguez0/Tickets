@@ -53,10 +53,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = $_POST['action_type'] ?? '';
         
+        $notifyAgent = function($msgStr) use ($mysqli, $quote, $qid) {
+            $staffId = (int)($quote['staff_id'] ?? 0);
+            $eid = (int)($quote['empresa_id'] ?? 1);
+            $escMsg = $mysqli->real_escape_string("Cotización #$qid: $msgStr");
+            
+            if ($staffId > 0) {
+                $mysqli->query("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES ($eid, $staffId, '$escMsg', 'quote', $qid, 0, NOW())");
+            } else {
+                $res = $mysqli->query("SELECT staff_id FROM notification_recipients WHERE empresa_id = $eid");
+                if ($res) {
+                    while ($row = $res->fetch_assoc()) {
+                        $sid = (int)$row['staff_id'];
+                        $mysqli->query("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES ($eid, $sid, '$escMsg', 'quote', $qid, 0, NOW())");
+                    }
+                }
+            }
+        };
+        
         if ($action === 'request_quote' && $quote['status'] === 'pending') {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'requested' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
+            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha solicitado la cotización formal.', NOW())");
+            if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
+                notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Solicitada');
+            }
+            $notifyAgent('El cliente ha solicitado la cotización formal.');
             $_SESSION['flash_msg'] = 'Cotización solicitada exitosamente.';
             header("Location: view-quote.php?id=$qid");
             exit;
@@ -64,6 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'accepted' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
+            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha ACEPTADO la cotización.', NOW())");
+            if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
+                notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Aceptada');
+            }
+            $notifyAgent('El cliente ha ACEPTADO la cotización.');
             $_SESSION['flash_msg'] = 'Cotización aceptada exitosamente.';
             header("Location: view-quote.php?id=$qid");
             exit;
@@ -71,27 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'rejected' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
+            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha RECHAZADO la cotización.', NOW())");
+            if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
+                notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Rechazada');
+            }
+            $notifyAgent('El cliente ha RECHAZADO la cotización.');
             $_SESSION['flash_msg'] = 'Cotización rechazada.';
             header("Location: view-quote.php?id=$qid");
             exit;
-        } elseif ($action === 'reply_message') {
-            $msg = trim($_POST['message'] ?? '');
-            if ($msg === '') {
-                $reply_error = 'El mensaje no puede estar vacío.';
-            } else {
-                $ins = $mysqli->prepare("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES (?, ?, ?, NOW())");
-                $ins->bind_param('iis', $qid, $uid, $msg);
-                if ($ins->execute()) {
-                    // Si el cliente responde, y el estado era answered, lo pasamos a requested para que el agente lo vuelva a ver
-                    if ($quote['status'] === 'answered') {
-                        $mysqli->query("UPDATE quotes SET status = 'requested' WHERE id = $qid");
-                    }
-                    header("Location: view-quote.php?id=$qid");
-                    exit;
-                } else {
-                    $reply_error = 'Error al enviar el mensaje.';
-                }
-            }
         }
     }
 }
@@ -552,7 +567,7 @@ $stCol = $stInfo['color'];
                                 <i class="bi bi-arrow-left"></i> Volver a la org.
                             </a>
                             <?php if (!empty($quote['file_path'])): ?>
-                                <a href="<?php echo html($quote['file_path']); ?>" target="_blank" class="btn btn-outline-secondary rounded-pill fw-bold">
+                                <a href="../<?php echo html($quote['file_path']); ?>" target="_blank" class="btn btn-outline-secondary rounded-pill fw-bold">
                                     <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
                                 </a>
                             <?php endif; ?>
@@ -621,7 +636,7 @@ $stCol = $stInfo['color'];
                                                     <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
                                                     <div style="flex:1; min-width:0;">
                                                         <div class="text-truncate fw-bold small">Documento_Cotizacion.pdf</div>
-                                                        <a href="<?php echo html($m['file_path']); ?>" target="_blank" class="small text-decoration-none">Descargar</a>
+                                                        <a href="../<?php echo html($m['file_path']); ?>" target="_blank" class="small text-decoration-none">Descargar</a>
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
@@ -678,26 +693,7 @@ $stCol = $stInfo['color'];
             </div>
             <?php endif; ?>
 
-            <?php if (!in_array($quote['status'], ['accepted', 'rejected'])): ?>
-            <!-- Reply box -->
-            <div class="card-soft mt-4">
-                <div class="head">
-                    <h5 class="m-0 fw-bold"><i class="bi bi-chat-dots"></i> Escribir un mensaje</h5>
-                </div>
-                <div class="body">
-                    <form method="POST">
-                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                        <input type="hidden" name="action_type" value="reply_message">
-                        <textarea name="message" class="form-control mb-3" rows="4" placeholder="Escribe tu mensaje o consulta aquí..." required></textarea>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-action-primary">
-                                <i class="bi bi-send"></i> Enviar Mensaje
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <?php endif; ?>
+
 
         </div>
     </div>

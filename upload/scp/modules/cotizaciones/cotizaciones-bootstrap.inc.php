@@ -9,6 +9,8 @@ if (!isset($mysqli) || !$mysqli) {
 
 $eid = empresaId();
 
+
+
 function getCotizaciones($mysqli, $eid, $status = '', $search = '') {
     $where = ["q.empresa_id = ?"];
     $params = [$eid];

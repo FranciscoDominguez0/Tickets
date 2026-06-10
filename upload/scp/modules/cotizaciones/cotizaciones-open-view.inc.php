@@ -174,9 +174,13 @@ body.dark-mode .open-section .form-control {
         <div class="open-section">
             <div class="section-title"><i class="bi bi-file-earmark-text"></i> Información de Cotización</div>
             <div class="row g-3">
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label">Título <span class="required">*</span></label>
                     <input type="text" name="title" class="form-control" placeholder="Ej. Instalación de Cámaras" value="<?php echo html($_POST['title'] ?? ''); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Sucursal</label>
+                    <input type="text" name="sucursal" class="form-control" placeholder="Ej. Sucursal Centro" value="<?php echo html($_POST['sucursal'] ?? ''); ?>">
                 </div>
                 <div class="col-12">
                     <label class="form-label">Organización <span class="required">*</span></label>

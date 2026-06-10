@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Auth::validateCSRF($_POST['csrf_token'] ?? '');
     
     $title = trim($_POST['title'] ?? '');
+    $sucursal = trim($_POST['sucursal'] ?? '');
     $org_id = (int)($_POST['org_id'] ?? 0);
     $amount = (float)($_POST['amount'] ?? 0);
     $description = trim($_POST['description'] ?? '');
@@ -21,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $staff_id = $_SESSION['staff_id'];
-        $sql = "INSERT INTO quotes (empresa_id, org_id, staff_id, title, description, amount, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())";
+        $sql = "INSERT INTO quotes (empresa_id, org_id, staff_id, title, sucursal, description, amount, status, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())";
         $stmt = $mysqli->prepare($sql);
         if ($stmt) {
-            $stmt->bind_param('iiissd', $eid, $org_id, $staff_id, $title, $description, $amount);
+            $stmt->bind_param('iiisssd', $eid, $org_id, $staff_id, $title, $sucursal, $description, $amount);
             if ($stmt->execute()) {
                 $newId = $stmt->insert_id;
                 

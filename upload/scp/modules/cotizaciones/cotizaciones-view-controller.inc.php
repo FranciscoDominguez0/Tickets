@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $dbPath = null;
             if (isset($_FILES['quote_file']) && $_FILES['quote_file']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../../../../uploads/attachments/';
+                $uploadDir = __DIR__ . '/../../../uploads/attachments/';
                 if (!is_dir($uploadDir)) {
                     @mkdir($uploadDir, 0755, true);
                 }
