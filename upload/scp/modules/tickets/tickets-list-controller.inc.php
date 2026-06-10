@@ -3,6 +3,10 @@
 $filters = [
     'open' => ['label' => 'Abiertos', 'where' => 't.closed IS NULL'],
     'closed' => ['label' => 'Cerrados', 'where' => 't.closed IS NOT NULL'],
+    'billing_pending' => [
+        'label' => 'Por facturar',
+        'where' => "t.closed IS NOT NULL AND tr.id IS NOT NULL AND (tr.billing_status IS NULL OR tr.billing_status = 'pending')",
+    ],
     'mine' => ['label' => 'Asignados a mí', 'where' => 't.staff_id = ?'],
     'unassigned' => ['label' => 'Sin asignar', 'where' => 't.staff_id IS NULL'],
     'all' => ['label' => 'Todos', 'where' => '1=1'],
@@ -109,6 +113,26 @@ if ($stmtCc) {
         $stmtCc->bind_param('i', $eid);
     }
     if ($stmtCc->execute()) $countClosed = (int)($stmtCc->get_result()->fetch_assoc()['c'] ?? 0);
+}
+
+$countBillingPending = 0;
+$sqlCbp = 'SELECT COUNT(*) c FROM tickets t
+    LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id
+    WHERE t.empresa_id = ? AND t.closed IS NOT NULL AND tr.id IS NOT NULL
+    AND (tr.billing_status IS NULL OR tr.billing_status = \'pending\')';
+if (!$canViewAll) {
+    $sqlCbp .= ' AND t.staff_id = ?';
+}
+$stmtCbp = $mysqli->prepare($sqlCbp);
+if ($stmtCbp) {
+    if (!$canViewAll) {
+        $stmtCbp->bind_param('ii', $eid, $_SESSION['staff_id']);
+    } else {
+        $stmtCbp->bind_param('i', $eid);
+    }
+    if ($stmtCbp->execute()) {
+        $countBillingPending = (int)($stmtCbp->get_result()->fetch_assoc()['c'] ?? 0);
+    }
 }
 
 $sqlCu = 'SELECT COUNT(*) c FROM tickets WHERE empresa_id = ? AND staff_id IS NULL AND closed IS NULL';

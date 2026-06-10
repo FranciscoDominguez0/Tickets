@@ -33,8 +33,12 @@
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Tickets</h1>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
+                <h1><?php echo $filterKey === 'billing_pending' ? 'Por facturar' : 'Tickets'; ?></h1>
+                <?php if ($filterKey === 'billing_pending'): ?>
+                <div class="sub">Tickets cerrados con reporte pendiente de facturación: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong></div>
+                <?php else: ?>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong> · Por facturar: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
+                <?php endif; ?>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
                 <a href="tickets.php?a=open" class="btn-new"><i class="bi bi-plus-lg me-1"></i> Nuevo</a>
@@ -109,6 +113,11 @@
         <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>" data-general-dept-id="<?php echo (int)$generalDeptId; ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-filters">
+                    <?php if ($filterKey === 'billing_pending'): ?>
+                    <span class="btn btn-sm" style="pointer-events:none; cursor:default; background:#fef9c3; color:#854d0e; border:1px solid #fef08a; font-weight:700;">
+                        <i class="bi bi-clock-history"></i> Por facturar
+                    </span>
+                    <?php else: ?>
                     <div class="dropdown filter-dd">
                         <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-funnel"></i>
@@ -123,8 +132,9 @@
                             <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Todos</a></li>
                         </ul>
                     </div>
+                    <?php endif; ?>
 
-                    <?php if ($deptFilterAvailable): ?>
+                    <?php if ($deptFilterAvailable && $filterKey !== 'billing_pending'): ?>
                         <select class="form-select form-select-sm" id="ticketDeptSelect" aria-label="Filtrar por departamento">
                             <option value="0">Todos los deptos</option>
                             <?php foreach ($deptOptions as $dp): ?>
@@ -134,6 +144,7 @@
                         </select>
                     <?php endif; ?>
 
+                    <?php if ($filterKey !== 'billing_pending'): ?>
                     <div id="ticketDateRange" style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:4px 8px; height:32px;">
                         <i class="bi bi-calendar3" style="color:#64748b; font-size:0.8rem; flex-shrink:0;"></i>
                         <input type="date" id="dateFromInput" value="<?php echo html($dateFrom); ?>" title="Desde"
@@ -176,6 +187,7 @@
                         });
                     })();
                     </script>
+                    <?php endif; ?>
                 </div>
                 <div class="tickets-search">
                     <div class="input-group">

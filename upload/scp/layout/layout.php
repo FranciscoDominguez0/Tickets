@@ -409,6 +409,9 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     <li class="sidebar-group">
                         <?php
                         $isTicketsRoute = in_array($currentRoute, ['tickets', 'reportes']);
+                        $ticketsSidebarFilter = (string)($_GET['filter'] ?? '');
+                        $isTicketsBillingPendingNav = ($currentRoute === 'tickets' && $ticketsSidebarFilter === 'billing_pending');
+                        $isTicketsDetailsNav = ($currentRoute === 'tickets' && !$isTicketsBillingPendingNav);
                         $expandTickets = ($isTicketsRoute && $allowExpandedGroups);
                         ?>
                         <button type="button"
@@ -430,14 +433,25 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         </button>
                         <ul id="tickets-subnav" class="sidebar-subnav <?php echo $expandTickets ? 'open' : ''; ?>">
                             <li>
-                                <a href="tickets.php" class="sidebar-link <?php echo $currentRoute === 'tickets' ? 'active' : ''; ?>">
+                                <a href="tickets.php" class="sidebar-link <?php echo $isTicketsDetailsNav ? 'active' : ''; ?>">
                                     <span class="icon">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <rect x="2" y="4" width="20" height="16" rx="2" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
-                                            <path d="M7 9H17M7 14H13" stroke="<?php echo $currentRoute === 'tickets' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
+                                            <rect x="2" y="4" width="20" height="16" rx="2" stroke="<?php echo $isTicketsDetailsNav ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M7 9H17M7 14H13" stroke="<?php echo $isTicketsDetailsNav ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round"/>
                                         </svg>
                                     </span>
                                     Detalles
+                                </a>
+                            </li>
+                            <li>
+                                <a href="tickets.php?filter=billing_pending" class="sidebar-link <?php echo $isTicketsBillingPendingNav ? 'active' : ''; ?>">
+                                    <span class="icon">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="12" cy="12" r="9" stroke="<?php echo $isTicketsBillingPendingNav ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6"/>
+                                            <path d="M12 7v5l3 2" stroke="<?php echo $isTicketsBillingPendingNav ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    Por facturar
                                 </a>
                             </li>
                             <?php
