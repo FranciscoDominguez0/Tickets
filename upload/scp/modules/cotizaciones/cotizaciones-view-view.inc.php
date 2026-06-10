@@ -58,12 +58,7 @@ if ($sn !== '') {
                     <label><i class="bi bi-file-earmark-text"></i> COTIZACIÓN</label>
                     <div class="value title"><?php echo html($quote['title']); ?></div>
                 </div>
-                <?php if (!empty(trim($quote['description'] ?? ''))): ?>
-                <div class="field">
-                    <label><i class="bi bi-text-left"></i> DESCRIPCIÓN</label>
-                    <div class="value sub-info" style="white-space: pre-wrap;"><?php echo html($quote['description']); ?></div>
-                </div>
-                <?php endif; ?>
+
                 <?php if ($quote['ticket_id']): ?>
                 <div class="field">
                     <label><i class="bi bi-ticket-perforated"></i> TICKET ORIGEN</label>

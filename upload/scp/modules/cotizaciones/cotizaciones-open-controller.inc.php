@@ -28,6 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param('iiissd', $eid, $org_id, $staff_id, $title, $description, $amount);
             if ($stmt->execute()) {
                 $newId = $stmt->insert_id;
+                
+                // Insertar la descripción como el primer mensaje del hilo si no está vacía
+                if (!empty($description)) {
+                    $insMsg = $mysqli->prepare("INSERT INTO quote_messages (quote_id, staff_id, message, created_at) VALUES (?, ?, ?, NOW())");
+                    if ($insMsg) {
+                        $insMsg->bind_param('iis', $newId, $staff_id, $description);
+                        $insMsg->execute();
+                    }
+                }
+                
                 $_SESSION['flash_msg'] = 'Cotización creada exitosamente como borrador.';
                 header("Location: cotizaciones.php?id=$newId");
                 exit;

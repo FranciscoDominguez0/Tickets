@@ -210,10 +210,7 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                         </div>
                         <div class="org-panel-head__actions d-flex align-items-center gap-2">
                             <span class="org-count-badge"><?php echo $orgQuotesTotal; ?></span>
-                            <!-- Botón para solicitar nueva cotización -->
-                            <button type="button" class="btn btn-primary btn-sm rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#newQuoteModal" style="background: #ef4444; border-color: #ef4444; padding: 6px 14px;">
-                                <i class="bi bi-plus-circle me-1"></i> Solicitar
-                            </button>
+                            <!-- Botón de solicitar removido para el jefe -->
                         </div>
                     </div>
 
@@ -230,40 +227,50 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                 $isUnread = (!$isQuote && empty($doc['is_read']));
                                 
                                 if ($isQuote) {
-                                    $statusColors = [
-                                        'draft'    => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
-                                        'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
-                                        'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
-                                        'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'En Revisión'],
-                                        'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
-                                        'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
-                                    ];
+                                    if (!empty($isDarkMode)) {
+                                        $statusColors = [
+                                            'draft'    => ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Borrador'],
+                                            'pending'  => ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Pendiente'],
+                                            'requested'=> ['bg' => 'rgba(254, 249, 195, 0.15)', 'color' => '#fde047', 'label' => 'Solicitada'],
+                                            'answered' => ['bg' => 'rgba(219, 234, 254, 0.15)', 'color' => '#93c5fd', 'label' => 'En Revisión'],
+                                            'accepted' => ['bg' => 'rgba(220, 252, 231, 0.15)', 'color' => '#86efac', 'label' => 'Aceptada'],
+                                            'rejected' => ['bg' => 'rgba(254, 226, 226, 0.15)', 'color' => '#fca5a5', 'label' => 'Rechazada']
+                                        ];
+                                    } else {
+                                        $statusColors = [
+                                            'draft'    => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
+                                            'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
+                                            'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
+                                            'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'En Revisión'],
+                                            'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
+                                            'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
+                                        ];
+                                    }
                                     $st = $statusColors[$doc['status']] ?? $statusColors['draft'];
                                 } else {
-                                    $st = ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Informe'];
+                                    $st = !empty($isDarkMode) 
+                                        ? ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Informe']
+                                        : ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Informe'];
                                 }
                                 
                                 $href = $isQuote ? "view-quote.php?id=" . $doc['id'] : "informe-jefe.php?id=" . $doc['id'];
                                 $icon = $isQuote ? "bi-file-earmark-text" : "bi-megaphone";
+                                $unreadClass = $isUnread ? (!empty($isDarkMode) ? 'bg-dark border-primary' : 'bg-light border-primary') : '';
                                 ?>
-                                <a href="<?php echo $href; ?>" class="list-group-item list-group-item-action org-explorer-row d-flex align-items-center flex-wrap gap-3 <?php echo $isUnread ? 'bg-light' : ''; ?>">
-                                    <span class="org-ticket-num" style="min-width:40px; text-align:center;"><i class="bi <?php echo $icon; ?> fs-5 text-muted"></i></span>
-                                    <div class="org-explorer-row-body" style="flex: 1; min-width: 250px;">
-                                        <div class="org-explorer-row-title fw-bold text-dark"><?php echo html($doc['subject'] ?? ''); ?></div>
-                                        <div class="org-explorer-row-sub text-muted" style="font-size: 0.85rem; margin-top: 4px;">
-                                            <?php if ($isQuote): ?>
-                                                <div style="white-space: pre-wrap; margin-bottom: 4px;"><?php echo html($doc['body_html'] ?? ''); ?></div>
-                                            <?php endif; ?>
-                                            <strong>Fecha:</strong> <?php echo date('d/m/Y', strtotime($doc['created_at'])); ?>
+                                <a href="<?php echo $href; ?>" class="list-group-item list-group-item-action org-explorer-row d-flex align-items-center flex-wrap gap-3 <?php echo $unreadClass; ?>" style="<?php echo $isUnread ? 'border-left: 4px solid #ef4444 !important;' : ''; ?>">
+                                    <span class="org-ticket-num" style="min-width:40px; text-align:center;"><i class="bi <?php echo $icon; ?> fs-5 <?php echo !empty($isDarkMode) ? 'text-light' : 'text-muted'; ?>"></i></span>
+                                    <div class="flex-grow-1" style="min-width:200px;">
+                                        <div class="fw-bold mb-1 <?php echo !empty($isDarkMode) ? 'text-white' : 'text-dark'; ?>"><?php echo html($doc['subject'] ?: 'Sin título'); ?></div>
+                                        <div class="small <?php echo !empty($isDarkMode) ? 'text-secondary' : 'text-muted'; ?>">
+                                            <i class="bi bi-calendar3 me-1"></i> <?php echo html(date('d/m/Y h:i A', strtotime($doc['created_at']))); ?>
                                         </div>
                                     </div>
-                                    <div class="d-flex align-items-center gap-3 flex-wrap">
-                                        <?php if ($isUnread): ?><span class="badge bg-primary rounded-pill">Nuevo</span><?php endif; ?>
-                                        <span class="badge" style="background-color: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; padding: 6px 12px; border-radius: 6px;">
+                                    <div class="text-end">
+                                        <span class="badge rounded-pill" style="background-color: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>; font-weight: 500; padding: 0.5em 0.8em;">
                                             <?php echo $st['label']; ?>
                                         </span>
-                                        <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-eye"></i> <?php echo $isQuote ? 'Ver detalle' : 'Leer informe'; ?></span>
                                     </div>
+                                    <span class="org-explorer-row-cta btn-org-primary ms-2"><i class="bi bi-eye"></i> Ver</span>
                                 </a>
                             <?php endforeach; ?>
                         </div>

@@ -169,6 +169,41 @@ $stCol = $stInfo['color'];
             color: #fff;
             text-decoration: none;
         }
+        .topbar .profile-brand .brand-logo-wrap {
+            height: 46px;
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+        }
+        .topbar .profile-brand .brand-logo {
+            height: 28px;
+            width: auto;
+            max-height: 28px;
+            max-width: 160px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
+        }
+        .topbar .user-menu-btn {
+            border-radius: 999px;
+            font-weight: 800;
+        }
+        .topbar .user-menu-btn .uavatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
         
         .container-main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
         .center-wrap { max-width: 980px; margin: 0 auto; }
@@ -185,17 +220,151 @@ $stCol = $stInfo['color'];
         .card-soft .head { padding: 20px 22px; border-bottom: 1px solid #e2e8f0; }
         .card-soft .body { padding: 24px; }
         
-        .ticket-view-entry { margin-bottom: 24px; font-family: 'Inter', system-ui, sans-serif; }
-        .ticket-view-entry .entry-row { display: flex; align-items: flex-start; gap: 16px; }
-        .ticket-view-entry.user .entry-row { flex-direction: row-reverse; }
-        .ticket-view-entry .entry-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-        .ticket-view-entry.staff .entry-avatar { background: #0f62fe; color: #ffffff; }
-        .ticket-view-entry.user .entry-avatar { background: #fef2f2; color: #1e3a8a; }
-        .ticket-view-entry .entry-content { flex: 1; min-width: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px 24px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03); position: relative; }
-        .ticket-view-entry.user .entry-content { background: #f8fafc; border-color: #f1f5f9; }
-        .ticket-view-entry .entry-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
-        .ticket-view-entry .entry-author { font-weight: 700; color: #0f172a; font-size: 0.95rem; }
-        .ticket-view-entry .entry-date { color: #64748b; font-size: 0.85rem; font-weight: 500; }
+        .ticket-view-entry {
+            margin-bottom: 24px;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .ticket-view-entry .entry-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .ticket-view-entry.user .entry-row {
+            flex-direction: row-reverse;
+        }
+
+        .ticket-view-entry .entry-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
+        .ticket-view-entry .entry-avatar-inner {
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+        }
+
+        .ticket-view-entry.staff .entry-avatar {
+            background: #0f62fe;
+            color: #ffffff;
+        }
+
+        .ticket-view-entry.user .entry-avatar {
+            background: #fef2f2;
+            color: #1e3a8a;
+        }
+
+        .ticket-view-entry .entry-bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .ticket-view-entry.user .entry-bubble-wrapper {
+            align-items: flex-end;
+        }
+
+        .ticket-view-entry .entry-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            padding-left: 2px;
+        }
+
+        .ticket-view-entry .author-name {
+            font-weight: 800;
+            color: #0f172a;
+            font-size: 1rem;
+        }
+
+        .ticket-view-entry .entry-content {
+            border-radius: 16px;
+            padding: 16px 20px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .ticket-view-entry.user .entry-content {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+
+        .ticket-view-entry.staff .entry-content {
+            background: #fef2f2;
+            border-color: #dbeafe;
+        }
+
+        .ticket-view-entry .entry-meta-top {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .ticket-view-entry .entry-body {
+            color: #1e293b;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        body.dark-mode .ticket-view-entry .entry-content {
+            background: #18181b;
+            border-color: #27272a;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark-mode .ticket-view-entry.user .entry-content {
+            background: #1e1e20;
+            border-color: #27272a;
+        }
+
+        body.dark-mode .ticket-view-entry.staff .entry-content {
+            background: #111827;
+            border-color: #1f2937;
+        }
+
+        body.dark-mode .ticket-view-entry .author-name {
+            color: #f4f4f5;
+        }
+
+        body.dark-mode .ticket-view-entry .entry-meta-top {
+            color: #a1a1aa;
+        }
+
+        body.dark-mode .ticket-view-entry .entry-avatar {
+            background: #27272a;
+            color: #f4f4f5;
+        }
+
+        body.dark-mode .ticket-view-entry.staff .entry-avatar {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+
+        body.dark-mode .ticket-view-entry.user .entry-avatar {
+            background: #3f3f46;
+            color: #e4e4e7;
+        }
+
+        body.dark-mode .ticket-view-entry .entry-body {
+            color: #d4d4d8;
+        }
         
         .btn-action-primary {
             background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -207,16 +376,148 @@ $stCol = $stInfo['color'];
         .btn-action-success { background: #10b981; color: #fff; border: none; padding: 10px 24px; border-radius: 50rem; font-weight: 700; }
         .btn-action-danger { background: #ef4444; color: #fff; border: none; padding: 10px 24px; border-radius: 50rem; font-weight: 700; }
         
+        @media (max-width: 576px) {
+            body .container-main {
+                padding: 0 10px !important;
+                margin: 20px auto !important;
+            }
+            body .center-wrap {
+                max-width: 100% !important;
+            }
+            body .panel-soft {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel-soft {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+        }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
 <nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
     <div class="container-fluid">
-        <a class="navbar-brand profile-brand" href="tickets.php?view=org">
-            <?php echo APP_NAME; ?>
+        <?php
+            $navUserName = trim((string)($user['name'] ?? ''));
+            $companyName = trim((string)getAppSetting('company.name', ''));
+            $companyLogoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
+            $navInitials = '';
+            $parts = preg_split('/\s+/', trim($navUserName));
+            if (!empty($parts[0])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[0], 0, 1) : substr($parts[0], 0, 1));
+            if (!empty($parts[1])) $navInitials .= (function_exists('mb_substr') ? mb_substr($parts[1], 0, 1) : substr($parts[1], 0, 1));
+            $navInitials = strtoupper($navInitials ?: 'U');
+            if ($navUserName === '') $navUserName = 'Mi Perfil';
+        ?>
+        <a class="navbar-brand profile-brand" href="tickets.php">
+            <span class="brand-logo-wrap" aria-hidden="true">
+                <img class="brand-logo" src="<?php echo html($companyLogoUrl); ?>" alt="<?php echo html($companyName !== '' ? $companyName : 'Logo'); ?>">
+            </span>
         </a>
         <div class="d-flex align-items-center gap-2">
-            <a href="tickets.php?view=org" class="btn btn-sm btn-outline-light rounded-pill">Volver a la organización</a>
+            <div class="dropdown">
+                <button class="btn btn-outline-light btn-sm user-menu-btn position-relative" type="button" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-bell" style="font-size: 15px;"></i>
+                    <span id="notifBellBadge" class="badge bg-danger position-absolute" style="display:none; font-size:.65rem; top: -2px; right: -2px; padding: 3px 5px; border-radius: 50px;">0</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-0 notif-dd notif-dd-flex" style="min-width: 380px; max-height: 420px;" aria-labelledby="notifBellBtn">
+                    <div class="p-3 notif-dd-head" style="flex-shrink: 0;">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:36px;height:36px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.22);">
+                                    <i class="bi bi-bell" style="font-size:1.05rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="notif-dd-title">Notificaciones</div>
+                                    <div class="notif-dd-sub" id="notifBellSub">Respuestas a tus tickets</div>
+                                </div>
+                            </div>
+                            <div id="notifBellCountPill" class="notif-dd-count" style="display:none;">0 nuevas</div>
+                        </div>
+                    </div>
+                    <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
+                        <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
+                            <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div>
+                            <div style="color:#64748b;">Cuando el equipo responda, te aparecerá aquí.</div>
+                        </div>
+                    </div>
+                    <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
+                        <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
+                            <i class="bi bi-check-all"></i> Marcar todas como leídas
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <form method="post" action="toggle_user_dark.php" class="d-inline" style="margin:0" id="clientDarkModeForm">
+                <?php csrfField(); ?>
+                <input type="hidden" name="dark_mode" value="<?php echo $isDarkMode ? '0' : '1'; ?>">
+                <input type="hidden" name="return" value="<?php echo html(basename((string)($_SERVER['PHP_SELF'] ?? 'view-quote.php')) . (!empty($_SERVER['QUERY_STRING']) ? ('?' . (string)$_SERVER['QUERY_STRING']) : '')); ?>">
+                <button type="submit" class="btn btn-outline-light btn-sm user-theme-toggle" id="clientDarkModeBtn" title="Modo oscuro" style="border-radius:999px; font-weight:700; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                    <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> user-theme-toggle-icon" style="font-size:16px;"></i>
+                </button>
+            </form>
+            <div class="dropdown">
+                <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="uavatar" aria-hidden="true"><?php echo html($navInitials); ?></span>
+                    <span class="d-none d-sm-inline"><?php echo html($navUserName); ?></span>
+                </button>
+                <style>
+                    .profile-dropdown {
+                        width: 230px; border-radius: 16px; border: 1px solid rgba(226,232,240,0.95); box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12); padding: 8px; background: #fff;
+                    }
+                    .profile-dd-item {
+                        border-radius: 10px; padding: 8px 12px; font-weight: 600; color: #334155; margin-bottom: 2px; transition: all .15s ease;
+                    }
+                    .profile-dd-item:hover { background: #f8fafc; color: #0f172a; }
+                    .profile-dd-icon {
+                        width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.1rem;
+                    }
+                    .profile-dd-icon-default { background: #f1f5f9; color: #64748b; }
+                    .profile-dd-icon-success { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+                    .profile-dd-danger { color: #ef4444; }
+                    .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+                    .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+                    .profile-dd-divider { border-color: #f1f5f9; opacity: 1; margin: 8px 0; }
+                    
+                    body.dark-mode .profile-dropdown { background: #1a1a1a; border-color: #2a2a2a; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
+                    body.dark-mode .profile-dd-item { color: #cbd5e1; }
+                    body.dark-mode .profile-dd-item:hover { background: #252525; color: #f8fafc; }
+                    body.dark-mode .profile-dd-icon-default { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
+                    body.dark-mode .profile-dd-icon-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+                    body.dark-mode .profile-dd-danger { color: #ef4444; }
+                    body.dark-mode .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                    body.dark-mode .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.15); }
+                    body.dark-mode .profile-dd-divider { border-color: #2a2a2a; }
+                </style>
+                <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php">
+                            <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-inboxes"></i></div> Mis Tickets
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php">
+                            <div class="profile-dd-icon profile-dd-icon-success"><i class="bi bi-plus-circle"></i></div> Crear Ticket
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider profile-dd-divider"></li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="profile.php">
+                            <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-person"></i></div> Mi perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
+                            <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>
@@ -234,92 +535,120 @@ $stCol = $stInfo['color'];
             <?php if ($reply_error): ?>
                 <div class="alert alert-danger mb-4"><?php echo html($reply_error); ?></div>
             <?php endif; ?>
-
-            <div class="client-ticket-hero" style="background: #fff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <span class="badge mb-2" style="background-color: <?php echo $stBg; ?>; color: <?php echo $stCol; ?>; border: 1px solid <?php echo $stCol; ?>33; padding: 6px 12px; border-radius: 6px;">
-                            <i class="<?php echo $stInfo['icon']; ?>"></i> <?php echo $stInfo['label']; ?>
-                        </span>
-                        <h1 class="h3 fw-bold mb-1">Cotización #<?php echo $qid; ?>: <?php echo html($quote['title']); ?></h1>
-                        <div class="text-muted small">
-                            <i class="bi bi-calendar"></i> Creada el <?php echo date('d/m/Y', strtotime($quote['created_at'])); ?> 
-                            | <i class="bi bi-building"></i> <?php echo html($quote['org_name']); ?>
+            <div class="client-ticket-hero">
+                <div class="client-ticket-hero__ticket-card">
+                    <div class="client-ticket-hero__ticket-accent" aria-hidden="true"></div>
+                    <div class="client-ticket-hero__ticket-body">
+                        <div class="client-ticket-hero__main">
+                            <div class="client-ticket-hero__headline">
+                                <span class="client-ticket-hero__number" aria-label="Cotización <?php echo html($qid); ?>" style="font-size: 0.9em;">
+                                    <span class="client-ticket-hero__number-mark" style="font-size: 0.85em; margin-right: 4px;">Cotización #</span><span class="client-ticket-hero__number-val"><?php echo html($qid); ?></span>
+                                </span>
+                                <h1 class="client-ticket-hero__title"><?php echo html($quote['title'] ?: 'Sin título'); ?></h1>
+                            </div>
+                        </div>
+                        <div class="client-ticket-hero__actions">
+                            <a href="tickets.php?view=org&org_id=<?php echo html($quote['org_id']); ?>&list=quotes" class="client-ticket-hero__back me-2">
+                                <i class="bi bi-arrow-left"></i> Volver a la org.
+                            </a>
+                            <?php if (!empty($quote['file_path'])): ?>
+                                <a href="<?php echo html($quote['file_path']); ?>" target="_blank" class="btn btn-outline-secondary rounded-pill fw-bold">
+                                    <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+                                </a>
+                            <?php endif; ?>
+                            
+                            <?php if ($quote['status'] === 'answered'): ?>
+                                <form method="POST" style="margin:0;" class="d-inline-block">
+                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                    <input type="hidden" name="action_type" value="accept_quote">
+                                    <button type="submit" class="btn btn-action-success">
+                                        <i class="bi bi-check-lg"></i> Aceptar
+                                    </button>
+                                </form>
+                                <form method="POST" style="margin:0;" class="d-inline-block">
+                                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                    <input type="hidden" name="action_type" value="reject_quote">
+                                    <button type="submit" class="btn btn-action-danger">
+                                        <i class="bi bi-x-lg"></i> Rechazar
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <?php if (!empty($quote['file_path'])): ?>
-                            <a href="<?php echo html($quote['file_path']); ?>" target="_blank" class="btn btn-outline-secondary rounded-pill fw-bold">
-                                <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
-                            </a>
-                        <?php endif; ?>
-                        
-                        <?php if ($quote['status'] === 'pending'): ?>
-                            <form method="POST" style="margin:0;">
-                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <input type="hidden" name="action_type" value="request_quote">
-                                <button type="submit" class="btn btn-action-primary">
-                                    <i class="bi bi-send"></i> Solicitar Cotización
-                                </button>
-                            </form>
-                        <?php elseif ($quote['status'] === 'answered'): ?>
-                            <form method="POST" style="margin:0;" class="d-flex gap-2">
-                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <input type="hidden" name="action_type" value="accept_quote">
-                                <button type="submit" class="btn btn-action-success">
-                                    <i class="bi bi-check-lg"></i> Aceptar
-                                </button>
-                            </form>
-                            <form method="POST" style="margin:0;">
-                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                                <input type="hidden" name="action_type" value="reject_quote">
-                                <button type="submit" class="btn btn-action-danger">
-                                    <i class="bi bi-x-lg"></i> Rechazar
-                                </button>
-                            </form>
-                        <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="client-ticket-overview">
+                <div class="client-ticket-overview__grid d-none d-md-grid">
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-info-circle"></i> Estado</div>
+                        <div class="client-ticket-field__value">
+                            <span class="badge" style="background-color: <?php echo $stBg; ?>; color: <?php echo $stCol; ?>; border: 1px solid <?php echo $stCol; ?>33; padding: 6px 12px; border-radius: 6px;">
+                                <i class="<?php echo $stInfo['icon']; ?>"></i> <?php echo $stInfo['label']; ?>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-calendar"></i> Fecha de Creación</div>
+                        <div class="client-ticket-field__value"><?php echo date('d/m/Y', strtotime($quote['created_at'])); ?></div>
+                    </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-building"></i> Organización</div>
+                        <div class="client-ticket-field__value"><?php echo html($quote['org_name'] ?: 'N/A'); ?></div>
                     </div>
                 </div>
-                
-                <?php if (!empty($quote['description'])): ?>
-                    <hr>
-                    <div class="text-secondary" style="white-space: pre-wrap;"><?php echo html($quote['description']); ?></div>
-                <?php endif; ?>
             </div>
 
             <!-- Thread -->
-            <div class="thread">
-                <?php foreach ($messages as $m): 
-                    $isStaff = !empty($m['staff_id']);
-                    $authorName = $isStaff ? $m['staff_name'] : $m['user_name'];
-                    $avInitials = strtoupper(substr($authorName, 0, 1) . substr(strrchr($authorName, ' ') ?: '', 1, 1));
-                    $avInitials = trim($avInitials) ?: 'U';
-                ?>
-                    <div class="ticket-view-entry <?php echo $isStaff ? 'staff' : 'user'; ?>">
-                        <div class="entry-row">
-                            <div class="entry-avatar">
-                                <span class="entry-avatar-inner"><?php echo html($avInitials); ?></span>
-                            </div>
-                            <div class="entry-content">
-                                <div class="entry-header">
-                                    <div class="entry-author"><?php echo html($authorName); ?></div>
-                                    <div class="entry-date"><?php echo date('d/m/Y h:i A', strtotime($m['created_at'])); ?></div>
-                                </div>
-                                <div class="entry-body" style="white-space: pre-wrap;"><?php echo html($m['message']); ?></div>
-                                
-                                <?php if (!empty($m['file_path'])): ?>
-                                    <div class="mt-3 p-2 border rounded bg-light" style="max-width: 300px; display:flex; align-items:center; gap: 10px;">
-                                        <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
-                                        <div style="flex:1; min-width:0;">
-                                            <div class="text-truncate fw-bold small">Documento_Cotizacion.pdf</div>
-                                            <a href="<?php echo html($m['file_path']); ?>" target="_blank" class="small text-decoration-none">Descargar</a>
+            <div class="card-soft mt-4">
+                <div class="client-ticket-thread-head head">
+                    <h5 class="m-0 fw-bold"><i class="bi bi-chat-left-text-fill me-2"></i> Hilo de la cotización</h5>
+                </div>
+                <div class="body p-3 p-md-4 client-ticket-thread-body">
+                    <div class="thread mt-0">
+                        <?php foreach ($messages as $m): 
+                            $isStaff = !empty($m['staff_id']);
+                            $authorName = $isStaff ? $m['staff_name'] : $m['user_name'];
+                            $avInitials = strtoupper(substr($authorName, 0, 1) . substr(strrchr($authorName, ' ') ?: '', 1, 1));
+                            $avInitials = trim($avInitials) ?: 'U';
+                        ?>
+                            <div class="ticket-view-entry <?php echo $isStaff ? 'staff' : 'user'; ?>">
+                                <div class="entry-row">
+                                    <div class="entry-avatar" aria-hidden="true">
+                                        <span class="entry-avatar-inner"><?php echo html($avInitials); ?></span>
+                                    </div>
+                                    <div class="entry-bubble-wrapper">
+                                        <div class="entry-header d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="author-name"><?php echo html($authorName); ?></span>
+                                                <?php if ($isStaff): ?>
+                                                    <span class="author-role">Técnico</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="entry-content">
+                                            <div class="entry-meta-top">
+                                                <?php echo date('d/m/Y h:i A', strtotime($m['created_at'])); ?>
+                                            </div>
+                                            <div class="entry-body" style="white-space: pre-wrap;"><?php echo html($m['message']); ?></div>
+                                            
+                                            <?php if (!empty($m['file_path'])): ?>
+                                                <div class="mt-3 p-2 border rounded" style="max-width: 300px; display:flex; align-items:center; gap: 10px;">
+                                                    <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
+                                                    <div style="flex:1; min-width:0;">
+                                                        <div class="text-truncate fw-bold small">Documento_Cotizacion.pdf</div>
+                                                        <a href="<?php echo html($m['file_path']); ?>" target="_blank" class="small text-decoration-none">Descargar</a>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                <?php endif; ?>
+                                </div>
                             </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
             </div>
             
             <?php if (!in_array($quote['status'], ['accepted', 'rejected'])): ?>
