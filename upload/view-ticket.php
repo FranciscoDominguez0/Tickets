@@ -1982,7 +1982,9 @@ function humanSize($bytes) {
                 </script>
             <?php endif; ?>
             <?php
-            $clientStatusColor = normalizeTicketHexColor((string)($t['status_color'] ?? ''), '#64748b');
+            $effClientStatus = ticketEffectiveStatusDisplay($t['status_name'] ?? '', $t['status_color'] ?? '', $ticketApprovalStatus);
+            $clientDisplayStatusName = (string)($effClientStatus['name'] ?? ($t['status_name'] ?? ''));
+            $clientStatusColor = normalizeTicketHexColor((string)($effClientStatus['color'] ?? ($t['status_color'] ?? '')), '#64748b');
             $clientPriorityColor = normalizeTicketHexColor((string)($t['priority_color'] ?? ''), '#64748b');
             $clientTopicName = trim((string)($t['topic_name'] ?? ''));
             if ($clientTopicName === '') {
@@ -2028,7 +2030,7 @@ function humanSize($bytes) {
                 <div class="client-ticket-overview__pills d-md-none">
                     <span class="client-ticket-pill" style="<?php echo html($clientStatusStyle); ?>">
                         <span class="client-ticket-pill__dot" style="<?php echo html($clientStatusDotStyle); ?>;"></span>
-                        <?php echo html($t['status_name']); ?>
+                        <?php echo html($clientDisplayStatusName); ?>
                     </span>
                     <span class="client-ticket-pill" style="<?php echo html($clientPriorityStyle); ?>">
                         <i class="bi bi-flag-fill"></i>
@@ -2068,7 +2070,7 @@ function humanSize($bytes) {
                             <div class="client-ticket-field__value">
                                 <span class="client-ticket-field__badge" style="<?php echo html($clientStatusStyle); ?>">
                                     <span class="client-ticket-pill__dot" style="<?php echo html($clientStatusDotStyle); ?>;"></span>
-                                    <?php echo html($t['status_name']); ?>
+                                    <?php echo html($clientDisplayStatusName); ?>
                                 </span>
                             </div>
                         </div>

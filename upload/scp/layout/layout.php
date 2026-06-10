@@ -443,6 +443,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Detalles
                                 </a>
                             </li>
+                            <?php
+                            $canViewReports = roleHasPermission('ticket.reports');
+                            if ($canViewReports):
+                            ?>
                             <li>
                                 <a href="tickets.php?filter=billing_pending" class="sidebar-link <?php echo $isTicketsBillingPendingNav ? 'active' : ''; ?>">
                                     <span class="icon">
@@ -454,10 +458,6 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     Por facturar
                                 </a>
                             </li>
-                            <?php
-                            $canViewReports = roleHasPermission('ticket.reports');
-                            if ($canViewReports):
-                            ?>
                             <li>
                                 <a href="reporte_tickets.php" class="sidebar-link <?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
                                     <span class="icon">

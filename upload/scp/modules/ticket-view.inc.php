@@ -365,8 +365,8 @@ if ($ticketClientSignaturePath !== '') {
         elseif ($ticketApprovalStatus === 'aprobado') $apprColor = '#10b981';
         elseif ($ticketApprovalStatus === 'rechazado') $apprColor = '#ef4444';
         
-        $apprTitle = 'Pendiente';
-        if ($ticketApprovalStatus === 'cotizacion') $apprTitle = 'Cotización';
+        $apprTitle = 'Pendiente aprobación';
+        if ($ticketApprovalStatus === 'cotizacion') $apprTitle = 'Cotización solicitada';
         elseif ($ticketApprovalStatus === 'aprobado') $apprTitle = 'Aprobado';
         elseif ($ticketApprovalStatus === 'rechazado') $apprTitle = 'Rechazado';
         ?>
@@ -379,8 +379,8 @@ if ($ticketClientSignaturePath !== '') {
                 Ticket #<?php echo html($t['ticket_number']); ?>
             </h1>
             <?php if ($ticketApprovalStatus !== 'none'): ?>
-                <span style="font-weight: 800; font-size: 0.75rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 10px; border-radius: 999px;">
-                    <i class="bi bi-shield-check"></i> <?php echo $apprTitle; ?>
+                <span style="font-weight: 800; font-size: 0.75rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 10px; border-radius: 999px; border: 1px solid <?php echo $apprColor; ?>33;">
+                    <i class="bi <?php echo $ticketApprovalStatus === 'pending' ? 'bi-shield-lock-fill' : 'bi-shield-check'; ?>"></i> <?php echo html($apprTitle); ?>
                 </span>
             <?php endif; ?>
         </div>
@@ -392,8 +392,8 @@ if ($ticketClientSignaturePath !== '') {
             <span>Ticket #<?php echo html($t['ticket_number']); ?></span>
             
             <?php if ($ticketApprovalStatus !== 'none'): ?>
-                <span style="font-weight: 800; font-size: 0.8rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.02em;">
-                    <i class="bi bi-shield-check" style="font-size: 0.9rem;"></i> <?php echo $apprTitle; ?>
+                <span style="font-weight: 800; font-size: 0.8rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.02em; border: 1px solid <?php echo $apprColor; ?>33;">
+                    <i class="bi <?php echo $ticketApprovalStatus === 'pending' ? 'bi-shield-lock-fill' : 'bi-shield-check'; ?>" style="font-size: 0.9rem;"></i> <?php echo html($apprTitle); ?>
                 </span>
             <?php endif; ?>
         </h1>
@@ -1047,15 +1047,17 @@ if ($ticketClientSignaturePath !== '') {
             $bstatus = $t['billing_status'] ?? 'pending';
             $canConfirmBilling = roleHasPermission('admin.access');
             if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
-                <div class="mobile-header" style="margin-top: 8px;">
-                    <?php if ($canConfirmBilling): ?>
-                        <a href="#" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
-                            <i class="bi bi-clock-history"></i> Pendiente Facturación
-                        </a>
-                    <?php else: ?>
-                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
-                            <i class="bi bi-clock-history"></i> Pendiente Facturación
-                        </a>
+                <div class="mobile-header" style="margin-top: 8px; flex-wrap: wrap;">
+                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1 && $bstatus === 'pending'): ?>
+                        <?php if ($canConfirmBilling): ?>
+                            <a href="#" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;" data-bs-toggle="modal" data-bs-target="#modalConfirmBilling">
+                                <i class="bi bi-clock-history"></i> Pendiente Facturación
+                            </a>
+                        <?php else: ?>
+                            <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" class="mobile-badge billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; text-decoration:none;">
+                                <i class="bi bi-clock-history"></i> Pendiente Facturación
+                            </a>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -1328,9 +1330,14 @@ if ($ticketClientSignaturePath !== '') {
         </div>
         <?php
         $msg = $_GET['msg'] ?? '';
-        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.'];
+        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.', 'approval_requested' => 'Solicitud de aprobación enviada al jefe. El ticket quedó en Pendiente aprobación.'];
+        $msgErrorText = ['approval_already_pending' => 'Este ticket ya tiene una solicitud de aprobación pendiente.', 'approval_no_manager' => 'No se encontró un jefe de organización para este ticket.', 'approval_no_email' => 'El jefe de la organización no tiene un correo válido.', 'approval_email_failed' => 'No se pudo enviar el correo de aprobación al jefe.', 'approval_error' => 'No se pudo procesar la solicitud de aprobación.'];
         if ($msg && isset($msgText[$msg])): ?>
             <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif ($msg && isset($msgErrorText[$msg])): ?>
+            <div class="alert alert-danger alert-dismissible fade show"><?php echo html($msgErrorText[$msg]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>

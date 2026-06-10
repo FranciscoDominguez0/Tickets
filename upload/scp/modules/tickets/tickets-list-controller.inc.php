@@ -22,6 +22,10 @@ if ($filterKey === null && !$canViewAll) {
 if ($filterKey === null || !isset($filters[$filterKey])) {
     $filterKey = 'open';
 }
+if ($filterKey === 'billing_pending' && !roleHasPermission('ticket.reports')) {
+    header('Location: tickets.php');
+    exit;
+}
 $query = trim($_GET['q'] ?? '');
 
 // Filtro de fechas
@@ -294,7 +298,8 @@ $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated
                u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email, u.company AS user_company,
                s.firstname AS staff_first, s.lastname AS staff_last,
                tr.billing_status,
-               (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report
+               (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
+               (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
         FROM tickets t
         JOIN users u ON t.user_id = u.id
         LEFT JOIN staff s ON t.staff_id = s.id

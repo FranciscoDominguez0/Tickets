@@ -562,7 +562,8 @@ $tickets = [];
 $sql = '
     SELECT t.id, t.ticket_number, t.subject, t.created, t.closed,
            ts.name as status_name, ts.color as status_color,
-           p.name as priority_name, p.color as priority_color
+           p.name as priority_name, p.color as priority_color,
+           (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
     FROM tickets t
     LEFT JOIN ticket_status ts ON t.status_id = ts.id
     LEFT JOIN priorities p ON t.priority_id = p.id
@@ -1539,7 +1540,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <?php foreach ($tickets as $ticket): ?>
                                 <?php $isNew = ($newTicketId > 0 && (int)$ticket['id'] === (int)$newTicketId); ?>
                                 <?php
-                                    $statusColor = normalizeTicketHexColor((string)($ticket['status_color'] ?? ''), '#ef4444');
+                                    $effClientListStatus = ticketEffectiveStatusDisplay($ticket['status_name'] ?? '', $ticket['status_color'] ?? '', $ticket['approval_status'] ?? '');
+                                    $clientListStatusName = (string)($effClientListStatus['name'] ?? ($ticket['status_name'] ?? ''));
+                                    $statusColor = normalizeTicketHexColor((string)($effClientListStatus['color'] ?? ($ticket['status_color'] ?? '')), '#ef4444');
                                     $priorityColor = normalizeTicketHexColor((string)($ticket['priority_color'] ?? ''), '#64748b');
                                     $statusBadgeStyle = clientTicketBadgeStyle($statusColor, $isDarkMode);
                                     $priorityBadgeStyle = clientTicketBadgeStyle($priorityColor, $isDarkMode);
@@ -1564,7 +1567,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
                                     <div class="ticket-card-meta">
                                         <span class="badge-soft" style="<?php echo html($statusBadgeStyle); ?>">
-                                            <?php echo html($ticket['status_name']); ?>
+                                            <?php echo html($clientListStatusName); ?>
                                         </span>
                                         <span class="badge-soft" style="<?php echo html($priorityBadgeStyle); ?>">
                                             <?php echo html($ticket['priority_name']); ?>

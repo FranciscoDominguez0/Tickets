@@ -37,7 +37,7 @@
                 <?php if ($filterKey === 'billing_pending'): ?>
                 <div class="sub">Tickets cerrados con reporte pendiente de facturación: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong></div>
                 <?php else: ?>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong> · Por facturar: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
+                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if (roleHasPermission('ticket.reports')): ?> · Por facturar: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong><?php endif; ?><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
                 <?php endif; ?>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>

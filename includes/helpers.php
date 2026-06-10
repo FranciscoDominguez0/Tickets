@@ -1996,6 +1996,25 @@ function parseTicketHexRgb(string $color): ?array
     ];
 }
 
+/**
+ * Estado visible cuando hay aprobación ejecutiva pendiente.
+ * No altera ticket_status en BD; solo la presentación en UI.
+ */
+function ticketEffectiveStatusDisplay($statusName, $statusColor, $approvalStatus): array
+{
+    if ((string) $approvalStatus === 'pending') {
+        return [
+            'name' => 'Pendiente aprobación',
+            'color' => '#d97706',
+        ];
+    }
+
+    return [
+        'name' => (string) $statusName,
+        'color' => (string) ($statusColor !== '' && $statusColor !== null ? $statusColor : '#64748b'),
+    ];
+}
+
 function clientTicketBadgeStyle(string $color, bool $darkMode = false): string
 {
     $hex = normalizeTicketHexColor($color);

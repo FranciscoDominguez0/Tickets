@@ -175,7 +175,7 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                     </span>
                                     <?php if (($tk['approval_status'] ?? '') === 'pending'): ?>
                                         <span class="org-status-badge" style="background: #fef3c7; color: #d97706; border: 1px solid #fcd34d;">
-                                            <i class="bi bi-shield-lock-fill"></i> Revisión Pendiente
+                                            <i class="bi bi-shield-lock-fill"></i> Pendiente aprobación
                                         </span>
                                     <?php else: ?>
                                         <?php if (!empty($tk['status_name'])): ?>
