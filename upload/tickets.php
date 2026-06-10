@@ -558,6 +558,9 @@ $sigBlockPortal = ($blockNewIfSignaturePending && $pendingSignCount > 0);
 // Aprobaciones pendientes (si es jefe)
 $pendingApprovalCount = 0;
 $pendingApprovalFirstOrgId = 0;
+$pendingQuotesCount = 0;
+$pendingQuotesFirstOrgId = 0;
+$totalReportsCount = 0;
 if ($canOrgTicketsView) {
     $orgs = getPortalOrganizationsForUser($mysqli, $uid, $eid);
     if (!empty($orgs)) {
@@ -609,6 +612,46 @@ if ($canOrgTicketsView) {
         }
         if ($pendingApprovalFirstOrgId <= 0 && !empty($orgs)) {
             $pendingApprovalFirstOrgId = (int)($orgs[0]['organization_id'] ?? 0);
+        }
+
+        // --- Cotizaciones pendientes
+        $orgIds = [];
+        foreach ($orgs as $o) {
+            $oid = (int) ($o['organization_id'] ?? 0);
+            if ($oid > 0) {
+                $orgIds[] = $oid;
+            }
+        }
+        if (!empty($orgIds) && dbTableExists('quotes')) {
+            $inList = implode(',', $orgIds);
+            $sqlPQ = "SELECT COUNT(id) as c, MIN(org_id) as oid FROM quotes WHERE empresa_id = ? AND org_id IN ($inList) AND status NOT IN ('accepted', 'rejected')";
+            $stmtPq = $mysqli->prepare($sqlPQ);
+            if ($stmtPq) {
+                $stmtPq->bind_param('i', $eid);
+                if ($stmtPq->execute()) {
+                    $rowPq = $stmtPq->get_result()->fetch_assoc();
+                    if ($rowPq && $rowPq['c'] > 0) {
+                        $pendingQuotesCount = (int)$rowPq['c'];
+                        $pendingQuotesFirstOrgId = (int)$rowPq['oid'];
+                    }
+                }
+            }
+        }
+
+        // --- Total Informes
+        if (!empty($orgIds) && dbTableExists('org_boss_reports')) {
+            $inList = implode(',', $orgIds);
+            $sqlTR = "SELECT COUNT(id) as c FROM org_boss_reports WHERE empresa_id = ? AND organization_id IN ($inList)";
+            $stmtTr = $mysqli->prepare($sqlTR);
+            if ($stmtTr) {
+                $stmtTr->bind_param('i', $eid);
+                if ($stmtTr->execute()) {
+                    $rowTr = $stmtTr->get_result()->fetch_assoc();
+                    if ($rowTr && $rowTr['c'] > 0) {
+                        $totalReportsCount = (int)$rowTr['c'];
+                    }
+                }
+            }
         }
     }
 }
@@ -1398,18 +1441,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-inboxes"></i></div> Mis Tickets
                             </a>
                         </li>
-                        <?php if (!empty($canOrgTicketsView)): ?>
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php?view=org">
-                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-diagram-3"></i></div> Por organización
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="informes-jefes.php">
-                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-file-earmark-text"></i></div> Informes de soporte
-                            </a>
-                        </li>
-                        <?php endif; ?>
+
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php" <?php if (!empty($sigBlockPortal)): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>>
                                 <div class="profile-dd-icon profile-dd-icon-success"><i class="bi bi-plus-circle"></i></div> Crear Ticket
@@ -1514,6 +1546,104 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 </a>
             </div>
             <?php endif; ?>
+
+            <?php if (!empty($canOrgTicketsView) && empty($isOrgExplorer)): ?>
+            <style>
+                .new-feature-alert {
+                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+                    padding: 16px 20px; border-radius: 16px; margin-bottom: 24px;
+                    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+                    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.25);
+                    color: #ffffff;
+                    position: relative;
+                    overflow: hidden;
+                    transition: opacity 0.4s ease, transform 0.4s ease;
+                }
+                .new-feature-alert::before {
+                    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+                    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+                    animation: featurePulse 8s linear infinite; pointer-events: none;
+                }
+                @keyframes featurePulse {
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(2%, 2%) scale(1.05); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
+                .new-feature-alert__main { display: flex; align-items: center; gap: 16px; z-index: 1; }
+                .new-feature-alert__icon {
+                    display: flex; align-items: center; justify-content: center;
+                    width: 48px; height: 48px; border-radius: 14px;
+                    background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);
+                    font-size: 1.5rem;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .new-feature-alert__text { font-size: 0.95rem; line-height: 1.5; margin: 0; color: #e0e7ff; }
+                .new-feature-alert__text strong { font-weight: 800; font-size: 1.05rem; display: block; margin-bottom: 2px; color: #ffffff; }
+                .new-feature-alert__actions { display: flex; align-items: center; gap: 12px; z-index: 1; }
+                .new-feature-alert__btn {
+                    background: #ffffff; color: #4f46e5; border: none;
+                    font-weight: 700; padding: 10px 24px; border-radius: 999px;
+                    text-decoration: none; transition: all 0.2s ease;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                    display: inline-flex; align-items: center; gap: 6px;
+                }
+                .new-feature-alert__btn:hover {
+                    transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); color: #4338ca;
+                }
+                .new-feature-alert__close {
+                    background: rgba(255,255,255,0.15); color: #ffffff; border: none;
+                    width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                    cursor: pointer; transition: background 0.2s;
+                }
+                .new-feature-alert__close:hover { background: rgba(255,255,255,0.3); }
+
+                @media (max-width: 767.98px) {
+                    .new-feature-alert { flex-direction: column; align-items: stretch; padding: 16px; }
+                    .new-feature-alert__actions { justify-content: space-between; width: 100%; }
+                    .new-feature-alert__btn { flex-grow: 1; justify-content: center; }
+                }
+            </style>
+            <div class="new-feature-alert" id="reports-feature-alert" style="display: none;">
+                <div class="new-feature-alert__main">
+                    <div class="new-feature-alert__icon">
+                        <i class="bi bi-stars"></i>
+                    </div>
+                    <div>
+                        <p class="new-feature-alert__text">
+                            <strong>¡Nuevo Módulo de Informes!</strong>
+                            Ahora tienes un espacio para revisar reportes y métricas de tu organización.
+                        </p>
+                    </div>
+                </div>
+                <div class="new-feature-alert__actions">
+                    <a href="informes-jefes.php" class="new-feature-alert__btn">
+                        Ver Informes <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <button class="new-feature-alert__close" id="reports-feature-close" title="Entendido">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const alertEl = document.getElementById('reports-feature-alert');
+                    const closeBtn = document.getElementById('reports-feature-close');
+                    
+                    if (localStorage.getItem('reportsFeatureSeen') !== 'true') {
+                        alertEl.style.display = 'flex';
+                    }
+                    
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function() {
+                            localStorage.setItem('reportsFeatureSeen', 'true');
+                            alertEl.style.opacity = '0';
+                            alertEl.style.transform = 'scale(0.95)';
+                            setTimeout(() => { alertEl.style.display = 'none'; }, 400);
+                        });
+                    }
+                });
+            </script>
+            <?php endif; ?>
             <main class="panel-soft" style="padding: 18px;">
                 <?php if (!empty($isOrgExplorer)): ?>
                     <?php require __DIR__ . '/partials/client-org-tickets.inc.php'; ?>
@@ -1529,14 +1659,21 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <a href="tickets.php?view=org" class="btn-org-ghost">
                                 <i class="bi bi-diagram-3"></i> Por organización
                             </a>
-                            <a href="informes-jefes.php" class="btn-org-ghost">
+                            <a href="informes-jefes.php" class="btn-org-ghost position-relative">
                                 <i class="bi bi-file-earmark-text"></i> Informes
+                                <?php if (($totalReportsCount ?? 0) > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                                    <span class="visually-hidden">Informes disponibles</span>
+                                </span>
+                                <?php endif; ?>
                             </a>
                             <?php endif; ?>
                             <a href="open.php" class="btn btn-primary btn-sm" style="border-radius: 999px; font-weight: 800; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>
                         </div>
                     </div>
                 </div>
+
+
 
                 <?php if ($flashMsg !== ''): ?>
                     <div class="alert alert-success" role="alert" id="tickets-flash-success"><?php echo html($flashMsg); ?></div>
