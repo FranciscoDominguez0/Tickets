@@ -22,7 +22,7 @@ $orgTicketsTotalPages = max(1, (int)($orgTicketsTotalPages ?? 1));
 $orgListPerPage = max(1, (int)($orgListPerPage ?? 10));
 $orgUsersPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId;
 $orgTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&member_id=' . (int)$orgExplorerMemberId;
-$orgExplorerListMode = (isset($orgExplorerListMode) && (string)$orgExplorerListMode === 'all') ? 'all' : 'users';
+$orgExplorerListMode = (isset($orgExplorerListMode) && in_array((string)$orgExplorerListMode, ['all', 'quotes'], true)) ? (string)$orgExplorerListMode : 'users';
 $orgAllTicketsTotal = (int)($orgAllTicketsTotal ?? 0);
 $orgAllTicketsPage = max(1, (int)($orgAllTicketsPage ?? 1));
 $orgAllTicketsTotalPages = max(1, (int)($orgAllTicketsTotalPages ?? 1));
@@ -106,11 +106,14 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
 
         <?php elseif ($orgExplorerMemberId <= 0): ?>
             <div class="org-view-tabs">
-                <a href="<?php echo $orgOrgBaseUrl; ?>" class="org-view-tab <?php echo $orgExplorerListMode === 'users' ? 'active' : ''; ?>">
+                <a href="<?php echo $orgOrgBaseUrl; ?>&amp;list=users" class="org-view-tab <?php echo $orgExplorerListMode === 'users' ? 'active' : ''; ?>">
                     <i class="bi bi-people"></i> Por usuario
                 </a>
                 <a href="<?php echo $orgOrgBaseUrlAll; ?>" class="org-view-tab <?php echo $orgExplorerListMode === 'all' ? 'active' : ''; ?>">
                     <i class="bi bi-collection"></i> Todos los tickets
+                </a>
+                <a href="<?php echo $orgOrgBaseUrl; ?>&amp;list=quotes" class="org-view-tab <?php echo $orgExplorerListMode === 'quotes' ? 'active' : ''; ?>">
+                    <i class="bi bi-file-earmark-text"></i> Cotizaciones
                 </a>
             </div>
 
@@ -197,6 +200,74 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                             <?php echo renderModernPagination($orgAllTicketsPage, $orgAllTicketsTotalPages, $orgAllTicketsPaginationParams, 'oat'); ?>
                         <?php endif; ?>
                 <?php endif; ?>
+                </div>
+
+            <?php elseif ($orgExplorerListMode === 'quotes'): ?>
+                <div class="org-list-section">
+                    <div class="org-panel-head org-panel-head--tickets" style="flex-wrap: wrap;">
+                        <div class="org-panel-head__left">
+                            <h3><i class="bi bi-file-earmark-text text-danger me-1"></i> Cotizaciones</h3>
+                        </div>
+                        <div class="org-panel-head__actions d-flex align-items-center gap-2">
+                            <span class="org-count-badge"><?php echo $orgQuotesTotal; ?></span>
+                            <!-- Botón para solicitar nueva cotización -->
+                            <button type="button" class="btn btn-primary btn-sm rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#newQuoteModal" style="background: #ef4444; border-color: #ef4444; padding: 6px 14px;">
+                                <i class="bi bi-plus-circle me-1"></i> Solicitar
+                            </button>
+                        </div>
+                    </div>
+
+                    <?php if ($orgQuotesTotal <= 0): ?>
+                        <div class="org-empty">
+                            <i class="bi bi-file-earmark-x" aria-hidden="true"></i>
+                            <p class="text-muted mb-0">No hay cotizaciones para esta organización.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush org-explorer-list">
+                            <?php foreach ($orgExplorerQuotes as $doc): ?>
+                                <?php
+                                $isQuote = ($doc['doc_type'] === 'quote');
+                                $isUnread = (!$isQuote && empty($doc['is_read']));
+                                
+                                if ($isQuote) {
+                                    $statusColors = [
+                                        'draft'    => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
+                                        'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
+                                        'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
+                                        'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'En Revisión'],
+                                        'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
+                                        'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
+                                    ];
+                                    $st = $statusColors[$doc['status']] ?? $statusColors['draft'];
+                                } else {
+                                    $st = ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Informe'];
+                                }
+                                
+                                $href = $isQuote ? "view-quote.php?id=" . $doc['id'] : "informe-jefe.php?id=" . $doc['id'];
+                                $icon = $isQuote ? "bi-file-earmark-text" : "bi-megaphone";
+                                ?>
+                                <a href="<?php echo $href; ?>" class="list-group-item list-group-item-action org-explorer-row d-flex align-items-center flex-wrap gap-3 <?php echo $isUnread ? 'bg-light' : ''; ?>">
+                                    <span class="org-ticket-num" style="min-width:40px; text-align:center;"><i class="bi <?php echo $icon; ?> fs-5 text-muted"></i></span>
+                                    <div class="org-explorer-row-body" style="flex: 1; min-width: 250px;">
+                                        <div class="org-explorer-row-title fw-bold text-dark"><?php echo html($doc['subject'] ?? ''); ?></div>
+                                        <div class="org-explorer-row-sub text-muted" style="font-size: 0.85rem; margin-top: 4px;">
+                                            <?php if ($isQuote): ?>
+                                                <div style="white-space: pre-wrap; margin-bottom: 4px;"><?php echo html($doc['body_html'] ?? ''); ?></div>
+                                            <?php endif; ?>
+                                            <strong>Fecha:</strong> <?php echo date('d/m/Y', strtotime($doc['created_at'])); ?>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                                        <?php if ($isUnread): ?><span class="badge bg-primary rounded-pill">Nuevo</span><?php endif; ?>
+                                        <span class="badge" style="background-color: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; padding: 6px 12px; border-radius: 6px;">
+                                            <?php echo $st['label']; ?>
+                                        </span>
+                                        <span class="org-explorer-row-cta btn-org-primary"><i class="bi bi-eye"></i> <?php echo $isQuote ? 'Ver detalle' : 'Leer informe'; ?></span>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
             <?php elseif ($orgUsersTotal <= 0): ?>
@@ -324,5 +395,36 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
             <?php endif; ?>
             </div>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- Modal Solicitar Cotización -->
+<div class="modal fade" id="newQuoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="tickets.php?view=org&org_id=<?php echo $orgExplorerOrgId; ?>&list=quotes" class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header bg-light border-bottom-0" style="border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-file-earmark-plus text-danger me-2"></i>Solicitar Cotización</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <input type="hidden" name="action_type" value="quote_action">
+                <input type="hidden" name="quote_action_name" value="create">
+                <input type="hidden" name="org_id" value="<?php echo $orgExplorerOrgId; ?>">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Título del Servicio/Producto</label>
+                    <input type="text" name="title" class="form-control form-control-lg bg-light" placeholder="Ej. Instalación de Red..." required style="border-radius: 12px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small text-uppercase">Descripción / Detalles Adicionales</label>
+                    <textarea name="description" class="form-control bg-light" rows="4" placeholder="Describe lo que necesitas..." style="border-radius: 12px;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Enviar Solicitud</button>
+            </div>
+        </form>
     </div>
 </div>

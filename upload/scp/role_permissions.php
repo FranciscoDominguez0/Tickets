@@ -175,6 +175,7 @@ $permissionGroups = [
         'user.manage' => ['title' => 'Gestionar usuarios', 'desc' => 'Habilidad para crear, editar, eliminar y realizar acciones en usuarios'],
         'org.view' => ['title' => 'Ver organizaciones', 'desc' => 'Habilidad para ver el listado y detalles de organizaciones'],
         'org.manage' => ['title' => 'Gestionar organizaciones', 'desc' => 'Habilidad para crear, editar y eliminar organizaciones'],
+        'org.reports' => ['title' => 'Informes a jefes', 'desc' => 'Crear y enviar informes a jefes de organización en su panel'],
         'agent.directory' => ['title' => 'Ver directorio de agentes', 'desc' => 'Habilidad para acceder al directorio del agente'],
         'agent.map' => ['title' => 'Ver mapa de agentes', 'desc' => 'Habilidad para acceder al mapa de agentes en tiempo real'],
         'stats.view' => ['title' => 'Ver estadísticas', 'desc' => 'Habilidad para visualizar el panel de estadísticas.'],

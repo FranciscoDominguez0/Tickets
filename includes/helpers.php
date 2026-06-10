@@ -3260,3 +3260,424 @@ function notifyApprovalToAdminRecipients($tid, $statusName)
         }
     }
 }
+
+function ensureOrgBossReportsTable()
+{
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    $sql = "CREATE TABLE IF NOT EXISTS org_boss_reports (\n"
+        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  staff_id INT NOT NULL,\n"
+        . "  organization_id INT NOT NULL,\n"
+        . "  target_user_id INT NULL,\n"
+        . "  subject VARCHAR(255) NOT NULL,\n"
+        . "  body_html MEDIUMTEXT NULL,\n"
+        . "  body_text MEDIUMTEXT NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_obr_empresa (empresa_id),\n"
+        . "  KEY idx_obr_org (organization_id),\n"
+        . "  KEY idx_obr_created (created_at)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    if (!$mysqli->query($sql)) {
+        return false;
+    }
+    return true;
+}
+
+function ensureOrgBossReportAttachmentsTable()
+{
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    ensureOrgBossReportsTable();
+    $sql = "CREATE TABLE IF NOT EXISTS org_boss_report_attachments (\n"
+        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  report_id BIGINT NOT NULL,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  original_filename VARCHAR(255) NOT NULL,\n"
+        . "  filename VARCHAR(255) NOT NULL,\n"
+        . "  mimetype VARCHAR(128) NULL,\n"
+        . "  size INT NOT NULL DEFAULT 0,\n"
+        . "  path VARCHAR(512) NOT NULL,\n"
+        . "  hash VARCHAR(64) NULL,\n"
+        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_obra_report (report_id),\n"
+        . "  KEY idx_obra_empresa (empresa_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool) $mysqli->query($sql);
+}
+
+function ensureOrgBossReportReadsTable()
+{
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    ensureOrgBossReportsTable();
+    $sql = "CREATE TABLE IF NOT EXISTS org_boss_report_reads (\n"
+        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  report_id BIGINT NOT NULL,\n"
+        . "  user_id INT NOT NULL,\n"
+        . "  read_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  UNIQUE KEY uq_obr_read (report_id, user_id),\n"
+        . "  KEY idx_obrr_user (user_id)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    return (bool) $mysqli->query($sql);
+}
+
+function orgBossReportsStorageDir()
+{
+    $base = defined('ATTACHMENTS_DIR') ? dirname((string) ATTACHMENTS_DIR) : (__DIR__ . '/../upload/uploads');
+    $dir = rtrim(str_replace('\\', '/', $base), '/') . '/org_boss_reports';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+/**
+ * @return array<int, array{id:int,email:string,firstname:string,lastname:string}>
+ */
+function fetchOrganizationBosses($mysqli, int $empresaId, int $organizationId): array
+{
+    if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
+        return [];
+    }
+    if (!ensureUserOrgTicketsViewColumn($mysqli) || !organizationMembershipEnabled($mysqli)) {
+        return [];
+    }
+    $stmt = $mysqli->prepare(
+        "SELECT DISTINCT u.id, u.email, u.firstname, u.lastname\n"
+        . "FROM user_organizations uo\n"
+        . "JOIN users u ON u.id = uo.user_id AND u.empresa_id = uo.empresa_id\n"
+        . "WHERE uo.empresa_id = ? AND uo.organization_id = ? AND u.org_tickets_view = 1 AND u.status = 'active'\n"
+        . "ORDER BY u.firstname, u.lastname"
+    );
+    if (!$stmt) {
+        return [];
+    }
+    $stmt->bind_param('ii', $empresaId, $organizationId);
+    if (!$stmt->execute()) {
+        return [];
+    }
+    $rows = [];
+    $res = $stmt->get_result();
+    while ($res && ($row = $res->fetch_assoc())) {
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
+function bossCanAccessOrgReport($mysqli, int $userId, int $empresaId, array $reportRow): bool
+{
+    if ($userId <= 0 || $empresaId <= 0 || empty($reportRow)) {
+        return false;
+    }
+    if (!userOrgTicketsViewEnabled($mysqli, $userId, $empresaId)) {
+        return false;
+    }
+    $orgId = (int) ($reportRow['organization_id'] ?? 0);
+    if ($orgId <= 0) {
+        return false;
+    }
+    $orgs = getPortalOrganizationsForUser($mysqli, $userId, $empresaId);
+    foreach ($orgs as $o) {
+        if ((int) ($o['organization_id'] ?? 0) === $orgId) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function countUnreadOrgBossReportsForUser($mysqli, int $userId, int $empresaId): int
+{
+    if ($userId <= 0 || !userOrgTicketsViewEnabled($mysqli, $userId, $empresaId)) {
+        return 0;
+    }
+    if (!ensureOrgBossReportReadsTable()) {
+        return 0;
+    }
+    $orgs = getPortalOrganizationsForUser($mysqli, $userId, $empresaId);
+    $orgIds = [];
+    foreach ($orgs as $o) {
+        $oid = (int) ($o['organization_id'] ?? 0);
+        if ($oid > 0) {
+            $orgIds[] = $oid;
+        }
+    }
+    if (empty($orgIds)) {
+        return 0;
+    }
+    $placeholders = implode(',', array_fill(0, count($orgIds), '?'));
+    $types = 'ii' . str_repeat('i', count($orgIds));
+    $sql = "SELECT COUNT(*) c FROM org_boss_reports r\n"
+        . "LEFT JOIN org_boss_report_reads rd ON rd.report_id = r.id AND rd.user_id = ?\n"
+        . "WHERE r.empresa_id = ? AND r.organization_id IN ($placeholders) AND rd.id IS NULL";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return 0;
+    }
+    $params = [$userId, $empresaId];
+    foreach ($orgIds as $oid) {
+        $params[] = $oid;
+    }
+    $stmt->bind_param($types, ...$params);
+    if (!$stmt->execute()) {
+        return 0;
+    }
+    return (int) ($stmt->get_result()->fetch_assoc()['c'] ?? 0);
+}
+
+/**
+ * @return array<int, array<string, mixed>>
+ */
+function fetchOrgBossReportsForBoss($mysqli, int $userId, int $empresaId, int $limit = 20, int $offset = 0): array
+{
+    if ($userId <= 0 || !userOrgTicketsViewEnabled($mysqli, $userId, $empresaId)) {
+        return [];
+    }
+    ensureOrgBossReportReadsTable();
+    $orgs = getPortalOrganizationsForUser($mysqli, $userId, $empresaId);
+    $orgIds = [];
+    foreach ($orgs as $o) {
+        $oid = (int) ($o['organization_id'] ?? 0);
+        if ($oid > 0) {
+            $orgIds[] = $oid;
+        }
+    }
+    if (empty($orgIds)) {
+        return [];
+    }
+    $limit = max(1, $limit);
+    $offset = max(0, $offset);
+    $placeholders = implode(',', array_fill(0, count($orgIds), '?'));
+    $types = 'ii' . str_repeat('i', count($orgIds)) . 'ii';
+    $sql = "SELECT r.*, o.name AS org_name,\n"
+        . "s.firstname AS staff_first, s.lastname AS staff_last,\n"
+        . "tu.firstname AS target_first, tu.lastname AS target_last, tu.email AS target_email,\n"
+        . "(CASE WHEN rd.id IS NULL THEN 0 ELSE 1 END) AS is_read\n"
+        . "FROM org_boss_reports r\n"
+        . "JOIN organizations o ON o.id = r.organization_id AND o.empresa_id = r.empresa_id\n"
+        . "LEFT JOIN staff s ON s.id = r.staff_id\n"
+        . "LEFT JOIN users tu ON tu.id = r.target_user_id\n"
+        . "LEFT JOIN org_boss_report_reads rd ON rd.report_id = r.id AND rd.user_id = ?\n"
+        . "WHERE r.empresa_id = ? AND r.organization_id IN ($placeholders)\n"
+        . "ORDER BY r.created_at DESC\n"
+        . "LIMIT ? OFFSET ?";
+    $stmt = $mysqli->prepare($sql);
+    if (!$stmt) {
+        return [];
+    }
+    $params = [$userId, $empresaId];
+    foreach ($orgIds as $oid) {
+        $params[] = $oid;
+    }
+    $params[] = $limit;
+    $params[] = $offset;
+    $stmt->bind_param($types, ...$params);
+    if (!$stmt->execute()) {
+        return [];
+    }
+    $rows = [];
+    $res = $stmt->get_result();
+    while ($res && ($row = $res->fetch_assoc())) {
+        $rows[] = $row;
+    }
+    return $rows;
+}
+
+function markOrgBossReportRead($mysqli, int $reportId, int $userId): void
+{
+    if ($reportId <= 0 || $userId <= 0 || !ensureOrgBossReportReadsTable()) {
+        return;
+    }
+    $stmt = $mysqli->prepare(
+        'INSERT INTO org_boss_report_reads (report_id, user_id, read_at) VALUES (?, ?, NOW())'
+        . ' ON DUPLICATE KEY UPDATE read_at = VALUES(read_at)'
+    );
+    if ($stmt) {
+        $stmt->bind_param('ii', $reportId, $userId);
+        $stmt->execute();
+    }
+}
+
+/**
+ * @return array{ok:bool,report_id?:int,error?:string}
+ */
+function saveOrgBossReportWithAttachments($mysqli, int $empresaId, int $staffId, int $organizationId, ?int $targetUserId, string $subject, string $bodyHtml, array $uploadedFiles = []): array
+{
+    if ($empresaId <= 0 || $staffId <= 0 || $organizationId <= 0) {
+        return ['ok' => false, 'error' => 'Datos inválidos'];
+    }
+    if (!ensureOrgBossReportAttachmentsTable()) {
+        return ['ok' => false, 'error' => 'No se pudo preparar la tabla de informes'];
+    }
+    $subject = trim($subject);
+    if ($subject === '') {
+        return ['ok' => false, 'error' => 'El asunto es obligatorio'];
+    }
+    if (mb_strlen($subject) > 255) {
+        $subject = mb_substr($subject, 0, 252) . '...';
+    }
+    $bodyHtml = trim($bodyHtml);
+    if ($bodyHtml === '') {
+        return ['ok' => false, 'error' => 'El mensaje es obligatorio'];
+    }
+    $bodyText = trim(strip_tags($bodyHtml));
+
+    $stmtOrg = $mysqli->prepare('SELECT id, name FROM organizations WHERE id = ? AND empresa_id = ? LIMIT 1');
+    if (!$stmtOrg) {
+        return ['ok' => false, 'error' => 'Organización no encontrada'];
+    }
+    $stmtOrg->bind_param('ii', $organizationId, $empresaId);
+    $stmtOrg->execute();
+    $orgRow = $stmtOrg->get_result()->fetch_assoc();
+    if (!$orgRow) {
+        return ['ok' => false, 'error' => 'Organización no válida'];
+    }
+    $orgName = (string) ($orgRow['name'] ?? '');
+
+    if ($targetUserId !== null && $targetUserId > 0) {
+        $users = fetchOrganizationUsers($mysqli, $empresaId, $organizationId, $orgName, 500, 0);
+        $valid = false;
+        foreach ($users as $u) {
+            if ((int) ($u['id'] ?? 0) === $targetUserId) {
+                $valid = true;
+                break;
+            }
+        }
+        if (!$valid) {
+            return ['ok' => false, 'error' => 'El usuario seleccionado no pertenece a la organización'];
+        }
+    } else {
+        $targetUserId = null;
+    }
+
+    if ($targetUserId !== null && $targetUserId > 0) {
+        $stmt = $mysqli->prepare(
+            'INSERT INTO org_boss_reports (empresa_id, staff_id, organization_id, target_user_id, subject, body_html, body_text, created_at, updated_at)'
+            . ' VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())'
+        );
+        if (!$stmt) {
+            return ['ok' => false, 'error' => 'Error al guardar el informe'];
+        }
+        $stmt->bind_param('iiiisss', $empresaId, $staffId, $organizationId, $targetUserId, $subject, $bodyHtml, $bodyText);
+    } else {
+        $stmt = $mysqli->prepare(
+            'INSERT INTO org_boss_reports (empresa_id, staff_id, organization_id, target_user_id, subject, body_html, body_text, created_at, updated_at)'
+            . ' VALUES (?, ?, ?, NULL, ?, ?, ?, NOW(), NOW())'
+        );
+        if (!$stmt) {
+            return ['ok' => false, 'error' => 'Error al guardar el informe'];
+        }
+        $stmt->bind_param('iiisss', $empresaId, $staffId, $organizationId, $subject, $bodyHtml, $bodyText);
+    }
+    if (!$stmt->execute()) {
+        return ['ok' => false, 'error' => 'Error al guardar el informe'];
+    }
+    $reportId = (int) $mysqli->insert_id;
+    if ($reportId <= 0) {
+        return ['ok' => false, 'error' => 'Error al crear el informe'];
+    }
+
+    $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt', 'mp4', 'webm', 'mov', 'mkv'];
+    $maxSize = 25 * 1024 * 1024;
+    $maxFiles = 10;
+    $storageDir = orgBossReportsStorageDir();
+    $saved = 0;
+
+    if (isset($uploadedFiles['name']) && is_array($uploadedFiles['name'])) {
+        $n = count($uploadedFiles['name']);
+        for ($i = 0; $i < $n && $saved < $maxFiles; $i++) {
+            $err = $uploadedFiles['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+            if ($err !== UPLOAD_ERR_OK) {
+                continue;
+            }
+            $tmp = (string) ($uploadedFiles['tmp_name'][$i] ?? '');
+            if ($tmp === '' || !is_readable($tmp)) {
+                continue;
+            }
+            $size = (int) ($uploadedFiles['size'][$i] ?? 0);
+            if ($size <= 0 || $size > $maxSize) {
+                continue;
+            }
+            $orig = (string) ($uploadedFiles['name'][$i] ?? 'archivo');
+            $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
+            if ($ext === '' || !in_array($ext, $allowedExt, true)) {
+                continue;
+            }
+            $mime = (string) ($uploadedFiles['type'][$i] ?? 'application/octet-stream');
+            if (class_exists('finfo')) {
+                $finfoObj = new finfo(FILEINFO_MIME_TYPE);
+                $det = @$finfoObj->file($tmp);
+                if (is_string($det) && $det !== '') {
+                    $mime = $det;
+                }
+            }
+            $safeName = 'obr_' . $reportId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+            $dest = $storageDir . '/' . $safeName;
+            if (!@move_uploaded_file($tmp, $dest)) {
+                continue;
+            }
+            $relPath = 'uploads/org_boss_reports/' . $safeName;
+            $hash = @hash_file('sha256', $dest) ?: null;
+            $stmtA = $mysqli->prepare(
+                'INSERT INTO org_boss_report_attachments (report_id, empresa_id, original_filename, filename, mimetype, size, path, hash, created_at)'
+                . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+            );
+            if ($stmtA) {
+                $stmtA->bind_param('iisssiss', $reportId, $empresaId, $orig, $safeName, $mime, $size, $relPath, $hash);
+                if ($stmtA->execute()) {
+                    $saved++;
+                }
+            }
+        }
+    }
+
+    $bosses = fetchOrganizationBosses($mysqli, $empresaId, $organizationId);
+    $portalUrl = rtrim((string) (defined('APP_URL') ? APP_URL : ''), '/') . '/upload/informe-jefe.php?id=' . $reportId;
+    $staffName = '';
+    if (function_exists('getCurrentUser')) {
+        $st = getCurrentUser();
+        if (is_array($st)) {
+            $staffName = trim((string) ($st['firstname'] ?? '') . ' ' . (string) ($st['lastname'] ?? ''));
+        }
+    }
+    if ($staffName === '') {
+        $staffName = 'Soporte técnico';
+    }
+    $subjMail = '[Informe] ' . $subject;
+    $bodyHtmlMail = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;">'
+        . '<h2 style="color:#1e3a5f;">Nuevo informe de ' . htmlspecialchars($orgName) . '</h2>'
+        . '<p>El equipo de soporte (<strong>' . htmlspecialchars($staffName) . '</strong>) envió un informe para su revisión.</p>'
+        . '<p><strong>Asunto:</strong> ' . htmlspecialchars($subject) . '</p>'
+        . '<p><a href="' . htmlspecialchars($portalUrl) . '" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;">Ver informe</a></p>'
+        . '</div>';
+    $bodyTextMail = "Nuevo informe de $orgName\nAsunto: $subject\nVer: $portalUrl";
+
+    foreach ($bosses as $boss) {
+        $email = trim((string) ($boss['email'] ?? ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+        if (function_exists('enqueueEmailJob')) {
+            enqueueEmailJob($email, $subjMail, $bodyHtmlMail, $bodyTextMail, [
+                'empresa_id' => $empresaId,
+                'context_type' => 'org_boss_report',
+                'context_id' => $reportId,
+            ]);
+        } elseif (class_exists('Mailer')) {
+            Mailer::send($email, $subjMail, $bodyHtmlMail, $bodyTextMail);
+        }
+    }
+    if (function_exists('triggerEmailQueueWorkerAsync')) {
+        triggerEmailQueueWorkerAsync();
+    }
+
+    return ['ok' => true, 'report_id' => $reportId];
+}

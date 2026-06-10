@@ -11,6 +11,34 @@ require_once '../includes/helpers.php';
 requireLogin('cliente');
 
 $user = getCurrentUser();
+$eid = (int)($_SESSION['empresa_id'] ?? 0);
+if ($eid <= 0) $eid = 1;
+$uid = (int)($_SESSION['user_id'] ?? 0);
+
+// AJAX o POST actions para cotizaciones del portal cliente
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type']) && $_POST['action_type'] === 'quote_action') {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $qId = (int)($_POST['quote_id'] ?? 0);
+        $qAction = $_POST['quote_action_name'] ?? ''; // 'create', 'accept', 'reject'
+        $orgId = (int)($_POST['org_id'] ?? 0);
+        
+        if ($qAction === 'create') {
+            $title = trim($_POST['title'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            if ($title !== '' && $orgId > 0) {
+                $stmt = $mysqli->prepare("INSERT INTO quotes (empresa_id, org_id, staff_id, title, description, status, created_at) VALUES (?, ?, 0, ?, ?, 'draft', NOW())");
+                if ($stmt) {
+                    $stmt->bind_param('iiss', $eid, $orgId, $title, $description);
+                    $stmt->execute();
+                    $_SESSION['flash_msg'] = 'Cotización solicitada exitosamente.';
+                }
+            }
+        }
+
+        header("Location: tickets.php?view=org&org_id=" . $orgId . "&list=quotes");
+        exit;
+    }
+}
 
 // AJAX: check for new staff replies while user is on tickets.php
 if (isset($_GET['action']) && $_GET['action'] === 'check_staff_replies') {
@@ -208,11 +236,22 @@ $orgUsersTotal = 0;
 $orgUsersTotalPages = 1;
 $orgTicketsTotal = 0;
 $orgTicketsTotalPages = 1;
-$orgExplorerListMode = (isset($_GET['list']) && (string)$_GET['list'] === 'all') ? 'all' : 'users';
+$orgExplorerListMode = (isset($_GET['list']) && in_array((string)$_GET['list'], ['all', 'users'], true)) ? (string)$_GET['list'] : 'quotes';
 $orgAllTicketsPage = max(1, (int)($_GET['oat'] ?? 1));
 $orgAllTicketsTotal = 0;
 $orgAllTicketsTotalPages = 1;
 $orgExplorerAllTickets = [];
+
+$orgQuotesTotal = 0;
+$orgQuotesPage = max(1, (int)($_GET['oqp'] ?? 1));
+$orgQuotesTotalPages = 1;
+$orgExplorerQuotes = [];
+
+$orgReportsTotal = 0;
+$orgReportsPage = max(1, (int)($_GET['orp'] ?? 1));
+$orgReportsTotalPages = 1;
+$orgExplorerReports = [];
+
 $ticketMonthFilter = null;
 $ticketMonthOptions = [];
 $ticketMonthSql = '';
@@ -262,6 +301,52 @@ if ($isOrgExplorer) {
                     $orgAllTicketsOffset,
                     $ticketMonthFilter
                 );
+            } elseif ($orgExplorerMemberId <= 0 && $orgExplorerListMode === 'quotes') {
+                ensureOrgBossReportReadsTable();
+                
+                $docs = [];
+                
+                // Fetch Quotes
+                $stmtQ = $mysqli->prepare("SELECT id, title as subject, description as body_html, status, created_at, 'quote' as doc_type FROM quotes WHERE empresa_id = ? AND org_id = ?");
+                if ($stmtQ) {
+                    $stmtQ->bind_param('ii', $eid, $orgExplorerOrgId);
+                    if ($stmtQ->execute()) {
+                        $resQ = $stmtQ->get_result();
+                        while ($row = $resQ->fetch_assoc()) {
+                            $docs[] = $row;
+                        }
+                    }
+                }
+                
+                // Fetch Reports
+                $sqlR = "SELECT r.id, r.subject, r.body_html, r.created_at, 'report' as doc_type,
+                            (SELECT rr.id FROM org_boss_report_reads rr WHERE rr.report_id = r.id AND rr.user_id = ? LIMIT 1) AS is_read
+                         FROM org_boss_reports r
+                         WHERE r.empresa_id = ? AND r.organization_id = ?";
+                $stmtR = $mysqli->prepare($sqlR);
+                if ($stmtR) {
+                    $stmtR->bind_param('iii', $uid, $eid, $orgExplorerOrgId);
+                    if ($stmtR->execute()) {
+                        $resR = $stmtR->get_result();
+                        while ($row = $resR->fetch_assoc()) {
+                            $row['status'] = empty($row['is_read']) ? 'unread' : 'read';
+                            $docs[] = $row;
+                        }
+                    }
+                }
+                
+                // Sort by date DESC
+                usort($docs, function($a, $b) {
+                    return strtotime($b['created_at']) <=> strtotime($a['created_at']);
+                });
+                
+                $orgQuotesTotal = count($docs);
+                $orgQuotesTotalPages = $orgQuotesTotal > 0 ? (int)ceil($orgQuotesTotal / $orgListPerPage) : 1;
+                $orgQuotesPage = max(1, (int)($_GET['oqp'] ?? 1));
+                $orgQuotesPage = min($orgQuotesPage, max(1, $orgQuotesTotalPages));
+                $orgQuotesOffset = ($orgQuotesPage - 1) * $orgListPerPage;
+                
+                $orgExplorerQuotes = array_slice($docs, $orgQuotesOffset, $orgListPerPage);
             } elseif ($orgExplorerMemberId <= 0) {
                 $orgExplorerMembers = fetchOrganizationUsers(
                     $mysqli,
@@ -1319,6 +1404,11 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-diagram-3"></i></div> Por organización
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="informes-jefes.php">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-file-earmark-text"></i></div> Informes de soporte
+                            </a>
+                        </li>
                         <?php endif; ?>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php" <?php if (!empty($sigBlockPortal)): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>>
@@ -1438,6 +1528,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <?php if (!empty($canOrgTicketsView)): ?>
                             <a href="tickets.php?view=org" class="btn-org-ghost">
                                 <i class="bi bi-diagram-3"></i> Por organización
+                            </a>
+                            <a href="informes-jefes.php" class="btn-org-ghost">
+                                <i class="bi bi-file-earmark-text"></i> Informes
                             </a>
                             <?php endif; ?>
                             <a href="open.php" class="btn btn-primary btn-sm" style="border-radius: 999px; font-weight: 800; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" <?php if ($sigBlockPortal): ?> onclick="window.showSigToast && window.showSigToast(); return false;" <?php endif; ?>><i class="bi bi-plus-circle"></i> Abrir ticket</a>

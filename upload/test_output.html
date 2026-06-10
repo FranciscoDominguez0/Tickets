@@ -1,0 +1,1105 @@
+
+Warning: Undefined array key "user_name" in C:\Server\Apache24\htdocs\sistema-tickets\includes\helpers.php on line 2100
+
+Warning: Undefined array key "user_email" in C:\Server\Apache24\htdocs\sistema-tickets\includes\helpers.php on line 2101
+
+Warning: Undefined array key "REQUEST_METHOD" in C:\Server\Apache24\htdocs\sistema-tickets\upload\tickets.php on line 19
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Tickets - Sistema de Tickets</title>
+    <link rel="icon" type="image/x-icon" href="http://localhost/sistema-tickets/publico/img/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #f6f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 62px;
+        }
+
+        /* Dynamic badge styles */
+        [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-light) !important;
+            color: var(--badge-color-light) !important;
+            border: 1px solid transparent !important;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        body.dark-mode [style*="--badge-bg-light"] {
+            background-color: var(--badge-bg-dark) !important;
+            color: var(--badge-color-dark) !important;
+            border-color: var(--badge-border-dark) !important;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(700px circle at 12% 0%, rgba(245, 158, 11, 0.08), transparent 52%),
+                radial-gradient(900px circle at 88% 10%, rgba(239, 68, 68, 0.10), transparent 55%),
+                repeating-linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0px, rgba(15, 23, 42, 0.02) 1px, transparent 1px, transparent 14px);
+            z-index: -1;
+        }
+
+        .topbar {
+            background: linear-gradient(135deg, #0b1220, #111827);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .topbar.navbar {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .topbar .container-fluid {
+            padding-top: 2px;
+            padding-bottom: 2px;
+            flex-wrap: nowrap !important;
+        }
+        .topbar .navbar-brand { font-weight: 900; letter-spacing: 0.02em; }
+        .topbar .profile-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .topbar .profile-brand .brand-logo-wrap {
+            height: 46px;
+            padding: 0;
+            border-radius: 0;
+            background: transparent;
+            border: 0;
+            justify-content: center;
+            box-shadow: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        .topbar .profile-brand .brand-logo {
+            height: 28px;
+            width: auto;
+            max-height: 28px;
+            max-width: 160px;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 22px rgba(0,0,0,0.22));
+        }
+        .agent-login-brand img {
+            height: 54px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.22));
+        }
+
+        .topbar .user-menu-btn {
+            border-radius: 999px;
+            font-weight: 800;
+        }
+        .topbar .user-menu-btn .uavatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .topbar .profile-brand .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 1000;
+            letter-spacing: 0.08em;
+            flex: 0 0 auto;
+        }
+        .topbar .profile-brand .name {
+            font-weight: 900;
+            font-size: 0.98rem;
+            line-height: 1.1;
+        }
+        .topbar .btn { border-radius: 999px; font-weight: 700; }
+
+        .container-main {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .shell {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .panel-soft {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(10px);
+            border-radius: 22px;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 22px 60px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+
+        .panel-soft {
+            background-image:
+                radial-gradient(900px circle at 0% 0%, rgba(239, 68, 68, 0.06), transparent 52%),
+                radial-gradient(700px circle at 100% 0%, rgba(245, 158, 11, 0.06), transparent 55%);
+        }
+
+        .page-header {
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+            padding: 22px 22px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            border-left: 6px solid #ef4444;
+        }
+        .page-header .sub { color: #64748b; font-weight: 700; }
+
+        .panel {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .panel {
+            transition: box-shadow .15s ease, border-color .15s ease;
+        }
+        .panel:hover {
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+            border-color: #cbd5e1;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            padding: 0 18px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tabs a {
+            padding: 14px 16px;
+            text-decoration: none;
+            font-weight: 700;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tabs a:hover { color: #0f172a; background: rgba(15,23,42,0.03); }
+        .tabs a.active { color: #ef4444; border-bottom-color: #ef4444; background: #fff; border-radius: 10px 10px 0 0; }
+        .tabs .count { background: #e2e8f0; color: #0f172a; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; }
+
+        .panel-head {
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .search {
+            min-width: 260px;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .tickets-table { padding: 0 18px 18px; overflow-x: auto; }
+        .tickets-table .table { min-width: 720px; }
+        .tickets-table .table { margin-bottom: 0; }
+        .tickets-table .table thead th { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .tickets-table .table tbody tr:hover { background: #f8fafc; }
+        .tickets-table .table tbody tr { transition: background .12s ease; }
+        .ticket-new-highlight { background: rgba(239, 68, 68, 0.08) !important; box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.25); }
+        .ticket-new-badge { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            padding: 2px 10px; 
+            border-radius: 999px; 
+            font-size: 0.72rem; 
+            font-weight: 900; 
+            letter-spacing: 0.04em; 
+            text-transform: uppercase; 
+            background: rgba(239, 68, 68, 0.1); 
+            color: #b91c1c; 
+            border: 1px solid rgba(239, 68, 68, 0.2); 
+            margin-left: 10px; 
+        }
+
+        .badge-soft { display: inline-block; padding: 6px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; border: 1px solid transparent; }
+        .mono { font-variant-numeric: tabular-nums; }
+        .dropdown-menu .notif-item:hover { background: #f1f5f9; }
+
+        .ticket-cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            padding: 0 18px 18px;
+        }
+
+        @media (max-width: 992px) {
+            .ticket-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 576px) {
+            .ticket-cards { grid-template-columns: 1fr; padding: 0 12px 12px; }
+        }
+
+        .ticket-card {
+            border-radius: 16px;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            background: #fff;
+            padding: 16px 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.10);
+            border-color: rgba(203, 213, 225, 1);
+        }
+
+        .ticket-card.ticket-new-highlight {
+            border-color: rgba(239, 68, 68, 0.35);
+            box-shadow: 0 14px 34px rgba(239, 68, 68, 0.16);
+        }
+
+        .ticket-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ticket-card-number {
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ticket-card-number a {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid rgba(226, 232, 240, 1);
+            color: #0f172a;
+        }
+
+        .ticket-card-subject {
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.25;
+            margin: 0 0 10px;
+            font-size: 1.02rem;
+        }
+
+        .ticket-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .ticket-card .badge-soft {
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            box-shadow: none;
+        }
+
+        .ticket-card-foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(226, 232, 240, 0.85);
+        }
+
+        .ticket-card-dates {
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.25;
+        }
+
+        .notif-dd {
+            border-radius: 18px;
+            border: 1px solid rgba(226,232,240,0.95);
+            overflow: hidden;
+            box-shadow: 0 22px 55px rgba(15, 23, 42, 0.22);
+        }
+        @media (max-width: 576px) {
+            .notif-dd {
+                position: fixed !important;
+                top: 60px !important;
+                left: 50% !important;
+                right: auto !important;
+                transform: translateX(-50%) !important;
+                width: 320px !important;
+                min-width: unset !important;
+                max-width: 90vw !important;
+                margin-top: 0 !important;
+            }
+        }
+        .notif-dd-head {
+            background: radial-gradient(900px circle at 0% 0%, rgba(255,255,255,0.35), transparent 55%),
+                        linear-gradient(135deg, #ef4444, #f87171);
+            color: #fff;
+        }
+        .notif-dd-flex.show {
+            display: flex !important;
+            flex-direction: column;
+        }
+        .notif-dd-title {
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .notif-dd-sub {
+            opacity: .85;
+            font-weight: 700;
+            font-size: .85rem;
+        }
+        .notif-dd-count {
+            background: rgba(255,255,255,0.22);
+            border: 1px solid rgba(255,255,255,0.28);
+            color: #fff;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-weight: 900;
+            font-size: .78rem;
+        }
+        .notif-empty {
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            background: rgba(248, 250, 252, 0.7);
+            border-radius: 16px;
+        }
+        .notif-item {
+            border: 1px solid rgba(226,232,240,0.95);
+            background: #fff;
+            transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+        }
+        .notif-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.10);
+        }
+        .notif-item + .notif-item { margin-top: 10px; }
+
+        /* ── Pagination ── */
+        .pagination-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap;
+            padding: 14px 22px 20px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .pagination-info {
+            font-size: .80rem; color: #94a3b8; font-weight: 600;
+        }
+        .pagination-nav {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .pg-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 34px; height: 34px; padding: 0 6px;
+            border-radius: 9px; border: 1px solid #e2e8f0;
+            background: #fff; color: #334155;
+            font-size: .83rem; font-weight: 700; text-decoration: none;
+            transition: background .14s, border-color .14s, color .14s, box-shadow .14s;
+            cursor: pointer;
+        }
+        .pg-btn:hover {
+            background: #fef2f2; border-color: #fecaca; color: #ef4444;
+        }
+        .pg-btn.pg-current {
+            background: #ef4444; border-color: #ef4444; color: #fff;
+            box-shadow: 0 2px 8px rgba(239,68,68,.28);
+            cursor: default;
+        }
+        .pg-btn.pg-disabled {
+            opacity: .35; cursor: not-allowed; pointer-events: none;
+        }
+        .pg-arrow { font-size: .78rem; }
+        .pg-dots {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 28px; height: 34px;
+            font-size: .83rem; color: #94a3b8; letter-spacing: .05em;
+        }
+        @media (max-width: 576px) {
+            .pagination-bar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px 16px; }
+        }
+
+        /* ── Limit selector ── */
+        .panel-head {
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #f1f5f9;
+            background: #fafbfc;
+        }
+        .panel-head .search {
+            min-width: 220px;
+            max-width: 360px;
+            width: 100%;
+        }
+        @media (max-width: 640px) {
+            .panel-head { flex-direction: column; align-items: stretch; }
+            .panel-head .search { max-width: 100%; }
+        }
+        .limit-selector {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f1f5f9; border-radius: 10px; padding: 4px;
+        }
+        @keyframes pulseHighlight {
+            0% { box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); }
+            50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.5); transform: scale(1.005); }
+            100% { box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); }
+        }
+        .pulse-highlight { animation: pulseHighlight 0.6s ease-in-out 3; }
+        .limit-label {
+            font-size: .76rem; font-weight: 700; color: #94a3b8;
+            padding: 0 8px; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .limit-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 36px; height: 28px; padding: 0 8px;
+            border-radius: 7px; font-size: .78rem; font-weight: 700;
+            color: #64748b; text-decoration: none;
+            transition: background .13s, color .13s, box-shadow .13s;
+            white-space: nowrap;
+        }
+        .limit-btn:hover { background: #fff; color: #ef4444; }
+        .limit-btn.active {
+            background: #fff; color: #ef4444;
+            box-shadow: 0 1px 4px rgba(15,23,42,.10);
+        }
+
+        @media (max-width: 576px) {
+            .limit-selector { flex-wrap: wrap; }
+            .limit-label { width: 100%; padding: 0 4px; margin-bottom: 2px; }
+        }
+
+        @media (max-width: 576px) {
+            body .container-main { padding: 0 10px !important; margin: 20px auto !important; }
+            body .shell { max-width: 100% !important; }
+            body .panel-soft {
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            body.dark-mode .panel-soft {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+            }
+            .tabs { 
+                padding: 0 4px; 
+                display: flex; 
+                justify-content: space-between; 
+                overflow: hidden;
+            }
+            .tabs a { 
+                padding: 12px 2px; 
+                flex: 1; 
+                justify-content: center; 
+                font-size: 0.82rem; 
+                gap: 4px; 
+                white-space: nowrap; 
+            }
+            .tabs .count { padding: 2px 5px; font-size: 0.72rem; }
+            .tickets-table { padding: 0 12px 12px; }
+        }
+
+        /* Botones primarios (Rojo) */
+        .btn-primary { background-color: #ef4444; border-color: #ef4444; color: #fff; }
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: #dc2626; border-color: #dc2626; color: #fff; }
+        .btn-outline-primary { color: #ef4444; border-color: #ef4444; }
+        .btn-outline-primary:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
+        .text-primary { color: #ef4444 !important; }
+    </style>
+    <link rel="stylesheet" href="css/client_dark.css?v=1780497065">
+        
+</head>
+<body class="">
+        <nav class="navbar navbar-dark topbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1030;">
+        <div class="container-fluid">
+            <a class="navbar-brand profile-brand" href="tickets.php">
+                <span class="brand-logo-wrap" aria-hidden="true">
+                    <img class="brand-logo" src="http://localhost/sistema-tickets/publico/img/vigitec-logo.webp?v=1780016607&amp;v=1780016607" alt="Vigitec Security Group">
+                </span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm user-menu-btn position-relative" type="button" id="notifBellBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-bell" style="font-size: 15px;"></i>
+                        <span id="notifBellBadge" class="badge bg-danger position-absolute" style="display:none; font-size:.65rem; top: -2px; right: -2px; padding: 3px 5px; border-radius: 50px;">0</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0 notif-dd notif-dd-flex" style="min-width: 380px; max-height: 420px;" aria-labelledby="notifBellBtn">
+                        <div class="p-3 notif-dd-head" style="flex-shrink: 0;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width:36px;height:36px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.22);">
+                                        <i class="bi bi-bell" style="font-size:1.05rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div class="notif-dd-title">Notificaciones</div>
+                                        <div class="notif-dd-sub" id="notifBellSub">Respuestas a tus tickets</div>
+                                    </div>
+                                </div>
+                                <div id="notifBellCountPill" class="notif-dd-count" style="display:none;">0 nuevas</div>
+                            </div>
+                        </div>
+                        <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
+                            <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
+                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div>
+                                <div style="color:#64748b;">Cuando el equipo responda, te aparecerá aquí.</div>
+                            </div>
+                        </div>
+                        <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
+                            <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
+                                <i class="bi bi-check-all"></i> Marcar todas como leídas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                                <form method="post" action="toggle_user_dark.php" class="d-inline" style="margin:0" id="clientDarkModeForm">
+                    <input type="hidden" name="csrf_token" value="c3bd25846af1ff4d5c40b5b93662d7ac80e0e57b769ea4f5944252fcf859ab5c">                    <input type="hidden" name="dark_mode" value="1">
+                    <input type="hidden" name="return" value="test_render.php">
+                    <button type="submit" class="btn btn-outline-light btn-sm user-theme-toggle" id="clientDarkModeBtn" title="Modo oscuro" style="border-radius:999px; font-weight:700; width:34px; height:34px; padding:0; display:inline-flex; align-items:center; justify-content:center;">
+                        <i class="bi bi-moon-stars user-theme-toggle-icon" style="font-size:16px;"></i>
+                    </button>
+                </form>
+                                <div class="dropdown">
+                    <button class="btn btn-outline-light btn-sm dropdown-toggle user-menu-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="uavatar" aria-hidden="true">U</span>
+                        <span class="d-none d-sm-inline">Mi Perfil</span>
+                    </button>
+                    <style>
+                        .profile-dropdown {
+                            width: 230px; border-radius: 16px; border: 1px solid rgba(226,232,240,0.95); box-shadow: 0 12px 34px rgba(15, 23, 42, 0.12); padding: 8px; background: #fff;
+                        }
+                        .profile-dd-item {
+                            border-radius: 10px; padding: 8px 12px; font-weight: 600; color: #334155; margin-bottom: 2px; transition: all .15s ease;
+                        }
+                        .profile-dd-item:hover { background: #f8fafc; color: #0f172a; }
+                        .profile-dd-icon {
+                            width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.1rem;
+                        }
+                        .profile-dd-icon-default { background: #f1f5f9; color: #64748b; }
+                        .profile-dd-icon-success { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+                        .profile-dd-danger { color: #ef4444; }
+                        .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+                        .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+                        .profile-dd-divider { border-color: #f1f5f9; opacity: 1; margin: 8px 0; }
+                        
+                        body.dark-mode .profile-dropdown { background: #1a1a1a; border-color: #2a2a2a; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
+                        body.dark-mode .profile-dd-item { color: #cbd5e1; }
+                        body.dark-mode .profile-dd-item:hover { background: #252525; color: #f8fafc; }
+                        body.dark-mode .profile-dd-icon-default { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
+                        body.dark-mode .profile-dd-icon-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+                        body.dark-mode .profile-dd-danger { color: #ef4444; }
+                        body.dark-mode .profile-dd-danger:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                        body.dark-mode .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.15); }
+                        body.dark-mode .profile-dd-divider { border-color: #2a2a2a; }
+                    </style>
+                    <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="tickets.php">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-inboxes"></i></div> Mis Tickets
+                            </a>
+                        </li>
+                                                <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="open.php" >
+                                <div class="profile-dd-icon profile-dd-icon-success"><i class="bi bi-plus-circle"></i></div> Crear Ticket
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider profile-dd-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item" href="profile.php">
+                                <div class="profile-dd-icon profile-dd-icon-default"><i class="bi bi-person"></i></div> Mi perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
+                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-main">
+        <div class="shell">
+                        <main class="panel-soft" style="padding: 18px;">
+                                <div class="page-header" style="margin-top: 0;">
+                    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                        <div>
+                            <h2 class="mb-1">Mis Tickets</h2>
+                            <div class="sub">Gestiona tus solicitudes y revisa respuestas del equipo.</div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                                                        <a href="open.php" class="btn btn-primary btn-sm" style="border-radius: 999px; font-weight: 800; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" ><i class="bi bi-plus-circle"></i> Abrir ticket</a>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+
+                <div class="panel">
+                    
+                    <div class="tabs">
+                        <a class="active" href="tickets.php?filter=open">
+                            Abiertos <span class="count">3</span>
+                        </a>
+                        <a class="" href="tickets.php?filter=closed">
+                            Cerrados <span class="count">0</span>
+                        </a>
+                        <a class="" href="tickets.php?filter=all">
+                            Todos <span class="count">3</span>
+                        </a>
+                    </div>
+
+                    <div class="panel-head">
+                        <div>
+                            <span style="font-size:.78rem;font-weight:600;color:#94a3b8;">
+                                <i class="bi bi-layout-three-columns me-1"></i> Mostrando 10 por página
+                            </span>
+                        </div>
+                        <form method="get" class="search">
+                            <input type="hidden" name="filter" value="open">
+                            <input type="hidden" name="p" value="1">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" name="q" value="" placeholder="Buscar por número o asunto…">
+                                <button class="btn btn-primary" type="submit">Buscar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                                            <div class="ticket-cards">
+                                                                                                                            <div id="ticket-row-241" class="ticket-card ">
+                                    <div class="ticket-card-top">
+                                        <div>
+                                            <div class="ticket-card-number mono">
+                                                <a href="view-ticket.php?id=241" class="text-decoration-none text-dark">
+                                                    34                                                </a>
+                                            </div>
+                                        </div>
+                                        <div>
+                                                                                    </div>
+                                    </div>
+
+                                    <p class="ticket-card-subject">CABLE DE IMPRESORA</p>
+
+                                    <div class="ticket-card-meta">
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(226,236,254);--badge-color-light:#3b82f6;--badge-bg-dark:rgb(29,39,58);--badge-color-dark:rgb(148,178,229);--badge-border-dark:rgb(33,52,84);">
+                                            Abierto                                        </span>
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(225,240,250);--badge-color-light:#3498db;--badge-bg-dark:rgb(28,42,54);--badge-color-dark:rgb(145,187,217);--badge-border-dark:rgb(31,57,77);">
+                                            Baja                                        </span>
+                                    </div>
+
+                                    <div class="ticket-card-foot">
+                                        <div class="ticket-card-dates">
+                                            <div>Creado: 22/04/2026 07:53 AM</div>
+                                                                                    </div>
+                                        <div>
+                                            <a href="view-ticket.php?id=241" class="btn btn-sm btn-primary" style="border-radius: 999px;"><i class="bi bi-eye"></i> Ver</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                                                                                                            <div id="ticket-row-236" class="ticket-card ">
+                                    <div class="ticket-card-top">
+                                        <div>
+                                            <div class="ticket-card-number mono">
+                                                <a href="view-ticket.php?id=236" class="text-decoration-none text-dark">
+                                                    29                                                </a>
+                                            </div>
+                                        </div>
+                                        <div>
+                                                                                    </div>
+                                    </div>
+
+                                    <p class="ticket-card-subject">CAMARAS</p>
+
+                                    <div class="ticket-card-meta">
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(226,236,254);--badge-color-light:#3b82f6;--badge-bg-dark:rgb(29,39,58);--badge-color-dark:rgb(148,178,229);--badge-border-dark:rgb(33,52,84);">
+                                            Abierto                                        </span>
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(225,240,250);--badge-color-light:#3498db;--badge-bg-dark:rgb(28,42,54);--badge-color-dark:rgb(145,187,217);--badge-border-dark:rgb(31,57,77);">
+                                            Baja                                        </span>
+                                    </div>
+
+                                    <div class="ticket-card-foot">
+                                        <div class="ticket-card-dates">
+                                            <div>Creado: 20/04/2026 02:04 PM</div>
+                                                                                    </div>
+                                        <div>
+                                            <a href="view-ticket.php?id=236" class="btn btn-sm btn-primary" style="border-radius: 999px;"><i class="bi bi-eye"></i> Ver</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                                                                                                            <div id="ticket-row-235" class="ticket-card ">
+                                    <div class="ticket-card-top">
+                                        <div>
+                                            <div class="ticket-card-number mono">
+                                                <a href="view-ticket.php?id=235" class="text-decoration-none text-dark">
+                                                    28                                                </a>
+                                            </div>
+                                        </div>
+                                        <div>
+                                                                                    </div>
+                                    </div>
+
+                                    <p class="ticket-card-subject">CAMBIO DE EQUIPO A OTRA OFICINA</p>
+
+                                    <div class="ticket-card-meta">
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(226,236,254);--badge-color-light:#3b82f6;--badge-bg-dark:rgb(29,39,58);--badge-color-dark:rgb(148,178,229);--badge-border-dark:rgb(33,52,84);">
+                                            Abierto                                        </span>
+                                        <span class="badge-soft" style="--badge-bg-light:rgb(225,240,250);--badge-color-light:#3498db;--badge-bg-dark:rgb(28,42,54);--badge-color-dark:rgb(145,187,217);--badge-border-dark:rgb(31,57,77);">
+                                            Baja                                        </span>
+                                    </div>
+
+                                    <div class="ticket-card-foot">
+                                        <div class="ticket-card-dates">
+                                            <div>Creado: 20/04/2026 01:21 PM</div>
+                                                                                    </div>
+                                        <div>
+                                            <a href="view-ticket.php?id=235" class="btn btn-sm btn-primary" style="border-radius: 999px;"><i class="bi bi-eye"></i> Ver</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                                    </div>
+
+                        
+                                    </div>
+                            </main>
+        </div>
+    </div>
+    <footer style="text-align: center; padding: 20px 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; margin-top: 40px; color: #6c757d; font-size: 12px;">
+        <p style="margin: 0;">
+            Derechos de autor &copy; 2026 Vigitec Security Group - Sistema de Tickets - Todos los derechos reservados.
+        </p>
+    </footer>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+        <div id="sigWarningToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Acción bloqueada</div>
+                    <div style="font-size: .88rem; line-height: 1.3;">
+                        Tienes <strong>0</strong> firma(s) pendiente(s). 
+                        Debes firmar tus tickets cerrados antes de abrir uno nuevo.
+                    </div>
+                                    </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="staffReplyToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <div class="fw-bold">Nueva respuesta en tu ticket</div>
+                    <div id="staffReplyToastText" style="font-size:.9rem">Tienes una nueva actualización del equipo.</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function(){
+            var POLL_MS = 12000;
+
+            function showToast(msg) {
+                try {
+                    var toastEl = document.getElementById('staffReplyToast');
+                    var textEl = document.getElementById('staffReplyToastText');
+                    if (!toastEl || !textEl) return;
+                    textEl.textContent = msg;
+                    bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 6500 }).show();
+                } catch (e) {}
+            }
+
+            function formatNotifMessage(raw) {
+                try {
+                    var s = (raw || '').toString().trim();
+                    if (!s) return '';
+                    var m = s.match(/ticket\s*(#?\d+)/i);
+                    if (m && m[1]) {
+                        return 'Respuesta nueva · Ticket #' + String(m[1]).replace('#','');
+                    }
+                    return s;
+                } catch (e) {
+                    return (raw || '').toString();
+                }
+            }
+
+            function formatNotifWhen(raw) {
+                try {
+                    var s = (raw || '').toString().trim();
+                    if (!s) return '';
+                    var d = new Date(s.replace(' ', 'T'));
+                    if (!isFinite(d.getTime())) return s;
+                    return d.toLocaleString('es-PA', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                } catch (e) {
+                    return (raw || '').toString();
+                }
+            }
+
+            function tryBrowserNotify(title, body, url) {
+                try {
+                    if (!('Notification' in window)) return;
+                    if (Notification.permission !== 'granted') return;
+                    var n = new Notification(title, { body: body });
+                    n.onclick = function(){
+                        try { window.focus(); } catch (e) {}
+                        if (url) window.location.href = url;
+                        try { n.close(); } catch (e) {}
+                    };
+                } catch (e) {}
+            }
+
+            function renderBell(items) {
+                try {
+                    var list = document.getElementById('notifBellList');
+                    if (!list) return;
+                    if (!items || !items.length) {
+                        list.innerHTML = '<div class="text-center text-muted py-3" style="font-size:.9rem">Sin notificaciones</div>';
+                        return;
+                    }
+                    var html = '';
+                    items.forEach(function(it){
+                        var msg = formatNotifMessage(it.message || '');
+                        var when = formatNotifWhen(it.created_at || '');
+                        var href = it.ticket_id ? ('view-ticket.php?id=' + String(it.ticket_id)) : 'tickets.php';
+                        html += ''
+                            + '<div class="notif-item rounded-3 px-2 py-2" style="cursor:pointer;">'
+                            +   '<div class="d-flex align-items-start gap-2">'
+                            +     '<div class="flex-shrink-0" style="width:34px;height:34px;border-radius:12px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;color:#ef4444;">'
+                            +       '<i class="bi bi-chat-dots"></i>'
+                            +     '</div>'
+                            +     '<div class="flex-grow-1">'
+                            +       '<div class="text-dark" style="font-weight:800;font-size:.92rem;line-height:1.15;">' + msg.replace(/</g,'&lt;') + '</div>'
+                            +       '<div class="text-muted" style="font-size:.78rem;">' + when.replace(/</g,'&lt;') + '</div>'
+                            +     '</div>'
+                            +     '<div class="flex-shrink-0">'
+                            +       '<button class="btn btn-sm btn-outline-primary" data-mark-read="' + String(it.id) + '" data-href="' + href + '" style="border-radius:999px;">Ver</button>'
+                            +     '</div>'
+                            +   '</div>'
+                            + '</div>';
+                    });
+                    list.innerHTML = html;
+                } catch (e) {}
+            }
+
+            function setBellCount(n) {
+                try {
+                    var badge = document.getElementById('notifBellBadge');
+                    var pill = document.getElementById('notifBellCountPill');
+                    if (!badge) return;
+                    var v = parseInt(n || 0, 10) || 0;
+                    badge.textContent = String(v);
+                    badge.style.display = v > 0 ? '' : 'none';
+                    if (pill) {
+                        pill.textContent = String(v) + ' nuevas';
+                        pill.style.display = v > 0 ? '' : 'none';
+                    }
+                } catch (e) {}
+            }
+
+            function poll(firstRun) {
+                fetch('tickets.php?action=user_notifs_count', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (!data || !data.ok) return;
+                        setBellCount(data.count || 0);
+                        var cnt = (parseInt(data.count || 0, 10) || 0);
+                        if (cnt <= 0) {
+                            renderBell([]);
+                            return;
+                        }
+                        return fetch('tickets.php?action=user_notifs_list', { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                            .then(function(r){ return r.json(); })
+                            .then(function(d2){
+                                if (!d2 || !d2.ok) return;
+                                var items = Array.isArray(d2.items) ? d2.items : [];
+                                renderBell(items);
+                                if (!items.length) return;
+                                var last = items[0] || {};
+                                var lastId = parseInt(last.id || 0, 10) || 0;
+                                var seenId = 0;
+                                try { seenId = parseInt(localStorage.getItem('tickets_last_notif_id') || '0', 10) || 0; } catch (e) { seenId = 0; }
+                                if (firstRun) {
+                                    try { if (lastId > 0) localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
+                                    return;
+                                }
+                                if (lastId <= 0 || lastId <= seenId) return;
+                                try { localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
+                                var msg = formatNotifMessage(last.message || '');
+                                if (!msg) msg = 'Respuesta nueva · Revisa tu ticket';
+                                showToast(msg);
+                                tryBrowserNotify('Nueva respuesta', msg, last.ticket_id ? ('view-ticket.php?id=' + String(last.ticket_id)) : 'tickets.php');
+                            });
+                    })
+                    .catch(function(){});
+            }
+
+            document.addEventListener('click', function(ev){
+                try {
+                    var btn = ev.target && ev.target.getAttribute ? ev.target.getAttribute('data-mark-read') : null;
+                    if (!btn) return;
+                    ev.preventDefault();
+                    var id = parseInt(btn, 10) || 0;
+                    if (!id) return;
+                    var href = ev.target.getAttribute('data-href') || 'tickets.php';
+                    var fd = new FormData();
+                    fd.append('id', String(id));
+                    fetch('tickets.php?action=user_notifs_mark_read', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                        .then(function(){ window.location.href = href; })
+                        .catch(function(){ window.location.href = href; });
+                } catch (e) {}
+            });
+
+            // Botón "Marcar todas como leídas"
+            (function(){
+                var markAllBtn = document.getElementById('notifMarkAllRead');
+                if (!markAllBtn) return;
+                markAllBtn.addEventListener('click', function(ev){
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    fetch('tickets.php?action=user_notifs_mark_all_read', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                        .then(function(r){ return r.json(); })
+                        .then(function(data){
+                            if (data && data.ok) {
+                                // Limpiar la UI
+                                setBellCount(0);
+                                renderBell([]);
+                                // Mostrar mensaje
+                                var list = document.getElementById('notifBellList');
+                                if (list) {
+                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leídas.</div></div>';
+                                }
+                            }
+                        })
+                        .catch(function(){});
+                });
+            })();
+
+            // Función global para mostrar el aviso de firma
+            window.showSigToast = function() {
+                try {
+                    var toastEl = document.getElementById('sigWarningToast');
+                    if (toastEl && typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                        var toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 8000 });
+                        toast.show();
+                    }
+                    // Intentar resaltar el banner amarillo si existe
+                    var banner = document.querySelector('.alert-warning');
+                    if (banner) {
+                        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        banner.classList.add('pulse-highlight');
+                        setTimeout(function(){ banner.classList.remove('pulse-highlight'); }, 2000);
+                    }
+                } catch (e) {
+                    console.log('Error showing signature toast:', e);
+                }
+            };
+
+            // Dark Mode Toggle
+            (function(){
+                var form = document.getElementById('clientDarkModeForm');
+                if (!form) return;
+                var btn = document.getElementById('clientDarkModeBtn');
+                var body = document.body;
+                var input = form.querySelector('input[name="dark_mode"]');
+                var icon = form.querySelector('.user-theme-toggle-icon');
+
+                function setUi(isDark) {
+                    if (isDark) body.classList.add('dark-mode');
+                    else body.classList.remove('dark-mode');
+                    if (icon) {
+                        icon.classList.remove('bi-sun', 'bi-moon-stars');
+                        icon.classList.add(isDark ? 'bi-sun' : 'bi-moon-stars');
+                    }
+                    if (input) input.value = isDark ? '0' : '1';
+                }
+
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+                    var isDark = body.classList.contains('dark-mode');
+                    var nextDark = !isDark;
+                    setUi(nextDark);
+                    try {
+                        if (btn) btn.disabled = true;
+                        var fd = new FormData(form);
+                        fd.set('dark_mode', nextDark ? '1' : '0');
+                        fetch(form.getAttribute('action') || 'toggle_user_dark.php', {
+                            method: 'POST',
+                            body: fd,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                        }).then(function(r){ return r.json().catch(function(){ return null; }); })
+                          .then(function(data){
+                              if (data && typeof data.dark_mode !== 'undefined') {
+                                  setUi(String(data.dark_mode) === '1' || data.dark_mode === 1);
+                              }
+                          })
+                          .catch(function(){
+                              setUi(isDark);
+                          })
+                          .finally(function(){
+                              if (btn) btn.disabled = false;
+                          });
+                    } catch (err) {
+                        setUi(isDark);
+                        if (btn) btn.disabled = false;
+                    }
+                });
+            })();
+
+            poll(true);
+            window.setInterval(function(){ poll(false); }, POLL_MS);
+        })();
+    </script>
+</body>
+</html>

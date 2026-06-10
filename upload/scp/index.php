@@ -38,6 +38,7 @@ $routes = [
     'notifications' => 'notifications.php', // Notificaciones (preferencias de correo)
     'mapa'      => 'mapa-view.inc.php',   // Mapa de agentes en tiempo real
     'credits'   => 'credits.php',     // Créditos y autoría
+    'cotizaciones' => 'cotizaciones.php', // Cotizaciones
 ];
 
 // Página por defecto

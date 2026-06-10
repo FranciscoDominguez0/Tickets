@@ -100,7 +100,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
     <link rel="stylesheet" href="css/users.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/users.css'); ?>">
     <?php endif; ?>
-    <?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes'])): ?>
+    <?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes', 'cotizaciones'])): ?>
     <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
@@ -408,7 +408,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     </li>
                     <li class="sidebar-group">
                         <?php
-                        $isTicketsRoute = in_array($currentRoute, ['tickets', 'reportes']);
+                        $isTicketsRoute = in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes']);
                         $ticketsSidebarFilter = (string)($_GET['filter'] ?? '');
                         $isTicketsBillingPendingNav = ($currentRoute === 'tickets' && $ticketsSidebarFilter === 'billing_pending');
                         $isTicketsDetailsNav = ($currentRoute === 'tickets' && !$isTicketsBillingPendingNav);
@@ -469,6 +469,45 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 </a>
                             </li>
                             <?php endif; ?>
+                        </ul>
+                    </li>
+                    <li class="sidebar-group">
+                        <?php
+                        $isQuotesRoute = ($currentRoute === 'cotizaciones');
+                        $expandQuotes = ($isQuotesRoute && $allowExpandedGroups);
+                        ?>
+                        <button type="button"
+                                class="sidebar-link sidebar-toggle <?php echo $expandQuotes ? 'active expanded' : ''; ?>"
+                                data-subnav="quotes-subnav" aria-controls="quotes-subnav" aria-expanded="<?php echo $expandQuotes ? 'true' : 'false'; ?>">
+                            <span class="icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 2v6h6" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16 13H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16 17H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 9H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Cotizaciones
+                            <span class="arrow">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <ul id="quotes-subnav" class="sidebar-subnav <?php echo $expandQuotes ? 'open' : ''; ?>">
+                            <li>
+                                <a href="cotizaciones.php" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones' && empty($_GET['status']) && empty($_GET['a'])) ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-card-list" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones' && empty($_GET['status']) && empty($_GET['a'])) ? '#ffffff' : '#64748b'; ?>;"></i></span>
+                                    Todas
+                                </a>
+                            </li>
+                            <li>
+                                <a href="cotizaciones.php?status=pending" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones' && ($_GET['status'] ?? '') === 'pending') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-hourglass-split" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones' && ($_GET['status'] ?? '') === 'pending') ? '#ffffff' : '#64748b'; ?>;"></i></span>
+                                    Pendientes
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     <?php
