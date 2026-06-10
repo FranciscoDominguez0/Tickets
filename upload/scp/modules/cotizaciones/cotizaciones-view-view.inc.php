@@ -52,11 +52,11 @@ if ($sn !== '') {
         <div class="ticket-view-overview-desktop">
             <!-- Col 1: Cotización -->
             <div>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-file-earmark-text"></i> COTIZACIÓN</label>
                     <div class="value title"><?php echo html($quote['title']); ?></div>
                 </div>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-flag"></i> ESTADO</label>
                     <div class="value">
                         <span class="badge-status" style="font-weight: 800; font-size: 0.8rem; background: <?php echo $stInfo['bg']; ?>; color: <?php echo $stInfo['color']; ?>; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid <?php echo $stInfo['color']; ?>33;">
@@ -66,7 +66,7 @@ if ($sn !== '') {
                 </div>
 
                 <?php if ($quote['ticket_id']): ?>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-ticket-perforated"></i> TICKET ORIGEN</label>
                     <div class="value"><a href="tickets.php?id=<?php echo $quote['ticket_id']; ?>" style="color: #ef4444; font-weight: 700; text-decoration: none;">#<?php echo $quote['ticket_id']; ?></a></div>
                 </div>
@@ -74,11 +74,11 @@ if ($sn !== '') {
             </div>
             <!-- Col 2: Organización & Agente -->
             <div>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-building"></i> ORGANIZACIÓN</label>
                     <div class="value" style="font-weight: 600;"><?php echo html($quote['org_name'] ?: 'N/A'); ?></div>
                 </div>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-headset"></i> AGENTE A CARGO</label>
                     <div class="value" style="display: flex; align-items: center; gap: 8px;">
                         <span style="width: 26px; height: 26px; background: #0f62fe; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.65rem; font-weight: 800; flex-shrink: 0;"><?php echo $staffInitials; ?></span>
@@ -89,12 +89,12 @@ if ($sn !== '') {
             <!-- Col 3: Estado & Fechas -->
             <div>
 
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-calendar-event"></i> CREADA</label>
                     <div class="value"><?php echo date('d/m/Y h:i A', strtotime($quote['created_at'])); ?></div>
                 </div>
                 <?php if (!empty($quote['file_path'])): ?>
-                <div class="field">
+                <div class="field mb-4">
                     <label><i class="bi bi-file-earmark-pdf"></i> DOCUMENTO</label>
                     <div class="value">
                         <a href="../../<?php echo html($quote['file_path']); ?>" target="_blank" class="btn-waze-premium"><i class="bi bi-download"></i> Descargar PDF</a>

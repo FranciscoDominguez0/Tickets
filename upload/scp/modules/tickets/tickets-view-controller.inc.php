@@ -40,6 +40,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
          p.name AS priority_name, p.color AS priority_color,
           (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
           tr.billing_status,
+          (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status,
           tr.final_price AS report_final_price"
           . $topicSelect .
         " FROM tickets t
@@ -1387,7 +1388,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             }
             if ($ok && $msg && !in_array($action, ['delete', 'merge'], true)) {
                 if ($msg === 'updated' && $isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1 && roleHasPermission('ticket.reports')) {
-                    $msg = 'closed_report';
+                    if (($ticketView['approval_status'] ?? '') !== 'rechazado') {
+                        $msg = 'closed_report';
+                    }
                 }
                 header('Location: tickets.php?id=' . $tid . '&msg=' . $msg);
                 exit;
@@ -1707,7 +1710,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         $reply_success = true;
                         $msgFinal = 'reply_sent';
                         if ($isClosingStatus && (int)($ticketView['requires_report'] ?? 0) === 1 && roleHasPermission('ticket.reports')) {
-                            $msgFinal = 'closed_report';
+                            if (($ticketView['approval_status'] ?? '') !== 'rechazado') {
+                                $msgFinal = 'closed_report';
+                            }
                         }
                         header('Location: tickets.php?id=' . $tid . '&msg=' . $msgFinal);
                         exit;

@@ -2485,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data && data.success) {
-                var requiresReport = <?php echo (roleHasPermission('ticket.reports') && (int)($t['requires_report'] ?? 0) === 1) ? 1 : 0; ?>;
+                var requiresReport = <?php echo (roleHasPermission('ticket.reports') && (int)($t['requires_report'] ?? 0) === 1 && ($t['approval_status'] ?? '') !== 'rechazado') ? 1 : 0; ?>;
                 var finalMsg = 'updated';
                 if (requiresReport === 1) {
                     finalMsg = 'closed_report';

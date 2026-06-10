@@ -5,8 +5,13 @@
 $statusFilter = $_GET['status'] ?? '';
 $searchQuery = $_GET['q'] ?? '';
 
-$quotes = getCotizaciones($mysqli, $eid, $statusFilter, $searchQuery);
+$page = max(1, (int)($_GET['p'] ?? 1));
+$limit = 10;
+$offset = ($page - 1) * $limit;
 
-// Procesar acciones masivas (borrar) si es necesario en el futuro
+$totalQuotes = countCotizaciones($mysqli, $eid, $statusFilter, $searchQuery);
+$totalPages = ceil($totalQuotes / $limit);
+
+$quotes = getCotizaciones($mysqli, $eid, $statusFilter, $searchQuery, $limit, $offset);
 
 require __DIR__ . '/cotizaciones-list-view.inc.php';

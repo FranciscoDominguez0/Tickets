@@ -32,6 +32,22 @@
         background: #334155 !important;
         color: #cbd5e1 !important;
     }
+    body.dark-mode .pagination-container {
+        background: #111111 !important;
+        border-color: #333 !important;
+    }
+    body.dark-mode .pagination-container .text-muted {
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .pagination-container .page-link {
+        background: transparent !important;
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .pagination-container .page-item.active .page-link {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: #fff !important;
+    }
 </style>
 <div class="tickets-shell">
     <div class="tickets-header">
@@ -118,12 +134,12 @@
                     <?php foreach ($quotes as $q): ?>
                         <?php
                         $statusColors = [
-                            'draft' => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
-                            'pending' => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
-                            'requested' => ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
-                            'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'Esperando Aprobación'],
-                            'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
-                            'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
+                            'draft'    => ['color' => '#94a3b8', 'icon' => 'bi-pencil-square',   'label' => 'Borrador'],
+                            'pending'  => ['color' => '#64748b', 'icon' => 'bi-clock-fill',       'label' => 'Pendiente'],
+                            'requested'=> ['color' => '#eab308', 'icon' => 'bi-send-exclamation', 'label' => 'Solicitada'],
+                            'answered' => ['color' => '#3b82f6', 'icon' => 'bi-reply-all-fill',   'label' => 'Esperando Aprobación'],
+                            'accepted' => ['color' => '#22c55e', 'icon' => 'bi-check-circle-fill', 'label' => 'Aceptada'],
+                            'rejected' => ['color' => '#ef4444', 'icon' => 'bi-x-circle-fill',    'label' => 'Rechazada']
                         ];
                         $st = $statusColors[$q['status']] ?? $statusColors['draft'];
                         ?>
@@ -155,8 +171,8 @@
                             </td>
                             <td class="d-none d-md-table-cell" style="vertical-align: middle;">
                                 <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
-                                    <span class="chip chip-status" style="background: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
-                                        <?php echo $st['label']; ?>
+                                    <span class="chip chip-status" style="background: <?php echo $st['color']; ?>15; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
+                                        <i class="bi <?php echo $st['icon']; ?>" style="font-size: 0.7rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $st['label']; ?>
                                     </span>
                                 </div>
                             </td>
@@ -177,4 +193,40 @@
             </tbody>
         </table>
     </div>
+
+    <?php if (isset($totalPages) && $totalPages > 1): ?>
+    <div class="d-flex justify-content-between align-items-center p-3 mt-2 pagination-container" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">
+            Página <?php echo $page; ?> de <?php echo $totalPages; ?> (Total: <?php echo $totalQuotes; ?>)
+        </div>
+        <ul class="pagination pagination-sm m-0" style="gap: 4px;">
+            <?php 
+            $qs = $_GET;
+            if ($page > 1): 
+                $qs['p'] = $page - 1;
+            ?>
+                <li class="page-item"><a class="page-link rounded-2" style="border: none; color: #64748b; font-weight: 700;" href="?<?php echo http_build_query($qs); ?>"><i class="bi bi-chevron-left"></i></a></li>
+            <?php else: ?>
+                <li class="page-item disabled"><span class="page-link rounded-2" style="border: none; background: transparent;"><i class="bi bi-chevron-left"></i></span></li>
+            <?php endif; ?>
+            
+            <?php for ($i = 1; $i <= $totalPages; $i++): 
+                $qs['p'] = $i;
+            ?>
+                <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                    <a class="page-link rounded-2" style="<?php echo $i === $page ? 'background: #3b82f6; border-color: #3b82f6; font-weight: 700;' : 'border: none; color: #64748b; font-weight: 600;'; ?>" href="?<?php echo http_build_query($qs); ?>"><?php echo $i; ?></a>
+                </li>
+            <?php endfor; ?>
+
+            <?php 
+            if ($page < $totalPages): 
+                $qs['p'] = $page + 1;
+            ?>
+                <li class="page-item"><a class="page-link rounded-2" style="border: none; color: #64748b; font-weight: 700;" href="?<?php echo http_build_query($qs); ?>"><i class="bi bi-chevron-right"></i></a></li>
+            <?php else: ?>
+                <li class="page-item disabled"><span class="page-link rounded-2" style="border: none; background: transparent;"><i class="bi bi-chevron-right"></i></span></li>
+            <?php endif; ?>
+        </ul>
+    </div>
+    <?php endif; ?>
 </div>

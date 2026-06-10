@@ -53,7 +53,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Obtener lista de organizaciones para el select
 $orgs = [];
-$oStmt = $mysqli->prepare("SELECT id, name FROM organizations WHERE empresa_id = ? ORDER BY name ASC");
+$oStmt = $mysqli->prepare("
+    SELECT o.id, o.name 
+    FROM organizations o 
+    WHERE o.empresa_id = ? 
+      AND EXISTS (
+          SELECT 1 
+          FROM user_organizations uo 
+          JOIN users u ON u.id = uo.user_id AND u.empresa_id = uo.empresa_id 
+          WHERE uo.organization_id = o.id 
+            AND uo.empresa_id = o.empresa_id 
+            AND u.org_tickets_view = 1 
+            AND u.status = 'active'
+      )
+    ORDER BY o.name ASC
+");
 if ($oStmt) {
     $oStmt->bind_param('i', $eid);
     $oStmt->execute();

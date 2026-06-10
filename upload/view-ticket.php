@@ -202,6 +202,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
             if ($stmtUpd->execute()) {
                 $ticketApprovalStatus = $newStatus;
                 
+                if ($newStatus === 'rechazado') {
+                    // Cierra el ticket
+                    $stmtC = $mysqli->prepare("UPDATE tickets SET closed = NOW(), status_id = COALESCE((SELECT id FROM ticket_status WHERE name LIKE '%cerrado%' OR name LIKE '%closed%' LIMIT 1), 5) WHERE id = ? AND empresa_id = ?");
+                    if ($stmtC) {
+                        $stmtC->bind_param('ii', $tid, $eid);
+                        $stmtC->execute();
+                    }
+                }
+                
                 if (function_exists('notifyApprovalToAdminRecipients')) {
                     $statusLabelNotif = ($newStatus === 'cotizacion') ? 'Cotización' : (($newStatus === 'aprobado') ? 'Aprobado' : 'Rechazado');
                     notifyApprovalToAdminRecipients($tid, $statusLabelNotif);

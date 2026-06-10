@@ -39,6 +39,18 @@ if ($orgCssV <= 0) {
 $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
 ?>
 <link rel="stylesheet" href="css/client-org-explorer.css?v=<?php echo $orgCssV; ?>">
+<style>
+    /* CSS para soportar el cambio dinámico de modo oscuro en la vista de cotizaciones */
+    .quote-title { color: #212529; }
+    .quote-date { color: #6c757d; }
+    .quote-icon { color: #6c757d; }
+    
+    body.dark-mode .quote-title { color: #f8f9fa !important; }
+    body.dark-mode .quote-date { color: #adb5bd !important; }
+    body.dark-mode .quote-icon { color: #f8f9fa !important; }
+    body.dark-mode .org-explorer-row.unread-item { background: #212529 !important; border-color: #0d6efd !important; }
+    .org-explorer-row.unread-item { background: #f8f9fa; border-color: #0d6efd; }
+</style>
 
 <div class="org-explorer-wrap">
     <div class="page-header org-explorer-header" style="margin-top: 0;">
@@ -227,46 +239,36 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                 $isUnread = (!$isQuote && empty($doc['is_read']));
                                 
                                 if ($isQuote) {
-                                    if (!empty($isDarkMode)) {
-                                        $statusColors = [
-                                            'draft'    => ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Borrador'],
-                                            'pending'  => ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Pendiente'],
-                                            'requested'=> ['bg' => 'rgba(254, 249, 195, 0.15)', 'color' => '#fde047', 'label' => 'Solicitada'],
-                                            'answered' => ['bg' => 'rgba(219, 234, 254, 0.15)', 'color' => '#93c5fd', 'label' => 'En Revisión'],
-                                            'accepted' => ['bg' => 'rgba(220, 252, 231, 0.15)', 'color' => '#86efac', 'label' => 'Aceptada'],
-                                            'rejected' => ['bg' => 'rgba(254, 226, 226, 0.15)', 'color' => '#fca5a5', 'label' => 'Rechazada']
-                                        ];
-                                    } else {
-                                        $statusColors = [
-                                            'draft'    => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
-                                            'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Pendiente'],
-                                            'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'label' => 'Solicitada'],
-                                            'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'label' => 'En Revisión'],
-                                            'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
-                                            'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
-                                        ];
-                                    }
+                                    $statusColors = [
+                                        'draft'    => ['color' => '#94a3b8', 'label' => 'Borrador'],
+                                        'pending'  => ['color' => '#64748b', 'label' => 'Pendiente'],
+                                        'requested'=> ['color' => '#eab308', 'label' => 'Solicitada'],
+                                        'answered' => ['color' => '#3b82f6', 'label' => 'En Revisión'],
+                                        'accepted' => ['color' => '#22c55e', 'label' => 'Aceptada'],
+                                        'rejected' => ['color' => '#ef4444', 'label' => 'Rechazada']
+                                    ];
                                     $st = $statusColors[$doc['status']] ?? $statusColors['draft'];
                                 } else {
-                                    $st = !empty($isDarkMode) 
-                                        ? ['bg' => 'rgba(241, 245, 249, 0.1)', 'color' => '#cbd5e1', 'label' => 'Informe']
-                                        : ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Informe'];
+                                    $st = ['color' => '#64748b', 'label' => 'Informe'];
                                 }
                                 
                                 $href = $isQuote ? "view-quote.php?id=" . $doc['id'] : "informe-jefe.php?id=" . $doc['id'];
                                 $icon = $isQuote ? "bi-file-earmark-text" : "bi-megaphone";
-                                $unreadClass = $isUnread ? (!empty($isDarkMode) ? 'bg-dark border-primary' : 'bg-light border-primary') : '';
+                                $unreadClass = $isUnread ? 'unread-item border-primary' : '';
                                 ?>
                                 <a href="<?php echo $href; ?>" class="list-group-item list-group-item-action org-explorer-row d-flex align-items-center flex-wrap gap-3 <?php echo $unreadClass; ?>" style="<?php echo $isUnread ? 'border-left: 4px solid #ef4444 !important;' : ''; ?>">
-                                    <span class="org-ticket-num" style="min-width:40px; text-align:center;"><i class="bi <?php echo $icon; ?> fs-5 <?php echo !empty($isDarkMode) ? 'text-light' : 'text-muted'; ?>"></i></span>
+                                    <span class="org-ticket-num d-flex flex-column align-items-center justify-content-center" style="min-width:55px; text-align:center;">
+                                        <i class="bi <?php echo $icon; ?> fs-5 quote-icon"></i>
+                                        <span style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-top: 2px;">#<?php echo $doc['id']; ?></span>
+                                    </span>
                                     <div class="flex-grow-1" style="min-width:200px;">
-                                        <div class="fw-bold mb-1 <?php echo !empty($isDarkMode) ? 'text-white' : 'text-dark'; ?>"><?php echo html($doc['subject'] ?: 'Sin título'); ?></div>
-                                        <div class="small <?php echo !empty($isDarkMode) ? 'text-secondary' : 'text-muted'; ?>">
+                                        <div class="fw-bold mb-1 quote-title"><?php echo html($doc['subject'] ?: 'Sin título'); ?></div>
+                                        <div class="small quote-date">
                                             <i class="bi bi-calendar3 me-1"></i> <?php echo html(date('d/m/Y h:i A', strtotime($doc['created_at']))); ?>
                                         </div>
                                     </div>
                                     <div class="text-end">
-                                        <span class="badge rounded-pill" style="background-color: <?php echo $st['bg']; ?>; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>; font-weight: 500; padding: 0.5em 0.8em;">
+                                        <span class="badge rounded-pill" style="background-color: <?php echo $st['color']; ?>1A; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; font-weight: 600; padding: 0.5em 0.8em; letter-spacing: 0.02em;">
                                             <?php echo $st['label']; ?>
                                         </span>
                                     </div>
@@ -274,6 +276,10 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                 </a>
                             <?php endforeach; ?>
                         </div>
+                        <?php if ($orgQuotesTotalPages > 1): ?>
+                            <?php $orgQuotesPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=quotes'; ?>
+                            <?php echo renderModernPagination($orgQuotesPage, $orgQuotesTotalPages, $orgQuotesPaginationParams, 'oqp'); ?>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
 
