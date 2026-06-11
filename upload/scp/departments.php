@@ -229,12 +229,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($hasStaffDepartmentsTableDel) {
                 // New model: check staff_departments
-                $stmtCntSql = "SELECT COUNT(DISTINCT sd.staff_id) c FROM staff_departments sd WHERE sd.dept_id IN ($placeholders)";
+                $stmtCntSql = "SELECT COUNT(DISTINCT sd.staff_id) c FROM staff_departments sd";
+                if ($staffHasEmpresa) {
+                    $stmtCntSql .= " JOIN staff s ON s.id = sd.staff_id";
+                }
+                $stmtCntSql .= " WHERE sd.dept_id IN ($placeholders)";
+                if ($staffHasEmpresa) {
+                    $stmtCntSql .= " AND s.empresa_id = ?";
+                }
             } else {
                 // Legacy model
                 $stmtCntSql = "SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)";
+                if ($staffHasEmpresa) {
+                    $stmtCntSql .= " AND empresa_id = ?";
+                }
             }
-            if ($staffHasEmpresa) $stmtCntSql .= " AND empresa_id = ?";
             $stmtCnt = $mysqli->prepare($stmtCntSql);
             if ($stmtCnt) {
                 if ($staffHasEmpresa) {
