@@ -45,12 +45,16 @@ $cacheTsKey = 'notif_cache_ts_' . $staffId;
 unset($_SESSION[$cacheKey], $_SESSION[$cacheTsKey]);
 
 if ($relatedId !== null && $relatedId > 0) {
-    if ($type === 'task_assigned') {
+    if ($type === 'task_assigned' || $type === 'task') {
         header('Location: tasks.php?id=' . (int) $relatedId);
         exit;
     }
-    if ($type === 'ticket_assigned') {
+    if ($type === 'ticket_assigned' || $type === 'ticket') {
         header('Location: tickets.php?id=' . (int) $relatedId);
+        exit;
+    }
+    if ($type === 'quote') {
+        header('Location: cotizaciones.php?id=' . (int) $relatedId);
         exit;
     }
 }
