@@ -314,57 +314,69 @@ class Mailer {
 
         if (!empty($attachments)) {
             $mixed = '----=_Mixed_' . md5(uniqid('', true));
-            $alt = '----=_Alt_' . md5(uniqid('', true));
-            $related = '----=_Rel_' . md5(uniqid('', true));
             $headerLines[] = 'Content-Type: multipart/mixed; boundary="' . $mixed . '"';
             $headerStr = implode("\r\n", $headerLines);
 
-            $hasInline = false;
-            foreach ($attachments as $att) {
-                if (is_array($att) && !empty($att['cid'])) { $hasInline = true; break; }
-            }
-
             $message = "--$mixed\r\n";
-            $message .= "Content-Type: multipart/alternative; boundary=\"$alt\"\r\n\r\n";
-
-            $message .= "--$alt\r\n";
-            $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-            $message .= base64_encode($bodyTextFinal) . "\r\n";
-
-            $message .= "--$alt\r\n";
-            if ($hasInline) {
-                $message .= "Content-Type: multipart/related; boundary=\"$related\"\r\n\r\n";
-                $message .= "--$related\r\n";
-                $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyHtmlFinal) . "\r\n";
-                foreach ($attachments as $att) {
-                    if (!is_array($att) || empty($att['cid'])) continue;
-                    $filename = (string)($att['filename'] ?? 'archivo');
-                    $contentType = (string)($att['contentType'] ?? 'application/octet-stream');
-                    $content = $att['content'] ?? '';
-                    $cid = (string)($att['cid'] ?? '');
-                    if ($content === '' || !is_string($content)) continue;
-                    $message .= "--$related\r\n";
-                    $message .= 'Content-Type: ' . $contentType . '; name="' . addslashes($filename) . "\"\r\n";
-                    $message .= "Content-Transfer-Encoding: base64\r\n";
-                    $message .= 'Content-ID: <' . $cid . ">\r\n";
-                    $message .= 'Content-Disposition: inline; filename="' . addslashes($filename) . "\"\r\n\r\n";
-                    $message .= chunk_split(base64_encode($content)) . "\r\n";
-                }
-                $message .= "--$related--\r\n";
+            
+            if ($bodyHtmlFinal === '') {
+                // Solo texto + adjuntos
+                $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                $message .= base64_encode($bodyTextFinal) . "\r\n";
             } else {
-                $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                // Alternative (Texto + HTML) dentro de Mixed
+                $alt = '----=_Alt_' . md5(uniqid('', true));
+                $related = '----=_Rel_' . md5(uniqid('', true));
+                $hasInline = false;
+                foreach ($attachments as $att) {
+                    if (is_array($att) && !empty($att['cid'])) { $hasInline = true; break; }
+                }
+
+                $message .= "Content-Type: multipart/alternative; boundary=\"$alt\"\r\n\r\n";
+
+                $message .= "--$alt\r\n";
+                $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                $message .= base64_encode($bodyTextFinal) . "\r\n";
+
+                $message .= "--$alt\r\n";
+                if ($hasInline) {
+                    $message .= "Content-Type: multipart/related; boundary=\"$related\"\r\n\r\n";
+                    $message .= "--$related\r\n";
+                    $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                    $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                    foreach ($attachments as $att) {
+                        if (!is_array($att) || empty($att['cid'])) continue;
+                        $filename = (string)($att['filename'] ?? 'archivo');
+                        $contentType = (string)($att['contentType'] ?? 'application/octet-stream');
+                        $content = $att['content'] ?? '';
+                        $cid = (string)($att['cid'] ?? '');
+                        if ($content === '' || !is_string($content)) continue;
+                        $message .= "--$related\r\n";
+                        $message .= 'Content-Type: ' . $contentType . '; name="' . addslashes($filename) . "\"\r\n";
+                        $message .= "Content-Transfer-Encoding: base64\r\n";
+                        $message .= 'Content-ID: <' . $cid . ">\r\n";
+                        $message .= 'Content-Disposition: inline; filename="' . addslashes($filename) . "\"\r\n\r\n";
+                        $message .= chunk_split(base64_encode($content)) . "\r\n";
+                    }
+                    $message .= "--$related--\r\n";
+                } else {
+                    $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                    $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                }
+                $message .= "--$alt--\r\n";
             }
 
-            $message .= "--$alt--\r\n";
-
+            // Adjuntos normales
             foreach ($attachments as $att) {
-                if (!is_array($att) || !empty($att['cid'])) continue;
+                if (!is_array($att)) continue;
+                // Si no hay HTML, los inline también se adjuntan normal
+                if ($bodyHtmlFinal !== '' && !empty($att['cid'])) continue;
+                
                 $filename = (string)($att['filename'] ?? 'archivo');
                 $contentType = (string)($att['contentType'] ?? 'application/octet-stream');
                 $content = $att['content'] ?? '';
                 if ($content === '' || !is_string($content)) continue;
+                
                 $message .= "--$mixed\r\n";
                 $message .= 'Content-Type: ' . $contentType . '; name="' . addslashes($filename) . "\"\r\n";
                 $message .= "Content-Transfer-Encoding: base64\r\n";
@@ -374,17 +386,27 @@ class Mailer {
 
             $message .= "--$mixed--";
         } else {
-            $alt = '----=_Alt_' . md5(uniqid('', true));
-            $headerLines[] = 'Content-Type: multipart/alternative; boundary="' . $alt . '"';
-            $headerStr = implode("\r\n", $headerLines);
+            if ($bodyHtmlFinal === '') {
+                // Solo texto plano, sin multipart
+                $headerLines[] = 'Content-Type: text/plain; charset=UTF-8';
+                $headerLines[] = 'Content-Transfer-Encoding: base64';
+                $headerStr = implode("\r\n", $headerLines);
+                
+                $message = base64_encode($bodyTextFinal);
+            } else {
+                // Multipart alternative
+                $alt = '----=_Alt_' . md5(uniqid('', true));
+                $headerLines[] = 'Content-Type: multipart/alternative; boundary="' . $alt . '"';
+                $headerStr = implode("\r\n", $headerLines);
 
-            $message = "--$alt\r\n";
-            $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-            $message .= base64_encode($bodyTextFinal) . "\r\n";
-            $message .= "--$alt\r\n";
-            $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-            $message .= base64_encode($bodyHtmlFinal) . "\r\n";
-            $message .= "--$alt--";
+                $message = "--$alt\r\n";
+                $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                $message .= base64_encode($bodyTextFinal) . "\r\n";
+                $message .= "--$alt\r\n";
+                $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
+                $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                $message .= "--$alt--";
+            }
         }
 
         $smtp = $options['smtp'] ?? null;

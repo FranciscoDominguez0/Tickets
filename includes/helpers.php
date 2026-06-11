@@ -2668,6 +2668,47 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
         $subject = mb_substr($subject, 0, 252) . '...';
     }
 
+    // Chequear si la organización del usuario exige correos en texto plano
+    $forcePlainText = false;
+    if (function_exists('dbColumnExists') && dbColumnExists('organizations', 'plain_text_emails')) {
+        $stmtCheck = $mysqli->prepare("
+            SELECT o.plain_text_emails 
+            FROM users u 
+            LEFT JOIN user_organizations uo ON u.id = uo.user_id 
+            LEFT JOIN organizations o ON o.id = uo.organization_id 
+            WHERE u.email = ? AND u.empresa_id = ? AND o.plain_text_emails = 1
+            LIMIT 1
+        ");
+        if ($stmtCheck) {
+            $stmtCheck->bind_param('si', $to, $eid);
+            $stmtCheck->execute();
+            if ($stmtCheck->get_result()->fetch_assoc()) {
+                $forcePlainText = true;
+            }
+        }
+        if (!$forcePlainText) {
+            $stmtCheck2 = $mysqli->prepare("
+                SELECT o.plain_text_emails 
+                FROM users u 
+                JOIN organizations o ON o.name = u.company AND o.empresa_id = u.empresa_id
+                WHERE u.email = ? AND u.empresa_id = ? AND o.plain_text_emails = 1
+                LIMIT 1
+            ");
+            if ($stmtCheck2) {
+                $stmtCheck2->bind_param('si', $to, $eid);
+                $stmtCheck2->execute();
+                if ($stmtCheck2->get_result()->fetch_assoc()) {
+                    $forcePlainText = true;
+                }
+            }
+        }
+    }
+
+    if ($forcePlainText) {
+        $bodyHtml = '';
+        $bodyText = $subject . ".\n\nPor favor, ingresa al portal para revisarlo.\n\n(Mensaje automático del sistema)";
+    }
+
     // Serializar adjuntos si existen (PDF bytes como base64)
     $attachmentsJson = null;
     if (isset($meta['attachments']) && is_array($meta['attachments']) && !empty($meta['attachments'])) {

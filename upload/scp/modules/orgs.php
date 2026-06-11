@@ -47,6 +47,11 @@ $mysqli->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 ");
 
+$chkCol = $mysqli->query("SHOW COLUMNS FROM organizations LIKE 'plain_text_emails'");
+if (!$chkCol || $chkCol->num_rows === 0) {
+    $mysqli->query("ALTER TABLE organizations ADD COLUMN plain_text_emails TINYINT(1) NOT NULL DEFAULT 0");
+}
+
 // Agregar organización
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
@@ -56,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $org_phone_ext = trim($_POST['org_phone_ext'] ?? '');
         $org_website = trim($_POST['org_website'] ?? '');
         $org_notes = trim($_POST['org_notes'] ?? '');
+        $plain_text_emails = isset($_POST['plain_text_emails']) ? 1 : 0;
 
         $errors = [];
         if (!$org_name) {
@@ -70,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             }
         }
         if (empty($errors)) {
-            $stmt = $mysqli->prepare("INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param('issssss', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
+            $stmt = $mysqli->prepare("INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes, plain_text_emails) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param('issssssi', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $plain_text_emails);
             if ($stmt->execute()) {
                 header('Location: orgs.php?org=' . urlencode($org_name) . '&msg=org_added');
                 exit;
@@ -111,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $org_phone_ext = trim((string)($_POST['org_phone_ext'] ?? ''));
         $org_website = trim((string)($_POST['org_website'] ?? ''));
         $org_notes = trim((string)($_POST['org_notes'] ?? ''));
+        $plain_text_emails = isset($_POST['plain_text_emails']) ? 1 : 0;
 
         $errors = [];
         if ($old_name === '') $errors[] = 'Organización inválida.';
@@ -138,15 +145,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             }
 
             if ($existingId > 0) {
-                $stmtU = $mysqli->prepare('UPDATE organizations SET name = ?, address = ?, phone = ?, phone_ext = ?, website = ?, notes = ? WHERE id = ? AND empresa_id = ?');
+                $stmtU = $mysqli->prepare('UPDATE organizations SET name = ?, address = ?, phone = ?, phone_ext = ?, website = ?, notes = ?, plain_text_emails = ? WHERE id = ? AND empresa_id = ?');
                 if ($stmtU) {
-                    $stmtU->bind_param('ssssssii', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $existingId, $eid);
+                    $stmtU->bind_param('ssssssiii', $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $plain_text_emails, $existingId, $eid);
                     $stmtU->execute();
                 }
             } else {
-                $stmtI = $mysqli->prepare('INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $stmtI = $mysqli->prepare('INSERT INTO organizations (empresa_id, name, address, phone, phone_ext, website, notes, plain_text_emails) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
                 if ($stmtI) {
-                    $stmtI->bind_param('issssss', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes);
+                    $stmtI->bind_param('issssssi', $eid, $org_name, $org_address, $org_phone, $org_phone_ext, $org_website, $org_notes, $plain_text_emails);
                     $stmtI->execute();
                 }
             }
@@ -1399,6 +1406,15 @@ if (!empty($_GET['org'])) {
                                     <label class="form-label">Notas internas</label>
                                     <textarea class="form-control" name="org_notes" rows="4"><?php echo html($orgInfo['notes'] ?? ''); ?></textarea>
                                 </div>
+                                <div class="col-12">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="plain_text_emails_edit" name="plain_text_emails" value="1" <?php echo !empty($orgInfo['plain_text_emails']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label fw-bold" for="plain_text_emails_edit">
+                                            <i class="bi bi-shield-check text-success"></i> Correos seguros (Solo texto plano)
+                                        </label>
+                                        <div class="form-text mt-0">Activa esta opción si los correos enviados a esta empresa suelen irse a Spam o son bloqueados.</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer org-modal-footer">
@@ -1640,6 +1656,15 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                     <div class="org-form-group">
                         <label for="org_notes" class="org-form-label"><i class="bi bi-file-text"></i> Notas internas</label>
                         <textarea class="org-form-control" id="org_notes" name="org_notes" rows="4" placeholder="Notas internas"><?php echo html($_POST['org_notes'] ?? ''); ?></textarea>
+                    </div>
+                    <div class="org-form-group mt-3 p-3 bg-light rounded border">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="plain_text_emails" name="plain_text_emails" value="1" <?php echo !empty($_POST['plain_text_emails']) ? 'checked' : ''; ?>>
+                            <label class="form-check-label fw-bold" for="plain_text_emails">
+                                <i class="bi bi-shield-check text-success"></i> Correos seguros (Solo texto plano)
+                            </label>
+                            <div class="form-text mt-1 text-muted" style="font-size: 0.85rem;">Activa esta opción si los correos enviados a esta empresa suelen irse a Spam o son bloqueados por servidores estrictos.</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer org-modal-footer">
