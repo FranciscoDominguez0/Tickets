@@ -193,6 +193,17 @@ if ($stmtA) {
     }
 }
 
+// Check if quote was already sent
+$quoteAlreadySent = false;
+$stmtL = $mysqli->prepare("SELECT id FROM logs WHERE action = 'executive_quote_sent' AND object_type = 'ticket' AND object_id = ? LIMIT 1");
+if ($stmtL) {
+    $stmtL->bind_param('i', $tid);
+    $stmtL->execute();
+    if ($stmtL->get_result()->fetch_assoc()) {
+        $quoteAlreadySent = true;
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['cotizacion', 'aprobado', 'rechazado'])) {
     if ($ticketApprovalStatus === 'pending' && !empty($user['org_tickets_view'])) {
         if (validateCSRF()) {
@@ -455,10 +466,10 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
         . "JOIN thread_entries te ON te.id = a.thread_entry_id\n"
         . "JOIN threads th ON th.id = te.thread_id\n"
         . "JOIN tickets tk ON tk.id = th.ticket_id\n"
-        . "WHERE a.id = ? AND te.thread_id = ? AND tk.user_id = ? AND tk.empresa_id = ?\n"
+        . "WHERE a.id = ? AND te.thread_id = ? AND tk.empresa_id = ?\n"
         . "LIMIT 1"
     );
-    $stmt->bind_param('iiii', $aid, $thread_id, $uid, $eid);
+    $stmt->bind_param('iii', $aid, $thread_id, $eid);
     $stmt->execute();
     $att = $stmt->get_result()->fetch_assoc();
     if (!$att) {
@@ -2288,11 +2299,13 @@ function humanSize($bytes) {
                             </div>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-3 mt-sm-0">
+                            <?php if (!$quoteAlreadySent): ?>
                             <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-cotizacion">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action" value="cotizacion">
                                 <button type="button" class="btn btn-sm btn-approval-warn" onclick="showApprovalModal('form-aprob-cotizacion', 'Solicitar Cotización', '¿Confirma que desea solicitar la Cotización?', 'btn-approval-warn', 'bi-file-earmark-text')"><i class="bi bi-file-earmark-text me-1"></i>Cotización</button>
                             </form>
+                            <?php endif; ?>
                             <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-aprobado">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action" value="aprobado">

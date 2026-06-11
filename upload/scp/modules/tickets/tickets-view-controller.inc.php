@@ -336,7 +336,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Acciones rápidas: estado, asignar, eliminar, etc.
         $action = $_GET['action'] ?? $_POST['action'] ?? null;
         $csrfOk = true;
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['update_support_times', 'request_approval', 'owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($action, ['send_executive_quote', 'update_support_times', 'request_approval', 'owner', 'block_email', 'delete', 'merge', 'link', 'collab_add', 'transfer', 'priority_update', 'edit_entry', 'delete_entry', 'referral_add'], true)) {
             $csrfOk = isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token']);
         }
         if ($action !== null && isset($_SESSION['staff_id']) && $csrfOk) {
@@ -738,6 +738,128 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                             } else {
                                 $msg = 'approval_email_failed';
                             }
+                        }
+                    }
+                }
+                header("Location: tickets.php?id=$tid&msg=$msg");
+                exit;
+            } elseif ($action === 'send_executive_quote') {
+                requireRolePermission('ticket.reply', 'tickets.php?id=' . $tid);
+                $msg = 'quote_error';
+                
+                if (!empty($_FILES['quote_pdf']['name']) && $_FILES['quote_pdf']['error'] === UPLOAD_ERR_OK) {
+                    $staffId = (int)$_SESSION['staff_id'];
+                    $quoteMsg = trim($_POST['quote_msg'] ?? '');
+                    
+                    $tmpName = $_FILES['quote_pdf']['tmp_name'];
+                    $origName = $_FILES['quote_pdf']['name'];
+                    $size = $_FILES['quote_pdf']['size'];
+                    $mime = 'application/pdf';
+                    $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                    
+                    if ($ext === 'pdf') {
+                        $hash = md5_file($tmpName);
+                        $subdir = substr($hash, 0, 2);
+                        $uploadDir = rtrim(ATTACHMENTS_DIR, '/\\') . '/' . $subdir;
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0777, true);
+                        }
+                        $finalName = $hash . '_' . time() . '.pdf';
+                        $finalPath = $uploadDir . '/' . $finalName;
+                        $dbPath = 'uploads/attachments/' . $subdir . '/' . $finalName;
+                        
+                        if (move_uploaded_file($tmpName, $finalPath)) {
+                            $body = "<p><strong>Cotización enviada para revisión ejecutiva.</strong></p>";
+                            if ($quoteMsg !== '') {
+                                $body .= "<p>" . htmlspecialchars($quoteMsg) . "</p>";
+                            }
+                            
+                            if (dbColumnExists('thread_entries', 'empresa_id')) {
+                                $stmtEntry = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, ?, 0, NOW())");
+                                $stmtEntry->bind_param('iiis', $eid, $thread_id, $staffId, $body);
+                            } else {
+                                $stmtEntry = $mysqli->prepare("INSERT INTO thread_entries (thread_id, staff_id, body, is_internal, created) VALUES (?, ?, ?, 0, NOW())");
+                                $stmtEntry->bind_param('iis', $thread_id, $staffId, $body);
+                            }
+                            $stmtEntry->execute();
+                            $entryId = $mysqli->insert_id;
+                            
+                            if (dbColumnExists('attachments', 'empresa_id')) {
+                                $stmtAtt = $mysqli->prepare("INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                                $stmtAtt->bind_param('iisssiss', $eid, $entryId, $finalName, $origName, $mime, $size, $dbPath, $hash);
+                            } else {
+                                $stmtAtt = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                                $stmtAtt->bind_param('isssiss', $entryId, $finalName, $origName, $mime, $size, $dbPath, $hash);
+                            }
+                            $stmtAtt->execute();
+                            
+                            $stmtUpd = $mysqli->prepare("UPDATE ticket_approvals SET status = 'pending' WHERE ticket_id = ? AND status = 'cotizacion'");
+                            $stmtUpd->bind_param('i', $tid);
+                            $stmtUpd->execute();
+                            
+                            addLog('executive_quote_sent', 'Cotización enviada al jefe de la organización', 'ticket', $tid, 'staff', $staffId);
+                            
+                            $stmtBoss = $mysqli->prepare("SELECT u.id, u.email, u.firstname, u.lastname FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = (SELECT organization_id FROM user_organizations WHERE user_id = ? LIMIT 1) AND u.org_tickets_view = 1 AND u.empresa_id = ? LIMIT 1");
+                            $bossRow = null;
+                            if ($stmtBoss) {
+                                $stmtBoss->bind_param('ii', $ticketView['user_id'], $eid);
+                                if ($stmtBoss->execute()) {
+                                    $bossRow = $stmtBoss->get_result()->fetch_assoc();
+                                }
+                            }
+                            if ($bossRow) {
+                                $bossEmail = trim((string)($bossRow['email'] ?? ''));
+                                if ($bossEmail !== '' && filter_var($bossEmail, FILTER_VALIDATE_EMAIL)) {
+                                    $bossName = trim($bossRow['firstname'] . ' ' . $bossRow['lastname']);
+                                    $ticketNo = $ticketView['ticket_number'];
+                                    $subjBoss = "[Revisión requerida] Cotización adjunta para el Ticket #" . $ticketNo;
+                                    $orgPortalUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?from=org&id=' . $tid;
+                                    
+                                    $bossBodyHtml = '<div style="font-family: Segoe UI, sans-serif; max-width: 700px; margin: 0 auto;">'
+                                        . '<h2 style="color:#1e3a5f; margin: 0 0 8px;">Cotización Lista para Revisión</h2>'
+                                        . '<p style="color:#475569; margin: 0 0 12px;">Estimado/a <strong>' . htmlspecialchars($bossName) . '</strong>, el agente ha enviado la cotización solicitada para el ticket:</p>'
+                                        . '<table style="width:100%; border-collapse: collapse; margin: 12px 0;">'
+                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee; width: 100px;"><strong>Número:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">#' . htmlspecialchars($ticketNo) . '</td></tr>'
+                                        . '<tr><td style="padding: 6px 0; border-bottom:1px solid #eee;"><strong>Asunto:</strong></td><td style="padding: 6px 0; border-bottom:1px solid #eee;">' . htmlspecialchars((string)$ticketView['subject']) . '</td></tr>'
+                                        . '</table>';
+                                    if ($quoteMsg !== '') {
+                                        $bossBodyHtml .= '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:8px; margin: 12px 0;">' . nl2br(htmlspecialchars($quoteMsg)) . '</div>';
+                                    }
+                                    $bossBodyHtml .= '<p style="margin: 14px 0 0;"><a href="' . htmlspecialchars($orgPortalUrl) . '" style="display:inline-block; background:#2563eb; color:#fff; padding:10px 16px; text-decoration:none; border-radius:8px;">Revisar y Autorizar</a></p>'
+                                        . '<p style="color:#94a3b8; font-size:12px; margin-top: 14px;">' . htmlspecialchars(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets') . '</p>'
+                                        . '</div>';
+                                        
+                                    $bossBodyText = "Cotización Lista para Revisión\n\nTicket: #" . $ticketNo . "\nAsunto: " . $ticketView['subject'] . "\n\nPor favor revise el archivo adjunto y autorice el ticket accediendo al siguiente enlace:\n" . $orgPortalUrl;
+                                    
+                                    $fileContent = file_get_contents($finalPath);
+                                    if ($fileContent !== false) {
+                                        if (function_exists('enqueueEmailJob')) {
+                                            enqueueEmailJob($bossEmail, $subjBoss, $bossBodyHtml, $bossBodyText, [
+                                                'empresa_id' => (int)$eid,
+                                                'context_type' => 'ticket_quote_sent',
+                                                'context_id' => (int)$tid,
+                                                'attachments' => [[
+                                                    'filename' => $origName,
+                                                    'contentType' => $mime,
+                                                    'content' => $fileContent,
+                                                ]]
+                                            ]);
+                                            if (function_exists('triggerEmailQueueWorkerAsync')) {
+                                                triggerEmailQueueWorkerAsync();
+                                            }
+                                        } else {
+                                            Mailer::sendWithOptions($bossEmail, $subjBoss, $bossBodyHtml, $bossBodyText, [
+                                                'attachments' => [[
+                                                    'filename' => $origName,
+                                                    'contentType' => $mime,
+                                                    'content' => base64_encode($fileContent), // Or depending on implementation
+                                                ]]
+                                            ]);
+                                        }
+                                    }
+                                }
+                            }
+                            $msg = 'quote_sent';
                         }
                     }
                 }

@@ -91,6 +91,9 @@ if ($statusIdClosed > 0) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
+    $hasTicketApprovals = function_exists('dbTableExists') ? dbTableExists('ticket_approvals') : false;
+    $rejectFilter = $hasTicketApprovals ? " AND NOT EXISTS (SELECT 1 FROM ticket_approvals ta WHERE ta.ticket_id = t.id AND ta.status = 'rechazado')" : '';
+
     // Filtrado estricto por mes (solo el mes seleccionado o todos)
     $reportJoinCount   = $hasReportsTable ? ' LEFT JOIN ticket_reports r ON r.ticket_id = t.id' : '';
     if ($monthFilter === 'all') {
@@ -106,7 +109,7 @@ if ($statusIdClosed > 0) {
                    JOIN departments d ON t.dept_id = d.id AND d.requires_report = 1
                    {$countJoin}
                    {$reportJoinCount}
-                   WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}";
+                   WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere} {$rejectFilter}";
     $cStmt = $mysqli->prepare($countQuery);
     if ($cStmt) {
         if ($monthFilter === 'all') {
@@ -146,7 +149,7 @@ if ($statusIdClosed > 0) {
               LEFT JOIN staff s ON t.staff_id = s.id
               {$dataJoin}
               {$reportJoin}
-              WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere}
+              WHERE t.empresa_id = ? AND t.status_id = ? {$monthWhere} {$searchWhere} {$rejectFilter}
               ORDER BY t.closed DESC, t.id DESC
               LIMIT ? OFFSET ?";
 

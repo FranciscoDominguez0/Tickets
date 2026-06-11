@@ -586,6 +586,11 @@ if ($ticketClientSignaturePath !== '') {
             </div>
 
             <?php if (empty($t['closed'])): ?>
+                <?php if ($ticketApprovalStatus === 'cotizacion'): ?>
+                    <button type="button" class="btn-icon" title="Enviar Cotización Ejecutiva" data-bs-toggle="modal" data-bs-target="#modalExecutiveQuote">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </button>
+                <?php endif; ?>
                 <button type="button" class="btn-icon <?php echo ($canTicketClose && !empty($t['signature_requested'])) ? 'text-warning' : ''; ?> <?php echo $canTicketClose ? '' : 'disabled'; ?>" 
                         title="<?php echo $canTicketClose ? (!empty($t['signature_requested']) ? 'Firma ya solicitada' : 'Solicitar firma del cliente') : 'Sin permiso'; ?>"
                         <?php echo $canTicketClose ? 'data-bs-toggle="modal" data-bs-target="#modalRequestSignature"' : 'onclick="showNoPermissionAlert(\'solicitar firma del cliente\'); return false;"'; ?>
@@ -1018,62 +1023,7 @@ if ($ticketClientSignaturePath !== '') {
                 }
             }
 
-            // Check if ticket requires a quote from boss review
-            $reqQuoteCheck = $mysqli->query("SELECT id FROM ticket_approvals WHERE ticket_id = $tid AND status = 'cotizacion' ORDER BY id DESC LIMIT 1");
-            $needsQuoteAlert = $reqQuoteCheck && $reqQuoteCheck->num_rows > 0 && !$isFromSameTicket;
         ?>
-
-        <?php if ($needsQuoteAlert): ?>
-            <style>
-                #quoteRequirementPopup { background: #ffffff; color: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05); }
-                #quoteRequirementPopup p { color: #64748b; }
-                #quoteRequirementPopup .close-btn { color: #94a3b8; }
-                #quoteRequirementPopup .close-btn:hover { color: #1e293b; }
-                body.dark-mode #quoteRequirementPopup { background: #1e293b; color: #f8fafc; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05); }
-                body.dark-mode #quoteRequirementPopup p { color: #94a3b8; }
-                body.dark-mode #quoteRequirementPopup .close-btn { color: #64748b; }
-                body.dark-mode #quoteRequirementPopup .close-btn:hover { color: #f8fafc; }
-            </style>
-            <div id="quoteRequirementPopup" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%); z-index: 9999; padding: 32px 40px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; border-bottom: 4px solid #ef4444; max-width: 420px; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease;">
-                <button type="button" class="close-btn" id="closeQuoteRequirement" style="position: absolute; top: 12px; right: 16px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s;" aria-label="Cerrar">&times;</button>
-                <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-                    <i class="bi bi-file-earmark-text-fill" style="font-size: 2.5rem;"></i>
-                </div>
-                <div>
-                    <h4 style="margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: 0.02em;">Requiere Cotización</h4>
-                    <p style="margin: 10px 0 0 0; font-size: 1rem; line-height: 1.5;">Se ha solicitado una cotización para avanzar con este ticket.</p>
-                </div>
-            </div>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    var popup = document.getElementById('quoteRequirementPopup');
-                    var closeBtn = document.getElementById('closeQuoteRequirement');
-                    var autoHideTimer;
-                    if (popup) {
-                        setTimeout(function() {
-                            popup.style.opacity = '1';
-                            popup.style.transform = 'translate(-50%, -50%) scale(1.02)';
-                            setTimeout(function() { popup.style.transform = 'translate(-50%, -50%) scale(1)'; }, 250);
-                        }, 150);
-                        
-                        function closePopup() {
-                            popup.style.opacity = '0';
-                            popup.style.transform = 'translate(-50%, -45%) scale(0.95)';
-                            setTimeout(function() { popup.remove(); }, 400);
-                        }
-
-                        autoHideTimer = setTimeout(closePopup, 5000);
-
-                        if (closeBtn) {
-                            closeBtn.addEventListener('click', function() {
-                                clearTimeout(autoHideTimer);
-                                closePopup();
-                            });
-                        }
-                    }
-                });
-            </script>
-        <?php endif; ?>
 
         <!-- DISEÑO MÓVIL (Visible solo en pantallas pequeñas) -->
         <div class="d-md-none">
@@ -1266,10 +1216,7 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="value" style="font-weight: 700; color: #334155;"><?php echo html($t['dept_name']); ?></div>
                 </div>
                 
-                <div class="field">
-                    <label><i class="bi bi-calendar-event"></i> CREADO EN</label>
-                    <div class="value" style="color: #64748b; font-size: 0.9rem;"><?php echo $t['created'] ? date('d/m/y h:i A', strtotime($t['created'])) : '—'; ?></div>
-                </div>
+
             </div>
 
             <!-- Columna 2: Cliente y Ubicación -->
@@ -1396,8 +1343,8 @@ if ($ticketClientSignaturePath !== '') {
         </div>
         <?php
         $msg = $_GET['msg'] ?? '';
-        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.', 'approval_requested' => 'Solicitud de aprobación enviada al jefe. El ticket quedó en Pendiente aprobación.'];
-        $msgErrorText = ['approval_already_pending' => 'Este ticket ya tiene una solicitud de aprobación pendiente.', 'approval_no_manager' => 'No se encontró un jefe de organización para este ticket.', 'approval_no_email' => 'El jefe de la organización no tiene un correo válido.', 'approval_email_failed' => 'No se pudo enviar el correo de aprobación al jefe.', 'approval_error' => 'No se pudo procesar la solicitud de aprobación.'];
+        $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.', 'approval_requested' => 'Solicitud de aprobación enviada al jefe. El ticket quedó en Pendiente aprobación.', 'quote_sent' => 'Cotización enviada exitosamente al Jefe de la Organización.'];
+        $msgErrorText = ['approval_already_pending' => 'Este ticket ya tiene una solicitud de aprobación pendiente.', 'approval_no_manager' => 'No se encontró un jefe de organización para este ticket.', 'approval_no_email' => 'El jefe de la organización no tiene un correo válido.', 'approval_email_failed' => 'No se pudo enviar el correo de aprobación al jefe.', 'approval_error' => 'No se pudo procesar la solicitud de aprobación.', 'quote_error' => 'Error al enviar la cotización. Asegúrate de adjuntar un archivo PDF válido.'];
         if ($msg && isset($msgText[$msg])): ?>
             <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -1626,6 +1573,15 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="badge bg-secondary">No tienes permisos para reabrir</div>
                 <?php endif; ?>
             </div>
+        <?php elseif ($ticketApprovalStatus === 'cotizacion'): ?>
+            <div style="text-align:center; padding:40px 20px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:14px; margin-bottom:20px;" class="closed-reply-prompt">
+                <i class="bi bi-file-earmark-pdf" style="font-size:2rem; color:#94a3b8; margin-bottom:10px; display:block;"></i>
+                <h4 style="font-size:1.1rem; color:#475569; font-weight:700; margin-bottom:6px;">Cotización Ejecutiva Requerida</h4>
+                <p style="color:#64748b; font-size:0.95rem; margin-bottom:16px;">Debes enviar la cotización ejecutiva para habilitar el hilo de respuestas.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalExecutiveQuote" style="border-radius:10px; font-weight:700; padding:10px 24px;">
+                    <i class="bi bi-upload me-2"></i>Subir Cotización
+                </button>
+            </div>
         <?php else: ?>
             <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data" id="form-reply">
                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
@@ -1752,6 +1708,43 @@ if ($ticketClientSignaturePath !== '') {
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <a href="tickets.php?id=<?php echo $tid; ?>&action=status&status_id=1" class="btn btn-primary">Sí, reabrir ticket</a>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Enviar Cotización Ejecutiva -->
+<div class="modal fade" id="modalExecutiveQuote" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-pdf text-primary"></i> Enviar Cotización Ejecutiva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="send_executive_quote">
+                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <div class="modal-body">
+                    <p class="text-secondary">
+                        Sube el documento en PDF. Se enviará automáticamente al correo del Jefe de la Organización para su revisión y aprobación.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label">Archivo PDF de Cotización</label>
+                        <input type="file" name="quote_pdf" accept=".pdf" required class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensaje opcional</label>
+                        <textarea name="quote_msg" class="form-control" placeholder="Escribe un mensaje para adjuntar a la cotización..." rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-1"></i> Enviar al Jefe
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
