@@ -1,44 +1,72 @@
 <style>
+    /* Distinct structural styling for Cotizaciones (Quotes) */
+    .quotes-shell .ticket-row {
+        position: relative;
+    }
+    .quotes-shell .ticket-row:hover {
+        background: #f8fafc !important;
+    }
+    .quotes-shell .quote-icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: #eff6ff;
+        color: #3b82f6;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    body.dark-mode .quotes-shell .ticket-row:hover {
+        background: #1e293b !important;
+    }
+    body.dark-mode .quotes-shell .quote-icon-wrapper {
+        background: rgba(96, 165, 250, 0.1);
+        color: #60a5fa;
+    }
+
     /* Dark mode overrides for cotizaciones list */
-    body.dark-mode .tickets-table thead.table-light {
+    body.dark-mode .quotes-shell .tickets-table thead.table-light {
         background-color: #1e293b !important;
         border-bottom-color: #334155 !important;
     }
-    body.dark-mode .tickets-table thead.table-light th {
+    body.dark-mode .quotes-shell .tickets-table thead.table-light th {
         color: #cbd5e1 !important;
     }
-    body.dark-mode .ticket-row {
+    body.dark-mode .quotes-shell .ticket-row {
         background: #111111 !important;
         border-bottom: 1px solid #333 !important;
     }
-    body.dark-mode .ticket-row:hover {
-        background: #1a1a1a !important;
-    }
-    body.dark-mode .ticket-title {
-        color: #60a5fa !important;
-        background: rgba(96, 165, 250, 0.15) !important;
-    }
-    body.dark-mode .ticket-subject {
+    body.dark-mode .quotes-shell .ticket-title {
+        background: #334155 !important;
         color: #f8fafc !important;
     }
-    body.dark-mode .ticket-row td span[style*="#334155"],
-    body.dark-mode .ticket-row td strong[style*="#475569"] {
-        color: #e2e8f0 !important;
-    }
-    body.dark-mode .ticket-row td div[style*="#64748b"],
-    body.dark-mode .ticket-row td i[style*="#94a3b8"] {
+    body.dark-mode .quotes-shell .ticket-title i {
         color: #94a3b8 !important;
     }
-    body.dark-mode .ticket-row td div[style*="#f1f5f9"] {
+    body.dark-mode .quotes-shell .ticket-subject {
+        color: #f8fafc !important;
+    }
+    body.dark-mode .quotes-shell .ticket-row td span[style*="#334155"],
+    body.dark-mode .quotes-shell .ticket-row td strong[style*="#475569"] {
+        color: #e2e8f0 !important;
+    }
+    body.dark-mode .quotes-shell .ticket-row td div[style*="#64748b"],
+    body.dark-mode .quotes-shell .ticket-row td i[style*="#94a3b8"] {
+        color: #94a3b8 !important;
+    }
+    body.dark-mode .quotes-shell .ticket-row td div[style*="#f1f5f9"] {
         background: #334155 !important;
         color: #cbd5e1 !important;
     }
 </style>
-<div class="tickets-shell">
+<div class="tickets-shell quotes-shell">
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Reportes</h1>
+                <h1>Cotizaciones</h1>
                 <div class="sub">
                     <?php
                     $statusNames = [
@@ -110,7 +138,7 @@
                     <tr>
                         <td colspan="5">
                             <div class="empty-state text-center p-4">
-                                <i class="bi bi-inbox fs-1 text-muted" style="opacity: 0.6;"></i>
+                                <i class="bi bi-file-earmark-text fs-1 text-muted" style="opacity: 0.6;"></i>
                                 <div class="mt-2 text-muted">No se encontraron cotizaciones.</div>
                             </div>
                         </td>
@@ -128,23 +156,30 @@
                         ];
                         $st = $statusColors[$q['status']] ?? $statusColors['draft'];
                         ?>
-                        <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" onclick="window.location='cotizaciones.php?id=<?php echo $q['id']; ?>'">
+                        <tr class="ticket-row" style="background: #fff; cursor: pointer;" onclick="window.location='cotizaciones.php?id=<?php echo $q['id']; ?>'">
                             <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <a class="ticket-title" href="cotizaciones.php?id=<?php echo $q['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa; text-decoration: none;">
-                                        <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo $q['id']; ?>
-                                    </a>
-                                    <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
-                                        <?php echo date('d/m/Y', strtotime($q['created_at'])); ?>
+                                <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                    <div class="quote-icon-wrapper d-none d-sm-flex">
+                                        <i class="bi bi-file-earmark-ruled"></i>
                                     </div>
-                                </div>
-                                <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
-                                    <?php echo html($q['title']); ?>
-                                </div>
-                                <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
-                                    <span style="display:inline-flex; align-items:center; gap:5px;">
-                                        <i class="bi bi-headset" style="color:#94a3b8;"></i> Agente: <strong style="color: #475569; font-weight:600;"><?php echo html($q['staff_name'] ?: 'Sin asignar'); ?></strong>
-                                    </span>
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                            <a class="ticket-title" href="cotizaciones.php?id=<?php echo $q['id']; ?>" style="background: #f1f5f9; color: #0f172a; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; gap: 2px; border: 1px solid #e2e8f0;">
+                                                <i class="bi bi-hash" style="color: #64748b; font-size: 0.85rem;"></i><?php echo $q['id']; ?>
+                                            </a>
+                                            <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
+                                                <?php echo date('d/m/Y', strtotime($q['created_at'])); ?>
+                                            </div>
+                                        </div>
+                                        <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 1rem; margin-bottom: 8px; line-height: 1.3; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+                                            <?php echo html($q['title']); ?>
+                                        </div>
+                                        <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
+                                            <span style="display:inline-flex; align-items:center; gap:5px;">
+                                                <i class="bi bi-headset" style="color:#94a3b8;"></i> Agente: <strong style="color: #475569; font-weight:600;"><?php echo html($q['staff_name'] ?: 'Sin asignar'); ?></strong>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Mobile Info -->
@@ -201,7 +236,15 @@
 
     <?php if (isset($totalPages) && $totalPages > 1): ?>
     <div class="mt-4 mb-2">
-        <?php echo renderModernPagination($page, $totalPages, $_GET, 'p'); ?>
+        <?php 
+        $urlParams = '';
+        foreach ($_GET as $k => $v) {
+            if ($k !== 'p' && $k !== 'page' && !is_array($v)) {
+                $urlParams .= '&' . urlencode($k) . '=' . urlencode((string)$v);
+            }
+        }
+        echo renderModernPagination($page, $totalPages, $urlParams, 'p'); 
+        ?>
     </div>
     <?php endif; ?>
 </div>

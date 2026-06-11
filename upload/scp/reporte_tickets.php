@@ -311,7 +311,7 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Reportes de Tickets</h1>
+                <h1>Reportes de Costo</h1>
                 <div class="sub">Tickets cerrados de departamentos que requieren reporte · <?php echo $totalTickets; ?> resultado<?php echo $totalTickets !== 1 ? 's' : ''; ?></div>
             </div>
             <a href="export_reports_csv.php?month=<?php echo urlencode($monthFilter); ?>&q=<?php echo urlencode($search); ?>" class="btn-new" style="background: linear-gradient(135deg, #16a34a, #15803d);">

@@ -457,15 +457,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     </span>
                                     Por facturar
                                 </a>
-                            </li>
-                            <li>
+                                                      <li>
                                 <a href="reporte_tickets.php" class="sidebar-link <?php echo $currentRoute === 'reportes' ? 'active' : ''; ?>">
                                     <span class="icon">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M4 19v-4m4 4v-8m4 8v-6m4 6v-10" stroke="<?php echo $currentRoute === 'reportes' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </span>
-                                    Reportes
+                                    Reportes de Costo
                                 </a>
                             </li>
                             <?php endif; ?>
@@ -483,7 +482,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     <path d="M10 9H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
-                            Reportes
+                            Cotizaciones
                         </a>
                     </li>
                     <?php endif; ?>
