@@ -77,7 +77,7 @@ if ($sn !== '') {
                 <div class="mobile-user-info">
                     <div class="name"><?php echo html($mobileOrgName); ?></div>
                     <div class="sub">
-                        <i class="bi bi-headset"></i> Agente: <?php echo html($quote['staff_name'] ?: 'Sin asignar'); ?>
+                        <i class="bi bi-shop"></i> Sucursal: <?php echo html($quote['sucursal'] ?: 'Principal'); ?>
                     </div>
                     <?php if (!empty($quote['org_boss_name'])): ?>
                     <div class="sub mt-1">
@@ -136,18 +136,15 @@ if ($sn !== '') {
                 </div>
                 <?php endif; ?>
             </div>
-            <!-- Col 2: Organización & Agente -->
+            <!-- Col 2: Organización & Sucursal -->
             <div>
                 <div class="field mb-4">
                     <label><i class="bi bi-building"></i> ORGANIZACIÓN</label>
                     <div class="value" style="font-weight: 600;"><?php echo html($quote['org_name'] ?: 'N/A'); ?></div>
                 </div>
                 <div class="field mb-4">
-                    <label><i class="bi bi-headset"></i> AGENTE A CARGO</label>
-                    <div class="value" style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 26px; height: 26px; background: #0f62fe; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 0.65rem; font-weight: 800; flex-shrink: 0;"><?php echo $staffInitials; ?></span>
-                        <?php echo html($quote['staff_name'] ?: 'Sin asignar'); ?>
-                    </div>
+                    <label><i class="bi bi-shop"></i> SUCURSAL</label>
+                    <div class="value" style="font-weight: 600;"><?php echo html($quote['sucursal'] ?: 'Principal'); ?></div>
                 </div>
             </div>
             <!-- Col 3: Estado & Fechas -->
