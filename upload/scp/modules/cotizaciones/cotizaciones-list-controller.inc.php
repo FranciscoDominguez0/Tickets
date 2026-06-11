@@ -2,6 +2,22 @@
 /**
  * Controlador de Lista de Cotizaciones
  */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
+    if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
+        $quoteId = (int)($_POST['id'] ?? 0);
+        if ($quoteId > 0) {
+            $stmt = $mysqli->prepare("DELETE FROM quotes WHERE id = ? AND empresa_id = ?");
+            if ($stmt) {
+                $stmt->bind_param("ii", $quoteId, $eid);
+                $stmt->execute();
+                $_SESSION['flash_msg'] = 'Cotización eliminada correctamente.';
+            }
+        }
+        header("Location: cotizaciones.php");
+        exit;
+    }
+}
+
 $statusFilter = $_GET['status'] ?? '';
 $searchQuery = $_GET['q'] ?? '';
 

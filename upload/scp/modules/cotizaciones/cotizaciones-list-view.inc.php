@@ -199,9 +199,14 @@
                                 </div>
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
-                                <a href="cotizaciones.php?id=<?php echo $q['id']; ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
-                                    <i class="bi bi-chevron-right"></i>
-                                </a>
+                                <div class="d-flex justify-content-end gap-2 align-items-center">
+                                    <button type="button" class="btn btn-sm" style="background: transparent; color: #f87171; border: none; font-size: 1.1rem; transition: all 0.2s; padding: 4px;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'" title="Eliminar Cotización" data-bs-toggle="modal" data-bs-target="#deleteQuoteModal" data-id="<?php echo $q['id']; ?>" onclick="event.stopPropagation();">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    <a href="cotizaciones.php?id=<?php echo $q['id']; ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center; padding: 4px;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -246,3 +251,58 @@
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Modal Confirmar Eliminación -->
+<div class="modal fade" id="deleteQuoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pt-0 pb-4 px-4">
+                <div style="width: 70px; height: 70px; border-radius: 50%; background: #fef2f2; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 20px;">
+                    <i class="bi bi-trash3-fill"></i>
+                </div>
+                <h4 class="fw-bold mb-2" style="color: #0f172a;">¿Eliminar cotización?</h4>
+                <p class="text-muted mb-4" style="font-size: 0.95rem;">Esta acción no se puede deshacer. La cotización será borrada permanentemente del sistema.</p>
+                <form method="POST" action="cotizaciones.php" id="deleteQuoteForm">
+                    <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" id="deleteQuoteId" value="">
+                    
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 999px; padding: 10px 24px; font-weight: 700; color: #475569; background: #f1f5f9; border: none;">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" style="border-radius: 999px; padding: 10px 24px; font-weight: 700; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Sí, eliminar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var deleteQuoteModal = document.getElementById('deleteQuoteModal');
+    if (deleteQuoteModal) {
+        deleteQuoteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var quoteId = button.getAttribute('data-id');
+            var inputId = document.getElementById('deleteQuoteId');
+            if (inputId) {
+                inputId.value = quoteId;
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    body.dark-mode #deleteQuoteModal .modal-content { background: #1e293b; }
+    body.dark-mode #deleteQuoteModal h4 { color: #f8fafc !important; }
+    body.dark-mode #deleteQuoteModal .text-muted { color: #94a3b8 !important; }
+    body.dark-mode #deleteQuoteModal .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+    body.dark-mode #deleteQuoteModal .btn-light { background: #334155 !important; color: #cbd5e1 !important; }
+    body.dark-mode #deleteQuoteModal .btn-light:hover { background: #475569 !important; }
+    body.dark-mode #deleteQuoteModal .bi-trash3-fill { color: #f87171; }
+    body.dark-mode #deleteQuoteModal div[style*="background: #fef2f2"] { background: rgba(239, 68, 68, 0.1) !important; }
+</style>

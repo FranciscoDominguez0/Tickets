@@ -183,6 +183,9 @@ $permissionGroups = [
     'Administración' => [
         'admin.access' => ['title' => 'Acceso al Panel de Administración', 'desc' => 'Habilidad para acceder a la configuración, agentes, roles y configuraciones de correo electrónico.'],
     ],
+    'Cotizaciones' => [
+        'quote.view' => ['title' => 'Acceso a Cotizaciones', 'desc' => 'Habilidad para ver y gestionar cotizaciones.'],
+    ],
 ];
 
 $allPermKeys = [];
@@ -293,6 +296,10 @@ if (!function_exists('renderPermissionGroupCard')) {
             $icon = 'bi-sliders';
             $headerColor = '#dc2626';
             $bgColor = 'rgba(220, 38, 38, 0.04)';
+        } elseif ($groupTitle === 'Cotizaciones') {
+            $icon = 'bi-file-earmark-text-fill';
+            $headerColor = '#ea580c';
+            $bgColor = 'rgba(234, 88, 12, 0.04)';
         }
         $groupId = 'group_' . preg_replace('/[^a-z0-9]/', '', strtolower($groupTitle));
         ?>
@@ -465,6 +472,9 @@ ob_start();
                     <?php 
                     if (isset($permissionGroups['Tareas'])) {
                         renderPermissionGroupCard('Tareas', $permissionGroups['Tareas'], $enabledPerms);
+                    }
+                    if (isset($permissionGroups['Cotizaciones'])) {
+                        renderPermissionGroupCard('Cotizaciones', $permissionGroups['Cotizaciones'], $enabledPerms);
                     }
                     if (isset($permissionGroups['Directorio, Mapa y Estadísticas'])) {
                         renderPermissionGroupCard('Directorio, Mapa y Estadísticas', $permissionGroups['Directorio, Mapa y Estadísticas'], $enabledPerms);

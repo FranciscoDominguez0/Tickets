@@ -471,6 +471,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             <?php endif; ?>
                         </ul>
                     </li>
+                    <?php if (roleHasPermission('quote.view')): ?>
                     <li class="sidebar-group">
                         <?php
                         $isQuotesRoute = ($currentRoute === 'cotizaciones');
@@ -497,19 +498,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         </button>
                         <ul id="quotes-subnav" class="sidebar-subnav <?php echo $expandQuotes ? 'open' : ''; ?>">
                             <li>
-                                <a href="cotizaciones.php" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones' && empty($_GET['status']) && empty($_GET['a'])) ? 'active' : ''; ?>">
-                                    <span class="icon"><i class="bi bi-card-list" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones' && empty($_GET['status']) && empty($_GET['a'])) ? '#ffffff' : '#64748b'; ?>;"></i></span>
-                                    Todas
-                                </a>
-                            </li>
-                            <li>
-                                <a href="cotizaciones.php?status=pending" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones' && ($_GET['status'] ?? '') === 'pending') ? 'active' : ''; ?>">
-                                    <span class="icon"><i class="bi bi-hourglass-split" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones' && ($_GET['status'] ?? '') === 'pending') ? '#ffffff' : '#64748b'; ?>;"></i></span>
-                                    Pendientes
+                                <a href="cotizaciones.php" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-card-list" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#64748b'; ?>;"></i></span>
+                                    Explorar
                                 </a>
                             </li>
                         </ul>
                     </li>
+                    <?php endif; ?>
                     <?php
                     $canViewUsers = roleHasPermission('user.view');
                     $canViewOrgs = roleHasPermission('org.view');

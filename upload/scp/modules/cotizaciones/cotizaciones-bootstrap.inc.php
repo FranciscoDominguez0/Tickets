@@ -7,6 +7,8 @@ if (!isset($mysqli) || !$mysqli) {
     die('Database connection not available.');
 }
 
+requireRolePermission('quote.view', 'index.php');
+
 $eid = empresaId();
 
 

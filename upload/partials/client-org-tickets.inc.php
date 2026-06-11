@@ -259,7 +259,7 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                 <a href="<?php echo $href; ?>" class="list-group-item list-group-item-action org-explorer-row d-flex align-items-center flex-wrap gap-3 <?php echo $unreadClass; ?>" style="<?php echo $isUnread ? 'border-left: 4px solid #ef4444 !important;' : ''; ?>">
                                     <span class="org-ticket-num d-flex flex-column align-items-center justify-content-center" style="min-width:55px; text-align:center;">
                                         <i class="bi <?php echo $icon; ?> fs-5 quote-icon"></i>
-                                        <span style="font-size: 0.75rem; font-weight: 800; color: #64748b; margin-top: 2px;">#<?php echo $doc['id']; ?></span>
+                                        <span style="font-size: 0.75rem; font-weight: 800; margin-top: 2px;">#<?php echo $doc['id']; ?></span>
                                     </span>
                                     <div class="flex-grow-1" style="min-width:200px;">
                                         <div class="fw-bold mb-1 quote-title"><?php echo html($doc['subject'] ?: 'Sin título'); ?></div>
