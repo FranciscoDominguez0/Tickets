@@ -483,7 +483,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     <path d="M10 9H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
-                            Cotizaciones
+                            Reportes
                         </a>
                     </li>
                     <?php endif; ?>

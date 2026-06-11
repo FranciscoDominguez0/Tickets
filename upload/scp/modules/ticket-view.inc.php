@@ -1007,7 +1007,73 @@ if ($ticketClientSignaturePath !== '') {
             $pStyle = "background: {$pColor}15; color: {$pColor}; border: none; border-radius: 50rem;";
             $sColor = $t['status_color'] ?: '#64748b';
             $sStyle = "background: {$sColor}15; color: {$sColor}; border: none; border-radius: 50rem;";
+            
+            // Comprobar si venimos de la misma página (recarga o post-redirect)
+            $isFromSameTicket = false;
+            if (isset($_SERVER['HTTP_REFERER'])) {
+                $refQuery = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_QUERY);
+                parse_str($refQuery ?? '', $refParams);
+                if (strpos($_SERVER['HTTP_REFERER'], 'tickets.php') !== false && isset($refParams['id']) && (int)$refParams['id'] === (int)$tid) {
+                    $isFromSameTicket = true;
+                }
+            }
+
+            // Check if ticket requires a quote from boss review
+            $reqQuoteCheck = $mysqli->query("SELECT id FROM ticket_approvals WHERE ticket_id = $tid AND status = 'cotizacion' ORDER BY id DESC LIMIT 1");
+            $needsQuoteAlert = $reqQuoteCheck && $reqQuoteCheck->num_rows > 0 && !$isFromSameTicket;
         ?>
+
+        <?php if ($needsQuoteAlert): ?>
+            <style>
+                #quoteRequirementPopup { background: #ffffff; color: #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05); }
+                #quoteRequirementPopup p { color: #64748b; }
+                #quoteRequirementPopup .close-btn { color: #94a3b8; }
+                #quoteRequirementPopup .close-btn:hover { color: #1e293b; }
+                body.dark-mode #quoteRequirementPopup { background: #1e293b; color: #f8fafc; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05); }
+                body.dark-mode #quoteRequirementPopup p { color: #94a3b8; }
+                body.dark-mode #quoteRequirementPopup .close-btn { color: #64748b; }
+                body.dark-mode #quoteRequirementPopup .close-btn:hover { color: #f8fafc; }
+            </style>
+            <div id="quoteRequirementPopup" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -40%); z-index: 9999; padding: 32px 40px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; border-bottom: 4px solid #ef4444; max-width: 420px; opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease;">
+                <button type="button" class="close-btn" id="closeQuoteRequirement" style="position: absolute; top: 12px; right: 16px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s;" aria-label="Cerrar">&times;</button>
+                <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                    <i class="bi bi-file-earmark-text-fill" style="font-size: 2.5rem;"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: 0.02em;">Requiere Cotización</h4>
+                    <p style="margin: 10px 0 0 0; font-size: 1rem; line-height: 1.5;">El jefe de la organización ha solicitado que se genere una cotización antes de proceder.</p>
+                </div>
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var popup = document.getElementById('quoteRequirementPopup');
+                    var closeBtn = document.getElementById('closeQuoteRequirement');
+                    var autoHideTimer;
+                    if (popup) {
+                        setTimeout(function() {
+                            popup.style.opacity = '1';
+                            popup.style.transform = 'translate(-50%, -50%) scale(1.02)';
+                            setTimeout(function() { popup.style.transform = 'translate(-50%, -50%) scale(1)'; }, 250);
+                        }, 150);
+                        
+                        function closePopup() {
+                            popup.style.opacity = '0';
+                            popup.style.transform = 'translate(-50%, -45%) scale(0.95)';
+                            setTimeout(function() { popup.remove(); }, 400);
+                        }
+
+                        autoHideTimer = setTimeout(closePopup, 5000);
+
+                        if (closeBtn) {
+                            closeBtn.addEventListener('click', function() {
+                                clearTimeout(autoHideTimer);
+                                closePopup();
+                            });
+                        }
+                    }
+                });
+            </script>
+        <?php endif; ?>
 
         <!-- DISEÑO MÓVIL (Visible solo en pantallas pequeñas) -->
         <div class="d-md-none">

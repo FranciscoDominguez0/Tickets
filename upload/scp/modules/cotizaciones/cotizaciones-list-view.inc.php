@@ -54,7 +54,7 @@
     <div class="tickets-header">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
-                <h1>Cotizaciones</h1>
+                <h1>Reportes</h1>
                 <div class="sub">
                     <?php
                     $statusNames = [
@@ -98,7 +98,7 @@
                         <input type="hidden" name="status" value="<?php echo html($statusFilter); ?>">
                     <?php endif; ?>
                     <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
-                    <input type="text" name="q" id="ticketSearchInput" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" placeholder="Buscar cotización..." value="<?php echo html($searchQuery); ?>">
+                    <input type="text" name="q" id="ticketSearchInput" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" placeholder="Buscar reporte..." value="<?php echo html($searchQuery); ?>">
                     <?php if ($searchQuery !== ''): ?>
                         <a href="cotizaciones.php<?php echo $statusFilter !== '' ? '?status='.html($statusFilter) : ''; ?>" class="btn btn-outline-secondary" style="border-left: none; border-radius: 0 10px 10px 0; background: #fff; border-color: #dee2e6;">
                             <i class="bi bi-x-lg"></i>
@@ -114,7 +114,7 @@
         <table class="table table-hover tickets-table no-checkbox mb-0" id="ticketsTable">
             <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
-                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Cotización</th>
+                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Reporte</th>
                     <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Organización</th>
                     <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
                     <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Fecha</th>
@@ -200,7 +200,7 @@
                             </td>
                             <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
                                 <div class="d-flex justify-content-end gap-2 align-items-center">
-                                    <button type="button" class="btn btn-sm" style="background: transparent; color: #f87171; border: none; font-size: 1.1rem; transition: all 0.2s; padding: 4px;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'" title="Eliminar Cotización" data-bs-toggle="modal" data-bs-target="#deleteQuoteModal" data-id="<?php echo $q['id']; ?>" onclick="event.stopPropagation();">
+                                    <button type="button" class="btn btn-sm" style="background: transparent; color: #f87171; border: none; font-size: 1.1rem; transition: all 0.2s; padding: 4px;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'" title="Eliminar Reporte" data-bs-toggle="modal" data-bs-target="#deleteQuoteModal" data-id="<?php echo $q['id']; ?>" onclick="event.stopPropagation();">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                     <a href="cotizaciones.php?id=<?php echo $q['id']; ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center; padding: 4px;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
