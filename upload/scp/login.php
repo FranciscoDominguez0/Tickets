@@ -204,14 +204,26 @@ if ($_POST) {
             box-shadow: 0 6px 20px var(--accent-glow-soft), 0 2px 8px rgba(0,0,0,0.2) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
         .agent-btn-login:hover:not(.loading) {
             transform: translateY(-2px) scale(1.01) !important;
             box-shadow: 0 10px 30px var(--accent-glow), 0 4px 12px var(--accent-glow-soft) !important;
             background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%) !important;
         }
+        .agent-btn-login.loading {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%) !important;
+            background-image: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%) !important;
+            box-shadow: 0 6px 20px var(--accent-glow-soft), 0 2px 8px rgba(0,0,0,0.2) !important;
+        }
         .agent-btn-login:active {
             transform: translateY(0) !important;
+            box-shadow: 0 0 0 3px var(--accent-glow) !important;
+        }
+        .agent-btn-login:focus, .agent-btn-login:focus-visible {
+            outline: none !important;
+            box-shadow: 0 0 0 3px var(--accent-glow) !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
         .agent-form-group input {
             background: rgba(255, 255, 255, 0.03) !important;
