@@ -36,3 +36,4 @@ CREATE TABLE IF NOT EXISTS `quote_messages` (
 
 -- Asegurarse de que exista el rol o permiso si se usa un sistema estricto, 
 -- aunque el código PHP asumirá validación básica si no se agregan permisos específicos a 'role_permissions'.
+ALTER TABLE quotes ADD COLUMN sucursal VARCHAR(255) DEFAULT '' AFTER title;

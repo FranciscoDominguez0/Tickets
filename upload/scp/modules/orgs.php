@@ -1406,15 +1406,6 @@ if (!empty($_GET['org'])) {
                                     <label class="form-label">Notas internas</label>
                                     <textarea class="form-control" name="org_notes" rows="4"><?php echo html($orgInfo['notes'] ?? ''); ?></textarea>
                                 </div>
-                                <div class="col-12">
-                                    <div class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" id="plain_text_emails_edit" name="plain_text_emails" value="1" <?php echo !empty($orgInfo['plain_text_emails']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label fw-bold" for="plain_text_emails_edit">
-                                            <i class="bi bi-shield-check text-success"></i> Correos seguros (Solo texto plano)
-                                        </label>
-                                        <div class="form-text mt-0">Activa esta opción si los correos enviados a esta empresa suelen irse a Spam o son bloqueados.</div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                         <div class="modal-footer org-modal-footer">
@@ -1656,15 +1647,6 @@ $orgs = array_slice($allOrgs, $offset, $perPage);
                     <div class="org-form-group">
                         <label for="org_notes" class="org-form-label"><i class="bi bi-file-text"></i> Notas internas</label>
                         <textarea class="org-form-control" id="org_notes" name="org_notes" rows="4" placeholder="Notas internas"><?php echo html($_POST['org_notes'] ?? ''); ?></textarea>
-                    </div>
-                    <div class="org-form-group mt-3 p-3 bg-light rounded border">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="plain_text_emails" name="plain_text_emails" value="1" <?php echo !empty($_POST['plain_text_emails']) ? 'checked' : ''; ?>>
-                            <label class="form-check-label fw-bold" for="plain_text_emails">
-                                <i class="bi bi-shield-check text-success"></i> Correos seguros (Solo texto plano)
-                            </label>
-                            <div class="form-text mt-1 text-muted" style="font-size: 0.85rem;">Activa esta opción si los correos enviados a esta empresa suelen irse a Spam o son bloqueados por servidores estrictos.</div>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer org-modal-footer">

@@ -322,7 +322,7 @@ class Mailer {
             if ($bodyHtmlFinal === '') {
                 // Solo texto + adjuntos
                 $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyTextFinal) . "\r\n";
+                $message .= chunk_split(base64_encode($bodyTextFinal)) . "\r\n";
             } else {
                 // Alternative (Texto + HTML) dentro de Mixed
                 $alt = '----=_Alt_' . md5(uniqid('', true));
@@ -336,14 +336,14 @@ class Mailer {
 
                 $message .= "--$alt\r\n";
                 $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyTextFinal) . "\r\n";
+                $message .= chunk_split(base64_encode($bodyTextFinal)) . "\r\n";
 
                 $message .= "--$alt\r\n";
                 if ($hasInline) {
                     $message .= "Content-Type: multipart/related; boundary=\"$related\"\r\n\r\n";
                     $message .= "--$related\r\n";
                     $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                    $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                    $message .= chunk_split(base64_encode($bodyHtmlFinal)) . "\r\n";
                     foreach ($attachments as $att) {
                         if (!is_array($att) || empty($att['cid'])) continue;
                         $filename = (string)($att['filename'] ?? 'archivo');
@@ -361,7 +361,7 @@ class Mailer {
                     $message .= "--$related--\r\n";
                 } else {
                     $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                    $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                    $message .= chunk_split(base64_encode($bodyHtmlFinal)) . "\r\n";
                 }
                 $message .= "--$alt--\r\n";
             }
@@ -392,7 +392,7 @@ class Mailer {
                 $headerLines[] = 'Content-Transfer-Encoding: base64';
                 $headerStr = implode("\r\n", $headerLines);
                 
-                $message = base64_encode($bodyTextFinal);
+                $message = chunk_split(base64_encode($bodyTextFinal));
             } else {
                 // Multipart alternative
                 $alt = '----=_Alt_' . md5(uniqid('', true));
@@ -401,10 +401,10 @@ class Mailer {
 
                 $message = "--$alt\r\n";
                 $message .= "Content-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyTextFinal) . "\r\n";
+                $message .= chunk_split(base64_encode($bodyTextFinal)) . "\r\n";
                 $message .= "--$alt\r\n";
                 $message .= "Content-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n";
-                $message .= base64_encode($bodyHtmlFinal) . "\r\n";
+                $message .= chunk_split(base64_encode($bodyHtmlFinal)) . "\r\n";
                 $message .= "--$alt--";
             }
         }
