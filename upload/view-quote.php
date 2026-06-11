@@ -629,6 +629,10 @@ $stCol = $stInfo['color'];
                         <div class="client-ticket-field__label"><i class="bi bi-building"></i> Organización</div>
                         <div class="client-ticket-field__value"><?php echo html($quote['org_name'] ?: 'N/A'); ?></div>
                     </div>
+                    <div class="client-ticket-overview__grid-item">
+                        <div class="client-ticket-field__label"><i class="bi bi-shop"></i> Sucursal</div>
+                        <div class="client-ticket-field__value"><?php echo html((string)($quote['sucursal'] ?? '') !== '' ? (string)$quote['sucursal'] : 'N/A'); ?></div>
+                    </div>
                 </div>
             </div>
 

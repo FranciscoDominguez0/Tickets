@@ -180,7 +180,7 @@ body.dark-mode .open-section .form-control {
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Sucursal</label>
-                    <input type="text" name="sucursal" class="form-control" placeholder="Ej. Sucursal Centro" value="<?php echo html($_POST['sucursal'] ?? ''); ?>">
+                    <input type="text" name="sucursal" class="form-control" placeholder="Ej. Penonomé" value="<?php echo html($_POST['sucursal'] ?? ''); ?>">
                 </div>
                 <div class="col-12">
                     <label class="form-label">Organización <span class="required">*</span></label>
@@ -210,3 +210,22 @@ body.dark-mode .open-section .form-control {
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('form-open-quote');
+    const btn = document.getElementById('btnSubmitQuote');
+    if (form && btn) {
+        form.addEventListener('submit', function(e) {
+            if (form.checkValidity()) {
+                // Timeout para asegurar que el evento submit se propague antes de deshabilitar
+                setTimeout(() => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.8';
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Creando...';
+                }, 50);
+            }
+        });
+    }
+});
+</script>
