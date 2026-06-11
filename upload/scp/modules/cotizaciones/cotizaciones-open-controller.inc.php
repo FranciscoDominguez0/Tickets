@@ -39,6 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
+                // Enviar correo de notificación al jefe de la organización
+                sendQuoteEmailToOrgBoss($newId, $description, true, $mysqli);
+                
                 $_SESSION['flash_msg'] = 'Cotización creada exitosamente como borrador.';
                 header("Location: cotizaciones.php?id=$newId");
                 exit;

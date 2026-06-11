@@ -231,16 +231,105 @@ if ($sn !== '') {
             <textarea name="message" class="form-control" style="min-height: 140px; border-radius: 12px; resize: vertical;" placeholder="Escribe tu respuesta aquí..." required></textarea>
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-                <div>
-                    <label style="font-weight: 600; font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                        <i class="bi bi-paperclip"></i> Adjuntar documento
-                    </label>
-                    <input type="file" name="quote_file" class="form-control form-control-sm" style="border-radius: 10px; max-width: 320px;" accept=".pdf,.doc,.docx">
+                <div style="flex: 1; min-width: 250px;">
+                    <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
+                        <input type="file" name="quote_file" id="attachments" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
+                        <div class="attach-text">Arrastra o <a href="#" data-action="attachments-browse">selecciona un archivo</a></div>
+                        <div class="attach-hint">PDF, DOC, JPG, PNG (Máx. 10MB)</div>
+                        <div class="attach-list" id="attach-list"></div>
+                    </div>
                 </div>
-                <button type="submit" class="btn-reply text-white" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); border-radius: 50rem; cursor: pointer; border: none; font-weight: 700;">
+                <button type="submit" class="btn-reply text-white" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); border-radius: 50rem; cursor: pointer; border: none; font-weight: 700; height: max-content; padding: 10px 24px;">
                     <i class="bi bi-send-fill"></i> Enviar
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var zone = document.getElementById('attach-zone');
+    var input = document.getElementById('attachments');
+    var list = document.getElementById('attach-list');
+
+    if (zone && input) {
+        zone.addEventListener('click', function (e) {
+            var t = e.target;
+            if (t && t.tagName && t.tagName.toLowerCase() === 'a') e.preventDefault();
+            if (t.closest('.dz-preview-remove')) return;
+            try {
+                if (typeof input.showPicker === 'function') input.showPicker();
+                else input.click();
+            } catch (err) { input.click(); }
+        });
+
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                input.files = e.dataTransfer.files;
+                updateList();
+            }
+        });
+        input.addEventListener('change', function() { updateList(); });
+    }
+
+    function humanSize(bytes) {
+        if (!bytes) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB'];
+        var i = Math.floor(Math.log(bytes) / Math.log(1024));
+        i = Math.min(i, units.length - 1);
+        return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    function updateList() {
+        if (list) list.innerHTML = '';
+        if (input && input.files.length) {
+            var file = input.files[0];
+            var ext = file.name.split('.').pop().toLowerCase();
+            var iconHtml = '<i class="bi bi-file-earmark-text"></i>';
+            if (['pdf'].includes(ext)) { iconHtml = '<i class="bi bi-file-earmark-pdf-fill" style="color: #ef4444;"></i>'; } 
+            else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) { iconHtml = '<i class="bi bi-file-earmark-image" style="color: #3b82f6;"></i>'; } 
+            else if (['doc', 'docx'].includes(ext)) { iconHtml = '<i class="bi bi-file-earmark-word-fill" style="color: #0ea5e9;"></i>'; }
+
+            var card = document.createElement('div');
+            card.className = 'dz-preview-card';
+            card.innerHTML = 
+                '<div class="dz-preview-icon" id="preview-icon-0">' + iconHtml + '</div>' +
+                '<div class="dz-preview-info">' +
+                    '<div class="dz-preview-name" title="'+file.name+'">' + file.name + '</div>' +
+                    '<div class="dz-preview-size">' + humanSize(file.size) + '</div>' +
+                '</div>' +
+                '<button type="button" class="dz-preview-remove" data-remove-index="0">Quitar</button>';
+            
+            list.appendChild(card);
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var iconDiv = document.getElementById('preview-icon-0');
+                    if (iconDiv) { iconDiv.innerHTML = '<img src="' + e.target.result + '" alt="preview">'; }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+
+    if (list) {
+        list.addEventListener('click', function(e) {
+            var btn = e.target.closest('.dz-preview-remove');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                var dt = new DataTransfer();
+                input.files = dt.files;
+                updateList();
+            }
+        });
+    }
+});
+</script>

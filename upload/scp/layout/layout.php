@@ -473,37 +473,18 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     </li>
                     <?php if (roleHasPermission('quote.view')): ?>
                     <li class="sidebar-group">
-                        <?php
-                        $isQuotesRoute = ($currentRoute === 'cotizaciones');
-                        $expandQuotes = ($isQuotesRoute && $allowExpandedGroups);
-                        ?>
-                        <button type="button"
-                                class="sidebar-link sidebar-toggle <?php echo $expandQuotes ? 'active expanded' : ''; ?>"
-                                data-subnav="quotes-subnav" aria-controls="quotes-subnav" aria-expanded="<?php echo $expandQuotes ? 'true' : 'false'; ?>">
+                        <a href="cotizaciones.php" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones') ? 'active' : ''; ?>">
                             <span class="icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M14 2v6h6" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M16 13H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M16 17H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M10 9H8" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M14 2v6h6" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16 13H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M16 17H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10 9H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Cotizaciones
-                            <span class="arrow">
-                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandQuotes ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </span>
-                        </button>
-                        <ul id="quotes-subnav" class="sidebar-subnav <?php echo $expandQuotes ? 'open' : ''; ?>">
-                            <li>
-                                <a href="cotizaciones.php" class="sidebar-link <?php echo ($currentRoute === 'cotizaciones') ? 'active' : ''; ?>">
-                                    <span class="icon"><i class="bi bi-card-list" style="font-size: 1rem; color: <?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#64748b'; ?>;"></i></span>
-                                    Explorar
-                                </a>
-                            </li>
-                        </ul>
+                        </a>
                     </li>
                     <?php endif; ?>
                     <?php

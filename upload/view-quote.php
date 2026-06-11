@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_msg'] = 'Cotización aceptada exitosamente.';
             header("Location: view-quote.php?id=$qid");
             exit;
-        } elseif ($action === 'reject_quote' && $quote['status'] === 'answered') {
+        } elseif ($action === 'reject_quote' && ($quote['status'] === 'answered' || $quote['status'] === 'pending')) {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'rejected' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
@@ -576,14 +576,14 @@ $stCol = $stInfo['color'];
     <div class="center-wrap">
         <div class="panel-soft">
             <?php if (!empty($_SESSION['flash_msg'])): ?>
-                <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                <div class="alert alert-success d-flex align-items-center mb-4 auto-dismiss-alert" role="alert">
                     <i class="bi bi-check-circle-fill fs-4 me-3"></i>
                     <div><?php echo html($_SESSION['flash_msg']); unset($_SESSION['flash_msg']); ?></div>
                 </div>
             <?php endif; ?>
             
             <?php if ($reply_error): ?>
-                <div class="alert alert-danger mb-4"><?php echo html($reply_error); ?></div>
+                <div class="alert alert-danger mb-4 auto-dismiss-alert"><?php echo html($reply_error); ?></div>
             <?php endif; ?>
             <div class="client-ticket-hero">
                 <div class="client-ticket-hero__ticket-card">
@@ -697,13 +697,22 @@ $stCol = $stInfo['color'];
                     <?php if ($quote['status'] === 'pending'): ?>
                         <h5 class="fw-bold mb-3">Acción Requerida</h5>
                         <p class="text-muted mb-4">Se ha registrado la solicitud de cotización. Por favor, apruébala para continuar con la generación formal del documento.</p>
-                        <form method="POST" class="d-inline-block">
-                            <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                            <input type="hidden" name="action_type" value="request_quote">
-                            <button type="submit" class="btn btn-action-primary">
-                                <i class="bi bi-check2-circle"></i> Aprobar Cotización
-                            </button>
-                        </form>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <form method="POST" class="d-inline-block m-0">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <input type="hidden" name="action_type" value="request_quote">
+                                <button type="submit" class="btn btn-action-primary">
+                                    <i class="bi bi-check2-circle"></i> Aprobar Cotización
+                                </button>
+                            </form>
+                            <form method="POST" class="d-inline-block m-0">
+                                <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                                <input type="hidden" name="action_type" value="reject_quote">
+                                <button type="submit" class="btn btn-action-outline">
+                                    <i class="bi bi-x-circle"></i> Rechazar Cotización
+                                </button>
+                            </form>
+                        </div>
                     <?php elseif ($quote['status'] === 'answered'): ?>
                         <h5 class="fw-bold mb-3">Resolución de Cotización</h5>
                         <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes aceptar o rechazar esta cotización.</p>
@@ -735,5 +744,22 @@ $stCol = $stInfo['color'];
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.auto-dismiss-alert');
+        alerts.forEach(alert => {
+            // Ocultar mensaje después de 5 segundos (5000 ms)
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s ease, margin 0.5s ease, padding 0.5s ease, height 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.margin = '0';
+                alert.style.padding = '0';
+                alert.style.height = '0';
+                alert.style.overflow = 'hidden';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
+    });
+</script>
 </body>
 </html>
