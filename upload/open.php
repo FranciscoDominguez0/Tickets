@@ -755,6 +755,7 @@ if ($_POST) {
                         addLog('ticket_email_queue_trigger_failed', 'No se pudo disparar worker asíncrono', 'ticket', $ticket_id, 'staff', 0);
                     }
                 }
+                notifyOrgManagersOfNewTicket($mysqli, (int)$ticket_id, (int)$eid);
                 $_SESSION['flash_msg'] = 'Ticket creado exitosamente! Número: ' . (string)$ticket_number;
                 $_SESSION['new_ticket_id'] = (int)$ticket_id;
                 $_SESSION['prevent_open_back'] = 1;

@@ -1,4 +1,4 @@
-<?php
+ <?php
 require 'config.php';
 $res1 = $mysqli->query("SELECT * FROM ticket_approvals ORDER BY id DESC LIMIT 10");
 echo "ticket_approvals:\n";

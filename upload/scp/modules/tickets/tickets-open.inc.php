@@ -406,6 +406,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                             }
                         }
 
+                        notifyOrgManagersOfNewTicket($mysqli, (int)$new_tid, (int)$eid);
                         header('Location: tickets.php?id=' . $new_tid . '&msg=created');
                         exit;
                     }

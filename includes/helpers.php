@@ -2558,6 +2558,7 @@ function ensureEmailQueueTable()
     if (!dbColumnExists('email_queue', 'attachments_json')) {
         @$mysqli->query("ALTER TABLE email_queue ADD COLUMN attachments_json MEDIUMTEXT NULL AFTER body_text");
     }
+    
     return true;
 }
 
@@ -3682,4 +3683,221 @@ function saveOrgBossReportWithAttachments($mysqli, int $empresaId, int $staffId,
     }
 
     return ['ok' => true, 'report_id' => $reportId];
+}
+
+/**
+ * Notifica a los encargados de la organización cuando se crea un nuevo ticket.
+ */
+function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): void
+{
+    if ($ticketId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
+        return;
+    }
+    
+    // Verificar si existe la tabla de organizaciones
+    $hasOrgs = dbTableExists('organizations');
+    if (!$hasOrgs) {
+        return;
+    }
+    $hasUserOrgs = dbTableExists('user_organizations');
+    
+    // Obtener detalles del ticket
+    $stmtT = $mysqli->prepare(
+        "SELECT t.ticket_number, t.subject, t.user_id, t.dept_id, d.name AS dept_name, 
+                u.firstname AS user_firstname, u.lastname AS user_lastname, u.email AS user_email, u.company AS user_company
+         FROM tickets t
+         LEFT JOIN users u ON u.id = t.user_id AND u.empresa_id = t.empresa_id
+         LEFT JOIN departments d ON d.id = t.dept_id AND d.empresa_id = t.empresa_id
+         WHERE t.id = ? AND t.empresa_id = ? LIMIT 1"
+    );
+    if (!$stmtT) {
+        return;
+    }
+    $stmtT->bind_param('ii', $ticketId, $empresaId);
+    if (!$stmtT->execute()) {
+        return;
+    }
+    $ticket = $stmtT->get_result()->fetch_assoc();
+    if (!$ticket) {
+        return;
+    }
+    
+    $ticketNumber = $ticket['ticket_number'];
+    $subject = $ticket['subject'];
+    $userId = (int)$ticket['user_id'];
+    $deptName = $ticket['dept_name'] ?? 'Soporte';
+    $userFirstname = $ticket['user_firstname'] ?? '';
+    $userLastname = $ticket['user_lastname'] ?? '';
+    $userEmail = $ticket['user_email'] ?? '';
+    $userFullname = trim($userFirstname . ' ' . $userLastname);
+    if ($userFullname === '') {
+        $userFullname = 'Cliente';
+    }
+    
+    if ($userId <= 0) {
+        return;
+    }
+    
+    // Obtener descripción del ticket (primer mensaje del hilo)
+    $bodyHtmlText = '';
+    $bodyEmailText = '';
+    $stmtTe = $mysqli->prepare(
+        "SELECT te.body
+         FROM thread_entries te
+         JOIN threads th ON th.id = te.thread_id
+         WHERE th.ticket_id = ? AND th.empresa_id = ?
+         ORDER BY te.id ASC
+         LIMIT 1"
+    );
+    if ($stmtTe) {
+        $stmtTe->bind_param('ii', $ticketId, $empresaId);
+        if ($stmtTe->execute()) {
+            $teRow = $stmtTe->get_result()->fetch_assoc();
+            if ($teRow && !empty($teRow['body'])) {
+                $bodyHtmlText = $teRow['body'];
+                $bodyEmailText = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags((string)$bodyHtmlText), ENT_QUOTES, 'UTF-8')));
+            }
+        }
+    }
+    
+    // Obtener encargados de la organización (org_tickets_view = 1) a los que pertenece el usuario
+    // Excluir al propio creador del ticket ($userId) para evitar auto-notificaciones.
+    $managers = [];
+    
+    if ($hasUserOrgs) {
+        $sql = "SELECT DISTINCT 
+                    u_manager.id AS manager_id,
+                    u_manager.email AS manager_email,
+                    u_manager.firstname AS manager_firstname,
+                    u_manager.lastname AS manager_lastname,
+                    o.name AS organization_name
+                FROM organizations o
+                INNER JOIN (
+                    SELECT uo.organization_id, uo.user_id, uo.empresa_id
+                    FROM user_organizations uo
+                    UNION
+                    SELECT o_fallback.id AS organization_id, u_fallback.id AS user_id, u_fallback.empresa_id
+                    FROM users u_fallback
+                    INNER JOIN organizations o_fallback ON o_fallback.name = u_fallback.company AND o_fallback.empresa_id = u_fallback.empresa_id
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM user_organizations uo_chk
+                        WHERE uo_chk.user_id = u_fallback.id AND uo_chk.empresa_id = u_fallback.empresa_id
+                    )
+                ) target_user_orgs ON target_user_orgs.organization_id = o.id AND target_user_orgs.empresa_id = o.empresa_id
+                INNER JOIN (
+                    SELECT uo_m.organization_id, u_m.id, u_m.email, u_m.firstname, u_m.lastname, u_m.empresa_id
+                    FROM users u_m
+                    INNER JOIN user_organizations uo_m ON uo_m.user_id = u_m.id AND uo_m.empresa_id = u_m.empresa_id
+                    WHERE u_m.org_tickets_view = 1 AND u_m.status = 'active'
+                    UNION
+                    SELECT o_m.id AS organization_id, u_m.id, u_m.email, u_m.firstname, u_m.lastname, u_m.empresa_id
+                    FROM users u_m
+                    INNER JOIN organizations o_m ON o_m.name = u_m.company AND o_m.empresa_id = u_m.empresa_id
+                    WHERE u_m.org_tickets_view = 1 AND u_m.status = 'active'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM user_organizations uo_chk2
+                          WHERE uo_chk2.user_id = u_m.id AND uo_chk2.empresa_id = u_m.empresa_id
+                      )
+                ) u_manager ON u_manager.organization_id = o.id AND u_manager.empresa_id = o.empresa_id
+                WHERE target_user_orgs.user_id = ? AND o.empresa_id = ? AND u_manager.id != ?";
+        $stmtM = $mysqli->prepare($sql);
+        if ($stmtM) {
+            $stmtM->bind_param('iii', $userId, $empresaId, $userId);
+        }
+    } else {
+        $sql = "SELECT DISTINCT 
+                    u_manager.id AS manager_id,
+                    u_manager.email AS manager_email,
+                    u_manager.firstname AS manager_firstname,
+                    u_manager.lastname AS manager_lastname,
+                    o.name AS organization_name
+                FROM organizations o
+                INNER JOIN users u_target ON u_target.company = o.name AND u_target.empresa_id = o.empresa_id
+                INNER JOIN users u_manager ON u_manager.company = o.name AND u_manager.empresa_id = o.empresa_id
+                WHERE u_target.id = ? AND o.empresa_id = ? AND u_manager.org_tickets_view = 1 AND u_manager.status = 'active' AND u_manager.id != ?";
+        $stmtM = $mysqli->prepare($sql);
+        if ($stmtM) {
+            $stmtM->bind_param('iii', $userId, $empresaId, $userId);
+        }
+    }
+    
+    if ($stmtM && $stmtM->execute()) {
+        $res = $stmtM->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $managers[] = $row;
+        }
+    }
+    
+    if (empty($managers)) {
+        return;
+    }
+    
+    // Encolar/Enviar correo a cada encargado de la organización
+    $viewUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?from=org&id=' . (int)$ticketId;
+    $appName = defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets';
+    
+    $mailSentCount = 0;
+    foreach ($managers as $mgr) {
+        $mgrEmail = strtolower(trim((string)($mgr['manager_email'] ?? '')));
+        if ($mgrEmail === '' || !filter_var($mgrEmail, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+        
+        $orgName = $mgr['organization_name'] ?? 'Organización';
+        $mgrName = trim(($mgr['manager_firstname'] ?? '') . ' ' . ($mgr['manager_lastname'] ?? ''));
+        if ($mgrName === '') {
+            $mgrName = 'Encargado';
+        }
+        
+        $emailSubject = '[Nuevo ticket] Org: ' . $orgName . ' - Usuario: ' . $userFullname;
+        
+        $bodyHtml = '
+            <div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #334155;">
+                <h2 style="color: #1e3a5f; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Nuevo ticket de tu organización</h2>
+                <p>Estimado/a <strong>' . htmlspecialchars($mgrName) . '</strong>,</p>
+                <p>Se ha creado un nuevo ticket para la organización <strong>' . htmlspecialchars($orgName) . '</strong>, por el usuario <strong>' . htmlspecialchars($userFullname) . '</strong>.</p>
+                
+                <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95rem;">
+                    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Número:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($ticketNumber) . '</td></tr>
+                    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Asunto:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($subject) . '</td></tr>
+                    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Usuario:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($userFullname) . '</td></tr>
+                    <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Departamento:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($deptName) . '</td></tr>
+                </table>';
+                
+        if ($bodyEmailText !== '') {
+            $bodyHtml .= '
+                <p><strong>Descripción:</strong></p>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin: 12px 0; font-style: italic;">' . nl2br(htmlspecialchars($bodyEmailText)) . '</div>';
+        }
+        
+        $bodyHtml .= '
+                <p style="margin-top: 20px;"><a href="' . htmlspecialchars($viewUrl) . '" style="display: inline-block; background: #2563eb; color: white; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver ticket en el Portal</a></p>
+                <p style="color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 24px;">' . htmlspecialchars($appName) . '</p>
+            </div>';
+            
+        $bodyText = "Nuevo ticket de tu organización\n\n"
+            . "Se ha creado un nuevo ticket para la organización: " . $orgName . "\n"
+            . "Usuario: " . $userFullname . "\n"
+            . "Número: " . $ticketNumber . "\n"
+            . "Asunto: " . $subject . "\n"
+            . "Departamento: " . $deptName . "\n\n"
+            . ($bodyEmailText !== '' ? "Descripción:\n" . $bodyEmailText . "\n\n" : "")
+            . "Ver ticket: " . $viewUrl . "\n\n"
+            . $appName;
+            
+        if (function_exists('enqueueEmailJob')) {
+            if (enqueueEmailJob($mgrEmail, $emailSubject, $bodyHtml, $bodyText, ['empresa_id' => $empresaId, 'context_type' => 'org_manager_notify', 'context_id' => $ticketId])) {
+                $mailSentCount++;
+            }
+        } else {
+            Mailer::send($mgrEmail, $emailSubject, $bodyHtml, $bodyText);
+            $mailSentCount++;
+        }
+    }
+    
+    if ($mailSentCount > 0 && function_exists('triggerEmailQueueWorkerAsync')) {
+        triggerEmailQueueWorkerAsync(40);
+    }
+    
+    addLog('org_manager_notify_summary', 'Se notificó a ' . $mailSentCount . ' encargados de organización para el ticket ' . $ticketNumber, 'ticket', $ticketId, 'staff', 0);
 }
