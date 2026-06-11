@@ -225,7 +225,31 @@
                         <?php
                         $clientName = trim($t['user_first'] . ' ' . $t['user_last']) ?: $t['user_email'];
                         $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
+                        
                         $statusColor = $t['status_color'] ?: '#ef4444';
+                        $statusIcon = 'bi-record-circle-fill';
+                        $statusName = html($t['status_name']);
+
+                        if (!empty($t['approval_status'])) {
+                            if ($t['approval_status'] === 'pending') {
+                                $statusName = 'Pendiente';
+                                $statusColor = '#eab308';
+                                $statusIcon = 'bi-clock-history';
+                            } elseif (in_array($t['approval_status'], ['approved', 'aprobado', 'aceptado'])) {
+                                $statusName = 'Aprobado';
+                                $statusColor = '#22c55e';
+                                $statusIcon = 'bi-check-circle-fill';
+                            } elseif (in_array($t['approval_status'], ['rejected', 'rechazado'])) {
+                                $statusName = 'Rechazado';
+                                $statusColor = '#ef4444';
+                                $statusIcon = 'bi-x-circle-fill';
+                            } elseif ($t['approval_status'] === 'cotizacion') {
+                                $statusName = 'Cotización';
+                                $statusColor = '#6366f1';
+                                $statusIcon = 'bi-file-earmark-text-fill';
+                            }
+                        }
+
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
 
                         $tidRow = (int)($t['id'] ?? 0);
@@ -305,7 +329,7 @@
                                     <?php endif; ?>
                                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
                                         <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
-                                            <?php echo html($t['status_name']); ?>
+                                            <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
                                         </span>
                                         <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                             <?php 
@@ -349,7 +373,7 @@
                             <td class="d-none d-md-table-cell" style="vertical-align: middle;">
                                 <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
                                     <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
-                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo html($t['status_name']); ?>
+                                        <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
                                     </span>
                                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                         <?php 

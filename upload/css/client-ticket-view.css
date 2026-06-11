@@ -417,7 +417,19 @@ body.dark-mode .client-ticket-thread-body {
 
     .client-ticket-hero__ticket-body {
         padding: 14px 14px 14px 16px;
-        gap: 10px;
+        gap: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .client-ticket-hero__main {
+        width: 100%;
+    }
+
+    .client-ticket-hero__actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .client-ticket-hero__headline {

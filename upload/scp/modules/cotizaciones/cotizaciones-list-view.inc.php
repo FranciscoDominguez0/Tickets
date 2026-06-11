@@ -16,6 +16,7 @@
     }
     body.dark-mode .ticket-title {
         color: #60a5fa !important;
+        background: rgba(96, 165, 250, 0.15) !important;
     }
     body.dark-mode .ticket-subject {
         color: #f8fafc !important;
@@ -110,7 +111,7 @@
 
     <!-- Tabla -->
     <div class="tickets-table-wrap">
-        <table class="table table-hover tickets-table mb-0" id="ticketsTable">
+        <table class="table table-hover tickets-table no-checkbox mb-0" id="ticketsTable">
             <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
                     <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Cotización</th>
@@ -149,6 +150,9 @@
                                     <a class="ticket-title" href="cotizaciones.php?id=<?php echo $q['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa; text-decoration: none;">
                                         <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo $q['id']; ?>
                                     </a>
+                                    <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
+                                        <?php echo date('d/m/Y', strtotime($q['created_at'])); ?>
+                                    </div>
                                 </div>
                                 <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
                                     <?php echo html($q['title']); ?>
@@ -157,6 +161,18 @@
                                     <span style="display:inline-flex; align-items:center; gap:5px;">
                                         <i class="bi bi-headset" style="color:#94a3b8;"></i> Agente: <strong style="color: #475569; font-weight:600;"><?php echo html($q['staff_name'] ?: 'Sin asignar'); ?></strong>
                                     </span>
+                                </div>
+
+                                <!-- Mobile Info -->
+                                <div class="d-md-none mt-3" style="display:flex; gap:8px; flex-direction:column;">
+                                    <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
+                                        <i class="bi bi-building" style="color:#cbd5e1;"></i> <strong><?php echo html($q['org_name'] ?: 'N/A'); ?></strong>
+                                    </div>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
+                                        <span class="chip chip-status" style="background: <?php echo $st['color']; ?>15; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; text-transform: uppercase;">
+                                            <i class="bi <?php echo $st['icon']; ?>" style="font-size: 0.7rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $st['label']; ?>
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="d-none d-lg-table-cell" style="vertical-align: middle;">

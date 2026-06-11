@@ -402,13 +402,29 @@ $stCol = $stInfo['color'];
         
         .btn-action-primary {
             background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #fff; border: none; padding: 10px 24px; border-radius: 50rem; font-weight: 700;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-            transition: transform 0.2s;
+            color: #fff; border: none; padding: 10px 26px; border-radius: 50rem; font-weight: 700;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+            transition: all 0.2s;
         }
-        .btn-action-primary:hover { transform: translateY(-2px); color: #fff; }
-        .btn-action-success { background: #10b981; color: #fff; border: none; padding: 10px 24px; border-radius: 50rem; font-weight: 700; }
-        .btn-action-danger { background: #ef4444; color: #fff; border: none; padding: 10px 24px; border-radius: 50rem; font-weight: 700; }
+        .btn-action-primary:hover { transform: translateY(-2px); color: #fff; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35); }
+        
+        .btn-action-dark {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #fff; border: none; padding: 10px 26px; border-radius: 50rem; font-weight: 700;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+            transition: all 0.2s;
+        }
+        .btn-action-dark:hover { transform: translateY(-2px); color: #fff; box-shadow: 0 6px 20px rgba(15, 23, 42, 0.35); }
+
+        .btn-action-outline {
+            background: transparent;
+            color: #64748b; border: 2px solid #e2e8f0; padding: 8px 24px; border-radius: 50rem; font-weight: 700;
+            transition: all 0.2s;
+        }
+        .btn-action-outline:hover { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+        
+        body.dark-mode .btn-action-outline { color: #a1a1aa; border-color: #3f3f46; }
+        body.dark-mode .btn-action-outline:hover { background: #27272a; color: #fafafa; border-color: #52525b; }
         
         @media (max-width: 576px) {
             body .container-main {
@@ -684,7 +700,7 @@ $stCol = $stInfo['color'];
                         <form method="POST" class="d-inline-block">
                             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                             <input type="hidden" name="action_type" value="request_quote">
-                            <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                            <button type="submit" class="btn btn-action-primary">
                                 <i class="bi bi-check2-circle"></i> Aprobar Cotización
                             </button>
                         </form>
@@ -695,14 +711,14 @@ $stCol = $stInfo['color'];
                             <form method="POST" style="margin:0;" class="d-inline-block">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="accept_quote">
-                                <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #16a34a; border-color: #16a34a; color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);">
+                                <button type="submit" class="btn btn-action-primary">
                                     <i class="bi bi-check-lg"></i> Aceptar Cotización
                                 </button>
                             </form>
                             <form method="POST" style="margin:0;" class="d-inline-block">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="reject_quote">
-                                <button type="submit" class="btn px-4 py-2" style="border-radius: 999px; font-weight: 700; background: #dc2626; border-color: #dc2626; color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+                                <button type="submit" class="btn btn-action-outline">
                                     <i class="bi bi-x-lg"></i> Rechazar Cotización
                                 </button>
                             </form>

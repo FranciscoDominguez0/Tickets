@@ -49,7 +49,66 @@ if ($sn !== '') {
 
     <!-- Overview Panel – 2 columnas limpias -->
     <div class="ticket-view-overview">
-        <div class="ticket-view-overview-desktop">
+        <!-- DISEÑO MÓVIL (Visible solo en pantallas pequeñas) -->
+        <div class="d-md-none">
+            <!-- Header: Estado -->
+            <div class="mobile-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="mobile-badge" style="background: <?php echo $stInfo['bg']; ?>; color: <?php echo $stInfo['color']; ?>; border: 1px solid <?php echo $stInfo['color']; ?>33;">
+                        <span class="dot" style="background: <?php echo $stInfo['color']; ?>;"></span>
+                        <?php echo $stInfo['label']; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Organización y Usuario -->
+            <div class="mobile-user-section">
+                <?php
+                    $mobileOrgName = trim($quote['org_name'] ?: 'N/A');
+                    $mobileInitialsOrg = strtoupper(substr($mobileOrgName, 0, 2));
+                    if(strlen($mobileOrgName) > 0 && strpos($mobileOrgName, ' ') !== false) {
+                        $parts = explode(' ', $mobileOrgName);
+                        $mobileInitialsOrg = strtoupper(substr($parts[0], 0, 1) . substr($parts[1], 0, 1));
+                    }
+                ?>
+                <div class="mobile-avatar" style="font-size: 1rem; font-weight: 900; letter-spacing: 0.04em; background: #eff6ff; color: #2563eb;">
+                    <?php echo html($mobileInitialsOrg); ?>
+                </div>
+                <div class="mobile-user-info">
+                    <div class="name"><?php echo html($mobileOrgName); ?></div>
+                    <div class="sub">
+                        <i class="bi bi-headset"></i> Agente: <?php echo html($quote['staff_name'] ?: 'Sin asignar'); ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grilla Inferior -->
+            <div class="mobile-grid">
+                <div class="mobile-grid-item" style="grid-column: 1 / -1;">
+                    <label><i class="bi bi-file-earmark-text"></i> COTIZACIÓN</label>
+                    <div class="val"><?php echo html($quote['title']); ?></div>
+                </div>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-calendar-event"></i> CREADA</label>
+                    <div class="val"><?php echo date('d/m/y h:i A', strtotime($quote['created_at'])); ?></div>
+                </div>
+                <?php if ($quote['ticket_id']): ?>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-ticket-perforated"></i> TICKET ORIGEN</label>
+                    <div class="val"><a href="tickets.php?id=<?php echo $quote['ticket_id']; ?>" style="color: #ef4444; font-weight: 700; text-decoration: none;">#<?php echo $quote['ticket_id']; ?></a></div>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($quote['file_path'])): ?>
+                <div class="mobile-grid-item">
+                    <label><i class="bi bi-file-earmark-pdf"></i> DOCUMENTO</label>
+                    <div class="val"><a href="../../<?php echo html($quote['file_path']); ?>" target="_blank" style="color: #3b82f6; font-weight: 700; text-decoration: none;"><i class="bi bi-download"></i> Descargar PDF</a></div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- DISEÑO DESKTOP (Visible en pantallas medianas y grandes) -->
+        <div class="d-none d-md-grid ticket-view-overview-desktop">
             <!-- Col 1: Cotización -->
             <div>
                 <div class="field mb-4">

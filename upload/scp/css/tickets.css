@@ -2430,18 +2430,18 @@ tr.ticket-row.is-selected td {
         border: none !important;
     }
 
-    /* Mostrar SOLO la segunda celda (contiene toda la info) */
-    .tickets-table tbody td:nth-child(2) {
+    /* Mostrar SOLO la segunda celda (contiene toda la info), o la primera si tiene .no-checkbox */
+    .tickets-table:not(.no-checkbox) tbody td:nth-child(2),
+    .tickets-table.no-checkbox tbody td:nth-child(1) {
         display: block !important;
         padding: 16px !important;
         width: 100%;
         position: static;
     }
 
-
-
     /* Enlace que cubre toda la tarjeta */
-    .tickets-table tbody td:nth-child(2) .ticket-title::after {
+    .tickets-table:not(.no-checkbox) tbody td:nth-child(2) .ticket-title::after,
+    .tickets-table.no-checkbox tbody td:nth-child(1) .ticket-title::after {
         content: '';
         position: absolute;
         top: 0;
@@ -2451,7 +2451,8 @@ tr.ticket-row.is-selected td {
         z-index: 5;
     }
 
-    .tickets-table tbody td:nth-child(2) .ticket-title {
+    .tickets-table:not(.no-checkbox) tbody td:nth-child(2) .ticket-title,
+    .tickets-table.no-checkbox tbody td:nth-child(1) .ticket-title {
         font-size: 0.95rem;
         font-weight: 800;
         color: #2563eb;
@@ -2464,11 +2465,13 @@ tr.ticket-row.is-selected td {
         transition: background 0.2s;
     }
 
-    .tickets-table tbody td:nth-child(2) .ticket-title:hover {
+    .tickets-table:not(.no-checkbox) tbody td:nth-child(2) .ticket-title:hover,
+    .tickets-table.no-checkbox tbody td:nth-child(1) .ticket-title:hover {
         background: #dbeafe;
     }
 
-    .tickets-table tbody td:nth-child(2) .ticket-subject {
+    .tickets-table:not(.no-checkbox) tbody td:nth-child(2) .ticket-subject,
+    .tickets-table.no-checkbox tbody td:nth-child(1) .ticket-subject {
         font-size: 1.05rem;
         font-weight: 700;
         color: #0f172a;

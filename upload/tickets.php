@@ -1533,7 +1533,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
             <?php if (!empty($canOrgTicketsView) && $pendingApprovalCount > 0 && empty($isOrgExplorer)): ?>
                 <div style="flex-shrink: 0;">
-                    <a href="tickets.php?view=org<?php echo $pendingApprovalFirstOrgId > 0 ? '&amp;org_id=' . $pendingApprovalFirstOrgId . '&amp;list=quotes' : '&amp;list=quotes'; ?>" class="reports-mini-toast">
+                    <a href="tickets.php?view=org<?php echo $pendingApprovalFirstOrgId > 0 ? '&amp;org_id=' . $pendingApprovalFirstOrgId . '&amp;list=all' : '&amp;list=all'; ?>" class="reports-mini-toast">
                         <div class="reports-mini-toast__icon" style="background: #334155; box-shadow: 0 2px 8px rgba(51, 65, 85, 0.25);">
                             <i class="bi bi-shield-lock-fill"></i>
                         </div>
