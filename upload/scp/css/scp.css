@@ -2056,7 +2056,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     border-left: 1px solid rgba(148, 163, 184, 0.2);
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.25s ease-out, opacity 0.2s ease-out;
+    transition: none;
     opacity: 0;
     pointer-events: none;
 }
@@ -2095,7 +2095,7 @@ body.superadmin .superadmin-theme-toggle:hover .superadmin-theme-toggle-icon {
     justify-content: center;
     width: 16px;
     height: 16px;
-    transition: transform .15s ease-out;
+    transition: none;
 }
 
 .sidebar-toggle .arrow svg {
@@ -2292,6 +2292,14 @@ body.sidebar-ready .main-shell {
 
 body.sidebar-ready .scp-footer-brand {
     transition: margin-left .25s ease, width .25s ease;
+}
+
+body.sidebar-ready .sidebar-subnav {
+    transition: max-height 0.25s ease-out, opacity 0.2s ease-out;
+}
+
+body.sidebar-ready .sidebar-toggle .arrow {
+    transition: transform .15s ease-out;
 }
 
 body.sidebar-collapsed .main-shell {
