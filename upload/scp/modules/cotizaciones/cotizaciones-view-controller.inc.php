@@ -14,13 +14,15 @@ $success = '';
 // Obtener la cotización
 $stmt = $mysqli->prepare("SELECT q.*, 
             o.name as org_name, o.website as org_website,
-            CONCAT(s.firstname, ' ', s.lastname) as staff_name 
+            CONCAT(s.firstname, ' ', s.lastname) as staff_name,
+            (SELECT CONCAT(u.firstname, ' ', u.lastname) FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = o.id AND u.org_tickets_view = 1 AND u.empresa_id = ? LIMIT 1) as org_boss_name,
+            (SELECT u.id FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = o.id AND u.org_tickets_view = 1 AND u.empresa_id = ? LIMIT 1) as org_boss_id
             FROM quotes q 
             LEFT JOIN organizations o ON q.org_id = o.id 
             LEFT JOIN staff s ON q.staff_id = s.id 
             WHERE q.id = ? AND q.empresa_id = ?");
 if ($stmt) {
-    $stmt->bind_param('ii', $id, $eid);
+    $stmt->bind_param('iiii', $eid, $eid, $id, $eid);
     $stmt->execute();
     $qResult = $stmt->get_result();
     $quote = $qResult->fetch_assoc();

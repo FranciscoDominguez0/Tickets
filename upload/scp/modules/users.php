@@ -631,6 +631,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         }
 
         if ($user_id > 0 && $org_id > 0) {
+            $stmtIsBoss = $mysqli->prepare("SELECT org_tickets_view FROM users WHERE id = ? LIMIT 1");
+            if ($stmtIsBoss) {
+                $stmtIsBoss->bind_param('i', $user_id);
+                $stmtIsBoss->execute();
+                $isBoss = (int)($stmtIsBoss->get_result()->fetch_assoc()['org_tickets_view'] ?? 0);
+                if ($isBoss === 1) {
+                    $stmtCheck = $mysqli->prepare("
+                        SELECT u.id 
+                        FROM user_organizations uo
+                        JOIN users u ON u.id = uo.user_id
+                        WHERE uo.organization_id = ? AND u.org_tickets_view = 1 AND u.id != ? LIMIT 1
+                    ");
+                    if ($stmtCheck) {
+                        $stmtCheck->bind_param('ii', $org_id, $user_id);
+                        $stmtCheck->execute();
+                        if ($stmtCheck->get_result()->fetch_assoc()) {
+                            header('Location: users.php?id=' . $user_id . '&msg=org_assign_conflict');
+                            exit;
+                        }
+                    }
+                }
+            }
             $before = getUserOrganizations($mysqli, $user_id, $eid);
             $had = false;
             foreach ($before as $o) {
@@ -655,6 +677,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $user_id = (int)$_POST['user_id'];
         $enable = isset($_POST['enable']) && (string)$_POST['enable'] === '1';
+        
+        if ($enable && $user_id > 0) {
+            $stmtCheck = $mysqli->prepare("
+                SELECT o.name 
+                FROM user_organizations uo
+                JOIN organizations o ON o.id = uo.organization_id
+                JOIN user_organizations uo2 ON uo2.organization_id = o.id
+                JOIN users u2 ON u2.id = uo2.user_id
+                WHERE uo.user_id = ? AND u2.id != ? AND u2.org_tickets_view = 1 AND u2.empresa_id = ?
+                LIMIT 1
+            ");
+            if ($stmtCheck) {
+                $stmtCheck->bind_param('iii', $user_id, $user_id, $eid);
+                $stmtCheck->execute();
+                if ($stmtCheck->get_result()->fetch_assoc()) {
+                    header('Location: users.php?id=' . $user_id . '&msg=org_boss_conflict');
+                    exit;
+                }
+            }
+        }
+
         if ($user_id > 0 && setUserOrgTicketsView($mysqli, $user_id, $eid, $enable)) {
             header('Location: users.php?id=' . $user_id . '&msg=' . ($enable ? 'org_view_on' : 'org_view_off'));
             exit;

@@ -79,6 +79,11 @@ if ($sn !== '') {
                     <div class="sub">
                         <i class="bi bi-headset"></i> Agente: <?php echo html($quote['staff_name'] ?: 'Sin asignar'); ?>
                     </div>
+                    <?php if (!empty($quote['org_boss_name'])): ?>
+                    <div class="sub mt-1">
+                        <i class="bi bi-person-badge"></i> Encargado: <span style="font-weight:600;"><a href="users.php?id=<?php echo $quote['org_boss_id']; ?>" style="color: inherit; text-decoration: none;"><?php echo html($quote['org_boss_name']); ?></a></span>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -152,6 +157,12 @@ if ($sn !== '') {
                     <label><i class="bi bi-calendar-event"></i> CREADA</label>
                     <div class="value"><?php echo date('d/m/Y h:i A', strtotime($quote['created_at'])); ?></div>
                 </div>
+                <?php if (!empty($quote['org_boss_name'])): ?>
+                <div class="field mb-4">
+                    <label><i class="bi bi-person-badge"></i> ENCARGADO DE ORG.</label>
+                    <div class="value" style="font-weight: 600;"><a href="users.php?id=<?php echo $quote['org_boss_id']; ?>" style="color: inherit; text-decoration: none;"><?php echo html($quote['org_boss_name']); ?></a></div>
+                </div>
+                <?php endif; ?>
                 <?php if (!empty($quote['file_path'])): ?>
                 <div class="field mb-4">
                     <label><i class="bi bi-file-earmark-pdf"></i> DOCUMENTO</label>

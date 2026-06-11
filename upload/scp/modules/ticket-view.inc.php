@@ -1041,7 +1041,7 @@ if ($ticketClientSignaturePath !== '') {
                 </div>
                 <div>
                     <h4 style="margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: 0.02em;">Requiere Cotización</h4>
-                    <p style="margin: 10px 0 0 0; font-size: 1rem; line-height: 1.5;">El jefe de la organización ha solicitado que se genere una cotización antes de proceder.</p>
+                    <p style="margin: 10px 0 0 0; font-size: 1rem; line-height: 1.5;">Se ha solicitado una cotización para avanzar con este ticket.</p>
                 </div>
             </div>
             <script>

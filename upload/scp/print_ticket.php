@@ -348,6 +348,7 @@ if (defined('TICKET_PDF_RENDER')) {
         <div class="sig-body">
             <?php if ($ticketClientSignatureUrl !== ''): ?>
                 <img src="<?php echo html($ticketClientSignatureUrl); ?>" alt="Firma del cliente" class="sig-img">
+                <div style="font-size:11px; font-weight:700; color:#334155; margin-top:4px; text-transform:uppercase; letter-spacing:0.02em;"><?php echo html($userName); ?></div>
             <?php else: ?>
                 <div style="padding: 20px 0; color: #94a3b8; font-size: 13px; font-weight: 700; font-style: italic; letter-spacing: 0.03em;">(No incluye firma)</div>
             <?php endif; ?>

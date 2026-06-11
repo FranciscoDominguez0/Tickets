@@ -38,11 +38,17 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             case 'org_view_on': $alertMsg = 'El usuario ha sido asignado como Encargado de su Organización.'; break;
             case 'org_view_off': $alertMsg = 'El usuario ha sido removido como Encargado de Organización.'; break;
             case 'org_view_error': $alertMsg = 'No se pudo actualizar el rol de encargado. Intente de nuevo.'; break;
+            case 'org_boss_conflict': $alertMsg = 'Error: La organización ya tiene otro encargado asignado.'; break;
+            case 'org_assign_conflict': $alertMsg = 'Error: Esta organización ya tiene un encargado.'; break;
         }
     }
-    if ($alertMsg): ?>
-        <div class="alert alert-success alert-dismissible fade show mx-3 mt-3" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <i class="bi bi-check-circle-fill me-2"></i> <?php echo html($alertMsg); ?>
+    if ($alertMsg): 
+        $isError = strpos($msg, 'error') !== false || strpos($msg, 'conflict') !== false;
+        $alertClass = $isError ? 'alert-danger' : 'alert-success';
+        $alertIcon = $isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
+    ?>
+        <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show mx-3 mt-3" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <i class="bi <?php echo $alertIcon; ?> me-2"></i> <?php echo html($alertMsg); ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
         <script>

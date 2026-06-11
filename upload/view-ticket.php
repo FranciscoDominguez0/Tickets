@@ -216,6 +216,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                     notifyApprovalToAdminRecipients($tid, $statusLabelNotif);
                 }
                 
+                if ($newStatus === 'cotizacion') {
+                    $msgBody = "Se ha solicitado una cotización para avanzar con este ticket.";
+                    $stmtTh = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, user_id, body, created) VALUES (?, ?, ?, ?, NOW())");
+                    if ($stmtTh && $thread_id > 0) {
+                        $stmtTh->bind_param('iiis', $eid, $thread_id, $uid, $msgBody);
+                        $stmtTh->execute();
+                    }
+                    $stmtUpdTkt = $mysqli->prepare("UPDATE tickets SET updated = NOW() WHERE id = ?");
+                    if ($stmtUpdTkt) {
+                        $stmtUpdTkt->bind_param('i', $tid);
+                        $stmtUpdTkt->execute();
+                    }
+                }
+                
                 $redirectParams = $_GET;
                 $redirectParams['id'] = $tid;
                 $redirectParams['from'] = 'org';
