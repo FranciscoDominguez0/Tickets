@@ -79,11 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     exit;
 }
 
-$usersHasPhone = false;
-$chkPhone = $mysqli->query("SHOW COLUMNS FROM users LIKE 'phone'");
-if ($chkPhone && $chkPhone->num_rows > 0) {
-    $usersHasPhone = true;
-}
+// Usar dbColumnExists() con caché de sesión en lugar de SHOW COLUMNS directo
+$usersHasPhone = dbColumnExists('users', 'phone');
 
 $importFlash = null;
 if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_flash'])) {

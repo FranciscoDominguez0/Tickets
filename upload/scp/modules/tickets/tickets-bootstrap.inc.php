@@ -2,24 +2,28 @@
 // Módulo: Solicitudes (tickets) — Bootstrap compartido
 // a=open: abrir nuevo ticket (uid= preselecciona usuario). id=X: vista detallada.
 // ── Migraciones de Facturación ──────────────────────────────────────────────
-if (isset($mysqli) && $mysqli) {
-    // Asegurar columna billing_status en ticket_reports
-    $colCheck = $mysqli->query("SHOW COLUMNS FROM ticket_reports LIKE 'billing_status'");
-    if (!$colCheck || $colCheck->num_rows === 0) {
-        $mysqli->query("ALTER TABLE ticket_reports ADD COLUMN billing_status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending' AFTER final_price");
-    }
+// Asegurar columna billing_status en ticket_reports (usa caché de sesión via dbColumnExists)
+if (isset($mysqli) && $mysqli && !dbColumnExists('ticket_reports', 'billing_status')) {
+    $mysqli->query("ALTER TABLE ticket_reports ADD COLUMN billing_status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending' AFTER final_price");
+    // Limpiar caché para que el próximo request vea la columna
+    unset($_SESSION['_dbmeta_cache']['col:ticket_reports:billing_status']);
 }
 
 $ticketView = null;
 $reply_errors = [];
 $reply_success = false;
 
+// Determinar si estamos en modo listado (seenIds solo se necesitan ahí)
+$_isListView = !isset($_GET['id'])
+    && !(isset($_GET['a']) && $_GET['a'] === 'open')
+    && !isset($_GET['action']);
+
 $seenKey = 'tickets_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if (!isset($_SESSION[$seenKey]) || !is_array($_SESSION[$seenKey])) {
     $_SESSION[$seenKey] = [];
 }
 $seenIds = [];
-foreach (($_SESSION[$seenKey] ?? []) as $v) {
+foreach ($_SESSION[$seenKey] as $v) {
     if (is_numeric($v)) $seenIds[(int)$v] = true;
 }
 
@@ -27,30 +31,14 @@ $sidNewSince = (int)($_SESSION['staff_id'] ?? 0);
 if ($sidNewSince > 0) {
     $sinceKey = 'tickets_new_since_' . $sidNewSince;
     if (!isset($_SESSION[$sinceKey]) || !is_numeric($_SESSION[$sinceKey])) {
-        $since = time();
-        if (isset($mysqli) && $mysqli) {
-            $q = @$mysqli->query('SELECT UNIX_TIMESTAMP(NOW()) ts');
-            if ($q && ($r = $q->fetch_assoc()) && is_numeric($r['ts'] ?? null)) {
-                $since = (int)$r['ts'];
-            }
-        }
-        $_SESSION[$sinceKey] = $since;
+        // Usar time() de PHP en lugar de SELECT UNIX_TIMESTAMP a BD
+        $_SESSION[$sinceKey] = time();
     }
 }
 
+// Cargar seenIds desde BD solo en listado (no en vista individual ni AJAX)
 $sidSeenDb = (int)($_SESSION['staff_id'] ?? 0);
-if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
-    @$mysqli->query(
-        "CREATE TABLE IF NOT EXISTS staff_ticket_seen (\n"
-        . "  staff_id INT NOT NULL,\n"
-        . "  ticket_id INT NOT NULL,\n"
-        . "  seen_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  PRIMARY KEY (staff_id, ticket_id),\n"
-        . "  KEY idx_ticket (ticket_id),\n"
-        . "  KEY idx_staff_seen_at (staff_id, seen_at)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
-    );
-
+if ($_isListView && $sidSeenDb > 0 && isset($mysqli) && $mysqli && dbTableExists('staff_ticket_seen')) {
     $stmtSeenLoad = $mysqli->prepare('SELECT ticket_id FROM staff_ticket_seen WHERE staff_id = ? ORDER BY seen_at DESC LIMIT 500');
     if ($stmtSeenLoad) {
         $stmtSeenLoad->bind_param('i', $sidSeenDb);
@@ -62,7 +50,6 @@ if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
             }
         }
     }
-
     if (!empty($seenIds)) {
         $_SESSION[$seenKey] = array_values(array_slice(array_unique(array_map('intval', array_keys($seenIds))), -500));
     }
@@ -70,15 +57,8 @@ if ($sidSeenDb > 0 && isset($mysqli) && $mysqli) {
 
 $eid = empresaId();
 
-$hasStaffDepartmentsTable = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasStaffDepartmentsTable = false;
-    }
-}
+// Usar dbTableExists() con caché de sesión (TTL 300s) en lugar de SHOW TABLES directo
+$hasStaffDepartmentsTable = dbTableExists('staff_departments');
 
 $staffBelongsToDept = function (int $staffId, int $deptId, int $generalDeptId) use ($mysqli, $eid, $hasStaffDepartmentsTable): bool {
     if ($deptId <= 0) return true;
@@ -166,14 +146,9 @@ try {
 }
 */
 
-$threadsHasEmpresa = false;
-$entriesHasEmpresa = false;
-if (isset($mysqli) && $mysqli) {
-    $colTh = $mysqli->query("SHOW COLUMNS FROM threads LIKE 'empresa_id'");
-    $threadsHasEmpresa = ($colTh && $colTh->num_rows > 0);
-    $colTe = $mysqli->query("SHOW COLUMNS FROM thread_entries LIKE 'empresa_id'");
-    $entriesHasEmpresa = ($colTe && $colTe->num_rows > 0);
-}
+// Usar dbColumnExists() con caché de sesión en lugar de SHOW COLUMNS directo
+$threadsHasEmpresa = dbColumnExists('threads', 'empresa_id');
+$entriesHasEmpresa = dbColumnExists('thread_entries', 'empresa_id');
 
 // Tabla de tickets vinculados (si no existe, se crea bajo demanda)
 $ensureTicketLinksTable = function () use ($mysqli) {

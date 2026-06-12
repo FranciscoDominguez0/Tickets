@@ -24,12 +24,8 @@ if (!$canViewReports) {
 $currentRoute = 'reportes';
 $eid = empresaId();
 
-// Verify if ticket_reports table exists
-$hasReportsTable = false;
-$chk = $mysqli->query("SHOW TABLES LIKE 'ticket_reports'");
-if ($chk && $chk->num_rows > 0) {
-    $hasReportsTable = true;
-}
+// Usar dbTableExists() con caché de sesión en lugar de SHOW TABLES directo
+$hasReportsTable = dbTableExists('ticket_reports');
 
 // Find "cerrado/closed" status ID dynamically
 $statusIdClosed = 0;
@@ -178,14 +174,17 @@ if ($statusIdClosed > 0) {
     $totalPages = 1;
 }
 
-// Obtener IDs de tickets vistos por este staff (para persistencia del badge NEW)
 $seenIds = [];
 $sid = (int)($_SESSION['staff_id'] ?? 0);
-if ($sid > 0) {
-    $resSeen = $mysqli->query("SELECT ticket_id FROM staff_reports_seen WHERE staff_id = $sid");
-    if ($resSeen) {
-        while ($rs = $resSeen->fetch_assoc()) {
-            $seenIds[] = (int)$rs['ticket_id'];
+if ($sid > 0 && dbTableExists('staff_reports_seen')) {
+    $stmtSeen = $mysqli->prepare('SELECT ticket_id FROM staff_reports_seen WHERE staff_id = ?');
+    if ($stmtSeen) {
+        $stmtSeen->bind_param('i', $sid);
+        if ($stmtSeen->execute()) {
+            $resSeen = $stmtSeen->get_result();
+            while ($resSeen && ($rs = $resSeen->fetch_assoc())) {
+                $seenIds[] = (int)$rs['ticket_id'];
+            }
         }
     }
 }
