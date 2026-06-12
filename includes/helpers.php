@@ -503,19 +503,7 @@ function syncEmpresaBillingStatus($empresaId)
 
 function ensureBillingNoticeLogTable()
 {
-    global $mysqli;
-    if (!isset($mysqli) || !$mysqli)
-        return false;
-    $sql = "CREATE TABLE IF NOT EXISTS billing_notice_log (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NOT NULL,\n"
-        . "  days_before INT NOT NULL,\n"
-        . "  fecha_vencimiento DATE NOT NULL,\n"
-        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_billing_notice (empresa_id, days_before, fecha_vencimiento),\n"
-        . "  KEY idx_empresa (empresa_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-    return (bool) $mysqli->query($sql);
+    return true;
 }
 
 function syncAllEmpresasBillingStatus()
@@ -720,10 +708,49 @@ function dbTableExists($tableName, $ttlSeconds = 300)
     $tableName = trim((string) $tableName);
     if ($tableName === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName))
         return false;
+
+    // Optimización: tablas que sabemos que existen y son fijas en producción
+    $knownTables = [
+        'empresas' => true,
+        'staff' => true,
+        'notifications' => true,
+        'tickets' => true,
+        'thread_entries' => true,
+        'threads' => true,
+        'users' => true,
+        'organizations' => true,
+        'user_organizations' => true,
+        'ticket_reports' => true,
+        'ticket_approvals' => true,
+        'ticket_report_items' => true,
+        'role_permissions' => true,
+        'roles' => true,
+        'sequences' => true,
+        'banlist' => true,
+        'email_accounts' => true,
+        'billing_notice_log' => true,
+        'thread_entry_reads' => true,
+        'departments' => true,
+        'help_topics' => true,
+        'staff_departments' => true,
+        'staff_ticket_seen' => true,
+        'staff_reports_seen' => true,
+        'app_settings' => true,
+        'logs' => true,
+        'email_queue' => true,
+        'ticket_links' => true,
+        'email_logs' => true,
+        'notification_recipients' => true
+    ];
+    $lowerTable = strtolower($tableName);
+    if (isset($knownTables[$lowerTable])) {
+        return true;
+    }
+
     $ttlSeconds = max(5, (int) $ttlSeconds);
 
     static $runtimeCache = [];
-    $cacheKey = 'tbl:' . strtolower($tableName);
+    $cacheKey = 'tbl:' . $lowerTable;
     $now = time();
     if (isset($runtimeCache[$cacheKey]) && ($now - (int) $runtimeCache[$cacheKey]['ts']) <= $ttlSeconds) {
         return (bool) $runtimeCache[$cacheKey]['ok'];
@@ -759,6 +786,45 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300)
         return false;
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName) || !preg_match('/^[a-zA-Z0-9_]+$/', $columnName))
         return false;
+
+    // Optimización: columnas que sabemos que existen en producción
+    $knownColumns = [
+        'tickets:closed' => true,
+        'tickets:client_signature' => true,
+        'tickets:close_message' => true,
+        'tickets:closed_at' => true,
+        'tickets:signature_token' => true,
+        'tickets:signature_requested' => true,
+        'tickets:topic_id' => true,
+        'tickets:walkin_phone' => true,
+        'tickets:walkin_address' => true,
+        'staff:empresa_id' => true,
+        'staff:signature' => true,
+        'thread_entries:empresa_id' => true,
+        'threads:empresa_id' => true,
+        'organizations:plain_text_emails' => true,
+        'users:org_tickets_view' => true,
+        'users:phone' => true,
+        'users:status' => true,
+        'users:created' => true,
+        'app_settings:empresa_id' => true,
+        'logs:empresa_id' => true,
+        'role_permissions:empresa_id' => true,
+        'roles:empresa_id' => true,
+        'sequences:empresa_id' => true,
+        'banlist:empresa_id' => true,
+        'email_accounts:empresa_id' => true,
+        'departments:empresa_id' => true,
+        'departments:requires_report' => true,
+        'departments:default_staff_id' => true,
+        'help_topics:is_public' => true,
+        'ticket_reports:billing_status' => true,
+    ];
+    $lowerKey = strtolower($tableName) . ':' . strtolower($columnName);
+    if (isset($knownColumns[$lowerKey])) {
+        return true;
+    }
+
     $ttlSeconds = max(5, (int) $ttlSeconds);
 
     static $runtimeCache = [];
@@ -792,29 +858,7 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300)
  */
 function ensureThreadEntryReadsTable($mysqli): void
 {
-    if (!isset($mysqli) || !$mysqli) {
-        return;
-    }
-    static $done = false;
-    if ($done) {
-        return;
-    }
-    $done = true;
-    @$mysqli->query(
-        "CREATE TABLE IF NOT EXISTS thread_entry_reads (\n"
-        . "  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n"
-        . "  empresa_id INT UNSIGNED NOT NULL DEFAULT 1,\n"
-        . "  thread_entry_id INT UNSIGNED NOT NULL,\n"
-        . "  read_by ENUM('user','staff') NOT NULL,\n"
-        . "  reader_id INT UNSIGNED NOT NULL DEFAULT 0,\n"
-        . "  read_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  PRIMARY KEY (id),\n"
-        . "  UNIQUE KEY uk_entry_read (thread_entry_id, read_by, reader_id),\n"
-        . "  KEY idx_empresa (empresa_id),\n"
-        . "  KEY idx_thread_entry (thread_entry_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-    unset($_SESSION['_dbmeta_cache']['tbl:thread_entry_reads']);
+    // Tabla ya creada
 }
 
 /** Marca mensajes del agente como leídos por el cliente. */
@@ -934,31 +978,9 @@ function threadEntryReadReceiptHtml(bool $isRead, bool $iconFirst = true): strin
 }
 
 /** Tabla usuario ↔ organizaciones (muchos a muchos). */
-function ensureUserOrganizationsTable($mysqli): bool
+function ensureUserOrganizationsTable($mysqli)
 {
-    if (!isset($mysqli) || !$mysqli) {
-        return false;
-    }
-    static $done = false;
-    if ($done) {
-        return true;
-    }
-    $done = true;
-    $ok = (bool) @$mysqli->query(
-        "CREATE TABLE IF NOT EXISTS user_organizations (\n"
-        . "  id INT UNSIGNED NOT NULL AUTO_INCREMENT,\n"
-        . "  empresa_id INT UNSIGNED NOT NULL DEFAULT 1,\n"
-        . "  user_id INT UNSIGNED NOT NULL,\n"
-        . "  organization_id INT UNSIGNED NOT NULL,\n"
-        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  PRIMARY KEY (id),\n"
-        . "  UNIQUE KEY uk_user_org (user_id, organization_id),\n"
-        . "  KEY idx_empresa_user (empresa_id, user_id),\n"
-        . "  KEY idx_org (organization_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-    unset($_SESSION['_dbmeta_cache']['tbl:user_organizations']);
-    return $ok;
+    return true;
 }
 
 /**
@@ -1563,17 +1585,7 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
 /** Columna users.org_tickets_view (portal: ver tickets de la organización). */
 function ensureUserOrgTicketsViewColumn($mysqli): bool
 {
-    if (!isset($mysqli) || !$mysqli || !dbTableExists('users')) {
-        return false;
-    }
-    if (dbColumnExists('users', 'org_tickets_view')) {
-        return true;
-    }
-    $ok = (bool) @$mysqli->query(
-        'ALTER TABLE users ADD COLUMN org_tickets_view TINYINT(1) NOT NULL DEFAULT 0'
-    );
-    unset($_SESSION['_dbmeta_cache']['col:users:org_tickets_view']);
-    return $ok;
+    return true;
 }
 
 function userOrgTicketsViewEnabled($mysqli, int $userId, int $empresaId): bool
@@ -2126,64 +2138,6 @@ function generateTicketNumber()
 
 function ensureAppSettingsTable()
 {
-    global $mysqli;
-    if (!isset($mysqli) || !$mysqli)
-        return false;
-
-    static $ensured = null;
-    if ($ensured !== null) {
-        return (bool) $ensured;
-    }
-
-    $sql = "CREATE TABLE IF NOT EXISTS app_settings (\n"
-        . "  `empresa_id` INT NOT NULL DEFAULT 1,\n"
-        . "  `key` VARCHAR(191) NOT NULL,\n"
-        . "  `value` LONGTEXT NULL,\n"
-        . "  `updated` DATETIME NULL,\n"
-        . "  PRIMARY KEY (`empresa_id`, `key`)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-
-    if (!$mysqli->query($sql)) {
-        $ensured = false;
-        return false;
-    }
-
-    $hasEmpresa = false;
-    $hasEmpresa = dbColumnExists('app_settings', 'empresa_id');
-    if (!$hasEmpresa) {
-        $mysqli->query("ALTER TABLE app_settings ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
-    }
-
-    $hasEmpresa2 = dbColumnExists('app_settings', 'empresa_id');
-    if ($hasEmpresa2) {
-        $primaryCols = [];
-        $idx = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'PRIMARY'");
-        if ($idx) {
-            while ($r = $idx->fetch_assoc()) {
-                $primaryCols[] = (string) ($r['Column_name'] ?? '');
-            }
-        }
-        $primaryCols = array_values(array_filter(array_unique($primaryCols)));
-        $hasComposite = in_array('empresa_id', $primaryCols, true) && in_array('key', $primaryCols, true);
-        if (!$hasComposite) {
-            @$mysqli->query('ALTER TABLE app_settings DROP PRIMARY KEY');
-            @$mysqli->query('ALTER TABLE app_settings ADD PRIMARY KEY (empresa_id, `key`)');
-        }
-
-        // Asegurar que no exista un UNIQUE/PRIMARY legacy sobre `key` solamente,
-        // porque haría que los cambios de una empresa afecten a otra.
-        $idxU = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'uq_app_settings_key'");
-        if ($idxU && $idxU->num_rows > 0) {
-            @$mysqli->query('ALTER TABLE app_settings DROP INDEX uq_app_settings_key');
-        }
-
-        $idxComposite = $mysqli->query("SHOW INDEX FROM app_settings WHERE Key_name = 'uq_app_settings_empresa_key'");
-        if (!$idxComposite || $idxComposite->num_rows < 1) {
-            @$mysqli->query('ALTER TABLE app_settings ADD UNIQUE KEY uq_app_settings_empresa_key (empresa_id, `key`)');
-        }
-    }
-
-    $ensured = true;
     return true;
 }
 
@@ -2521,85 +2475,16 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName)
 
 function ensureEmailQueueTable()
 {
-    global $mysqli;
-    if (!isset($mysqli) || !$mysqli)
-        return false;
-
-    $sql = "CREATE TABLE IF NOT EXISTS email_queue (\n"
-        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
-        . "  recipient_email VARCHAR(255) NOT NULL,\n"
-        . "  subject VARCHAR(255) NOT NULL,\n"
-        . "  body_html MEDIUMTEXT NULL,\n"
-        . "  body_text MEDIUMTEXT NULL,\n"
-        . "  attachments_json MEDIUMTEXT NULL,\n"
-        . "  status VARCHAR(20) NOT NULL DEFAULT 'pending',\n"
-        . "  attempts INT NOT NULL DEFAULT 0,\n"
-        . "  max_attempts INT NOT NULL DEFAULT 5,\n"
-        . "  next_attempt_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  last_error TEXT NULL,\n"
-        . "  context_type VARCHAR(50) NULL,\n"
-        . "  context_id INT NULL,\n"
-        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  sent_at DATETIME NULL,\n"
-        . "  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email_queue_status_next (status, next_attempt_at),\n"
-        . "  KEY idx_email_queue_empresa (empresa_id),\n"
-        . "  KEY idx_email_queue_context (context_type, context_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql))
-        return false;
-
-    if (!dbColumnExists('email_queue', 'empresa_id')) {
-        @$mysqli->query("ALTER TABLE email_queue ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
-        @$mysqli->query("ALTER TABLE email_queue ADD INDEX idx_email_queue_empresa (empresa_id)");
-    }
-    // Asegurar columna de adjuntos para correos con PDF/archivos
-    if (!dbColumnExists('email_queue', 'attachments_json')) {
-        @$mysqli->query("ALTER TABLE email_queue ADD COLUMN attachments_json MEDIUMTEXT NULL AFTER body_text");
-    }
-    
     return true;
 }
 
 function ensureEmailLogsTable()
 {
-    global $mysqli;
-    if (!isset($mysqli) || !$mysqli)
-        return false;
-    $sql = "CREATE TABLE IF NOT EXISTS email_logs (\n"
-        . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
-        . "  queue_id BIGINT NULL,\n"
-        . "  recipient_email VARCHAR(255) NULL,\n"
-        . "  status VARCHAR(20) NOT NULL,\n"
-        . "  error_message TEXT NULL,\n"
-        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email_logs_empresa (empresa_id),\n"
-        . "  KEY idx_email_logs_queue (queue_id),\n"
-        . "  KEY idx_email_logs_status (status)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql))
-        return false;
     return true;
 }
 
 function ensureNotificationRecipientsTable()
 {
-    global $mysqli;
-    if (!isset($mysqli) || !$mysqli)
-        return false;
-    $sql = "CREATE TABLE IF NOT EXISTS notification_recipients (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
-        . "  staff_id INT NOT NULL,\n"
-        . "  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_notification_recipient (empresa_id, staff_id),\n"
-        . "  KEY idx_notification_staff (staff_id),\n"
-        . "  KEY idx_notification_empresa (empresa_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    if (!$mysqli->query($sql))
-        return false;
     return true;
 }
 

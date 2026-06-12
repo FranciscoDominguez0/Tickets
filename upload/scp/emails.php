@@ -16,14 +16,8 @@ $emailTab = 'emails';
 
 $eid = empresaId();
 
-$emailAccHasEmpresa = false;
-$deptHasEmpresa = false;
-if (isset($mysqli) && $mysqli) {
-    $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
-    $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
-    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
-}
+$emailAccHasEmpresa = true;
+$deptHasEmpresa = true;
 
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
@@ -36,29 +30,8 @@ if (!isset($_SESSION[$menuKey])) {
     $collapseSettingsMenu = true;
 }
 
-$ensureEmailAccountsTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS email_accounts (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NULL,\n"
-        . "  email VARCHAR(255) NOT NULL,\n"
-        . "  name VARCHAR(255) NULL,\n"
-        . "  priority VARCHAR(32) NULL,\n"
-        . "  dept_id INT NULL,\n"
-        . "  is_default TINYINT(1) NOT NULL DEFAULT 0,\n"
-        . "  smtp_host VARCHAR(255) NULL,\n"
-        . "  smtp_port INT NULL,\n"
-        . "  smtp_secure VARCHAR(10) NULL,\n"
-        . "  smtp_user VARCHAR(255) NULL,\n"
-        . "  smtp_pass VARCHAR(255) NULL,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email (email),\n"
-        . "  KEY idx_default (is_default),\n"
-        . "  KEY idx_dept (dept_id),\n"
-        . "  KEY idx_empresa (empresa_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
+$ensureEmailAccountsTable = function () {
+    return true;
 };
 
 $ensureEmailAccountsTable();
@@ -119,9 +92,7 @@ if (!empty($_SESSION['flash_error'])) {
 $loadDepartments = function () use ($mysqli) {
     $departments = [];
     if (!isset($mysqli) || !$mysqli) return $departments;
-    $deptHasEmpresa = false;
-    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
+    $deptHasEmpresa = true;
 
     $sql = 'SELECT id, name FROM departments';
     if ($deptHasEmpresa) {

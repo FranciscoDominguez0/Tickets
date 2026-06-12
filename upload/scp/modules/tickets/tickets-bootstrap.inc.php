@@ -2,12 +2,7 @@
 // Módulo: Solicitudes (tickets) — Bootstrap compartido
 // a=open: abrir nuevo ticket (uid= preselecciona usuario). id=X: vista detallada.
 // ── Migraciones de Facturación ──────────────────────────────────────────────
-// Asegurar columna billing_status en ticket_reports (usa caché de sesión via dbColumnExists)
-if (isset($mysqli) && $mysqli && !dbColumnExists('ticket_reports', 'billing_status')) {
-    $mysqli->query("ALTER TABLE ticket_reports ADD COLUMN billing_status ENUM('pending', 'confirmed') NOT NULL DEFAULT 'pending' AFTER final_price");
-    // Limpiar caché para que el próximo request vea la columna
-    unset($_SESSION['_dbmeta_cache']['col:ticket_reports:billing_status']);
-}
+// La columna billing_status ya existe en ticket_reports en producción.
 
 $ticketView = null;
 $reply_errors = [];
@@ -150,20 +145,9 @@ try {
 $threadsHasEmpresa = dbColumnExists('threads', 'empresa_id');
 $entriesHasEmpresa = dbColumnExists('thread_entries', 'empresa_id');
 
-// Tabla de tickets vinculados (si no existe, se crea bajo demanda)
-$ensureTicketLinksTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $exists = @$mysqli->query("SHOW TABLES LIKE 'ticket_links'");
-    if ($exists && $exists->num_rows > 0) return true;
-    $sql = "CREATE TABLE IF NOT EXISTS ticket_links (\n"
-        . "  ticket_id INT NOT NULL,\n"
-        . "  linked_ticket_id INT NOT NULL,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_ticket_link (ticket_id, linked_ticket_id),\n"
-        . "  KEY idx_ticket (ticket_id),\n"
-        . "  KEY idx_linked (linked_ticket_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)@$mysqli->query($sql);
+// Tabla de tickets vinculados (ya existe en producción)
+$ensureTicketLinksTable = function () {
+    return true;
 };
 
 // Departamento "General" (fallback). Si no existe, se usará 0 y se omite la excepción.

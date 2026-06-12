@@ -31,26 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageOrgs) {
     exit;
 }
 
-// Crear tabla de organizaciones si no existe
-$mysqli->query("
-    CREATE TABLE IF NOT EXISTS organizations (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        name VARCHAR(255) UNIQUE NOT NULL,
-        address TEXT,
-        phone VARCHAR(50),
-        phone_ext VARCHAR(20),
-        website VARCHAR(255),
-        notes TEXT,
-        created DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        KEY idx_name (name)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-");
-
-$chkCol = $mysqli->query("SHOW COLUMNS FROM organizations LIKE 'plain_text_emails'");
-if (!$chkCol || $chkCol->num_rows === 0) {
-    $mysqli->query("ALTER TABLE organizations ADD COLUMN plain_text_emails TINYINT(1) NOT NULL DEFAULT 0");
-}
+// La columna plain_text_emails ya existe en la tabla organizations.
 
 // Agregar organización
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'add') {

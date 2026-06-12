@@ -14,30 +14,8 @@ $staff = getCurrentUser();
 $currentRoute = 'helptopics';
 
 $eid = empresaId();
-$helpTopicsHasEmpresaId = false;
-$departmentsHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'empresa_id'");
-        $helpTopicsHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $helpTopicsHasEmpresaId = false;
-    }
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-        $departmentsHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-    } catch (Throwable $e) {
-        $departmentsHasEmpresaId = false;
-    }
-
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'is_public'");
-        if ($res && $res->num_rows === 0) {
-            $mysqli->query("ALTER TABLE help_topics ADD COLUMN is_public TINYINT(1) DEFAULT 1");
-        }
-    } catch (Throwable $e) {}
-}
+$helpTopicsHasEmpresaId = true;
+$departmentsHasEmpresaId = true;
 
 
 // Lógica para controlar el estado inicial del sidebar (similar al panel de administrador)

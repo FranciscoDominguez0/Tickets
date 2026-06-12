@@ -49,21 +49,7 @@ if (empty($ticket['closed'])) {
 $sid = (int)$_SESSION['staff_id'];
 $mysqli->query("INSERT IGNORE INTO staff_reports_seen (staff_id, ticket_id) VALUES ($sid, $ticketId)");
 
-// ── Crear tabla de items si no existe ──────────────────────────────────────
-$tblCheck = $mysqli->query("SHOW TABLES LIKE 'ticket_report_items'");
-if (!$tblCheck || $tblCheck->num_rows === 0) {
-    $mysqli->query("CREATE TABLE `ticket_report_items` (
-        `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-        `empresa_id` int(11) NOT NULL DEFAULT 1,
-        `report_id` int(11) unsigned NOT NULL,
-        `description` text NOT NULL,
-        `price` decimal(10,2) NOT NULL DEFAULT 0.00,
-        `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-        PRIMARY KEY (`id`),
-        KEY `idx_empresa_id` (`empresa_id`),
-        KEY `idx_report_id` (`report_id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-}
+// La tabla ticket_report_items ya existe en producción.
 
 // 2. Verificar si ya existe un reporte
 $reportExists = false;

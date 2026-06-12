@@ -26,21 +26,8 @@ if (!empty($_SESSION['flash_error'])) {
     unset($_SESSION['flash_error']);
 }
 
-$deptHasEmpresa = false;
-if (isset($mysqli) && $mysqli) {
-    $col = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-    $deptHasEmpresa = ($col && $col->num_rows > 0);
-}
-
-$hasStaffDepartmentsTable = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasStaffDepartmentsTable = false;
-    }
-}
+$deptHasEmpresa = dbColumnExists('departments', 'empresa_id');
+$hasStaffDepartmentsTable = dbTableExists('staff_departments');
 
 function normalizeDeptIds($raw): array {
     if (!is_array($raw)) return [];
@@ -61,42 +48,8 @@ if ($currentStaffId > 0) {
     }
 }
 
-$ensureRolesTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS roles (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  name VARCHAR(100) NOT NULL,\n"
-        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_roles_name (name)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
-};
-
-$ensureRolesTable();
-
-if (isset($mysqli) && $mysqli) {
-    try {
-        $resCol = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'role'");
-        if ($resCol && $resCol->num_rows > 0) {
-            $colData = $resCol->fetch_assoc();
-            if (stripos((string)($colData['Type'] ?? ''), 'enum') !== false) {
-                $mysqli->query("ALTER TABLE staff MODIFY COLUMN role VARCHAR(100) COLLATE utf8mb4_unicode_ci DEFAULT 'agent'");
-            }
-        }
-    } catch (Throwable $e) {}
-}
-
-$rolesHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
-        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $rolesHasEmpresaId = false;
-    }
-}
+// Verificar columna empresa_id en roles (con caché)
+$rolesHasEmpresaId = dbColumnExists('roles', 'empresa_id');
 
 $enabledRoles = [];
 if (isset($mysqli) && $mysqli) {
@@ -137,20 +90,7 @@ $isValidEnabledRole = function (string $role) use ($mysqli, $eid, $rolesHasEmpre
 };
 
 function ensureStaffPasswordResetsTableExists($mysqli) {
-    if (!$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  staff_id INT NOT NULL,\n"
-        . "  token_hash CHAR(64) NOT NULL,\n"
-        . "  expires_at DATETIME NOT NULL,\n"
-        . "  used_at DATETIME NULL,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_staff_id (staff_id),\n"
-        . "  KEY idx_token_hash (token_hash),\n"
-        . "  KEY idx_expires (expires_at),\n"
-        . "  FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-    return (bool)$mysqli->query($sql);
+    return $mysqli && dbTableExists('staff_password_resets');
 }
 
 function randomPassword($length = 12) {
@@ -207,10 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // Si existen tareas asignadas a este agente, bloquear con mensaje claro.
-        $hasTasks = false;
-        $rt = @$mysqli->query("SHOW TABLES LIKE 'tasks'");
-        if ($rt && $rt->num_rows > 0) $hasTasks = true;
+        // Verificar si existen tareas asignadas a este agente
+        $hasTasks = dbTableExists('tasks');
         if ($hasTasks) {
             $stmtCntT = $mysqli->prepare('SELECT COUNT(*) c FROM tasks WHERE assigned_to = ? AND empresa_id = ?');
             if ($stmtCntT) {

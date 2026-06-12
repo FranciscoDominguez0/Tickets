@@ -848,20 +848,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $tab = isset($_POST['tab']) ? trim((string)$_POST['tab']) : '';
         $tabParam = ($tab !== '') ? ('&t=' . urlencode($tab)) : '';
 
-        $mysqli->query(
-            "CREATE TABLE IF NOT EXISTS password_resets (\n"
-            . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-            . "  user_id INT NOT NULL,\n"
-            . "  token_hash CHAR(64) NOT NULL,\n"
-            . "  expires_at DATETIME NOT NULL,\n"
-            . "  used_at DATETIME NULL,\n"
-            . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-            . "  KEY idx_user_id (user_id),\n"
-            . "  KEY idx_token_hash (token_hash),\n"
-            . "  KEY idx_expires (expires_at),\n"
-            . "  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE\n"
-            . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
+        // La tabla password_resets ya existe en producción.
 
         $stmtU = $mysqli->prepare('SELECT id, email, firstname, lastname FROM users WHERE id = ? AND empresa_id = ? LIMIT 1');
         if ($stmtU) {

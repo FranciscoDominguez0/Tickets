@@ -19,19 +19,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     }
 
     // Cargar ticket con usuario, estado, prioridad, departamento, asignado
-    $hasTopicCol = false;
-    $hasTopicsTable = false;
-    $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-    if ($c && $c->num_rows > 0) $hasTopicCol = true;
-    $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-    if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+    $hasTopicCol = true;
+    $hasTopicsTable = true;
 
-    $topicSelect = $hasTopicCol && $hasTopicsTable
-        ? ", ht.name AS topic_name"
-        : "";
-    $topicJoin = $hasTopicCol && $hasTopicsTable
-        ? " LEFT JOIN help_topics ht ON ht.id = t.topic_id"
-        : "";
+    $topicSelect = ", ht.name AS topic_name";
+    $topicJoin = " LEFT JOIN help_topics ht ON ht.id = t.topic_id";
 
     $stmt = $mysqli->prepare(
         "SELECT t.*, u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email, u.address AS user_address, u.latitude AS user_latitude, u.longitude AS user_longitude,
@@ -86,18 +78,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     // Acción: Solicitar firma del cliente
     if ($ticketView && isset($_GET['action']) && $_GET['action'] === 'request_signature') {
         if (roleHasPermission('ticket.close')) {
-            // Asegurar que las columnas existan
-            try {
-                if (!dbColumnExists('tickets', 'signature_token')) {
-                    $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_token VARCHAR(64) NULL");
-                }
-            } catch (Throwable $e) {}
-            
-            try {
-                if (!dbColumnExists('tickets', 'signature_requested')) {
-                    $mysqli->query("ALTER TABLE tickets ADD COLUMN signature_requested TINYINT(1) DEFAULT 0");
-                }
-            } catch (Throwable $e) {}
+            // Las columnas signature_token y signature_requested ya existen en la tabla tickets en producción.
 
             $token = bin2hex(random_bytes(16));
             $stmtUpd = $mysqli->prepare("UPDATE tickets SET signature_requested = 1, signature_token = ? WHERE id = ? AND empresa_id = ?");
@@ -1057,18 +1038,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     $stmt->bind_param('ii', $eid, $uid);
                     $ok = $stmt->execute();
 
-                    $mysqli->query("CREATE TABLE IF NOT EXISTS banlist (\n"
-                        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-                        . "  email VARCHAR(255) NOT NULL,\n"
-                        . "  domain VARCHAR(255) NULL,\n"
-                        . "  notes TEXT NULL,\n"
-                        . "  is_active TINYINT(1) NOT NULL DEFAULT 0,\n"
-                        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-                        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-                        . "  KEY idx_email (email),\n"
-                        . "  KEY idx_domain (domain),\n"
-                        . "  KEY idx_active (is_active)\n"
-                        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+                    // La tabla banlist ya existe en producción.
 
                     $emailNorm = strtolower(trim((string)$email));
                     if ($emailNorm !== '' && filter_var($emailNorm, FILTER_VALIDATE_EMAIL)) {

@@ -42,25 +42,14 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
 
 // Verificar si el agente tiene tickets "En camino" para habilitar tracking
 $hasEnCamino = false;
-if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
-    // Asegurar tabla staff_locations con UNIQUE KEY para el staff_id
-    $mysqli->query("CREATE TABLE IF NOT EXISTS staff_locations (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        staff_id INT NOT NULL,
-        lat DECIMAL(10, 8) NOT NULL,
-        lng DECIMAL(11, 8) NOT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_staff (staff_id),
-        KEY idx_updated (updated_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // Buscamos tickets abiertos asignados a este staff con status_id en (2=En Camino, 3=En proceso)
-    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = " . (int)$_SESSION['staff_id'] . " AND status_id IN (2, 3) AND closed IS NULL LIMIT 1");
+if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id']) && dbTableExists('staff_locations')) {
+    $sidEc = (int)$_SESSION['staff_id'];
+    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = $sidEc AND status_id IN (2, 3) AND closed IS NULL LIMIT 1");
     $hasEnCamino = ($resEc && $resEc->num_rows > 0);
-    
+
     // Si no tiene tickets en camino, limpiamos su ubicación para no dejar datos huérfanos
     if (!$hasEnCamino) {
-        $mysqli->query("DELETE FROM staff_locations WHERE staff_id = " . (int)$_SESSION['staff_id']);
+        $mysqli->query("DELETE FROM staff_locations WHERE staff_id = $sidEc");
     }
 }
 

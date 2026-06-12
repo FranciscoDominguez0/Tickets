@@ -14,22 +14,8 @@ $staff = getCurrentUser();
 $currentRoute = 'roles';
 
 $eid = empresaId();
-$rolesHasEmpresaId = false;
-$staffHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
-        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $rolesHasEmpresaId = false;
-    }
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $staffHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $staffHasEmpresaId = false;
-    }
-}
+$rolesHasEmpresaId = true;
+$staffHasEmpresaId  = true;
 
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
@@ -42,45 +28,7 @@ if (!isset($_SESSION[$menuKey])) {
     $collapseSettingsMenu = true;
 }
 
-$ensureRolesTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS roles (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  name VARCHAR(100) NOT NULL,\n"
-        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_roles_name (name)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
-};
-
-$ensureRolesTable();
-
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
-        $hasEmpresaCol = ($res && $res->num_rows > 0);
-        if (!$hasEmpresaCol) {
-            $mysqli->query("ALTER TABLE roles ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
-            $mysqli->query("ALTER TABLE roles ADD INDEX idx_roles_empresa (empresa_id)");
-        }
-
-        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
-        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
-        if ($rolesHasEmpresaId) {
-            $idx = $mysqli->query("SHOW INDEX FROM roles WHERE Key_name = 'uq_roles_name'");
-            if ($idx && $idx->num_rows > 0) {
-                $mysqli->query("ALTER TABLE roles DROP INDEX uq_roles_name");
-            }
-            $idx2 = $mysqli->query("SHOW INDEX FROM roles WHERE Key_name = 'uq_roles_empresa_name'");
-            if (!$idx2 || $idx2->num_rows < 1) {
-                $mysqli->query("ALTER TABLE roles ADD UNIQUE KEY uq_roles_empresa_name (empresa_id, name)");
-            }
-        }
-    } catch (Throwable $e) {
-    }
-}
+// La columna empresa_id ya existe en la tabla roles.
 
 if (isset($mysqli) && $mysqli) {
     $rolesCount = 0;

@@ -44,56 +44,13 @@ if ($currentStaffRole !== 'admin') {
     exit;
 }
 
-$ensureRolesTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS roles (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  name VARCHAR(100) NOT NULL,\n"
-        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_roles_name (name)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
+$ensureRolesTable = function () {
+    return true;
 };
 $ensureRolesTable();
 
-$ensureRolePermissionsTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS role_permissions (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
-        . "  role_name VARCHAR(100) NOT NULL,\n"
-        . "  perm_key VARCHAR(120) NOT NULL,\n"
-        . "  is_enabled TINYINT(1) NOT NULL DEFAULT 1,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  UNIQUE KEY uq_role_perm (empresa_id, role_name, perm_key),\n"
-        . "  KEY idx_role (role_name)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    $ok = (bool)$mysqli->query($sql);
-
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM role_permissions LIKE 'empresa_id'");
-        $hasEmpresaId = ($res && $res->num_rows > 0);
-        if (!$hasEmpresaId) {
-            $mysqli->query("ALTER TABLE role_permissions ADD COLUMN empresa_id INT NOT NULL DEFAULT 1");
-            $mysqli->query("ALTER TABLE role_permissions ADD INDEX idx_role_perm_empresa (empresa_id, role_name)");
-        }
-
-        $idxOld = $mysqli->query("SHOW INDEX FROM role_permissions WHERE Key_name = 'uq_role_perm'");
-        if ($idxOld && $idxOld->num_rows > 0) {
-            $mysqli->query("ALTER TABLE role_permissions DROP INDEX uq_role_perm");
-        }
-
-        $idxNew = $mysqli->query("SHOW INDEX FROM role_permissions WHERE Key_name = 'uq_role_perm_empresa_role_perm'");
-        if (!$idxNew || $idxNew->num_rows < 1) {
-            $mysqli->query("ALTER TABLE role_permissions ADD UNIQUE KEY uq_role_perm_empresa_role_perm (empresa_id, role_name, perm_key)");
-        }
-    } catch (Throwable $e) {
-    }
-
-    return $ok;
+$ensureRolePermissionsTable = function () {
+    return true;
 };
 $ensureRolePermissionsTable();
 
@@ -104,15 +61,7 @@ if ($roleName === '') {
     exit;
 }
 
-$rolesHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM roles LIKE 'empresa_id'");
-        $rolesHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $rolesHasEmpresaId = false;
-    }
-}
+$rolesHasEmpresaId = true;
 
 $stmtRole = $rolesHasEmpresaId
     ? $mysqli->prepare('SELECT name FROM roles WHERE empresa_id = ? AND name = ? LIMIT 1')

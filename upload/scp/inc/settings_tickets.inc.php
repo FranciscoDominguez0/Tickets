@@ -20,22 +20,8 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $eid = empresaId();
-$departmentsHasEmpresaId = false;
-$staffHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-        $departmentsHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $departmentsHasEmpresaId = false;
-    }
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $staffHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $staffHasEmpresaId = false;
-    }
-}
+$departmentsHasEmpresaId = true;
+$staffHasEmpresaId = true;
 
 // Asignación por defecto por departamento
 $generalDeptId = 0;
@@ -51,17 +37,7 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
-$hasDeptDefaultStaff = false;
-if (isset($mysqli) && $mysqli) {
-    $chkCol = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
-    if ($chkCol && $chkCol->num_rows > 0) {
-        $hasDeptDefaultStaff = true;
-    } else {
-        $mysqli->query("ALTER TABLE departments ADD COLUMN default_staff_id INT NULL");
-        $chkCol2 = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'default_staff_id'");
-        $hasDeptDefaultStaff = $chkCol2 && $chkCol2->num_rows > 0;
-    }
-}
+$hasDeptDefaultStaff = true;
 
 $departments = [];
 $agents = [];
@@ -101,44 +77,24 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $helpTopics = [];
-$hasHelpTopics = false;
+$hasHelpTopics = true;
 if (isset($mysqli) && $mysqli) {
-    $chk = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-    $hasHelpTopics = $chk && $chk->num_rows > 0;
-    if ($hasHelpTopics) {
-        $res = $mysqli->query('SELECT id, name FROM help_topics WHERE is_active = 1 ORDER BY name');
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $helpTopics[] = $row;
-            }
+    $res = $mysqli->query('SELECT id, name FROM help_topics WHERE is_active = 1 ORDER BY name');
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $helpTopics[] = $row;
         }
     }
 }
 
 $sequences = [];
-$hasSequences = false;
+$hasSequences = true;
 if (isset($mysqli) && $mysqli) {
-    $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
-    $hasSequences = $chkSeq && $chkSeq->num_rows > 0;
-    if ($hasSequences) {
-        $sequencesHasEmpresaId = false;
-        try {
-            $resC = $mysqli->query("SHOW COLUMNS FROM sequences LIKE 'empresa_id'");
-            $sequencesHasEmpresaId = ($resC && $resC->num_rows > 0);
-        } catch (Throwable $e) {
-            $sequencesHasEmpresaId = false;
-        }
-
-        $sqlSeq = 'SELECT id, name, next, increment, padding FROM sequences';
-        if ($sequencesHasEmpresaId) {
-            $sqlSeq .= ' WHERE empresa_id = ' . (int)$eid;
-        }
-        $sqlSeq .= ' ORDER BY id';
-        $res = $mysqli->query($sqlSeq);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $sequences[] = $row;
-            }
+    $sqlSeq = 'SELECT id, name, next, increment, padding FROM sequences WHERE empresa_id = ' . (int)$eid . ' ORDER BY id';
+    $res = $mysqli->query($sqlSeq);
+    if ($res) {
+        while ($row = $res->fetch_assoc()) {
+            $sequences[] = $row;
         }
     }
 }
@@ -224,15 +180,7 @@ if ($_POST) {
                         $allowed = false;
                         
                         // Check if staff_departments table exists
-                        $hasStaffDepartmentsTableSettings = false;
-                        if (isset($mysqli) && $mysqli) {
-                            try {
-                                $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-                                $hasStaffDepartmentsTableSettings = ($rt && $rt->num_rows > 0);
-                            } catch (Throwable $e) {
-                                $hasStaffDepartmentsTableSettings = false;
-                            }
-                        }
+                        $hasStaffDepartmentsTableSettings = true;
                         
                         if ($hasStaffDepartmentsTableSettings) {
                             // New model: check staff_departments
@@ -597,16 +545,7 @@ ob_start();
                                         <?php
                                         $aid = (int)($a['id'] ?? 0);
                                         
-                                        // Check if staff_departments table exists
-                                        $hasStaffDepartmentsTableAgent = false;
-                                        if (isset($mysqli) && $mysqli) {
-                                            try {
-                                                $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-                                                $hasStaffDepartmentsTableAgent = ($rt && $rt->num_rows > 0);
-                                            } catch (Throwable $e) {
-                                                $hasStaffDepartmentsTableAgent = false;
-                                            }
-                                        }
+                                        $hasStaffDepartmentsTableAgent = true;
                                         
                                         if ($hasStaffDepartmentsTableAgent) {
                                             // New model: check staff_departments
