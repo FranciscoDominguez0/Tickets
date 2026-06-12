@@ -1029,12 +1029,12 @@ body.dark-mode .reporte-ticket-link:hover {
                             </table>
                         </div>
 
-                        <div class="d-flex flex-column flex-md-row justify-content-end gap-2 mt-3">
-                            <a href="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>&action=edit" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil"></i> Editar Reporte
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-3 mt-4 pt-4 border-top border-secondary-subtle">
+                            <a href="reporte_costos.php?ticket_id=<?php echo $ticketId; ?>&action=edit" class="btn btn-outline-primary fw-bold" style="border-radius: 12px; padding: 10px 24px; transition: all 0.2s;">
+                                <i class="bi bi-pencil-square me-1"></i> Editar Reporte
                             </a>
-                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-sm btn-pdf-action" style="border:1px solid #ef4444; color:#ef4444; background:transparent;">
-                                <i class="bi bi-file-earmark-pdf"></i> Descargar PDF
+                            <a href="reporte_pdf.php?report_id=<?php echo (int)$reportData['id']; ?>" class="btn btn-danger btn-pdf-action fw-bold" style="border-radius: 12px; padding: 10px 24px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2); transition: all 0.2s;">
+                                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
                             </a>
                         </div>
 

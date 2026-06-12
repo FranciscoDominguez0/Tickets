@@ -40,15 +40,16 @@ if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     }
 }
 
-// Verificar si el agente tiene tickets "En camino" para habilitar tracking
+// Verificar si el agente tiene tickets "En camino" o "En proceso" para habilitar tracking GPS
 $hasEnCamino = false;
-if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id']) && dbTableExists('staff_locations')) {
+if (isset($mysqli) && $mysqli && isset($_SESSION['staff_id'])) {
     $sidEc = (int)$_SESSION['staff_id'];
-    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = $sidEc AND status_id IN (2, 3) AND closed IS NULL LIMIT 1");
+    $eidEc = (int)($_SESSION['empresa_id'] ?? 1);
+    $resEc = $mysqli->query("SELECT 1 FROM tickets WHERE staff_id = $sidEc AND status_id IN (2, 3) AND empresa_id = $eidEc AND closed IS NULL LIMIT 1");
     $hasEnCamino = ($resEc && $resEc->num_rows > 0);
 
-    // Si no tiene tickets en camino, limpiamos su ubicación para no dejar datos huérfanos
-    if (!$hasEnCamino) {
+    // Si no tiene tickets activos, limpiar ubicación huérfana (solo si la tabla existe)
+    if (!$hasEnCamino && dbTableExists('staff_locations')) {
         $mysqli->query("DELETE FROM staff_locations WHERE staff_id = $sidEc");
     }
 }

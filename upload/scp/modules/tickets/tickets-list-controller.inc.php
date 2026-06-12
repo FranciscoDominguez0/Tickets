@@ -649,10 +649,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && isset($_SESS
                             } catch (Throwable $eLog) { /* No bloqueante */ }
 
                             // Eliminar entradas/hilos si existen
-                            $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
-                            $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
-                            $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
-                            $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
+                            $threadsOk = dbTableExists('threads');
+                            $entriesOk = dbTableExists('thread_entries');
                             if ($threadsOk && $entriesOk) {
                                 $sqlDelEntries = "DELETE te\n"
                                     . "FROM thread_entries te\n"

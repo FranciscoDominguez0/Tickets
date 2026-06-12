@@ -525,15 +525,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
                     // Correo a agentes configurados en notificaciones
                     $adminRecipients = [];
-                    $hasRecipientsTable = $mysqli->query("SHOW TABLES LIKE 'notification_recipients'");
-                    if ($hasRecipientsTable && $hasRecipientsTable->num_rows > 0) {
-                        $staffHasEmpresa = false;
-                        try {
-                            $chk = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-                            $staffHasEmpresa = ($chk && $chk->num_rows > 0);
-                        } catch (Throwable $e) {
-                            $staffHasEmpresa = false;
-                        }
+                    if (dbTableExists('notification_recipients')) {
+                        $staffHasEmpresa = dbColumnExists('staff', 'empresa_id');
 
                         $sqlAdmin = "SELECT s.email FROM notification_recipients nr INNER JOIN staff s ON s.id = nr.staff_id WHERE nr.empresa_id = ? AND s.is_active = 1";
                         if ($staffHasEmpresa) {
@@ -1168,8 +1161,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         throw new Exception('ticket_links');
                     }
                     
-                    $colLinks = $mysqli->query("SHOW COLUMNS FROM ticket_links LIKE 'empresa_id'");
-                    $linksHasEmpresa = ($colLinks && $colLinks->num_rows > 0);
+                    $linksHasEmpresa = dbColumnExists('ticket_links', 'empresa_id');
 
                     if ($linksHasEmpresa) {
                         $stmtL = $mysqli->prepare('INSERT IGNORE INTO ticket_links (empresa_id, ticket_id, linked_ticket_id) VALUES (?, ?, ?), (?, ?, ?)');
@@ -1212,8 +1204,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         header('Location: tickets.php?id=' . $tid);
                         exit;
                     }
-                $colLinks = $mysqli->query("SHOW COLUMNS FROM ticket_links LIKE 'empresa_id'");
-                $linksHasEmpresa = ($colLinks && $colLinks->num_rows > 0);
+                $linksHasEmpresa = dbColumnExists('ticket_links', 'empresa_id');
 
                 if ($linksHasEmpresa) {
                     $stmt = $mysqli->prepare("INSERT IGNORE INTO ticket_links (empresa_id, ticket_id, linked_ticket_id) VALUES (?, ?, ?), (?, ?, ?)");
@@ -1240,8 +1231,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             } elseif ($action === 'collab_add' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['user_id']) && is_numeric($_POST['user_id'])) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_POST['user_id'];
-                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
-                if ($exists && $exists->num_rows > 0) {
+                if (dbTableExists('ticket_collaborators')) {
                     $userOk = false;
                     if ($uid > 0) {
                         $stmtU = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND id = ? LIMIT 1');
@@ -1262,8 +1252,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             } elseif ($action === 'collab_remove' && isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
                 requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
                 $uid = (int) $_GET['user_id'];
-                $exists = $mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
-                if ($exists && $exists->num_rows > 0) {
+                if (dbTableExists('ticket_collaborators')) {
                     $stmt = $mysqli->prepare("DELETE FROM ticket_collaborators WHERE ticket_id = ? AND user_id = ?");
                     $stmt->bind_param('ii', $tid, $uid);
                     $ok = $stmt->execute();
@@ -1302,10 +1291,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
 
                     // Si existen tablas de threads/entries, borrarlas explícitamente para instalaciones sin FKs
-                    $hasThreads = $mysqli->query("SHOW TABLES LIKE 'threads'");
-                    $hasEntries = $mysqli->query("SHOW TABLES LIKE 'thread_entries'");
-                    $threadsOk = $hasThreads && $hasThreads->num_rows > 0;
-                    $entriesOk = $hasEntries && $hasEntries->num_rows > 0;
+                    $threadsOk = dbTableExists('threads');
+                    $entriesOk = dbTableExists('thread_entries');
 
                     if ($threadsOk && $entriesOk) {
                         $stmtDelEntries = $mysqli->prepare(
@@ -1542,9 +1529,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         // Notificar al cliente (solo respuestas públicas)
                         if (!$is_internal) {
                             try {
-                                $hasUserNotifs = false;
-                                $chkT = @$mysqli->query("SHOW TABLES LIKE 'user_notifications'");
-                                $hasUserNotifs = ($chkT && $chkT->num_rows > 0);
+                                $hasUserNotifs = dbTableExists('user_notifications');
                                 if ($hasUserNotifs) {
                                     $uidOwner = (int)($ticketView['user_id'] ?? 0);
                                     if ($uidOwner > 0) {
@@ -1881,15 +1866,13 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
         // Tickets vinculados y colaboradores (si existen tablas)
         $ticketView['linked_tickets'] = [];
         $ticketView['collaborators'] = [];
-        $resLinks = @$mysqli->query("SHOW TABLES LIKE 'ticket_links'");
-        if ($resLinks && $resLinks->num_rows > 0) {
+        if (dbTableExists('ticket_links')) {
             $stmt = $mysqli->prepare("SELECT tl.linked_ticket_id AS id, t.ticket_number, t.subject FROM ticket_links tl JOIN tickets t ON t.id = tl.linked_ticket_id WHERE tl.ticket_id = ? AND t.empresa_id = ?");
             $stmt->bind_param('ii', $tid, $eid);
             $stmt->execute();
             $ticketView['linked_tickets'] = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
-        $resCollab = @$mysqli->query("SHOW TABLES LIKE 'ticket_collaborators'");
-        if ($resCollab && $resCollab->num_rows > 0) {
+        if (dbTableExists('ticket_collaborators')) {
             $stmt = $mysqli->prepare("SELECT tc.user_id, u.firstname, u.lastname, u.email FROM ticket_collaborators tc JOIN users u ON u.id = tc.user_id WHERE tc.ticket_id = ? AND u.empresa_id = ?");
             $stmt->bind_param('ii', $tid, $eid);
             $stmt->execute();

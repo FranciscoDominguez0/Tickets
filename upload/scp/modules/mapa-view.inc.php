@@ -546,9 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Polling cada 8 segundos
+    // Polling cada 15 segundos (reduce carga en BD)
     fetchLocations();
-    setInterval(fetchLocations, 8000);
+    setInterval(fetchLocations, 15000);
 
     // Botón Actualizar
     document.getElementById('refresh-map').addEventListener('click', function() {
@@ -569,9 +569,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1200);
     });
 
-    // Ajustar tamaño del mapa tras carga inicial
-    setTimeout(() => map.invalidateSize(), 100);
-    setTimeout(() => map.invalidateSize(), 400);
-    setTimeout(() => map.invalidateSize(), 900);
+    // Ajustar tamaño del mapa: ResizeObserver + un solo fallback timeout
+    setTimeout(() => map.invalidateSize(), 200);
+    if (typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(() => map.invalidateSize());
+        ro.observe(document.getElementById('mapContainerOuter'));
+    }
 });
 </script>

@@ -2917,32 +2917,117 @@ document.addEventListener('DOMContentLoaded', function() {
 <!-- Modal Confirmar Facturación -->
 <div class="modal fade" id="modalConfirmBilling" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 25px 60px rgba(0,0,0,0.2); overflow: hidden;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 22px 26px; background: #fff;">
-                <h5 class="modal-title" style="font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 12px; font-size: 1.15rem;">
-                    <div style="width: 36px; height: 36px; background: #dcfce7; color: #166534; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-shield-check"></i>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+
+            <!-- Estado: confirmación -->
+            <div id="billingConfirmState">
+                <div class="modal-header border-0" style="padding: 22px 26px;">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" style="font-size: 1.1rem;">
+                        <div class="d-flex align-items-center justify-content-center rounded-3 bg-success bg-opacity-10 text-success" style="width:36px;height:36px;flex-shrink:0;">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        Confirmar Facturación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 6px 26px 24px;">
+                    <p class="text-muted mb-3" style="font-size: 0.95rem; line-height: 1.6;">
+                        ¿Estás seguro de que deseas marcar este ticket como <strong>facturado</strong>? Esta acción confirmará el proceso de facturación de forma permanente.
+                    </p>
+                    <div class="d-flex align-items-center justify-content-between gap-2 p-3 rounded-3 border" style="font-size: 0.875rem;">
+                        <span class="text-muted fw-semibold"><i class="bi bi-file-earmark-text me-1"></i> Puedes revisar los costos antes de confirmar:</span>
+                        <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" target="_blank" class="btn btn-sm btn-outline-primary fw-bold" style="border-radius: 8px; white-space: nowrap;">Ver Reporte</a>
                     </div>
-                    Confirmar Facturación
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="padding: 26px; background: #fff;">
-                <p style="color: #475569; font-size: 1rem; line-height: 1.6; margin-bottom: 18px;">
-                    ¿Estás seguro de que deseas marcar este ticket como <strong style="color: #0f172a;">facturado</strong>? Esta acción confirmará el proceso de facturación de forma permanente.
-                </p>
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                    <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; line-height: 1.3;"><i class="bi bi-file-earmark-text me-1"></i> Puedes revisar los costos antes de confirmar:</span>
-                    <a href="reporte_costos.php?ticket_id=<?php echo $tid; ?>" target="_blank" class="btn btn-sm" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-weight: 700; border-radius: 8px; white-space: nowrap;">Ver Reporte</a>
+                </div>
+                <div class="modal-footer border-0" style="padding: 16px 26px; gap: 10px;">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal" style="border-radius: 12px; padding: 9px 20px;">Cancelar</button>
+                    <button type="button" id="btnConfirmBillingFinal" class="btn btn-success fw-bold" style="border-radius: 12px; padding: 9px 22px;">
+                        <i class="bi bi-check2-circle me-1"></i> Confirmar y Facturar
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 20px 26px; gap: 12px; background: #f8fafc;">
-                <button type="button" class="btn" data-bs-dismiss="modal" style="background: #fff; color: #64748b; font-weight: 700; border-radius: 12px; padding: 10px 20px; border: 1px solid #e2e8f0; font-size: 0.9rem;">Cancelar</button>
-                <a href="tickets.php?id=<?php echo $tid; ?>&action=confirm_billing" class="btn" style="background: #15803d; color: #fff; font-weight: 700; border-radius: 12px; padding: 10px 24px; border: none; box-shadow: 0 4px 15px rgba(21, 128, 61, 0.3); font-size: 0.9rem;">Confirmar y Facturar</a>
+
+            <!-- Estado: procesando -->
+            <div id="billingLoadingState" style="display:none;">
+                <div class="modal-body text-center py-5">
+                    <div class="billing-spinner mx-auto mb-3"></div>
+                    <div class="fw-bold mb-1">Procesando facturación…</div>
+                    <div class="text-muted small">Por favor espera un momento</div>
+                </div>
             </div>
+
+            <!-- Estado: éxito -->
+            <div id="billingSuccessState" style="display:none;">
+                <div class="modal-body text-center py-5">
+                    <div class="billing-success-icon mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10">
+                        <i class="bi bi-check-lg text-success" style="font-size: 2rem;"></i>
+                    </div>
+                    <div class="fw-bold mb-1" style="font-size: 1.1rem;">¡Facturación confirmada!</div>
+                    <div class="text-muted small">El ticket ha sido marcado como facturado correctamente.</div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
+
+<style>
+.billing-spinner {
+    width: 56px; height: 56px;
+    border: 4px solid rgba(25,135,84,.2);
+    border-top-color: #198754;
+    border-radius: 50%;
+    animation: billingSpin .7s linear infinite;
+}
+body.dark-mode .billing-spinner {
+    border-color: rgba(74,222,128,.15);
+    border-top-color: #4ade80;
+}
+.billing-success-icon {
+    width: 72px; height: 72px;
+    animation: billingPop .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes billingSpin { to { transform: rotate(360deg); } }
+@keyframes billingPop  { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+
+<script>
+(function () {
+    var btnConfirm = document.getElementById('btnConfirmBillingFinal');
+    if (!btnConfirm) return;
+
+    var billingUrl = 'tickets.php?id=<?php echo (int)$tid; ?>&action=confirm_billing';
+
+    btnConfirm.addEventListener('click', function () {
+        var confirmState = document.getElementById('billingConfirmState');
+        var loadingState = document.getElementById('billingLoadingState');
+        var successState = document.getElementById('billingSuccessState');
+
+        confirmState.style.display = 'none';
+        loadingState.style.display = 'block';
+        successState.style.display  = 'none';
+
+        fetch(billingUrl, { credentials: 'same-origin', redirect: 'manual' })
+            .then(function () {
+                loadingState.style.display = 'none';
+                successState.style.display = 'block';
+                setTimeout(function () { window.location.href = billingUrl; }, 1600);
+            })
+            .catch(function () {
+                window.location.href = billingUrl;
+            });
+    });
+
+    var modalEl = document.getElementById('modalConfirmBilling');
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('billingConfirmState').style.display = 'block';
+            document.getElementById('billingLoadingState').style.display = 'none';
+            document.getElementById('billingSuccessState').style.display  = 'none';
+        });
+    }
+})();
+</script>
 
 <style>
     .creative-pop-overlay-scp{position:fixed; inset:0; background:rgba(15,23,42,.46); display:none; align-items:center; justify-content:center; padding:18px; z-index:9999; backdrop-filter: blur(10px);}

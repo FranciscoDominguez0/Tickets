@@ -97,8 +97,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             $open_hasTopics = false;
             $open_topicsCount = 0;
-            $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-            if ($checkTopics && $checkTopics->num_rows > 0) {
+            if (dbTableExists('help_topics')) {
                 $open_hasTopics = true;
                 $stmtCntTopics = $mysqli->prepare('SELECT COUNT(*) AS c FROM help_topics WHERE empresa_id = ? AND is_active = 1');
                 if ($stmtCntTopics) {
@@ -124,9 +123,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
             $maxOpenTicketsSetting = (int)getAppSetting('tickets.max_open_tickets', '0');
             if ($maxOpenTicketsSetting > 0 && $user_id > 0) {
-                $hasClosedCol = false;
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'closed'");
-                if ($c && $c->num_rows > 0) $hasClosedCol = true;
+                $hasClosedCol = dbColumnExists('tickets', 'closed');
 
                 if ($hasClosedCol) {
                     $stmtCnt = $mysqli->prepare('SELECT COUNT(*) AS cnt FROM tickets WHERE empresa_id = ? AND user_id = ? AND closed IS NULL');
@@ -188,8 +185,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $sequenceId = (int)$sequenceId;
                     if ($sequenceId <= 0) return null;
 
-                    $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
-                    if (!$chkSeq || $chkSeq->num_rows === 0) return null;
+                    if (!dbTableExists('sequences')) return null;
 
                     // Intentar hasta 50 veces encontrar un número no duplicado
                     for ($attempt = 0; $attempt < 50; $attempt++) {
@@ -252,18 +248,10 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $ticket_number = $generateTicketNumberFromFormat($ticketNumberFormat);
                 }
                 error_log('[tickets] INSERT tickets via scp/modules/tickets.php open uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' user_id=' . (string)$user_id . ' dept_id=' . (string)$dept_id);
-                $hasTopicCol = false;
-                $hasTopicsTable = false;
-                $hasWalkinPhoneCol = false;
-                $hasWalkinAddressCol = false;
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-                if ($c && $c->num_rows > 0) $hasTopicCol = true;
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'walkin_phone'");
-                if ($c && $c->num_rows > 0) $hasWalkinPhoneCol = true;
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'walkin_address'");
-                if ($c && $c->num_rows > 0) $hasWalkinAddressCol = true;
-                $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-                if ($t && $t->num_rows > 0) $hasTopicsTable = true;
+                $hasTopicCol      = dbColumnExists('tickets', 'topic_id');
+                $hasWalkinPhoneCol = dbColumnExists('tickets', 'walkin_phone');
+                $hasWalkinAddressCol = dbColumnExists('tickets', 'walkin_address');
+                $hasTopicsTable   = dbTableExists('help_topics');
 
                 $defaultStatusId = (int)getAppSetting('tickets.default_ticket_status_id', '1');
                 if ($defaultStatusId <= 0) $defaultStatusId = 1;
@@ -455,8 +443,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     // Temas (opcional)
     $open_hasTopics = false;
     $open_topics = [];
-    $checkTopics = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-    if ($checkTopics && $checkTopics->num_rows > 0) {
+    if (dbTableExists('help_topics')) {
         $open_hasTopics = true;
         $stmt = $mysqli->prepare('SELECT id, name, dept_id FROM help_topics WHERE empresa_id = ? AND is_active = 1 ORDER BY name');
         if ($stmt) {

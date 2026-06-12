@@ -740,7 +740,7 @@ function dbTableExists($tableName, $ttlSeconds = 300)
         'email_queue' => true,
         'ticket_links' => true,
         'email_logs' => true,
-        'notification_recipients' => true
+        'notification_recipients' => true,
     ];
     $lowerTable = strtolower($tableName);
     if (isset($knownTables[$lowerTable])) {
@@ -819,6 +819,9 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300)
         'departments:default_staff_id' => true,
         'help_topics:is_public' => true,
         'ticket_reports:billing_status' => true,
+        'ticket_links:empresa_id' => true,
+        'staff:role' => true,
+        'staff:dept_id' => true,
     ];
     $lowerKey = strtolower($tableName) . ':' . strtolower($columnName);
     if (isset($knownColumns[$lowerKey])) {

@@ -66,9 +66,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
 
     $canViewAll = roleHasPermission('ticket.view_all');
     $sql = "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
-        . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email\n"
+        . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,\n"
+        . " COALESCE(th.id, 0) AS thread_id\n"
         . "FROM tickets t\n"
         . "JOIN users u ON u.id = t.user_id\n"
+        . "LEFT JOIN threads th ON th.ticket_id = t.id\n"
         . "WHERE t.id = ? AND t.empresa_id = ?";
     if (!$canViewAll) {
         $sql .= " AND t.staff_id = ?";
@@ -94,15 +96,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         exit;
     }
 
-    $threadId = 0;
-    $stmtTh = $mysqli->prepare('SELECT th.id FROM threads th INNER JOIN tickets t ON t.id = th.ticket_id WHERE th.ticket_id = ? AND t.empresa_id = ? LIMIT 1');
-    if ($stmtTh) {
-        $stmtTh->bind_param('ii', $tid, $eid);
-        if ($stmtTh->execute()) {
-            $row = $stmtTh->get_result()->fetch_assoc();
-            $threadId = (int)($row['id'] ?? 0);
-        }
-    }
+    $threadId = (int)($ticket['thread_id'] ?? 0);
+
 
     $previewWhen = $ticket['updated'] ?: $ticket['created'];
     $previewIsInternal = 0;
