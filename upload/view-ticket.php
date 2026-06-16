@@ -237,11 +237,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
                 } else {
                     $threadMsg = $svgX . ' Rechazado por: ' . $managerName;
                 }
+                $entry_id = 0;
                 $stmtTh = $mysqli->prepare("INSERT INTO thread_entries (empresa_id, thread_id, user_id, body, created) VALUES (?, ?, ?, ?, NOW())");
                 if ($stmtTh && $thread_id > 0) {
                     $stmtTh->bind_param('iiis', $eid, $thread_id, $uid, $threadMsg);
-                    $stmtTh->execute();
+                    if ($stmtTh->execute()) {
+                        $entry_id = (int)$mysqli->insert_id;
+                    }
                 }
+                
+                // Process Orden de Compra file upload
+                if ($newStatus === 'aprobado' && $entry_id > 0 && !empty($_FILES['orden_compra']['name'])) {
+                    $file = $_FILES['orden_compra'];
+                    if ($file['error'] === UPLOAD_ERR_OK) {
+                        $orig = (string)$file['name'];
+                        $mime = (string)$file['type'];
+                        $size = (int)$file['size'];
+                        $ext = strtolower((string)(pathinfo($orig, PATHINFO_EXTENSION) ?: ''));
+                        
+                        $allowedExt = [
+                            'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
+                            'gif' => 'image/gif', 'webp' => 'image/webp', 'pdf' => 'application/pdf',
+                            'doc' => 'application/msword', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'xls' => 'application/vnd.ms-excel', 'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'txt' => 'text/plain', 'zip' => 'application/zip', 'rar' => 'application/x-rar-compressed'
+                        ];
+                        
+                        if (isset($allowedExt[$ext])) {
+                            $safeName = bin2hex(random_bytes(8)) . '_' . time() . '.' . preg_replace('/[^a-z0-9]/i', '', $ext);
+                            $uploadDir = defined('ATTACHMENTS_DIR') ? ATTACHMENTS_DIR : __DIR__ . '/uploads/attachments';
+                            if (!is_dir($uploadDir)) {
+                                @mkdir($uploadDir, 0755, true);
+                            }
+                            $path = $uploadDir . '/' . $safeName;
+                            if (move_uploaded_file($file['tmp_name'], $path)) {
+                                $relPath = 'uploads/attachments/' . $safeName;
+                                $hash = @hash_file('sha256', $path) ?: '';
+                                
+                                $attachmentsHasEmpresa = false;
+                                $colA = $mysqli->query("SHOW COLUMNS FROM attachments LIKE 'empresa_id'");
+                                $attachmentsHasEmpresa = ($colA && $colA->num_rows > 0);
+                                
+                                if ($attachmentsHasEmpresa) {
+                                    $stmtA = $mysqli->prepare("INSERT INTO attachments (empresa_id, thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+                                    $stmtA->bind_param('iisssiss', $eid, $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                                } else {
+                                    $stmtA = $mysqli->prepare("INSERT INTO attachments (thread_entry_id, filename, original_filename, mimetype, size, path, hash, created) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
+                                    $stmtA->bind_param('isssiss', $entry_id, $safeName, $orig, $mime, $size, $relPath, $hash);
+                                }
+                                $stmtA->execute();
+                                
+                                // Update thread body to reflect purchase order
+                                $updatedMsg = $threadMsg . '<br><strong>Orden de compra</strong>';
+                                $stmtUpdBody = $mysqli->prepare("UPDATE thread_entries SET body = ? WHERE id = ?");
+                                $stmtUpdBody->bind_param('si', $updatedMsg, $entry_id);
+                                $stmtUpdBody->execute();
+                            }
+                        }
+                    }
+                }
+                
                 $stmtUpdTkt = $mysqli->prepare("UPDATE tickets SET updated = NOW() WHERE id = ?");
                 if ($stmtUpdTkt) {
                     $stmtUpdTkt->bind_param('i', $tid);
@@ -2011,8 +2066,15 @@ function humanSize($bytes) {
                     </div>
                     <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>
-                <script>
+                 <script>
                     (function(){
+                        if (window.history.replaceState) {
+                            var url = new URL(window.location.href);
+                            if (url.searchParams.has('msg')) {
+                                url.searchParams.delete('msg');
+                                window.history.replaceState({}, document.title, url.pathname + url.search);
+                            }
+                        }
                         setTimeout(function(){
                             var el = document.getElementById('flash-msg-approved');
                             if(el) {
@@ -2315,7 +2377,7 @@ function humanSize($bytes) {
                                 <button type="button" class="btn btn-sm btn-approval-warn" onclick="showApprovalModal('form-aprob-cotizacion', 'Solicitar Cotización', '¿Confirma que desea solicitar la Cotización?', 'btn-approval-warn', 'bi-file-earmark-text')"><i class="bi bi-file-earmark-text me-1"></i>Cotización</button>
                             </form>
                             <?php endif; ?>
-                            <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-aprobado">
+                            <form method="post" style="margin: 0; display: inline-flex;" id="form-aprob-aprobado" enctype="multipart/form-data">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action" value="aprobado">
                                 <button type="button" class="btn btn-sm btn-approval-success" onclick="showApprovalModal('form-aprob-aprobado', 'Aprobar Solicitud', '¿Confirma que desea APROBAR esta solicitud?', 'btn-approval-success', 'bi-check-circle-fill')"><i class="bi bi-check-circle-fill me-1"></i>Aprobado</button>
@@ -3504,6 +3566,28 @@ document.addEventListener('DOMContentLoaded', function() {
             <span id="approvalModalTitle">Confirmar Acción</span>
         </h5>
         <p id="approvalModalMsg" style="font-size: 0.95rem; color: #64748b; margin: 0; line-height: 1.4;"></p>
+        <div id="modalPurchaseOrderContainer" class="mt-3 text-start" style="display: none;">
+            <label style="font-weight: 800; font-size: 0.82rem; color: #475569; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.03em;">Orden de Compra (Opcional)</label>
+            <div class="po-upload-zone" id="po-upload-zone" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 16px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+                <input type="file" id="orden_compra_modal" name="orden_compra" style="display: none;">
+                <div class="po-upload-icon" style="font-size: 1.5rem; color: #94a3b8; margin-bottom: 6px;"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                <div class="po-upload-text" id="po-upload-text" style="font-size: 0.85rem; font-weight: 700; color: #64748b;">Subir Orden de Compra</div>
+                <div class="po-upload-hint" style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">PDF, PNG, JPG o DOC (Idem)</div>
+            </div>
+            <style>
+                body.dark-mode .po-upload-zone {
+                    background: #1e293b !important;
+                    border-color: #475569 !important;
+                }
+                body.dark-mode .po-upload-zone:hover {
+                    border-color: #f87171 !important;
+                }
+                .po-upload-zone:hover {
+                    border-color: #ef4444;
+                    background: #f1f5f9;
+                }
+            </style>
+        </div>
       </div>
       <div class="modal-footer border-0 d-flex flex-nowrap justify-content-center gap-2 pb-3 px-3 px-sm-4">
         <button type="button" class="btn btn-light w-50" style="border-radius: 10px; font-weight: 600; padding: 8px;" data-bs-dismiss="modal">Cancelar</button>
@@ -3519,6 +3603,24 @@ function showApprovalModal(formId, title, msg, btnClass, iconClass) {
     currentApprovalFormId = formId;
     document.getElementById('approvalModalTitle').textContent = title;
     document.getElementById('approvalModalMsg').textContent = msg;
+    
+    // Show/hide purchase order field based on action
+    var poContainer = document.getElementById('modalPurchaseOrderContainer');
+    if (poContainer) {
+        if (formId === 'form-aprob-aprobado') {
+            poContainer.style.display = 'block';
+        } else {
+            poContainer.style.display = 'none';
+            var fileIn = document.getElementById('orden_compra_modal');
+            if (fileIn) {
+                fileIn.value = '';
+                var uploadText = document.getElementById('po-upload-text');
+                if (uploadText) uploadText.innerHTML = 'Subir Orden de Compra';
+                var uploadZone = document.getElementById('po-upload-zone');
+                if (uploadZone) uploadZone.style.borderColor = '#cbd5e1';
+            }
+        }
+    }
     
     var iconEl = document.getElementById('approvalModalIcon');
     iconEl.className = 'bi ' + iconClass;
@@ -3547,10 +3649,40 @@ function showApprovalModal(formId, title, msg, btnClass, iconClass) {
     modal.show();
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    var fileInput = document.getElementById('orden_compra_modal');
+    var uploadZone = document.getElementById('po-upload-zone');
+    var uploadText = document.getElementById('po-upload-text');
+
+    if (uploadZone && fileInput) {
+        uploadZone.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files && fileInput.files.length > 0) {
+                var filename = fileInput.files[0].name;
+                uploadText.innerHTML = '<span style="color: #10b981;"><i class="bi bi-file-earmark-check-fill me-1"></i> ' + filename + '</span>';
+                uploadZone.style.borderColor = '#10b981';
+            } else {
+                uploadText.innerHTML = 'Subir Orden de Compra';
+                uploadZone.style.borderColor = '#cbd5e1';
+            }
+        });
+    }
+});
+
 document.getElementById('approvalModalConfirmBtn').addEventListener('click', function() {
     if (currentApprovalFormId) {
         var form = document.getElementById(currentApprovalFormId);
         if (form) {
+            // If it's the approved form, move the file input into it
+            if (currentApprovalFormId === 'form-aprob-aprobado') {
+                var fileInput = document.getElementById('orden_compra_modal');
+                if (fileInput) {
+                    form.appendChild(fileInput);
+                }
+            }
             form.submit();
         }
     }
