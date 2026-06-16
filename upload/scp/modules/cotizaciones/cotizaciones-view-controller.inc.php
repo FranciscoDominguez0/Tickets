@@ -66,7 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'El mensaje no puede estar vacío.';
         } else {
             $dbPath = null;
-            if (isset($_FILES['quote_file']) && $_FILES['quote_file']['error'] === UPLOAD_ERR_OK) {
+            if ($quote['status'] === 'requested' && (!isset($_FILES['quote_file']) || $_FILES['quote_file']['error'] !== UPLOAD_ERR_OK)) {
+                $errors[] = 'Debes adjuntar el documento de cotización solicitado.';
+            }
+
+            if (empty($errors) && isset($_FILES['quote_file']) && $_FILES['quote_file']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = __DIR__ . '/../../../uploads/attachments/';
                 if (!is_dir($uploadDir)) {
                     @mkdir($uploadDir, 0755, true);
@@ -89,16 +93,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $insStmt->bind_param('iiss', $id, $staffId, $messageText, $dbPath);
                     $insStmt->execute();
                     
-                    // Actualizar el archivo principal de la cotización si se adjuntó uno nuevo, y cambiar a answered (Esperando Aprobación)
+                    // Actualizar el archivo principal de la cotización si se adjuntó uno nuevo, y cambiar a answered (Esperando Aprobación) si no está Aceptada/Rechazada
+                    $isTerminalState = ($quote['status'] === 'accepted' || $quote['status'] === 'rejected');
+                    $updStmt = null;
                     if ($dbPath) {
-                        $updStmt = $mysqli->prepare("UPDATE quotes SET file_path = ?, status = 'answered' WHERE id = ?");
-                        $updStmt->bind_param('si', $dbPath, $id);
+                        if ($isTerminalState) {
+                            $updStmt = $mysqli->prepare("UPDATE quotes SET file_path = ? WHERE id = ?");
+                            $updStmt->bind_param('si', $dbPath, $id);
+                        } else {
+                            $updStmt = $mysqli->prepare("UPDATE quotes SET file_path = ?, status = 'answered' WHERE id = ?");
+                            $updStmt->bind_param('si', $dbPath, $id);
+                        }
                     } else {
-                        // Cambiar estado a answered
-                        $updStmt = $mysqli->prepare("UPDATE quotes SET status = 'answered' WHERE id = ?");
-                        $updStmt->bind_param('i', $id);
+                        if (!$isTerminalState) {
+                            $updStmt = $mysqli->prepare("UPDATE quotes SET status = 'answered' WHERE id = ?");
+                            $updStmt->bind_param('i', $id);
+                        }
                     }
-                    $updStmt->execute();
+                    if ($updStmt) {
+                        $updStmt->execute();
+                    }
                     
                     // Enviar correo de notificación al jefe de la organización
                     sendQuoteEmailToOrgBoss($id, $messageText, false, $mysqli, $dbPath);

@@ -242,9 +242,14 @@ if ($sn !== '') {
             <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
                 <div style="flex: 1; min-width: 250px;">
                     <div class="attach-zone" id="attach-zone" data-action="attachments-browse">
-                        <input type="file" name="quote_file" id="attachments" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <input type="file" name="quote_file" id="attachments" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" <?php echo $quote['status'] === 'requested' ? 'required' : ''; ?>>
                         <div class="dz-icon"><i class="bi bi-paperclip"></i></div>
-                        <div class="attach-text">Arrastra o <a href="#" data-action="attachments-browse">selecciona un archivo</a></div>
+                        <div class="attach-text">
+                            Arrastra o <a href="#" data-action="attachments-browse">selecciona un archivo</a>
+                            <?php if ($quote['status'] === 'requested'): ?>
+                                <span class="text-danger fw-bold">* (Obligatorio)</span>
+                            <?php endif; ?>
+                        </div>
                         <div class="attach-hint">PDF, DOC, JPG, PNG (Máx. 10MB)</div>
                         <div class="attach-list" id="attach-list"></div>
                     </div>
