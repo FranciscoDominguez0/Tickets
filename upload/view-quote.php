@@ -13,6 +13,17 @@ $eid = (int)empresaId();
 
 // Cargar info del usuario
 $user = getCurrentUser();
+$user['org_tickets_view'] = 0;
+if ($uid > 0 && $eid > 0) {
+    $stmtOtv = $mysqli->prepare("SELECT org_tickets_view FROM users WHERE id = ? AND empresa_id = ? LIMIT 1");
+    if ($stmtOtv) {
+        $stmtOtv->bind_param('ii', $uid, $eid);
+        if ($stmtOtv->execute()) {
+            $rowOtv = $stmtOtv->get_result()->fetch_assoc();
+            $user['org_tickets_view'] = (int)($rowOtv['org_tickets_view'] ?? 0);
+        }
+    }
+}
 
 if (!isset($_SESSION['client_dark_mode'])) {
     $_SESSION['client_dark_mode'] = 0;
@@ -43,7 +54,18 @@ if (!$quote) {
 }
 
 // Check access: user must belong to the org of the quote and have org_tickets_view
-$hasAccess = true;
+$userOrgs = getPortalOrganizationsForUser($mysqli, $uid, $eid);
+$userOrgIds = array_map(fn($o) => (int)($o['organization_id'] ?? 0), $userOrgs);
+
+$hasAccess = false;
+if (in_array((int)$quote['org_id'], $userOrgIds) && !empty($user['org_tickets_view'])) {
+    $hasAccess = true;
+}
+
+if (!$hasAccess) {
+    header('Location: tickets.php');
+    exit;
+}
 
 // Procesar acciones POST
 $reply_error = '';

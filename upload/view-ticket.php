@@ -276,7 +276,7 @@ if (isset($_SESSION[$replySessionKey]) && is_array($_SESSION[$replySessionKey]))
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'reply') {
-    if ($isOrgPeerView) {
+    if ($isOrgPeerView && empty($user['org_tickets_view'])) {
         $reply_error = 'No puedes responder en tickets de otros usuarios.';
     } elseif (!validateCSRF()) {
         $reply_error = 'Token de seguridad inválido';
@@ -356,9 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $stmt->bind_param('iiis', $eid, $thread_id, $uid, $body);
             if ($stmt->execute()) {
                 $entry_id = (int) $mysqli->insert_id;
-                $stmtUpdTicket = $mysqli->prepare('UPDATE tickets SET updated = NOW() WHERE id = ? AND user_id = ? AND empresa_id = ?');
+                $stmtUpdTicket = $mysqli->prepare('UPDATE tickets SET updated = NOW() WHERE id = ? AND empresa_id = ?');
                 if ($stmtUpdTicket) {
-                    $stmtUpdTicket->bind_param('iii', $tid, $uid, $eid);
+                    $stmtUpdTicket->bind_param('ii', $tid, $eid);
                     $stmtUpdTicket->execute();
                 }
 
@@ -2064,7 +2064,7 @@ function humanSize($bytes) {
 
                 <?php if ($isOrgPeerView && $ticketOwnerName !== ''): ?>
                     <div class="client-ticket-hero__meta">
-                        <i class="bi bi-eye"></i> Consulta de ticket de <?php echo html($ticketOwnerName); ?> · solo lectura
+                        <i class="bi bi-eye"></i> Consulta de ticket de <?php echo html($ticketOwnerName); ?><?php echo empty($user['org_tickets_view']) ? ' · solo lectura' : ''; ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -2329,7 +2329,7 @@ function humanSize($bytes) {
                     </div>
                 <?php endif; ?>
 
-                <?php if (!empty($isOrgPeerView)): ?>
+                 <?php if (!empty($isOrgPeerView) && empty($user['org_tickets_view'])): ?>
                     <?php
                     $orgReadonlyOwner = $ticketOwnerName !== '' ? $ticketOwnerName : 'otro usuario';
                     ?>
