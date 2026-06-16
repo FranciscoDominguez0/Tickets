@@ -335,6 +335,109 @@ class Auth {
             return false;
         }
         
+        // 1. Try to find the user in super_admins table
+        $superAdmin = null;
+        $stmtSuper = $mysqli->prepare('SELECT id, username, email, firstname, lastname, password, dark_mode FROM super_admins WHERE username = ? AND is_active = 1');
+        if ($stmtSuper) {
+            $stmtSuper->bind_param('s', $username);
+            $stmtSuper->execute();
+            $resSuper = $stmtSuper->get_result();
+            $superAdmin = $resSuper->fetch_assoc();
+        }
+
+        if ($superAdmin) {
+            if (!self::verify($password, $superAdmin['password'])) {
+                if (isset($mysqli) && $mysqli) {
+                    $stmtU = $mysqli->prepare('INSERT INTO staff_login_attempts (username, ip, attempts, locked_until, updated) VALUES (?, ?, 1, NULL, NOW()) ON DUPLICATE KEY UPDATE attempts = attempts + 1, updated = NOW()');
+                    if ($stmtU) {
+                        $stmtU->bind_param('ss', $username, $ip);
+                        $stmtU->execute();
+                    }
+
+                    $stmtG = $mysqli->prepare('SELECT attempts FROM staff_login_attempts WHERE username = ? AND ip = ? LIMIT 1');
+                    if ($stmtG) {
+                        $stmtG->bind_param('ss', $username, $ip);
+                        $stmtG->execute();
+                        $rowG = $stmtG->get_result()->fetch_assoc();
+                        $attemptsNow = (int)($rowG['attempts'] ?? 0);
+                        if ($lockoutMin > 0 && $attemptsNow >= $maxAttempts) {
+                            $stmtLock = $mysqli->prepare('UPDATE staff_login_attempts SET locked_until = DATE_ADD(NOW(), INTERVAL ? MINUTE), attempts = 0, updated = NOW() WHERE username = ? AND ip = ?');
+                            if ($stmtLock) {
+                                $stmtLock->bind_param('iss', $lockoutMin, $username, $ip);
+                                $stmtLock->execute();
+                            }
+
+                            $stmtDeact = $mysqli->prepare('UPDATE super_admins SET is_active = 0 WHERE username = ?');
+                            if ($stmtDeact) {
+                                $stmtDeact->bind_param('s', $username);
+                                $stmtDeact->execute();
+                            }
+
+                            if (function_exists('addLog')) {
+                                addLog(
+                                    'superadmin_login_lockout',
+                                    'Cuenta de superadmin bloqueada por intentos fallidos para ' . (string)$username,
+                                    'auth',
+                                    null,
+                                    'staff',
+                                    null
+                                );
+                            }
+                        }
+                    }
+                }
+                if (function_exists('addLog')) {
+                    addLog(
+                        'superadmin_login_failed',
+                        'Credenciales de superadmin inválidas para ' . (string)$username,
+                        'auth',
+                        null,
+                        'staff',
+                        null
+                    );
+                }
+                return false;
+            }
+
+            if (isset($mysqli) && $mysqli) {
+                $stmtC = $mysqli->prepare('DELETE FROM staff_login_attempts WHERE username = ? AND ip = ?');
+                if ($stmtC) {
+                    $stmtC->bind_param('ss', $username, $ip);
+                    $stmtC->execute();
+                }
+            }
+
+            $update = $mysqli->prepare('UPDATE super_admins SET last_login = NOW() WHERE id = ?');
+            $update->bind_param('i', $superAdmin['id']);
+            $update->execute();
+
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                @session_regenerate_id(true);
+            }
+            $_SESSION['staff_id'] = $superAdmin['id'];
+            $_SESSION['user_type'] = 'agente';
+            $_SESSION['staff_email'] = $superAdmin['email'];
+            $_SESSION['staff_name'] = $superAdmin['firstname'] . ' ' . $superAdmin['lastname'];
+            $_SESSION['staff_role'] = 'superadmin';
+            $_SESSION['empresa_id'] = 1;
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+            $_SESSION['session_fp'] = self::sessionFingerprint('agente');
+            $_SESSION['session_fp_relaxed'] = self::sessionFingerprintRelaxed('agente');
+            $_SESSION['scp_dark_mode'] = (string)($superAdmin['dark_mode'] ?? '0');
+            $_SESSION['superadmin_dark_mode'] = (int)($superAdmin['dark_mode'] ?? 0);
+
+            return [
+                'id' => $superAdmin['id'],
+                'username' => $superAdmin['username'],
+                'email' => $superAdmin['email'],
+                'firstname' => $superAdmin['firstname'],
+                'lastname' => $superAdmin['lastname'],
+                'role' => 'superadmin',
+                'empresa_id' => 1,
+                'dark_mode' => $superAdmin['dark_mode']
+            ];
+        }
+
         $hasEmpresaId = self::tableHasColumn('staff', 'empresa_id');
         $hasRole = self::tableHasColumn('staff', 'role');
         if ($hasEmpresaId && $hasRole) {

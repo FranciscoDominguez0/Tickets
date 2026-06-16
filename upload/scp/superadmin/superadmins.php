@@ -27,15 +27,6 @@ if (!empty($_SESSION['flash_error'])) {
     unset($_SESSION['flash_error']);
 }
 
-$staffHasEmpresa = false;
-$staffHasRole = false;
-if (isset($mysqli) && $mysqli) {
-    $col = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-    $staffHasEmpresa = ($col && $col->num_rows > 0);
-    $col = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'role'");
-    $staffHasRole = ($col && $col->num_rows > 0);
-}
-
 $meId = (int)($_SESSION['staff_id'] ?? 0);
 
 $redirectSelf = function (string $qs = '') {
@@ -81,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $redirectSelf();
         }
 
-        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE username = ? OR email = ? LIMIT 1');
+        $stmtDu = $mysqli->prepare('SELECT id FROM super_admins WHERE username = ? OR email = ? LIMIT 1');
         if ($stmtDu) {
             $stmtDu->bind_param('ss', $username, $email);
             $stmtDu->execute();
@@ -93,31 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $hash = Auth::hash($password);
 
-        if ($staffHasRole && $staffHasEmpresa) {
-            $empresa_id = 1;
-            $role = 'superadmin';
-            $stmt = $mysqli->prepare('INSERT INTO staff (empresa_id, role, username, email, firstname, lastname, password, is_active, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
-            if (!$stmt) {
-                $_SESSION['flash_error'] = 'No se pudo crear el superadmin.';
-                $redirectSelf();
-            }
-            $stmt->bind_param('issssssi', $empresa_id, $role, $username, $email, $firstname, $lastname, $hash, $is_active);
-        } elseif ($staffHasRole) {
-            $role = 'superadmin';
-            $stmt = $mysqli->prepare('INSERT INTO staff (role, username, email, firstname, lastname, password, is_active, created, updated) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())');
-            if (!$stmt) {
-                $_SESSION['flash_error'] = 'No se pudo crear el superadmin.';
-                $redirectSelf();
-            }
-            $stmt->bind_param('ssssssi', $role, $username, $email, $firstname, $lastname, $hash, $is_active);
-        } else {
-            $stmt = $mysqli->prepare('INSERT INTO staff (username, email, firstname, lastname, password, is_active, created, updated) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())');
-            if (!$stmt) {
-                $_SESSION['flash_error'] = 'No se pudo crear el superadmin.';
-                $redirectSelf();
-            }
-            $stmt->bind_param('sssssi', $username, $email, $firstname, $lastname, $hash, $is_active);
+        $stmt = $mysqli->prepare('INSERT INTO super_admins (username, email, firstname, lastname, password, is_active, created, updated) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())');
+        if (!$stmt) {
+            $_SESSION['flash_error'] = 'No se pudo crear el superadmin.';
+            $redirectSelf();
         }
+        $stmt->bind_param('ssssssi', $username, $email, $firstname, $lastname, $hash, $is_active);
 
         if ($stmt->execute()) {
             $_SESSION['flash_msg'] = 'Superadmin creado correctamente.';
@@ -150,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $redirectSelf();
         }
 
-        $stmtDu = $mysqli->prepare('SELECT id FROM staff WHERE (username = ? OR email = ?) AND id <> ? LIMIT 1');
+        $stmtDu = $mysqli->prepare('SELECT id FROM super_admins WHERE (username = ? OR email = ?) AND id <> ? LIMIT 1');
         if ($stmtDu) {
             $stmtDu->bind_param('ssi', $username, $email, $id);
             $stmtDu->execute();
@@ -162,14 +134,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($password !== '') {
             $hash = Auth::hash($password);
-            $stmt = $mysqli->prepare('UPDATE staff SET username = ?, email = ?, firstname = ?, lastname = ?, password = ?, is_active = ?, updated = NOW() WHERE id = ?');
+            $stmt = $mysqli->prepare('UPDATE super_admins SET username = ?, email = ?, firstname = ?, lastname = ?, password = ?, is_active = ?, updated = NOW() WHERE id = ?');
             if (!$stmt) {
                 $_SESSION['flash_error'] = 'No se pudo actualizar.';
                 $redirectSelf();
             }
             $stmt->bind_param('sssssii', $username, $email, $firstname, $lastname, $hash, $is_active, $id);
         } else {
-            $stmt = $mysqli->prepare('UPDATE staff SET username = ?, email = ?, firstname = ?, lastname = ?, is_active = ?, updated = NOW() WHERE id = ?');
+            $stmt = $mysqli->prepare('UPDATE super_admins SET username = ?, email = ?, firstname = ?, lastname = ?, is_active = ?, updated = NOW() WHERE id = ?');
             if (!$stmt) {
                 $_SESSION['flash_error'] = 'No se pudo actualizar.';
                 $redirectSelf();
@@ -198,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $redirectSelf();
         }
 
-        $stmt = $mysqli->prepare("SELECT id FROM staff WHERE id = ?" . ($staffHasRole ? " AND role = 'superadmin'" : "") . " LIMIT 1");
+        $stmt = $mysqli->prepare("SELECT id FROM super_admins WHERE id = ? LIMIT 1");
         if ($stmt) {
             $stmt->bind_param('i', $id);
             $stmt->execute();
@@ -208,7 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $stmtDel = $mysqli->prepare('DELETE FROM staff WHERE id = ?');
+        $stmtDel = $mysqli->prepare('DELETE FROM super_admins WHERE id = ?');
         if (!$stmtDel) {
             $_SESSION['flash_error'] = 'No se pudo eliminar.';
             $redirectSelf();
@@ -229,13 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $rows = [];
 if (isset($mysqli) && $mysqli) {
-    $sql = "SELECT id, username, email, firstname, lastname, is_active, last_login";
-    if ($staffHasRole) $sql .= ", role";
-    $sql .= " FROM staff";
-    if ($staffHasRole) {
-        $sql .= " WHERE role = 'superadmin'";
-    }
-    $sql .= " ORDER BY id ASC";
+    $sql = "SELECT id, username, email, firstname, lastname, is_active, last_login FROM super_admins ORDER BY id ASC";
     $res = $mysqli->query($sql);
     if ($res) {
         while ($r = $res->fetch_assoc()) {
