@@ -26,6 +26,7 @@ if ($sn !== '') {
         </h1>
         <div class="ticket-view-actions">
             <a href="cotizaciones.php" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
+            <a href="print_cotizacion.php?id=<?php echo $quote['id']; ?>" target="_blank" class="btn-icon" title="Imprimir Cotización"><i class="bi bi-printer"></i></a>
             <?php if (!empty($quote['file_path'])): ?>
                 <a href="../../<?php echo html($quote['file_path']); ?>" target="_blank" class="btn-icon" title="Descargar PDF"><i class="bi bi-file-earmark-arrow-down"></i></a>
             <?php endif; ?>

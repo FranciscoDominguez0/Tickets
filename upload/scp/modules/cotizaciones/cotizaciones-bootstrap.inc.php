@@ -98,7 +98,7 @@ function getCotizaciones($mysqli, $eid, $status = '', $search = '', $limit = 0, 
     return $quotes;
 }
 
-function sendQuoteEmailToOrgBoss($quoteId, $messageText, $isNewQuote, $mysqli) {
+function sendQuoteEmailToOrgBoss($quoteId, $messageText, $isNewQuote, $mysqli, $newFilePath = null) {
     $quoteId = (int)$quoteId;
     $eid = empresaId();
 
@@ -171,18 +171,39 @@ function sendQuoteEmailToOrgBoss($quoteId, $messageText, $isNewQuote, $mysqli) {
     }
     $bossBodyText .= "Por favor revise la cotización accediendo al siguiente enlace:\n" . $clientPortalUrl;
 
-    // Adjuntar PDF si existe
+    // Adjuntar PDF/archivo si aplica
     $attachments = [];
-    if (!empty($quote['file_path'])) {
+    $fileToAttach = null;
+    $attachmentName = '';
+    
+    if ($isNewQuote && !empty($quote['file_path'])) {
+        $fileToAttach = $quote['file_path'];
+        $attachmentName = 'Cotizacion_' . $quoteNo . '.pdf';
+    } elseif ($newFilePath !== null && !empty($newFilePath)) {
+        $fileToAttach = $newFilePath;
+        $attachmentName = basename($newFilePath);
+    }
+    
+    if ($fileToAttach) {
         $projectRoot = realpath(dirname(__DIR__, 4));
-        $filePath = $projectRoot . '/' . ltrim($quote['file_path'], '/');
+        $filePath = $projectRoot . '/' . ltrim($fileToAttach, '/');
         if (is_file($filePath)) {
-            $pdfContent = file_get_contents($filePath);
-            if ($pdfContent !== false) {
+            $fileContent = @file_get_contents($filePath);
+            if ($fileContent !== false) {
+                $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+                $mimetype = 'application/octet-stream';
+                if ($ext === 'pdf') {
+                    $mimetype = 'application/pdf';
+                } elseif ($ext === 'png') {
+                    $mimetype = 'image/png';
+                } elseif (in_array($ext, ['jpg', 'jpeg'])) {
+                    $mimetype = 'image/jpeg';
+                }
+                
                 $attachments[] = [
-                    'filename' => 'Cotizacion_' . $quoteNo . '.pdf',
-                    'contentType' => 'application/pdf',
-                    'content' => $pdfContent
+                    'filename' => $attachmentName,
+                    'contentType' => $mimetype,
+                    'content' => $fileContent
                 ];
             }
         }

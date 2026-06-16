@@ -716,6 +716,10 @@ tr.ticket-row.is-selected td {
     font-size: 0.88rem;
     text-decoration: none;
     display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
 
 .chat-att-info .att-filename:hover {

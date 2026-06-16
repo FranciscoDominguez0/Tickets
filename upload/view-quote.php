@@ -93,15 +93,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         };
         
+        $clientName = trim((string)($user['name'] ?? 'El cliente'));
+
         if ($action === 'request_quote' && $quote['status'] === 'pending') {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'requested' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
-            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha solicitado la cotización formal.', NOW())");
+            $msg = $clientName . ' ha solicitado la cotización formal.';
+            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, '" . $mysqli->real_escape_string($msg) . "', NOW())");
             if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
                 notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Solicitada');
             }
-            $notifyAgent('El cliente ha solicitado la cotización formal.');
+            $notifyAgent($msg);
             $_SESSION['flash_msg'] = 'Cotización solicitada exitosamente.';
             header("Location: view-quote.php?id=$qid");
             exit;
@@ -109,23 +112,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'accepted' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
-            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha ACEPTADO la cotización.', NOW())");
+            
+            $dbPath = null;
+            $msgSuffix = $clientName . ' ha ACEPTADO la cotización.';
+
+            $insStmt = $mysqli->prepare("INSERT INTO quote_messages (quote_id, user_id, message, file_path) VALUES (?, ?, ?, ?)");
+            $insStmt->bind_param('iiss', $qid, $uid, $msgSuffix, $dbPath);
+            $insStmt->execute();
+
             if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
                 notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Aceptada');
             }
-            $notifyAgent('El cliente ha ACEPTADO la cotización.');
+            $notifyAgent($msgSuffix);
             $_SESSION['flash_msg'] = 'Cotización aceptada exitosamente.';
+            header("Location: view-quote.php?id=$qid");
+            exit;
+        } elseif ($action === 'upload_purchase_order' && $quote['status'] === 'accepted') {
+            $dbPath = null;
+            $filename = '';
+            if (isset($_FILES['purchase_order']) && $_FILES['purchase_order']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/uploads/attachments/';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0755, true);
+                }
+                $filename = basename($_FILES['purchase_order']['name']);
+                $filename = preg_replace('/[^a-zA-Z0-9_.-]/', '_', $filename);
+                $newFileName = time() . '_oc_' . $filename;
+                $destPath = $uploadDir . $newFileName;
+                
+                if (move_uploaded_file($_FILES['purchase_order']['tmp_name'], $destPath)) {
+                    $dbPath = 'upload/uploads/attachments/' . $newFileName;
+                }
+            }
+
+            if ($dbPath) {
+                $msg = $clientName . ' adjuntó la Orden de Compra.';
+                $insStmt = $mysqli->prepare("INSERT INTO quote_messages (quote_id, user_id, message, file_path) VALUES (?, ?, ?, ?)");
+                $insStmt->bind_param('iiss', $qid, $uid, $msg, $dbPath);
+                $insStmt->execute();
+                
+                $notifyAgent($msg);
+                $_SESSION['flash_msg'] = 'Orden de Compra adjuntada correctamente.';
+            } else {
+                $reply_error = 'Error al subir el archivo de la orden de compra.';
+            }
             header("Location: view-quote.php?id=$qid");
             exit;
         } elseif ($action === 'reject_quote' && ($quote['status'] === 'answered' || $quote['status'] === 'pending')) {
             $upd = $mysqli->prepare("UPDATE quotes SET status = 'rejected' WHERE id = ?");
             $upd->bind_param('i', $qid);
             $upd->execute();
-            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, 'El cliente ha RECHAZADO la cotización.', NOW())");
+            $msg = $clientName . ' ha RECHAZADO la cotización.';
+            $mysqli->query("INSERT INTO quote_messages (quote_id, user_id, message, created_at) VALUES ($qid, $uid, '" . $mysqli->real_escape_string($msg) . "', NOW())");
             if (!empty($quote['ticket_id']) && function_exists('notifyApprovalToAdminRecipients')) {
                 notifyApprovalToAdminRecipients($quote['ticket_id'], 'Cotización Rechazada');
             }
-            $notifyAgent('El cliente ha RECHAZADO la cotización.');
+            $notifyAgent($msg);
             $_SESSION['flash_msg'] = 'Cotización rechazada.';
             header("Location: view-quote.php?id=$qid");
             exit;
@@ -149,6 +191,14 @@ if ($stmtMsg) {
     $msgResult = $stmtMsg->get_result();
     while ($row = $msgResult->fetch_assoc()) {
         $messages[] = $row;
+    }
+}
+
+$hasPurchaseOrder = false;
+foreach ($messages as $m) {
+    if (strpos($m['message'], 'Orden de Compra') !== false && !empty($m['file_path'])) {
+        $hasPurchaseOrder = true;
+        break;
     }
 }
 
@@ -470,6 +520,104 @@ $stCol = $stInfo['color'];
                 backdrop-filter: none !important;
             }
         }
+
+        .chat-att-list {
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-att-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            padding: 10px 14px;
+            max-width: min(380px, 100%);
+            transition: all 0.2s;
+        }
+
+        .chat-att-item:hover {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+
+        .chat-att-icon {
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-att-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-att-info .att-filename {
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+        @media (max-width: 600px) {
+            .chat-att-info .att-filename {
+                max-width: 180px;
+            }
+        }
+
+        .chat-att-info .att-filename:hover {
+            color: #ef4444;
+            text-decoration: underline;
+        }
+
+        .chat-att-info .att-size {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .chat-att-download {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .chat-att-download:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+        body.dark-mode .chat-att-item {
+            background: #1a1a1a !important;
+            border-color: #252525 !important;
+        }
+        body.dark-mode .chat-att-info .att-filename {
+            color: #bbb !important;
+        }
+        body.dark-mode .chat-att-download {
+            background: #1e1e1e !important;
+            border-color: #2e2e2e !important;
+            color: #888 !important;
+        }
     </style>
 </head>
 <body class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
@@ -698,12 +846,19 @@ $stCol = $stInfo['color'];
                                             </div>
                                             <div class="entry-body" style="white-space: pre-wrap;"><?php echo html($m['message']); ?></div>
                                             
-                                            <?php if (!empty($m['file_path'])): ?>
-                                                <div class="mt-3 p-2 border rounded" style="max-width: 300px; display:flex; align-items:center; gap: 10px;">
-                                                    <i class="bi bi-file-earmark-pdf fs-3 text-danger"></i>
-                                                    <div style="flex:1; min-width:0;">
-                                                        <div class="text-truncate fw-bold small">Documento_Cotizacion.pdf</div>
-                                                        <a href="../<?php echo html($m['file_path']); ?>" target="_blank" class="small text-decoration-none">Descargar</a>
+                                            <?php if (!empty($m['file_path'])): 
+                                                $fileName = basename($m['file_path']);
+                                                $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                                                $iconClass = $ext === 'pdf' ? 'bi-file-earmark-pdf-fill' : (in_array($ext, ['doc','docx']) ? 'bi-file-earmark-word-fill' : 'bi-file-earmark');
+                                                $iconColor = $ext === 'pdf' ? '#dc2626' : '#3b82f6';
+                                            ?>
+                                                <div class="chat-att-list">
+                                                    <div class="chat-att-item">
+                                                        <span class="chat-att-icon" style="color: <?php echo $iconColor; ?>;"><i class="bi <?php echo $iconClass; ?>"></i></span>
+                                                        <div class="chat-att-info">
+                                                            <a href="../<?php echo html($m['file_path']); ?>" target="_blank" class="att-filename"><?php echo html($fileName); ?></a>
+                                                        </div>
+                                                        <a href="../<?php echo html($m['file_path']); ?>" target="_blank" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
                                                     </div>
                                                 </div>
                                             <?php endif; ?>
@@ -716,7 +871,6 @@ $stCol = $stInfo['color'];
                 </div>
             </div>
             
-            <?php if ($quote['status'] === 'pending' || $quote['status'] === 'answered'): ?>
             <!-- Quote Actions -->
             <style>
                 .quote-action-panel { background: #f8fafc; border: 1px dashed #cbd5e1; }
@@ -724,36 +878,39 @@ $stCol = $stInfo['color'];
                 body.dark-mode .quote-action-panel h5 { color: #f8fafc; }
                 body.dark-mode .quote-action-panel p { color: #94a3b8 !important; }
             </style>
+
+            <?php if ($quote['status'] === 'pending' || $quote['status'] === 'answered'): ?>
             <div class="card-soft mt-4 quote-action-panel">
                 <div class="body p-4 text-center">
                     <?php if ($quote['status'] === 'pending'): ?>
                         <h5 class="fw-bold mb-3">Acción Requerida</h5>
-                        <p class="text-muted mb-4">Se ha registrado la solicitud de cotización. Por favor, apruébala para continuar con la generación formal del documento.</p>
+                        <p class="text-muted mb-4">Se ha registrado la solicitud de cotización. Por favor, solicítala para continuar con la generación formal del documento.</p>
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
                             <form method="POST" class="d-inline-block m-0">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="request_quote">
                                 <button type="submit" class="btn btn-action-primary">
-                                    <i class="bi bi-check2-circle"></i> Aprobar Cotización
+                                    <i class="bi bi-check2-circle"></i> Solicitar Cotización
                                 </button>
                             </form>
                             <form method="POST" class="d-inline-block m-0">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="reject_quote">
                                 <button type="submit" class="btn btn-action-outline">
-                                    <i class="bi bi-x-circle"></i> Rechazar Cotización
+                                    <i class="bi bi-x-circle"></i> Rechazar
                                 </button>
                             </form>
                         </div>
                     <?php elseif ($quote['status'] === 'answered'): ?>
                         <h5 class="fw-bold mb-3">Resolución de Cotización</h5>
-                        <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes solicitar o rechazar esta cotización.</p>
+                        <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes aceptar o rechazar esta cotización.</p>
+                        
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
                             <form method="POST" style="margin:0;" class="d-inline-block">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="accept_quote">
                                 <button type="submit" class="btn btn-action-primary">
-                                    <i class="bi bi-check-lg"></i> Solicitar Cotización
+                                    <i class="bi bi-check-lg"></i> Aceptar Cotización
                                 </button>
                             </form>
                             <form method="POST" style="margin:0;" class="d-inline-block">
@@ -765,6 +922,52 @@ $stCol = $stInfo['color'];
                             </form>
                         </div>
                     <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if ($quote['status'] === 'accepted' && !$hasPurchaseOrder): ?>
+            <style>
+                .accepted-oc-card {
+                    background: linear-gradient(145deg, #ffffff, #fef2f2) !important;
+                    border: 1px solid #fecaca !important;
+                    border-radius: 16px !important;
+                    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.04) !important;
+                    width: 100% !important;
+                    margin-top: 24px !important;
+                }
+                body.dark-mode .accepted-oc-card {
+                    background: linear-gradient(145deg, #18181b, #2a0f0f) !important;
+                    border-color: #7f1d1d !important;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+                }
+                body.dark-mode .accepted-oc-card h5 {
+                    color: #fca5a5 !important;
+                }
+            </style>
+            <div class="card-soft mt-4 accepted-oc-card">
+                <div class="body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px; border-radius: 50%; background: #fee2e2; color: #ef4444;">
+                        <i class="bi bi-file-earmark-check-fill fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: #991b1b; font-size: 1.05rem;">Orden de Compra</h5>
+                    <p class="text-muted mb-3" style="font-size: 0.86rem; line-height: 1.35; max-width: 600px; margin: 0 auto 15px;">
+                        La cotización ha sido aceptada. Si lo deseas, puedes adjuntar la Orden de Compra correspondiente para proceder.
+                    </p>
+                    
+                    <form method="POST" enctype="multipart/form-data" class="m-0" id="oc-upload-form" style="max-width: 500px; margin: 0 auto !important;">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <input type="hidden" name="action_type" value="upload_purchase_order">
+                        
+                        <div class="mb-3 text-start">
+                            <label class="form-label fw-bold small text-muted"><i class="bi bi-paperclip"></i> Seleccionar archivo</label>
+                            <input type="file" name="purchase_order" id="oc-file-input" class="form-control" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required style="border-radius: 10px;">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-action-primary w-100" style="padding: 8px 20px; border-radius: 50rem;">
+                            <i class="bi bi-cloud-arrow-up"></i> Enviar Orden de Compra
+                        </button>
+                    </form>
                 </div>
             </div>
             <?php endif; ?>

@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $updStmt->execute();
                     
                     // Enviar correo de notificación al jefe de la organización
-                    sendQuoteEmailToOrgBoss($id, $messageText, false, $mysqli);
+                    sendQuoteEmailToOrgBoss($id, $messageText, false, $mysqli, $dbPath);
                     
                     $_SESSION['flash_msg'] = 'Mensaje publicado correctamente.';
                     header("Location: cotizaciones.php?id=" . $id);
