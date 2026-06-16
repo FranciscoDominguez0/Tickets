@@ -367,13 +367,19 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
                                 <?php 
                                     $mp = strtolower(trim((string)($p['metodo_pago'] ?? '')));
                                     $icon = 'bi-credit-card';
+                                    $imgHtml = '';
                                     if ($mp === 'efectivo') $icon = 'bi-cash';
                                     elseif ($mp === 'transferencia') $icon = 'bi-bank';
-                                    elseif ($mp === 'yappy') $icon = 'bi-phone-vibrate';
+                                    elseif ($mp === 'yappy') {
+                                        $icon = '';
+                                        $imgHtml = '<img src="yappy.png" alt="Yappy" style="width:16px;height:16px;object-fit:contain;margin-right:4px;border-radius:4px">';
+                                    }
                                     if ($mp === '') $mp = '—';
                                 ?>
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill" style="font-weight:600;">
-                                    <i class="bi <?php echo $icon; ?> me-1"></i><?php echo html(ucfirst($mp)); ?>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill d-inline-flex align-items-center" style="font-weight:600;">
+                                    <?php if ($icon !== ''): ?><i class="bi <?php echo $icon; ?> me-1"></i><?php endif; ?>
+                                    <?php echo $imgHtml; ?>
+                                    <?php echo html(ucfirst($mp)); ?>
                                 </span>
                             </td>
                             <td class="text-muted" style="font-size:.85rem">

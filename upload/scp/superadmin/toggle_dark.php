@@ -14,7 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (validateCSRF()) {
+require_once '../../../includes/Auth.php';
+
+if (Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
     $newVal = (string)($_POST['dark_mode'] ?? '0');
     $_SESSION['superadmin_dark_mode'] = ($newVal === '1') ? 1 : 0;
 }

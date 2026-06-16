@@ -61,10 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $firstname = trim((string)($_POST['firstname'] ?? ''));
         $lastname = trim((string)($_POST['lastname'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
+        $password_confirm = (string)($_POST['password_confirm'] ?? '');
         $is_active = isset($_POST['is_active']) ? 1 : 0;
 
         if ($username === '' || $email === '' || $firstname === '' || $lastname === '' || $password === '') {
             $_SESSION['flash_error'] = 'Todos los campos son obligatorios.';
+            $redirectSelf();
+        }
+        if ($password !== $password_confirm) {
+            $_SESSION['flash_error'] = 'Las contraseñas no coinciden.';
             $redirectSelf();
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -107,6 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $firstname = trim((string)($_POST['firstname'] ?? ''));
         $lastname = trim((string)($_POST['lastname'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
+        $password_confirm = (string)($_POST['password_confirm'] ?? '');
         $is_active = isset($_POST['is_active']) ? 1 : 0;
 
         if ($id <= 0) {
@@ -115,6 +121,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($username === '' || $email === '' || $firstname === '' || $lastname === '') {
             $_SESSION['flash_error'] = 'Todos los campos (excepto contraseña) son obligatorios.';
+            $redirectSelf();
+        }
+        if ($password !== '' && $password !== $password_confirm) {
+            $_SESSION['flash_error'] = 'Las contraseñas no coinciden.';
             $redirectSelf();
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -201,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $rows = [];
 if (isset($mysqli) && $mysqli) {
-    $sql = "SELECT id, username, email, firstname, lastname, is_active, last_login FROM super_admins ORDER BY id ASC";
+    $sql = "SELECT id, username, email, firstname, lastname, is_active, last_login FROM super_admins ORDER BY (id = " . (int)$meId . ") DESC, id ASC";
     $res = $mysqli->query($sql);
     if ($res) {
         while ($r = $res->fetch_assoc()) {
@@ -497,7 +507,12 @@ ob_start();
                             <input type="password" class="form-control" name="password" id="saPassword">
                             <div class="form-text" id="saPasswordHelp" style="display:none;">Deja en blanco para mantener la contraseña actual.</div>
                         </div>
-                        <div class="col-md-6 d-flex align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label" id="saPasswordConfirmLabel">Confirmar Contraseña</label>
+                            <input type="password" class="form-control" name="password_confirm" id="saPasswordConfirm">
+                            <div class="invalid-feedback" id="saPasswordError">Las contraseñas no coinciden. Por favor, verifica e inténtalo de nuevo.</div>
+                        </div>
+                        <div class="col-md-12 d-flex align-items-end">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="saActive" checked>
                                 <label class="form-check-label" for="saActive">Activo</label>
@@ -525,11 +540,13 @@ ob_start();
         var firstnameEl = document.getElementById('saFirstname');
         var lastnameEl = document.getElementById('saLastname');
         var passwordEl = document.getElementById('saPassword');
+        var passwordConfirmEl = document.getElementById('saPasswordConfirm');
         var passwordLabelEl = document.getElementById('saPasswordLabel');
         var passwordHelpEl = document.getElementById('saPasswordHelp');
         var activeEl = document.getElementById('saActive');
         var submitEl = document.getElementById('saSubmit');
         var btnCreate = document.getElementById('btnOpenCreate');
+        var formEl = document.getElementById('superadminForm');
 
         var delIdEl = document.getElementById('delSaId');
         var delUsernameEl = document.getElementById('delSaUsername');
@@ -544,7 +561,9 @@ ob_start();
             firstnameEl.value = '';
             lastnameEl.value = '';
             passwordEl.value = '';
+            passwordConfirmEl.value = '';
             passwordEl.required = true;
+            passwordConfirmEl.required = true;
             passwordLabelEl.textContent = 'Contraseña';
             passwordHelpEl.style.display = 'none';
             activeEl.checked = true;
@@ -560,11 +579,31 @@ ob_start();
             firstnameEl.value = btn.getAttribute('data-firstname') || '';
             lastnameEl.value = btn.getAttribute('data-lastname') || '';
             passwordEl.value = '';
+            passwordConfirmEl.value = '';
             passwordEl.required = false;
+            passwordConfirmEl.required = false;
             passwordLabelEl.textContent = 'Nueva contraseña (opcional)';
             passwordHelpEl.style.display = 'block';
             activeEl.checked = (btn.getAttribute('data-active') === '1');
             submitEl.textContent = 'Guardar cambios';
+        }
+
+        if (formEl) {
+            formEl.addEventListener('submit', function (e) {
+                if (passwordEl.value !== passwordConfirmEl.value) {
+                    e.preventDefault();
+                    passwordConfirmEl.classList.add('is-invalid');
+                } else {
+                    passwordConfirmEl.classList.remove('is-invalid');
+                }
+            });
+
+            passwordConfirmEl.addEventListener('input', function() {
+                passwordConfirmEl.classList.remove('is-invalid');
+            });
+            passwordEl.addEventListener('input', function() {
+                passwordConfirmEl.classList.remove('is-invalid');
+            });
         }
 
         if (btnCreate) {
