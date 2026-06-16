@@ -454,7 +454,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                             <path d="M4 19v-4m4 4v-8m4 8v-6m4 6v-10" stroke="<?php echo $currentRoute === 'reportes' ? '#ffffff' : '#64748b'; ?>" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                         </svg>
                                     </span>
-                                    Reporte
+                                    Hoja de reporte
                                 </a>
                             </li>
                             <?php endif; ?>
@@ -472,7 +472,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                     <path d="M10 9H8" stroke="<?php echo ($currentRoute === 'cotizaciones') ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
-                            Cotizaciones
+                            Reporte
                         </a>
                     </li>
                     <?php endif; ?>

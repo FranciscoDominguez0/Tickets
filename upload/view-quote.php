@@ -747,20 +747,20 @@ $stCol = $stInfo['color'];
                         </div>
                     <?php elseif ($quote['status'] === 'answered'): ?>
                         <h5 class="fw-bold mb-3">Resolución de Cotización</h5>
-                        <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes aceptar o rechazar esta cotización.</p>
+                        <p class="text-muted mb-4">Revisa la información proporcionada y el documento adjunto. Puedes solicitar o rechazar esta cotización.</p>
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
                             <form method="POST" style="margin:0;" class="d-inline-block">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="accept_quote">
                                 <button type="submit" class="btn btn-action-primary">
-                                    <i class="bi bi-check-lg"></i> Aceptar Cotización
+                                    <i class="bi bi-check-lg"></i> Solicitar Cotización
                                 </button>
                             </form>
                             <form method="POST" style="margin:0;" class="d-inline-block">
                                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                                 <input type="hidden" name="action_type" value="reject_quote">
                                 <button type="submit" class="btn btn-action-outline">
-                                    <i class="bi bi-x-lg"></i> Rechazar Cotización
+                                    <i class="bi bi-x-lg"></i> Rechazar
                                 </button>
                             </form>
                         </div>
