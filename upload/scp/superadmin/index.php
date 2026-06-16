@@ -214,10 +214,10 @@ function stDias(?int $d): string {
 
 /* ── Array de KPIs: sin "Tickets este mes", "Staff activo" ni "Pagos vencidos" ── */
 $kpiCards = [
-    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'primary',   'total registradas'],
-    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'primary',   date('M Y')],
-    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'primary',   'histórico'],
-    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'primary',   'estado suspendido'],
+    ['bi-building-check', 'Empresas activas',  number_format($kpiActivas),             'danger',   'total registradas'],
+    ['bi-cash-stack',     'Ingresos del mes',   '$'.number_format($kpiIngresosMes, 0), 'danger',   date('M Y')],
+    ['bi-receipt',        'Total pagos',         number_format($kpiTotalPagos),          'danger',   'histórico'],
+    ['bi-calendar-check', 'Suspendidas',         number_format($pagosSuspendidos),       'danger',   'estado suspendido'],
 ];
 
 ?>
@@ -226,17 +226,19 @@ $kpiCards = [
 <link rel="stylesheet" href="css/estadisticas.css">
 
 <!-- ══ HEADER ══════════════════════════════════════════════ -->
-<div class="stats-hero mb-1">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+<div class="settings-hero mb-3">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="hero-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+            <span class="settings-hero-icon">
+                <i class="bi bi-bar-chart-line-fill text-white"></i>
+            </span>
             <div>
                 <h1>Estadísticas del sistema</h1>
                 <p>Control global de clientes, pagos y operaciones</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2" style="color: #fff !important; border-color: rgba(255, 255, 255, 0.2) !important;">
                 <i class="bi bi-calendar3 me-1"></i><?= date('d M Y') ?>
             </span>
         </div>

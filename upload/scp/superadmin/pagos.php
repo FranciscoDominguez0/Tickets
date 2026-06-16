@@ -171,19 +171,19 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
 <link rel="stylesheet" href="css/empresas.css">
 
 <!-- ══ HEADER ══════════════════════════════════════════════ -->
-<div class="emp-hero mb-1">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+<div class="settings-hero mb-3">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="hero-icon" style="background:#0d6efd;">
-                <i class="bi bi-credit-card-2-front"></i>
-            </div>
+            <span class="settings-hero-icon">
+                <i class="bi bi-cash-stack text-white"></i>
+            </span>
             <div>
                 <h1>Facturación</h1>
                 <p>Control mensual de pagos y estado del servicio</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2" style="color: #fff !important; border-color: rgba(255, 255, 255, 0.2) !important;">
                 <i class="bi bi-calendar3 me-1"></i><?php echo date('d M Y'); ?>
             </span>
         </div>
@@ -212,13 +212,13 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'primary'],
-        ['icon' => 'bi-x-circle',           'label' => 'Vencidas',          'value' => $kpiVencidas,     'color' => 'primary'],
-        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas',        'value' => $kpiBloqueadas,   'color' => 'primary'],
-        ['icon' => 'bi-cash-stack',         'label' => 'Ingresos del mes',  'value' => $kpiIngresosMes,  'color' => 'primary', 'prefix' => '$'],
+        ['icon' => 'bi-hourglass-split',    'label' => 'Vencen en ≤7 días', 'value' => $kpiVencen7,      'color' => 'danger'],
+        ['icon' => 'bi-x-circle',           'label' => 'Vencidas',          'value' => $kpiVencidas,     'color' => 'danger'],
+        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas',        'value' => $kpiBloqueadas,   'color' => 'danger'],
+        ['icon' => 'bi-cash-stack',         'label' => 'Ingresos del mes',  'value' => $kpiIngresosMes,  'color' => 'danger', 'prefix' => '$'],
     ];
     foreach ($kpis as $k):
-        $display = $k['value'] === null ? '—' : (($k['prefix'] ?? '') . ($k['color'] === 'success' ? number_format((float)$k['value'], 2) : (int)$k['value']));
+        $display = $k['value'] === null ? '—' : (($k['prefix'] ?? '') . (($k['prefix'] ?? '') === '$' ? number_format((float)$k['value'], 2) : (int)$k['value']));
     ?>
     <div class="col-6 col-md-3">
         <div class="card kpi-card shadow-sm h-100">
@@ -364,8 +364,16 @@ if ($hasPagos && isset($mysqli) && $mysqli) {
                                 <?php echo html((string)($p['periodo_hasta'] ?? '')); ?>
                             </td>
                             <td>
-                                <span class="badge-pill badge bg-primary bg-opacity-10 text-primary">
-                                    <?php echo html((string)($p['metodo_pago'] ?? '—')); ?>
+                                <?php 
+                                    $mp = strtolower(trim((string)($p['metodo_pago'] ?? '')));
+                                    $icon = 'bi-credit-card';
+                                    if ($mp === 'efectivo') $icon = 'bi-cash';
+                                    elseif ($mp === 'transferencia') $icon = 'bi-bank';
+                                    elseif ($mp === 'yappy') $icon = 'bi-phone-vibrate';
+                                    if ($mp === '') $mp = '—';
+                                ?>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill" style="font-weight:600;">
+                                    <i class="bi <?php echo $icon; ?> me-1"></i><?php echo html(ucfirst($mp)); ?>
                                 </span>
                             </td>
                             <td class="text-muted" style="font-size:.85rem">

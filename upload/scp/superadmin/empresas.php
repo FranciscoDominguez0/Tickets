@@ -359,17 +359,19 @@ function badgeDias(?int $d): string {
 <link rel="stylesheet" href="css/empresas.css">
 
 <!-- ══ HEADER ══════════════════════════════════════════════ -->
-<div class="emp-hero mb-1">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+<div class="settings-hero mb-3">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="hero-icon"><i class="bi bi-buildings"></i></div>
+            <span class="settings-hero-icon">
+                <i class="bi bi-buildings text-white"></i>
+            </span>
             <div>
                 <h1>Empresas</h1>
                 <p>Administración de servicios, pagos y accesos por tenant</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2">
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-3 py-2" style="color: #fff !important; border-color: rgba(255, 255, 255, 0.2) !important;">
                 <i class="bi bi-calendar3 me-1"></i><?php echo date('d M Y'); ?>
             </span>
             <button class="btn btn-primary btn-sm px-3" type="button"
@@ -386,10 +388,10 @@ function badgeDias(?int $d): string {
 <div class="row g-3 mb-2">
     <?php
     $kpis = [
-        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'primary'],
-        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'primary'],
-        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'primary'],
-        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'primary'],
+        ['icon' => 'bi-buildings',          'label' => 'Total',      'value' => $totalEmpresas,   'color' => 'danger'],
+        ['icon' => 'bi-building-check',     'label' => 'Activas',    'value' => $totalActivas,    'color' => 'danger'],
+        ['icon' => 'bi-exclamation-triangle','label' => 'Vencidas',  'value' => $totalVencidas,   'color' => 'danger'],
+        ['icon' => 'bi-slash-circle',       'label' => 'Bloqueadas', 'value' => $totalBloqueadas, 'color' => 'danger'],
     ];
     foreach ($kpis as $k): ?>
     <div class="col-6 col-md-3">

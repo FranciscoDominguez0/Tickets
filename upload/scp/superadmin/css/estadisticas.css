@@ -50,11 +50,8 @@
 .kpi-card {
     border:none; border-radius:var(--radius-card);
     overflow:hidden; position:relative;
-    transition:transform .2s, box-shadow .2s;
-    will-change:transform;
     animation:fadeUp .35s ease both;
 }
-.kpi-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,.12); }
 
 .kpi-card .kpi-icon {
     width:48px; height:48px; border-radius:10px; flex-shrink:0;

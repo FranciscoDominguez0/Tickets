@@ -158,12 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
 
 <link rel="stylesheet" href="css/empresas.css">
 
-<div class="emp-hero mb-1">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+<div class="settings-hero mb-3">
+    <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-            <div class="hero-icon" style="background:#0d6efd;">
-                <i class="bi bi-bell"></i>
-            </div>
+            <span class="settings-hero-icon">
+                <i class="bi bi-bell text-white"></i>
+            </span>
             <div>
                 <h1>Notificaciones</h1>
                 <p>Envía avisos internos (campana) a los administradores de una empresa específica</p>
@@ -173,11 +173,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'billing_settings') {
 </div>
 
 <?php if ($err !== ''): ?>
-    <div class="alert alert-danger mb-3"><?php echo html($err); ?></div>
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+        <div><?php echo html($err); ?></div>
+    </div>
 <?php endif; ?>
 
 <?php if ($msg !== ''): ?>
-    <div class="alert alert-success mb-3"><?php echo html($msg); ?></div>
+    <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        <div><?php echo html($msg); ?></div>
+    </div>
 <?php endif; ?>
 
 <p class="section-title"><i class="bi bi-clock"></i> Avisos automáticos de vencimiento</p>
