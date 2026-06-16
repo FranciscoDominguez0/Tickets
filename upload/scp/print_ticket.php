@@ -63,6 +63,24 @@ if ($thread_id > 0) {
     $entries = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
+// Fetch attachments for all entries
+$attachmentsByEntry = [];
+if (!empty($entries)) {
+    $entryIds = array_map(fn($e) => (int)$e['id'], $entries);
+    $placeholders = implode(',', array_fill(0, count($entryIds), '?'));
+    $types = str_repeat('i', count($entryIds));
+    $stmtA = $mysqli->prepare("SELECT id, thread_entry_id, original_filename, mimetype FROM attachments WHERE thread_entry_id IN ($placeholders) ORDER BY id");
+    if ($stmtA) {
+        $stmtA->bind_param($types, ...$entryIds);
+        if ($stmtA->execute()) {
+            $resA = $stmtA->get_result();
+            while ($a = $resA->fetch_assoc()) {
+                $attachmentsByEntry[(int)$a['thread_entry_id']][] = $a;
+            }
+        }
+    }
+}
+
 // App settings para encabezado
 $companyName = trim((string)getAppSetting('company.name', ''));
 if ($companyName === '') $companyName = (string)APP_NAME;
@@ -227,7 +245,7 @@ if (defined('TICKET_PDF_RENDER')) {
         .who{font-weight:900;}
         .when{color:var(--muted); font-weight:700; font-size: 11px; text-align:right;}
         .body{white-space:pre-wrap; word-break:break-word; line-height:1.45;}
-        .body img{max-width:100%; height:auto; display:block; border-radius:6px; margin-top:8px;}
+        .body img{max-width:180px; max-height:180px; width:auto; height:auto; display:block; border-radius:6px; margin-top:8px;}
         .body iframe{max-width:100%; width:100%; border-radius:6px;}
         .tag{font-weight:900; font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:#b45309; margin-left:10px; background:#fef3c7; padding:2px 6px; border-radius:10px;}
 
@@ -331,6 +349,16 @@ if (defined('TICKET_PDF_RENDER')) {
                     <div class="body"><?php
                         echo sanitizeRichText((string)($e['body'] ?? ''));
                     ?></div>
+                    <?php if (!empty($attachmentsByEntry[(int)$e['id']])): ?>
+                        <div class="attachments" style="margin-top: 10px; font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 6px;">
+                            <strong>Adjuntos:</strong>
+                            <ul style="margin: 4px 0 0 0; padding-left: 20px; list-style-type: none;">
+                                <?php foreach ($attachmentsByEntry[(int)$e['id']] as $att): ?>
+                                    <li style="margin-bottom: 2px;"><i class="bi bi-paperclip"></i> <?php echo html($att['original_filename']); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
