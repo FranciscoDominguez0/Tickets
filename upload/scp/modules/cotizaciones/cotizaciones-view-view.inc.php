@@ -78,7 +78,7 @@ if ($sn !== '') {
                 <div class="mobile-user-info">
                     <div class="name"><?php echo html($mobileOrgName); ?></div>
                     <div class="sub">
-                        <i class="bi bi-shop"></i> Sucursal: <?php echo html($quote['sucursal'] ?: 'Principal'); ?>
+                        <i class="bi bi-shop"></i> Sucursal: <?php echo html($quote['sucursal'] ?? 'Principal'); ?>
                     </div>
                     <?php if (!empty($quote['org_boss_name'])): ?>
                     <div class="sub mt-1">
@@ -145,7 +145,7 @@ if ($sn !== '') {
                 </div>
                 <div class="field mb-4">
                     <label><i class="bi bi-shop"></i> SUCURSAL</label>
-                    <div class="value" style="font-weight: 600;"><?php echo html($quote['sucursal'] ?: 'Principal'); ?></div>
+                    <div class="value" style="font-weight: 600;"><?php echo html($quote['sucursal'] ?? 'Principal'); ?></div>
                 </div>
             </div>
             <!-- Col 3: Estado & Fechas -->
