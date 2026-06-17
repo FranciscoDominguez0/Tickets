@@ -211,12 +211,25 @@ if ($sn !== '') {
                                 $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                                 $iconClass = $ext === 'pdf' ? 'bi-file-earmark-pdf-fill' : (in_array($ext, ['doc','docx']) ? 'bi-file-earmark-word-fill' : 'bi-file-earmark');
                                 $iconColor = $ext === 'pdf' ? '#dc2626' : '#3b82f6';
+                                
+                                $previewType = '';
+                                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) $previewType = 'image';
+                                elseif ($ext === 'pdf') $previewType = 'pdf';
+                                elseif ($ext === 'docx') $previewType = 'docx';
+                                elseif (in_array($ext, ['mp4', 'webm', 'ogg'])) $previewType = 'video';
+                                
+                                $previewUrl = "../../" . $m['file_path'];
                             ?>
                             <div class="chat-att-list">
                                 <div class="chat-att-item">
                                     <span class="chat-att-icon" style="color: <?php echo $iconColor; ?>;"><i class="bi <?php echo $iconClass; ?>"></i></span>
                                     <div class="chat-att-info">
-                                        <a href="../../<?php echo html($m['file_path']); ?>" target="_blank" class="att-filename"><?php echo html($fileName); ?></a>
+                                        <a href="../../<?php echo html($m['file_path']); ?>" target="_blank" 
+                                           class="att-filename <?php echo $previewType ? 'att-preview-trigger' : ''; ?>" 
+                                           data-preview-url="<?php echo html($previewUrl); ?>" 
+                                           data-preview-type="<?php echo $previewType; ?>">
+                                            <?php echo html($fileName); ?>
+                                        </a>
                                     </div>
                                     <a href="../../<?php echo html($m['file_path']); ?>" target="_blank" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
                                 </div>
@@ -345,5 +358,236 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+});
+</script>
+
+<style>
+/* Image Preview Styles */
+.att-image-preview-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: auto;
+    display: none;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    max-width: min(90vw, 520px);
+    animation: attFadeIn 0.2s ease-out forwards;
+}
+@media (max-width: 768px) {
+    .att-image-preview-container { margin-top: -20px; }
+}
+.att-image-preview-container img {
+    max-width: 100%;
+    max-height: 350px;
+    display: block;
+    border-radius: 8px;
+    object-fit: contain;
+}
+@keyframes attFadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.att-image-preview-container .preview-content-docx {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #334155;
+    background: #fdfdfd;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.att-image-preview-container .preview-loading {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+}
+.att-image-preview-container .preview-error {
+    padding: 15px;
+    color: #ef4444;
+    font-size: 12px;
+    text-align: center;
+}
+.att-preview-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 30px;
+    height: 30px;
+    background: #1e293b;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10001;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 0;
+    line-height: 1;
+}
+.att-preview-close i { font-size: 16px; pointer-events: none; }
+@media (max-width: 768px) {
+    .att-preview-close { display: flex; }
+    .att-image-preview-container {
+        width: 94vw !important;
+        max-width: 94vw !important;
+        padding: 6px;
+    }
+    .att-image-preview-container img {
+        max-height: 70vh;
+    }
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image Preview Logic
+    (function() {
+        var previewContainer = document.createElement('div');
+        previewContainer.className = 'att-image-preview-container';
+        
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'att-preview-close';
+        closeBtn.innerHTML = '<i class="bi bi-x-lg"></i>';
+        closeBtn.type = 'button';
+        closeBtn.onclick = function(e) {
+            e.stopPropagation();
+            previewContainer.style.display = 'none';
+            activeUrl = '';
+        };
+        previewContainer.appendChild(closeBtn);
+
+        document.body.appendChild(previewContainer);
+
+        var triggers = document.querySelectorAll('.att-preview-trigger');
+        var hideTimeout = null;
+        var activeUrl = '';
+        var isMobile = window.innerWidth <= 768;
+
+        function showPreview(el, e) {
+            clearTimeout(hideTimeout);
+            var url = el.getAttribute('data-preview-url');
+            var type = el.getAttribute('data-preview-type');
+            if (!url) return;
+            
+            if (activeUrl === url && previewContainer.style.display === 'block') return;
+
+            activeUrl = url;
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(closeBtn);
+            previewContainer.style.display = 'block';
+            
+            if (type === 'image') {
+                var img = document.createElement('img');
+                img.src = url;
+                previewContainer.appendChild(img);
+            } else if (type === 'pdf') {
+                var iframe = document.createElement('iframe');
+                iframe.src = url + '#toolbar=0&navpanes=0&scrollbar=1';
+                iframe.style.width = isMobile ? '100%' : '500px';
+                iframe.style.height = isMobile ? '60vh' : '380px';
+                iframe.style.border = 'none';
+                iframe.style.borderRadius = '8px';
+                if (!isMobile) previewContainer.style.maxWidth = '520px';
+                previewContainer.appendChild(iframe);
+            } else if (type === 'docx') {
+                var loader = document.createElement('div');
+                loader.className = 'preview-loading';
+                loader.innerHTML = '<div class="spinner-border spinner-border-sm text-primary me-2"></div> Cargando documento...';
+                previewContainer.appendChild(loader);
+                previewContainer.style.width = isMobile ? '100%' : '380px';
+
+                fetch(url)
+                    .then(function(r) { return r.arrayBuffer(); })
+                    .then(function(arrayBuffer) {
+                        if (activeUrl !== url) return;
+                        return mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+                    })
+                    .then(function(result) {
+                        if (activeUrl !== url || !result) return;
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var content = document.createElement('div');
+                        content.className = 'preview-content-docx';
+                        content.innerHTML = result.value;
+                        previewContainer.appendChild(content);
+                    })
+                    .catch(function(err) {
+                        if (activeUrl !== url) return;
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(closeBtn);
+                        var error = document.createElement('div');
+                        error.className = 'preview-error';
+                        error.innerHTML = '<i class="bi bi-exclamation-triangle"></i> No se pudo previsualizar el documento Word.';
+                        previewContainer.appendChild(error);
+                    });
+            } else if (type === 'video') {
+                var video = document.createElement('video');
+                video.src = url;
+                video.controls = true;
+                video.autoplay = true;
+                video.style.width = '100%';
+                video.style.maxHeight = isMobile ? '60vh' : '400px';
+                video.style.borderRadius = '8px';
+                previewContainer.appendChild(video);
+                if (!isMobile) previewContainer.style.maxWidth = '600px';
+            }
+        }
+
+        function hidePreview() {
+            if (isMobile) return;
+            hideTimeout = setTimeout(function() {
+                previewContainer.style.display = 'none';
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(closeBtn);
+                previewContainer.style.maxWidth = '400px';
+                previewContainer.style.width = '';
+                activeUrl = '';
+            }, 250);
+        }
+
+        triggers.forEach(function(el) {
+            el.addEventListener('mouseenter', function(e) {
+                if (!isMobile) showPreview(el, e);
+            });
+
+            el.addEventListener('mouseleave', function() {
+                if (!isMobile) hidePreview();
+            });
+
+            var pressTimer;
+            el.addEventListener('touchstart', function(e) {
+                pressTimer = window.setTimeout(function() {
+                    showPreview(el, e);
+                    if (navigator.vibrate) navigator.vibrate(40);
+                }, 600);
+            }, {passive: true});
+
+            el.addEventListener('touchend', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
+
+            el.addEventListener('touchmove', function() {
+                clearTimeout(pressTimer);
+            }, {passive: true});
+        });
+
+        previewContainer.addEventListener('mouseenter', function() {
+            if (!isMobile) clearTimeout(hideTimeout);
+        });
+
+        previewContainer.addEventListener('mouseleave', function() {
+            if (!isMobile) hidePreview();
+        });
+
+    })();
 });
 </script>
