@@ -903,7 +903,7 @@ function humanSize($bytes) {
             display: flex;
             flex-direction: column;
             max-width: 800px;
-            width: 100%;
+            flex: 1;
             min-width: 0;
         }
 
@@ -941,7 +941,7 @@ function humanSize($bytes) {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-            width: 100%;
+            box-sizing: border-box;
             max-width: 100%;
         }
 
@@ -2117,6 +2117,9 @@ function humanSize($bytes) {
                             </div>
                         </div>
                         <div class="client-ticket-hero__actions">
+                            <a href="ticket_pdf.php?id=<?php echo (int)$t['id']; ?>" class="client-ticket-hero__back" target="_blank" style="margin-right: 8px;">
+                                <i class="bi bi-printer"></i> Imprimir / PDF
+                            </a>
                             <a href="<?php echo html($viewTicketBackUrl); ?>" class="client-ticket-hero__back">
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>

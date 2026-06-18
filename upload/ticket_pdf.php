@@ -45,18 +45,23 @@ require_once $autoload;
 
 // Pre-validación de propiedad si el cliente está logueado y no está usando el token de bypass
 if (!$valid_token_bypass) {
-    $stmt_check = $mysqli->prepare("SELECT 1 FROM tickets WHERE id = ? AND user_id = ? LIMIT 1");
+    $eid = (int)($_SESSION['empresa_id'] ?? 1);
+    if ($eid <= 0) $eid = 1;
+
+    $stmt_check = $mysqli->prepare("SELECT user_id FROM tickets WHERE id = ? LIMIT 1");
     if ($stmt_check) {
-        $stmt_check->bind_param('ii', $tid, $userId);
+        $stmt_check->bind_param('i', $tid);
         $stmt_check->execute();
-        if (!$stmt_check->get_result()->fetch_assoc()) {
+        $ticketRow = $stmt_check->get_result()->fetch_assoc();
+        
+        if (!$ticketRow || !clientUserCanAccessTicket($mysqli, $userId, (int)$ticketRow['user_id'], $eid)) {
             http_response_code(403);
             exit('No autorizado para ver este ticket');
         }
     }
 }
 
-// Renderizar el HTML de scp/print_ticket.php para que el PDF sea exacto a la vista de impresión
+// Renderizar el HTML de scp/print_ticket.php
 if (!defined('TICKET_PDF_RENDER')) {
     define('TICKET_PDF_RENDER', true);
 }
@@ -66,33 +71,12 @@ ob_start();
 require __DIR__ . '/scp/print_ticket.php';
 $html = (string)ob_get_clean();
 
-if (!class_exists('Dompdf\Dompdf') || !class_exists('Dompdf\Options')) {
-    http_response_code(500);
-    exit('Dependencia faltante: Dompdf');
-}
+// Inyectar el script de impresión automática ya que TICKET_PDF_RENDER lo desactiva en la plantilla
+$html = str_replace(
+    '</body>',
+    "<script>\nwindow.addEventListener('load', function () {\n    setTimeout(function () {\n        try { window.print(); } catch (e) {}\n    }, 300);\n});\n</script>\n</body>",
+    $html
+);
 
-try {
-    $options = new Dompdf\Options();
-    $options->set('isHtml5ParserEnabled', true);
-    $options->set('isRemoteEnabled', false);
-    $options->set('chroot', $projectRoot);
-
-    $dompdf = new Dompdf\Dompdf($options);
-    $dompdf->loadHtml($html, 'UTF-8');
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-
-    $pdf = $dompdf->output();
-} catch (Throwable $e) {
-    http_response_code(500);
-    exit('Error al generar PDF: ' . $e->getMessage());
-}
-
-$filename = 'ticket_' . $tid . '.pdf';
-header('Content-Type: application/pdf; charset=utf-8');
-header('Content-Disposition: attachment; filename="' . $filename . '"');
-header('Cache-Control: private, max-age=0, must-revalidate');
-header('Pragma: public');
-
-echo $pdf;
+echo $html;
 exit;
