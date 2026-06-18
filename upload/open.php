@@ -687,6 +687,7 @@ if ($_POST) {
                 $recipientCount = 0;
                 if ($adminNotifyEnabled) {
                     $recipientEmails = [];
+                    $recipientStaffIds = [];
                     if (ensureNotificationRecipientsTable()) {
                         $staffHasEmpresa = false;
                         try {
@@ -695,7 +696,7 @@ if ($_POST) {
                             $staffHasEmpresa = false;
                         }
 
-                        $sqlRcpt = "SELECT s.email\n"
+                        $sqlRcpt = "SELECT s.email, s.id\n"
                             . "FROM notification_recipients nr\n"
                             . "INNER JOIN staff s ON s.id = nr.staff_id\n"
                             . "WHERE nr.empresa_id = ? AND s.is_active = 1";
@@ -714,9 +715,26 @@ if ($_POST) {
                                 $rsRcpt = $stmtRcpt->get_result();
                                 while ($rsRcpt && ($rr = $rsRcpt->fetch_assoc())) {
                                     $em = strtolower(trim((string)($rr['email'] ?? '')));
-                                    if ($em === '' || !filter_var($em, FILTER_VALIDATE_EMAIL)) continue;
-                                    $recipientEmails[$em] = true;
+                                    $sid = (int)($rr['id'] ?? 0);
+                                    if ($em !== '' && filter_var($em, FILTER_VALIDATE_EMAIL)) {
+                                        $recipientEmails[$em] = true;
+                                    }
+                                    if ($sid > 0 && !isset($recipientStaffIds[$sid])) {
+                                        $recipientStaffIds[$sid] = true;
+                                    }
                                 }
+                            }
+                        }
+                    }
+
+                    // Insertar notificación de campanita
+                    if (!empty($recipientStaffIds)) {
+                        $msgCampana = 'Nuevo ticket #' . $ticket_number . ': ' . $subject;
+                        $stmtCampana = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, "ticket_created", ?, 0, NOW())');
+                        if ($stmtCampana) {
+                            foreach (array_keys($recipientStaffIds) as $sid) {
+                                $stmtCampana->bind_param('isi', $sid, $msgCampana, $ticket_id);
+                                $stmtCampana->execute();
                             }
                         }
                     }
