@@ -432,7 +432,7 @@ if ($ticketClientSignaturePath !== '') {
 
                         if (str_contains($stName, 'abiert') || str_contains($stName, 'open')) $statusIcon = 'bi-record-circle-fill';
                         elseif ($isClosing) $statusIcon = 'bi-check-circle-fill';
-                        elseif (str_contains($stName, 'espera') || str_contains($stName, 'wait')) $statusIcon = 'bi-pause-circle-fill';
+                        elseif (str_contains($stName, 'espera') || str_contains($stName, 'wait') || str_contains($stName, 'retenid')) $statusIcon = 'bi-pause-circle-fill';
                         elseif (str_contains($stName, 'pendient')) $statusIcon = 'bi-clock-fill';
                         
                         $isOpening = (str_contains($stName, 'abiert') || str_contains($stName, 'open'));

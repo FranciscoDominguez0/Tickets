@@ -441,6 +441,69 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     notifyStatusChangeToAdminRecipients($tid, 'Resuelto');
                 }
 
+                // Si cambió a Retenido (id=6), notificar al creador y a su jefe
+                if ($ok && $sid === 6 && (int)($ticketView['status_id'] ?? 0) !== 6) {
+                    $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                    $ticketSubject = (string)($ticketView['subject'] ?? '');
+                    
+                    $subjRetenido = '[Ticket Retenido] ' . $ticketNo . ' - ' . $ticketSubject;
+                    $bodyHtmlRetenido = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:680px;margin:0 auto;">'
+                        . '<h2 style="margin:0 0 10px;color:#e74c3c;">Ticket Retenido</h2>'
+                        . '<p>Estimado usuario, su ticket ha sido puesto en estado Retenido temporalmente.</p>'
+                        . '<div style="background:#f8fafc; border:1px solid #e2e8f0; padding:14px; border-radius:10px; margin-top:14px;">'
+                        . '<p style="margin:0 0 8px;"><strong>ID del Ticket:</strong> ' . html($ticketNo) . '</p>'
+                        . '<p style="margin:0;"><strong>Asunto:</strong> ' . html($ticketSubject) . '</p>'
+                        . '</div>'
+                        . '<p style="margin-top:14px;color:#64748b;font-size:12px;">' . html((string)(defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets')) . '</p>'
+                        . '</div>';
+                    $bodyTextRetenido = "Estimado usuario, su ticket ha sido puesto en estado Retenido temporalmente.\n\n"
+                        . "ID del Ticket: $ticketNo\n"
+                        . "Asunto: $ticketSubject";
+
+                    // 1. Notificar al creador del ticket
+                    $toClient = trim((string)($ticketView['user_email'] ?? ''));
+                    if ($toClient !== '' && filter_var($toClient, FILTER_VALIDATE_EMAIL)) {
+                        if (function_exists('enqueueEmailJob')) {
+                            enqueueEmailJob($toClient, $subjRetenido, $bodyHtmlRetenido, $bodyTextRetenido, [
+                                'empresa_id' => (int)$eid,
+                                'context_type' => 'ticket_retenido_client',
+                                'context_id' => (int)$tid,
+                            ]);
+                        } else {
+                            Mailer::send($toClient, $subjRetenido, $bodyHtmlRetenido, $bodyTextRetenido);
+                        }
+                    }
+
+                    // 2. Notificar al jefe de la organización
+                    $stmtBoss = $mysqli->prepare("SELECT u.email FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = (SELECT organization_id FROM user_organizations WHERE user_id = ? LIMIT 1) AND u.org_tickets_view = 1 AND u.empresa_id = ? LIMIT 1");
+                    if ($stmtBoss) {
+                        $stmtBoss->bind_param('ii', $ticketView['user_id'], $eid);
+                        if ($stmtBoss->execute()) {
+                            $bossRow = $stmtBoss->get_result()->fetch_assoc();
+                            if ($bossRow) {
+                                $bossEmail = trim((string)($bossRow['email'] ?? ''));
+                                if ($bossEmail !== '' && filter_var($bossEmail, FILTER_VALIDATE_EMAIL)) {
+                                    if (function_exists('enqueueEmailJob')) {
+                                        enqueueEmailJob($bossEmail, $subjRetenido, $bodyHtmlRetenido, $bodyTextRetenido, [
+                                            'empresa_id' => (int)$eid,
+                                            'context_type' => 'ticket_retenido_boss',
+                                            'context_id' => (int)$tid,
+                                        ]);
+                                    } else {
+                                        Mailer::send($bossEmail, $subjRetenido, $bodyHtmlRetenido, $bodyTextRetenido);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (function_exists('triggerEmailQueueWorkerAsync')) {
+                        triggerEmailQueueWorkerAsync();
+                    }
+                    addLog('ticket_retenido_email', 'Notificación Retenido enviada al creador y jefe', 'ticket', $tid);
+                    notifyStatusChangeToAdminRecipients($tid, 'Retenido');
+                }
+
                 // Si se cierra (id=5 u otro cierre), notificar
                 if ($ok && $isClosingStatus && (int)($ticketView['status_id'] ?? 0) !== $sid) {
                     $labelNotif = ($statusLabel !== '') ? $statusLabel : 'Cerrado';
