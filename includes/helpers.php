@@ -1450,7 +1450,7 @@ function mysqliBindParams(mysqli_stmt $stmt, string $types, array $baseParams, a
     return (bool) call_user_func_array([$stmt, 'bind_param'], $refs);
 }
 
-function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, ?array $monthFilter = null): int
+function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, ?array $monthFilter = null, ?string $searchQuery = null): int
 {
     if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
         return 0;
@@ -1459,6 +1459,16 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     $monthSql = ticketMonthFilterSqlClause($monthFilter);
     $monthTypes = $monthSql !== '' ? 'ss' : '';
     $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
+    
+    $searchSql = '';
+    $searchTypes = '';
+    $searchParams = [];
+    if (!empty($searchQuery)) {
+        $searchSql = " AND t.ticket_number LIKE ?";
+        $searchTypes = 's';
+        $searchLike = '%' . trim($searchQuery) . '%';
+        $searchParams = [$searchLike];
+    }
 
     if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
         $sql = "SELECT COUNT(DISTINCT t.id) AS c
@@ -1477,26 +1487,26 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
                         WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
                     )
                 )
-            )" . $monthSql;
+            )" . $monthSql . $searchSql;
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return 0;
         }
         mysqliBindParams(
             $stmt,
-            'iiiisi' . $monthTypes,
+            'iiiisi' . $monthTypes . $searchTypes,
             [$empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId],
-            $monthParams
+            array_merge($monthParams, $searchParams)
         );
     } else {
         $sql = 'SELECT COUNT(*) AS c FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
-            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?' . $monthSql;
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?' . $monthSql . $searchSql;
         $stmt = $mysqli->prepare($sql);
         if (!$stmt) {
             return 0;
         }
-        mysqliBindParams($stmt, 'iis' . $monthTypes, [$empresaId, $empresaId, $orgName], $monthParams);
+        mysqliBindParams($stmt, 'iis' . $monthTypes . $searchTypes, [$empresaId, $empresaId, $orgName], array_merge($monthParams, $searchParams));
     }
     if (!$stmt->execute()) {
         return 0;
@@ -1509,7 +1519,7 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
  *
  * @return array<int, array<string, mixed>>
  */
-function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset, ?array $monthFilter = null): array
+function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizationId, string $orgName, int $limit, int $offset, ?array $monthFilter = null, ?string $searchQuery = null): array
 {
     if ($empresaId <= 0 || $organizationId <= 0 || !isset($mysqli) || !$mysqli) {
         return [];
@@ -1520,6 +1530,16 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     $monthSql = ticketMonthFilterSqlClause($monthFilter);
     $monthTypes = $monthSql !== '' ? 'ss' : '';
     $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
+    
+    $searchSql = '';
+    $searchTypes = '';
+    $searchParams = [];
+    if (!empty($searchQuery)) {
+        $searchSql = " AND t.ticket_number LIKE ?";
+        $searchTypes = 's';
+        $searchLike = '%' . trim($searchQuery) . '%';
+        $searchParams = [$searchLike];
+    }
 
     if ($organizationId > 0 && organizationMembershipEnabled($mysqli)) {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
@@ -1542,7 +1562,7 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
                         WHERE uo2.user_id = u.id AND uo2.empresa_id = ?
                     )
                 )
-            )" . $monthSql . "
+            )" . $monthSql . $searchSql . "
             ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
                 COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
@@ -1552,9 +1572,9 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
         }
         mysqliBindParams(
             $stmt,
-            'iiiisi' . $monthTypes . 'ii',
+            'iiiisi' . $monthTypes . $searchTypes . 'ii',
             [$empresaId, $empresaId, $organizationId, $empresaId, $orgName, $empresaId],
-            array_merge($monthParams, [$limit, $offset])
+            array_merge($monthParams, $searchParams, [$limit, $offset])
         );
     } else {
         $sql = "SELECT t.id, t.ticket_number, t.subject, t.created, t.closed, t.user_id AS owner_user_id,
@@ -1564,7 +1584,7 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
             FROM tickets t
             INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
             LEFT JOIN ticket_status ts ON t.status_id = ts.id
-            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?" . $monthSql . "
+            WHERE t.empresa_id = ? AND u.empresa_id = ? AND u.company = ?" . $monthSql . $searchSql . "
             ORDER BY CASE WHEN (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) = 'pending' THEN 0 ELSE 1 END,
                 COALESCE(t.updated, t.created) DESC, t.id DESC
             LIMIT ? OFFSET ?";
@@ -1574,9 +1594,9 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
         }
         mysqliBindParams(
             $stmt,
-            'iis' . $monthTypes . 'ii',
+            'iis' . $monthTypes . $searchTypes . 'ii',
             [$empresaId, $empresaId, $orgName],
-            array_merge($monthParams, [$limit, $offset])
+            array_merge($monthParams, $searchParams, [$limit, $offset])
         );
     }
     if (!$stmt->execute()) {

@@ -28,8 +28,9 @@ $orgAllTicketsPage = max(1, (int)($orgAllTicketsPage ?? 1));
 $orgAllTicketsTotalPages = max(1, (int)($orgAllTicketsTotalPages ?? 1));
 $orgExplorerAllTickets = isset($orgExplorerAllTickets) && is_array($orgExplorerAllTickets) ? $orgExplorerAllTickets : [];
 $orgMonthQuery = isset($ticketMonthQuery) ? (string)$ticketMonthQuery : '';
-$orgAllTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all' . $orgMonthQuery;
-$orgTicketsPaginationParams .= $orgMonthQuery;
+$orgSearchQuery = !empty($_GET['q']) ? '&q=' . urlencode(trim($_GET['q'])) : '';
+$orgAllTicketsPaginationParams = '&view=org&org_id=' . (int)$orgExplorerOrgId . '&list=all' . $orgMonthQuery . $orgSearchQuery;
+$orgTicketsPaginationParams .= $orgMonthQuery . $orgSearchQuery;
 $orgOrgBaseUrl = 'tickets.php?view=org&amp;org_id=' . (int)$orgExplorerOrgId;
 $orgOrgBaseUrlAll = $orgOrgBaseUrl . '&amp;list=all' . str_replace('&', '&amp;', $orgMonthQuery);
 $orgCssV = (int)@filemtime(__DIR__ . '/../css/client-org-explorer.css');
@@ -141,11 +142,21 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                 $ticketMonthPickerCompact = true;
                 ?>
                 <div class="org-list-section">
-                    <div class="org-panel-head org-panel-head--tickets">
+                    <div class="org-panel-head org-panel-head--tickets" style="flex-wrap: wrap; gap: 12px;">
                         <div class="org-panel-head__left">
                             <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Todos los tickets</h3>
                         </div>
-                        <div class="org-panel-head__actions">
+                        <div class="org-panel-head__actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            <form method="GET" action="tickets.php" class="d-flex" style="max-width: 250px; margin: 0;">
+                                <input type="hidden" name="view" value="org">
+                                <input type="hidden" name="org_id" value="<?php echo $orgExplorerOrgId; ?>">
+                                <input type="hidden" name="list" value="all">
+                                <?php if (!empty($_GET['month'])): ?>
+                                <input type="hidden" name="month" value="<?php echo html($_GET['month']); ?>">
+                                <?php endif; ?>
+                                <input type="text" name="q" class="form-control form-control-sm" placeholder="Buscar N° de ticket..." value="<?php echo html($_GET['q'] ?? ''); ?>" style="border-radius: 6px 0 0 6px; box-shadow: none;">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="border-radius: 0 6px 6px 0;"><i class="bi bi-search"></i></button>
+                            </form>
                             <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
                             <span class="org-count-badge"><?php echo $orgAllTicketsTotal; ?></span>
                         </div>
@@ -173,6 +184,9 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                 }
                                 if ($orgMonthQuery !== '') {
                                     $href .= $orgMonthQuery;
+                                }
+                                if ($orgSearchQuery !== '') {
+                                    $href .= $orgSearchQuery;
                                 }
                                 ?>
                                 <a href="<?php echo html($href); ?>" class="list-group-item list-group-item-action org-explorer-row org-explorer-row-ticket">
@@ -339,7 +353,7 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
             $ticketMonthPickerCompact = true;
             ?>
             <div class="org-list-section">
-                <div class="org-panel-head org-panel-head--tickets">
+                <div class="org-panel-head org-panel-head--tickets" style="flex-wrap: wrap; gap: 12px;">
                     <div class="org-panel-head__left">
                         <h3><i class="bi bi-ticket-perforated text-danger me-1"></i> Tickets</h3>
                         <?php if ($orgExplorerMemberName !== ''): ?>
@@ -351,7 +365,17 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                             </div>
                         <?php endif; ?>
                     </div>
-                    <div class="org-panel-head__actions">
+                    <div class="org-panel-head__actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <form method="GET" action="tickets.php" class="d-flex" style="max-width: 250px; margin: 0;">
+                            <input type="hidden" name="view" value="org">
+                            <input type="hidden" name="org_id" value="<?php echo $orgExplorerOrgId; ?>">
+                            <input type="hidden" name="member_id" value="<?php echo $orgExplorerMemberId; ?>">
+                            <?php if (!empty($_GET['month'])): ?>
+                            <input type="hidden" name="month" value="<?php echo html($_GET['month']); ?>">
+                            <?php endif; ?>
+                            <input type="text" name="q" class="form-control form-control-sm" placeholder="Buscar N° de ticket..." value="<?php echo html($_GET['q'] ?? ''); ?>" style="border-radius: 6px 0 0 6px; box-shadow: none;">
+                            <button type="submit" class="btn btn-secondary btn-sm" style="border-radius: 0 6px 6px 0;"><i class="bi bi-search"></i></button>
+                        </form>
                         <?php require __DIR__ . '/ticket-month-filter.inc.php'; ?>
                         <span class="org-count-badge"><?php echo $orgTicketsTotal; ?></span>
                     </div>
@@ -372,6 +396,9 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                             }
                             if ($orgMonthQuery !== '') {
                                 $href .= $orgMonthQuery;
+                            }
+                            if ($orgSearchQuery !== '') {
+                                $href .= $orgSearchQuery;
                             }
                             ?>
                             <a href="<?php echo html($href); ?>" class="list-group-item list-group-item-action org-explorer-row org-explorer-row-ticket">

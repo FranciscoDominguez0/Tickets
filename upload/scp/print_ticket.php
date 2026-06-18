@@ -257,8 +257,17 @@ if (defined('TICKET_PDF_RENDER')) {
         .sig-title{font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-weight:800; color:var(--muted); text-align:center; border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:8px;}
         .sig-body{text-align:center; padding: 4px;}
         .sig-img{display:inline-block; max-width:100%; max-height:120px; width:auto; height:auto; filter: contrast(1.1) grayscale(0.5);}
-
+        @page {
+            margin: 0;
+        }
         @media print{
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body {
+                padding: 1.5cm;
+            }
             .sheet{max-width:none; margin:0; padding:0;}
             .entry{page-break-inside: avoid;}
             .summary{page-break-inside: avoid;}
@@ -280,9 +289,13 @@ if (defined('TICKET_PDF_RENDER')) {
                 </div>
             </td>
             <td style="vertical-align:bottom; text-align:right; width:40%;">
-                <div style="font-size:10px; text-transform:uppercase; font-weight:800; color:#64748b; letter-spacing:0.08em; margin-bottom:6px;">Documento de Ticket</div>
-                <div style="font-size:28px; font-weight:900; color:#0f172a; line-height:1; letter-spacing:-0.02em; margin-bottom:10px;"><?php echo html((string)($t['ticket_number'] ?? ('#' . $tid))); ?></div>
-                <div style="font-size:13px; font-weight:800; color:#334155; margin-bottom:6px;"><?php echo html((string)($t['subject'] ?? '')); ?></div>
+                <div style="font-size:10px; text-transform:uppercase; font-weight:800; color:#64748b; letter-spacing:0.08em; margin-bottom:8px;">Documento de Ticket</div>
+                <div style="display:inline-flex; align-items: baseline; gap: 2px; padding: 6px 16px 7px; border-radius: 12px; background: #0f172a; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18); margin-bottom: 12px;">
+                    <span style="color: #ef4444; font-weight: 800; font-size: 24px; line-height: 1;">#</span>
+                    <span style="color: #ffffff; font-weight: 900; font-size: 26px; line-height: 1; letter-spacing: 0.04em; font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;">
+                        <?php echo html(ltrim((string)($t['ticket_number'] ?? $tid), '#')); ?>
+                    </span>
+                </div>
                 <div style="font-size:11px; color:#64748b; font-weight:700;">Emitido: <?php 
                     $originalTz = date_default_timezone_get();
                     date_default_timezone_set('America/Panama');

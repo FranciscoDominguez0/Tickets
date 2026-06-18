@@ -288,7 +288,8 @@ if ($isOrgExplorer) {
             $orgUsersOffset = ($orgUsersPage - 1) * $orgListPerPage;
 
             if ($orgExplorerMemberId <= 0 && $orgExplorerListMode === 'all') {
-                $orgAllTicketsTotal = countPortalOrganizationTickets($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName, $ticketMonthFilter);
+                $q = trim($_GET['q'] ?? '');
+                $orgAllTicketsTotal = countPortalOrganizationTickets($mysqli, $eid, $orgExplorerOrgId, $orgExplorerOrgName, $ticketMonthFilter, $q);
                 $orgAllTicketsTotalPages = $orgAllTicketsTotal > 0 ? (int)ceil($orgAllTicketsTotal / $orgListPerPage) : 1;
                 $orgAllTicketsPage = min($orgAllTicketsPage, max(1, $orgAllTicketsTotalPages));
                 $orgAllTicketsOffset = ($orgAllTicketsPage - 1) * $orgListPerPage;
@@ -299,7 +300,8 @@ if ($isOrgExplorer) {
                     $orgExplorerOrgName,
                     $orgListPerPage,
                     $orgAllTicketsOffset,
-                    $ticketMonthFilter
+                    $ticketMonthFilter,
+                    $q
                 );
             } elseif ($orgExplorerMemberId <= 0 && $orgExplorerListMode === 'quotes') {
                 ensureOrgBossReportReadsTable();
@@ -411,15 +413,25 @@ if ($isOrgExplorer) {
                         $orgExplorerMemberName = (string)($memberRow['email'] ?? 'Usuario');
                     }
 
+                    $q = trim($_GET['q'] ?? '');
+                    $searchSql = '';
+                    $searchTypes = '';
+                    $searchParams = [];
+                    if ($q !== '') {
+                        $searchSql = ' AND t.ticket_number LIKE ?';
+                        $searchTypes = 's';
+                        $searchParams = ['%' . $q . '%'];
+                    }
+
                     $stmtTc = $mysqli->prepare(
-                        'SELECT COUNT(*) AS c FROM tickets t WHERE t.user_id = ? AND t.empresa_id = ?' . $ticketMonthSql
+                        'SELECT COUNT(*) AS c FROM tickets t WHERE t.user_id = ? AND t.empresa_id = ?' . $ticketMonthSql . $searchSql
                     );
                     if ($stmtTc) {
                         mysqliBindParams(
                             $stmtTc,
-                            'ii' . $ticketMonthTypes,
+                            'ii' . $ticketMonthTypes . $searchTypes,
                             [$orgExplorerMemberId, $eid],
-                            $ticketMonthParams
+                            array_merge($ticketMonthParams, $searchParams)
                         );
                         if ($stmtTc->execute()) {
                             $orgTicketsTotal = (int)($stmtTc->get_result()->fetch_assoc()['c'] ?? 0);
@@ -435,16 +447,16 @@ if ($isOrgExplorer) {
                                 (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
                          FROM tickets t
                          LEFT JOIN ticket_status ts ON t.status_id = ts.id
-                         WHERE t.user_id = ? AND t.empresa_id = ?' . $ticketMonthSql . '
+                         WHERE t.user_id = ? AND t.empresa_id = ?' . $ticketMonthSql . $searchSql . '
                          ORDER BY COALESCE(t.updated, t.created) DESC
                          LIMIT ? OFFSET ?'
                     );
                     if ($stmtOt) {
                         mysqliBindParams(
                             $stmtOt,
-                            'ii' . $ticketMonthTypes . 'ii',
+                            'ii' . $ticketMonthTypes . $searchTypes . 'ii',
                             [$orgExplorerMemberId, $eid],
-                            array_merge($ticketMonthParams, [$orgListPerPage, $orgTicketsOffset])
+                            array_merge($ticketMonthParams, $searchParams, [$orgListPerPage, $orgTicketsOffset])
                         );
                         if ($stmtOt->execute()) {
                             $orgExplorerTickets = $stmtOt->get_result()->fetch_all(MYSQLI_ASSOC) ?: [];
