@@ -3552,42 +3552,47 @@ body.sidebar-collapsed .scp-footer-brand {
 }
 .modern-pagination .page-link {
     background: #ffffff;
-    color: #475569;
+    color: #475569 !important;
     border: 1px solid #e2e8f0 !important;
-    transition: all 0.1s ease-out;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 38px;
     height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px !important;
-    margin: 0 3px;
+    border-radius: 8px !important;
+    margin: 0 2px !important;
     font-weight: 600;
+    text-decoration: none !important;
 }
 .modern-pagination .page-link:hover {
     background: #f8fafc;
-    color: #ef4444;
+    color: #ef4444 !important;
     border-color: #cbd5e1 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.04) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
     z-index: 1;
+    text-decoration: none !important;
 }
 .modern-pagination .page-item.active .page-link,
 .modern-pagination .page-item .page-link.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    background: #000000 !important;
     color: #ffffff !important;
     border-color: #ef4444 !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;
+    text-decoration: none !important;
 }
 .modern-pagination .page-item.disabled .page-link {
     background: #f8fafc;
-    color: #94a3b8;
+    color: #94a3b8 !important;
     border-color: #e2e8f0 !important;
     box-shadow: none !important;
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    text-decoration: none !important;
 }
+
 
 /* === SUMMERNOTE MODALS === */
 .note-modal-content {

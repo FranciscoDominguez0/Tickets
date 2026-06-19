@@ -424,21 +424,22 @@ ob_start();
         </form>
     </div>
 
-    <div class="card-footer d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="card-footer">
         <div class="text-muted small">Total: <strong><?php echo (int)$total; ?></strong></div>
-        <nav aria-label="Paginación">
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item <?php echo ($page <= 1) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="<?php echo html($mkUrl(['p' => max(1, $page - 1)])); ?>">&laquo;</a>
-                </li>
-                <li class="page-item disabled"><span class="page-link"><?php echo (int)$page; ?> / <?php echo (int)$totalPages; ?></span></li>
-                <li class="page-item <?php echo ($page >= $totalPages) ? 'disabled' : ''; ?>">
-                    <a class="page-link" href="<?php echo html($mkUrl(['p' => min($totalPages, $page + 1)])); ?>">&raquo;</a>
-                </li>
-            </ul>
-        </nav>
     </div>
 </div>
+
+<?php 
+$urlParams = '';
+$qs = $_GET;
+unset($qs['p']);
+foreach ($qs as $k => $v) {
+    if ($v !== '' && $v !== null) {
+        $urlParams .= '&' . urlencode($k) . '=' . urlencode($v);
+    }
+}
+echo renderModernPagination($page, $totalPages, $urlParams, 'p'); 
+?>
 
 <div class="modal fade" id="emptyAllLogsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
