@@ -1437,9 +1437,9 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         .profile-dd-icon-danger { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
                         .profile-dd-divider { border-color: #f1f5f9; opacity: 1; margin: 8px 0; }
                         
-                        body.dark-mode .profile-dropdown { background: #1a1a1a; border-color: #2a2a2a; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
+                        body.dark-mode .profile-dropdown { background: #000000; border-color: #2a2a2a; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
                         body.dark-mode .profile-dd-item { color: #cbd5e1; }
-                        body.dark-mode .profile-dd-item:hover { background: #252525; color: #f8fafc; }
+                        body.dark-mode .profile-dd-item:hover { background: #000000; color: #f8fafc; }
                         body.dark-mode .profile-dd-icon-default { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
                         body.dark-mode .profile-dd-icon-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
                         body.dark-mode .profile-dd-danger { color: #ef4444; }

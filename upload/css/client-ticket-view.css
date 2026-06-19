@@ -305,12 +305,12 @@
 
 /* Modo oscuro */
 body.dark-mode .client-ticket-hero {
-    background: linear-gradient(180deg, #0f0f10 0%, #111113 100%);
+    background: linear-gradient(180deg, #0f0f10 0%, #000000 100%);
     border-bottom-color: #27272a;
 }
 
 body.dark-mode .client-ticket-hero__ticket-card {
-    background: #18181b;
+    background: #000000;
     border-color: #3f3f46;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
@@ -321,7 +321,7 @@ body.dark-mode .client-ticket-hero__ticket-card::after {
 
 body.dark-mode .client-ticket-hero__number {
     color: #fafafa;
-    background: linear-gradient(135deg, #27272a 0%, #18181b 100%);
+    background: linear-gradient(135deg, #000000 0%, #000000 100%);
     box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -336,7 +336,7 @@ body.dark-mode .client-ticket-hero__title {
 }
 
 body.dark-mode .client-ticket-hero__meta {
-    background: #18181b;
+    background: #000000;
     border-color: #3f3f46;
     color: #a1a1aa;
 }
@@ -348,19 +348,19 @@ body.dark-mode .client-ticket-hero__back {
 }
 
 body.dark-mode .client-ticket-hero__back:hover {
-    background: #27272a;
+    background: #000000;
     border-color: #52525b;
     color: #fafafa;
 }
 
 body.dark-mode .client-ticket-overview {
-    background: #18181b;
+    background: #000000;
     border-bottom-color: #27272a;
 }
 
 body.dark-mode .client-ticket-overview__pills,
 body.dark-mode .client-ticket-overview__peer {
-    background: #141414;
+    background: #000000;
     border-bottom-color: #27272a;
     color: #a1a1aa;
 }
@@ -382,19 +382,19 @@ body.dark-mode .client-ticket-field__value--muted {
 }
 
 body.dark-mode .client-ticket-field__divider {
-    background: linear-gradient(90deg, transparent, #27272a 20%, #27272a 80%, transparent);
+    background: linear-gradient(90deg, transparent, #000000 20%, #000000 80%, transparent);
 }
 
 body.dark-mode .client-ticket-overview__grid {
-    background: #27272a;
+    background: #000000;
 }
 
 body.dark-mode .client-ticket-overview__grid-item {
-    background: #18181b;
+    background: #000000;
 }
 
 body.dark-mode .client-ticket-thread-head {
-    background: #141414;
+    background: #000000;
     border-bottom-color: #27272a;
 }
 

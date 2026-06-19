@@ -267,13 +267,13 @@
 }
 
 body.dark-mode .ticket-month-picker__trigger {
-    background: #18181b;
+    background: #000000;
     border-color: #3f3f46;
     color: #f4f4f5;
 }
 
 body.dark-mode .ticket-month-picker__trigger-icon {
-    background: linear-gradient(135deg, #27272a, #18181b);
+    background: linear-gradient(135deg, #000000, #000000);
 }
 
 body.dark-mode .ticket-month-picker__trigger-value {
@@ -281,7 +281,7 @@ body.dark-mode .ticket-month-picker__trigger-value {
 }
 
 body.dark-mode .ticket-month-picker__panel {
-    background: #18181b;
+    background: #000000;
     border-color: #3f3f46;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
@@ -291,12 +291,12 @@ body.dark-mode .ticket-month-picker__year-label {
 }
 
 body.dark-mode .ticket-month-picker__year-btn {
-    background: #27272a;
+    background: #000000;
     color: #a1a1aa;
 }
 
 body.dark-mode .ticket-month-picker__month {
-    background: #27272a;
+    background: #000000;
     border-color: #3f3f46;
     color: #e4e4e7;
 }
@@ -308,7 +308,7 @@ body.dark-mode .ticket-month-picker__month:hover:not(:disabled) {
 }
 
 body.dark-mode .ticket-month-picker__all {
-    background: #27272a;
+    background: #000000;
     border-color: #52525b;
     color: #a1a1aa;
 }
@@ -376,7 +376,7 @@ body.dark-mode .ticket-month-picker__chip {
 }
 
 body.dark-mode .ticket-month-picker--compact .ticket-month-picker__clear-compact:hover {
-    background: #27272a;
+    background: #000000;
     color: #fca5a5;
 }
 
