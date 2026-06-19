@@ -2318,12 +2318,13 @@ function humanSize($bytes) {
                                                             $iconClass = 'bi-file-word text-info';
                                                         }
 
-                                                        $previewUrl = "view-ticket.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                                        $sParam = $isSignatureLink ? '&s=' . rawurlencode($sigToken) : '';
+                                                        $previewUrl = "view-ticket.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1&v=2" . $sParam;
                                                     ?>
                                                     <div class="chat-att-item">
                                                         <div class="chat-att-icon"><i class="bi <?php echo $iconClass; ?>"></i></div>
                                                         <div class="chat-att-info">
-                                                            <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>" 
+                                                            <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?><?php echo $sParam; ?>" 
                                                                <?php if ($type !== 'unknown'): ?>
                                                                class="att-preview-trigger att-filename" 
                                                                data-preview-url="<?php echo html($previewUrl); ?>"
@@ -2338,7 +2339,7 @@ function humanSize($bytes) {
                                                             ><?php echo html($a['original_filename'] ?? 'archivo'); ?></a>
                                                             <div class="att-size"><?php echo humanSize($a['size'] ?? 0); ?></div>
                                                         </div>
-                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?>" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
+                                                        <a href="view-ticket.php?id=<?php echo (int)$t['id']; ?>&download=<?php echo (int)$a['id']; ?><?php echo $sParam; ?>" class="chat-att-download" title="Descargar"><i class="bi bi-download"></i></a>
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>

@@ -19,6 +19,9 @@ function requireLogin($type = 'user')
     if ($type === 'cliente') {
         $status = (string) getAppSetting('system.helpdesk_status', 'online');
         if ($status === 'offline') {
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Pragma: no-cache');
+            header('Expires: 0');
             $currentPath = (string) ($_SERVER['PHP_SELF'] ?? '');
             if (strpos($currentPath, '/upload/') !== false) {
                 header('Location: login.php?msg=offline');
@@ -35,6 +38,9 @@ function requireLogin($type = 'user')
         $returnUrl = basename($currentPath) . ($queryString !== '' ? '?' . $queryString : '');
         $returnParam = ($returnUrl !== '' && $returnUrl !== 'login.php') ? '?return=' . urlencode($returnUrl) : '';
 
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
         if (strpos($currentPath, '/upload/') !== false) {
             header('Location: login.php' . $returnParam);
         } else {

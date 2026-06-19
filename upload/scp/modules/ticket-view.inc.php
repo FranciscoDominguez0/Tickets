@@ -1487,7 +1487,7 @@ if ($ticketClientSignaturePath !== '') {
                                                     $iconClass = 'bi-file-word text-info';
                                                 }
 
-                                                $previewUrl = "tickets.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1";
+                                                $previewUrl = "tickets.php?id=" . (int)$tid . "&download=" . (int)$a['id'] . "&inline=1&v=2";
                                             ?>
                                             <div class="chat-att-item">
                                                 <div class="chat-att-icon"><i class="bi <?php echo $iconClass; ?>"></i></div>
@@ -2259,6 +2259,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function removeAt(index) {
         try {
+            if (!input) return;
             var dt = new DataTransfer();
             for (var i = 0; i < input.files.length; i++) {
                 if (i !== index) dt.items.add(input.files[i]);
@@ -2268,6 +2269,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {}
     }
     function updateList() {
+        if (!list || !input) return;
         list.innerHTML = '';
         var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
         var maxSize = maxMb * 1024 * 1024;
@@ -2354,15 +2356,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    list.addEventListener('click', function(e) {
-        var btn = e.target.closest('.dz-preview-remove');
-        if (btn) {
-            e.preventDefault();
-            e.stopPropagation();
-            removeAt(parseInt(btn.getAttribute('data-remove-index')));
-        }
-    });
-    input.addEventListener('change', updateList);
+    if (list) {
+        list.addEventListener('click', function(e) {
+            var btn = e.target.closest('.dz-preview-remove');
+            if (btn) {
+                e.preventDefault();
+                e.stopPropagation();
+                removeAt(parseInt(btn.getAttribute('data-remove-index')));
+            }
+        });
+    }
+    if (input) {
+        input.addEventListener('change', updateList);
+    }
 
     window.validateEditFiles = function(input) {
         var maxMb = <?php echo (int)getAppSetting('tickets.ticket_max_file_mb', '10'); ?>;
@@ -2389,24 +2395,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('edit-upload-hint').textContent = input.files.length + ' archivos seleccionados';
     };
-    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
-    zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
-    zone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        zone.classList.remove('dragover');
-        if (e.dataTransfer.files.length) {
-            input.files = e.dataTransfer.files;
-            updateList();
-        }
-    });
+    if (zone) {
+        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+        zone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            zone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                if (input) {
+                    input.files = e.dataTransfer.files;
+                    updateList();
+                }
+            }
+        });
+    }
     var btnReset = document.getElementById('btn-reset');
     if (btnReset) {
         btnReset.addEventListener('click', function() {
             if (typeof jQuery !== 'undefined' && jQuery('#reply_body').length && jQuery('#reply_body').summernote('code')) {
                 jQuery('#reply_body').summernote('reset');
             }
-            input.value = '';
-            list.innerHTML = '';
+            if (input) input.value = '';
+            if (list) list.innerHTML = '';
         });
     }
 
