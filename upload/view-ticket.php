@@ -2495,8 +2495,70 @@ function humanSize($bytes) {
                 <?php endif; ?>
 
                 <?php if (!empty($t['closed'])): ?>
-                    <div class="alert alert-warning mb-3">Este ticket está cerrado y no admite nuevas respuestas.</div>
+                    <div class="ticket-closed-banner" role="status" aria-label="Ticket cerrado">
+                        <style>
+                        .ticket-closed-banner {
+                            display: flex;
+                            align-items: center;
+                            gap: 14px;
+                            background: #fff;
+                            border: 1px solid #e5e7eb;
+                            border-left: 4px solid #dc2626;
+                            border-radius: 12px;
+                            padding: 14px 18px;
+                            margin-bottom: 16px;
+                            transition: background 0.25s, border-color 0.25s;
+                        }
+                        .ticket-closed-banner__icon {
+                            flex-shrink: 0;
+                            width: 36px;
+                            height: 36px;
+                            background: #dc2626;
+                            border-radius: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: #fff;
+                            font-size: 1rem;
+                            transition: background 0.25s;
+                        }
+                        .ticket-closed-banner__title {
+                            font-weight: 700;
+                            font-size: 0.875rem;
+                            color: #111827;
+                            margin: 0 0 2px;
+                            transition: color 0.25s;
+                        }
+                        .ticket-closed-banner__sub {
+                            font-size: 0.76rem;
+                            color: #6b7280;
+                            margin: 0;
+                            transition: color 0.25s;
+                        }
+                        body.dark-mode .ticket-closed-banner {
+                            background: #0a0a0a;
+                            border-color: #1f1f1f;
+                            border-left-color: #dc2626;
+                        }
+                        body.dark-mode .ticket-closed-banner__icon { background: #dc2626; }
+                        body.dark-mode .ticket-closed-banner__title { color: #f9fafb; }
+                        body.dark-mode .ticket-closed-banner__sub   { color: #6b7280; }
+                        </style>
+
+
+                        <div class="ticket-closed-banner__icon" aria-hidden="true">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <div>
+                            <p class="ticket-closed-banner__title">Ticket cerrado — sin nuevas respuestas</p>
+                            <p class="ticket-closed-banner__sub">
+                                <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                                <?php echo !empty($t['closed']) ? 'Cerrado el ' . date('d/m/Y \a \l\a\s h:i A', strtotime($t['closed'])) : 'Ticket resuelto'; ?>
+                            </p>
+                        </div>
+                    </div>
                 <?php else: ?>
+
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="do" value="reply">

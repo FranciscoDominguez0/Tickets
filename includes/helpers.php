@@ -2579,20 +2579,61 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
 
 
 
-    // Serializar adjuntos si existen (PDF bytes como base64)
+    // Serializar adjuntos si existen (PDF bytes como base64 o ruta a fichero en disco)
     $attachmentsJson = null;
     if (isset($meta['attachments']) && is_array($meta['attachments']) && !empty($meta['attachments'])) {
+        // Límite seguro: TEXT = 65535 bytes. El JSON incluye el cuerpo completo del mail +
+        // metadatos, así que usamos 48 000 bytes como umbral máximo del contenido binario.
+        // Por encima de ese límite, volcamos el binario a un fichero temporal y guardamos
+        // sólo la ruta, evitando el error "Data too long for column 'attachments_json'".
+        $maxInlineBytes = 48000;
+
         $serializable = [];
         foreach ($meta['attachments'] as $att) {
             if (!is_array($att))
                 continue;
             $item = [
-                'filename' => (string) ($att['filename'] ?? 'adjunto'),
-                'contentType' => (string) ($att['contentType'] ?? 'application/octet-stream'),
+                'filename'    => (string)($att['filename'] ?? 'adjunto'),
+                'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
             ];
-            if (isset($att['content']) && $att['content'] !== '' && $att['content'] !== null) {
-                // Codificar bytes binarios como base64 para almacenar en JSON
-                $item['content_b64'] = base64_encode($att['content']);
+
+            $rawContent = isset($att['content']) ? $att['content'] : null;
+
+            if ($rawContent !== null && $rawContent !== '') {
+                if (strlen((string)$rawContent) > $maxInlineBytes) {
+                    // Contenido demasiado grande para guardar en base64 en la BD.
+                    // Volcamos a un fichero temporal y guardamos sólo la ruta.
+                    $fileSizeKb = round(strlen((string)$rawContent) / 1024, 1);
+                    $limitKb    = round($maxInlineBytes / 1024, 1);
+                    error_log(
+                        '[mail_queue] ADVERTENCIA: Adjunto "' . ($att['filename'] ?? 'adjunto') . '" '
+                        . '(' . $fileSizeKb . ' KB) supera el límite recomendado para almacenar inline '
+                        . '(' . $limitKb . ' KB). Se guardará en fichero temporal en lugar de base64 en BD.'
+                    );
+                    try {
+                        $tmpDir = sys_get_temp_dir() . '/mail_queue_atts';
+                        if (!is_dir($tmpDir)) {
+                            mkdir($tmpDir, 0700, true);
+                        }
+                        $safeFilename = preg_replace('/[^A-Za-z0-9_.\-]/', '_', (string)($att['filename'] ?? 'adjunto'));
+                        $tmpFile = $tmpDir . '/' . bin2hex(random_bytes(12)) . '_' . $safeFilename;
+                        if (file_put_contents($tmpFile, $rawContent) !== false) {
+                            $item['file_path'] = $tmpFile;
+                            error_log('[mail_queue] Adjunto guardado en fichero temporal: ' . $tmpFile);
+                        } else {
+                            // Si no se pudo escribir, caer al método base64 (puede fallar igualmente)
+                            error_log('[mail_queue] ERROR: No se pudo escribir fichero temporal para adjunto. Intentando base64 (riesgo de truncar BD).');
+                            $item['content_b64'] = base64_encode((string)$rawContent);
+                        }
+                    } catch (Throwable $e) {
+                        error_log('[mail_queue] ERROR inesperado al guardar adjunto temporal: ' . $e->getMessage());
+                        // Último recurso: base64 (puede seguir fallando en BD, pero no peor que antes)
+                        $item['content_b64'] = base64_encode((string)$rawContent);
+                    }
+                } else {
+                    // Adjunto pequeño: guardar inline en base64 (comportamiento original)
+                    $item['content_b64'] = base64_encode((string)$rawContent);
+                }
             }
             $serializable[] = $item;
         }

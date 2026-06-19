@@ -774,6 +774,200 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             <li><a class="tab <?php echo $activeTab === 'notes' ? 'active' : ''; ?>" href="users.php?id=<?php echo $uid; ?>&t=notes"><i class="bi bi-pin-angle"></i> Notas</a></li>
         </ul>
 
+        <?php if ($viewUserOrgTicketsView && !empty($viewUserOrganizations)): ?>
+        <?php
+        // Obtener el primer org_id para los enlaces
+        $firstOrgId = (int)($viewUserOrganizations[0]['organization_id'] ?? 0);
+        $firstOrgName = (string)($viewUserOrganizations[0]['name'] ?? '');
+        ?>
+        <style>
+        .org-boss-panels {
+            margin: 20px 0 8px;
+            padding: 0;
+        }
+        .org-boss-panels-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .org-boss-panels-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+        .org-boss-panels-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .org-boss-panels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .org-boss-panel-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            text-decoration: none !important;
+            color: #1e293b;
+            transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+            box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+        .org-boss-panel-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--boss-accent, #3b82f6);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .org-boss-panel-card:hover {
+            border-color: var(--boss-accent, #3b82f6);
+            box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+            transform: translateY(-2px);
+            color: #1e293b;
+        }
+        .org-boss-panel-card:hover::before {
+            opacity: 1;
+        }
+        .org-boss-panel-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            background: var(--boss-icon-bg, rgba(59,130,246,0.1));
+            color: var(--boss-accent, #3b82f6);
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .org-boss-panel-card:hover .org-boss-panel-icon {
+            transform: scale(1.1);
+        }
+        .org-boss-panel-label {
+            font-weight: 700;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+        .org-boss-panel-desc {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .org-boss-panel-arrow {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .org-boss-panel-card:hover .org-boss-panel-arrow {
+            color: var(--boss-accent, #3b82f6);
+            transform: translateX(2px);
+        }
+        /* Dark mode */
+        body.dark-mode .org-boss-panel-card {
+            background: #18181b;
+            border-color: #27272a;
+            color: #e2e8f0;
+        }
+        body.dark-mode .org-boss-panel-card:hover {
+            background: #1c1c1f;
+            border-color: var(--boss-accent, #3b82f6);
+        }
+        body.dark-mode .org-boss-panel-desc { color: #52525b; }
+        body.dark-mode .org-boss-panel-arrow { color: #3f3f46; }
+        </style>
+        <div class="org-boss-panels">
+            <div class="org-boss-panels-header">
+                <span class="org-boss-panels-badge"><i class="bi bi-diagram-3-fill"></i> Encargado de Org.</span>
+                <span class="org-boss-panels-title">Paneles de acceso rápido</span>
+            </div>
+            <div class="org-boss-panels-grid">
+                <!-- Panel 1: Informes del Jefe -->
+                <a href="informes_jefes.php"
+                   class="org-boss-panel-card"
+                   style="--boss-accent:#7c3aed; --boss-icon-bg:rgba(124,58,237,0.1);"
+                   title="Ver informes de la organización">
+                    <div class="org-boss-panel-icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+                    <div>
+                        <div class="org-boss-panel-label">Informes del Jefe</div>
+                        <div class="org-boss-panel-desc">Estadísticas y reportes de tu organización</div>
+                    </div>
+                    <i class="bi bi-arrow-right org-boss-panel-arrow"></i>
+                </a>
+
+                <!-- Panel 2: Ver tickets de la org -->
+                <a href="tickets.php?filter=open&org_id=<?php echo $firstOrgId; ?>"
+                   class="org-boss-panel-card"
+                   style="--boss-accent:#dc2626; --boss-icon-bg:rgba(220,38,38,0.08);"
+                   title="Ver todos los tickets de la organización">
+                    <div class="org-boss-panel-icon"><i class="bi bi-ticket-perforated-fill"></i></div>
+                    <div>
+                        <div class="org-boss-panel-label">Tickets de la Org.</div>
+                        <div class="org-boss-panel-desc"><?php echo html($firstOrgName ?: 'Ver tickets de la organización'); ?></div>
+                    </div>
+                    <i class="bi bi-arrow-right org-boss-panel-arrow"></i>
+                </a>
+
+                <!-- Panel 3: Panel de la organización -->
+                <?php if ($firstOrgId > 0): ?>
+                <a href="orgs.php?id=<?php echo $firstOrgId; ?>"
+                   class="org-boss-panel-card"
+                   style="--boss-accent:#0891b2; --boss-icon-bg:rgba(8,145,178,0.1);"
+                   title="Ver el panel de la organización">
+                    <div class="org-boss-panel-icon"><i class="bi bi-building-fill"></i></div>
+                    <div>
+                        <div class="org-boss-panel-label">Panel de Organización</div>
+                        <div class="org-boss-panel-desc">Gestionar miembros y detalles</div>
+                    </div>
+                    <i class="bi bi-arrow-right org-boss-panel-arrow"></i>
+                </a>
+                <?php endif; ?>
+
+                <!-- Panel 4 (si tiene múltiples orgs): todas las orgs -->
+                <?php if (count($viewUserOrganizations) > 1): ?>
+                <a href="orgs.php"
+                   class="org-boss-panel-card"
+                   style="--boss-accent:#059669; --boss-icon-bg:rgba(5,150,105,0.1);"
+                   title="Ver todas las organizaciones">
+                    <div class="org-boss-panel-icon"><i class="bi bi-buildings-fill"></i></div>
+                    <div>
+                        <div class="org-boss-panel-label">Todas las Orgs.</div>
+                        <div class="org-boss-panel-desc">Encargado de <?php echo count($viewUserOrganizations); ?> organizaciones</div>
+                    </div>
+                    <i class="bi bi-arrow-right org-boss-panel-arrow"></i>
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="user-view-tab-content" id="tab-tickets" style="display:<?php echo $activeTab === 'tickets' ? 'block' : 'none'; ?>">
             <?php if (empty($userTickets)): ?>
                 <div class="empty-state">

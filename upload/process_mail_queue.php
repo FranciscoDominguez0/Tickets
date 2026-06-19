@@ -182,10 +182,31 @@ foreach ($jobs as $job) {
                 $extraOptions['attachments'] = [];
                 foreach ($attsDecoded as $att) {
                     if (!is_array($att)) continue;
+
+                    $attContent = '';
+
+                    if (!empty($att['file_path'])) {
+                        // Adjunto grande: leer desde fichero temporal en disco
+                        $filePath = (string)$att['file_path'];
+                        if (is_file($filePath) && is_readable($filePath)) {
+                            $attContent = (string)file_get_contents($filePath);
+                            // Limpiar fichero temporal después de leerlo
+                            @unlink($filePath);
+                        } else {
+                            error_log(
+                                '[mail_queue] ADVERTENCIA: Fichero temporal de adjunto no encontrado o no legible: '
+                                . $filePath . ' (queue_id=' . $qid . ')'
+                            );
+                        }
+                    } elseif (isset($att['content_b64'])) {
+                        // Adjunto pequeño: decodificar desde base64 inline
+                        $attContent = base64_decode($att['content_b64']);
+                    }
+
                     $extraOptions['attachments'][] = [
-                        'filename' => (string)($att['filename'] ?? 'adjunto'),
+                        'filename'    => (string)($att['filename'] ?? 'adjunto'),
                         'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
-                        'content' => isset($att['content_b64']) ? base64_decode($att['content_b64']) : '',
+                        'content'     => $attContent,
                     ];
                 }
             }

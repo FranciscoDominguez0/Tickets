@@ -33,14 +33,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])
     header('Content-Type: application/json; charset=UTF-8');
     header('X-Content-Type-Options: nosniff');
 
-    ensureUserOrganizationsTable($mysqli);
-
+    // organizations y user_organizations están en $knownTables → dbTableExists() es O(1)
     $query = trim($_GET['q']);
     $excludeUserId = isset($_GET['user_id']) && is_numeric($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
     $results = [];
-    if (strlen($query) >= 2 && dbTableExists('organizations')) {
+    if (strlen($query) >= 2) {
         $sql = "SELECT o.id, o.name FROM organizations o WHERE o.empresa_id = ? AND o.name LIKE ?";
-        if ($excludeUserId > 0 && dbTableExists('user_organizations')) {
+        if ($excludeUserId > 0) {
             $sql .= " AND NOT EXISTS (
                 SELECT 1 FROM user_organizations uo
                 WHERE uo.user_id = ? AND uo.organization_id = o.id AND uo.empresa_id = o.empresa_id
@@ -50,7 +49,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_orgs' && isset($_GET['q'])
         $stmt = $mysqli->prepare($sql);
         if ($stmt) {
             $like = '%' . $query . '%';
-            if ($excludeUserId > 0 && dbTableExists('user_organizations')) {
+            if ($excludeUserId > 0) {
                 $stmt->bind_param('isi', $eid, $like, $excludeUserId);
             } else {
                 $stmt->bind_param('is', $eid, $like);
@@ -79,8 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$canManageUsers) {
     exit;
 }
 
-// Usar dbColumnExists() con caché de sesión en lugar de SHOW COLUMNS directo
-$usersHasPhone = dbColumnExists('users', 'phone');
+// Columnas 'users:phone' y 'users:org_tickets_view' están en $knownColumns de dbColumnExists()
+// → retornan true inmediatamente sin ninguna consulta SQL
+$usersHasPhone = true; // users.phone confirmado en producción (knownColumns)
+$usersHasOrgTicketsView = true; // users.org_tickets_view confirmado en producción (knownColumns)
 
 $importFlash = null;
 if (isset($_SESSION['users_import_flash']) && is_array($_SESSION['users_import_flash'])) {
@@ -928,16 +929,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
 
 // Vista de un usuario concreto (users.php?id=X)
+// $usersHasOrgTicketsView y $usersHasPhone ya están definidos arriba (= true)
 $viewUser = null;
-$usersHasOrgTicketsView = ensureUserOrgTicketsViewColumn($mysqli);
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $uid = (int) $_GET['id'];
-    $orgViewCol = $usersHasOrgTicketsView ? ', org_tickets_view' : '';
-    if ($usersHasPhone) {
-        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, phone, company, status, created, updated{$orgViewCol} FROM users WHERE id = ? AND empresa_id = ?");
-    } else {
-        $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, company, status, created, updated{$orgViewCol} FROM users WHERE id = ? AND empresa_id = ?");
-    }
+    // Ambas columnas existen en producción; seleccionamos siempre ambas
+    $stmt = $mysqli->prepare("SELECT id, email, address, firstname, lastname, phone, company, status, created, updated, org_tickets_view FROM users WHERE id = ? AND empresa_id = ?");
     $stmt->bind_param('ii', $uid, $eid);
     $stmt->execute();
     $viewUser = $stmt->get_result()->fetch_assoc();
@@ -981,17 +978,19 @@ if ($viewUser) {
 
     $statusLabels = ['active' => 'Activo', 'inactive' => 'Inactivo', 'banned' => 'Bloqueado'];
     $viewUserName = trim($viewUser['firstname'] . ' ' . $viewUser['lastname']) ?: $viewUser['email'];
-    ensureUserOrganizationsTable($mysqli);
-    $viewUserOrgTicketsView = $usersHasOrgTicketsView && ((int)($viewUser['org_tickets_view'] ?? 0) === 1);
+    // $usersHasOrgTicketsView = true (definido al inicio del módulo)
+    $viewUserOrgTicketsView = ((int)($viewUser['org_tickets_view'] ?? 0) === 1);
     $viewUserOrganizations = getUserOrganizations($mysqli, $uid2, $eid);
-    if (empty($viewUserOrganizations) && trim((string)($viewUser['company'] ?? '')) !== '' && dbTableExists('organizations')) {
+    // Migración legacy: si el usuario tiene company pero aún no está en user_organizations
+    if (empty($viewUserOrganizations) && trim((string)($viewUser['company'] ?? '')) !== '') {
         $legacyName = trim((string)$viewUser['company']);
-        $stmtLeg = $mysqli->prepare('SELECT id, name FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
+        $stmtLeg = $mysqli->prepare('SELECT id FROM organizations WHERE empresa_id = ? AND name = ? LIMIT 1');
         if ($stmtLeg) {
             $stmtLeg->bind_param('is', $eid, $legacyName);
             if ($stmtLeg->execute()) {
                 $leg = $stmtLeg->get_result()->fetch_assoc();
                 if ($leg && addUserToOrganization($mysqli, $uid2, (int)$leg['id'], $eid)) {
+                    // Re-fetch solo si la inserción fue exitosa
                     $viewUserOrganizations = getUserOrganizations($mysqli, $uid2, $eid);
                 }
             }
@@ -1070,13 +1069,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             exit;
         }
         $orgIdBulk = (int)($orgRow['id'] ?? 0);
-        ensureUserOrganizationsTable($mysqli);
+
+        // Optimización bulk: un solo INSERT IGNORE batch en lugar de N*3 queries
+        // 1. Verificar que todos los user_ids pertenecen a la empresa (una sola query)
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmtV = $mysqli->prepare("SELECT id FROM users WHERE empresa_id = ? AND id IN ($placeholders)");
+        if (!$stmtV) {
+            header('Location: users.php?msg=org_bulk_error');
+            exit;
+        }
+        $stmtV->bind_param(str_repeat('i', count($ids) + 1), $eid, ...$ids);
+        $stmtV->execute();
+        $validIds = [];
+        $resV = $stmtV->get_result();
+        while ($row = $resV->fetch_assoc()) {
+            $validIds[] = (int)$row['id'];
+        }
+
         $affected = 0;
-        foreach ($ids as $uidBulk) {
-            if (addUserToOrganization($mysqli, (int)$uidBulk, $orgIdBulk, $eid)) {
-                $affected++;
+        if (!empty($validIds)) {
+            // 2. INSERT IGNORE batch: un solo round-trip para todos los usuarios válidos
+            $batchPlaceholders = implode(',', array_fill(0, count($validIds), '(?, ?, ?, NOW())'));
+            $batchSql = "INSERT IGNORE INTO user_organizations (empresa_id, user_id, organization_id, created_at) VALUES $batchPlaceholders";
+            $stmtB = $mysqli->prepare($batchSql);
+            if ($stmtB) {
+                $batchParams = [];
+                foreach ($validIds as $vid) {
+                    $batchParams[] = $eid;
+                    $batchParams[] = $vid;
+                    $batchParams[] = $orgIdBulk;
+                }
+                $stmtB->bind_param(str_repeat('iii', count($validIds)), ...$batchParams);
+                $stmtB->execute();
+                $affected = $stmtB->affected_rows > 0 ? $stmtB->affected_rows : count($validIds);
+
+                // 3. Sincronizar company en una sola query UPDATE
+                $syncPh = implode(',', array_fill(0, count($validIds), '?'));
+                $stmtSync = $mysqli->prepare(
+                    "UPDATE users SET company = ?, updated = NOW() WHERE empresa_id = ? AND id IN ($syncPh) AND (company IS NULL OR company = '')"
+                );
+                if ($stmtSync) {
+                    $stmtSync->bind_param(
+                        's' . 'i' . str_repeat('i', count($validIds)),
+                        $org_name, $eid, ...$validIds
+                    );
+                    $stmtSync->execute();
+                }
             }
         }
+
         unset($_SESSION['bulk_org_ids']);
         header('Location: users.php?msg=org_bulk_assigned&count=' . $affected);
         exit;
