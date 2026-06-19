@@ -554,13 +554,13 @@ ob_start();
     gap: 12px;
 }
 body.dark-mode .search-card {
-    background: linear-gradient(145deg, #18181b 0%, #09090b 100%) !important;
+    background: linear-gradient(145deg, #000000 0%, #000000 100%) !important;
     border-color: #27272a !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 body.dark-mode .search-card input,
 body.dark-mode .search-card select {
-    background-color: #09090b !important;
+    background-color: #000000 !important;
     border-color: #27272a !important;
     color: #f4f4f5 !important;
 }
@@ -574,7 +574,7 @@ body.dark-mode .search-card input::placeholder {
     transition: opacity 0.15s ease;
 }
 body.dark-mode #log-tip {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
 }
@@ -658,7 +658,7 @@ body.dark-mode .badge-lvl.lvl-info {
     border: 1px solid #e2e8f0;
 }
 body.dark-mode .log-ip code {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #cbd5e1 !important;
     border-color: #3f3f46 !important;
 }
@@ -685,7 +685,7 @@ body.dark-mode .log-ip code {
         padding: 0 !important;
     }
     body.dark-mode .settings-card .table tbody tr {
-        background: #18181b !important;
+        background: #000000 !important;
         border-color: #27272a !important;
     }
     body.dark-mode .settings-card .table tbody tr td div {

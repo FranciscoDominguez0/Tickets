@@ -346,7 +346,7 @@ body.dark-mode .info-card i {
     padding: 30px;
 }
 body.dark-mode .settings-panel {
-    background: #1e1e1e;
+    background: #000000;
     border-color: #2a2a2a;
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }

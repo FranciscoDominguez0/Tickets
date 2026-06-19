@@ -261,11 +261,11 @@ ob_start();
     
     /* Adaptación premium para el Modo Oscuro */
     body.superadmin-dark .pro-table tbody tr {
-        background: #18181b !important;
+        background: #000000 !important;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
     body.superadmin-dark .pro-table tbody tr:hover {
-        background: #27272a !important;
+        background: #000000 !important;
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
     body.superadmin-dark .pro-table tbody td {

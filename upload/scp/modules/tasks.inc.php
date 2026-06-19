@@ -220,12 +220,12 @@
 
 /* ── Dark Mode Overrides ── */
 body.dark-mode .task-stat-card {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
 }
 body.dark-mode .task-stat-card::after {
-    background: #27272a !important;
+    background: #000000 !important;
 }
 body.dark-mode .task-stat-card .stat-number {
     color: #f8fafc !important;
@@ -239,15 +239,15 @@ body.dark-mode .task-stat-card:hover {
     border-color: #3f3f46 !important;
 }
 body.dark-mode .tasks-toolbar .filter-dd .btn {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #f1f5f9 !important;
 }
 body.dark-mode .tasks-toolbar .filter-dd .btn:hover {
-    background: #27272a !important;
+    background: #000000 !important;
 }
 body.dark-mode #tasksTable tbody tr {
-    background: #111 !important;
+    background: #000000 !important;
     border-color: #222 !important;
 }
 body.dark-mode .tickets-table td {

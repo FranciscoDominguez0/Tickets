@@ -442,7 +442,7 @@ body.dark-mode .directory-search-clear {
     color: #0f172a !important;
 }
 body.dark-mode .directory-search-clear:hover {
-    background: #18181b !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
@@ -464,7 +464,7 @@ body.dark-mode .directory-search-clear:hover {
     }
 }
 body.dark-mode .tickets-toolbar {
-    background: #111;
+    background: #000000;
     border-color: #333;
 }
 body.dark-mode .form-select,
@@ -494,7 +494,7 @@ body.dark-mode .form-control {
     overflow: hidden;
 }
 body.dark-mode .directory-agent-card {
-    background: #111;
+    background: #000000;
     border-color: rgba(255, 255, 255, 0.06);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }

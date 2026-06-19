@@ -484,24 +484,24 @@ function viewTicketThread(id, ticketNum) {
 /* ── Dark Mode Variable Overrides ── */
 body.dark-mode {
     --del-bg-main: #0a0a0a;
-    --del-card-bg: #111111;
+    --del-card-bg: #000000;
     --del-card-border: #2a2a2a;
     --del-text-main: #e5e5e5;
     --del-text-muted: #888888;
     --del-table-header: #161616;
-    --del-row-hover: #1a1a1a;
+    --del-row-hover: #000000;
     
-    --modal-content-bg: #111111;
+    --modal-content-bg: #000000;
     --modal-content-border: #2a2a2a;
-    --modal-header-bg: #111111;
+    --modal-header-bg: #000000;
     --modal-body-bg: #161616;
-    --modal-footer-bg: #111111;
+    --modal-footer-bg: #000000;
     
     --thread-internal-bg: #201a15;
     --thread-internal-border: #3b2f1f;
     --thread-staff-bg: #161616;
     --thread-staff-border: #2a2a2a;
-    --thread-user-bg: #111111;
+    --thread-user-bg: #000000;
     --thread-user-border: #2a2a2a;
     --thread-name-color: #f1f5f9;
     --thread-body-color: #cbd5e1;
@@ -693,7 +693,7 @@ body.dark-mode #modalWarning .text-danger {
     color: #f87171 !important;
 }
 body.dark-mode .settings-hero-icon {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     color: #e5e5e5 !important;
 }
 

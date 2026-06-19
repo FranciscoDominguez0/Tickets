@@ -787,12 +787,12 @@ window.addEventListener('DOMContentLoaded', function(){
 }
 
 body.dark-mode {
-    --card-bg: #18181b;
+    --card-bg: #000000;
     --card-border: #27272a;
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
-    --badge-neutral-bg: #27272a;
+    --badge-neutral-bg: #000000;
     --badge-neutral-border: #3f3f46;
     --badge-success-bg: rgba(16, 185, 129, 0.1);
     --badge-success-text: #10b981;
@@ -814,7 +814,7 @@ body.dark-mode .agent-card-title {
 }
 
 body.dark-mode .btn-light {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #f8fafc !important;
 }

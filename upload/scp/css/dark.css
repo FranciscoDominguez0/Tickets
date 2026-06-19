@@ -354,7 +354,10 @@ body.dark-mode .chat-att-download {
 
 /* === OVERVIEW DESKTOP === */
 body.dark-mode .ticket-view-overview-desktop {
-    background: #111113 !important;
+    background: #000000 !important;
+    border: 1px solid rgba(239, 68, 68, 0.15) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.15) !important;
+    border-radius: 8px;
 }
 
 @media (min-width: 768px) {
@@ -1607,8 +1610,10 @@ body.dark-mode .ticket-view-title .ticket-num {
 
 /* --- Vista overview (grid de campos TEMA, ASIGNADO A, etc.) --- */
 body.dark-mode .ticket-view-overview {
-    background: #141414 !important;
-    border-color: #222 !important;
+    background: #000000 !important;
+    border: 1px solid rgba(239, 68, 68, 0.15) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.15) !important;
+    border-radius: 8px;
 }
 
 body.dark-mode .ticket-view-overview .field {
@@ -3123,20 +3128,25 @@ body.dark-mode .scp-modal-footer {
 }
 
 body.dark-mode .scp-btn-cancel {
-    background: #000000 !important;
-    border-color: #3f3f46 !important;
-    color: #cbd5e1 !important;
+    background: #1a1a1a !important;
+    border: 1px solid #333 !important;
+    color: #e4e4e7 !important;
 }
 
 body.dark-mode .scp-btn-cancel:hover {
-    background: #3f3f46 !important;
-    color: #f8fafc !important;
+    background: #27272a !important;
+    color: #ffffff !important;
 }
 
 body.dark-mode .scp-btn-confirm {
-    background: #000000 !important;
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    border: none !important;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
     color: #fff !important;
+}
+
+body.dark-mode .scp-btn-confirm:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
 }
 
 /* ============================================================

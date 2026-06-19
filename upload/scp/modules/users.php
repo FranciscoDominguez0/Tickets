@@ -1165,6 +1165,7 @@ $sql = "
         u.status,
         u.created,
         u.updated,
+        u.org_tickets_view,
         COUNT(t.id) AS ticket_count
     FROM users u
     LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
@@ -1501,6 +1502,9 @@ $statusBadges = [
                         <div class="umc-info">
                             <h4 class="umc-name">
                                 <a href="users.php?id=<?php echo (int)$u['id']; ?>"><?php echo html($fullName); ?></a>
+                                <?php if (!empty($u['org_tickets_view'])): ?>
+                                    <i class="bi bi-star-fill text-warning ms-1" style="font-size: 0.85rem;" title="Encargado de Org."></i>
+                                <?php endif; ?>
                             </h4>
                             <div class="umc-contact">
                                 <span><i class="bi bi-envelope"></i> <?php echo html($email !== '' ? $email : 'Sin correo'); ?></span>
@@ -1652,6 +1656,9 @@ $statusBadges = [
                                 <a href="users.php?id=<?php echo (int)$u['id']; ?>">
                                     <?php echo html(trim($u['firstname'] . ' ' . $u['lastname']) ?: $u['email']); ?>
                                 </a>
+                                <?php if (!empty($u['org_tickets_view'])): ?>
+                                    <i class="bi bi-star-fill text-warning ms-1" style="font-size: 0.9rem;" title="Encargado de Org."></i>
+                                <?php endif; ?>
                                 <?php if ((int)$u['ticket_count'] > 0): ?>
                                     <span class="ticket-count"><i class="bi bi-ticket-perforated"></i> (<?php echo (int)$u['ticket_count']; ?>)</span>
                                 <?php endif; ?>

@@ -88,7 +88,7 @@ if (!isset($_SESSION['staff_id'])) exit;
         transition: all 0.3s ease;
     }
     body.dark-mode .map-sidebar {
-        background: #111111;
+        background: #000000;
         border-color: #333;
         box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
@@ -147,7 +147,7 @@ if (!isset($_SESSION['staff_id'])) exit;
         transform: scale(1.02);
     }
     body.dark-mode .agent-item:hover {
-        background: #1a1a1a;
+        background: #000000;
         border-color: #333;
     }
 

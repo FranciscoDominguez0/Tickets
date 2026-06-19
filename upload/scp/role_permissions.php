@@ -360,12 +360,12 @@ ob_start();
 
     /* === MODO OSCURO SOPORTE === */
     body.dark-mode .card {
-        background: #111111 !important;
+        background: #000000 !important;
         border: 1px solid #2a2a2a !important;
     }
     body.dark-mode .card-header {
         background: #161616 !important;
-        border-bottom: 1px solid #2a2a2a !important;
+        border-bottom: 1px solid #000000 !important;
     }
     body.dark-mode .card-header h2 {
         color: #e5e5e5 !important;
@@ -374,7 +374,7 @@ ob_start();
         color: #888 !important;
     }
     body.dark-mode .perm-item-card {
-        background: #1a1a1a !important;
+        background: #000000 !important;
         border-color: #2a2a2a !important;
     }
     body.dark-mode .perm-item-card:hover {
@@ -395,7 +395,7 @@ ob_start();
         color: #e5e5e5 !important;
     }
     body.dark-mode .action-bar-container {
-        background: #111111 !important;
+        background: #000000 !important;
         border-color: #2a2a2a !important;
     }
 </style>

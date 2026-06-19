@@ -499,7 +499,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
 
     /* Modo oscuro */
     body.superadmin-dark .act-row {
-        background: #18181b;
+        background: #000000;
         border-color: rgba(255,255,255,0.06);
         box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
@@ -550,10 +550,10 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
     .pro-table tbody tr:hover { background: #f8fafc !important; }
 
     body.superadmin-dark .pro-table tbody tr {
-        background: #18181b !important;
+        background: #000000 !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
-    body.superadmin-dark .pro-table tbody tr:hover { background: #27272a !important; }
+    body.superadmin-dark .pro-table tbody tr:hover { background: #000000 !important; }
     body.superadmin-dark .pro-table tbody td { color: #e4e4e7 !important; }
     body.superadmin-dark .pro-table thead th { color: #64748b !important; }
 
@@ -596,7 +596,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
     .dir-status.active { background:#22c55e; box-shadow:0 0 0 2px rgba(34,197,94,.25); }
 
     body.superadmin-dark .dir-item { background:#1e1e21; border-color:rgba(255,255,255,0.06); }
-    body.superadmin-dark .dir-item:hover { background:#27272a; }
+    body.superadmin-dark .dir-item:hover { background:#000000; }
     body.superadmin-dark .dir-name { color:#f1f5f9; }
     body.superadmin-dark .dir-email { color:#64748b; }
     body.superadmin-dark .dir-badge.agent { background:rgba(100,116,139,.15); color:#94a3b8; }
@@ -642,7 +642,7 @@ if ($selectedId > 0 && $hasEmpresas && isset($mysqli) && $mysqli) {
         background: rgba(248,250,252,0.8); border-radius: 0 0 14px 14px;
     }
     body.superadmin-dark .tx-item { background:#1e1e21; border-color:rgba(255,255,255,0.06); }
-    body.superadmin-dark .tx-item:hover { background:#27272a; }
+    body.superadmin-dark .tx-item:hover { background:#000000; }
     body.superadmin-dark .tx-subject { color:#e2e8f0; }
     body.superadmin-dark .tx-num { background:rgba(220,38,38,.12); color:#f87171; border-color:rgba(220,38,38,.2); }
     body.superadmin-dark .tx-status.open   { background:rgba(34,197,94,.12); color:#4ade80; }

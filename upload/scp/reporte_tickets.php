@@ -288,7 +288,7 @@ body.dark-mode .rpt-card-num {
 
 /* ── Dark Mode Overrides for Cards ── */
 body.dark-mode .rpt-card {
-    background: #111111 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
 }

@@ -653,7 +653,7 @@ while ($row = $res->fetch_assoc()) {
         border-color: #333;
     }
     body.dark-mode .mobile-filter-btn:hover, body.dark-mode .mobile-filter-btn:focus, body.dark-mode .mobile-filter-btn[aria-expanded="true"] {
-        background-color: #1a1a1a;
+        background-color: #000000;
         color: #fff;
         border-color: #444;
     }
@@ -741,7 +741,7 @@ while ($row = $res->fetch_assoc()) {
         transform: translateY(-1px);
     }
     body.dark-mode .chart-legend-chip {
-        background: #111;
+        background: #000000;
         border-color: #222;
     }
     body.dark-mode .chart-legend-chip:hover {

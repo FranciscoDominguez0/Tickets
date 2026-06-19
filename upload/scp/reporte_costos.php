@@ -433,14 +433,14 @@ h6.border-bottom {
 
 /* Tarjetas de ítems en móvil */
 body.dark-mode .items-table-wrap .table tbody tr {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .items-table-wrap .table tbody td[data-label]::before {
     color: #71717a !important;
 }
 body.dark-mode .items-table-wrap .table thead th {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
     border-color: #27272a !important;
 }
@@ -451,7 +451,7 @@ body.dark-mode .items-table-wrap .table tbody td {
 /* Inputs dentro de las tarjetas */
 body.dark-mode .items-table-wrap .item-desc,
 body.dark-mode .items-table-wrap .item-price {
-    background: #09090b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #e4e4e7 !important;
 }
@@ -462,7 +462,7 @@ body.dark-mode .items-table-wrap .item-price::placeholder {
 /* Card de overview móvil (Depto, Técnico, etc.) — solo celular */
 @media (max-width: 767px) {
     body.dark-mode .ticket-view-overview .field {
-        background: #18181b !important;
+        background: #000000 !important;
         border-color: #27272a !important;
     }
     body.dark-mode .ticket-view-overview .d-md-none label {
@@ -494,7 +494,7 @@ body.dark-mode .items-table-wrap .item-price::placeholder {
 }
 /* Sección usuario móvil */
 body.dark-mode .mobile-user-section {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .mobile-user-info .name {
@@ -504,12 +504,12 @@ body.dark-mode .mobile-user-info .sub {
     color: #a1a1aa !important;
 }
 body.dark-mode .mobile-avatar {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
 }
 /* Grid inferior móvil */
 body.dark-mode .mobile-grid-item {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .mobile-grid-item label {
@@ -520,22 +520,22 @@ body.dark-mode .mobile-grid-item .val {
 }
 /* Settings card */
 body.dark-mode .settings-card {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .settings-card .card-header {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #e4e4e7 !important;
 }
 body.dark-mode .settings-card .card-body {
-    background: #18181b !important;
+    background: #000000 !important;
     color: #e4e4e7 !important;
 }
 /* Textarea y form-control generales */
 body.dark-mode .settings-card textarea.form-control,
 body.dark-mode .settings-card input.form-control {
-    background: #09090b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #e4e4e7 !important;
 }
@@ -545,12 +545,12 @@ body.dark-mode .settings-card input.form-control::placeholder {
 }
 /* Custom options (radios) */
 body.dark-mode .custom-option {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #e4e4e7 !important;
 }
 body.dark-mode .custom-option:hover {
-    background: #1f1f23 !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
 }
 body.dark-mode .custom-option:has(input:checked) {
@@ -563,25 +563,25 @@ body.dark-mode .custom-option .text-muted {
 }
 /* Observaciones alert */
 body.dark-mode .alert-secondary {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #a1a1aa !important;
 }
 body.dark-mode .bg-light.rounded.border {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #d4d4d8 !important;
 }
 body.dark-mode .items-table-wrap tfoot tr {
-    background: #111113 !important;
+    background: #000000 !important;
 }
 body.dark-mode .items-table-wrap tfoot tr td {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #f4f4f5 !important;
     border-top-color: #27272a !important;
 }
 body.dark-mode .price-display-box {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .price-display-box .price-value {
@@ -591,24 +591,24 @@ body.dark-mode .price-display-box .price-label {
     color: #a1a1aa !important;
 }
 body.dark-mode .mat-read-item {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 body.dark-mode .mat-read-item .mat-name {
     color: #e4e4e7 !important;
 }
 body.dark-mode .mat-read-item .mat-qty {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
 }
 body.dark-mode .btn-back-creative {
-    background: #18181b !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
     border-color: #27272a !important;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 body.dark-mode .btn-back-creative:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #f4f4f5 !important;
     border-color: #3f3f46 !important;
 }

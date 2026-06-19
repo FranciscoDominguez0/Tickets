@@ -62,7 +62,7 @@ $agentsByDeptB64 = base64_encode((string)($agentsJson ?: '{}'));
     transition: all 0.3s ease;
 }
 body.dark-mode .open-section {
-    background: #111111;
+    background: #000000;
     border-color: #333;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
@@ -212,7 +212,7 @@ body.dark-mode .loading-fullscreen-overlay {
     background: rgba(0, 0, 0, 0.6);
 }
 body.dark-mode .loading-fullscreen-card {
-    background: #111111;
+    background: #000000;
     border-color: #222;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 }
@@ -220,7 +220,7 @@ body.dark-mode .loading-fullscreen-card {
     color: #ef4444 !important;
 }
 body.dark-mode .open-section {
-    background: #111111 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #f1f5f9;
 }
@@ -237,7 +237,7 @@ body.dark-mode .form-select {
     color: #fff !important;
 }
 body.dark-mode .btn-cancel {
-    background: #111;
+    background: #000000;
     border-color: #333;
     color: #94a3b8;
 }

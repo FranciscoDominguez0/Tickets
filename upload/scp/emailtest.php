@@ -292,7 +292,7 @@ ob_start();
 <style>
   #emailtest-loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.25);z-index:2000}
   #emailtest-loading-overlay .box{background:#fff;border-radius:14px;padding:18px 22px;min-width:320px;max-width:92vw;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  body.dark-mode #emailtest-loading-overlay .box{background:#1e1e1e; color:#eee;}
+  body.dark-mode #emailtest-loading-overlay .box{background:#000000; color:#eee;}
   
   .compose-container {
       background: #fff;
@@ -302,7 +302,7 @@ ob_start();
       border: 1px solid #e2e8f0;
   }
   body.dark-mode .compose-container {
-      background: #1e1e1e;
+      background: #000000;
       border-color: #333;
   }
   .compose-header {
@@ -316,7 +316,7 @@ ob_start();
       color: #1e293b;
   }
   body.dark-mode .compose-header {
-      background: #2a2a2a;
+      background: #000000;
       border-color: #333;
       color: #eee;
   }
@@ -399,7 +399,7 @@ ob_start();
       border-color: #3b82f6;
   }
   body.dark-mode .upload-dropzone {
-      background-color: #2a2a2a;
+      background-color: #000000;
       border-color: #444;
   }
   body.dark-mode .upload-dropzone:hover, body.dark-mode .upload-dropzone.dragover {
@@ -421,7 +421,7 @@ ob_start();
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   }
   body.dark-mode .file-preview-card {
-      background: #2a2a2a;
+      background: #000000;
       border-color: #444;
   }
   .file-preview-card img {
@@ -593,7 +593,7 @@ body.dark-mode .select2-container--default .select2-selection--single .select2-s
     padding: 4px 0;
 }
 body.dark-mode .select2-dropdown {
-    background-color: #2a2a2a !important;
+    background-color: #000000 !important;
     border-color: #444 !important;
 }
 .select2-container--default .select2-results__option {
@@ -615,7 +615,7 @@ body.dark-mode .select2-container--default .select2-results__option--highlighted
     font-weight: 600;
 }
 body.dark-mode .select2-container--default .select2-results__option[aria-selected=true] {
-    background-color: #1e1e1e !important;
+    background-color: #000000 !important;
     color: #eee !important;
 }
 .select2-search--dropdown .select2-search__field {
@@ -625,7 +625,7 @@ body.dark-mode .select2-container--default .select2-results__option[aria-selecte
     outline: none !important;
 }
 body.dark-mode .select2-search--dropdown .select2-search__field {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     border-color: #444 !important;
     color: #eee !important;
 }

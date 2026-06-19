@@ -894,17 +894,18 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-reply.btn-primary-reply {
-    background: #000000;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: #ffffff;
+    border: none;
+    padding: 10px 24px;
     border-radius: 50rem;
     font-weight: 700;
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
 }
 
 .ticket-view-reply .btn-reply.btn-primary-reply:hover {
-    background: #000000;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
@@ -1126,19 +1127,18 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-publish {
-    background: #000000;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #ffffff;
     border: none;
     padding: 10px 24px;
     border-radius: 50rem;
     font-weight: 700;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
 }
 
 .ticket-view-reply .btn-publish:hover {
-    background: #000000;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
     color: #ffffff;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
@@ -1917,16 +1917,16 @@ tr.ticket-row.is-selected td {
     padding: 9px 22px;
     border-radius: 10px;
     border: none;
-    background: #000000;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
     color: #fff;
-    font-weight: 700;
-    font-size: 0.9rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    transition: all 0.2s ease;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 7px;
-    transition: opacity 0.18s, transform 0.18s;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 .scp-btn-confirm:hover {
@@ -2537,26 +2537,28 @@ tr.ticket-row.is-selected td {
     /* Sección Usuario Móvil */
     .ticket-view-overview .mobile-user-section {
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Alinear arriba */
         gap: 16px;
         padding: 20px;
         border-bottom: 1px solid #f8fafc;
         position: relative;
     }
     .ticket-view-overview .mobile-avatar {
-        width: 60px;
-        height: 60px;
+        width: 48px; /* Más chico */
+        height: 48px; /* Más chico */
         background: #eef2ff;
         color: #4f46e5;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.4rem; /* Texto más chico */
         flex-shrink: 0;
+        margin-top: 4px; /* Pequeño margen para alinearlo con la primera línea de texto */
     }
     .ticket-view-overview .mobile-user-info {
         flex-grow: 1;
+        min-width: 0; /* Permite que el texto se trunque o envuelva correctamente sin desbordar el flex container */
     }
     .ticket-view-overview .mobile-user-info .name {
         font-size: 1.1rem;

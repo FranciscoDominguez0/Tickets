@@ -94,7 +94,7 @@ $avatarColor = $avatarColors[($selected_uid ?: 0) % count($avatarColors)];
     transition: all 0.3s ease;
 }
 body.dark-mode .open-section {
-    background: #111111;
+    background: #000000;
     border-color: #333;
     box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
@@ -295,7 +295,7 @@ body.dark-mode .loading-fullscreen-overlay {
     background: rgba(0, 0, 0, 0.6);
 }
 body.dark-mode .loading-fullscreen-card {
-    background: #111111;
+    background: #000000;
     border-color: #222;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
 }
@@ -303,7 +303,7 @@ body.dark-mode .loading-fullscreen-card {
     color: #ef4444 !important;
 }
 body.dark-mode .open-section {
-    background: #111111 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #f1f5f9;
 }
@@ -332,7 +332,7 @@ body.dark-mode .btn-outline-danger:hover {
     color: #fff;
 }
 body.dark-mode .btn-cancel {
-    background: #111;
+    background: #000000;
     border-color: #333;
     color: #94a3b8;
 }
@@ -634,12 +634,12 @@ body.dark-mode .text-muted {
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content" style="border-radius: 16px; border: 1px solid #e2e8f0; transition: all 0.3s ease;">
       <style>
-        body.dark-mode #modalUserSearch .modal-content { background: #111; border-color: #333; color: #fff; }
+        body.dark-mode #modalUserSearch .modal-content { background: #000000; border-color: #333; color: #fff; }
         body.dark-mode #modalUserSearch .modal-header, 
         body.dark-mode #modalUserSearch .modal-footer { border-color: #222; }
         body.dark-mode #modalUserSearch .alert-info { background: #1e1b4b; border-color: #312e81; color: #e0e7ff; }
-        body.dark-mode #modalUserSearch .list-group-item { background: #111; border-color: #222; color: #fff; }
-        body.dark-mode #modalUserSearch .list-group-item:hover { background: #1a1a1a; }
+        body.dark-mode #modalUserSearch .list-group-item { background: #000000; border-color: #000000; color: #fff; }
+        body.dark-mode #modalUserSearch .list-group-item:hover { background: #000000; }
         body.dark-mode #modalUserSearch .form-control { background: #000; border-color: #333; color: #fff; }
         body.dark-mode #modalUserSearch .input-group-text { background: #0a0a0a !important; border-color: #333; color: #94a3b8; }
       </style>

@@ -774,7 +774,7 @@ body.dark-mode .btn-action.delete:hover {
 }
 
 body.dark-mode .staff-row--self > td.d-md-none .agent-mobile-card {
-    background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), #18181b 28%);
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), #000000 28%);
 }
 
 .settings-card .table tbody tr.staff-row--self > td.d-none.d-md-table-cell {
@@ -813,7 +813,7 @@ body.dark-mode .agent-desktop-dept {
     color: #cbd5e1 !important;
 }
 body.dark-mode .table th {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #a1a1aa !important;
 }
@@ -920,12 +920,12 @@ body.dark-mode .table td {
 
 /* Modo Oscuro para Search Card */
 body.dark-mode .search-card {
-    background: linear-gradient(145deg, #18181b 0%, #09090b 100%);
+    background: linear-gradient(145deg, #000000 0%, #000000 100%);
     border-color: rgba(239, 68, 68, 0.15);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 body.dark-mode .search-card input.form-control {
-    background: #09090b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #f1f5f9 !important;
 }
@@ -933,7 +933,7 @@ body.dark-mode .search-card input.form-control:focus {
     border-color: #ef4444 !important;
 }
 body.dark-mode .search-card .btn-filter {
-    background: #27272a;
+    background: #000000;
     color: #e4e4e7;
     border-color: #3f3f46;
 }
@@ -951,14 +951,14 @@ body.dark-mode .search-card .btn-clear:hover {
     color: #fca5a5;
 }
 body.dark-mode .advanced-filters-panel {
-    background: #09090b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
 }
 body.dark-mode .advanced-filters-panel label {
     color: #a1a1aa !important;
 }
 body.dark-mode .advanced-filters-panel select {
-    background-color: #09090b !important;
+    background-color: #000000 !important;
     border-color: #27272a !important;
     color: #cbd5e1 !important;
 }

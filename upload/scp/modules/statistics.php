@@ -431,7 +431,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
     
     /* Dark Mode Overrides para Estadísticas */
     body.dark-mode .stats-page .card {
-        background: #111;
+        background: #000000;
         border-color: #222;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }

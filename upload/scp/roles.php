@@ -505,31 +505,31 @@ ob_start();
 }
 
 body.dark-mode {
-    --role-card-bg: #111111;
+    --role-card-bg: #000000;
     --role-card-border: #2a2a2a;
-    --role-stat-bg: #1a1a1a;
+    --role-stat-bg: #000000;
     --role-table-header-bg: #161616;
-    --role-table-row-hover: #1a1a1a;
+    --role-table-row-hover: #000000;
     --role-text-main: #e5e5e5;
     --role-text-muted: #888888;
     --role-badge-active-bg: rgba(16, 185, 129, 0.15);
     --role-badge-active-color: #34d399;
-    --role-badge-inactive-bg: #222222;
+    --role-badge-inactive-bg: #000000;
     --role-badge-inactive-color: #888888;
-    --role-badge-count-bg: #222222;
+    --role-badge-count-bg: #000000;
     --role-badge-count-color: #e5e5e5;
-    --role-btn-perm-hover-bg: #2a2a2a;
+    --role-btn-perm-hover-bg: #000000;
     --modal-close-filter: invert(1);
 
     /* Mobile variables */
-    --role-mobile-card-bg: #111111;
+    --role-mobile-card-bg: #000000;
     --role-mobile-card-border: #2a2a2a;
-    --role-mobile-stat-bg: #1a1a1a;
+    --role-mobile-stat-bg: #000000;
     --role-mobile-stat-text: #f1f5f9;
     --role-mobile-card-title: #f8fafc;
     --role-mobile-card-meta: #94a3b8;
     --role-mobile-dashed-border: #2a2a2a;
-    --role-mobile-action-btn-bg: #1a1a1a;
+    --role-mobile-action-btn-bg: #000000;
     --role-mobile-action-btn-color: #94a3b8;
 }
 
@@ -581,7 +581,7 @@ body.dark-mode {
 }
 
 body.dark-mode .premium-table tr.selected td {
-    background: #18181b !important;
+    background: #000000 !important;
 }
 
 .premium-table tr:hover td {
@@ -707,7 +707,7 @@ body.dark-mode .agent-count-badge.active-agents {
 }
 
 body.dark-mode .dropdown-item:hover {
-    background-color: #222222 !important;
+    background-color: #000000 !important;
     color: #ffffff !important;
 }
 
@@ -786,7 +786,7 @@ body.dark-mode .dropdown-item:hover {
     }
     body.dark-mode .premium-table tbody tr.selected {
         border-color: #404040 !important;
-        background: #18181b !important;
+        background: #000000 !important;
     }
     .premium-table tbody td.d-md-none {
         display: block !important;
