@@ -14,7 +14,7 @@ body.dark-mode *::after {
 
 /* === BASE === */
 body.dark-mode {
-    background: #0a0a0a !important;
+    background: #000000 !important;
     color: #e5e5e5 !important;
 }
 
@@ -34,10 +34,10 @@ body.dark-mode .card,
 body.dark-mode .modal-content,
 body.dark-mode .ticket-view-tab-content,
 body.dark-mode .ticket-view-tabs {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
-    border: 1px solid #27272a !important;
+    background: #000000 !important;
+    border: 1px solid #111111 !important;
     color: #e4e4e7 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
 }
 
 /* Avatares e iniciales */
@@ -51,7 +51,7 @@ body.dark-mode .entry-avatar-inner {
 
 body.dark-mode .ticket-view-overview,
 body.dark-mode .ticket-view-reply {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     color: #e4e4e7 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
@@ -60,8 +60,8 @@ body.dark-mode .ticket-view-reply {
 body.dark-mode .card-header,
 body.dark-mode .modal-header,
 body.dark-mode .modal-footer {
-    background: #18181b !important;
-    border-color: #27272a !important;
+    background: #000000 !important;
+    border-color: #111111 !important;
     color: #f4f4f5 !important;
 }
 
@@ -70,7 +70,7 @@ body.dark-mode .modal-title {
 }
 
 body.dark-mode .modal-body {
-    background: #141414 !important;
+    background: #000000 !important;
     color: #ddd !important;
 }
 
@@ -78,8 +78,8 @@ body.dark-mode .modal-body {
 body.dark-mode .tickets-panel,
 body.dark-mode .tickets-toolbar,
 body.dark-mode .tickets-table-wrap {
-    background: #111 !important;
-    border-color: #222 !important;
+    background: #000000 !important;
+    border-color: #111111 !important;
 }
 
 /* === TABLA === */
@@ -90,13 +90,13 @@ body.dark-mode .table {
 
 body.dark-mode .table thead,
 body.dark-mode .table-light {
-    background: #161616 !important;
-    border-bottom-color: #252525 !important;
+    background: #000000 !important;
+    border-bottom-color: #111111 !important;
 }
 
 body.dark-mode .table thead th {
     color: #888 !important;
-    background: #161616 !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .table> :not(caption)>*>* {
@@ -105,11 +105,11 @@ body.dark-mode .table> :not(caption)>*>* {
 }
 
 body.dark-mode .table-hover>tbody>tr:hover>* {
-    background-color: #1a1a1a !important;
+    background-color: #000000 !important;
 }
 
 body.dark-mode tr.ticket-row {
-    background: #111 !important;
+    background: #000000 !important;
 }
 
 body.dark-mode tr.ticket-row:hover>td {
@@ -130,7 +130,7 @@ body.dark-mode .ticket-subject {
 body.dark-mode .form-control,
 body.dark-mode .form-select,
 body.dark-mode .input-group-text {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     color: #e5e5e5 !important;
     border-color: #2e2e2e !important;
 }
@@ -153,7 +153,7 @@ body.dark-mode label {
 }
 
 body.dark-mode .form-check-input {
-    background-color: #1e1e1e !important;
+    background-color: #000000 !important;
     border-color: #3a3a3a !important;
 }
 
@@ -164,7 +164,7 @@ body.dark-mode .form-check-input:checked {
 
 /* === DROPDOWNS === */
 body.dark-mode .dropdown-menu {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7) !important;
 }
@@ -175,13 +175,13 @@ body.dark-mode .dropdown-item {
 
 body.dark-mode .dropdown-item:hover,
 body.dark-mode .dropdown-item:focus {
-    background: #252525 !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
 body.dark-mode .dropdown-item.active,
 body.dark-mode .dropdown-item:active {
-    background: #2a2a2a !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
@@ -221,14 +221,14 @@ body.dark-mode .btn-outline-dark:hover {
 }
 
 body.dark-mode .btn-light {
-    background: linear-gradient(145deg, #27272a, #18181b) !important;
+    background: #000000 !important;
     border: 1px solid #3f3f46 !important;
     color: #e4e4e7 !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
 }
 
 body.dark-mode .btn-light:hover {
-    background: linear-gradient(145deg, #3f3f46, #27272a) !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
@@ -338,7 +338,7 @@ body.dark-mode .ticket-view-entry.internal .entry-avatar {
 }
 
 body.dark-mode .chat-att-item {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #252525 !important;
 }
 
@@ -347,7 +347,7 @@ body.dark-mode .chat-att-info .att-filename {
 }
 
 body.dark-mode .chat-att-download {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
     color: #888 !important;
 }
@@ -400,12 +400,12 @@ body.dark-mode .mobile-header {
 }
 
 body.dark-mode .mobile-user-section {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
 }
 
 body.dark-mode .mobile-avatar {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     color: #94a3b8 !important;
 }
 
@@ -423,7 +423,7 @@ body.dark-mode .mobile-grid {
 }
 
 body.dark-mode .mobile-grid-item {
-    background: linear-gradient(145deg, #18181b, #0f0f11) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     border-radius: 12px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
@@ -450,7 +450,7 @@ body.dark-mode .mobile-grid-item .val {
 
 /* === TICKET TABS === */
 body.dark-mode .ticket-view-tabs {
-    background: #111 !important;
+    background: #000000 !important;
     border-color: #1e1e1e !important;
 }
 
@@ -464,18 +464,18 @@ body.dark-mode .ticket-view-tabs .tab:hover {
 
 body.dark-mode .ticket-view-tabs .tab.active {
     color: #e5e5e5 !important;
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-bottom-color: #e5e5e5 !important;
 }
 
 /* === REPLY BOX === */
 body.dark-mode .ticket-view-reply {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
 }
 
 body.dark-mode .ticket-view-reply .attach-zone {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
 }
 
@@ -495,17 +495,17 @@ body.dark-mode .ticket-view-reply .attach-zone .attach-hint {
 
 /* === NOTE-EDITOR (Summernote) === */
 body.dark-mode .note-editor.note-frame {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
 }
 
 body.dark-mode .note-editor .note-toolbar {
-    background: #161616 !important;
+    background: #000000 !important;
     border-bottom-color: #2a2a2a !important;
 }
 
 body.dark-mode .note-editor .note-editable {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     color: #ddd !important;
 }
 
@@ -516,12 +516,12 @@ body.dark-mode .note-editor .note-btn {
 }
 
 body.dark-mode .note-editor .note-btn:hover {
-    background: #252525 !important;
+    background: #000000 !important;
     color: #e5e5e5 !important;
 }
 
 body.dark-mode .note-editor .note-status-output {
-    background: #161616 !important;
+    background: #000000 !important;
     color: #666 !important;
     border-top-color: #222 !important;
 }
@@ -613,7 +613,7 @@ body.dark-mode .badge.bg-warning {
 
 /* === DASHBOARD === */
 body.dark-mode .kpi-card {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
 }
 
@@ -626,7 +626,7 @@ body.dark-mode .kpi-card .kpi-label {
 }
 
 body.dark-mode .chart-card {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
 }
 
@@ -636,13 +636,13 @@ body.dark-mode .chart-title {
 
 /* === SELECTION BAR === */
 body.dark-mode .tickets-selection-bar {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
     color: #ccc !important;
 }
 
 body.dark-mode .btn-bulk {
-    background: #252525 !important;
+    background: #000000 !important;
     color: #ccc !important;
     border-color: #333 !important;
 }
@@ -669,7 +669,7 @@ body.dark-mode .border-top {
 
 /* === PAGINATION === */
 body.dark-mode .page-link {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
     color: #999 !important;
 }
@@ -687,7 +687,7 @@ body.dark-mode .scp-footer-brand {
 
 /* === DASHBOARD legacy (stat-card, top-tabs, welcome-card) === */
 body.dark-mode .stat-card {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #e5e5e5 !important;
 }
@@ -701,7 +701,7 @@ body.dark-mode .stat-label {
 }
 
 body.dark-mode .top-tabs {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -717,14 +717,14 @@ body.dark-mode .top-tab-link:hover {
 }
 
 body.dark-mode .welcome-card {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #e5e5e5 !important;
 }
 
 /* === CARDS MÓVIL (table rows como cards) === */
 body.dark-mode .card-body .table-responsive table tbody tr {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
 }
 
@@ -752,11 +752,11 @@ body.dark-mode .panel-body,
 body.dark-mode .dash-card,
 body.dark-mode .dash-panel,
 body.dark-mode .dash-widget {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
-    border: 1px solid #27272a !important;
+    background: #000000 !important;
+    border: 1px solid #111111 !important;
     border-radius: 14px !important;
     color: #e4e4e7 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
 }
 
 body.dark-mode .directory-card:hover,
@@ -808,7 +808,7 @@ body.dark-mode .uvm-empty {
 
 /* ── Dark mode: nuevas cards de usuarios rediseñadas ── */
 body.dark-mode .users-mobile-card {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
@@ -821,6 +821,7 @@ body.dark-mode .umc-avatar {
 body.dark-mode .umc-name a {
     color: #f4f4f5 !important;
 }
+
 body.dark-mode .umc-name a:hover {
     color: #f87171 !important;
 }
@@ -830,7 +831,7 @@ body.dark-mode .umc-contact {
 }
 
 body.dark-mode .umc-body {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
@@ -841,9 +842,11 @@ body.dark-mode .umc-stat-label {
 body.dark-mode .umc-stat-val {
     color: #d4d4d8 !important;
 }
+
 body.dark-mode .umc-stat-val.text-success {
     color: #4ade80 !important;
 }
+
 body.dark-mode .umc-stat-val.text-muted {
     color: #71717a !important;
 }
@@ -852,15 +855,17 @@ body.dark-mode .btn-umc-primary {
     background: #dc2626 !important;
     color: #fff !important;
 }
+
 body.dark-mode .btn-umc-primary:hover {
     background: #b91c1c !important;
 }
 
 body.dark-mode .btn-umc-icon {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #a1a1aa !important;
 }
+
 body.dark-mode .btn-umc-icon:hover {
     background: #3f3f46 !important;
     color: #f4f4f5 !important;
@@ -881,7 +886,7 @@ body.dark-mode .users-directory .search-card .btn-search:hover {
 
 /* === MOBILE PAGINATION DARK MODE === */
 body.dark-mode .users-mobile-pagination {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: none !important;
 }
@@ -895,7 +900,7 @@ body.dark-mode .ump-export-btn {
 }
 
 body.dark-mode a.ump-nav-btn {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #f87171 !important;
 }
@@ -906,13 +911,13 @@ body.dark-mode a.ump-nav-btn:active {
 }
 
 body.dark-mode .ump-nav-btn.ump-disabled {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #3f3f46 !important;
 }
 
 body.dark-mode .ump-page-num {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #a1a1aa !important;
 }
@@ -932,7 +937,7 @@ body.dark-mode .ump-page-num.ump-page-active {
 /* === SINGLE USER MOBILE VIEW OVERRIDES === */
 /* Cabecera Premium */
 body.dark-mode .user-view-mobile-head {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -950,7 +955,7 @@ body.dark-mode .uvm-back-btn:hover {
 }
 
 body.dark-mode .user-view-mobile-avatar {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(99, 102, 241, 0.2)) !important;
+    background: #000000 !important;
     border-color: rgba(239, 68, 68, 0.35) !important;
     color: #f87171 !important;
 }
@@ -993,18 +998,18 @@ body.dark-mode .uvm-btn-edit:hover {
 }
 
 body.dark-mode .uvm-btn-gear {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #cbd5e1 !important;
 }
 
 body.dark-mode .uvm-btn-gear:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
 body.dark-mode .uvm-gear-dropdown {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
@@ -1014,7 +1019,7 @@ body.dark-mode .uvm-gear-dropdown .dropdown-item {
 }
 
 body.dark-mode .uvm-gear-dropdown .dropdown-item:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
@@ -1079,7 +1084,7 @@ body.dark-mode .user-mobile-toggle-btn:hover {
 }
 
 body.dark-mode .user-view-mobile-card-details {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -1126,7 +1131,7 @@ body.dark-mode .uvm-action-link {
 
 /* Pill Tabs */
 body.dark-mode .user-view-mobile-tabs-pill {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -1142,7 +1147,7 @@ body.dark-mode .uvm-tab-pill.active {
 
 /* Panels */
 body.dark-mode .user-view-mobile-panel-modern {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -1178,7 +1183,7 @@ body.dark-mode .uvm-ticket-item-num {
 }
 
 body.dark-mode .uvm-ticket-status-badge {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
     border-color: #3f3f46 !important;
 }
@@ -1235,7 +1240,7 @@ body.dark-mode [style*="background: #f8fafc"],
 body.dark-mode [style*="background:#f8fafc"],
 body.dark-mode [style*="background: #f1f5f9"],
 body.dark-mode [style*="background: #ffffff"] {
-    background: #1a1a1a !important;
+    background: #000000 !important;
 }
 
 body.dark-mode [style*="color: #0f172a"],
@@ -1283,17 +1288,17 @@ body.dark-mode .ticket-view-overview-desktop>div {
 
 /* === PROFILE / USERS menus === */
 body.dark-mode .scp-profile-menu {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #252525 !important;
 }
 
 body.dark-mode .scp-notif-menu {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #252525 !important;
 }
 
 body.dark-mode .scp-notif-head {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-bottom-color: #252525 !important;
 }
 
@@ -1319,7 +1324,7 @@ body.dark-mode .scp-notif-item {
 }
 
 body.dark-mode .scp-notif-item:hover {
-    background: #2a2a2a !important;
+    background: #000000 !important;
     border-color: #444444 !important;
     transform: translateY(-2px) !important;
 }
@@ -1338,22 +1343,22 @@ body.dark-mode .scp-notif-empty {
 
 body.dark-mode .scp-notif-footer {
     border-top-color: #222 !important;
-    background: #111 !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .scp-notif-btn-all {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     color: #aaa !important;
 }
 
 body.dark-mode .scp-notif-btn-all:not(:disabled):hover {
-    background: #2a2a2a !important;
+    background: #000000 !important;
     color: #eee !important;
 }
 
 /* === INPUT DATE RANGE === */
 body.dark-mode #ticketDateRange {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
 }
 
@@ -1365,7 +1370,7 @@ body.dark-mode #dateToInput {
 
 /* === HOVER PREVIEW === */
 body.dark-mode .ticket-hover-preview-inner {
-    background: #161616 !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
 }
@@ -1388,7 +1393,7 @@ body.dark-mode .ticket-hover-preview .msg {
 }
 
 body.dark-mode .ticket-hover-preview .msg .th-item {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #252525 !important;
 }
 
@@ -1422,7 +1427,7 @@ body.dark-mode .ticket-hover-preview .msg .th-when {
 }
 
 body.dark-mode .ticket-hover-preview .msg .th-item.internal .th-head {
-    background: #27272a !important;
+    background: #000000 !important;
     border-bottom-color: #3f3f46 !important;
 }
 
@@ -1452,7 +1457,7 @@ body.dark-mode .dropdown-divider {
 
 /* === LIST GROUPS === */
 body.dark-mode .list-group-item {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #252525 !important;
     color: #ccc !important;
 }
@@ -1471,7 +1476,7 @@ body.dark-mode .list-group-item.active {
 
 /* === DZ PREVIEW CARDS (adjuntos) === */
 body.dark-mode .dz-preview-card {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
 }
 
@@ -1528,14 +1533,14 @@ body.dark-mode #dmToggleBtn .dm-icon-dark {
 
 /* --- Listado de tickets: tarjetas móvil (≤768px) --- */
 body.dark-mode .tickets-table tbody tr.ticket-row {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
 }
 
 body.dark-mode .tickets-table tbody tr.ticket-row:hover {
-    background: linear-gradient(145deg, #27272a, #18181b) !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(59, 130, 246, 0.1) !important;
 }
@@ -1579,14 +1584,14 @@ body.dark-mode .tickets-table tbody td:nth-child(2) .ticket-subject {
 /* --- Detalle de ticket: botones de acción (btn-icon) --- */
 body.dark-mode .ticket-view-actions .btn-icon,
 body.dark-mode .btn-icon {
-    background: #1e1e1e !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
     color: #aaa !important;
 }
 
 body.dark-mode .ticket-view-actions .btn-icon:hover,
 body.dark-mode .btn-icon:hover {
-    background: #252525 !important;
+    background: #000000 !important;
     border-color: #3a3a3a !important;
     color: #e5e5e5 !important;
 }
@@ -1649,7 +1654,7 @@ body.dark-mode .ticket-view-overview>div {
 body.dark-mode .filter-dd .btn,
 body.dark-mode .tickets-filters .btn,
 body.dark-mode .btn-sm.dropdown-toggle {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
     color: #bbb !important;
 }
@@ -1682,7 +1687,7 @@ body.dark-mode .chip-report-done {
 /* --- Mobile info sections (directory, users, orgs) --- */
 body.dark-mode .directory-mobile .directory-card,
 body.dark-mode .users-mobile-list .users-mobile-card {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     box-shadow: none !important;
 }
@@ -1691,7 +1696,7 @@ body.dark-mode .users-mobile-list .users-mobile-card {
 body.dark-mode .org-view-mobile-head,
 body.dark-mode .org-view-mobile-card,
 body.dark-mode .org-view-mobile-panel {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #e5e5e5 !important;
     box-shadow: none !important;
@@ -1758,13 +1763,13 @@ body.dark-mode .billing-icon-cotizacion {
 /* --- Summernote dark (toolbar dropdown menus) --- */
 body.dark-mode .note-dropdown-menu,
 body.dark-mode .note-popover .popover-content {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2a2a2a !important;
     color: #ccc !important;
 }
 
 body.dark-mode .note-dropdown-item:hover {
-    background: #252525 !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .note-color-row .note-color-btn {
@@ -1775,7 +1780,7 @@ body.dark-mode .note-color-row .note-color-btn {
 body.dark-mode .dash-card,
 body.dark-mode .dash-panel,
 body.dark-mode .dash-widget {
-    background: #141414 !important;
+    background: #000000 !important;
     border-color: #222 !important;
     color: #e5e5e5 !important;
 }
@@ -1793,13 +1798,13 @@ body.dark-mode .table-responsive {
 
 /* --- input-group dark --- */
 body.dark-mode .input-group .btn {
-    background: #1a1a1a !important;
+    background: #000000 !important;
     border-color: #2e2e2e !important;
     color: #aaa !important;
 }
 
 body.dark-mode .input-group .btn:hover {
-    background: #252525 !important;
+    background: #000000 !important;
     color: #e5e5e5 !important;
 }
 
@@ -1822,7 +1827,7 @@ body.dark-mode small {
 
 body.dark-mode .user-view-card,
 body.dark-mode .org-stat-card {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
     color: #e4e4e7 !important;
@@ -1865,7 +1870,7 @@ body.dark-mode .org-back-link:hover {
 
 /* Tables inside User/Org view */
 body.dark-mode .user-view-tickets-table thead th {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
     border-bottom: 2px solid #27272a !important;
 }
@@ -1876,12 +1881,12 @@ body.dark-mode .user-view-tickets-table tbody td {
 }
 
 body.dark-mode .user-view-tickets-table tbody tr:hover td {
-    background: #18181b !important;
+    background: #000000 !important;
 }
 
 /* Premium ticket table – dark mode */
 body.dark-mode .user-view-tickets-table.uvt-premium thead th {
-    background: #18181b !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
 }
 
@@ -1957,7 +1962,7 @@ body.dark-mode .uvt-status-overdue {
 }
 
 body.dark-mode .uvt-status-default {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.08)) !important;
+    background: #000000 !important;
     color: #a78bfa !important;
     border-color: rgba(167, 139, 250, 0.2) !important;
 }
@@ -1965,7 +1970,7 @@ body.dark-mode .uvt-status-default {
 /* Mobile overrides for User/Org specific tables */
 @media (max-width: 768px) {
     body.dark-mode .user-view-tickets-table tbody tr {
-        background: linear-gradient(145deg, #18181b, #111113) !important;
+        background: #000000 !important;
         border: 1px solid #27272a !important;
         border-top: 4px solid #ef4444 !important;
     }
@@ -2010,7 +2015,7 @@ body.dark-mode .uvt-status-default {
 body.dark-mode .search-card,
 body.dark-mode .org-search-card,
 body.dark-mode .table-card {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
@@ -2038,7 +2043,7 @@ body.dark-mode .org-page-title {
 }
 
 body.dark-mode .table-card table thead th {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #a1a1aa !important;
     border-bottom: 2px solid #27272a !important;
 }
@@ -2065,7 +2070,7 @@ body.dark-mode .table-card table tbody td a {
 }
 
 body.dark-mode .table-footer-bar {
-    background: #111113 !important;
+    background: #000000 !important;
     border-top: 1px solid #27272a !important;
     color: #a1a1aa !important;
 }
@@ -2073,8 +2078,8 @@ body.dark-mode .table-footer-bar {
 @media (min-width: 768px) {
     body.dark-mode .table-footer-bar {
         padding: 18px 26px !important;
-        background: linear-gradient(180deg, #18181b 0%, #111113 100%) !important;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 -4px 15px rgba(0,0,0,0.2) !important;
+        background: #000000 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 -4px 15px rgba(0, 0, 0, 0.2) !important;
         border-radius: 0 0 16px 16px !important;
     }
 }
@@ -2088,13 +2093,13 @@ body.dark-mode .table-footer-bar .pagination-wrap a:hover {
 }
 
 body.dark-mode .org-card {
-    background: #111113 !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     overflow: hidden !important;
 }
 
 body.dark-mode .org-card-header {
-    background: #18181b !important;
+    background: #000000 !important;
     border-bottom: 1px solid #27272a !important;
 }
 
@@ -2122,7 +2127,7 @@ body.dark-mode .org-card-title a {
 
 body.dark-mode .org-card-footer {
     border-top: 1px solid #27272a !important;
-    background: #111113 !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .org-card-date {
@@ -2174,14 +2179,14 @@ body.dark-mode .users-directory .table-card .table tbody tr:active td {
 /* Fix for buttons like 'Importar' and 'Más' that were white */
 body.dark-mode .btn-import,
 body.dark-mode .btn-more {
-    background: #18181b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     color: #e4e4e7 !important;
 }
 
 body.dark-mode .btn-import:hover,
 body.dark-mode .btn-more:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #fff !important;
 }
 
@@ -2209,13 +2214,13 @@ body.dark-mode .profile-section-title {
 }
 
 body.dark-mode .profile-card {
-    background: #18181b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
 }
 
 body.dark-mode .dropdown-menu {
-    background-color: #111113 !important;
+    background-color: #000000 !important;
     border: 1px solid #27272a !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
 }
@@ -2239,7 +2244,7 @@ body.dark-mode .dropdown-divider {
 
 /* The Tab Bar was white in the screenshot */
 body.dark-mode .user-view-tabs {
-    background: #111113 !important;
+    background: #000000 !important;
     border-bottom: 2px solid #27272a !important;
 }
 
@@ -2266,7 +2271,7 @@ body.dark-mode .user-view-detail {
 }
 
 body.dark-mode .user-view-avatar {
-    background: #111113 !important;
+    background: #000000 !important;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
     color: #ffffff !important;
 }
@@ -2317,26 +2322,26 @@ body.dark-mode .user-view-profile-premium {
 
 body.dark-mode .uvp-breadcrumb-link,
 body.dark-mode .uvp-refresh-link {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #d4d4d8 !important;
 }
 
 body.dark-mode .uvp-breadcrumb-link:hover,
 body.dark-mode .uvp-refresh-link:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #f87171 !important;
 }
 
 body.dark-mode .user-view-card {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
 
 body.dark-mode .user-view-profile-premium .uvp-hero {
-    background: #18181b !important;
+    background: #000000 !important;
     border-bottom-color: #27272a !important;
     border-left-color: #ef4444 !important;
 }
@@ -2387,7 +2392,7 @@ body.dark-mode .user-view-profile-premium .uvp-email a:hover {
 }
 
 body.dark-mode .user-view-profile-premium .uvp-field {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
@@ -2402,7 +2407,7 @@ body.dark-mode .user-view-profile-premium .uvp-org-name {
 }
 
 body.dark-mode .user-view-profile-premium .uvp-org-chip {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
 }
 
@@ -2416,13 +2421,13 @@ body.dark-mode .user-view-profile-premium .uvp-org-chip-remove:hover {
 }
 
 body.dark-mode .user-view-profile-premium .uvp-action-link {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #d4d4d8 !important;
 }
 
 body.dark-mode .user-view-profile-premium .uvp-action-link:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #f4f4f5 !important;
 }
@@ -2451,7 +2456,7 @@ body.dark-mode .user-view-profile-premium .uvp-meta-item .value {
     body.dark-mode .user-view-mobile-panel,
     body.dark-mode .uvm-ticket,
     body.dark-mode .uvm-note {
-        background: linear-gradient(145deg, #18181b, #111113) !important;
+        background: #000000 !important;
         border: 1px solid #27272a !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
         color: #e4e4e7 !important;
@@ -2472,7 +2477,7 @@ body.dark-mode .user-view-profile-premium .uvp-meta-item .value {
     }
 
     body.dark-mode .user-view-mobile-avatar {
-        background: #111113 !important;
+        background: #000000 !important;
         border-color: #3b82f6 !important;
         color: #60a5fa !important;
     }
@@ -2532,14 +2537,14 @@ body.dark-mode .user-view-profile-premium .uvp-meta-item .value {
    ============================================================ */
 
 body.dark-mode .org-modal-content {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     color: #e4e4e7 !important;
 }
 
 body.dark-mode .org-modal-header,
 body.dark-mode .org-modal-footer {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     color: #f4f4f5 !important;
 }
@@ -2568,7 +2573,7 @@ body.dark-mode .org-form-label i {
 }
 
 body.dark-mode .org-form-control {
-    background: #18181b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     color: #e4e4e7 !important;
 }
@@ -2600,18 +2605,18 @@ body.dark-mode .org-delete-org-name {
    ============================================================ */
 
 body.dark-mode .settings-card {
-    background: #111113 !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
 }
 
 body.dark-mode .settings-card .card-header {
-    background: #18181b !important;
+    background: #000000 !important;
     border-bottom: 1px solid #27272a !important;
     color: #f4f4f5 !important;
 }
 
 body.dark-mode .settings-card .card-body {
-    background: #111113 !important;
+    background: #000000 !important;
     color: #d4d4d8 !important;
 }
 
@@ -2675,11 +2680,13 @@ body.dark-mode .ticket-view-overview-desktop .btn-waze-premium {
     background: #1e293b !important;
     border: none !important;
 }
+
 body.dark-mode .ticket-view-overview .btn-waze-premium:hover,
 body.dark-mode .ticket-view-overview-desktop .btn-waze-premium:hover {
     color: #cbd5e1 !important;
     background: #334155 !important;
 }
+
 body.dark-mode .ticket-view-overview .btn-waze-mobile,
 body.dark-mode .ticket-view-overview .btn-waze-mobile:hover,
 body.dark-mode .ticket-view-overview-desktop .btn-waze-mobile {
@@ -2690,6 +2697,7 @@ body.dark-mode .ticket-view-overview .btn-waze-premium i,
 body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-premium i {
     color: inherit !important;
 }
+
 body.dark-mode .d-none.d-md-grid.ticket-view-overview-desktop .btn-waze-mobile i,
 body.dark-mode .ticket-view-overview .btn-waze-mobile i {
     color: #ffffff !important;
@@ -2728,7 +2736,7 @@ body.dark-mode .open-ticket-shell .form-actions .btn-submit:hover i {
 
 /* Alerts refinement */
 body.dark-mode .alert-secondary {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
     border-color: #27272a !important;
     color: #a1a1aa !important;
 }
@@ -2739,7 +2747,7 @@ body.dark-mode .alert-secondary.text-dark {
 }
 
 body.dark-mode .bg-light {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
     border-color: #27272a !important;
     color: #d4d4d8 !important;
 }
@@ -2747,7 +2755,7 @@ body.dark-mode .bg-light {
 /* Items Table refinement */
 body.dark-mode .table-light,
 body.dark-mode .table-light th {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
     color: #a1a1aa !important;
     border-bottom-color: #27272a !important;
 }
@@ -2764,7 +2772,7 @@ body.dark-mode .items-table-wrap .table tfoot tr.table-primary td {
 
 /* Read-only list refinement */
 body.dark-mode .mat-read-item {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
@@ -2793,12 +2801,12 @@ body.dark-mode .price-display-box .price-value {
 
 /* Custom Radios */
 body.dark-mode .custom-option {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
 body.dark-mode .custom-option:hover {
-    background: #27272a !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .custom-option:has(input:checked) {
@@ -2827,7 +2835,7 @@ body.dark-mode h6.border-bottom {
 body.dark-mode .users-directory .table-card,
 body.dark-mode .users-directory .search-card,
 body.dark-mode .users-directory .user-view-card {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     border-color: #27272a !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
@@ -2847,7 +2855,7 @@ body.dark-mode .users-directory .table tbody tr {
 
 /* HOVER — era #f8fafc (blanco), ahora oscuro visible */
 body.dark-mode .users-directory .table tbody tr:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #f4f4f5 !important;
 }
 
@@ -2869,7 +2877,7 @@ body.dark-mode .users-directory .user-name-cell .ticket-count {
 
 /* Pie de tabla (paginación / "mostrando") */
 body.dark-mode .users-directory .table-footer-bar {
-    background: #18181b !important;
+    background: #000000 !important;
     border-top-color: #27272a !important;
     color: #a1a1aa !important;
 }
@@ -2877,7 +2885,7 @@ body.dark-mode .users-directory .table-footer-bar {
 /* Botones Import / Más */
 body.dark-mode .users-directory .btn-import,
 body.dark-mode .users-directory .btn-more {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #e4e4e7 !important;
     border-color: #3f3f46 !important;
 }
@@ -2911,7 +2919,7 @@ body.dark-mode .user-view-detail .value {
 }
 
 body.dark-mode .user-view-tabs {
-    background: #18181b !important;
+    background: #000000 !important;
     border-bottom-color: #27272a !important;
 }
 
@@ -2930,7 +2938,7 @@ body.dark-mode .user-view-tickets-table th {
 }
 
 body.dark-mode .user-view-actions .btn {
-    background: #27272a !important;
+    background: #000000 !important;
     color: #e4e4e7 !important;
     border-color: #3f3f46 !important;
 }
@@ -2946,13 +2954,13 @@ body.dark-mode .user-view-actions .btn:hover {
    ============================================================ */
 
 body.dark-mode .scp-modal-content {
-    background: #18181b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6) !important;
 }
 
 body.dark-mode .scp-modal-header {
-    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #b91c1c 100%) !important;
+    background: #000000 !important;
     color: #f8fafc !important;
     border-bottom: 1px solid #450a0a !important;
 }
@@ -2987,7 +2995,7 @@ body.dark-mode .scp-modal-close:hover {
 }
 
 body.dark-mode .scp-modal-body {
-    background: #18181b !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .scp-choice-label {
@@ -2995,7 +3003,7 @@ body.dark-mode .scp-choice-label {
 }
 
 body.dark-mode .scp-btn-choice {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
 }
 
@@ -3015,17 +3023,17 @@ body.dark-mode .scp-btn-choice-primary:hover {
 }
 
 body.dark-mode .scp-btn-choice-ghost {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
 body.dark-mode .scp-btn-choice-ghost:hover {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
 }
 
 body.dark-mode .scp-btn-choice-icon {
-    background: linear-gradient(135deg, #991b1b, #dc2626) !important;
+    background: #000000 !important;
     color: #f8fafc !important;
 }
 
@@ -3043,7 +3051,7 @@ body.dark-mode .scp-btn-choice-sub {
 }
 
 body.dark-mode .scp-nosig-info {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
 }
 
@@ -3068,7 +3076,7 @@ body.dark-mode .scp-field-optional {
 }
 
 body.dark-mode .scp-textarea {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #f8fafc !important;
 }
@@ -3079,7 +3087,7 @@ body.dark-mode .scp-textarea:focus {
 }
 
 body.dark-mode .scp-btn-clear {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #cbd5e1 !important;
 }
@@ -3110,12 +3118,12 @@ body.dark-mode .scp-rotate-hint {
 }
 
 body.dark-mode .scp-modal-footer {
-    background: #18181b !important;
+    background: #000000 !important;
     border-top-color: #27272a !important;
 }
 
 body.dark-mode .scp-btn-cancel {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #cbd5e1 !important;
 }
@@ -3126,7 +3134,7 @@ body.dark-mode .scp-btn-cancel:hover {
 }
 
 body.dark-mode .scp-btn-confirm {
-    background: linear-gradient(135deg, #dc2626, #991b1b) !important;
+    background: #000000 !important;
     box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
     color: #fff !important;
 }
@@ -3136,18 +3144,18 @@ body.dark-mode .scp-btn-confirm {
    ============================================================ */
 
 body.dark-mode .ticket-signature-print-box {
-    background: #18181b !important;
+    background: #000000 !important;
     border-color: #27272a !important;
 }
 
 body.dark-mode .ticket-signature-print-title {
-    background: #27272a !important;
+    background: #000000 !important;
     border-bottom-color: #3f3f46 !important;
     color: #f8fafc !important;
 }
 
 body.dark-mode .ticket-signature-print-body {
-    background: #18181b !important;
+    background: #000000 !important;
 }
 
 body.dark-mode .ticket-signature-print-image {
@@ -3161,7 +3169,7 @@ body.dark-mode .ticket-signature-print-image {
    ============================================================ */
 body.dark-mode .users-directory .btn-add,
 body.dark-mode .btn-add-org {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    background: #000000 !important;
     color: #ffffff !important;
     box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4) !important;
     border: 1px solid rgba(239, 68, 68, 0.5) !important;
@@ -3169,7 +3177,7 @@ body.dark-mode .btn-add-org {
 
 body.dark-mode .users-directory .btn-add:hover,
 body.dark-mode .btn-add-org:hover {
-    background: linear-gradient(135deg, #f87171, #ef4444) !important;
+    background: #000000 !important;
     box-shadow: 0 6px 22px rgba(239, 68, 68, 0.55) !important;
     border-color: rgba(248, 113, 113, 0.6) !important;
     color: #ffffff !important;
@@ -3276,7 +3284,7 @@ body.dark-mode .ticket-hover-preview-head .num {
 
 /* --- Botones Premium --- */
 .modal-content .btn-primary {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    background: #000000 !important;
     border: none !important;
     border-radius: 12px !important;
     font-weight: 700 !important;
@@ -3288,7 +3296,7 @@ body.dark-mode .ticket-hover-preview-head .num {
 }
 
 .modal-content .btn-primary:hover {
-    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    background: #000000 !important;
     box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35) !important;
     transform: translateY(-1px) !important;
 }
@@ -3318,7 +3326,7 @@ body.dark-mode .ticket-hover-preview-head .num {
 
 /* --- Modo Oscuro Unificado (Vigitec Dark) --- */
 body.dark-mode .modal-content {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6) !important;
 }
@@ -3337,7 +3345,7 @@ body.dark-mode .modal-title i {
 }
 
 body.dark-mode .modal-body {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
 }
 
 body.dark-mode .modal-footer {
@@ -3373,7 +3381,7 @@ body.dark-mode .modal-content .form-control::placeholder {
 
 body.dark-mode .modal-content .btn-secondary,
 body.dark-mode .modal-content .btn-outline-secondary {
-    background: #27272a !important;
+    background: #000000 !important;
     border-color: rgba(255, 255, 255, 0.06) !important;
     color: #e4e4e7 !important;
 }
@@ -3516,28 +3524,32 @@ body.dark-mode .btn-remove-item i {
     color: #f87171 !important;
     /* Rojo brillante para el botón de eliminar ítem */
 }
+
 /* -- Modern Pagination (Dark Mode) -- */
 body.dark-mode .modern-pagination .page-link {
-    background: #18181b;
+    background: #000000;
     color: #a1a1aa;
     border-color: #27272a !important;
 }
+
 body.dark-mode .modern-pagination .page-link:hover {
-    background: #27272a;
+    background: #000000;
     color: #ef4444;
     border-color: #3f3f46 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
 }
+
 body.dark-mode .modern-pagination .page-item.active .page-link,
 body.dark-mode .modern-pagination .page-item .page-link.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    background: #000000 !important;
     color: #ffffff !important;
     border-color: #ef4444 !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
+
 body.dark-mode .modern-pagination .page-item.disabled .page-link {
-    background: #18181b;
+    background: #000000;
     color: #52525b;
     border-color: #27272a !important;
 }
@@ -3570,24 +3582,27 @@ body.dark-mode .user-view-profile-premium .uvp-field-icon {
 body.dark-mode .nav-tabs {
     border-bottom-color: #27272a !important;
 }
+
 body.dark-mode .nav-tabs .nav-link {
     color: #a1a1aa !important;
     background: transparent !important;
     border-color: transparent !important;
 }
+
 body.dark-mode .nav-tabs .nav-link:hover {
     color: #f4f4f5 !important;
     border-color: #27272a #27272a transparent !important;
 }
+
 body.dark-mode .nav-tabs .nav-link.active {
-    background-color: #18181b !important;
+    background-color: #000000 !important;
     border-color: #27272a #27272a #18181b !important;
     color: #ef4444 !important;
 }
 
 /* === SUMMERNOTE MODALS (Dark Mode) === */
 body.dark-mode .note-modal-content {
-    background: #18181b !important;
+    background: #000000 !important;
     border: 1px solid #27272a !important;
     color: #e5e5e5 !important;
     border-radius: 12px !important;
@@ -3614,7 +3629,7 @@ body.dark-mode .note-modal .close {
 }
 
 body.dark-mode .note-modal .form-control {
-    background: #111113 !important;
+    background: #000000 !important;
     border-color: #3f3f46 !important;
     color: #eee !important;
 }
@@ -3629,10 +3644,9 @@ body.dark-mode .badge-public {
     color: #7dd3fc !important;
     border: 1px solid rgba(56, 189, 248, 0.4) !important;
 }
+
 body.dark-mode .badge-private {
     background-color: rgba(217, 119, 6, 0.25) !important;
     color: #fcd34d !important;
     border: 1px solid rgba(251, 191, 36, 0.4) !important;
 }
-
-

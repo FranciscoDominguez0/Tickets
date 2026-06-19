@@ -894,7 +894,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-reply.btn-primary-reply {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #000000;
     color: #ffffff;
     border-radius: 50rem;
     font-weight: 700;
@@ -904,7 +904,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-reply.btn-primary-reply:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    background: #000000;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
@@ -1126,7 +1126,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-publish {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: #000000;
     color: #ffffff;
     border: none;
     padding: 10px 24px;
@@ -1138,7 +1138,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-view-reply .btn-publish:hover {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    background: #000000;
     color: #ffffff;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
@@ -1212,7 +1212,7 @@ tr.ticket-row.is-selected td {
 }
 
 .ticket-open-wrap .btn-submit {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: #000000;
     color: #fff;
     border: none;
     padding: 12px 24px;
@@ -1250,7 +1250,7 @@ tr.ticket-row.is-selected td {
 }
 
 .tickets-header {
-    background: linear-gradient(135deg, #000000 0%, #111111 50%, #ef4444 100%);
+    background: #000000;
     color: #fff;
     border-radius: 10px;
     padding: 26px 18px;
@@ -1571,7 +1571,7 @@ tr.ticket-row.is-selected td {
     align-items: center;
     gap: 14px;
     padding: 20px 22px;
-    background: linear-gradient(135deg, #b91c1c 0%, #dc2626 55%, #ef4444 100%);
+    background: #000000;
     color: #fff;
 }
 
@@ -1702,7 +1702,7 @@ tr.ticket-row.is-selected td {
     width: 42px;
     height: 42px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #dc2626, #ef4444);
+    background: #000000;
     color: #fff;
     display: flex;
     align-items: center;
@@ -1917,7 +1917,7 @@ tr.ticket-row.is-selected td {
     padding: 9px 22px;
     border-radius: 10px;
     border: none;
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    background: #000000;
     color: #fff;
     font-weight: 700;
     font-size: 0.9rem;
@@ -2802,10 +2802,9 @@ tr.ticket-row.is-selected td {
     font-size: 1rem;
 }
 
-/* Dark mode overrides */
 body.dark-mode .creative-dropdown-menu {
-    background: #111113;
-    border: 1px solid #27272a;
+    background: #000000;
+    border: 1px solid #111111;
     box-shadow: 0 20px 50px rgba(0,0,0,0.6);
 }
 body.dark-mode .creative-dropdown-header {
@@ -2816,7 +2815,7 @@ body.dark-mode .creative-dropdown-item {
     color: #e2e8f0;
 }
 body.dark-mode .creative-dropdown-item:hover {
-    background: #18181b;
+    background: #050505;
     color: #ef4444;
 }
 body.dark-mode .creative-dropdown-item.active {
@@ -2824,9 +2823,9 @@ body.dark-mode .creative-dropdown-item.active {
     color: #ef4444 !important;
 }
 body.dark-mode .creative-dropdown-avatar {
-    background: linear-gradient(135deg, #27272a, #18181b);
+    background: #000000;
     color: #ef4444;
-    border: 1px solid #3f3f46;
+    border: 1px solid #111111;
 }
 body.dark-mode .creative-dropdown-item:hover .creative-dropdown-avatar {
     background: #ef4444;
@@ -2876,7 +2875,7 @@ button.creative-dropdown-item {
 }
 .modern-pagination .page-item.active .page-link,
 .modern-pagination .page-item .page-link.active {
-    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    background: #000000 !important;
     color: #ffffff !important;
     border-color: #ef4444 !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25) !important;

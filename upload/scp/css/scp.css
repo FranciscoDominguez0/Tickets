@@ -1344,7 +1344,7 @@ body.superadmin-dark .alert-warning {
  }
 
 body.superadmin.superadmin-dark {
-    background: #0a0a0a !important;
+    background: #000000 !important;
     color: #e5e5e5;
 }
 
@@ -1361,10 +1361,10 @@ body.superadmin.superadmin-dark .pro-card,
 body.superadmin.superadmin-dark .chart-card,
 body.superadmin.superadmin-dark .kpi-card,
 body.superadmin.superadmin-dark .modal-content {
-    background: linear-gradient(145deg, #18181b, #111113) !important;
+    background: #000000 !important;
     color: #e4e4e7 !important;
-    border-color: #27272a !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.02) !important;
+    border-color: #111111 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.01) !important;
 }
 
 body.superadmin.superadmin-dark .card-header {
