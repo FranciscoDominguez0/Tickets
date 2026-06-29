@@ -230,21 +230,30 @@
                         $statusIcon = 'bi-record-circle-fill';
                         $statusName = html($t['status_name']);
 
-                        // Chip de revisión ejecutiva (independiente del estado del ticket)
+                        // Chip de revisión ejecutiva — estilo tag secundario (borde izquierdo de color)
                         $approvalChip = '';
+                        $accentStyle = 'display:inline-flex; align-items:center; gap:5px; padding:3px 8px 3px 7px; border-radius:4px; font-size:0.72rem; font-weight:600; white-space:nowrap; border-left:3px solid; border-top:1px solid transparent; border-right:1px solid transparent; border-bottom:1px solid transparent;';
                         if (!empty($t['approval_status'])) {
                             if ($t['approval_status'] === 'pending') {
-                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#fef9c3; color:#854d0e; border:1px solid #fde68a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
-                                    . '<i class="bi bi-eye-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Pendiente</span>';
+                                $approvalChip = '<span title="Revisión Ejecutiva: Pendiente de aprobación" style="' . $accentStyle . ' background:rgba(234,179,8,0.07); border-left-color:#eab308; color:#92400e;">'
+                                    . '<i class="bi bi-eye" style="font-size:0.65rem; opacity:0.7;"></i>'
+                                    . '<span style="font-weight:700; color:#b45309;">Ejec. Pendiente</span>'
+                                    . '</span>';
                             } elseif (in_array($t['approval_status'], ['approved', 'aprobado', 'aceptado'])) {
-                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
-                                    . '<i class="bi bi-check-circle-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Aprobado</span>';
+                                $approvalChip = '<span title="Revisión Ejecutiva: Aprobado" style="' . $accentStyle . ' background:rgba(34,197,94,0.06); border-left-color:#22c55e; color:#166534;">'
+                                    . '<i class="bi bi-eye" style="font-size:0.65rem; opacity:0.7;"></i>'
+                                    . '<span style="font-weight:700; color:#15803d;">Ejec. Aprobado</span>'
+                                    . '</span>';
                             } elseif (in_array($t['approval_status'], ['rejected', 'rechazado'])) {
-                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
-                                    . '<i class="bi bi-x-circle-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Rechazado</span>';
+                                $approvalChip = '<span title="Revisión Ejecutiva: Rechazado" style="' . $accentStyle . ' background:rgba(239,68,68,0.06); border-left-color:#ef4444; color:#991b1b;">'
+                                    . '<i class="bi bi-eye" style="font-size:0.65rem; opacity:0.7;"></i>'
+                                    . '<span style="font-weight:700; color:#b91c1c;">Ejec. Rechazado</span>'
+                                    . '</span>';
                             } elseif ($t['approval_status'] === 'cotizacion') {
-                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
-                                    . '<i class="bi bi-file-earmark-text-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Cotización</span>';
+                                $approvalChip = '<span title="Revisión Ejecutiva: Cotización enviada" style="' . $accentStyle . ' background:rgba(99,102,241,0.06); border-left-color:#6366f1; color:#4338ca;">'
+                                    . '<i class="bi bi-eye" style="font-size:0.65rem; opacity:0.7;"></i>'
+                                    . '<span style="font-weight:700; color:#4338ca;">Ejec. Cotización</span>'
+                                    . '</span>';
                             }
                         }
 
