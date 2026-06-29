@@ -230,23 +230,21 @@
                         $statusIcon = 'bi-record-circle-fill';
                         $statusName = html($t['status_name']);
 
+                        // Chip de revisión ejecutiva (independiente del estado del ticket)
+                        $approvalChip = '';
                         if (!empty($t['approval_status'])) {
                             if ($t['approval_status'] === 'pending') {
-                                $statusName = 'Pendiente';
-                                $statusColor = '#eab308';
-                                $statusIcon = 'bi-clock-history';
+                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#fef9c3; color:#854d0e; border:1px solid #fde68a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
+                                    . '<i class="bi bi-eye-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Pendiente</span>';
                             } elseif (in_array($t['approval_status'], ['approved', 'aprobado', 'aceptado'])) {
-                                $statusName = 'Aprobado';
-                                $statusColor = '#22c55e';
-                                $statusIcon = 'bi-check-circle-fill';
+                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
+                                    . '<i class="bi bi-check-circle-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Aprobado</span>';
                             } elseif (in_array($t['approval_status'], ['rejected', 'rechazado'])) {
-                                $statusName = 'Rechazado';
-                                $statusColor = '#ef4444';
-                                $statusIcon = 'bi-x-circle-fill';
+                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
+                                    . '<i class="bi bi-x-circle-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Rechazado</span>';
                             } elseif ($t['approval_status'] === 'cotizacion') {
-                                $statusName = 'Cotización';
-                                $statusColor = '#6366f1';
-                                $statusIcon = 'bi-file-earmark-text-fill';
+                                $approvalChip = '<span class="chip" title="Revisión Ejecutiva" style="background:#eef2ff; color:#4338ca; border:1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">'
+                                    . '<i class="bi bi-file-earmark-text-fill" style="font-size:0.6rem;"></i> Rev. Ejecutiva: Cotización</span>';
                             }
                         }
 
@@ -331,6 +329,9 @@
                                         <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
                                             <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
                                         </span>
+                                        <?php if ($approvalChip !== ''): ?>
+                                            <?php echo $approvalChip; ?>
+                                        <?php endif; ?>
                                         <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                             <?php 
                                             $bstatus = $t['billing_status'] ?? 'pending';
@@ -375,6 +376,9 @@
                                     <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
                                         <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
                                     </span>
+                                    <?php if ($approvalChip !== ''): ?>
+                                        <?php echo $approvalChip; ?>
+                                    <?php endif; ?>
                                     <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
                                         <?php 
                                         $bstatus = $t['billing_status'] ?? 'pending';

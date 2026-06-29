@@ -396,10 +396,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
         if ($reply_error !== '') {
             // No continuar: ya existe un error (ej. adjunto muy grande / demasiados adjuntos)
-        } elseif ($body === '') {
+        } elseif ($body === '' && !$hasFiles) {
             $reply_error = 'El mensaje no puede estar vacío.';
-        } elseif ($hasFiles && $plain === '' && stripos($body, '<img') === false && stripos($body, '<iframe') === false) {
-            $reply_error = 'Debes escribir un mensaje para enviar archivos. Si solo quieres adjuntar, escribe una breve descripción.';
         } elseif (stripos($body, 'data:image/') !== false) {
             $reply_error = 'Las imágenes pegadas dentro del texto no están soportadas. Adjunta la imagen usando la opción de archivos.';
         } elseif (strlen($body) > 500000) {
@@ -3218,20 +3216,29 @@ function humanSize($bytes) {
             }
         });
 
-        // Popup preventivo: adjuntos sin mensaje
+        // Validación frontend: solo bloquear si no hay mensaje Y no hay adjuntos
         var form = document.querySelector('.reply-card form');
         var fileInput = document.getElementById('attachments');
         form && form.addEventListener('submit', function (ev) {
             try {
                 var hasFiles = fileInput && fileInput.files && fileInput.files.length > 0;
-                if (!hasFiles) return;
+                if (hasFiles) return; // Con adjuntos, el mensaje es opcional
 
                 var isEmpty = false;
                 try { isEmpty = jQuery('#reply_body').summernote('isEmpty'); } catch (e) {}
                 if (isEmpty) {
                     ev.preventDefault();
+                    // Resetear el botón de envío que pudo haber quedado en estado loading
+                    var replyBtn = document.getElementById('reply-submit-btn');
+                    if (replyBtn) {
+                        var lbl = replyBtn.querySelector('.btn-label');
+                        var ldr = replyBtn.querySelector('.btn-loading');
+                        if (lbl) lbl.classList.remove('d-none');
+                        if (ldr) ldr.classList.add('d-none');
+                        replyBtn.disabled = false;
+                    }
                     window.__showCreativePop && window.__showCreativePop(
-                        'Adjuntaste un archivo, pero el mensaje está vacío. Escribe una breve descripción para poder enviarlo.',
+                        'El mensaje no puede estar vacío si no adjuntas ningún archivo.',
                         'Falta un mensaje'
                     );
                     return false;
