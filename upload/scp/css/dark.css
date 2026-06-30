@@ -1767,18 +1767,40 @@ body.dark-mode .billing-icon-cotizacion {
 
 /* --- Summernote dark (toolbar dropdown menus) --- */
 body.dark-mode .note-dropdown-menu,
+body.dark-mode .note-dropdown-menu.dropdown-menu,
 body.dark-mode .note-popover .popover-content {
-    background: #000000 !important;
-    border-color: #2a2a2a !important;
-    color: #ccc !important;
+    background: #0b1220 !important;
+    border: 1px solid #1e293b !important;
+    color: #e2e8f0 !important;
 }
 
-body.dark-mode .note-dropdown-item:hover {
-    background: #000000 !important;
+body.dark-mode .note-dropdown-menu a,
+body.dark-mode .note-dropdown-menu h1,
+body.dark-mode .note-dropdown-menu h2,
+body.dark-mode .note-dropdown-menu h3,
+body.dark-mode .note-dropdown-menu h4,
+body.dark-mode .note-dropdown-menu h5,
+body.dark-mode .note-dropdown-menu h6,
+body.dark-mode .note-dropdown-menu p,
+body.dark-mode .note-dropdown-menu pre,
+body.dark-mode .note-dropdown-menu blockquote,
+body.dark-mode .note-dropdown-item {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .note-dropdown-item:hover,
+body.dark-mode .note-dropdown-menu a:hover {
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .note-dropdown-item:hover *,
+body.dark-mode .note-dropdown-menu a:hover * {
+    color: #ffffff !important;
 }
 
 body.dark-mode .note-color-row .note-color-btn {
-    border-color: #333 !important;
+    border-color: #334155 !important;
 }
 
 /* --- Dashboard widgets adicionales --- */

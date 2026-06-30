@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!isset($ticketView) || !is_array($ticketView)) return;
  $t = $ticketView;
 $tid = (int) $t['id'];
@@ -1586,7 +1586,7 @@ if ($ticketClientSignaturePath !== '') {
         <?php else: ?>
             <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data" id="form-reply">
                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
-                <div class="mb-3">
+                <div class="mb-3 summernote-wrapper" style="min-height: 200px;">
                     <label class="form-label fw-bold">Respuesta</label>
                     <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
                 </div>
@@ -1638,7 +1638,7 @@ if ($ticketClientSignaturePath !== '') {
                 <div class="modal-body" style="padding: 32px; background: #ffffff;">
                     <div class="mb-4">
                         <label class="form-label mb-2" style="font-weight: 700; color: #334155; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Contenido del mensaje</label>
-                        <div class="editor-wrapper" style="border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                        <div class="editor-wrapper summernote-wrapper" style="min-height: 300px; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
                             <textarea name="body" id="edit-entry-body" class="form-control" rows="10"></textarea>
                         </div>
                     </div>
