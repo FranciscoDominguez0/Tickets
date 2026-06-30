@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!isset($ticketView) || !is_array($ticketView)) return;
  $t = $ticketView;
 $tid = (int) $t['id'];
@@ -360,13 +360,14 @@ if ($ticketClientSignaturePath !== '') {
         }
         
         $apprColor = '#64748b';
-        if ($ticketApprovalStatus === 'pending') $apprColor = '#f59e0b';
-        elseif ($ticketApprovalStatus === 'cotizacion') $apprColor = '#0ea5e9';
-        elseif ($ticketApprovalStatus === 'aprobado') $apprColor = '#10b981';
-        elseif ($ticketApprovalStatus === 'rechazado') $apprColor = '#ef4444';
+        $apprBorder = '#64748b';
+        if ($ticketApprovalStatus === 'pending') { $apprColor = '#64748b'; $apprBorder = '#64748b'; }
+        elseif ($ticketApprovalStatus === 'cotizacion') { $apprColor = '#0f766e'; $apprBorder = '#0f766e'; }
+        elseif ($ticketApprovalStatus === 'aprobado') { $apprColor = '#166534'; $apprBorder = '#166534'; }
+        elseif ($ticketApprovalStatus === 'rechazado') { $apprColor = '#9f1239'; $apprBorder = '#9f1239'; }
         
-        $apprTitle = 'Pendiente aprobación';
-        if ($ticketApprovalStatus === 'cotizacion') $apprTitle = 'Cotización solicitada';
+        $apprTitle = 'Pendiente';
+        if ($ticketApprovalStatus === 'cotizacion') $apprTitle = 'Cotización';
         elseif ($ticketApprovalStatus === 'aprobado') $apprTitle = 'Aprobado';
         elseif ($ticketApprovalStatus === 'rechazado') $apprTitle = 'Rechazado';
         ?>
@@ -379,7 +380,7 @@ if ($ticketClientSignaturePath !== '') {
                 Ticket #<?php echo html($t['ticket_number']); ?>
             </h1>
             <?php if ($ticketApprovalStatus !== 'none'): ?>
-                <span style="font-weight: 800; font-size: 0.75rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 10px; border-radius: 999px; border: 1px solid <?php echo $apprColor; ?>33;">
+                <span style="font-weight:800; font-size:0.75rem; color:<?php echo $apprColor; ?>; background:<?php echo $apprColor; ?>44; padding:4px 10px; border-radius:999px; border:1px solid <?php echo $apprColor; ?>99; display:inline-flex; align-items:center; gap:5px;">
                     <i class="bi <?php echo $ticketApprovalStatus === 'pending' ? 'bi-shield-lock-fill' : 'bi-shield-check'; ?>"></i> <?php echo html($apprTitle); ?>
                 </span>
             <?php endif; ?>
@@ -392,8 +393,8 @@ if ($ticketClientSignaturePath !== '') {
             <span>Ticket #<?php echo html($t['ticket_number']); ?></span>
             
             <?php if ($ticketApprovalStatus !== 'none'): ?>
-                <span style="font-weight: 800; font-size: 0.8rem; color: <?php echo $apprColor; ?>; background: <?php echo $apprColor; ?>15; padding: 4px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.02em; border: 1px solid <?php echo $apprColor; ?>33;">
-                    <i class="bi <?php echo $ticketApprovalStatus === 'pending' ? 'bi-shield-lock-fill' : 'bi-shield-check'; ?>" style="font-size: 0.9rem;"></i> <?php echo html($apprTitle); ?>
+                <span style="font-weight:800; font-size:0.8rem; color:<?php echo $apprColor; ?>; background:<?php echo $apprColor; ?>44; padding:4px 12px; border-radius:999px; display:inline-flex; align-items:center; gap:6px; letter-spacing:0.02em; border:1px solid <?php echo $apprColor; ?>99;">
+                    <i class="bi <?php echo $ticketApprovalStatus === 'pending' ? 'bi-shield-lock-fill' : 'bi-shield-check'; ?>" style="font-size:0.9rem;"></i> <?php echo html($apprTitle); ?>
                 </span>
             <?php endif; ?>
         </h1>
@@ -1749,10 +1750,10 @@ if ($ticketClientSignaturePath !== '') {
     </div>
 </div>
 
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
+<link href="../css/vendor/summernote-lite.min.css" rel="stylesheet">
+<script src="../js/vendor/jquery-3.6.0.min.js"></script>
+<script src="../js/vendor/summernote-lite.min.js"></script>
+<script src="../js/vendor/summernote-es-ES.min.js"></script>
 <div class="modal fade" id="vigitecImageInsertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

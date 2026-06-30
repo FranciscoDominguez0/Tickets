@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * LOGIN CLIENTE
  * Formulario de autenticación para usuarios
@@ -91,7 +91,7 @@ if ($_POST) {
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Login - <?php echo APP_NAME; ?></title>
     <?php $loginCssV = (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: 1); ?>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo $loginCssV; ?>">
 </head>
 <?php

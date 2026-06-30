@@ -78,8 +78,11 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Panel Agente - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Bootstrap CSS local (sin latencia CDN) -->
+    <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
+    <!-- Bootstrap Icons local + font-display:swap -->
+    <link rel="stylesheet" href="css/vendor/bootstrap-icons.css">
+    <style>@font-face{font-family:"bootstrap-icons";src:url("css/vendor/fonts/bootstrap-icons.woff2") format("woff2"),url("css/vendor/fonts/bootstrap-icons.woff") format("woff");font-display:swap}</style>
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
     <?php if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
     <link rel="stylesheet" href="css/dashboard.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/dashboard.css'); ?>">
@@ -92,6 +95,9 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <?php endif; ?>
     <?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes', 'cotizaciones'])): ?>
     <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
+    <?php endif; ?>
+    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
+    <link rel="stylesheet" href="css/vendor/summernote-lite.min.css">
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
     <link rel="stylesheet" href="css/orgs.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/orgs.css'); ?>">
@@ -715,8 +721,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         <a id="customPopLink" href="#" class="n-btn">Ver solicitud</a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/scp.js"></script>
+    <script src="js/vendor/bootstrap.bundle.min.js" defer></script>
+    <script src="js/scp.js" defer></script>
     <script>
         // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador
         window.scpNotificationAudio = new Audio('../../publico/audio/notification.mp3');
@@ -881,15 +887,14 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <script src="js/users.js"></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/vendor/chart.umd.min.js"></script>
     <script src="js/dashboard.js?v=<?php echo (int)@filemtime(__DIR__ . '/../js/dashboard.js'); ?>"></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
-    <script src="js/tickets.js"></script>
+    <script src="js/vendor/jquery-3.6.0.min.js" defer></script>
+    <script src="js/vendor/summernote-lite.min.js" defer></script>
+    <script src="js/vendor/summernote-es-ES.min.js" defer></script>
+    <script src="js/tickets.js" defer></script>
     <?php endif; ?>
     <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
     <script src="js/tasks.js"></script>

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * REGISTRO DE CLIENTE
  * Formulario para que nuevos clientes se registren
@@ -179,7 +179,7 @@ if ($isPortalDarkModeEnabled) {
 }
 ?>
 <body style="<?php echo $bodyStyle; ?>" class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <div class="support-center-wrapper">
         <!-- HEADER SUPERIOR -->

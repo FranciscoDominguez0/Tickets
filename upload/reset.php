@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../config.php';
 require_once '../includes/helpers.php';
 require_once '../includes/Auth.php';
@@ -103,7 +103,7 @@ if ($_POST && $error === '') {
     <link rel="icon" type="image/x-icon"
         href="<?php echo (defined('APP_URL') ? rtrim((string) APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Restablecer contraseña - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
     <link rel="stylesheet"
         href="../publico/css/login.css?v=<?php echo (int) (@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
 </head>

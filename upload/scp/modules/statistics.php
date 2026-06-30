@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 $endDate = new DateTime('today');
 $endDate->setTime(23, 59, 59);
@@ -593,7 +593,7 @@ $resolvedTotals = array_map(function ($r) { return $r['total']; }, $resolvedByMo
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="../js/vendor/chart.umd.min.js"></script>
 <script>
 (function () {
     function safeParseJson(s, fallback) {

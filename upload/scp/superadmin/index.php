@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * estadisticas.php  —  /scp/superadmin/estadisticas.php
  *
@@ -475,7 +475,7 @@ window.dashData = {
 };
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script src="../js/vendor/chart.umd.min.js" defer></script>
 <script src="js/estadisticas.js" defer></script>
 
 <?php

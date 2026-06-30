@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Layout para panel administrador
 // Similar al layout de agentes pero con sidebar de administración
 
@@ -50,8 +50,8 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Panel Administrador - <?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="css/vendor/bootstrap-icons.css">
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/scp.css'); ?>">
     <link rel="stylesheet" href="css/dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/dark.css'); ?>">
     <style>
@@ -523,7 +523,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         &copy; VigitecPanama
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
         // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../config.php';
 require_once '../includes/helpers.php';
 
@@ -119,8 +119,8 @@ function formatFileSizeHuman(int $bytes): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo html((string) ($report['subject'] ?? 'Informe')); ?> — <?php echo html(APP_NAME); ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="scp/css/vendor/bootstrap-5.3.0.min.css" rel="stylesheet">
+    <link href="scp/css/vendor/bootstrap-icons-1.11.1.css" rel="stylesheet">
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int) @filemtime(__DIR__ . '/css/client_dark.css'); ?>">
     <style>
         body { background:#f8fafc; padding-top:72px; }

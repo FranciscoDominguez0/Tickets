@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../config.php';
 require_once '../../includes/helpers.php';
 require_once '../../includes/Auth.php';
@@ -550,8 +550,8 @@ ob_start();
                 </div>
             </form>
         </div>
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+   <link rel="stylesheet" href="css/vendor/summernote-lite.min.css">
+<link href="css/vendor/select2.min.css" rel="stylesheet" />
 <style>
 /* Select2 Custom Inline Styling */
 .select2-container {
@@ -630,10 +630,10 @@ body.dark-mode .select2-search--dropdown .select2-search__field {
     color: #eee !important;
 }
 </style>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/lang/summernote-es-ES.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="js/vendor/jquery-3.6.0.min.js"></script>
+<script src="js/vendor/summernote-lite.min.js"></script>
+<script src="js/vendor/summernote-es-ES.min.js"></script>
+<script src="js/vendor/select2.min.js"></script>
 <script>
   (function(){
     // --- UI Loading ---
