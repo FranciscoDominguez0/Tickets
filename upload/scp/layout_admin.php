@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Layout para panel administrador
 // Similar al layout de agentes pero con sidebar de administración
 
@@ -145,7 +145,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             </div>
             <div class="d-flex align-items-center gap-2">
                 <div class="dropdown">
-                    <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+                    <button class="btn position-relative scp-notif-btn scp-notif-toggle <?php echo $notifCount > 0 ? 'has-new' : ''; ?>" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones" aria-label="Notificaciones">
                         <i class="bi bi-bell"></i>
                         <?php if ($notifCount > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -236,7 +236,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         $staffNameDisplay = $initials;
                     }
                     ?>
-                    <button class="dropdown-toggle scp-profile-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="dropdown-toggle scp-profile-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Perfil de usuario">
                         <span class="scp-profile-avatar" aria-hidden="true"><?php echo html($initials); ?></span>
                         <span class="scp-profile-name"><?php echo html($staffNameDisplay); ?></span>
                     </button>

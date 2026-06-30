@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * VER TICKET (USUARIO)
  * Detalle de ticket con hilo y adjuntos
@@ -584,6 +584,8 @@ if (isset($_GET['download']) && is_numeric($_GET['download'])) {
         header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
     }
     header('X-Content-Type-Options: nosniff');
+    if (ob_get_length()) ob_clean();
+    flush();
     readfile($full);
     exit;
 }

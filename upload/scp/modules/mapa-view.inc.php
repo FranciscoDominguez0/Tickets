@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Módulo: Mapa de Agentes en Tiempo Real
  * Muestra la ubicación de los agentes que tienen tickets "En camino" usando Leaflet.js
@@ -9,7 +9,7 @@ if (!isset($_SESSION['staff_id'])) exit;
 ?>
 
 <!-- Leaflet CSS -->
-<link rel="stylesheet" href="../css/vendor/leaflet.css">
+<link rel="stylesheet" href="css/vendor/leaflet.css">
 
 <style>
     /* Estilos del Hero Principal (Adaptado de stats-hero) */
@@ -386,7 +386,7 @@ if (!isset($_SESSION['staff_id'])) exit;
 </div>
 
 <!-- Leaflet JS -->
-<script src="../js/vendor/leaflet.js"></script>
+<script src="js/vendor/leaflet.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

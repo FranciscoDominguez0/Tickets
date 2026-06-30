@@ -264,6 +264,10 @@
                                     . '</span>';
                             }
                         }
+                        
+                        if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1) {
+                            $approvalChip = ''; // Ocultar el badge "Ejecutivo" si ya se hizo el reporte de costos
+                        }
 
                         $priorityColor = $t['priority_color'] ?: '#94a3b8';
 
@@ -369,8 +373,7 @@
                                                     <i class="bi bi-clock-history"></i> Pendiente Facturación
                                                 </span>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </div>
+                                        <?php endif; ?>                                    </div>
                                 </div>
                             </td>
                             <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
@@ -416,8 +419,7 @@
                                                 <i class="bi bi-clock-history"></i> Pendiente Facturación
                                             </span>
                                         <?php endif; ?>
-                                    <?php endif; ?>
-                                </div>
+                                    <?php endif; ?>                                </div>
                             </td>
                             <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
                                 <div style="color:#64748b; font-size: 0.85rem; font-weight: 600; display:flex; align-items:center; gap:6px;">

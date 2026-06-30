@@ -274,6 +274,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 header('Content-Disposition: attachment; filename="' . str_replace('"', '', $filename) . '"');
             }
             header('X-Content-Type-Options: nosniff');
+            if (ob_get_length()) ob_clean();
+            flush();
             readfile($full);
             exit;
         }
