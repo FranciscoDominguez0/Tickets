@@ -155,19 +155,21 @@ if (!$canViewAll) {
     $params[] = (int) ($_SESSION['staff_id'] ?? 0);
 }
 
-if ($filterKey === 'mine') {
-    if ($canViewAll) {
-        $whereClauses[] = 't.staff_id = ?';
-        $types .= 'i';
-        $params[] = (int) ($_SESSION['staff_id'] ?? 0);
+if ($query === '') {
+    if ($filterKey === 'mine') {
+        if ($canViewAll) {
+            $whereClauses[] = 't.staff_id = ?';
+            $types .= 'i';
+            $params[] = (int) ($_SESSION['staff_id'] ?? 0);
+        }
+    } elseif ($filterKey !== 'all') {
+        $whereClauses[] = $filters[$filterKey]['where'];
     }
-} elseif ($filterKey !== 'all') {
-    $whereClauses[] = $filters[$filterKey]['where'];
-}
-if ($deptFilterAvailable && $selectedDeptId > 0) {
-    $whereClauses[] = 't.dept_id = ?';
-    $types .= 'i';
-    $params[] = $selectedDeptId;
+    if ($deptFilterAvailable && $selectedDeptId > 0) {
+        $whereClauses[] = 't.dept_id = ?';
+        $types .= 'i';
+        $params[] = $selectedDeptId;
+    }
 }
 if ($query !== '') {
     $like = '%' . $query . '%';
@@ -186,7 +188,7 @@ if ($query !== '') {
 //   - Abiertos/pendientes/en camino: t.closed IS NULL
 //   - Cerrados sin reporte: tr.billing_status IS NULL
 //   - Cerrados con reporte pendiente: tr.billing_status = 'pending'
-if ($dateFrom !== '' || $dateTo !== '') {
+if ($query === '' && ($dateFrom !== '' || $dateTo !== '')) {
     // tr proviene del LEFT JOIN ticket_reports tr del SELECT principal.
     // Si no hay reporte, tr.billing_status es NULL (nunca = 'confirmed').
     // Estados finalizados: facturado, visita técnica, cotización.
@@ -246,7 +248,7 @@ if ($page > $totalPages) {
 }
 
 // Conteo del departamento seleccionado dentro de la vista actual (sin LIMIT)
-if ($deptFilterAvailable && $selectedDeptId > 0) {
+if ($query === '' && $deptFilterAvailable && $selectedDeptId > 0) {
     $sqlCnt = "SELECT COUNT(*) AS c\n"
         . "FROM tickets t\n"
         . "JOIN users u ON t.user_id = u.id\n"
