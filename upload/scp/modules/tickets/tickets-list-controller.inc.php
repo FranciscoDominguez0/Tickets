@@ -15,7 +15,8 @@ $filterKey = $_GET['filter'] ?? null;
 
 $role = getCurrentStaffRoleName();
 $isAgent = ($role === 'agent');
-$canViewAll = roleHasPermission('ticket.view_all');
+$isSuperadmin = ((string)($_SESSION['staff_role'] ?? '') === 'superadmin' || getCurrentStaffRoleName() === 'superadmin' || roleHasPermission('admin.access'));
+$canViewAll = $isSuperadmin || roleHasPermission('ticket.view_all');
 if ($filterKey === null && !$canViewAll) {
     $filterKey = 'mine';
 }

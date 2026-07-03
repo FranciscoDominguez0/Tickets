@@ -2062,13 +2062,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 );
             });
 
-            $('#modalEditEntry').modal('show');
+            var mEdit = document.getElementById('modalEditEntry');
+            if (mEdit && window.bootstrap) bootstrap.Modal.getOrCreateInstance(mEdit).show();
         });
 
         $(document).on('click', '.js-delete-entry', function() {
             var entryId = $(this).data('id');
             $('#delete-entry-id').val(entryId);
-            $('#modalDeleteEntry').modal('show');
+            var mDel = document.getElementById('modalDeleteEntry');
+            if (mDel && window.bootstrap) bootstrap.Modal.getOrCreateInstance(mDel).show();
         });
 
         // Inicializar summernote para el editor de edición

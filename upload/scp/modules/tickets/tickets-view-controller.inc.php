@@ -52,8 +52,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     if ($ticketView) {
         $canViewAll = roleHasPermission('ticket.view_all');
         $isAssignedToMe = (int)($ticketView['staff_id'] ?? 0) === (int)($_SESSION['staff_id'] ?? 0);
-        // Allow access if: can view all, is assigned to me, OR has any ticket action permission
-        $canActOnTickets = $canViewAll || $isAssignedToMe
+        $isSuperadmin = ((string)($_SESSION['staff_role'] ?? '') === 'superadmin' || getCurrentStaffRoleName() === 'superadmin' || roleHasPermission('admin.access'));
+        // Allow access if: superadmin, can view all, is assigned to me, OR has any ticket action permission
+        $canActOnTickets = $isSuperadmin || $canViewAll || $isAssignedToMe
             || roleHasPermission('ticket.edit')
             || roleHasPermission('ticket.assign')
             || roleHasPermission('ticket.reply')

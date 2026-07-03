@@ -64,7 +64,8 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
         exit;
     }
 
-    $canViewAll = roleHasPermission('ticket.view_all');
+    $isSuperadmin = ((string)($_SESSION['staff_role'] ?? '') === 'superadmin' || getCurrentStaffRoleName() === 'superadmin' || roleHasPermission('admin.access'));
+    $canViewAll = $isSuperadmin || roleHasPermission('ticket.view_all');
     $sql = "SELECT t.id, t.ticket_number, t.subject, t.updated, t.created,\n"
         . " u.firstname AS user_first, u.lastname AS user_last, u.email AS user_email,\n"
         . " COALESCE(th.id, 0) AS thread_id\n"
