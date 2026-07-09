@@ -184,8 +184,13 @@
 
                                 <!-- Mobile Info -->
                                 <div class="d-md-none mt-3" style="display:flex; gap:8px; flex-direction:column;">
-                                    <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
+                                    <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                         <i class="bi bi-building" style="color:#cbd5e1;"></i> <strong><?php echo html($q['org_name'] ?: 'N/A'); ?></strong>
+                                        <?php if (!empty($q['sucursal'])): ?>
+                                        <span style="font-size:0.72rem; color:#94a3b8; font-weight:500; display:inline-flex; align-items:center; gap:2px;">
+                                            <i class="bi bi-geo-alt" style="font-size:0.68rem;"></i><?php echo html($q['sucursal']); ?>
+                                        </span>
+                                        <?php endif; ?>
                                     </div>
                                     <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
                                         <span class="chip chip-status" style="background: <?php echo $st['color']; ?>15; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700; text-transform: uppercase;">
@@ -199,8 +204,13 @@
                                     <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
                                         <i class="bi bi-building"></i>
                                     </div>
-                                    <div style="display:flex; flex-direction:column;">
+                                    <div style="display:flex; flex-direction:column; gap:2px;">
                                         <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($q['org_name'] ?: 'N/A'); ?></span>
+                                        <?php if (!empty($q['sucursal'])): ?>
+                                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 500; display:inline-flex; align-items:center; gap:3px;">
+                                            <i class="bi bi-geo-alt" style="font-size:0.68rem;"></i><?php echo html($q['sucursal']); ?>
+                                        </span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </td>

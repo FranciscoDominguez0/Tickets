@@ -246,9 +246,17 @@ if ($sn !== '') {
 
     <!-- Reply -->
     <div class="ticket-view-reply" style="margin-top: 24px;">
-        <form method="POST" action="cotizaciones.php?id=<?php echo $id; ?>" enctype="multipart/form-data">
+        <?php
+        // Generar idempotency key si no existe
+        if (empty($_SESSION['quote_idem_key_' . $id])) {
+            $_SESSION['quote_idem_key_' . $id] = bin2hex(random_bytes(16));
+        }
+        $idemKey = $_SESSION['quote_idem_key_' . $id];
+        ?>
+        <form method="POST" action="cotizaciones.php?id=<?php echo $id; ?>" enctype="multipart/form-data" id="quoteReplyForm">
             <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
             <input type="hidden" name="action_type" value="post_message">
+            <input type="hidden" name="idem_key" id="idemKeyInput" value="<?php echo html($idemKey); ?>">
 
             <textarea name="message" class="form-control" style="min-height: 140px; border-radius: 12px; resize: vertical;" placeholder="Escribe tu respuesta aquí..." required></textarea>
 
@@ -267,13 +275,36 @@ if ($sn !== '') {
                         <div class="attach-list" id="attach-list"></div>
                     </div>
                 </div>
-                <button type="submit" class="btn-reply text-white" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); border-radius: 50rem; cursor: pointer; border: none; font-weight: 700; height: max-content; padding: 10px 24px;">
-                    <i class="bi bi-send-fill"></i> Enviar
+                <button type="submit" id="quoteSubmitBtn" class="btn-reply text-white" style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); border-radius: 50rem; cursor: pointer; border: none; font-weight: 700; height: max-content; padding: 10px 24px;">
+                    <i class="bi bi-send-fill" id="quoteSubmitIcon"></i>
+                    <span id="quoteSubmitText"> Enviar</span>
+                    <span id="quoteSubmitSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none;"></span>
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+// Bloqueo de formulario al submit (previene doble envío)
+(function() {
+    var form = document.getElementById('quoteReplyForm');
+    var btn  = document.getElementById('quoteSubmitBtn');
+    var icon = document.getElementById('quoteSubmitIcon');
+    var txt  = document.getElementById('quoteSubmitText');
+    var spin = document.getElementById('quoteSubmitSpinner');
+    if (!form || !btn) return;
+
+    form.addEventListener('submit', function() {
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor  = 'not-allowed';
+        if (icon) icon.style.display = 'none';
+        if (txt)  txt.textContent  = ' Enviando...';
+        if (spin) spin.style.display = 'inline-block';
+    });
+})();
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

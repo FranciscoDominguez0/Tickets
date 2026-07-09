@@ -280,6 +280,11 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                         <div class="small quote-date">
                                             <i class="bi bi-calendar3 me-1"></i> <?php echo html(date('d/m/Y h:i A', strtotime($doc['created_at']))); ?>
                                         </div>
+                                        <?php if ($isQuote && !empty($doc['sucursal'])): ?>
+                                        <div class="small mt-1" style="color: #94a3b8; font-size: 0.72rem; display:inline-flex; align-items:center; gap:3px;">
+                                            <i class="bi bi-geo-alt" style="font-size:0.68rem;"></i><?php echo html($doc['sucursal']); ?>
+                                        </div>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <span class="badge rounded-pill" style="background-color: <?php echo $st['color']; ?>1A; color: <?php echo $st['color']; ?>; border: 1px solid <?php echo $st['color']; ?>33; font-weight: 600; padding: 0.5em 0.8em; letter-spacing: 0.02em;">

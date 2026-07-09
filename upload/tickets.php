@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * VER TICKETS (USUARIO)
  * Lista de tickets del usuario
@@ -309,7 +309,7 @@ if ($isOrgExplorer) {
                 $docs = [];
                 
                 // Fetch Quotes
-                $stmtQ = $mysqli->prepare("SELECT id, title as subject, description as body_html, status, created_at, 'quote' as doc_type FROM quotes WHERE empresa_id = ? AND org_id = ?");
+                $stmtQ = $mysqli->prepare("SELECT id, title as subject, description as body_html, status, created_at, sucursal, 'quote' as doc_type FROM quotes WHERE empresa_id = ? AND org_id = ?");
                 if ($stmtQ) {
                     $stmtQ->bind_param('ii', $eid, $orgExplorerOrgId);
                     if ($stmtQ->execute()) {

@@ -1586,6 +1586,7 @@ if ($ticketClientSignaturePath !== '') {
         <?php else: ?>
             <form method="post" action="tickets.php?id=<?php echo $tid; ?>" enctype="multipart/form-data" id="form-reply">
                 <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                <input type="hidden" name="do" value="reply">
                 <div class="mb-3 summernote-wrapper" style="min-height: 200px;">
                     <label class="form-label fw-bold">Respuesta</label>
                     <textarea name="body" id="reply_body" class="form-control" placeholder="Escribe tu respuesta aquí..."></textarea>
@@ -1599,8 +1600,10 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="attach-list" id="attach-list"></div>
                 </div>
                 <div class="reply-buttons">
-                    <button type="submit" name="do" value="reply" class="btn btn-reply btn-publish">
-                        <i class="bi bi-send"></i> Responder
+                    <button type="submit" class="btn btn-reply btn-publish" id="ticketReplySubmitBtn">
+                        <i class="bi bi-send" id="ticketReplySubmitIcon"></i>
+                        <span id="ticketReplySubmitText"> Responder</span>
+                        <span id="ticketReplySubmitSpinner" class="spinner-border spinner-border-sm ms-1" style="display:none;"></span>
                     </button>
                     <?php if (!empty($canTicketClose) && empty($t['closed'])): ?>
                     <button type="button" class="btn btn-reply btn-primary-reply" id="btnCloseTicketBottom">
@@ -3260,4 +3263,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+
+<script>
+// Bloqueo del formulario de respuesta para evitar doble envío
+// NOTA: Se usa pointer-events+flag en lugar de disabled=true para no perder
+// el name/value del botón ni interferir con el POST del formulario.
+(function() {
+    function initReplyLock() {
+        var form = document.getElementById('form-reply');
+        var btn  = document.getElementById('ticketReplySubmitBtn');
+        var icon = document.getElementById('ticketReplySubmitIcon');
+        var txt  = document.getElementById('ticketReplySubmitText');
+        var spin = document.getElementById('ticketReplySubmitSpinner');
+        if (!form || !btn) return;
+
+        var submitted = false;
+        form.addEventListener('submit', function(e) {
+            if (submitted) {
+                e.preventDefault();
+                return false;
+            }
+            submitted = true;
+            // Feedback visual SIN usar disabled (disabled descarta el name/value del botón)
+            btn.style.opacity        = '0.7';
+            btn.style.pointerEvents  = 'none';
+            btn.style.cursor         = 'not-allowed';
+            if (icon) icon.style.display = 'none';
+            if (txt)  txt.textContent    = ' Enviando...';
+            if (spin) spin.style.display = 'inline-block';
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initReplyLock);
+    } else {
+        initReplyLock();
+    }
+})();
 </script>
