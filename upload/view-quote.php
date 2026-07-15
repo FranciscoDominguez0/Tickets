@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_msg'] = 'Cotización aceptada exitosamente.';
             header("Location: view-quote.php?id=$qid");
             exit;
-        } elseif ($action === 'upload_purchase_order' && $quote['status'] === 'accepted') {
+        } elseif ($action === 'upload_purchase_order' && in_array($quote['status'], ['accepted', 'waiting_oc'])) {
             $dbPath = null;
             $filename = '';
             if (isset($_FILES['purchase_order']) && $_FILES['purchase_order']['error'] === UPLOAD_ERR_OK) {
@@ -146,6 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($dbPath) {
+                if ($quote['status'] === 'waiting_oc') {
+                    $updStatus = $mysqli->prepare("UPDATE quotes SET status = 'accepted' WHERE id = ?");
+                    $updStatus->bind_param('i', $qid);
+                    $updStatus->execute();
+                    $quote['status'] = 'accepted';
+                }
+
                 $msg = $clientName . ' adjuntó la Orden de Compra.';
                 $insStmt = $mysqli->prepare("INSERT INTO quote_messages (quote_id, user_id, message, file_path) VALUES (?, ?, ?, ?)");
                 $insStmt->bind_param('iiss', $qid, $uid, $msg, $dbPath);
@@ -223,6 +230,7 @@ $statusColors = [
     'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'icon' => 'bi-clock-fill',       'label' => 'Pendiente de Solicitud'],
     'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'icon' => 'bi-send-exclamation', 'label' => 'Solicitada'],
     'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'icon' => 'bi-reply-all-fill',   'label' => 'Esperando Aprobación'],
+    'waiting_oc'=> ['bg' => '#fef3c7', 'color' => '#b45309', 'icon' => 'bi-file-earmark-text-fill',  'label' => 'En espera O/C'],
     'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'icon' => 'bi-check-circle-fill', 'label' => 'Aceptada'],
     'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'icon' => 'bi-x-circle-fill',    'label' => 'Rechazada']
 ];
@@ -969,7 +977,7 @@ $stCol = $stInfo['color'];
             </div>
             <?php endif; ?>
 
-            <?php if ($quote['status'] === 'accepted' && !$hasPurchaseOrder): ?>
+            <?php if (in_array($quote['status'], ['accepted', 'waiting_oc']) && !$hasPurchaseOrder): ?>
             <style>
                 .accepted-oc-card {
                     background: linear-gradient(145deg, #ffffff, #fef2f2) !important;

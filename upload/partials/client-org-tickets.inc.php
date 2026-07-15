@@ -258,6 +258,7 @@ $orgLoggedUserId = (int)($orgLoggedUserId ?? ($_SESSION['user_id'] ?? 0));
                                         'pending'  => ['color' => '#64748b', 'label' => 'Pendiente'],
                                         'requested'=> ['color' => '#eab308', 'label' => 'Solicitada'],
                                         'answered' => ['color' => '#3b82f6', 'label' => 'En Revisión'],
+                                        'waiting_oc'=> ['color' => '#b45309', 'label' => 'En espera O/C'],
                                         'accepted' => ['color' => '#22c55e', 'label' => 'Aceptada'],
                                         'rejected' => ['color' => '#ef4444', 'label' => 'Rechazada']
                                     ];

@@ -4,6 +4,7 @@ $statusColors = [
     'pending'  => ['bg' => '#f1f5f9', 'color' => '#475569', 'icon' => 'bi-clock-fill',       'label' => 'Pendiente de Solicitud'],
     'requested'=> ['bg' => '#fef9c3', 'color' => '#854d0e', 'icon' => 'bi-send-exclamation', 'label' => 'Solicitada'],
     'answered' => ['bg' => '#dbeafe', 'color' => '#1e40af', 'icon' => 'bi-reply-all-fill',   'label' => 'Esperando Aprobación'],
+    'waiting_oc'=> ['bg' => '#fef3c7', 'color' => '#b45309', 'icon' => 'bi-file-earmark-text-fill',  'label' => 'En espera O/C'],
     'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'icon' => 'bi-check-circle-fill', 'label' => 'Aceptada'],
     'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'icon' => 'bi-x-circle-fill',    'label' => 'Rechazada']
 ];
@@ -26,6 +27,11 @@ if ($sn !== '') {
         </h1>
         <div class="ticket-view-actions">
             <a href="cotizaciones.php" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
+            <?php if ($quote['status'] !== 'waiting_oc'): ?>
+            <button type="button" class="btn-icon" style="color: #dc2626;" title="Poner en espera O/C manualmente" data-bs-toggle="modal" data-bs-target="#modalWaitingOC">
+                <i class="bi bi-file-earmark-text-fill"></i>
+            </button>
+            <?php endif; ?>
             <a href="print_cotizacion.php?id=<?php echo $quote['id']; ?>" target="_blank" class="btn-icon" title="Imprimir Cotización"><i class="bi bi-printer"></i></a>
             <?php if (!empty($quote['file_path'])): ?>
                 <a href="../../<?php echo html($quote['file_path']); ?>" target="_blank" class="btn-icon" title="Descargar PDF"><i class="bi bi-file-earmark-arrow-down"></i></a>
@@ -243,6 +249,38 @@ if ($sn !== '') {
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+
+    <!-- Modal Poner en espera O/C -->
+    <?php if ($quote['status'] !== 'waiting_oc'): ?>
+    <div class="modal fade" id="modalWaitingOC" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                <div class="modal-header bg-light border-bottom-0" style="border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold" style="color: #dc2626;">
+                        <i class="bi bi-file-earmark-text-fill me-2"></i> Poner en espera O/C
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-file-earmark-text-fill" style="font-size: 3rem; color: #dc2626;"></i>
+                    </div>
+                    <p class="mb-0 text-muted" style="font-size: 1.05rem;">
+                        ¿Estás seguro que deseas marcar esta cotización manualmente como <br><strong>En espera de Orden de Compra</strong>?
+                    </p>
+                </div>
+                <div class="modal-footer border-top-0 d-flex justify-content-between p-3 bg-light" style="border-radius: 0 0 16px 16px;">
+                    <button type="button" class="btn btn-light border" style="border-radius: 8px; font-weight: 600;" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="POST" action="cotizaciones.php?id=<?php echo $quote['id']; ?>" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
+                        <input type="hidden" name="action_type" value="set_waiting_oc">
+                        <button type="submit" class="btn text-white" style="background-color: #dc2626; border-radius: 8px; font-weight: 600;">Sí, poner en espera</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Reply -->
     <div class="ticket-view-reply" style="margin-top: 24px;">

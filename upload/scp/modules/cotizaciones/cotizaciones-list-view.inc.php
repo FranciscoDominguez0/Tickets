@@ -151,6 +151,7 @@
                             'pending'  => ['color' => '#64748b', 'icon' => 'bi-clock-fill',       'label' => 'Pendiente'],
                             'requested'=> ['color' => '#eab308', 'icon' => 'bi-send-exclamation', 'label' => 'Solicitada'],
                             'answered' => ['color' => '#3b82f6', 'icon' => 'bi-reply-all-fill',   'label' => 'Esperando Aprobación'],
+                            'waiting_oc'=> ['color' => '#b45309', 'icon' => 'bi-file-earmark-text-fill',  'label' => 'En espera O/C'],
                             'accepted' => ['color' => '#22c55e', 'icon' => 'bi-check-circle-fill', 'label' => 'Aceptada'],
                             'rejected' => ['color' => '#ef4444', 'icon' => 'bi-x-circle-fill',    'label' => 'Rechazada']
                         ];

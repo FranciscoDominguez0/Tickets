@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/Auth.php';
@@ -117,6 +117,7 @@ $statusLabels = [
     'pending'  => 'Pendiente de Solicitud',
     'requested'=> 'Solicitada',
     'answered' => 'Esperando Aprobación',
+    'waiting_oc' => 'En espera O/C',
     'accepted' => 'Aceptada',
     'rejected' => 'Rechazada'
 ];

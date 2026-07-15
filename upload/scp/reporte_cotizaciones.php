@@ -100,6 +100,7 @@ ob_start();
                         <option value="">Todos</option>
                         <option value="draft" <?php echo $statusFilter === 'draft' ? 'selected' : ''; ?>>Borrador</option>
                         <option value="pending" <?php echo $statusFilter === 'pending' ? 'selected' : ''; ?>>Pendiente</option>
+                        <option value="waiting_oc" <?php echo $statusFilter === 'waiting_oc' ? 'selected' : ''; ?>>En espera O/C</option>
                         <option value="accepted" <?php echo $statusFilter === 'accepted' ? 'selected' : ''; ?>>Aceptada</option>
                         <option value="rejected" <?php echo $statusFilter === 'rejected' ? 'selected' : ''; ?>>Rechazada</option>
                     </select>
@@ -187,6 +188,7 @@ ob_start();
                                     $statusColors = [
                                         'draft' => ['bg' => '#f1f5f9', 'color' => '#475569', 'label' => 'Borrador'],
                                         'pending' => ['bg' => '#fffbeb', 'color' => '#d97706', 'label' => 'Pendiente'],
+                                        'waiting_oc' => ['bg' => '#fef3c7', 'color' => '#b45309', 'label' => 'En espera O/C'],
                                         'accepted' => ['bg' => '#dcfce7', 'color' => '#166534', 'label' => 'Aceptada'],
                                         'rejected' => ['bg' => '#fee2e2', 'color' => '#991b1b', 'label' => 'Rechazada']
                                     ];

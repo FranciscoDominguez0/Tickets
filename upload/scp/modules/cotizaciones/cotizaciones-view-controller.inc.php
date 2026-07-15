@@ -58,6 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Auth::validateCSRF($_POST['csrf_token'] ?? '');
     $actionType = $_POST['action_type'] ?? '';
 
+    if ($actionType === 'set_waiting_oc') {
+        $updStmt = $mysqli->prepare("UPDATE quotes SET status = 'waiting_oc' WHERE id = ?");
+        if ($updStmt) {
+            $updStmt->bind_param('i', $id);
+            $updStmt->execute();
+            $_SESSION['flash_msg'] = 'Cotización marcada en espera de O/C (Orden de Compra).';
+        }
+        header("Location: cotizaciones.php?id=" . $id);
+        exit;
+    }
+
     if ($actionType === 'post_message') {
         $messageText = trim($_POST['message'] ?? '');
         $staffId = (int)($_SESSION['staff_id'] ?? 0);
