@@ -421,7 +421,9 @@ if ($ticketClientSignaturePath !== '') {
                     <div class="creative-dropdown-header">Cambiar Estado</div>
                     <?php
                     $st = $mysqli->query("SELECT id, name, color FROM ticket_status ORDER BY order_by, id");
-                    while ($row = $st->fetch_assoc()): ?>
+                    while ($row = $st->fetch_assoc()): 
+                        if (!$hasOrgManager && (int)$row['id'] === 7) continue;
+                    ?>
                         <?php
                         $stName = strtolower(trim((string)($row['name'] ?? '')));
                         $isClosing = ($stName !== '' && (str_contains($stName, 'cerrad') || str_contains($stName, 'resuelt') || str_contains($stName, 'closed') || str_contains($stName, 'resolved')));

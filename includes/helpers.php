@@ -1877,6 +1877,12 @@ function sanitizeRichText($inputHtml)
         $url = trim((string) $url);
         if ($url === '')
             return false;
+            
+        // Permitir rutas relativas/absolutas locales (sin protocolo)
+        if (!preg_match('~^[a-z]+:~i', $url)) {
+            return true;
+        }
+
         $url = $normalizeProtocolRelative($url);
         if (preg_match('~^https?://~i', $url))
             return true;
@@ -1953,10 +1959,20 @@ function sanitizeRichText($inputHtml)
                     }
                 } elseif ($tag === 'img') {
                     $src = $child->getAttribute('src');
-                    if ($src !== '' && strpos(trim($src), '//') === 0) {
+                    
+                    // Asegurar que las imágenes subidas usen siempre la ruta relativa del sistema actual
+                    // para evitar 404 si se subió en localhost y se visualiza en una IP de red local
+                    if ($src !== '' && strpos($src, '/upload/uploads/inline-images/') !== false) {
+                        $parsedApp = parse_url(APP_URL);
+                        $appPath = isset($parsedApp['path']) ? rtrim($parsedApp['path'], '/') : '';
+                        $filename = basename(parse_url($src, PHP_URL_PATH));
+                        $src = $appPath . '/upload/uploads/inline-images/' . $filename;
+                        $child->setAttribute('src', $src);
+                    } elseif ($src !== '' && strpos(trim($src), '//') === 0) {
                         $src = 'https:' . trim($src);
                         $child->setAttribute('src', $src);
                     }
+                    
                     if ($src === '' || !$isSafeImgSrc($src)) {
                         $node->removeChild($child);
                         continue;
@@ -2043,13 +2059,6 @@ function parseTicketHexRgb(string $color): ?array
  */
 function ticketEffectiveStatusDisplay($statusName, $statusColor, $approvalStatus): array
 {
-    if ((string) $approvalStatus === 'pending') {
-        return [
-            'name' => 'Pendiente aprobación',
-            'color' => '#d97706',
-        ];
-    }
-
     return [
         'name' => (string) $statusName,
         'color' => (string) ($statusColor !== '' && $statusColor !== null ? $statusColor : '#64748b'),

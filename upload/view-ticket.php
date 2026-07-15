@@ -45,6 +45,8 @@ if ($uid > 0 && $eid > 0) {
     }
 }
 
+
+
 if (!isset($_SESSION['client_dark_mode'])) {
     $_SESSION['client_dark_mode'] = 0;
     if (isset($mysqli) && $mysqli && !empty($_SESSION['user_id'])) {
@@ -100,6 +102,19 @@ $ticketOwnerId = (int)($t['user_id'] ?? 0);
 if (!$t || !clientUserCanAccessTicket($mysqli, $uid, $ticketOwnerId, $eid)) {
     header('Location: tickets.php');
     exit;
+}
+
+$hasOrgManager = false;
+if ($ticketOwnerId > 0) {
+    $stmtM = $mysqli->prepare("SELECT 1 FROM user_organizations uo JOIN users u ON u.id = uo.user_id WHERE uo.organization_id = (SELECT organization_id FROM user_organizations WHERE user_id = ? LIMIT 1) AND u.org_tickets_view = 1 LIMIT 1");
+    if ($stmtM) {
+        $stmtM->bind_param('i', $ticketOwnerId);
+        $stmtM->execute();
+        $resM = $stmtM->get_result();
+        if ($resM->num_rows > 0) {
+            $hasOrgManager = true;
+        }
+    }
 }
 
 $isOrgPeerView = ($ticketOwnerId !== $uid);
@@ -2143,10 +2158,35 @@ function humanSize($bytes) {
                         <span class="client-ticket-pill__dot" style="<?php echo html($clientStatusDotStyle); ?>;"></span>
                         <?php echo html($clientDisplayStatusName); ?>
                     </span>
-                    <span class="client-ticket-pill" style="<?php echo html($clientPriorityStyle); ?>">
-                        <i class="bi bi-flag-fill"></i>
-                        <?php echo html($t['priority_name']); ?>
-                    </span>
+                    <?php if ($hasOrgManager): ?>
+                        <?php
+                            $apprStatus = (!empty($ticketApprovalStatus) && $ticketApprovalStatus !== 'none') ? $ticketApprovalStatus : 'pending';
+                            $apprText = ucfirst($apprStatus);
+                            $apprBg = '#f1f5f9'; $apprTextCol = '#475569'; $apprBorder = '#cbd5e1';
+                            
+                            if ($apprStatus === 'pending') {
+                                $apprText = 'Pendiente';
+                                $apprBg = '#f1f5f9'; $apprTextCol = '#475569'; $apprBorder = '#cbd5e1';
+                            } elseif ($apprStatus === 'cotizacion') {
+                                $apprText = 'Cotización';
+                                $apprBg = '#ccfbf1'; $apprTextCol = '#0f766e'; $apprBorder = '#99f6e4';
+                            } elseif ($apprStatus === 'aprobado') {
+                                $apprText = 'Aprobada';
+                                $apprBg = '#dcfce7'; $apprTextCol = '#166534'; $apprBorder = '#bbf7d0';
+                            } elseif ($apprStatus === 'rechazado') {
+                                $apprText = 'Rechazada';
+                                $apprBg = '#ffe4e6'; $apprTextCol = '#9f1239'; $apprBorder = '#fecdd3';
+                            }
+                        ?>
+                        <span class="client-ticket-pill" style="background: <?php echo $apprBg; ?>; color: <?php echo $apprTextCol; ?>; border-color: <?php echo $apprBorder; ?>;">
+                            Revisión: <?php echo html($apprText); ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="client-ticket-pill" style="<?php echo html($clientPriorityStyle); ?>">
+                            <i class="bi bi-flag-fill"></i>
+                            <?php echo html($t['priority_name']); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
 
                 <div class="client-ticket-overview__grid d-md-none">
@@ -2213,12 +2253,43 @@ function humanSize($bytes) {
 
                     <div class="client-ticket-overview__col">
                         <div class="client-ticket-field">
-                            <div class="client-ticket-field__label"><i class="bi bi-flag"></i> Prioridad</div>
+                            <div class="client-ticket-field__label">
+                                <?php if ($hasOrgManager): ?>
+                                    <i class="bi bi-shield-check"></i> Revisión Ejecutiva
+                                <?php else: ?>
+                                    <i class="bi bi-flag"></i> Prioridad
+                                <?php endif; ?>
+                            </div>
                             <div class="client-ticket-field__value">
-                                <span class="client-ticket-field__badge" style="<?php echo html($clientPriorityStyle); ?>">
-                                    <i class="bi bi-bar-chart-fill"></i>
-                                    <?php echo html($t['priority_name']); ?>
-                                </span>
+                                <?php if ($hasOrgManager): ?>
+                                    <?php
+                                        $apprStatus = (!empty($ticketApprovalStatus) && $ticketApprovalStatus !== 'none') ? $ticketApprovalStatus : 'pending';
+                                        $apprText = ucfirst($apprStatus);
+                                        $apprBg = '#f1f5f9'; $apprTextCol = '#475569'; $apprBorder = '#cbd5e1';
+                                        
+                                        if ($apprStatus === 'pending') {
+                                            $apprText = 'Pendiente';
+                                            $apprBg = '#f1f5f9'; $apprTextCol = '#475569'; $apprBorder = '#cbd5e1';
+                                        } elseif ($apprStatus === 'cotizacion') {
+                                            $apprText = 'Cotización';
+                                            $apprBg = '#ccfbf1'; $apprTextCol = '#0f766e'; $apprBorder = '#99f6e4';
+                                        } elseif ($apprStatus === 'aprobado') {
+                                            $apprText = 'Aprobada';
+                                            $apprBg = '#dcfce7'; $apprTextCol = '#166534'; $apprBorder = '#bbf7d0';
+                                        } elseif ($apprStatus === 'rechazado') {
+                                            $apprText = 'Rechazada';
+                                            $apprBg = '#ffe4e6'; $apprTextCol = '#9f1239'; $apprBorder = '#fecdd3';
+                                        }
+                                    ?>
+                                    <span class="client-ticket-field__badge" style="background: <?php echo $apprBg; ?>; color: <?php echo $apprTextCol; ?>; border-color: <?php echo $apprBorder; ?>;">
+                                        Revisión: <?php echo html($apprText); ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="client-ticket-field__badge" style="<?php echo html($clientPriorityStyle); ?>">
+                                        <i class="bi bi-bar-chart-fill"></i>
+                                        <?php echo html($t['priority_name']); ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <hr class="client-ticket-field__divider">
