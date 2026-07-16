@@ -565,7 +565,7 @@ if ($ticketClientSignaturePath !== '') {
 
                     <div style="height: 1px; background: rgba(0,0,0,0.05); margin: 6px 0;"></div>
                     
-                    <?php if ($hasOrgManager && $ticketApprovalStatus === 'none' && empty($t['closed'])): ?>
+                    <?php if ($hasOrgManager && $ticketApprovalStatus === 'none' && empty($t['closed']) && roleHasPermission('org.reports')): ?>
                     <a class="creative-dropdown-item" href="#" onclick="document.getElementById('form-request-approval').submit(); return false;">
                         <div class="creative-dropdown-icon"><i class="bi bi-shield-lock"></i></div>
                         <span>Solicitar revisión ejecutiva</span>

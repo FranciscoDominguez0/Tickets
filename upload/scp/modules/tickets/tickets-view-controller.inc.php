@@ -720,7 +720,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
             } elseif ($action === 'request_approval') {
-                requireRolePermission('ticket.edit', 'tickets.php?id=' . $tid);
+                requireRolePermission('org.reports', 'tickets.php?id=' . $tid);
                 $msg = 'approval_error';
 
                 $stmtPending = $mysqli->prepare("SELECT id FROM ticket_approvals WHERE ticket_id = ? AND status = 'pending' LIMIT 1");
