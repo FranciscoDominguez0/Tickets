@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sin conexión — Sistema de Tickets</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;
+  background:#0f172a;
+  color:#e2e8f0;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.box{
+  width:min(400px,92vw);
+  text-align:center;
+}
+.icon{
+  width:72px;height:72px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#b91c1c,#ef4444);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 24px;
+  font-size:32px;font-weight:800;color:#fff;
+}
+h1{font-size:20px;font-weight:700;margin-bottom:10px}
+p{font-size:14px;color:#94a3b8;line-height:1.6;margin-bottom:24px}
+.btn{
+  display:inline-block;
+  padding:10px 28px;
+  border-radius:10px;
+  background:#b91c1c;
+  color:#fff;
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  border:none;cursor:pointer;
+}
+.btn:hover{background:#dc2626}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="icon">T</div>
+  <h1>Sin conexión</h1>
+  <p>No tienes acceso a internet.<br>Vuelve a intentarlo cuando tengas conexión.</p>
+  <button class="btn" onclick="window.location.reload()">Reintentar</button>
+</div>
+</body>
+</html>

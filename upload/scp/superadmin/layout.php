@@ -23,7 +23,10 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#b91c1c">
+    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
+    <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>SuperAdmin - <?php echo htmlspecialchars(APP_NAME); ?></title>
     <link rel="stylesheet" href="../css/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="../css/vendor/bootstrap-icons.css">
@@ -298,5 +301,13 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
         });
     })();
 </script>
+    <?php $swPath = rtrim((string)parse_url(defined('APP_URL') ? APP_URL : '', PHP_URL_PATH), '/') . '/upload/sw.js'; ?>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('<?php echo $swPath; ?>').catch(function(err) {
+            console.warn('SW registration failed:', err);
+        });
+    }
+    </script>
 </body>
 </html>

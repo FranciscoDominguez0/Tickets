@@ -1,0 +1,17 @@
+{
+  "name": "Sistema de Tickets",
+  "short_name": "Tickets",
+  "description": "Sistema de tickets multi-empresa — Vigitec Panamá",
+  "start_url": "scp/tickets.php",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#b91c1c",
+  "categories": ["business", "productivity"],
+  "icons": [
+    { "src": "../publico/img/pwa/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../publico/img/pwa/icon-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "../publico/img/pwa/icon-512x512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

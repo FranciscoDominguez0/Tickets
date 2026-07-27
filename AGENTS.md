@@ -1,134 +1,120 @@
 # AGENTS.md — Sistema de Tickets
 
-## Visión general
+Multi-tenant (multi-empresa) helpdesk. PHP 8 procedural + MySQLi, Bootstrap 5, jQuery,
+Summernote, Dompdf (composer). No framework.
 
-Sistema de tickets de soporte técnico multi-tenant (multi-empresa) inspirado en osTicket.
-Cada empresa tiene su propio panel de agentes (SCP) y portal de clientes.
-El código es PHP puro **procedural** con algunas clases en `includes/`.
+## Rutas principales (coexisten ambas)
 
-## Stack y dependencias
+| Portal | Cliente | Agente |
+|--------|---------|--------|
+| Principal | `upload/tickets.php` | `upload/scp/index.php?page=MODULO` |
+| Legacy | `cliente/` | `agente/` |
 
-- **Backend**: PHP 8.x (procedural), MySQLi
-- **Frontend**: Bootstrap 5, jQuery, Summernote (WYSIWYG), Bootstrap Icons
-- **PDF**: Dompdf (vía Composer en `vendor/`)
-- **Email**: PHPMailer o clase propia `Mailer` (SMTP configurable por empresa)
-- **No hay framework**: todo es código propio
+Siempre trabajar en `upload/` (nuevo portal). `cliente/` y `agente/` son legacy.
 
-## Estructura de carpetas clave
+## SCP routing (agent panel)
 
-```
-sistema-tickets/
-├── config.php                    # DB, APP_URL, SMTP, CSRF, sesiones, autoload
-├── includes/
-│   ├── helpers.php               # Funciones globales: requireLogin, html(), empresaId(), etc.
-│   ├── Auth.php                  # CSRF, autenticación básica
-│   ├── Mailer.php                # Envío de correos
-│   ├── Database.php              # Clase DB (si se usa)
-│   └── TicketPdfGenerator.php    # Generación de PDFs de tickets
-├── upload/
-│   ├── scp/                      # Panel de Agentes (Staff Control Panel)
-│   │   ├── index.php             # Router único del SCP (carga modules/)
-│   │   ├── layout/layout.php     # Layout con sidebar + header
-│   │   ├── modules/              # Módulos cargados por index.php
-│   │   │   ├── tickets.php       # Dispatcher principal de tickets
-│   │   │   ├── tickets/          # NUEVO: refactorización de tickets.php
-│   │   │   │   ├── tickets-bootstrap.inc.php
-│   │   │   │   ├── tickets-list-controller.inc.php
-│   │   │   │   └── tickets-list-view.inc.php
-│   │   │   ├── ticket-view.inc.php   # Vista detallada de ticket (HTML)
-│   │   │   ├── ticket-open.inc.php   # Formulario de nuevo ticket (HTML)
-│   │   │   └── ...
-│   │   └── tickets.php           # Proxy: setea $_GET['page']='tickets' y requiere index.php
-│   ├── tickets.php               # Portal del cliente (vista de sus tickets)
-│   ├── open.php                  # Cliente abre ticket
-│   └── login.php                 # Login de clientes
-├── agente/                       # Endpoints para agentes móviles/externos
-│   └── close-ticket.php          # Cierre con firma del cliente
-└── cliente/                      # Portal antiguo o alternativo del cliente
-```
+`upload/scp/index.php` → `$routes[page]` → `require modules/FILE`.
+Contenido capturado con `ob_start()` e inyectado en `layout/layout.php`.
 
-## Convenciones obligatorias
+`upload/scp/tickets.php` es proxy: setea `$_GET['page']='tickets'` e incluye `index.php`.
 
-### Multi-tenancy: `empresa_id`
+Rutas disponibles: `dashboard`, `tickets`, `statistics`* , `users`, `tasks`, `canned`,
+`directory`, `profile`, `orgs`, `notifications`, `mapa`* , `credits`, `cotizaciones`.
+`*` redirigen a standalone pages (ej: `statics.php`, `mapa.php`).
 
-TODAS las queries a tablas de negocio **deben** filtrar por `empresa_id`.
-La función `empresaId()` retorna `$_SESSION['empresa_id']` o `1`.
+## Tickets module internals
 
-```php
-$eid = empresaId(); // siempre usar esto
-```
+`modules/tickets.php` es dispatcher → bootstrap + subfiles en `modules/tickets/`:
+- `tickets-bootstrap.inc.php`: status ID mapping (ticket_status table), departamentos,
+  seen-IDs tracking, auto-close (deshabilitado/comentado)
+- `tickets-ajax.inc.php`
+- `tickets-list-controller.inc.php` + `tickets-list-view.inc.php`
+- `tickets-view-controller.inc.php`
+- `tickets-open.inc.php`
 
-### Seguridad
+## Variables globales disponibles en módulos SCP
 
-- **CSRF**: Todos los formularios POST deben incluir `<input type="hidden" name="csrf_token" ...>` y validar con `Auth::validateCSRF($_POST['csrf_token'])`.
-- **XSS**: Usar `html($text)` (alias de `htmlspecialchars`) en todo output dinámico.
-- **Permisos**: El sistema usa roles y permisos. Verificar con `roleHasPermission('ticket.edit')` antes de acciones. Para bloquear completamente una acción POST usar `requireRolePermission('ticket.edit', $redirectUrl)`.
-- **Sesiones**: Fingerprint de sesión (user agent + IP parcial), timeout configurable.
-
-### Compatibilidad de esquema (muy importante)
-
-El código usa constantemente `SHOW TABLES LIKE '...'` y `SHOW COLUMNS FROM ... LIKE '...'` para soportar migraciones parciales sin romper funcionalidad existente. **Nunca** asumas que una tabla o columna existe sin verificar.
-
-```php
-$hasTable = dbTableExists('staff_departments');
-$hasColumn = dbColumnExists('tickets', 'topic_id');
-```
-
-### Routing del SCP
-
-Las URLs del panel de agentes apuntan a `upload/scp/index.php?page=MODULO`.
-`upload/scp/tickets.php` es un proxy que hace `$_GET['page'] = 'tickets'` y requiere `index.php`.
-
-`index.php` hace `require __DIR__ . '/modules/' . $routes[$page]`. Los módulos se ejecutan en el scope global y luego se capturan en un buffer `ob_start()` que se inyecta en `layout.php`.
-
-### Variables globales disponibles en módulos
-
-Cuando un módulo carga, estas variables están disponibles en scope global:
-- `$mysqli`: conexión MySQLi (desde `config.php`)
-- `$staff`: array del agente logueado (desde `index.php`)
+- `$mysqli` (MySQLi), `$staff` (array del agente logueado)
 - `$_SESSION['staff_id']`, `$_SESSION['empresa_id']`, `$_SESSION['csrf_token']`
-- Constantes: `APP_NAME`, `APP_URL`, `SECRET_KEY`, `ATTACHMENTS_DIR`
+- Constantes: `APP_URL`, `APP_NAME`, `SECRET_KEY`, `ATTACHMENTS_DIR`
 
-### Generación de números de ticket
+## Helpers clave (includes/helpers.php)
 
-Puede ser por formato (`######`) o por secuencia de BD (tabla `sequences`). Ver función `$generateTicketNumberFromFormat` y `$generateTicketNumberFromSequence`.
+| Función | Uso |
+|---------|-----|
+| `empresaId()` | Retorna `$_SESSION['empresa_id']`  fallback 1 |
+| `html($text)` | `htmlspecialchars($text, ENT_QUOTES, 'UTF-8')` — **siempre** en output |
+| `csrfField()` / `validateCSRF()` | CSRF en forms y validación POST |
+| `dbTableExists($t)` / `dbColumnExists($t,$c)` | Usar en vez de asumir schema |
+| `getAppSetting($key, $default)` | Config app_settings por empresa |
+| `addLog($action, ...)` | Auditoría en tabla `logs` |
+| `roleHasPermission($key)` / `requireRolePermission($key, $url)` | Permisos por rol |
+| `generateTicketNumber()` | Número random `XXX-YYYYMMDD-######` |
 
-### Notificaciones por email
+## Multi-tenancy: `empresa_id`
 
-- Para agentes: usa `Mailer::send()` o `Mailer::sendWithOptions()`
-- Para colas async: usa `enqueueEmailJob()` y `triggerEmailQueueWorkerAsync()` si existen
-- Siempre verificar `filter_var($email, FILTER_VALIDATE_EMAIL)`
+TODAS las queries a tablas de negocio **deben** filtrar por `empresa_id`:
+```php
+$eid = empresaId();
+```
+La empresa 1 es "always active" (billing bypass).
 
-### Adjuntos
+## Schema compatibilidad (importante)
 
-- Directorio: `ATTACHMENTS_DIR` (por defecto `upload/uploads/attachments/`)
+Nunca asumas que una tabla/columna existe. Usar `dbTableExists()` y `dbColumnExists()`.
+Tienen cache en sesión (300s TTL) y listas internas de tablas/columnas conocidas
+(ver `helpers.php` ~línea 719 y ~797). No necesitas verificar tablas/columnas que
+estén en esas listas.
+
+## Login / Auth (includes/Auth.php)
+
+Dos flujos separados:
+- **Cliente**: `Auth::loginUser($email, $password)` → sesión con `user_id`, `user_type='cliente'`
+- **Agente**: `Auth::loginStaff($username, $password)` → primero busca en `super_admins`
+  (superadmin global), luego en `staff` → sesión con `staff_id`, `user_type='agente'`
+
+Ambos usan: bcrypt cost 10, session fingerprint (UA + IP parcial), rate-limit
+(tablas `user_login_attempts` / `staff_login_attempts`).
+
+## Read-only por billing
+
+Cuando `empresas.estado_pago` está vencido o `empresas.bloqueada=1`, los agentes entran
+en modo read-only (todos los POST en SCP son bloqueados con 403). `helpers.php:321-329`.
+
+El script `scripts/billing_daily.php` sincroniza estados vía cron:
+```php
+php scripts/billing_daily.php
+```
+
+## Config (config.php — NO CAMBIAR sin consultar)
+
+- DB: port `3306`, user `root`, pass `12345678`, db `tickets_db`
+- Autoload PSR-4-like: `includes/ClassName.php`
+- DB port en config.php (3306) — el README.md está desactualizado (dice 33065)
+- `ATTACHMENTS_DIR` = `upload/uploads/attachments/`
+
+## Adjuntos
+
+- Directorio: `ATTACHMENTS_DIR` (config.php)
 - Tabla `attachments` vinculada a `thread_entries`
 - Descarga vía `tickets.php?id=X&download=Y`
 
-## Patrones de archivos nuevos
+## PWA (Progressive Web App)
 
-Cuando se refactoriza un módulo grande:
-1. Crear subcarpeta en `modules/NOMBRE/`
-2. Extraer bootstrap compartido a `NOMBRE-bootstrap.inc.php`
-3. Extraer controllers a `NOMBRE-ACCION-controller.inc.php`
-4. Extraer views a `NOMBRE-ACCION-view.inc.php` (o reutilizar `.inc.php` existentes)
-5. El archivo `modules/NOMBRE.php` debe ser un **dispatcher** limpio que hace `require` del bootstrap y luego enruta a la acción correspondiente.
+Instalable como app nativa. Archivos clave:
+- `upload/manifest.json` — metadatos, iconos, theme_color (#b91c1c), display standalone
+- `upload/sw.js` — service worker: cache-first para JS/CSS/fonts, network-first para páginas
+- `upload/publico/pwa-offline.html` — fallback offline
+- `publico/img/pwa/` — iconos 192×192, 512×512, maskable, apple-touch-icon
 
-## Qué NO cambiar sin consultar
+Inyectado en: `layout/layout.php`, `layout_admin.php`, `superadmin/layout.php`, `login.php`
+(agente y cliente), `tickets.php`. Requiere HTTPS para instalarse.
 
-- `config.php`: contiene credenciales de BD y SMTP.
-- Convenciones de nombres de tablas existentes (`tickets`, `thread_entries`, `threads`, `staff`, `users`, etc.).
-- El mecanismo de `empresa_id` en queries.
-- Las funciones helper de `includes/helpers.php` usadas por otros módulos.
+## Testing / verificación rápida
 
-## Tests / Verificación rápida
-
-- Después de cambios en `modules/tickets.php` o sus includes, verificar que estas URLs funcionen:
-  - `tickets.php` → listado
-  - `tickets.php?filter=open`, `?filter=closed`, `?filter=mine`, `?filter=unassigned`
-  - `tickets.php?id=X` → vista detallada
-  - `tickets.php?a=open` → formulario nuevo ticket
-  - `tickets.php?action=user_search&q=test` → AJAX de búsqueda de usuarios
-  - `tickets.php?action=ticket_preview&id=X` → AJAX de preview
-  - Acciones masivas (bulk assign, bulk status, bulk delete)
-- Si hay errores de sintaxis, PHP los mostrará directamente (no hay logging estructurado).
+Sin test runner configurado. Verificar URLs manualmente:
+- SCP: `upload/scp/tickets.php`, `?filter=open/closed/mine/unassigned`, `?id=X`, `?a=open`
+- AJAX: `?action=user_search&q=test`, `?action=ticket_preview&id=X`
+- Bulk: assign, status, delete
+- Errores PHP se muestran directamente (sin logging estructurado)
