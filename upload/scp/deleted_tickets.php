@@ -126,9 +126,9 @@ $res = $mysqli->query($sql);
 ob_start();
 ?>
 <!-- CABECERA ESTILO ADMIN (HERO) -->
-<div class="settings-hero">
+<div class="settings-hero mb-4">
     <div class="d-flex align-items-center gap-3">
-        <span class="settings-hero-icon" style="background: #f1f5f9; color: #1e293b;"><i class="bi bi-trash"></i></span>
+        <span class="settings-hero-icon"><i class="bi bi-trash"></i></span>
         <div>
             <h1>Historial de Tickets Borrados</h1>
             <p>Supervisión y aprobación de solicitudes de eliminación de registros.</p>
@@ -608,6 +608,18 @@ body.dark-mode .badge-del-status.rejected {
 }
 
 /* ── Modern Layout Custom Styles (Dark Mode Support) ── */
+.settings-hero-icon {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 1.75rem;
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
 .settings-card {
     background: var(--del-card-bg) !important;
     border: 1px solid var(--del-card-border) !important;
@@ -693,8 +705,8 @@ body.dark-mode #modalWarning .text-danger {
     color: #f87171 !important;
 }
 body.dark-mode .settings-hero-icon {
-    background: #000000 !important;
-    color: #e5e5e5 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
 }
 
 /* ── Mobile Layout CSS & Dark Mode Support ── */
