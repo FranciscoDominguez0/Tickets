@@ -46,7 +46,7 @@ class Auth {
 
     private static function sessionFingerprint($userType) {
         $ua = (string)($_SERVER['HTTP_USER_AGENT'] ?? '');
-        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = getUserIpAddress();
         
         $bindIp = (string)getAppSetting(($userType === 'agente' ? 'agents' : 'users') . '.bind_session_ip', '0') === '1';
         $ipPrefix = $bindIp ? self::sessionIpPrefix($ip) : 'no-ip';
@@ -68,7 +68,7 @@ class Auth {
         } elseif (preg_match('~safari/(\d+)~i', $ua, $m)) {
             $browser = 'safari-' . (string)$m[1];
         }
-        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = getUserIpAddress();
         
         $bindIp = (string)getAppSetting(($userType === 'agente' ? 'agents' : 'users') . '.bind_session_ip', '0') === '1';
         $ipPrefix = $bindIp ? self::sessionIpPrefix($ip) : 'no-ip';
@@ -117,7 +117,7 @@ class Auth {
 
         $ensureAttemptsTable();
 
-        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = getUserIpAddress();
         $maxAttempts = (int)getAppSetting('users.max_login_attempts', '10');
         if ($maxAttempts <= 0) $maxAttempts = 10;
         $lockoutMin = (int)getAppSetting('users.lockout_minutes', '1');
@@ -278,7 +278,7 @@ class Auth {
 
         $ensureAttemptsTable();
 
-        $ip = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+        $ip = getUserIpAddress();
         $maxAttempts = (int)getAppSetting('agents.max_login_attempts', '4');
         if ($maxAttempts <= 0) $maxAttempts = 4;
         $lockoutMin = (int)getAppSetting('agents.lockout_minutes', '2');

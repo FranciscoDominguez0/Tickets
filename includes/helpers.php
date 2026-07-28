@@ -3,6 +3,25 @@
  * FUNCIONES AUXILIARES
  */
 
+/**
+ * Obtiene la IP real del usuario (soporta proxys)
+ */
+function getUserIpAddress() {
+    $ipKeys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+    foreach ($ipKeys as $key) {
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            $ips = explode(',', (string)$_SERVER[$key]);
+            foreach ($ips as $ip) {
+                $ip = trim($ip);
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+    }
+    return (string)($_SERVER['REMOTE_ADDR'] ?? '');
+}
+
 // Proteger página (requiere login)
 function requireLogin($type = 'user')
 {
@@ -114,7 +133,7 @@ function requireLogin($type = 'user')
 
         if (!empty($_SESSION['session_fp'])) {
             $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
-            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $ip = getUserIpAddress();
             $ipPrefix = '';
             if ($ip !== '') {
                 if (strpos($ip, ':') !== false) {
@@ -330,7 +349,7 @@ function requireLogin($type = 'user')
 
         if (!empty($_SESSION['session_fp'])) {
             $ua = (string) ($_SERVER['HTTP_USER_AGENT'] ?? '');
-            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $ip = getUserIpAddress();
             $ipPrefix = '';
             if ($ip !== '') {
                 if (strpos($ip, ':') !== false) {
@@ -404,7 +423,7 @@ function requireLogin($type = 'user')
 
         $bindIp = (string) getAppSetting('agents.bind_session_ip', '0') === '1';
         if ($bindIp) {
-            $currentIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $currentIp = getUserIpAddress();
             $loginIp = (string) ($_SESSION['staff_login_ip'] ?? '');
             if ($loginIp !== '' && $currentIp !== '' && $loginIp !== $currentIp) {
                 $_SESSION = [];
@@ -2427,7 +2446,7 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     if ($action === '')
         return false;
 
-    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    $ip = getUserIpAddress();
     $details = $details !== null ? (string) $details : null;
     $object_type = $object_type !== null ? (string) $object_type : null;
     $object_id = ($object_id !== null && is_numeric($object_id)) ? (int) $object_id : null;
@@ -2450,6 +2469,23 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
     if (!$stmt)
         return false;
     $stmt->bind_param('ssissss', $action, $object_type, $object_id, $user_type, $user_id, $details, $ip);
+    return $stmt->execute();
+}
+
+/**
+ * Registra un evento de auditoría de negocio
+ */
+function addAuditLog($actor_type, $actor_id, $action, $entity_type, $entity_id, $description) {
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) return false;
+
+    $eid = function_exists('empresaId') ? empresaId() : 1;
+    $ip = getUserIpAddress();
+    
+    $stmt = $mysqli->prepare('INSERT INTO audit_logs (empresa_id, actor_type, actor_id, action, entity_type, entity_id, description, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+    if (!$stmt) return false;
+    
+    $stmt->bind_param('isisssss', $eid, $actor_type, $actor_id, $action, $entity_type, $entity_id, $description, $ip);
     return $stmt->execute();
 }
 

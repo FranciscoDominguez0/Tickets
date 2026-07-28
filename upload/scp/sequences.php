@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../config.php';
 require_once '../../includes/helpers.php';
 require_once '../../includes/Auth.php';
@@ -420,6 +420,7 @@ function deleteSequence(id, name) {
 $content = ob_get_clean();
 
 if ($embed) {
+    $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     ?><!DOCTYPE html>
     <html lang="es">
     <head>
@@ -429,8 +430,9 @@ if ($embed) {
         <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
         <link rel="stylesheet" href="css/vendor/bootstrap-icons.css">
         <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/scp.css'); ?>">
+        <link rel="stylesheet" href="css/dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/css/dark.css'); ?>">
     </head>
-    <body class="p-3" style="background:#fff;">
+    <body class="p-3 <?php echo $isDarkMode ? 'dark-mode' : ''; ?>" style="<?php echo $isDarkMode ? 'background:#000;' : 'background:#fff;'; ?>">
         <?php echo $content; ?>
         <script src="js/vendor/bootstrap.bundle.min.js"></script>
     </body>

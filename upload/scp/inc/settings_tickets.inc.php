@@ -106,31 +106,19 @@ if ($_POST) {
         $ticket_number_format = trim((string)($_POST['ticket_number_format'] ?? ''));
         $ticket_sequence_id = (string)($_POST['ticket_sequence_id'] ?? '0');
 
-        $queue_bucket_counts = isset($_POST['queue_bucket_counts']) ? '1' : '0';
+
 
         $default_ticket_status_id = (string)($_POST['default_ticket_status_id'] ?? '');
         $default_priority_id = (string)($_POST['default_priority_id'] ?? '');
-        $default_sla_id = (string)($_POST['default_sla_id'] ?? '0');
+
         $default_help_topic = (string)($_POST['default_help_topic'] ?? '0');
 
-        $ticket_lock = (string)($_POST['ticket_lock'] ?? 'activity');
-        if (!in_array($ticket_lock, ['disabled', 'view', 'activity'], true)) {
-            $ticket_lock = 'activity';
-        }
 
-        $default_ticket_queue = (string)($_POST['default_ticket_queue'] ?? 'open');
-        if (!in_array($default_ticket_queue, ['open'], true)) {
-            $default_ticket_queue = 'open';
-        }
 
         $max_open_tickets = (string)($_POST['max_open_tickets'] ?? '0');
         if ($max_open_tickets === '') $max_open_tickets = '0';
         $block_new_if_signature_pending = isset($_POST['block_new_if_signature_pending']) ? '1' : '0';
-        $collaborator_ticket_visibility = isset($_POST['collaborator_ticket_visibility']) ? '1' : '0';
-        $auto_claim_tickets = isset($_POST['auto_claim_tickets']) ? '1' : '0';
-        $auto_refer_closed = isset($_POST['auto_refer_closed']) ? '1' : '0';
-        $require_topic_to_close = isset($_POST['require_topic_to_close']) ? '1' : '0';
-        $allow_external_images = isset($_POST['allow_external_images']) ? '1' : '0';
+
 
         $ticket_max_file_mb = (string)($_POST['ticket_max_file_mb'] ?? '10');
         $ticket_max_uploads = (string)($_POST['ticket_max_uploads'] ?? '5');
@@ -146,20 +134,14 @@ if ($_POST) {
         } else {
             setAppSetting('tickets.ticket_number_format', $ticket_number_format);
             setAppSetting('tickets.ticket_sequence_id', $ticket_sequence_id);
-            setAppSetting('tickets.queue_bucket_counts', $queue_bucket_counts);
             setAppSetting('tickets.default_ticket_status_id', $default_ticket_status_id);
             setAppSetting('tickets.default_priority_id', $default_priority_id);
-            setAppSetting('tickets.default_sla_id', $default_sla_id);
+
             setAppSetting('tickets.default_help_topic', $default_help_topic);
-            setAppSetting('tickets.ticket_lock', $ticket_lock);
-            setAppSetting('tickets.default_ticket_queue', $default_ticket_queue);
+
             setAppSetting('tickets.max_open_tickets', $max_open_tickets);
             setAppSetting('tickets.block_new_if_signature_pending', $block_new_if_signature_pending);
-            setAppSetting('tickets.collaborator_ticket_visibility', $collaborator_ticket_visibility);
-            setAppSetting('tickets.auto_claim_tickets', $auto_claim_tickets);
-            setAppSetting('tickets.auto_refer_closed', $auto_refer_closed);
-            setAppSetting('tickets.require_topic_to_close', $require_topic_to_close);
-            setAppSetting('tickets.allow_external_images', $allow_external_images);
+
             setAppSetting('tickets.ticket_max_file_mb', $ticket_max_file_mb);
             setAppSetting('tickets.ticket_max_uploads', $ticket_max_uploads);
 
@@ -259,20 +241,14 @@ if ($_POST) {
 
 $ticket_number_format = (string)getAppSetting('tickets.ticket_number_format', '######');
 $ticket_sequence_id = (string)getAppSetting('tickets.ticket_sequence_id', '0');
-$queue_bucket_counts = (string)getAppSetting('tickets.queue_bucket_counts', '1') === '1';
 $default_ticket_status_id = (string)getAppSetting('tickets.default_ticket_status_id', '');
 $default_priority_id = (string)getAppSetting('tickets.default_priority_id', '');
-$default_sla_id = (string)getAppSetting('tickets.default_sla_id', '1');
+
 $default_help_topic = (string)getAppSetting('tickets.default_help_topic', '0');
-$ticket_lock = (string)getAppSetting('tickets.ticket_lock', 'activity');
-$default_ticket_queue = (string)getAppSetting('tickets.default_ticket_queue', 'open');
+
 $max_open_tickets = (string)getAppSetting('tickets.max_open_tickets', '0');
 $block_new_if_signature_pending = (string)getAppSetting('tickets.block_new_if_signature_pending', '0') === '1';
-$collaborator_ticket_visibility = (string)getAppSetting('tickets.collaborator_ticket_visibility', '1') === '1';
-$auto_claim_tickets = (string)getAppSetting('tickets.auto_claim_tickets', '1') === '1';
-$auto_refer_closed = (string)getAppSetting('tickets.auto_refer_closed', '1') === '1';
-$require_topic_to_close = (string)getAppSetting('tickets.require_topic_to_close', '0') === '1';
-$allow_external_images = (string)getAppSetting('tickets.allow_external_images', '0') === '1';
+
 $ticket_max_file_mb = (string)getAppSetting('tickets.ticket_max_file_mb', '10');
 $ticket_max_uploads = (string)getAppSetting('tickets.ticket_max_uploads', '5');
 
@@ -385,12 +361,7 @@ ob_start();
                         </div>
                     </div>
 
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="queue_bucket_counts" name="queue_bucket_counts" value="1" <?php echo $queue_bucket_counts ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="queue_bucket_counts">Recuento de boletos de nivel superior: Habilitar</label>
-                        </div>
-                    </div>
+
 
                     <div class="col-12 col-lg-6">
                         <label class="form-label">Estado predeterminado</label>
@@ -410,13 +381,7 @@ ob_start();
                         </select>
                     </div>
 
-                    <div class="col-12 col-lg-6">
-                        <label class="form-label">SLA por defecto</label>
-                        <select class="form-select" name="default_sla_id">
-                            <option value="1" <?php echo $default_sla_id === '1' ? 'selected' : ''; ?>>Default SLA (18 horas - Activo)</option>
-                            <option value="0" <?php echo $default_sla_id === '0' ? 'selected' : ''; ?>>— Ninguno —</option>
-                        </select>
-                    </div>
+
 
                     <div class="col-12 col-lg-6">
                         <label class="form-label">Tema de ayuda por defecto</label>
@@ -430,21 +395,7 @@ ob_start();
                         </select>
                     </div>
 
-                    <div class="col-12 col-lg-6">
-                        <label class="form-label">Semántica de bloqueo</label>
-                        <select class="form-select" name="ticket_lock">
-                            <option value="activity" <?php echo $ticket_lock === 'activity' ? 'selected' : ''; ?>>Bloqueo en actividad</option>
-                            <option value="view" <?php echo $ticket_lock === 'view' ? 'selected' : ''; ?>>Bloqueo al ver</option>
-                            <option value="disabled" <?php echo $ticket_lock === 'disabled' ? 'selected' : ''; ?>>Deshabilitado</option>
-                        </select>
-                    </div>
 
-                    <div class="col-12 col-lg-6">
-                        <label class="form-label">Cola de Ticket por defecto</label>
-                        <select class="form-select" name="default_ticket_queue">
-                            <option value="open" <?php echo $default_ticket_queue === 'open' ? 'selected' : ''; ?>>Open</option>
-                        </select>
-                    </div>
 
                     <div class="col-12 col-lg-6">
                         <label class="form-label">Máximo número de Tickets abierto</label>
@@ -461,40 +412,7 @@ ob_start();
                         </div>
                     </div>
 
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="collaborator_ticket_visibility" name="collaborator_ticket_visibility" value="1" <?php echo $collaborator_ticket_visibility ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="collaborator_ticket_visibility">Visibilidad de colaboradores de tickets: Habilitar</label>
-                        </div>
-                    </div>
 
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="auto_claim_tickets" name="auto_claim_tickets" value="1" <?php echo $auto_claim_tickets ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="auto_claim_tickets">Demande respuesta: Habilitar</label>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="auto_refer_closed" name="auto_refer_closed" value="1" <?php echo $auto_refer_closed ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="auto_refer_closed">Referencia automática al cerrar: Habilitar</label>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="require_topic_to_close" name="require_topic_to_close" value="1" <?php echo $require_topic_to_close ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="require_topic_to_close">Es necesario seleccionar un tema de ayuda para cerrar.: Habilitar</label>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="allow_external_images" name="allow_external_images" value="1" <?php echo $allow_external_images ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="allow_external_images">Permitir imágenes externas: Habilitar</label>
-                        </div>
-                    </div>
 
                 </div>
             </div>

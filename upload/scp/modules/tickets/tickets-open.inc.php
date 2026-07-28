@@ -283,6 +283,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
 
                     if ($stmt && $stmt->execute()) {
                         $new_tid = (int) $mysqli->insert_id;
+                        $logDetails = 'Ticket creado - Número: ' . $ticket_number . ' - ' . $subject;
+                        addAuditLog('staff', (int)($_SESSION['staff_id'] ?? 0), 'ticket_created', 'ticket', $new_tid, $logDetails);
                         // Notificación interna si el estado inicial es relevante
                         if ($defaultStatusId === 2 || $defaultStatusId === 3) {
                             $statusName = ($defaultStatusId === 2) ? 'En Camino' : 'En Proceso';

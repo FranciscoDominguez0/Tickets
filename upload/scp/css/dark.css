@@ -135,6 +135,11 @@ body.dark-mode .input-group-text {
     border-color: #2e2e2e !important;
 }
 
+body.dark-mode .form-select option {
+    background: #000000 !important;
+    color: #e5e5e5 !important;
+}
+
 body.dark-mode .form-control::placeholder {
     color: #555 !important;
 }

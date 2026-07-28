@@ -589,6 +589,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $stmt->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $company, $status);
         }
         if ($stmt->execute()) {
+            $logDetails = 'Usuario creado: ' . trim($firstname . ' ' . $lastname) . ' (' . $email . ')';
+            addAuditLog('staff', (int)($_SESSION['staff_id'] ?? 0), 'user_created', 'user', $mysqli->insert_id, $logDetails);
             header('Location: users.php?added=1');
             exit;
         }
@@ -602,9 +604,19 @@ $add_errors = $add_errors ?? [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do'] === 'delete' && isset($_POST['id']) && is_numeric($_POST['id'])) {
     if (isset($_POST['csrf_token']) && Auth::validateCSRF($_POST['csrf_token'])) {
         $del_id = (int) $_POST['id'];
+        
+        // Obtener detalles del usuario antes de eliminar
+        $delInfoStr = "ID: " . $del_id;
+        $qDel = $mysqli->query("SELECT firstname, lastname, email FROM users WHERE id = $del_id AND empresa_id = $eid");
+        if ($qDel && $qDel->num_rows > 0) {
+            $rdel = $qDel->fetch_assoc();
+            $delInfoStr = trim($rdel['firstname'] . ' ' . $rdel['lastname']) . ' (' . $rdel['email'] . ') - ID: ' . $del_id;
+        }
+        
         $stmt = $mysqli->prepare("DELETE FROM users WHERE id = ? AND empresa_id = ?");
         $stmt->bind_param('ii', $del_id, $eid);
         if ($stmt->execute() && $stmt->affected_rows > 0) {
+            addAuditLog('staff', (int)($_SESSION['staff_id'] ?? 0), 'user_deleted', 'user', $del_id, 'Usuario eliminado: ' . $delInfoStr);
             header('Location: users.php?msg=user_deleted');
             exit;
         }
@@ -774,6 +786,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 if ($stmtU) {
                     $stmtU->bind_param('sssssii', $email, $firstname, $lastname, $phoneVal, $address, $user_id, $eid);
                     if ($stmtU->execute()) {
+                        $logDetails = 'Usuario editado: ' . trim($firstname . ' ' . $lastname) . ' (' . $email . ') - ID: ' . $user_id;
+                        addAuditLog('staff', (int)($_SESSION['staff_id'] ?? 0), 'user_edited', 'user', $user_id, $logDetails);
                         header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
                     }
@@ -783,6 +797,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 if ($stmtU) {
                     $stmtU->bind_param('ssssii', $email, $firstname, $lastname, $address, $user_id, $eid);
                     if ($stmtU->execute()) {
+                        $logDetails = 'Usuario editado: ' . trim($firstname . ' ' . $lastname) . ' (' . $email . ') - ID: ' . $user_id;
+                        addAuditLog('staff', (int)($_SESSION['staff_id'] ?? 0), 'user_edited', 'user', $user_id, $logDetails);
                         header('Location: users.php?id=' . $user_id . '&msg=user_updated');
                         exit;
                     }

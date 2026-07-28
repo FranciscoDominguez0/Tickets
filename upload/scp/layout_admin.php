@@ -320,10 +320,35 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 </a>
                             </li>
                         </ul>
-                        <a href="logs.php" class="sidebar-link <?php echo ($currentRoute === 'logs') ? 'active' : ''; ?>">
+                    <li class="sidebar-group">
+                        <?php 
+                        $isPanelRoute = ($currentRoute === 'logs' || $currentRoute === 'audit'); 
+                        $expandPanel = ($isPanelRoute && $allowExpandedGroups); 
+                        ?>
+                        <button type="button" class="sidebar-toggle <?php echo $expandPanel ? 'active expanded' : ''; ?>" data-subnav="panel-subnav" aria-controls="panel-subnav" aria-expanded="<?php echo $expandPanel ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-graph-up"></i></span>
                             Panel de Control
-                        </a>
+                            <span class="arrow">
+                                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 5L12 10L7 15" stroke="<?php echo $expandPanel ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <ul id="panel-subnav" class="sidebar-subnav <?php echo $expandPanel ? 'open' : ''; ?>">
+                            <li>
+                                <a href="logs.php" class="sidebar-link <?php echo ($currentRoute === 'logs') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-terminal"></i></span>
+                                    Logs
+                                </a>
+                            </li>
+                            <li>
+                                <a href="audit.php" class="sidebar-link <?php echo ($currentRoute === 'audit') ? 'active' : ''; ?>">
+                                    <span class="icon"><i class="bi bi-shield-check"></i></span>
+                                    Auditoría
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                         <a href="notifications_admin.php" class="sidebar-link <?php echo ($currentRoute === 'notifications_admin') ? 'active' : ''; ?>">
                             <span class="icon"><i class="bi bi-bell"></i></span>
                             Notificaciones

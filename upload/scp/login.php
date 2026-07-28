@@ -64,7 +64,7 @@ if ($_POST) {
                 if ($staff) {
                     $_SESSION['user_login_time'] = time();
                     $_SESSION['staff_last_activity'] = time();
-                    $_SESSION['staff_login_ip'] = (string)($_SERVER['REMOTE_ADDR'] ?? '');
+                    $_SESSION['staff_login_ip'] = getUserIpAddress();
                     $_SESSION['show_agent_loading_overlay'] = 1;
                     $redirectTo = ((string)($_SESSION['staff_role'] ?? '') === 'superadmin')
                         ? 'superadmin/index.php'

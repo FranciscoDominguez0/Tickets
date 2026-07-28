@@ -11,16 +11,16 @@ if (!isset($_SESSION['staff_id'])) {
 requireLogin('agente');
 requireRolePermission('admin.access');
 $staff = getCurrentUser();
-$currentRoute = 'logs';
+$currentRoute = 'audit';
 
 $eid = empresaId();
-$logsHasEmpresaId = false;
+$auditHasEmpresaId = false;
 if (isset($mysqli) && $mysqli) {
     try {
-        $res = $mysqli->query("SHOW COLUMNS FROM logs LIKE 'empresa_id'");
-        $logsHasEmpresaId = ($res && $res->num_rows > 0);
+        $res = $mysqli->query("SHOW COLUMNS FROM audit_logs LIKE 'empresa_id'");
+        $auditHasEmpresaId = ($res && $res->num_rows > 0);
     } catch (Throwable $e) {
-        $logsHasEmpresaId = false;
+        $auditHasEmpresaId = false;
     }
 }
 
@@ -56,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $placeholders = implode(',', array_fill(0, count($ids), '?'));
                     $types = str_repeat('i', count($ids));
-                    $sqlDelete = "DELETE FROM logs WHERE id IN ($placeholders)";
-                    if ($logsHasEmpresaId) {
+                    $sqlDelete = "DELETE FROM audit_logs WHERE id IN ($placeholders)";
+                    if ($auditHasEmpresaId) {
                         $sqlDelete .= ' AND empresa_id = ?';
                         $types .= 'i';
                     }
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $errors['err'] = 'No se pudo preparar la operación.';
                     } else {
                         $bind = array_map('intval', $ids);
-                        if ($logsHasEmpresaId) {
+                        if ($auditHasEmpresaId) {
                             $bind[] = (int)$eid;
                         }
                         $stmt->bind_param($types, ...$bind);
@@ -87,8 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($do === 'empty_all') {
-            if ($logsHasEmpresaId) {
-                $stmt = $mysqli->prepare('DELETE FROM logs WHERE empresa_id = ?');
+            if ($auditHasEmpresaId) {
+                $stmt = $mysqli->prepare('DELETE FROM audit_logs WHERE empresa_id = ?');
                 if ($stmt) {
                     $stmt->bind_param('i', $eid);
                     if ($stmt->execute()) {
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors['err'] = 'No se pudo preparar la operación.';
                 }
             } else {
-                if ($mysqli->query('DELETE FROM logs')) {
+                if ($mysqli->query('DELETE FROM audit_logs')) {
                     $n = (int)$mysqli->affected_rows;
                     $msg = $n > 0
                         ? "Se eliminaron {$n} registro(s). La bitácora quedó vacía."
@@ -127,27 +127,27 @@ $where = [];
 $params = [];
 $types = '';
 
-if ($logsHasEmpresaId) {
+if ($auditHasEmpresaId) {
     $where[] = 'empresa_id = ?';
     $params[] = (int)$eid;
     $types .= 'i';
 }
 
 if ($q !== '') {
-    $where[] = '(action LIKE ? OR object_type LIKE ? OR details LIKE ? OR ip_address LIKE ?)';
+    $where[] = '(action LIKE ? OR entity_type LIKE ? OR description LIKE ? OR ip_address LIKE ?)';
     $like = '%' . $q . '%';
     $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
     $types .= 'ssss';
 }
 if ($level !== '' && in_array($level, ['Error', 'Warning', 'Info'], true)) {
-    $where[] = "(CASE WHEN (LOWER(action) LIKE '%error%' OR LOWER(details) LIKE '%error%') THEN 'Error' WHEN (LOWER(action) LIKE '%warn%' OR LOWER(details) LIKE '%warn%') THEN 'Warning' ELSE 'Info' END) = ?";
+    $where[] = "(CASE WHEN (LOWER(action) LIKE '%error%' OR LOWER(description) LIKE '%error%') THEN 'Error' WHEN (LOWER(action) LIKE '%warn%' OR LOWER(description) LIKE '%warn%') THEN 'Warning' ELSE 'Info' END) = ?";
     $params[] = $level;
     $types .= 's';
 }
 if ($date_from !== '') {
     $ts = strtotime($date_from . ' 00:00:00');
     if ($ts) {
-        $where[] = 'created >= ?';
+        $where[] = 'created_at >= ?';
         $params[] = date('Y-m-d H:i:s', $ts);
         $types .= 's';
     }
@@ -155,7 +155,7 @@ if ($date_from !== '') {
 if ($date_to !== '') {
     $ts = strtotime($date_to . ' 23:59:59');
     if ($ts) {
-        $where[] = 'created <= ?';
+        $where[] = 'created_at <= ?';
         $params[] = date('Y-m-d H:i:s', $ts);
         $types .= 's';
     }
@@ -165,7 +165,7 @@ $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
 // Count total
 $total = 0;
-$sqlCount = "SELECT COUNT(*) AS c FROM logs $whereSql";
+$sqlCount = "SELECT COUNT(*) AS c FROM audit_logs $whereSql";
 $stmtC = $mysqli->prepare($sqlCount);
 if ($stmtC) {
     if ($types !== '') {
@@ -175,9 +175,42 @@ if ($stmtC) {
     $total = (int)($stmtC->get_result()->fetch_assoc()['c'] ?? 0);
 }
 
+// Helper to get actor name
+$namesCache = [];
+function getActorName($type, $id, $mysqli) {
+    global $namesCache;
+    if (!$id || !$type) return 'Sistema';
+    $key = $type . '_' . $id;
+    if (isset($namesCache[$key])) return $namesCache[$key];
+    
+    $name = '';
+    if ($type === 'staff') {
+        $r = $mysqli->query("SELECT firstname, lastname FROM staff WHERE id = " . (int)$id);
+        if ($r && $r->num_rows > 0) {
+            $row = $r->fetch_assoc();
+            $name = trim($row['firstname'] . ' ' . $row['lastname']);
+        } else {
+            $r = $mysqli->query("SELECT firstname, lastname FROM super_admins WHERE id = " . (int)$id);
+            if ($r && $r->num_rows > 0) {
+                $row = $r->fetch_assoc();
+                $name = trim($row['firstname'] . ' ' . $row['lastname']);
+            }
+        }
+    } elseif ($type === 'cliente') {
+        $r = $mysqli->query("SELECT firstname, lastname FROM users WHERE id = " . (int)$id);
+        if ($r && $r->num_rows > 0) {
+            $row = $r->fetch_assoc();
+            $name = trim($row['firstname'] . ' ' . $row['lastname']);
+        }
+    }
+    
+    $namesCache[$key] = $name ?: 'Desconocido (ID '.$id.')';
+    return $namesCache[$key];
+}
+
 // Data
 $rows = [];
-$sql = "SELECT id, action, object_type, object_id, user_type, user_id, details, ip_address, created FROM logs $whereSql ORDER BY created DESC LIMIT ? OFFSET ?";
+$sql = "SELECT id, action, entity_type as object_type, entity_id as object_id, actor_type as user_type, actor_id as user_id, description as details, ip_address, created_at as created FROM audit_logs $whereSql ORDER BY created_at DESC LIMIT ? OFFSET ?";
 $stmt = $mysqli->prepare($sql);
 if ($stmt) {
     $bindParams = $params;
@@ -199,7 +232,7 @@ $mkUrl = function ($overrides = []) {
     foreach ($qs as $k => $v) {
         if ($v === '' || $v === null) unset($qs[$k]);
     }
-    return 'logs.php' . (count($qs) ? ('?' . http_build_query($qs)) : '');
+    return 'audit.php' . (count($qs) ? ('?' . http_build_query($qs)) : '');
 };
 
 ob_start();
@@ -209,8 +242,8 @@ ob_start();
         <div class="d-flex align-items-center gap-3">
             <span class="settings-hero-icon"><i class="bi bi-terminal"></i></span>
             <div>
-                <h1>Registros del Sistema</h1>
-                <p>Auditoría de acciones y eventos</p>
+                <h1>Auditoría de Negocio</h1>
+                <p>Historial de acciones de usuarios y agentes</p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -241,12 +274,12 @@ ob_start();
 <!-- Tabs de navegación -->
 <ul class="nav nav-tabs mb-4" style="border-bottom: 2px solid #e2e8f0;">
     <li class="nav-item">
-        <a class="nav-link active" href="logs.php" style="color: #0f172a; font-weight: 600; background-color: #fff; border-color: #e2e8f0 #e2e8f0 #fff; border-bottom-width: 2px; margin-bottom: -2px;">
+        <a class="nav-link text-secondary" href="logs.php" style="font-weight: 500; border: none; hover:background: transparent;">
             <i class="bi bi-terminal me-2"></i>Logs del Sistema
         </a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-secondary" href="audit.php" style="font-weight: 500; border: none; hover:background: transparent;">
+        <a class="nav-link active" href="audit.php" style="color: #0f172a; font-weight: 600; background-color: #fff; border-color: #e2e8f0 #e2e8f0 #fff; border-bottom-width: 2px; margin-bottom: -2px;">
             <i class="bi bi-shield-check me-2"></i>Auditoría de Negocio
         </a>
     </li>
@@ -254,7 +287,7 @@ ob_start();
 
 <!-- Buscador y Filtros Avanzados -->
 <div class="search-card">
-    <form method="get" action="logs.php" class="m-0">
+    <form method="get" action="audit.php" class="m-0">
         <div class="search-wrap">
             <div class="position-relative flex-grow-1">
                 <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left: 16px;"></i>
@@ -312,7 +345,7 @@ ob_start();
         </div>
     </div>
 
-    <form id="emptyAllLogsForm" method="post" action="logs.php" class="d-none" aria-hidden="true">
+    <form id="emptyAllLogsForm" method="post" action="audit.php" class="d-none" aria-hidden="true">
         <?php csrfField(); ?>
         <input type="hidden" name="do" value="empty_all">
     </form>
@@ -329,9 +362,9 @@ ob_start();
                             <input class="form-check-input" type="checkbox" id="checkAll" style="width: 1.2rem; height: 1.2rem; border-radius: 4px;">
                         </th>
                         <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Evento / Acción</th>
-                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 140px;">Severidad</th>
-                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 180px;">Fecha y Hora</th>
-                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 150px;">Origen IP</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 220px;">Autor</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 140px;">Fecha y Hora</th>
+                        <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; width: 130px;">IP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -344,41 +377,36 @@ ob_start();
                             <?php
                             $txt = (string)($r['details'] ?? '');
                             $rawAction = (string)($r['action'] ?? '');
-                            $actionMapLogs = [
-                                'approval_requested' => 'Aprobación Solicitada',
-                                'billing_confirmed' => 'Pago Confirmado',
-                                'executive_quote_sent' => 'Cotización Enviada',
-                                'org_manager_notify_summary' => 'Notificación a Manager',
-                                'permission_denied' => 'Permiso Denegado',
-                                'signature_requested' => 'Firma Solicitada',
-                                'staff_login_failed' => 'Login Fallido (Agente)',
-                                'superadmin_login_failed' => 'Login Fallido (Admin)',
-                                'ticket_assigned' => 'Ticket Asignado',
-                                'ticket_closed_client' => 'Ticket Cerrado por Cliente',
-                                'ticket_email_queue_summary' => 'Resumen Cola de Emails',
-                                'ticket_email_queue_trigger_failed' => 'Fallo en Cola de Emails',
-                                'ticket_en_camino_email' => 'Email: Ticket En Camino',
-                                'ticket_en_proceso_email' => 'Email: Ticket En Proceso',
-                                'ticket_entry_deleted' => 'Respuesta de Ticket Eliminada',
-                                'ticket_entry_edited' => 'Respuesta de Ticket Editada',
-                                'ticket_retenido_email' => 'Email: Ticket Retenido',
-                                'user_login_failed' => 'Login Fallido (Cliente)',
-                                'user_login_locked' => 'Usuario Bloqueado (Login)',
-                                'user_login_lockout' => 'Cierre de Sesión Forzado'
+                            $spanishActions = [
+                                'user_created' => 'Creación de Usuario',
+                                'user_edited' => 'Edición de Usuario',
+                                'user_deleted' => 'Eliminación de Usuario',
+                                'ticket_created' => 'Creación de Ticket',
+                                'ticket_closed' => 'Cierre de Ticket',
+                                'ticket_status_changed' => 'Cambio de Estado de Ticket',
+                                'ticket_message_added' => 'Mensaje Añadido a Ticket',
+                                'thread_message_added' => 'Mensaje en Hilo de Ticket'
                             ];
-                            $title = $actionMapLogs[$rawAction] ?? ucwords(str_replace(['_', '-'], ' ', $rawAction));
+                            $title = $spanishActions[$rawAction] ?? ucwords(str_replace(['_', '-'], ' ', $rawAction));
+                            
                             $lower = strtolower($rawAction . ' ' . $txt);
                             if (strpos($lower, 'error') !== false) $lvl = 'Error';
                             elseif (strpos($lower, 'warn') !== false) $lvl = 'Warning';
                             else $lvl = 'Info';
                             
-                            $popoverTitle = (string)($r['action'] ?? 'Registro');
+                            $actorName = getActorName($r['user_type'], $r['user_id'], $mysqli);
+                            $actorType = $r['user_type'] === 'staff' ? 'Agente/Admin' : ($r['user_type'] === 'cliente' ? 'Cliente' : ($r['user_type'] ?: 'Sistema'));
+                            $fullActor = $actorName !== 'Sistema' ? $actorName . ' (' . $actorType . ')' : 'Sistema';
+                            
+                            $objType = $r['object_type'] === 'user' ? 'Usuario' : ($r['object_type'] === 'ticket' ? 'Ticket' : ($r['object_type'] ?: '-'));
+                            
+                            $popoverTitle = $title;
                             $popoverBody =
                                 "Detalles: " . ($txt !== '' ? $txt : '-') . "\n\n"
                                 . "Fecha: " . formatDate($r['created']) . "\n"
-                                . "IP: " . ($r['ip_address'] ?: '-') . "\n"
-                                . "Usuario: " . (($r['user_type'] ?: '-') . ($r['user_id'] ? (' #' . (int)$r['user_id']) : '')) . "\n"
-                                . "Objeto: " . (($r['object_type'] ?: '-') . ($r['object_id'] ? (' #' . (int)$r['object_id']) : ''));
+                                . "IP Origen: " . ($r['ip_address'] ?: '-') . "\n"
+                                . "Realizado por: " . $fullActor . "\n"
+                                . "Afecta a: " . $objType . ($r['object_id'] ? (' (ID: ' . (int)$r['object_id'] . ')') : '');
 
                             $popTitleB64 = base64_encode($popoverTitle);
                             $popBodyB64 = base64_encode($popoverBody);
@@ -394,18 +422,14 @@ ob_start();
                                                     <?php echo date('d M Y, H:i', strtotime($r['created'])); ?>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <?php 
-                                                if ($lvl === 'Error') echo '<span class="badge-lvl lvl-error"><i class="bi bi-x-octagon me-1"></i>Error</span>';
-                                                elseif ($lvl === 'Warning') echo '<span class="badge-lvl lvl-warning"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
-                                                else echo '<span class="badge-lvl lvl-info"><i class="bi bi-info-circle me-1"></i>Info</span>';
-                                                ?>
-                                            </div>
+                                                <div style="font-size: 0.8rem; font-weight: 600; color: #475569;">
+                                                    <i class="bi bi-person me-1"></i><?php echo html($actorName); ?>
+                                                </div>
                                         </div>
 
                                         <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; line-height: 1.4;">
                                             <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: inherit;">
-                                                <?php echo html(ucwords(str_replace(['_', '-'], ' ', $title))); ?>
+                                                <?php echo html($title); ?>
                                             </a>
                                         </div>
 
@@ -435,17 +459,18 @@ ob_start();
                                         <?php endif; ?>
                                         <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: #1e293b; font-weight: 700; font-size: 0.92rem; display: block; flex: 1; min-width: 0;">
                                             <div class="text-truncate log-desktop-title" style="max-width: 650px;" title="<?php echo html($title); ?>">
-                                                <?php echo html(ucwords(str_replace(['_', '-'], ' ', $title))); ?>
+                                                <?php echo html($title); ?>
                                             </div>
                                         </a>
                                     </div>
                                 </td>
                                 <td class="d-none d-md-table-cell">
-                                    <?php 
-                                    if ($lvl === 'Error') echo '<span class="badge-lvl lvl-error"><i class="bi bi-x-octagon me-1"></i>Error</span>';
-                                    elseif ($lvl === 'Warning') echo '<span class="badge-lvl lvl-warning"><i class="bi bi-exclamation-triangle me-1"></i>Warn</span>';
-                                    else echo '<span class="badge-lvl lvl-info"><i class="bi bi-info-circle me-1"></i>Info</span>';
-                                    ?>
+                                    <div class="fw-bold" style="font-size: 0.85rem; color: #334155;">
+                                        <?php echo html($actorName); ?>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        <?php echo html($actorType); ?>
+                                    </div>
                                 </td>
                                 <td style="white-space:nowrap; font-weight: 500; font-size: 0.85rem; color: #475569;" class="d-none d-md-table-cell agent-desktop-date">
                                     <i class="bi bi-clock me-1 text-muted" style="font-size:0.8rem;"></i> <?php echo html(formatDate($r['created'])); ?>
@@ -488,7 +513,7 @@ echo renderModernPagination($page, $totalPages, $urlParams, 'p');
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-2">Se eliminarán <strong>todos</strong> los registros de auditoría<?php echo $logsHasEmpresaId ? ' de <strong>esta empresa</strong>' : ''; ?>, incluidos los que no ves por filtros o paginación.</p>
+                <p class="mb-2">Se eliminarán <strong>todos</strong> los registros de auditoría<?php echo $auditHasEmpresaId ? ' de <strong>esta empresa</strong>' : ''; ?>, incluidos los que no ves por filtros o paginación.</p>
                 <p class="mb-0 text-muted small">Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
