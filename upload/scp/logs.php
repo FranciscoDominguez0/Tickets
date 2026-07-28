@@ -434,7 +434,7 @@ ob_start();
                                             <span style="font-size: 1.1rem; line-height: 1;"><i class="bi bi-info-circle-fill text-info"></i></span>
                                         <?php endif; ?>
                                         <a href="#" class="log-pop text-decoration-none" tabindex="0" data-pop-title="<?php echo html($popTitleB64); ?>" data-pop-body="<?php echo html($popBodyB64); ?>" style="color: #1e293b; font-weight: 700; font-size: 0.92rem; display: block; flex: 1; min-width: 0;">
-                                            <div class="text-truncate log-desktop-title" style="max-width: 650px;" title="<?php echo html($title); ?>">
+                                            <div class="text-truncate log-desktop-title" style="max-width: 650px;">
                                                 <?php echo html(ucwords(str_replace(['_', '-'], ' ', $title))); ?>
                                             </div>
                                         </a>
@@ -578,12 +578,11 @@ echo renderModernPagination($page, $totalPages, $urlParams, 'p');
     document.addEventListener('DOMContentLoaded', function() {
         if (window.bootstrap && window.bootstrap.Popover) {
             var popEls = document.querySelectorAll('.log-pop');
+            var activePopovers = [];
+            
             popEls.forEach(function(el) {
-                el.addEventListener('click', function(e) {
-                    e.preventDefault();
-                });
-                new bootstrap.Popover(el, {
-                    trigger: 'focus',
+                var p = new bootstrap.Popover(el, {
+                    trigger: 'manual', // Controlamos manualmente para asegurar 1 a la vez
                     html: true,
                     placement: 'auto',
                     sanitize: false,
@@ -598,6 +597,26 @@ echo renderModernPagination($page, $totalPages, $urlParams, 'p');
                         return '<div style="font-weight:bold; font-size:0.95rem;" class="log-pop-inner-title">' + t + '</div>';
                     }
                 });
+                activePopovers.push(p);
+
+                el.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Cerrar los demas
+                    activePopovers.forEach(function(otherP) {
+                        if (otherP !== p) otherP.hide();
+                    });
+                    p.toggle();
+                });
+            });
+
+            // Cerrar al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.popover') && !e.target.closest('.log-pop')) {
+                    activePopovers.forEach(function(p) {
+                        p.hide();
+                    });
+                }
             });
         }
     });
