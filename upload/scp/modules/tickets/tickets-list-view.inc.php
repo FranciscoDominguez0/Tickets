@@ -22,8 +22,10 @@
 
     <div id="bulkClientAlert" class="alert alert-warning d-none" role="alert"></div>
 
-    <div id="bulkLoadingOverlay" class="d-none" style="position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 3000;">
-        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 260px; text-align:center;">
+    <div id="bulkLoadingOverlay" class="d-none"
+        style="position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index: 3000;">
+        <div
+            style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:14px; padding:16px 18px; border:1px solid #e2e8f0; box-shadow:0 16px 40px rgba(0,0,0,0.25); min-width: 260px; text-align:center;">
             <div class="spinner-border text-primary" role="status" style="width:2.25rem; height:2.25rem;"></div>
             <div id="bulkLoadingText" style="margin-top:10px; font-weight:800; color:#0f172a;">Procesando…</div>
             <div style="margin-top:4px; color:#64748b; font-size:0.9rem;">Por favor espera</div>
@@ -31,13 +33,23 @@
     </div>
 
     <div class="tickets-header">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div
+            class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 <h1><?php echo $filterKey === 'billing_pending' ? 'Por facturar' : 'Tickets'; ?></h1>
                 <?php if ($filterKey === 'billing_pending'): ?>
-                <div class="sub">Tickets cerrados con reporte pendiente de facturación: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong></div>
+                    <div class="sub">Tickets cerrados con reporte pendiente de facturación:
+                        <strong><?php echo (int) ($countBillingPending ?? 0); ?></strong>
+                    </div>
                 <?php else: ?>
-                <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar: <strong><?php echo $countUnassigned; ?></strong> · Míos: <strong><?php echo $countMine; ?></strong><?php if (roleHasPermission('ticket.reports')): ?> · Por facturar: <strong><?php echo (int)($countBillingPending ?? 0); ?></strong><?php endif; ?><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?> · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int)$selectedDeptId)); ?></strong> (Total: <strong><?php echo (int)$countSelectedDept; ?></strong>)<?php endif; ?></div>
+                    <div class="sub">Abiertos: <strong><?php echo $countOpen; ?></strong> · Sin asignar:
+                        <strong><?php echo $countUnassigned; ?></strong> · Míos:
+                        <strong><?php echo $countMine; ?></strong><?php if (roleHasPermission('ticket.reports')): ?> · Por
+                            facturar:
+                            <strong><?php echo (int) ($countBillingPending ?? 0); ?></strong><?php endif; ?><?php if ($deptFilterAvailable && $selectedDeptId > 0): ?>
+                            · Dept: <strong><?php echo html($selectedDeptName ?: ('#' . (int) $selectedDeptId)); ?></strong>
+                            (Total: <strong><?php echo (int) $countSelectedDept; ?></strong>)<?php endif; ?>
+                    </div>
                 <?php endif; ?>
             </div>
             <?php if (roleHasPermission('ticket.create')): ?>
@@ -52,7 +64,7 @@
         <input type="hidden" name="confirm" id="bulk_confirm" value="0">
         <input type="hidden" name="current_filter" value="<?php echo html($filterKey); ?>">
         <input type="hidden" name="current_q" value="<?php echo html($query); ?>">
-        <input type="hidden" name="current_dept_id" value="<?php echo (int)$selectedDeptId; ?>">
+        <input type="hidden" name="current_dept_id" value="<?php echo (int) $selectedDeptId; ?>">
         <input type="hidden" name="bulk_staff_id" id="bulk_staff_id" value="">
         <input type="hidden" name="bulk_status_id" id="bulk_status_id" value="">
         <input type="hidden" id="bulk_staff_label" value="">
@@ -79,212 +91,262 @@
             </div>
             <div class="bulk-actions">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-bulk <?php echo $canBulkAssign ? '' : 'disabled'; ?>" style="<?php echo $canBulkAssign ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" title="<?php echo $canBulkAssign ? 'Asignar a...' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'asignar tickets de forma masiva\'); return false;"'; ?>>
+                    <button type="button" class="btn btn-bulk <?php echo $canBulkAssign ? '' : 'disabled'; ?>"
+                        style="<?php echo $canBulkAssign ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>"
+                        title="<?php echo $canBulkAssign ? 'Asignar a...' : 'Sin permiso para asignar'; ?>" <?php echo $canBulkAssign ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'asignar tickets de forma masiva\'); return false;"'; ?>>
                         <i class="bi bi-person-fill"></i> Asignar
                     </button>
                     <ul class="dropdown-menu" id="bulkAssignMenu">
-                        <li id="bulkAssignEmptyItem" class="d-none"><span class="dropdown-item-text text-muted" style="font-weight:700;">Debes seleccionar un ticket</span></li>
-                        <li id="bulkAssignUnassignItem"><a class="dropdown-item" href="#" data-action="tickets-bulk-assign" data-staff-id="0" data-staff-label="— Sin asignar —">— Sin asignar —</a></li>
-                        <li id="bulkAssignDivider"><hr class="dropdown-divider"></li>
+                        <li id="bulkAssignEmptyItem" class="d-none"><span class="dropdown-item-text text-muted"
+                                style="font-weight:700;">Debes seleccionar un ticket</span></li>
+                        <li id="bulkAssignUnassignItem"><a class="dropdown-item" href="#"
+                                data-action="tickets-bulk-assign" data-staff-id="0" data-staff-label="— Sin asignar —">—
+                                Sin asignar —</a></li>
+                        <li id="bulkAssignDivider">
+                            <hr class="dropdown-divider">
+                        </li>
                         <?php foreach ($staffOptions as $s): ?>
                             <?php $sn = trim($s['firstname'] . ' ' . $s['lastname']); ?>
-                            <li><a class="dropdown-item bulk-assign-staff-item" href="#" data-action="tickets-bulk-assign" data-staff-id="<?php echo (int) $s['id']; ?>" data-staff-label="<?php echo html($sn); ?>" data-staff-dept-id="<?php echo (int)($s['dept_id'] ?? 0); ?>"><?php echo html($sn); ?></a></li>
+                            <li><a class="dropdown-item bulk-assign-staff-item" href="#" data-action="tickets-bulk-assign"
+                                    data-staff-id="<?php echo (int) $s['id']; ?>"
+                                    data-staff-label="<?php echo html($sn); ?>"
+                                    data-staff-dept-id="<?php echo (int) ($s['dept_id'] ?? 0); ?>"><?php echo html($sn); ?></a>
+                            </li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
 
                 <div class="btn-group">
-                    <button type="button" class="btn btn-bulk <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>" style="<?php echo $bulkStatusLocked ? 'pointer-events: auto; cursor: not-allowed;' : ''; ?>" title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar estado' : 'Cambiar estado a...'; ?>" <?php echo $bulkStatusLocked ? 'onclick="showNoPermissionAlert(\'cambiar el estado de los tickets de forma masiva\'); return false;"' : 'data-bs-toggle="dropdown"'; ?>>
+                    <button type="button" class="btn btn-bulk <?php echo $bulkStatusLocked ? 'disabled' : ''; ?>"
+                        style="<?php echo $bulkStatusLocked ? 'pointer-events: auto; cursor: not-allowed;' : ''; ?>"
+                        title="<?php echo $bulkStatusLocked ? 'Sin permiso para cambiar estado' : 'Cambiar estado a...'; ?>"
+                        <?php echo $bulkStatusLocked ? 'onclick="showNoPermissionAlert(\'cambiar el estado de los tickets de forma masiva\'); return false;"' : 'data-bs-toggle="dropdown"'; ?>>
                         <i class="bi bi-flag-fill"></i> Estado
                     </button>
                     <ul class="dropdown-menu">
                         <?php foreach ($statusOptions as $st): ?>
-                            <li><a class="dropdown-item" href="#" data-action="tickets-bulk-status" data-status-id="<?php echo (int) $st['id']; ?>" data-status-label="<?php echo html($st['name']); ?>"><?php echo html($st['name']); ?></a></li>
+                            <li><a class="dropdown-item" href="#" data-action="tickets-bulk-status"
+                                    data-status-id="<?php echo (int) $st['id']; ?>"
+                                    data-status-label="<?php echo html($st['name']); ?>"><?php echo html($st['name']); ?></a>
+                            </li>
                         <?php endforeach; ?>
                     </ul>
                 </div>
 
-                <button type="button" class="btn btn-bulk btn-bulk-danger <?php echo $canBulkDeleteOrRequest ? '' : 'disabled'; ?>" style="<?php echo $canBulkDeleteOrRequest ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>" <?php echo $canBulkDeleteOrRequest ? 'data-action="tickets-bulk-delete"' : 'onclick="showNoPermissionAlert(\'eliminar o solicitar borrado masivo de tickets\'); return false;"'; ?> title="<?php echo $bulkDeleteTitle; ?>">
+                <button type="button"
+                    class="btn btn-bulk btn-bulk-danger <?php echo $canBulkDeleteOrRequest ? '' : 'disabled'; ?>"
+                    style="<?php echo $canBulkDeleteOrRequest ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>"
+                    <?php echo $canBulkDeleteOrRequest ? 'data-action="tickets-bulk-delete"' : 'onclick="showNoPermissionAlert(\'eliminar o solicitar borrado masivo de tickets\'); return false;"'; ?> title="<?php echo $bulkDeleteTitle; ?>">
                     <i class="bi <?php echo $bulkDeleteIcon; ?>"></i> <?php echo $bulkDeleteText; ?>
                 </button>
             </div>
         </div>
 
-        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>" data-general-dept-id="<?php echo (int)$generalDeptId; ?>">
+        <div class="tickets-panel" data-filter-key="<?php echo html($filterKey); ?>"
+            data-general-dept-id="<?php echo (int) $generalDeptId; ?>">
             <div class="tickets-toolbar">
                 <div class="tickets-filters">
                     <?php if ($filterKey === 'billing_pending'): ?>
-                    <span class="btn btn-sm" style="pointer-events:none; cursor:default; background:#fef9c3; color:#854d0e; border:1px solid #fef08a; font-weight:700;">
-                        <i class="bi bi-clock-history"></i> Por facturar
-                    </span>
+                        <span class="btn btn-sm"
+                            style="pointer-events:none; cursor:default; background:#fef9c3; color:#854d0e; border:1px solid #fef08a; font-weight:700;">
+                            <i class="bi bi-clock-history"></i> Por facturar
+                        </span>
                     <?php else: ?>
-                    <div class="dropdown filter-dd">
-                        <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-funnel"></i>
-                            <?php echo html($filters[$filterKey]['label']); ?>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <?php $deptParam = ($deptFilterAvailable && $selectedDeptId > 0) ? ('&dept_id=' . (int)$selectedDeptId) : ''; ?>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>" href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Abiertos</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>" href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Sin asignar</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>" href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Asignados a mí</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>" href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Cerrados</a></li>
-                            <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>" href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Todos</a></li>
-                        </ul>
-                    </div>
+                        <div class="dropdown filter-dd">
+                            <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-funnel"></i>
+                                <?php echo html($filters[$filterKey]['label']); ?>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <?php $deptParam = ($deptFilterAvailable && $selectedDeptId > 0) ? ('&dept_id=' . (int) $selectedDeptId) : ''; ?>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'open' ? 'active' : ''; ?>"
+                                        href="tickets.php?filter=open<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Abiertos</a>
+                                </li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'unassigned' ? 'active' : ''; ?>"
+                                        href="tickets.php?filter=unassigned<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Sin
+                                        asignar</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'mine' ? 'active' : ''; ?>"
+                                        href="tickets.php?filter=mine<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Asignados
+                                        a mí</a></li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'closed' ? 'active' : ''; ?>"
+                                        href="tickets.php?filter=closed<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Cerrados</a>
+                                </li>
+                                <li><a class="dropdown-item <?php echo $filterKey === 'all' ? 'active' : ''; ?>"
+                                        href="tickets.php?filter=all<?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?><?php echo $deptParam; ?>">Todos</a>
+                                </li>
+                            </ul>
+                        </div>
                     <?php endif; ?>
 
                     <?php if ($deptFilterAvailable && $filterKey !== 'billing_pending'): ?>
-                        <select class="form-select form-select-sm" id="ticketDeptSelect" aria-label="Filtrar por departamento">
+                        <select class="form-select form-select-sm" id="ticketDeptSelect"
+                            aria-label="Filtrar por departamento">
                             <option value="0">Todos los deptos</option>
                             <?php foreach ($deptOptions as $dp): ?>
-                                <?php $dpId = (int)($dp['id'] ?? 0); ?>
-                                <option value="<?php echo $dpId; ?>" <?php echo $dpId === (int)$selectedDeptId ? 'selected' : ''; ?>><?php echo html((string)($dp['name'] ?? '')); ?></option>
+                                <?php $dpId = (int) ($dp['id'] ?? 0); ?>
+                                <option value="<?php echo $dpId; ?>" <?php echo $dpId === (int) $selectedDeptId ? 'selected' : ''; ?>><?php echo html((string) ($dp['name'] ?? '')); ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php endif; ?>
 
                     <?php if ($filterKey !== 'billing_pending'): ?>
-                    <div id="ticketDateRange" style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:4px 8px; height:32px;">
-                        <i class="bi bi-calendar3" style="color:#64748b; font-size:0.8rem; flex-shrink:0;"></i>
-                        <input type="date" id="dateFromInput" value="<?php echo html($dateFrom); ?>" title="Desde"
-                               style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
-                        <span style="color:#cbd5e1; font-size:0.75rem; flex-shrink:0;">→</span>
-                        <input type="date" id="dateToInput" value="<?php echo html($dateTo); ?>" title="Hasta"
-                               style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
-                        <button type="button" id="applyDateRange"
+                        <div id="ticketDateRange"
+                            style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:4px 8px; height:32px;">
+                            <i class="bi bi-calendar3" style="color:#64748b; font-size:0.8rem; flex-shrink:0;"></i>
+                            <input type="date" id="dateFromInput" value="<?php echo html($dateFrom); ?>" title="Desde"
+                                style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                            <span style="color:#cbd5e1; font-size:0.75rem; flex-shrink:0;">→</span>
+                            <input type="date" id="dateToInput" value="<?php echo html($dateTo); ?>" title="Hasta"
+                                style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                            <button type="button" id="applyDateRange"
                                 style="display:inline-flex; align-items:center; gap:3px; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:2px 10px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
-                            <i class="bi bi-check-lg"></i> Aplicar
-                        </button>
-                        <?php if ($dateFrom !== $defaultDateFrom || $dateTo !== $defaultDateTo): ?>
-                        <a href="tickets.php?filter=<?php echo html($filterKey); ?><?php echo $query !== '' ? '&q='.urlencode($query) : ''; ?>"
-                           title="Restablecer al mes actual" style="color:#94a3b8; font-size:0.9rem; flex-shrink:0; line-height:1;">
-                            <i class="bi bi-x-circle"></i>
-                        </a>
-                        <?php endif; ?>
-                    </div>
-                    <script>
-                    (function(){
-                        var btn = document.getElementById('applyDateRange');
-                        if (!btn) return;
-                        btn.addEventListener('click', function(){
-                            var from = document.getElementById('dateFromInput').value;
-                            var to   = document.getElementById('dateToInput').value;
-                            var url  = new URL(window.location.href);
-                            url.searchParams.delete('p');
-                            if (from) url.searchParams.set('date_from', from); else url.searchParams.delete('date_from');
-                            if (to)   url.searchParams.set('date_to',   to);   else url.searchParams.delete('date_to');
-                            window.location.href = url.toString();
-                        });
-                        ['dateFromInput','dateToInput'].forEach(function(id){
-                            var el = document.getElementById(id);
-                            if (el) el.addEventListener('keydown', function(e){ 
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    btn.click(); 
-                                }
-                            });
-                        });
-                    })();
-                    </script>
+                                <i class="bi bi-check-lg"></i> Aplicar
+                            </button>
+                            <?php if ($dateFrom !== $defaultDateFrom || $dateTo !== $defaultDateTo): ?>
+                                <a href="tickets.php?filter=<?php echo html($filterKey); ?><?php echo $query !== '' ? '&q=' . urlencode($query) : ''; ?>"
+                                    title="Restablecer al mes actual"
+                                    style="color:#94a3b8; font-size:0.9rem; flex-shrink:0; line-height:1;">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                        <script>
+                            (function () {
+                                var btn = document.getElementById('applyDateRange');
+                                if (!btn) return;
+                                btn.addEventListener('click', function () {
+                                    var from = document.getElementById('dateFromInput').value;
+                                    var to = document.getElementById('dateToInput').value;
+                                    var url = new URL(window.location.href);
+                                    url.searchParams.delete('p');
+                                    if (from) url.searchParams.set('date_from', from); else url.searchParams.delete('date_from');
+                                    if (to) url.searchParams.set('date_to', to); else url.searchParams.delete('date_to');
+                                    window.location.href = url.toString();
+                                });
+                                ['dateFromInput', 'dateToInput'].forEach(function (id) {
+                                    var el = document.getElementById(id);
+                                    if (el) el.addEventListener('keydown', function (e) {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            btn.click();
+                                        }
+                                    });
+                                });
+                            })();
+                        </script>
                     <?php endif; ?>
                 </div>
                 <div class="tickets-search">
                     <div class="input-group">
-                        <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;"><i class="bi bi-search"></i></span>
-                        <input type="text" id="ticketSearchInput" class="form-control" style="border-left: none; border-radius: 0 10px 10px 0;" placeholder="Buscar ticket y presione Enter..." value="<?php echo html($query); ?>">
+                        <span class="input-group-text bg-white"
+                            style="border-right: none; border-radius: 10px 0 0 10px;"><i
+                                class="bi bi-search"></i></span>
+                        <input type="text" id="ticketSearchInput" class="form-control"
+                            style="border-left: none; border-radius: 0 10px 10px 0;"
+                            placeholder="Buscar ticket y presione Enter..." value="<?php echo html($query); ?>">
                     </div>
                 </div>
             </div>
         </div>
 
-    <div class="tickets-table-wrap">
-        <table class="table table-hover tickets-table mb-0" id="ticketsTable">
-            <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
-                <tr>
-                    <th class="check-cell" style="width: 44px; text-align: center; vertical-align: middle;"><input type="checkbox" class="form-check-input" id="check_all"></th>
-                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 0;">Asunto del Ticket</th>
-                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Cliente</th>
-                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
-                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Última Actividad</th>
-                    <th style="width: 80px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (empty($tickets)): ?>
+        <div class="tickets-table-wrap">
+            <table class="table table-hover tickets-table mb-0" id="ticketsTable">
+                <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                     <tr>
-                        <td colspan="7">
-                            <div class="empty-state">
-                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.6;"></i>
-                                <div class="mt-2">No hay tickets para esta vista.</div>
-                            </div>
-                        </td>
+                        <th class="check-cell" style="width: 44px; text-align: center; vertical-align: middle;"><input
+                                type="checkbox" class="form-check-input" id="check_all"></th>
+                        <th
+                            style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 0;">
+                            Asunto del Ticket</th>
+                        <th class="d-none d-lg-table-cell"
+                            style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Cliente</th>
+                        <th class="d-none d-md-table-cell"
+                            style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Estado</th>
+                        <th class="d-none d-lg-table-cell"
+                            style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            Última Actividad</th>
+                        <th
+                            style="width: 80px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        </th>
                     </tr>
-                <?php else: ?>
-                    <?php foreach ($tickets as $t): ?>
-                        <?php
-                        $clientName = trim($t['user_first'] . ' ' . $t['user_last']) ?: $t['user_email'];
-                        $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
-                        
-                        $statusColor = $t['status_color'] ?: '#ef4444';
-                        $statusIcon = 'bi-record-circle-fill';
-                        $statusName = html($t['status_name']);
+                </thead>
+                <tbody>
+                    <?php if (empty($tickets)): ?>
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.6;"></i>
+                                    <div class="mt-2">No hay tickets para esta vista.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($tickets as $t): ?>
+                            <?php
+                            $clientName = trim($t['user_first'] . ' ' . $t['user_last']) ?: $t['user_email'];
+                            $staffName = trim($t['staff_first'] . ' ' . $t['staff_last']);
 
-                        // Chip de revisión ejecutiva — estilo tag secundario (borde izquierdo de color)
-                        $approvalChip = '';
-                        $accentBase = 'display:inline-flex; align-items:center; gap:5px; padding:3px 8px 3px 7px; border-radius:4px; font-size:0.72rem; font-weight:600; white-space:nowrap; background:rgba(100,116,139,0.1); border-left:3px solid; border-top:none; border-right:none; border-bottom:none;';
-                        if (!empty($t['approval_status'])) {
-                            if ($t['approval_status'] === 'pending') {
-                                // Gris slate — neutral "en espera"
-                                $approvalChip = '<span title="Revisión Ejecutiva: Pendiente de aprobación" style="' . $accentBase . ' border-left-color:#64748b;">'
-                                    . '<i class="bi bi-eye" style="font-size:0.65rem; color:#64748b; opacity:0.85;"></i>'
-                                    . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
-                                    . '<span style="font-weight:700; color:#475569;">Pendiente</span>'
-                                    . '</span>';
-                            } elseif (in_array($t['approval_status'], ['approved', 'aprobado', 'aceptado'])) {
-                                // Verde oscuro — aprobación sin neon
-                                $approvalChip = '<span title="Revisión Ejecutiva: Aprobado" style="' . $accentBase . ' border-left-color:#166534;">'
-                                    . '<i class="bi bi-eye" style="font-size:0.65rem; color:#166534; opacity:0.85;"></i>'
-                                    . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
-                                    . '<span style="font-weight:700; color:#166534;">Aprobado</span>'
-                                    . '</span>';
-                            } elseif (in_array($t['approval_status'], ['rejected', 'rechazado'])) {
-                                // Carmesí oscuro — rechazo sin rojo brillante
-                                $approvalChip = '<span title="Revisión Ejecutiva: Rechazado" style="' . $accentBase . ' border-left-color:#9f1239;">'
-                                    . '<i class="bi bi-eye" style="font-size:0.65rem; color:#9f1239; opacity:0.85;"></i>'
-                                    . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
-                                    . '<span style="font-weight:700; color:#9f1239;">Rechazado</span>'
-                                    . '</span>';
-                            } elseif ($t['approval_status'] === 'cotizacion') {
-                                // Teal — documento/cotización, distinto del azul de "Abierto"
-                                $approvalChip = '<span title="Revisión Ejecutiva: Cotización enviada" style="' . $accentBase . ' border-left-color:#0f766e;">'
-                                    . '<i class="bi bi-eye" style="font-size:0.65rem; color:#0f766e; opacity:0.85;"></i>'
-                                    . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
-                                    . '<span style="font-weight:700; color:#0f766e;">Cotización</span>'
-                                    . '</span>';
+                            $statusColor = $t['status_color'] ?: '#ef4444';
+                            $statusIcon = 'bi-record-circle-fill';
+                            $statusName = html($t['status_name']);
+
+                            // Chip de revisión ejecutiva — estilo tag secundario (borde izquierdo de color)
+                            $approvalChip = '';
+                            $accentBase = 'display:inline-flex; align-items:center; gap:5px; padding:3px 8px 3px 7px; border-radius:4px; font-size:0.72rem; font-weight:600; white-space:nowrap; background:rgba(100,116,139,0.1); border-left:3px solid; border-top:none; border-right:none; border-bottom:none;';
+                            if (!empty($t['approval_status'])) {
+                                if ($t['approval_status'] === 'pending') {
+                                    // Gris slate — neutral "en espera"
+                                    $approvalChip = '<span title="Revisión Ejecutiva: Pendiente de aprobación" style="' . $accentBase . ' border-left-color:#64748b;">'
+                                        . '<i class="bi bi-eye" style="font-size:0.65rem; color:#64748b; opacity:0.85;"></i>'
+                                        . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
+                                        . '<span style="font-weight:700; color:#475569;">Pendiente</span>'
+                                        . '</span>';
+                                } elseif (in_array($t['approval_status'], ['approved', 'aprobado', 'aceptado'])) {
+                                    // Verde oscuro — aprobación sin neon
+                                    $approvalChip = '<span title="Revisión Ejecutiva: Aprobado" style="' . $accentBase . ' border-left-color:#166534;">'
+                                        . '<i class="bi bi-eye" style="font-size:0.65rem; color:#166534; opacity:0.85;"></i>'
+                                        . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
+                                        . '<span style="font-weight:700; color:#166534;">Aprobado</span>'
+                                        . '</span>';
+                                } elseif (in_array($t['approval_status'], ['rejected', 'rechazado'])) {
+                                    // Carmesí oscuro — rechazo sin rojo brillante
+                                    $approvalChip = '<span title="Revisión Ejecutiva: Rechazado" style="' . $accentBase . ' border-left-color:#9f1239;">'
+                                        . '<i class="bi bi-eye" style="font-size:0.65rem; color:#9f1239; opacity:0.85;"></i>'
+                                        . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
+                                        . '<span style="font-weight:700; color:#9f1239;">Rechazado</span>'
+                                        . '</span>';
+                                } elseif ($t['approval_status'] === 'cotizacion') {
+                                    // Teal — documento/cotización, distinto del azul de "Abierto"
+                                    $approvalChip = '<span title="Revisión Ejecutiva: Cotización enviada" style="' . $accentBase . ' border-left-color:#0f766e;">'
+                                        . '<i class="bi bi-eye" style="font-size:0.65rem; color:#0f766e; opacity:0.85;"></i>'
+                                        . '<span style="opacity:0.55; font-weight:500;">Ejec.</span>'
+                                        . '<span style="font-weight:700; color:#0f766e;">Cotización</span>'
+                                        . '</span>';
+                                }
                             }
-                        }
-                        
-                        if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1) {
-                            $approvalChip = ''; // Ocultar el badge "Ejecutivo" si ya se hizo el reporte de costos
-                        }
 
-                        $priorityColor = $t['priority_color'] ?: '#94a3b8';
+                            if (!empty($t['closed']) && (int) ($t['has_report'] ?? 0) === 1) {
+                                $approvalChip = ''; // Ocultar el badge "Ejecutivo" si ya se hizo el reporte de costos
+                            }
 
-                        $tidRow = (int)($t['id'] ?? 0);
-                        $createdTs = !empty($t['created']) ? @strtotime((string)$t['created']) : 0;
-                        $sidNew = (int)($_SESSION['staff_id'] ?? 0);
-                        $sinceKey = $sidNew > 0 ? ('tickets_new_since_' . $sidNew) : '';
-                        $newSince = ($sinceKey !== '' && isset($_SESSION[$sinceKey]) && is_numeric($_SESSION[$sinceKey])) ? (int)$_SESSION[$sinceKey] : 0;
-                        $isAfterSince = ($newSince > 0 && $createdTs > 0 && $createdTs >= $newSince);
-                        $isNew = ($tidRow > 0 && $isAfterSince && !isset($seenIds[$tidRow]));
-                        ?>
-                        <?php
+                            $priorityColor = $t['priority_color'] ?: '#94a3b8';
+
+                            $tidRow = (int) ($t['id'] ?? 0);
+                            $createdTs = !empty($t['created']) ? @strtotime((string) $t['created']) : 0;
+                            $sidNew = (int) ($_SESSION['staff_id'] ?? 0);
+                            $sinceKey = $sidNew > 0 ? ('tickets_new_since_' . $sidNew) : '';
+                            $newSince = ($sinceKey !== '' && isset($_SESSION[$sinceKey]) && is_numeric($_SESSION[$sinceKey])) ? (int) $_SESSION[$sinceKey] : 0;
+                            $isAfterSince = ($newSince > 0 && $createdTs > 0 && $createdTs >= $newSince);
+                            $isNew = ($tidRow > 0 && $isAfterSince && !isset($seenIds[$tidRow]));
+                            ?>
+                            <?php
                             $backRel = 'tickets.php';
                             if (!empty($_SERVER['REQUEST_URI'])) {
-                                $u = (string)$_SERVER['REQUEST_URI'];
-                                $path = (string)parse_url($u, PHP_URL_PATH);
-                                $reqQueryStr = (string)parse_url($u, PHP_URL_QUERY);
+                                $u = (string) $_SERVER['REQUEST_URI'];
+                                $path = (string) parse_url($u, PHP_URL_PATH);
+                                $reqQueryStr = (string) parse_url($u, PHP_URL_QUERY);
                                 $rel = ltrim($path, '/');
                                 $needle = 'upload/scp/';
                                 $pos = strpos($rel, $needle);
@@ -296,182 +358,228 @@
                                     $backRel = $rel . ($reqQueryStr !== '' ? ('?' . $reqQueryStr) : '');
                                 }
                             }
-                            $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
-                        ?>
-                        <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;" data-ticket-id="<?php echo (int)$t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>" onclick="if(!event.target.closest('.check-cell') && !event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo html($ticketHref); ?>';">
-                            <td class="check-cell" style="vertical-align: middle; text-align: center; width: 44px;">
-                                <input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]" value="<?php echo (int) $t['id']; ?>" data-ticket-dept-id="<?php echo (int)($t['dept_id'] ?? 0); ?>" style="cursor: pointer; width: 1.1em; height: 1.1em;">
-                            </td>
-                            <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                    <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>" data-ticket-id="<?php echo (int)$t['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa;">
+                            $ticketHref = 'tickets.php?id=' . (int) $t['id'] . '&back=' . urlencode($backRel);
+                            ?>
+                            <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;"
+                                data-ticket-id="<?php echo (int) $t['id']; ?>"
+                                data-ticket-dept-id="<?php echo (int) ($t['dept_id'] ?? 0); ?>"
+                                onclick="if(!event.target.closest('.check-cell') && !event.target.closest('a') && !event.target.closest('button')) window.location='<?php echo html($ticketHref); ?>';">
+                                <td class="check-cell" style="vertical-align: middle; text-align: center; width: 44px;">
+                                    <input class="form-check-input ticket-check" type="checkbox" name="ticket_ids[]"
+                                        value="<?php echo (int) $t['id']; ?>"
+                                        data-ticket-dept-id="<?php echo (int) ($t['dept_id'] ?? 0); ?>"
+                                        style="cursor: pointer; width: 1.1em; height: 1.1em;">
+                                </td>
+                                <td style="vertical-align: middle; padding: 18px 12px 18px 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                        <a class="ticket-title ticket-preview-trigger" href="<?php echo html($ticketHref); ?>"
+                                            data-ticket-id="<?php echo (int) $t['id']; ?>"
+                                            style="font-weight: 800; font-size: 1.05rem; color: #60a5fa;">
 
-                                        <i class="bi bi-hash" style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
-                                    </a>
-                                    <?php if (!empty($t['priority_name'])): ?>
-                                        <span title="Prioridad: <?php echo html($t['priority_name']); ?>" style="display:inline-flex; align-items:center; gap:4px; background:<?php echo html($priorityColor); ?>18; color:<?php echo html($priorityColor); ?>; border:1px solid <?php echo html($priorityColor); ?>40; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
-                                            <span style="width:5px; height:5px; border-radius:50%; background:<?php echo html($priorityColor); ?>; flex-shrink:0; display:inline-block;"></span>
-                                            <?php echo html($t['priority_name']); ?>
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if ($isNew): ?>
-                                        <span class="badge" style="background:#ef4444; color: #fff; font-size: 0.65rem; padding: 4px 6px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">Nuevo</span>
-                                    <?php endif; ?>
-                                    <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
-                                        <?php echo formatDate($t['updated'] ?: $t['created']); ?>
-                                    </div>
-                                </div>
-                                <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
-                                    <?php 
-                                    $subj = (string)($t['subject'] ?? '');
-                                    if (function_exists('cleanPlainText')) {
-                                        $subj = cleanPlainText($subj);
-                                    }
-                                    echo html(mb_strlen($subj) > 50 ? mb_substr($subj, 0, 47) . '...' : $subj);
-                                    ?>
-                                </div>
-                                <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
-                                    <span style="display:inline-flex; align-items:center; gap:5px;">
-                                        <i class="bi bi-headset" style="color:#94a3b8;"></i> Asignado a: <strong style="color: #475569; font-weight:600;"><?php echo $staffName ?: 'Sin asignar'; ?></strong>
-                                    </span>
-                                </div>
-                                
-                                <!-- Mobile Info -->
-                                <div class="d-md-none mt-3" style="display:flex; gap:8px; flex-direction:column;">
-                                    <div style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
-                                        <i class="bi bi-person-fill" style="color:#cbd5e1;"></i> <strong><?php echo html($clientName); ?></strong>
-                                    </div>
-                                    <?php if (!empty($t['user_company'])): ?>
-                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: -4px; margin-left: 20px;">
-                                            <i class="bi bi-building" style="font-size: 0.7rem;"></i> <?php echo html($t['user_company']); ?>
+                                            <i class="bi bi-hash"
+                                                style="opacity: 0.5;"></i><?php echo html($t['ticket_number']); ?>
+                                        </a>
+                                        <?php if (!empty($t['priority_name'])): ?>
+                                            <span title="Prioridad: <?php echo html($t['priority_name']); ?>"
+                                                style="display:inline-flex; align-items:center; gap:4px; background:<?php echo html($priorityColor); ?>18; color:<?php echo html($priorityColor); ?>; border:1px solid <?php echo html($priorityColor); ?>40; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
+                                                <span
+                                                    style="width:5px; height:5px; border-radius:50%; background:<?php echo html($priorityColor); ?>; flex-shrink:0; display:inline-block;"></span>
+                                                <?php echo html($t['priority_name']); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($isNew): ?>
+                                            <span class="badge"
+                                                style="background:#ef4444; color: #fff; font-size: 0.65rem; padding: 4px 6px; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 6px; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);">Nuevo</span>
+                                        <?php endif; ?>
+                                        <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
+                                            <?php echo formatDate($t['updated'] ?: $t['created']); ?>
                                         </div>
-                                    <?php endif; ?>
-                                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
-                                        <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
-                                            <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
+                                    </div>
+                                    <div class="ticket-subject"
+                                        style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+                                        <?php
+                                        $subj = (string) ($t['subject'] ?? '');
+                                        if (function_exists('cleanPlainText')) {
+                                            $subj = cleanPlainText($subj);
+                                        }
+                                        echo html(mb_strlen($subj) > 50 ? mb_substr($subj, 0, 47) . '...' : $subj);
+                                        ?>
+                                    </div>
+                                    <div style="display: flex; align-items: center; font-size: 0.8rem; color: #64748b;">
+                                        <span style="display:inline-flex; align-items:center; gap:5px;">
+                                            <i class="bi bi-headset" style="color:#94a3b8;"></i> Asignado a: <strong
+                                                style="color: #475569; font-weight:600;"><?php echo $staffName ?: 'Sin asignar'; ?></strong>
+                                        </span>
+                                    </div>
+
+                                    <!-- Mobile Info -->
+                                    <div class="d-md-none mt-3" style="display:flex; gap:8px; flex-direction:column;">
+                                        <div
+                                            style="font-size: 0.85rem; color: #475569; display:flex; align-items:center; gap:6px;">
+                                            <i class="bi bi-person-fill" style="color:#cbd5e1;"></i>
+                                            <strong><?php echo html($clientName); ?></strong>
+                                        </div>
+                                        <?php if (!empty($t['user_company'])): ?>
+                                            <div
+                                                style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px; margin-top: -4px; margin-left: 20px;">
+                                                <i class="bi bi-building" style="font-size: 0.7rem;"></i>
+                                                <?php echo html($t['user_company']); ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top: 2px;">
+                                            <span class="chip chip-status"
+                                                style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <i class="bi <?php echo $statusIcon; ?>"
+                                                    style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i>
+                                                <?php echo $statusName; ?>
+                                            </span>
+                                            <?php if ($approvalChip !== ''): ?>
+                                                <?php echo $approvalChip; ?>
+                                            <?php endif; ?>
+                                            <?php if (!empty($t['closed']) && (int) ($t['has_report'] ?? 0) === 1): ?>
+                                                <?php
+                                                $bstatus = $t['billing_status'] ?? 'pending';
+                                                if ($bstatus === 'confirmed'): ?>
+                                                    <span class="chip billing-badge-confirmed"
+                                                        style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                        <i class="bi bi-patch-check-fill"></i> Facturado
+                                                    </span>
+                                                <?php elseif ($bstatus === 'visita_tecnica'): ?>
+                                                    <span class="chip billing-badge-visita"
+                                                        style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                        <i class="bi bi-geo-alt-fill"></i> Visita Técnica
+                                                    </span>
+                                                <?php elseif ($bstatus === 'cotizacion'): ?>
+                                                    <span class="chip billing-badge-cotizacion"
+                                                        style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                        <i class="bi bi-file-earmark-text-fill"></i> Cotización
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="chip billing-badge-pending"
+                                                        style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                        <i class="bi bi-clock-history"></i> Pendiente Facturación
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <div
+                                            style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                        <div style="display:flex; flex-direction:column;">
+                                            <span
+                                                style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($clientName); ?></span>
+                                            <?php if (!empty($t['user_company'])): ?>
+                                                <span
+                                                    style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                                                    <i class="bi bi-building" style="font-size: 0.7rem;"></i>
+                                                    <?php echo html($t['user_company']); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                                    <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
+                                        <span class="chip chip-status"
+                                            style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
+                                            <i class="bi <?php echo $statusIcon; ?>"
+                                                style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i>
+                                            <?php echo $statusName; ?>
                                         </span>
                                         <?php if ($approvalChip !== ''): ?>
                                             <?php echo $approvalChip; ?>
                                         <?php endif; ?>
-                                        <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                            <?php 
+                                        <?php if (!empty($t['closed']) && (int) ($t['has_report'] ?? 0) === 1): ?>
+                                            <?php
                                             $bstatus = $t['billing_status'] ?? 'pending';
                                             if ($bstatus === 'confirmed'): ?>
-                                                <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <span class="chip billing-badge-confirmed"
+                                                    style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                     <i class="bi bi-patch-check-fill"></i> Facturado
                                                 </span>
                                             <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                                                <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <span class="chip billing-badge-visita"
+                                                    style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                     <i class="bi bi-geo-alt-fill"></i> Visita Técnica
                                                 </span>
                                             <?php elseif ($bstatus === 'cotizacion'): ?>
-                                                <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <span class="chip billing-badge-cotizacion"
+                                                    style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                     <i class="bi bi-file-earmark-text-fill"></i> Cotización
                                                 </span>
                                             <?php else: ?>
-                                                <span class="chip billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-size:0.7rem; border-radius:6px; padding:3px 8px; font-weight:700;">
+                                                <span class="chip billing-badge-pending"
+                                                    style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
                                                     <i class="bi bi-clock-history"></i> Pendiente Facturación
                                                 </span>
                                             <?php endif; ?>
-                                        <?php endif; ?>                                    </div>
-                                </div>
-                            </td>
-                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <div style="display:flex; flex-direction:column;">
-                                        <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($clientName); ?></span>
-                                        <?php if (!empty($t['user_company'])): ?>
-                                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 4px;">
-                                                <i class="bi bi-building" style="font-size: 0.7rem;"></i> <?php echo html($t['user_company']); ?>
-                                            </span>
                                         <?php endif; ?>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="d-none d-md-table-cell" style="vertical-align: middle;">
-                                <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
-                                    <span class="chip chip-status" style="background: <?php echo html($statusColor); ?>15; color: <?php echo html($statusColor); ?>; border: 1px solid <?php echo html($statusColor); ?>33; padding: 6px 14px; font-weight: 700; letter-spacing: 0.03em; border-radius: 8px; font-size: 0.8rem; text-transform: uppercase;">
-                                        <i class="bi <?php echo $statusIcon; ?>" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> <?php echo $statusName; ?>
-                                    </span>
-                                    <?php if ($approvalChip !== ''): ?>
-                                        <?php echo $approvalChip; ?>
-                                    <?php endif; ?>
-                                    <?php if (!empty($t['closed']) && (int)($t['has_report'] ?? 0) === 1): ?>
-                                        <?php 
-                                        $bstatus = $t['billing_status'] ?? 'pending';
-                                        if ($bstatus === 'confirmed'): ?>
-                                            <span class="chip billing-badge-confirmed" style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
-                                                <i class="bi bi-patch-check-fill"></i> Facturado
-                                            </span>
-                                        <?php elseif ($bstatus === 'visita_tecnica'): ?>
-                                            <span class="chip billing-badge-visita" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
-                                                <i class="bi bi-geo-alt-fill"></i> Visita Técnica
-                                            </span>
-                                        <?php elseif ($bstatus === 'cotizacion'): ?>
-                                            <span class="chip billing-badge-cotizacion" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
-                                                <i class="bi bi-file-earmark-text-fill"></i> Cotización
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="chip billing-badge-pending" style="background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; padding: 4px 10px; font-weight: 700; font-size: 0.75rem; border-radius: 6px; margin-top: 4px;">
-                                                <i class="bi bi-clock-history"></i> Pendiente Facturación
-                                            </span>
-                                        <?php endif; ?>
-                                    <?php endif; ?>                                </div>
-                            </td>
-                            <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
-                                <div style="color:#64748b; font-size: 0.85rem; font-weight: 600; display:flex; align-items:center; gap:6px;">
-                                    <i class="bi bi-clock-history" style="color:#94a3b8; font-size: 1rem;"></i> 
-                                    <span><?php echo formatDate($t['updated'] ?: $t['created']); ?></span>
-                                </div>
-                            </td>
-                            <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
-                                <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm" style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
-                                    <i class="bi bi-chevron-right"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+                                </td>
+                                <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                                    <div
+                                        style="color:#64748b; font-size: 0.85rem; font-weight: 600; display:flex; align-items:center; gap:6px;">
+                                        <i class="bi bi-clock-history" style="color:#94a3b8; font-size: 1rem;"></i>
+                                        <span><?php echo formatDate($t['updated'] ?: $t['created']); ?></span>
+                                    </div>
+                                </td>
+                                <td style="vertical-align: middle; text-align: right; padding-right: 12px;">
+                                    <a href="<?php echo html($ticketHref); ?>" class="btn btn-sm"
+                                        style="background: transparent; color: #94a3b8; border: none; font-size: 1.2rem; transition: all 0.2s; display: inline-flex; align-items: center;"
+                                        onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='#94a3b8'">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
 
-    <?php
-    $basePageParams = ['filter' => $filterKey];
-    if ($query !== '') $basePageParams['q'] = $query;
-    if ($deptFilterAvailable && $selectedDeptId > 0) $basePageParams['dept_id'] = (int)$selectedDeptId;
-    if ($dateFrom !== '') $basePageParams['date_from'] = $dateFrom;
-    if ($dateTo   !== '') $basePageParams['date_to']   = $dateTo;
-    $urlParams = '';
-    foreach ($basePageParams as $k => $v) {
-        $urlParams .= '&' . urlencode($k) . '=' . urlencode($v);
-    }
-    echo renderModernPagination($page, $totalPages, $urlParams, 'p');
-    ?>
+        <?php
+        $basePageParams = ['filter' => $filterKey];
+        if ($query !== '')
+            $basePageParams['q'] = $query;
+        if ($deptFilterAvailable && $selectedDeptId > 0)
+            $basePageParams['dept_id'] = (int) $selectedDeptId;
+        if ($dateFrom !== '')
+            $basePageParams['date_from'] = $dateFrom;
+        if ($dateTo !== '')
+            $basePageParams['date_to'] = $dateTo;
+        $urlParams = '';
+        foreach ($basePageParams as $k => $v) {
+            $urlParams .= '&' . urlencode($k) . '=' . urlencode($v);
+        }
+        echo renderModernPagination($page, $totalPages, $urlParams, 'p');
+        ?>
 
-    <div class="ticket-hover-preview d-none" id="ticketHoverPreview" role="dialog" aria-hidden="true">
-        <div class="ticket-hover-preview-inner">
-            <div class="ticket-hover-preview-head">
-                <div class="num" id="ticketHoverNumber"></div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <a class="open" id="ticketHoverOpen" href="#" title="Abrir ticket"><i class="bi bi-box-arrow-up-right"></i></a>
-                    <button type="button" class="close" id="ticketHoverClose" aria-label="Cerrar" title="Cerrar">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
+        <div class="ticket-hover-preview d-none" id="ticketHoverPreview" role="dialog" aria-hidden="true">
+            <div class="ticket-hover-preview-inner">
+                <div class="ticket-hover-preview-head">
+                    <div class="num" id="ticketHoverNumber"></div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <a class="open" id="ticketHoverOpen" href="#" title="Abrir ticket"><i
+                                class="bi bi-box-arrow-up-right"></i></a>
+                        <button type="button" class="close" id="ticketHoverClose" aria-label="Cerrar" title="Cerrar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="subject" id="ticketHoverSubject"></div>
+                <div class="meta" id="ticketHoverMeta"></div>
+                <div class="msg" id="ticketHoverMsg"></div>
+                <div class="loading d-none" id="ticketHoverLoading">
+                    <div class="spinner-border text-primary" role="status" style="width:1.5rem; height:1.5rem;"></div>
+                    <div class="text">Cargando…</div>
                 </div>
             </div>
-            <div class="subject" id="ticketHoverSubject"></div>
-            <div class="meta" id="ticketHoverMeta"></div>
-            <div class="msg" id="ticketHoverMsg"></div>
-            <div class="loading d-none" id="ticketHoverLoading">
-                <div class="spinner-border text-primary" role="status" style="width:1.5rem; height:1.5rem;"></div>
-                <div class="text">Cargando…</div>
-            </div>
         </div>
-    </div>
     </form>
 </div>
 

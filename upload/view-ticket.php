@@ -686,6 +686,13 @@ function humanSize($bytes) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo html($t['ticket_number']); ?> - <?php echo APP_NAME; ?></title>
+    <?php
+    $ogDesc = 'Ticket #' . ($t['ticket_number'] ?? '') . ' | Estado: ' . ($t['status_name'] ?? 'Abierto') . ' | Prioridad: ' . ($t['priority_name'] ?? 'Normal') . ' — ' . ($t['subject'] ?? '');
+    echo renderOpenGraphTags([
+        'title'       => 'Ticket #' . ($t['ticket_number'] ?? '') . ' - ' . ($t['subject'] ?? ''),
+        'description' => $ogDesc,
+    ]);
+    ?>
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-5.3.0.min.css">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">

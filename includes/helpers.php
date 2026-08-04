@@ -2437,6 +2437,81 @@ function getCompanyLogoUrl($fallbackRelativePath = '')
     return $finalUrl;
 }
 
+/**
+ * Genera meta tags optimizados para Open Graph (WhatsApp, Facebook, Twitter/X) y SEO.
+ */
+function renderOpenGraphTags(array $options = []): string
+{
+    $appName = defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets';
+    $title = trim((string)($options['title'] ?? ''));
+    if ($title === '') {
+        $title = $appName;
+    } elseif (!str_contains($title, $appName)) {
+        $title = $title . ' — ' . $appName;
+    }
+
+    $description = trim((string)($options['description'] ?? ''));
+    if ($description === '') {
+        $description = 'Portal de soporte técnico, gestión de tickets y atención de incidencias en línea.';
+    }
+    if (function_exists('mb_strlen') && mb_strlen($description) > 200) {
+        $description = mb_substr($description, 0, 197) . '...';
+    } elseif (strlen($description) > 200) {
+        $description = substr($description, 0, 197) . '...';
+    }
+
+    $siteName = trim((string)($options['site_name'] ?? $appName));
+    $type     = trim((string)($options['type'] ?? 'website'));
+
+    // URL de imagen (WhatsApp requiere URL absoluta http/https y tamaño adecuado)
+    $image = trim((string)($options['image'] ?? ''));
+    if ($image === '') {
+        $image = 'publico/img/og-preview.png';
+    }
+    $imageUrl = toAppAbsoluteUrl($image);
+
+    // URL canónica actual
+    $currentUrl = trim((string)($options['url'] ?? ''));
+    if ($currentUrl === '') {
+        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ((string)($_SERVER['SERVER_PORT'] ?? '') === '443')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+        $scheme = $isSecure ? 'https' : 'http';
+        $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
+        $currentUrl = $scheme . '://' . $host . $uri;
+    }
+
+    $escTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+    $escDesc  = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+    $escSite  = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
+    $escType  = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
+    $escUrl   = htmlspecialchars($currentUrl, ENT_QUOTES, 'UTF-8');
+    $escImg   = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
+
+    $html  = "\n";
+    $html .= '    <!-- Open Graph / WhatsApp / Facebook -->' . "\n";
+    $html .= '    <meta name="description" content="' . $escDesc . '">' . "\n";
+    $html .= '    <meta property="og:type" content="' . $escType . '">' . "\n";
+    $html .= '    <meta property="og:site_name" content="' . $escSite . '">' . "\n";
+    $html .= '    <meta property="og:title" content="' . $escTitle . '">' . "\n";
+    $html .= '    <meta property="og:description" content="' . $escDesc . '">' . "\n";
+    $html .= '    <meta property="og:url" content="' . $escUrl . '">' . "\n";
+    $html .= '    <meta property="og:image" content="' . $escImg . '">' . "\n";
+    $html .= '    <meta property="og:image:secure_url" content="' . $escImg . '">' . "\n";
+    $html .= '    <meta property="og:image:type" content="image/png">' . "\n";
+    $html .= '    <meta property="og:image:width" content="1200">' . "\n";
+    $html .= '    <meta property="og:image:height" content="630">' . "\n";
+    $html .= '    <meta property="og:image:alt" content="' . $escTitle . '">' . "\n";
+    $html .= '    <!-- Twitter Card -->' . "\n";
+    $html .= '    <meta name="twitter:card" content="summary_large_image">' . "\n";
+    $html .= '    <meta name="twitter:title" content="' . $escTitle . '">' . "\n";
+    $html .= '    <meta name="twitter:description" content="' . $escDesc . '">' . "\n";
+    $html .= '    <meta name="twitter:image" content="' . $escImg . '">' . "\n";
+
+    return $html;
+}
+
 function addLog($action, $details = null, $object_type = null, $object_id = null, $user_type = null, $user_id = null)
 {
     global $mysqli;

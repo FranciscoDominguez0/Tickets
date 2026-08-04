@@ -93,6 +93,12 @@ if ($_POST) {
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>Login Agente - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Acceso a Panel de Agentes',
+        'description' => 'Plataforma de atención, gestión de incidencias y tickets para el equipo de soporte técnico.',
+    ]);
+    ?>
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
     <?php
         $uploadRootAbs = realpath(__DIR__ . '/..');

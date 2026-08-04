@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * REGISTRO DE CLIENTE
  * Formulario para que nuevos clientes se registren
@@ -96,6 +96,12 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrarse - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Registro de Nuevo Cliente',
+        'description' => 'Crea tu cuenta en ' . APP_NAME . ' para gestionar tus solicitudes de soporte técnico y servicios.',
+    ]);
+    ?>
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
     <link rel="icon" type="image/x-icon" href="../publico/img/favicon.ico">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />

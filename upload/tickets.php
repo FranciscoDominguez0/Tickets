@@ -775,6 +775,12 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <meta name="theme-color" content="#b91c1c">
     <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
     <title>Mis Tickets - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Portal de Tickets de Soporte',
+        'description' => 'Consulta el estado de tus tickets, historial de solicitudes y soporte técnico en ' . APP_NAME . '.',
+    ]);
+    ?>
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-5.3.0.min.css">

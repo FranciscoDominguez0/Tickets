@@ -81,6 +81,12 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>Panel Agente - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Panel de Gestión y Soporte Técnico',
+        'description' => 'Sistema centralizado de helpdesk, administración de tickets y seguimiento de servicios técnicos.',
+    ]);
+    ?>
     <!-- Bootstrap CSS local (sin latencia CDN) -->
     <link rel="stylesheet" href="css/vendor/bootstrap.min.css">
     <!-- Bootstrap Icons local + font-display:swap -->

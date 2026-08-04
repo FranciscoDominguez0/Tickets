@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../config.php';
 require_once '../includes/helpers.php';
 require_once '../includes/Auth.php';
@@ -136,6 +136,12 @@ if ($_POST) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <title>Recuperar contraseña - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Recuperar Contraseña',
+        'description' => 'Restablece el acceso a tu cuenta de cliente en ' . APP_NAME . '.',
+    ]);
+    ?>
     <link rel="stylesheet" href="../publico/css/login.css?v=<?php echo (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
 </head>
 <?php

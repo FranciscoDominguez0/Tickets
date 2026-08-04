@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * CREAR TICKET
  * Formulario para que usuarios creen nuevos tickets
@@ -904,6 +904,12 @@ if ($blockNewIfSignaturePending) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Ticket - <?php echo APP_NAME; ?></title>
+    <?php
+    echo renderOpenGraphTags([
+        'title'       => 'Crear Nuevo Ticket de Soporte',
+        'description' => 'Abre una solicitud de asistencia técnica, reporte de falla o requerimiento de servicio en ' . APP_NAME . '.',
+    ]);
+    ?>
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-5.3.0.min.css">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">

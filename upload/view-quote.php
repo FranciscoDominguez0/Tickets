@@ -245,6 +245,16 @@ $stCol = $stInfo['color'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cotización #<?php echo $qid; ?> - <?php echo APP_NAME; ?></title>
+    <?php
+    $quoteNum = $quote['quote_number'] ?? ('COT-' . $qid);
+    $quoteSubj = $quote['subject'] ?? ($quote['title'] ?? 'Cotización de Servicios');
+    $quoteTotal = isset($quote['total']) ? (' | Total: $' . number_format((float)$quote['total'], 2)) : '';
+    $ogDesc = 'Cotización #' . $quoteNum . ' — ' . $quoteSubj . $quoteTotal . ' — ' . ($quote['org_name'] ?? APP_NAME);
+    echo renderOpenGraphTags([
+        'title'       => 'Cotización #' . $quoteNum . ' - ' . $quoteSubj,
+        'description' => $ogDesc,
+    ]);
+    ?>
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-5.3.0.min.css">
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
