@@ -1,11 +1,11 @@
 # ── Páginas de error personalizadas ──────────────────────────────────────────
 # ErrorDocument sin query strings — Apache pasa el código real en REDIRECT_STATUS.
 # La detección de PATH_INFO la maneja config.php directamente en PHP.
-ErrorDocument 400 /sistema-tickets/upload/error.php
-ErrorDocument 403 /sistema-tickets/upload/error.php
-ErrorDocument 404 /sistema-tickets/upload/error.php
-ErrorDocument 500 /sistema-tickets/upload/error.php
-ErrorDocument 503 /sistema-tickets/upload/error.php
+ErrorDocument 400 /upload/error.php
+ErrorDocument 403 /upload/error.php
+ErrorDocument 404 /upload/error.php
+ErrorDocument 500 /upload/error.php
+ErrorDocument 503 /upload/error.php
 
 <IfModule mod_headers.c>
     # 1. HSTS (Strict-Transport-Security)

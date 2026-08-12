@@ -3128,31 +3128,39 @@ function requireRolePermission($permKey, $redirectUrl = null)
     if ($ok)
         return true;
 
-    $_SESSION['flash_error'] = 'No tienes permiso para hacer esta acción.';
     addLog('permission_denied', (string) $permKey, null, null, 'staff', (int) ($_SESSION['staff_id'] ?? 0));
 
+    // Si hay redirect explícito, hacer flash + redirect (comportamiento legacy)
     if ($redirectUrl) {
+        $_SESSION['flash_error'] = 'No tienes permiso para hacer esta acción.';
         header('Location: ' . $redirectUrl);
         exit;
     }
 
-    $fallback = toAppAbsoluteUrl('upload/scp/index.php');
-    $ref = (string) ($_SERVER['HTTP_REFERER'] ?? '');
-    if ($ref !== '') {
-        $refHost = (string) parse_url($ref, PHP_URL_HOST);
-        $curHost = (string) ($_SERVER['HTTP_HOST'] ?? '');
-        if ($refHost === '' || $refHost === $curHost) {
-            $refPath = (string) parse_url($ref, PHP_URL_PATH);
-            if ($refPath !== '' && strpos($refPath, '/upload/scp/') !== false) {
-                $fallback = $ref;
-            }
-        }
-    }
+    // Sin redirect: mostrar página 403 personalizada
+    $errorCode = class_exists('ErrorHandler') ? ErrorHandler::generateErrorCode() : ('ERR-' . date('Ymd') . '-000000');
 
-    http_response_code(403);
-    header('Location: ' . $fallback);
-    exit;
+    if (class_exists('ErrorHandler')) {
+        ErrorHandler::logError($errorCode, [
+            'type'    => 'HTTP403',
+            'errno'   => 403,
+            'message' => 'Permiso denegado: ' . $permKey,
+            'file'    => $_SERVER['SCRIPT_NAME'] ?? '',
+            'line'    => 0,
+        ]);
+        ErrorHandler::renderErrorPage(403, $errorCode);
+    } else {
+        http_response_code(403);
+        $pageFile = dirname(__DIR__) . '/includes/error_pages/403.php';
+        if (file_exists($pageFile)) {
+            require $pageFile;
+        } else {
+            echo '<h1>403 Acceso Denegado</h1>';
+        }
+        exit;
+    }
 }
+
 
 function getPostMaxSize()
 {
