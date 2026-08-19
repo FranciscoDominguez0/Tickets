@@ -29,8 +29,10 @@ $lockFp = @fopen($lockFile, 'c');
 if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
     // Otro worker ya está corriendo, salir sin error
     if ($lockFp) fclose($lockFp);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['ok' => true, 'skipped' => 'another_worker_running'], JSON_UNESCAPED_UNICODE);
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => true, 'skipped' => 'another_worker_running'], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
 // El lock se libera al cerrar $lockFp o al terminar el script
@@ -67,16 +69,20 @@ if ($workerToken === '' && $isCli) {
 $authorized = $isCli || ($requestToken !== '' && hash_equals($workerToken, $requestToken));
 if (!$authorized) {
     error_log('[mail_queue] forbidden token mismatch eid=' . (string)$requestEmpresaId . ' token_len=' . strlen($requestToken));
-    http_response_code(403);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['ok' => false, 'error' => 'forbidden'], JSON_UNESCAPED_UNICODE);
+    if (!headers_sent()) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'error' => 'forbidden'], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
 
 if (!ensureEmailQueueTable()) {
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['ok' => false, 'error' => 'queue_table_unavailable'], JSON_UNESCAPED_UNICODE);
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'error' => 'queue_table_unavailable'], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
 ensureEmailLogsTable();
@@ -116,9 +122,11 @@ $stmt = $mysqli->prepare(
     . "LIMIT ?"
 );
 if (!$stmt) {
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['ok' => false, 'error' => 'queue_select_failed'], JSON_UNESCAPED_UNICODE);
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'error' => 'queue_select_failed'], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
 $stmt->bind_param('i', $limit);

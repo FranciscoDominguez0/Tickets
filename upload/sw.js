@@ -21,7 +21,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   const sameOrigin = url.origin === location.origin;
 
-  if (!sameOrigin) return;
+  // IMPORTANTE: No interceptar peticiones POST (como el login).
+  // Interceptar POST en el Service Worker causa que Chrome aborte la petición.
+  if (!sameOrigin || e.request.method !== 'GET') return;
 
   const isNav = e.request.mode === 'navigate';
   const isStatic = /\.(css|js|woff2?|png|jpg|jpeg|gif|svg|ico|webp)(\?.*)?$/i.test(url.pathname);
