@@ -57,6 +57,10 @@ if ($relatedId !== null && $relatedId > 0) {
         header('Location: cotizaciones.php?id=' . (int) $relatedId);
         exit;
     }
+    if ($type === 'requisition') {
+        header('Location: requisitions.php?a=view&id=' . (int) $relatedId);
+        exit;
+    }
 }
 
 header('Location: index.php?page=dashboard');

@@ -39,6 +39,7 @@ $routes = [
     'mapa'      => 'mapa-view.inc.php',   // Mapa de agentes en tiempo real
     'credits'   => 'credits.php',     // Créditos y autoría
     'cotizaciones' => 'cotizaciones.php', // Cotizaciones
+    'requisitions' => 'requisitions.php', // Requisiciones e Inventario
 ];
 
 // Página por defecto

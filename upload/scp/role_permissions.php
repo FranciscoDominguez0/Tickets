@@ -135,6 +135,10 @@ $permissionGroups = [
     'Cotizaciones' => [
         'quote.view' => ['title' => 'Acceso a Cotizaciones', 'desc' => 'Habilidad para ver y gestionar cotizaciones.'],
     ],
+    'Requisiciones e Inventario' => [
+        'requisitions.view' => ['title' => 'Acceder a Requisiciones', 'desc' => 'Habilidad para ver y solicitar requisiciones de inventario.'],
+        'requisitions.manage' => ['title' => 'Entregar Requisiciones', 'desc' => 'Habilidad para marcar requisiciones como entregadas.'],
+    ],
 ];
 
 $allPermKeys = [];
@@ -249,6 +253,10 @@ if (!function_exists('renderPermissionGroupCard')) {
             $icon = 'bi-file-earmark-text-fill';
             $headerColor = '#ea580c';
             $bgColor = 'rgba(234, 88, 12, 0.04)';
+        } elseif ($groupTitle === 'Requisiciones e Inventario') {
+            $icon = 'bi-box-seam-fill';
+            $headerColor = '#059669';
+            $bgColor = 'rgba(5, 150, 105, 0.04)';
         }
         $groupId = 'group_' . preg_replace('/[^a-z0-9]/', '', strtolower($groupTitle));
         ?>
@@ -424,6 +432,9 @@ ob_start();
                     }
                     if (isset($permissionGroups['Cotizaciones'])) {
                         renderPermissionGroupCard('Cotizaciones', $permissionGroups['Cotizaciones'], $enabledPerms);
+                    }
+                    if (isset($permissionGroups['Requisiciones e Inventario'])) {
+                        renderPermissionGroupCard('Requisiciones e Inventario', $permissionGroups['Requisiciones e Inventario'], $enabledPerms);
                     }
                     if (isset($permissionGroups['Directorio, Mapa y Estadísticas'])) {
                         renderPermissionGroupCard('Directorio, Mapa y Estadísticas', $permissionGroups['Directorio, Mapa y Estadísticas'], $enabledPerms);
