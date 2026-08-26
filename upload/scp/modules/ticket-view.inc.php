@@ -1317,10 +1317,86 @@ if ($ticketClientSignaturePath !== '') {
         </div>
     </div>
 
+    <?php
+    $countRequisitions = 0;
+    if (dbTableExists('requisitions')) {
+        $stmtR = $mysqli->prepare("SELECT COUNT(*) as c FROM requisitions WHERE ticket_id = ? AND empresa_id = ?");
+        if ($stmtR) {
+            $stmtR->bind_param('ii', $tid, $eid);
+            $stmtR->execute();
+            $countRequisitions = (int)($stmtR->get_result()->fetch_assoc()['c'] ?? 0);
+        }
+    }
+    ?>
+
     <!-- Pestañas: Hilo del ticket -->
     <ul class="ticket-view-tabs" role="tablist">
         <li><a class="tab active" href="#thread"><i class="bi bi-chat-left-text"></i> Hilo del Ticket (<?php echo $countPublic; ?>)</a></li>
+        <?php if ($countRequisitions > 0 || roleHasPermission('requisitions.view')): ?>
+        <li><a class="tab" href="#requisitions"><i class="bi bi-box-seam"></i> Solicitudes de Inventario (<?php echo $countRequisitions; ?>)</a></li>
+        <?php endif; ?>
     </ul>
+
+    <!-- Tab Inventario -->
+    <div class="ticket-view-tab-content" id="requisitions" style="display: none;">
+        <div class="p-4">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+                <h4 class="mb-0 fw-bold d-flex align-items-center"><i class="bi bi-box-seam text-danger me-2 fs-3"></i> Solicitudes de Inventario Asociadas</h4>
+                <?php if (roleHasPermission('requisitions.view')): ?>
+                <a href="requisitions.php?a=new&ticket_id=<?php echo $tid; ?>" class="btn btn-danger fw-bold shadow-sm rounded-pill px-4"><i class="bi bi-plus-lg me-2"></i> Nueva Solicitud</a>
+                <?php endif; ?>
+            </div>
+            
+            <?php
+            if ($countRequisitions > 0) {
+                $stmtReqs = $mysqli->prepare("SELECT id, client_name, status, created_at FROM requisitions WHERE ticket_id = ? AND empresa_id = ? ORDER BY id DESC");
+                $stmtReqs->bind_param('ii', $tid, $eid);
+                $stmtReqs->execute();
+                $reqsRes = $stmtReqs->get_result();
+                
+                echo '<div class="table-responsive border rounded-4 shadow-sm bg-body">';
+                echo '<table class="table table-hover align-middle mb-0">';
+                echo '<thead class="table-light"><tr><th class="ps-4 py-3 text-uppercase small fw-bold text-muted">ID</th><th class="py-3 text-uppercase small fw-bold text-muted">Solicitante / Cliente</th><th class="py-3 text-uppercase small fw-bold text-muted">Estado</th><th class="py-3 text-uppercase small fw-bold text-muted">Fecha</th><th class="text-end pe-4 py-3 text-uppercase small fw-bold text-muted">Acciones</th></tr></thead><tbody>';
+                while ($rq = $reqsRes->fetch_assoc()) {
+                    $statusBadge = ($rq['status'] === 'pending') ? '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i>Pendiente</span>' : '<span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill px-3 py-2"><i class="bi bi-check-all me-2"></i>Entregado</span>';
+                    echo '<tr>';
+                    echo '<td class="fw-bold ps-4 text-primary">#REQ-' . str_pad($rq['id'], 5, '0', STR_PAD_LEFT) . '</td>';
+                    echo '<td class="fw-semibold">' . html($rq['client_name']) . '</td>';
+                    echo '<td>' . $statusBadge . '</td>';
+                    echo '<td class="text-muted small"><i class="bi bi-calendar-event me-2"></i>' . date('d M, Y h:i A', strtotime($rq['created_at'])) . '</td>';
+                    echo '<td class="text-end pe-4"><a href="requisitions.php?a=view&id='.$rq['id'].'" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" target="_blank">Ver Detalles <i class="bi bi-arrow-right-short ms-1"></i></a></td>';
+                    echo '</tr>';
+                }
+                echo '</tbody></table></div>';
+            } else {
+                echo '<div class="alert bg-body-tertiary border text-center text-muted py-5 rounded-4 shadow-sm"><i class="bi bi-inbox fs-1 d-block mb-3 text-secondary opacity-50"></i> <span class="fw-medium fs-5">No hay solicitudes de inventario asociadas a este ticket.</span></div>';
+            }
+            ?>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('.ticket-view-tabs .tab');
+        const contents = document.querySelectorAll('.ticket-view-tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                
+                // Remove active from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.style.display = 'none');
+                
+                // Add active to current
+                this.classList.add('active');
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) targetContent.style.display = 'block';
+            });
+        });
+    });
+    </script>
 
     <div class="ticket-view-tab-content" id="thread" data-print-area="thread">
         <div class="ticket-print-header">

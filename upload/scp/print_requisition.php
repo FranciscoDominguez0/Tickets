@@ -205,6 +205,7 @@ $logoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                 <tr>
                     <th>Descripción</th>
                     <th style="width: 80px; text-align: center;">Cantidad</th>
+                    <th style="width: 80px; text-align: center;">Uso Real</th>
                 </tr>
             </thead>
             <tbody>
@@ -212,6 +213,13 @@ $logoUrl = (string)getCompanyLogoUrl('publico/img/vigitec-logo.png');
                 <tr>
                     <td><?php echo html($item['product_name']); ?></td>
                     <td style="text-align: center;"><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 12px; font-weight: 900; border: 1px solid #e2e8f0;"><?php echo html($item['quantity']); ?></span></td>
+                    <td style="text-align: center;">
+                        <?php if ($item['quantity_used'] !== null): ?>
+                            <span style="background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 12px; font-weight: 900; border: 1px solid #bae6fd;"><?php echo html($item['quantity_used']); ?></span>
+                        <?php else: ?>
+                            <span style="color: #94a3b8; font-weight: normal;">-</span>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endwhile; ?>
             </tbody>

@@ -7,6 +7,7 @@ $eid = empresaId();
 $sid = (int)$_SESSION['staff_id'];
 $action = $_GET['a'] ?? 'list';
 $canManage = roleHasPermission('requisitions.manage');
+$isAdmin = roleHasPermission('admin.access');
 $flashMsg = '';
 $flashError = '';
 
@@ -19,22 +20,102 @@ if (!empty($_SESSION['flash_error'])) {
     unset($_SESSION['flash_error']);
 }
 
+if ($action === 'ajax_tickets') {
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    if ($page < 1) $page = 1;
+    $limit = 5;
+    $offset = ($page - 1) * $limit;
+    
+    $q = trim((string)($_GET['q'] ?? ''));
+    
+    $whereStr = "empresa_id = ? AND (closed IS NULL OR closed = 0)";
+    $types = 'i';
+    $params = [$eid];
+    
+    if ($q !== '') {
+        $whereStr .= " AND (ticket_number LIKE ? OR subject LIKE ?)";
+        $likeQ = '%' . $q . '%';
+        $types .= 'ss';
+        $params[] = $likeQ;
+        $params[] = $likeQ;
+    } else {
+        $whereStr .= " AND MONTH(created) = MONTH(CURRENT_DATE()) AND YEAR(created) = YEAR(CURRENT_DATE())";
+    }
+    
+    $sqlCount = "SELECT COUNT(*) as total FROM tickets WHERE $whereStr";
+    $stmtC = $mysqli->prepare($sqlCount);
+    if ($stmtC) {
+        $stmtC->bind_param($types, ...$params);
+        $stmtC->execute();
+        $total = (int)$stmtC->get_result()->fetch_assoc()['total'];
+    } else {
+        $total = 0;
+    }
+    
+    $totalPages = ceil($total / $limit);
+    if ($totalPages < 1) $totalPages = 1;
+    
+    $sqlT = "SELECT id, ticket_number, subject, created FROM tickets WHERE $whereStr ORDER BY id DESC LIMIT ? OFFSET ?";
+    $stmtT = $mysqli->prepare($sqlT);
+    $types .= 'ii';
+    $params[] = $limit;
+    $params[] = $offset;
+    $stmtT->bind_param($types, ...$params);
+    $stmtT->execute();
+    $resT = $stmtT->get_result();
+    
+    $tickets = [];
+    while ($row = $resT->fetch_assoc()) {
+        $tickets[] = [
+            'id' => $row['id'],
+            'number' => $row['ticket_number'],
+            'subject' => $row['subject'],
+            'date' => date('d/m/Y h:i A', strtotime($row['created']))
+        ];
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode([
+        'tickets' => $tickets,
+        'currentPage' => $page,
+        'totalPages' => $totalPages,
+        'total' => $total
+    ]);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
         $flashError = 'Token inválido.';
     } else {
         $do = $_POST['do'] ?? '';
         if ($do === 'create') {
-            $clientName = trim($_POST['client_name'] ?? '');
+            $ticketId = isset($_POST['ticket_id']) ? (int)$_POST['ticket_id'] : 0;
+            $manualClientName = trim((string)($_POST['manual_client_name'] ?? ''));
             $products = $_POST['product_name'] ?? [];
             $quantities = $_POST['quantity'] ?? [];
-            if ($clientName === '' || empty($products)) {
-                $flashError = 'El nombre del cliente y al menos un producto son requeridos.';
+            if (($ticketId <= 0 && $manualClientName === '') || empty($products)) {
+                $flashError = 'Debe seleccionar un ticket o ingresar el nombre del cliente, y añadir al menos un producto.';
             } else {
                 $mysqli->begin_transaction();
                 try {
-                    $stmtIns = $mysqli->prepare("INSERT INTO requisitions (empresa_id, agent_id, client_name, created_at) VALUES (?, ?, ?, NOW())");
-                    $stmtIns->bind_param('iis', $eid, $sid, $clientName);
+                    $clientName = $manualClientName;
+                    $dbTicketId = null;
+                    if ($ticketId > 0) {
+                        $dbTicketId = $ticketId;
+                        $clientName = 'Ticket #'.$ticketId;
+                        $stmtTkt = $mysqli->prepare("SELECT u.firstname, u.lastname FROM tickets t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = ? AND t.empresa_id = ?");
+                        $stmtTkt->bind_param('ii', $ticketId, $eid);
+                        $stmtTkt->execute();
+                        $tktRes = $stmtTkt->get_result()->fetch_assoc();
+                        if ($tktRes) {
+                            $clientName = trim($tktRes['firstname'] . ' ' . $tktRes['lastname']);
+                            if (empty($clientName)) $clientName = 'Cliente (Sin Nombre)';
+                        }
+                    }
+
+                    $stmtIns = $mysqli->prepare("INSERT INTO requisitions (empresa_id, ticket_id, agent_id, client_name, created_at) VALUES (?, ?, ?, ?, NOW())");
+                    $stmtIns->bind_param('iiis', $eid, $dbTicketId, $sid, $clientName);
                     $stmtIns->execute();
                     $reqId = $mysqli->insert_id;
                     
@@ -75,6 +156,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $flashError = 'Error al crear la requisición.';
                 }
             }
+        } elseif ($do === 'update_usage') {
+            if (!$isAdmin) {
+                $_SESSION['flash_error'] = 'Solo un administrador puede editar el uso real de materiales.';
+                header("Location: requisitions.php?a=view&id=" . (int)$_POST['id']);
+                exit;
+            }
+            $reqId = (int)$_POST['id'];
+            $used_quantities = $_POST['quantity_used'] ?? [];
+            
+            $stmtUpd = $mysqli->prepare("UPDATE requisition_items SET quantity_used = ? WHERE id = ? AND requisition_id = ?");
+            foreach ($used_quantities as $itemId => $qtyUsed) {
+                $qUsed = ($qtyUsed === '') ? null : (int)$qtyUsed;
+                $iId = (int)$itemId;
+                $stmtUpd->bind_param('iii', $qUsed, $iId, $reqId);
+                $stmtUpd->execute();
+            }
+            $_SESSION['flash_msg'] = 'Uso de materiales actualizado correctamente.';
+            header("Location: requisitions.php?a=view&id={$reqId}");
+            exit;
         } elseif ($do === 'mark_delivered' && $canManage) {
             $reqId = (int)$_POST['id'];
             
@@ -336,21 +436,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <?php if ($totalPages > 1): ?>
         <div class="card-footer bg-light border-top py-3">
-            <nav aria-label="Navegación de páginas">
-                <ul class="pagination justify-content-center mb-0">
-                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
-                        <a class="page-link border-0 bg-transparent text-secondary" href="requisitions.php?q=<?php echo urlencode($search); ?>&p=<?php echo $page - 1; ?>"><i class="bi bi-chevron-left"></i></a>
-                    </li>
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
-                            <a class="page-link <?php echo $i === $page ? 'bg-danger border-danger rounded-3 text-white shadow-sm' : 'border-0 bg-transparent text-dark'; ?>" href="requisitions.php?q=<?php echo urlencode($search); ?>&p=<?php echo $i; ?>"><?php echo $i; ?></a>
-                        </li>
-                    <?php endfor; ?>
-                    <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
-                        <a class="page-link border-0 bg-transparent text-secondary" href="requisitions.php?q=<?php echo urlencode($search); ?>&p=<?php echo $page + 1; ?>"><i class="bi bi-chevron-right"></i></a>
-                    </li>
-                </ul>
-            </nav>
+            <?php echo renderModernPagination($page, $totalPages, '&q=' . urlencode($search), 'p'); ?>
         </div>
         <?php endif; ?>
     </div>
@@ -376,12 +462,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Left Column -->
                 <div class="col-md-5 col-lg-4 p-4 border-end-md bg-light">
                     <div class="section-title">
-                        <i class="bi bi-person-badge fs-4 me-2"></i> Información del Cliente
+                        <i class="bi bi-ticket-detailed fs-4 me-2"></i> Información del Ticket
                     </div>
                     
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-muted small text-uppercase">Nombre del Cliente</label>
-                        <input type="text" name="client_name" class="form-control form-control-lg border-secondary-subtle" required placeholder="Ej. Juan Pérez">
+                        <label class="form-label fw-bold text-muted small text-uppercase mb-2">Ticket Relacionado o Cliente Manual</label>
+                        
+                        <?php $preSelectTicketId = isset($_GET['ticket_id']) ? (int)$_GET['ticket_id'] : 0; ?>
+                        <!-- Hidden input to store selected ticket ID -->
+                        <input type="hidden" name="ticket_id" id="ticket_id_input" value="<?php echo html($preSelectTicketId); ?>">
+                        
+                        <!-- Selected Ticket Display -->
+                        <div id="selected_ticket_container" class="mb-3" style="display: <?php echo $preSelectTicketId ? 'block' : 'none'; ?>;">
+                            <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 bg-white shadow-sm border-secondary-subtle">
+                                <div>
+                                    <div class="fw-bold text-dark fs-5 mb-1" id="selected_ticket_display">
+                                        <?php if ($preSelectTicketId): ?>Ticket #<?php echo html($preSelectTicketId); ?><?php endif; ?>
+                                    </div>
+                                    <div class="small text-muted">Ticket asociado a la requisición</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold" onclick="clearSelectedTicket()">
+                                    <i class="bi bi-x-circle me-1"></i> Quitar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Manual Client Input Container -->
+                        <div id="manual_client_container" class="mb-3" style="display: <?php echo $preSelectTicketId ? 'none' : 'block'; ?>;">
+                            <input type="text" name="manual_client_name" id="manual_client_name" class="form-control form-control-lg border-secondary-subtle w-100 shadow-sm" placeholder="Escribir nombre del cliente">
+                        </div>
+                        
+                        <!-- Button to Open Modal -->
+                        <button type="button" class="btn btn-outline-primary w-100 py-3 fw-bold border-secondary-subtle bg-light shadow-sm" data-bs-toggle="modal" data-bs-target="#ticketSelectionModal" style="border-style: dashed !important; display: <?php echo $preSelectTicketId ? 'none' : 'block'; ?>;" id="btn_open_modal">
+                            <i class="bi bi-ticket-detailed me-2"></i> Buscar un Ticket Abierto
+                        </button>
                     </div>
                 </div>
                 
@@ -449,6 +563,166 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     </script>
+
+    <!-- Ticket Selection Modal -->
+    <div class="modal fade" id="ticketSelectionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 bg-light p-4">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-ticket-detailed text-primary me-2"></i>Seleccionar Ticket Abierto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="p-3 border-bottom bg-white sticky-top">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0 bg-light shadow-none" id="tickets-search-input" placeholder="Buscar por número o asunto (presiona Enter para buscar)...">
+                            <button class="btn btn-primary px-4 fw-bold" type="button" onclick="loadTickets(1)">Buscar</button>
+                        </div>
+                        <div class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Por defecto muestra los tickets de este mes. Busca algo para ver tickets más antiguos.</div>
+                    </div>
+                    <div id="tickets-loading" class="text-center py-5 text-muted">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2 fw-medium">Cargando tickets...</div>
+                    </div>
+                    <div id="tickets-list" class="list-group list-group-flush" style="display:none;">
+                        <!-- Tickets rendered here -->
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 bg-light p-3 d-flex justify-content-between align-items-center">
+                    <div class="small text-muted fw-bold" id="tickets-total">0 tickets encontrados</div>
+                    <nav aria-label="Paginación de tickets">
+                        <ul class="pagination pagination-sm mb-0" id="tickets-pagination">
+                            <!-- Pagination here -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('ticketSelectionModal');
+            let currentPage = 1;
+
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', function () {
+                    loadTickets(1);
+                });
+            }
+            
+            window.clearSelectedTicket = function() {
+                document.getElementById('ticket_id_input').value = '';
+                document.getElementById('selected_ticket_container').style.display = 'none';
+                document.getElementById('manual_client_container').style.display = 'block';
+                document.getElementById('btn_open_modal').style.display = 'block';
+                document.getElementById('manual_client_name').required = true;
+            };
+
+            window.selectTicket = function(id, number, subject) {
+                document.getElementById('ticket_id_input').value = id;
+                document.getElementById('selected_ticket_display').innerHTML = `Ticket #${id} - ${subject}`;
+                
+                document.getElementById('selected_ticket_container').style.display = 'block';
+                document.getElementById('manual_client_container').style.display = 'none';
+                document.getElementById('btn_open_modal').style.display = 'none';
+                
+                const manualInput = document.getElementById('manual_client_name');
+                manualInput.required = false;
+                manualInput.value = '';
+                
+                const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                bsModal.hide();
+            };
+
+            const searchInput = document.getElementById('tickets-search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadTickets(1);
+                    }
+                });
+            }
+
+            window.loadTickets = function(page) {
+                currentPage = page;
+                const searchQ = searchInput ? searchInput.value.trim() : '';
+                
+                document.getElementById('tickets-loading').style.display = 'block';
+                document.getElementById('tickets-list').style.display = 'none';
+                
+                fetch('requisitions.php?a=ajax_tickets&page=' + page + '&q=' + encodeURIComponent(searchQ))
+                    .then(response => response.json())
+                    .then(data => {
+                        renderTickets(data.tickets);
+                        renderPagination(data.currentPage, data.totalPages);
+                        document.getElementById('tickets-total').innerText = data.total + ' tickets encontrados';
+                        document.getElementById('tickets-loading').style.display = 'none';
+                        document.getElementById('tickets-list').style.display = 'block';
+                    })
+                    .catch(err => {
+                        console.error('Error cargando tickets:', err);
+                        document.getElementById('tickets-loading').innerHTML = '<div class="text-danger py-5"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar.</div>';
+                    });
+            };
+
+            function renderTickets(tickets) {
+                const list = document.getElementById('tickets-list');
+                list.innerHTML = '';
+                if (tickets.length === 0) {
+                    list.innerHTML = '<div class="p-4 text-center text-muted fw-medium">No hay tickets abiertos disponibles.</div>';
+                    return;
+                }
+                
+                tickets.forEach(t => {
+                    const subjectEscaped = t.subject.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    const html = `
+                        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3 gap-3">
+                            <div>
+                                <div class="fw-bold text-dark mb-1">#${t.number} - ${t.subject}</div>
+                                <div class="small text-muted"><i class="bi bi-calendar-event me-1"></i>${t.date}</div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold flex-shrink-0" onclick="selectTicket(${t.id}, '${t.number}', '${subjectEscaped}')">
+                                Elegir
+                            </button>
+                        </div>
+                    `;
+                    list.insertAdjacentHTML('beforeend', html);
+                });
+            }
+
+            function renderPagination(current, total) {
+                const ul = document.getElementById('tickets-pagination');
+                ul.innerHTML = '';
+                if (total <= 1) return;
+                
+                let html = `<li class="page-item ${current <= 1 ? 'disabled' : ''}">
+                    <button type="button" class="page-link shadow-none" ${current > 1 ? `onclick="loadTickets(${current - 1})"` : 'disabled'}>Anterior</button>
+                </li>`;
+                
+                for(let i = 1; i <= total; i++) {
+                    html += `<li class="page-item ${current === i ? 'active' : ''}">
+                        <button type="button" class="page-link shadow-none" onclick="loadTickets(${i})">${i}</button>
+                    </li>`;
+                }
+                
+                html += `<li class="page-item ${current >= total ? 'disabled' : ''}">
+                    <button type="button" class="page-link shadow-none" ${current < total ? `onclick="loadTickets(${current + 1})"` : 'disabled'}>Siguiente</button>
+                </li>`;
+                
+                ul.innerHTML = html;
+            }
+            
+            // Initialization state for preselected ticket
+            const preSelectTicketId = parseInt(document.getElementById('ticket_id_input').value) || 0;
+            if (preSelectTicketId <= 0) {
+                document.getElementById('manual_client_name').required = true;
+            }
+        });
+    </script>
+
 
 <?php elseif ($action === 'view'): 
     $reqId = (int)($_GET['id'] ?? 0);
@@ -534,35 +808,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <!-- Products Table Card -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-light border-bottom-0 p-4 d-flex justify-content-between align-items-center">
-                    <div class="section-title">
-                        <i class="bi bi-box-seam-fill fs-4 me-2"></i> Productos Solicitados
+            <form method="post" action="requisitions.php" class="m-0">
+                <?php csrfField(); ?>
+                <input type="hidden" name="do" value="update_usage">
+                <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
+                
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-light border-bottom-0 p-4 d-flex justify-content-between align-items-center">
+                        <div class="section-title">
+                            <i class="bi bi-box-seam-fill fs-4 me-2"></i> Productos Solicitados y Uso
+                        </div>
+                        <span class="badge bg-secondary rounded-pill px-3 py-2"><?php echo $items->num_rows; ?> Artículos</span>
                     </div>
-                    <span class="badge bg-secondary rounded-pill px-3 py-2"><?php echo $items->num_rows; ?> Artículos</span>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light text-muted small text-uppercase fw-bold d-none d-md-flex px-4 py-3">
+                                <div class="flex-grow-1">Producto</div>
+                                <div style="width: 120px;" class="text-center">Solicitado</div>
+                                <div style="width: 120px;" class="text-center">Utilizado</div>
+                            </li>
+                            <?php while ($item = $items->fetch_assoc()): ?>
+                            <li class="list-group-item px-3 px-md-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                                <div class="fw-bold text-dark text-break flex-grow-1">
+                                    <i class="bi bi-box me-2 text-secondary opacity-50 d-none d-md-inline"></i>
+                                    <?php echo html($item['product_name']); ?>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between justify-content-md-end gap-3 flex-shrink-0">
+                                    <div class="text-center" style="width: 120px;">
+                                        <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fs-6 border">
+                                            <?php echo html($item['quantity']); ?>
+                                        </span>
+                                    </div>
+                                    <div style="width: 120px;">
+                                        <?php if ($req['status'] === 'delivered' && $isAdmin): ?>
+                                            <input type="number" name="quantity_used[<?php echo $item['id']; ?>]" class="form-control text-center form-control-sm" placeholder="Uso Real" value="<?php echo html($item['quantity_used'] ?? ''); ?>" min="0">
+                                        <?php else: ?>
+                                            <span class="badge <?php echo ($item['quantity_used'] !== null) ? 'bg-info-subtle text-info border-info' : 'bg-light text-muted border'; ?> rounded-pill px-3 py-2 fs-6 border d-block text-center">
+                                                <?php echo ($item['quantity_used'] !== null) ? html($item['quantity_used']) : '-'; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </li>
+                            <?php endwhile; ?>
+                        </ul>
+                    </div>
+                    <?php if ($req['status'] === 'delivered' && $isAdmin): ?>
+                    <div class="card-footer bg-transparent border-top p-3 text-end">
+                        <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-2"></i>Guardar Uso Real</button>
+                    </div>
+                    <?php endif; ?>
                 </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item bg-light text-muted small text-uppercase fw-bold d-none d-md-flex px-4 py-3">
-                            <div class="flex-grow-1">Producto</div>
-                            <div style="width: 100px;" class="text-end">Cantidad</div>
-                        </li>
-                        <?php while ($item = $items->fetch_assoc()): ?>
-                        <li class="list-group-item px-3 px-md-4 py-3 d-flex justify-content-between align-items-center">
-                            <div class="fw-bold text-dark text-break pe-3">
-                                <i class="bi bi-box me-2 text-secondary opacity-50 d-none d-md-inline"></i>
-                                <?php echo html($item['product_name']); ?>
-                            </div>
-                            <div class="text-end flex-shrink-0">
-                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fs-6 border">
-                                    Cant: <?php echo html($item['quantity']); ?>
-                                </span>
-                            </div>
-                        </li>
-                        <?php endwhile; ?>
-                    </ul>
-                </div>
-            </div>
+            </form>
         </div>
 
         <!-- Right Column -->
