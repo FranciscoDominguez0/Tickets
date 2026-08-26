@@ -21,7 +21,7 @@ if (!empty($_SESSION['flash_error'])) {
 }
 
 if ($action === 'ajax_tickets') {
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $page = isset($_GET['p']) ? (int)$_GET['p'] : 1;
     if ($page < 1) $page = 1;
     $limit = 5;
     $offset = ($page - 1) * $limit;
@@ -336,10 +336,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ?>
 
     <div class="tickets-header mb-4">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
-                <h1>Requisiciones e Inventario</h1>
-                <div class="sub">Control de salidas de productos y materiales</div>
+                <h1 class="mb-1">Requisiciones e Inventario</h1>
+                <div class="sub opacity-75">Control y registro de salidas de productos y materiales</div>
             </div>
             <a href="requisitions.php?a=new" class="btn-new" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.30); color: #fff; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="bi bi-plus-lg"></i> Nueva Salida
@@ -347,98 +347,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white overflow-hidden">
-        <div class="card-header bg-white border-bottom p-3">
-            <form method="get" action="requisitions.php" class="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between m-0">
-                <div class="input-group flex-grow-1">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" name="q" value="<?php echo html($search); ?>" class="form-control border-start-0 ps-0" placeholder="Buscar por nombre de cliente o ID (#REQ-...)">
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-danger fw-bold px-4">Buscar</button>
-                    <?php if ($search !== ''): ?>
-                        <a href="requisitions.php" class="btn btn-outline-secondary fw-bold px-3 text-center">Limpiar</a>
-                    <?php endif; ?>
-                </div>
-            </form>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light text-muted small text-uppercase">
-                        <tr class="d-none d-md-table-row">
-                            <th class="ps-4 py-3">ID</th>
-                            <th class="py-3">Cliente</th>
-                            <th class="py-3">Estado</th>
-                            <th class="py-3">Fecha Solicitud</th>
-                            <th class="text-end pe-4 py-3">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $sql = "SELECT id, client_name, status, created_at FROM requisitions WHERE $whereStr ORDER BY id DESC LIMIT ? OFFSET ?";
-                        $stmt = $mysqli->prepare($sql);
-                        $params[] = $perPage;
-                        $params[] = $offset;
-                        $types .= "ii";
-                        $stmt->bind_param($types, ...$params);
-                        
-                        $stmt->execute();
-                        $res = $stmt->get_result();
-                        if ($res->num_rows === 0) {
-                            echo '<tr><td colspan="5" class="text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No hay requisiciones registradas.</td></tr>';
-                        }
-                        while ($row = $res->fetch_assoc()):
-                        ?>
-                            <!-- Desktop Row -->
-                            <tr class="d-none d-md-table-row">
-                                <td class="ps-4 py-3 fw-bold text-dark">#REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?></td>
-                                <td class="py-3 fw-medium"><?php echo html($row['client_name']); ?></td>
-                                <td class="py-3">
-                                    <?php if ($row['status'] === 'pending'): ?>
-                                        <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-clock me-1"></i>Pendiente</span>
-                                    <?php else: ?>
-                                        <span class="badge bg-success px-2 py-1"><i class="bi bi-check-all me-1"></i>Entregado</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td class="py-3 text-muted"><?php echo date('d M, Y', strtotime($row['created_at'])); ?></td>
-                                <td class="text-end pe-4 py-3">
-                                    <a href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-light fw-bold text-danger border shadow-sm">
-                                        <i class="bi bi-eye"></i> Detalles
-                                    </a>
-                                </td>
-                            </tr>
-                            <!-- Mobile Card Row -->
-                            <tr class="d-md-none border-bottom d-block w-100">
-                                <td colspan="5" class="p-0 border-0 d-block w-100">
-                                    <div class="px-3 py-3 position-relative w-100">
-                                        <!-- Status Badge absolutely positioned top-right -->
-                                        <div class="position-absolute top-0 end-0 mt-3 me-3">
-                                            <?php if ($row['status'] === 'pending'): ?>
-                                                <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-clock me-1"></i>Pendiente</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-success px-2 py-1"><i class="bi bi-check-all me-1"></i>Entregado</span>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="fw-bold text-dark fs-5 mb-2 pe-5">#REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?></div>
-                                        <div class="mb-2 fw-medium text-dark"><i class="bi bi-person me-2 text-muted"></i><?php echo html($row['client_name']); ?></div>
-                                        <div class="mb-3 text-muted small"><i class="bi bi-calendar me-2"></i><?php echo date('d M, Y, h:i A', strtotime($row['created_at'])); ?></div>
-                                        <a href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" class="btn btn-light fw-bold text-danger border w-100 shadow-sm py-2">
-                                            <i class="bi bi-eye me-1"></i> Ver Detalles
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
+    <div class="tickets-panel">
+        <div class="tickets-toolbar">
+            <div class="tickets-filters">
+                <!-- Espacio para futuros filtros (como fecha, estado, etc.) -->
+                <?php if ($search !== ''): ?>
+                    <a href="requisitions.php" class="btn btn-sm btn-outline-secondary fw-bold px-3">Limpiar Búsqueda</a>
+                <?php endif; ?>
+            </div>
+            <div class="tickets-search">
+                <form method="get" action="requisitions.php" class="m-0">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white" style="border-right: none; border-radius: 10px 0 0 10px;">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control" placeholder="Buscar por cliente o ID (#REQ-...) y presione Enter" value="<?php echo html($search); ?>" style="border-left: none; border-radius: 0 10px 10px 0;">
+                    </div>
+                </form>
             </div>
         </div>
-        <?php if ($totalPages > 1): ?>
-        <div class="card-footer bg-light border-top py-3">
-            <?php echo renderModernPagination($page, $totalPages, '&q=' . urlencode($search), 'p'); ?>
-        </div>
-        <?php endif; ?>
+    </div>
+
+    <div class="tickets-table-wrap">
+        <table class="table table-hover tickets-table mb-0">
+            <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
+                <tr>
+                    <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Requisición</th>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Cliente</th>
+                    <th class="d-none d-md-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Estado</th>
+                    <th class="d-none d-lg-table-cell" style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;">Fecha Solicitud</th>
+                    <th style="width: 80px; text-align: right; font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $sql = "SELECT id, client_name, status, created_at FROM requisitions WHERE $whereStr ORDER BY id DESC LIMIT ? OFFSET ?";
+                $stmt = $mysqli->prepare($sql);
+                $params[] = $perPage;
+                $params[] = $offset;
+                $types .= "ii";
+                $stmt->bind_param($types, ...$params);
+                
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res->num_rows === 0) {
+                    echo '<tr><td colspan="5"><div class="empty-state" style="padding: 40px; text-align: center;"><i class="bi bi-box-seam" style="font-size: 2.5rem; opacity: 0.4; color: #dc3545;"></i><div style="margin-top: 15px; color: #475569; font-weight: 500; font-size: 1.1rem;">No hay salidas de inventario registradas.</div></div></td></tr>';
+                }
+                while ($row = $res->fetch_assoc()):
+                ?>
+                    <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: background 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='requisitions.php?a=view&id=<?php echo $row['id']; ?>';">
+                        <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                <a class="ticket-title" href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa; text-decoration: none;">
+                                    <i class="bi bi-hash" style="opacity: 0.5;"></i>REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?>
+                                </a>
+                                <span title="Tipo de Solicitud" style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
+                                    <span style="width:5px; height:5px; border-radius:50%; background:#64748b; flex-shrink:0; display:inline-block;"></span>
+                                    INVENTARIO
+                                </span>
+                                <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
+                                    <?php echo date('d M, Y', strtotime($row['created_at'])); ?>
+                                </div>
+                            </div>
+                            <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+                                Solicitud de Materiales
+                            </div>
+                        </td>
+                        
+                        <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div style="display:flex; flex-direction:column;">
+                                    <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($row['client_name']); ?></span>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+                            <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
+                                <?php if ($row['status'] === 'pending'): ?>
+                                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> PENDIENTE
+                                    </span>
+                                <?php else: ?>
+                                    <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> ENTREGADO
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        
+                        <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+                            <div style="display:flex; flex-direction:column; gap:3px;">
+                                <span style="color:#64748b; font-size:0.85rem; display:flex; align-items:center; gap:5px;">
+                                    <i class="bi bi-clock" style="opacity:0.6;"></i> <?php echo date('d/m/Y h:i A', strtotime($row['created_at'])); ?>
+                                </span>
+                            </div>
+                        </td>
+                        
+                        <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
+                            <i class="bi bi-chevron-right" style="color: #cbd5e1; font-size: 1.2rem; font-weight: bold;"></i>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <?php if ($totalPages > 1): ?>
+    <div class="tickets-pagination-wrap bg-white border-top py-3 px-4">
+        <?php echo renderModernPagination($page, $totalPages, '&q=' . urlencode($search), 'p'); ?>
+    </div>
+    <?php endif; ?>
     </div>
 <?php elseif ($action === 'new'): ?>
     <div class="tickets-header mb-4">
@@ -576,10 +598,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="p-3 border-bottom bg-white sticky-top">
                         <div class="input-group">
                             <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control border-start-0 bg-light shadow-none" id="tickets-search-input" placeholder="Buscar por número o asunto (presiona Enter para buscar)...">
+                            <input type="text" class="form-control border-start-0 bg-light shadow-none" id="tickets-search-input" placeholder="Buscar ticket...">
                             <button class="btn btn-primary px-4 fw-bold" type="button" onclick="loadTickets(1)">Buscar</button>
                         </div>
-                        <div class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Por defecto muestra los tickets de este mes. Busca algo para ver tickets más antiguos.</div>
                     </div>
                     <div id="tickets-loading" class="text-center py-5 text-muted">
                         <div class="spinner-border text-primary" role="status"></div>
@@ -589,13 +610,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <!-- Tickets rendered here -->
                     </div>
                 </div>
-                <div class="modal-footer border-top-0 bg-light p-3 d-flex justify-content-between align-items-center">
-                    <div class="small text-muted fw-bold" id="tickets-total">0 tickets encontrados</div>
-                    <nav aria-label="Paginación de tickets">
+                <div class="modal-footer border-top-0 bg-light p-3 d-flex justify-content-between align-items-center w-100">
+                    <div class="small text-muted fw-bold w-25" id="tickets-total">0 tickets encontrados</div>
+                    <nav aria-label="Paginación de tickets" class="w-50 d-flex justify-content-center">
                         <ul class="pagination pagination-sm mb-0" id="tickets-pagination">
                             <!-- Pagination here -->
                         </ul>
                     </nav>
+                    <div class="w-25"></div> <!-- Spacer for centering -->
                 </div>
             </div>
         </div>
@@ -653,7 +675,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById('tickets-loading').style.display = 'block';
                 document.getElementById('tickets-list').style.display = 'none';
                 
-                fetch('requisitions.php?a=ajax_tickets&page=' + page + '&q=' + encodeURIComponent(searchQ))
+                fetch('requisitions.php?a=ajax_tickets&p=' + page + '&q=' + encodeURIComponent(searchQ))
                     .then(response => response.json())
                     .then(data => {
                         renderTickets(data.tickets);
@@ -698,18 +720,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ul.innerHTML = '';
                 if (total <= 1) return;
                 
+                ul.className = 'pagination pagination-sm justify-content-center mb-0 gap-1 modern-pagination';
+                
                 let html = `<li class="page-item ${current <= 1 ? 'disabled' : ''}">
-                    <button type="button" class="page-link shadow-none" ${current > 1 ? `onclick="loadTickets(${current - 1})"` : 'disabled'}>Anterior</button>
+                    <button type="button" class="page-link border-0 rounded-3 shadow-sm" ${current > 1 ? `onclick="loadTickets(${current - 1})"` : 'disabled'} title="Anterior"><i class="bi bi-chevron-left"></i></button>
                 </li>`;
                 
-                for(let i = 1; i <= total; i++) {
-                    html += `<li class="page-item ${current === i ? 'active' : ''}">
-                        <button type="button" class="page-link shadow-none" onclick="loadTickets(${i})">${i}</button>
-                    </li>`;
+                const range = 2;
+                const start = Math.max(1, current - range);
+                const end = Math.min(total, current + range);
+
+                if (start > 1) {
+                    html += `<li class="page-item"><button type="button" class="page-link border-0 rounded-3 fw-bold shadow-sm" onclick="loadTickets(1)">1</button></li>`;
+                    if (start > 2) {
+                        html += `<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="pointer-events: none;">&hellip;</span></li>`;
+                    }
+                }
+
+                for (let i = start; i <= end; i++) {
+                    if (current === i) {
+                        html += `<li class="page-item active"><span class="page-link border-0 rounded-3 fw-bold shadow-sm">${i}</span></li>`;
+                    } else {
+                        html += `<li class="page-item"><button type="button" class="page-link border-0 rounded-3 fw-bold shadow-sm" onclick="loadTickets(${i})">${i}</button></li>`;
+                    }
+                }
+
+                if (end < total) {
+                    if (end < total - 1) {
+                        html += `<li class="page-item disabled"><span class="page-link border-0 bg-transparent text-muted" style="pointer-events: none;">&hellip;</span></li>`;
+                    }
+                    html += `<li class="page-item"><button type="button" class="page-link border-0 rounded-3 fw-bold shadow-sm" onclick="loadTickets(${total})">${total}</button></li>`;
                 }
                 
                 html += `<li class="page-item ${current >= total ? 'disabled' : ''}">
-                    <button type="button" class="page-link shadow-none" ${current < total ? `onclick="loadTickets(${current + 1})"` : 'disabled'}>Siguiente</button>
+                    <button type="button" class="page-link border-0 rounded-3 shadow-sm" ${current < total ? `onclick="loadTickets(${current + 1})"` : 'disabled'} title="Siguiente"><i class="bi bi-chevron-right"></i></button>
                 </li>`;
                 
                 ul.innerHTML = html;
