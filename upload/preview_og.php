@@ -16,6 +16,8 @@ $pages = [
 // Si se pasa una URL personalizada
 $selectedUrl = isset($_GET['url']) && $_GET['url'] !== '' ? $_GET['url'] : reset($pages);
 
+session_write_close();
+
 // Obtener contenido HTML de la página seleccionada
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $selectedUrl);
@@ -24,7 +26,7 @@ curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 $html = curl_exec($ch);
-curl_close($ch);
+
 
 // Extraer meta tags Open Graph
 $og = [

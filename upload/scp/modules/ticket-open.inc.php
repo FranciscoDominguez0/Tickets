@@ -387,9 +387,14 @@ body.dark-mode .text-muted {
                             <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un usuario</div>
                         <?php endif; ?>
                     </div>
-                    <button type="button" class="btn btn-outline-danger btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch" style="border-radius: 10px; font-weight: 600;">
-                        <i class="bi bi-search text-danger"></i> Buscar
-                    </button>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-outline-danger btn-change" id="btn_change_user" data-bs-toggle="modal" data-bs-target="#modalUserSearch" style="border-radius: 10px; font-weight: 600;">
+                            <i class="bi bi-search text-danger"></i> Buscar Cliente
+                        </button>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalQuickCreateClient" style="border-radius: 10px; font-weight: 600;">
+                            <i class="bi bi-person-plus-fill"></i> Crear Usuario
+                        </button>
+                    </div>
                 </div>
 
                 <?php if ($walkinDefaultUserId > 0 && $walkinDefaultUser): ?>
@@ -754,9 +759,113 @@ body.dark-mode .text-muted {
         })();
         </script>
       </div>
+      </div>
       <div class="modal-footer" style="border-top: 1px solid #f1f5f9;">
         <button type="button" class="btn btn-secondary" style="border-radius: 10px;" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Modal: Quick Create Client -->
+<div class="modal fade" id="modalQuickCreateClient" tabindex="-1" aria-labelledby="modalQuickCreateClientLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border: none; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+      <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
+        <h5 class="modal-title" id="modalQuickCreateClientLabel" style="font-weight: 700; font-size: 1.15rem;"><i class="bi bi-person-plus-fill text-danger me-2"></i>Crear Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form id="formQuickCreateClient" onsubmit="event.preventDefault(); submitQuickCreateClient();">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label" style="font-weight: 600; font-size: 0.9rem;">Nombre Completo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="qc_name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight: 600; font-size: 0.9rem;">Empresa / Organización</label>
+              <input type="text" class="form-control" id="qc_company" placeholder="Nombre (Opcional)">
+              <div class="form-text" style="font-size: 0.8rem;">Se vinculará automáticamente.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" style="font-weight: 600; font-size: 0.9rem;">Teléfono</label>
+              <input type="text" class="form-control" id="qc_phone" placeholder="Teléfono (Opcional)">
+            </div>
+            <div class="col-12">
+              <label class="form-label" style="font-weight: 600; font-size: 0.9rem;">Dirección</label>
+              <input type="text" class="form-control" id="qc_address" placeholder="Dirección completa (Opcional)">
+            </div>
+          </div>
+          <div id="qc_error_msg" class="alert alert-danger mt-3 mb-0" style="display: none; padding: 10px; font-size: 0.85rem;"></div>
+        </form>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 16px 24px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+        <button type="button" class="btn btn-danger fw-bold px-4" id="btnQuickCreateSubmit" onclick="submitQuickCreateClient()" style="border-radius: 10px;">Crear y Seleccionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function submitQuickCreateClient() {
+    const btn = document.getElementById('btnQuickCreateSubmit');
+    const errorMsg = document.getElementById('qc_error_msg');
+    
+    const fullName = document.getElementById('qc_name').value.trim();
+    const company = document.getElementById('qc_company').value.trim();
+    const phone = document.getElementById('qc_phone').value.trim();
+    const address = document.getElementById('qc_address').value.trim();
+    
+    if (!fullName) {
+        errorMsg.textContent = 'El nombre es obligatorio.';
+        errorMsg.style.display = 'block';
+        return;
+    }
+    
+    // Split full name into firstname and lastname
+    const nameParts = fullName.split(' ');
+    const firstname = nameParts[0];
+    const lastname = nameParts.slice(1).join(' ') || '-';
+    
+    errorMsg.style.display = 'none';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creando...';
+    
+    fetch('tickets.php?action=quick_create_client', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            firstname: firstname,
+            lastname: lastname,
+            company: company,
+            phone: phone,
+            address: address
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok && data.user) {
+            // User created successfully, select it automatically
+            const url = new URL(window.location.href);
+            url.searchParams.set('a', 'open');
+            url.searchParams.set('uid', data.user.id);
+            window.location.href = url.toString();
+        } else {
+            errorMsg.textContent = data.error || 'Ocurrió un error al crear el cliente.';
+            errorMsg.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = 'Crear y Seleccionar';
+        }
+    })
+    .catch(err => {
+        errorMsg.textContent = 'Error de conexión con el servidor.';
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = 'Crear y Seleccionar';
+    });
+}
+</script>

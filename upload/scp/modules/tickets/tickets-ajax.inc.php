@@ -226,3 +226,103 @@ if (isset($_GET['action']) && $_GET['action'] === 'ticket_preview') {
     ]);
     exit;
 }
+
+// AJAX: Crear cliente rápido y vincular a organización
+if (isset($_GET['action']) && $_GET['action'] === 'quick_create_client') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!isset($_SESSION['staff_id']) || !roleHasPermission('ticket.create')) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Forbidden']);
+        exit;
+    }
+
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+
+    $firstname = trim($data['firstname'] ?? '');
+    $lastname = trim($data['lastname'] ?? '');
+    $address = trim($data['address'] ?? '');
+    $phone = trim($data['phone'] ?? '');
+    $company = trim($data['company'] ?? '');
+    $email = trim($data['email'] ?? '');
+
+    if ($firstname === '' || $lastname === '') {
+        echo json_encode(['ok' => false, 'error' => 'Nombre y apellido son obligatorios.']);
+        exit;
+    }
+
+    // Generar email temporal si no se proporcionó
+    if ($email === '') {
+        $baseEmail = strtolower(preg_replace('/[^a-z0-9]/i', '', $firstname) . '.' . preg_replace('/[^a-z0-9]/i', '', $lastname));
+        if ($baseEmail === '.') $baseEmail = 'cliente';
+        
+        // Buscar un email único
+        $tempEmail = $baseEmail . '@temporal.local';
+        $i = 1;
+        while (true) {
+            $stmtC = $mysqli->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+            $stmtC->bind_param('s', $tempEmail);
+            $stmtC->execute();
+            if (!$stmtC->get_result()->fetch_assoc()) break;
+            $tempEmail = $baseEmail . $i . '@temporal.local';
+            $i++;
+        }
+        $email = $tempEmail;
+    } else {
+        // Verificar si el email ingresado ya existe
+        $stmtC = $mysqli->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+        $stmtC->bind_param('s', $email);
+        $stmtC->execute();
+        if ($stmtC->get_result()->fetch_assoc()) {
+            echo json_encode(['ok' => false, 'error' => 'El correo electrónico ya está en uso.']);
+            exit;
+        }
+    }
+
+    $mysqli->begin_transaction();
+    try {
+        // 1. Crear usuario
+        $pwd = password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT);
+        $stmt = $mysqli->prepare("INSERT INTO users (firstname, lastname, address, phone, company, email, password, empresa_id, status, created) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())");
+        $stmt->bind_param('sssssssi', $firstname, $lastname, $address, $phone, $company, $email, $pwd, $eid);
+        $stmt->execute();
+        $user_id = $mysqli->insert_id;
+
+        // 2. Gestionar organización si se ingresó "empresa"
+        if ($company !== '') {
+            $stmtOrg = $mysqli->prepare("SELECT id FROM organizations WHERE name = ? AND empresa_id = ? LIMIT 1");
+            $stmtOrg->bind_param('si', $company, $eid);
+            $stmtOrg->execute();
+            $resOrg = $stmtOrg->get_result()->fetch_assoc();
+            
+            if ($resOrg) {
+                $org_id = (int)$resOrg['id'];
+            } else {
+                $stmtNewOrg = $mysqli->prepare("INSERT INTO organizations (name, empresa_id, created) VALUES (?, ?, NOW())");
+                $stmtNewOrg->bind_param('si', $company, $eid);
+                $stmtNewOrg->execute();
+                $org_id = $mysqli->insert_id;
+            }
+            
+            // Vincular usuario con organización
+            $stmtLink = $mysqli->prepare("INSERT INTO user_organizations (empresa_id, user_id, organization_id) VALUES (?, ?, ?)");
+            $stmtLink->bind_param('iii', $eid, $user_id, $org_id);
+            $stmtLink->execute();
+        }
+
+        $mysqli->commit();
+        echo json_encode([
+            'ok' => true,
+            'user' => [
+                'id' => $user_id,
+                'name' => trim($firstname . ' ' . $lastname),
+                'email' => $email
+            ]
+        ]);
+    } catch (Exception $e) {
+        $mysqli->rollback();
+        echo json_encode(['ok' => false, 'error' => 'Error en la base de datos al crear el cliente.']);
+    }
+    exit;
+}
