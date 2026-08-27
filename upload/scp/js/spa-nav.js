@@ -96,6 +96,7 @@
     function injectStyles(html) {
         var wrap = document.createElement('div');
         wrap.innerHTML = html;
+        var added = [];
         wrap.querySelectorAll('link[rel="stylesheet"]').forEach(function (old) {
             var href = resolveUrl(old.getAttribute('href'));
             if (!href || loadedStyles[href]) {
@@ -107,6 +108,36 @@
             link.rel = 'stylesheet';
             link.href = href;
             document.head.appendChild(link);
+            added.push(link);
+        });
+        return added;
+    }
+
+    // Espera a que los CSS recién inyectados terminen de cargar (o expira el
+    // timeout). Evita el "flash" de contenido sin estilos al navegar: el HTML
+    // nuevo solo se muestra cuando su hoja de estilos ya está aplicada.
+    function waitForStyles(links, timeout) {
+        if (!links.length) return Promise.resolve();
+        return new Promise(function (resolve) {
+            var done = false;
+            var timer = setTimeout(finish, timeout);
+            function finish() {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+                links.forEach(function (l) {
+                    l.removeEventListener('load', finish);
+                    l.removeEventListener('error', finish);
+                });
+                resolve();
+            }
+            links.forEach(function (l) {
+                l.addEventListener('load', finish);
+                l.addEventListener('error', finish);
+                // Si el navegador ya lo tenía en caché, .sheet está disponible de
+                // inmediato y el evento load pudo dispararse antes del listener.
+                try { if (l.sheet) finish(); } catch (e) {}
+            });
         });
     }
 
@@ -218,10 +249,17 @@
         .then(function (data) {
             if (!data || !data.ok) throw new Error('bad-response');
             lastAssetsHtml = data.assets || '';
-            mainContent.innerHTML = data.html || '';
-            injectStyles(lastAssetsHtml);
-            return loadExternalScripts().then(function () {
-                runInlineScripts(mainContent);
+            // Inyectar los estilos de la ruta ANTES del contenido: el HTML nuevo
+            // se muestra solo cuando su CSS ya está aplicado (sin flash feo).
+            var pendingStyles = injectStyles(lastAssetsHtml);
+            mainContent.style.transition = 'opacity .15s ease';
+            mainContent.style.opacity = '0.45';
+            return waitForStyles(pendingStyles, 2000).then(function () {
+                mainContent.innerHTML = data.html || '';
+                mainContent.style.opacity = '';
+                return loadExternalScripts().then(function () {
+                    runInlineScripts(mainContent);
+                });
             });
         })
         .then(function () {
@@ -240,6 +278,7 @@
             navInFlight = false;
         })
         .catch(function () {
+            mainContent.style.opacity = '';
             navInFlight = false;
             // Fallback seguro: navegación completa (mismo comportamiento de siempre)
             window.location.href = url;

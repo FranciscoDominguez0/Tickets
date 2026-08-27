@@ -2921,6 +2921,21 @@ function ensureRolePermissionsTable()
     global $mysqli;
     if (!isset($mysqli) || !$mysqli)
         return false;
+
+    // La estructura de la tabla es estable: validar 1 sola vez por request y
+    // cachear el resultado en sesión (24h). Evita ejecutar CREATE TABLE IF NOT
+    // EXISTS + SHOW INDEX en cada llamada (causa principal de lentitud del sidebar).
+    static $checked = false;
+    if ($checked)
+        return true;
+
+    $tsKey = 'role_perm_schema_checked_ts';
+    $lastTs = (int) ($_SESSION[$tsKey] ?? 0);
+    if ($lastTs > 0 && (time() - $lastTs) < 86400) {
+        $checked = true;
+        return true;
+    }
+
     $sql = "CREATE TABLE IF NOT EXISTS role_permissions (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
@@ -2953,6 +2968,11 @@ function ensureRolePermissionsTable()
             $mysqli->query("ALTER TABLE role_permissions ADD UNIQUE KEY uq_role_perm_empresa_role_perm (empresa_id, role_name, perm_key)");
         }
     } catch (Throwable $e) {
+    }
+
+    if ($ok) {
+        $checked = true;
+        $_SESSION[$tsKey] = time();
     }
 
     return $ok;
@@ -2992,13 +3012,22 @@ function roleHasPermission($permKey)
     if ($permKey === '')
         return false;
 
+    // Caché por request: el sidebar hace ~10+ llamadas por página
+    static $resultCache = [];
+    if (array_key_exists($permKey, $resultCache)) {
+        return $resultCache[$permKey];
+    }
+
     $role = getCurrentStaffRoleName();
-    if ($role === '')
+    if ($role === '') {
+        $resultCache[$permKey] = false;
         return false;
+    }
 
     // Protected fallback: admin and administrator roles always have access to admin.access to prevent accidental lockout
     // This is a safety mechanism to ensure the admin panel remains accessible
     if (($role === 'admin' || $role === 'administrator') && $permKey === 'admin.access') {
+        $resultCache[$permKey] = true;
         return true;
     }
 
@@ -3009,13 +3038,16 @@ function roleHasPermission($permKey)
         $adminPrefixes = ['admin.', 'user.', 'task.', 'org.', 'email.', 'helptopic.', 'banlist.', 'department.', 'role.', 'staff.', 'notification.', 'log.', 'billing.', 'sequence.', 'setting.'];
         foreach ($adminPrefixes as $prefix) {
             if (strpos($permKey, $prefix) === 0) {
+                $resultCache[$permKey] = true;
                 return true;
             }
         }
     }
 
-    if (!isset($mysqli) || !$mysqli)
+    if (!isset($mysqli) || !$mysqli) {
+        $resultCache[$permKey] = false;
         return false;
+    }
     ensureRolePermissionsTable();
 
     $eid = empresaId();
@@ -3029,8 +3061,10 @@ function roleHasPermission($permKey)
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt)
+    if (!$stmt) {
+        $resultCache[$permKey] = false;
         return false;
+    }
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $permKey);
@@ -3039,7 +3073,8 @@ function roleHasPermission($permKey)
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool) $row;
+    $resultCache[$permKey] = (bool) $row;
+    return $resultCache[$permKey];
 }
 
 function roleHasPermissionDirect($permKey)
@@ -3049,12 +3084,22 @@ function roleHasPermissionDirect($permKey)
     if ($permKey === '')
         return false;
 
-    $role = getCurrentStaffRoleName();
-    if ($role === '')
-        return false;
+    // Caché por request
+    static $resultCache = [];
+    if (array_key_exists($permKey, $resultCache)) {
+        return $resultCache[$permKey];
+    }
 
-    if (!isset($mysqli) || !$mysqli)
+    $role = getCurrentStaffRoleName();
+    if ($role === '') {
+        $resultCache[$permKey] = false;
         return false;
+    }
+
+    if (!isset($mysqli) || !$mysqli) {
+        $resultCache[$permKey] = false;
+        return false;
+    }
     ensureRolePermissionsTable();
 
     $eid = empresaId();
@@ -3068,8 +3113,10 @@ function roleHasPermissionDirect($permKey)
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key = ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt)
+    if (!$stmt) {
+        $resultCache[$permKey] = false;
         return false;
+    }
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $permKey);
@@ -3078,7 +3125,8 @@ function roleHasPermissionDirect($permKey)
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool) $row;
+    $resultCache[$permKey] = (bool) $row;
+    return $resultCache[$permKey];
 }
 
 function roleHasAnyPermissionPrefix($prefix)
@@ -3088,12 +3136,22 @@ function roleHasAnyPermissionPrefix($prefix)
     if ($prefix === '')
         return false;
 
-    $role = getCurrentStaffRoleName();
-    if ($role === '')
-        return false;
+    // Caché por request
+    static $resultCache = [];
+    if (array_key_exists($prefix, $resultCache)) {
+        return $resultCache[$prefix];
+    }
 
-    if (!isset($mysqli) || !$mysqli)
+    $role = getCurrentStaffRoleName();
+    if ($role === '') {
+        $resultCache[$prefix] = false;
         return false;
+    }
+
+    if (!isset($mysqli) || !$mysqli) {
+        $resultCache[$prefix] = false;
+        return false;
+    }
     ensureRolePermissionsTable();
 
     $like = $prefix . '%';
@@ -3109,8 +3167,10 @@ function roleHasAnyPermissionPrefix($prefix)
     $stmt = $hasEmpresa
         ? $mysqli->prepare('SELECT 1 FROM role_permissions WHERE empresa_id = ? AND role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1')
         : $mysqli->prepare('SELECT 1 FROM role_permissions WHERE role_name = ? AND perm_key LIKE ? AND is_enabled = 1 LIMIT 1');
-    if (!$stmt)
+    if (!$stmt) {
+        $resultCache[$prefix] = false;
         return false;
+    }
 
     if ($hasEmpresa) {
         $stmt->bind_param('iss', $eid, $role, $like);
@@ -3119,7 +3179,8 @@ function roleHasAnyPermissionPrefix($prefix)
     }
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    return (bool) $row;
+    $resultCache[$prefix] = (bool) $row;
+    return $resultCache[$prefix];
 }
 
 function requireRolePermission($permKey, $redirectUrl = null)
