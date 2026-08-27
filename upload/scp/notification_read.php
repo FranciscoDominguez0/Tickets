@@ -49,7 +49,7 @@ if ($relatedId !== null && $relatedId > 0) {
         header('Location: tasks.php?id=' . (int) $relatedId);
         exit;
     }
-    if ($type === 'ticket_assigned' || $type === 'ticket') {
+    if ($type === 'ticket_assigned' || $type === 'ticket' || $type === 'ticket_created') {
         header('Location: tickets.php?id=' . (int) $relatedId);
         exit;
     }
