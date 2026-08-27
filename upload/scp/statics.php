@@ -22,5 +22,8 @@ ob_start();
 require __DIR__ . '/modules/statistics.php';
 $content = ob_get_clean();
 
+// Navegación AJAX (SPA): solo contenido, sin layout
+require __DIR__ . '/partials/ajax-response.inc.php';
+
 require __DIR__ . '/layout/layout.php';
 

@@ -93,27 +93,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     <link rel="stylesheet" href="css/vendor/bootstrap-icons.css">
     <style>@font-face{font-family:"bootstrap-icons";src:url("css/vendor/fonts/bootstrap-icons.woff2") format("woff2"),url("css/vendor/fonts/bootstrap-icons.woff") format("woff");font-display:swap}</style>
     <link rel="stylesheet" href="css/scp.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/scp.css'); ?>">
-    <?php if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
-    <link rel="stylesheet" href="css/dashboard.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/dashboard.css'); ?>">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
-    <link rel="stylesheet" href="css/profile.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/profile.css'); ?>">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
-    <link rel="stylesheet" href="css/users.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/users.css'); ?>">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes', 'cotizaciones'])): ?>
-    <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
-    <link rel="stylesheet" href="css/vendor/summernote-lite.min.css">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
-    <link rel="stylesheet" href="css/orgs.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/orgs.css'); ?>">
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
-    <link rel="stylesheet" href="css/tasks.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tasks.css'); ?>">
-    <?php endif; ?>
+    <?php require __DIR__ . '/../partials/route-css.inc.php'; ?>
     <link rel="stylesheet" href="css/dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/dark.css'); ?>">
 </head>
 <?php
@@ -121,7 +101,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
 $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 ?>
 <?php $userActiveTab = (isset($currentRoute) && $currentRoute === 'users') ? (isset($_GET['t']) ? htmlspecialchars($_GET['t'], ENT_QUOTES, 'UTF-8') : 'tickets') : ''; ?>
-<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?><?php echo $isDarkMode ? ' dark-mode' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>"<?php if ($userActiveTab !== ''): ?> data-user-active-tab="<?php echo $userActiveTab; ?>"<?php endif; ?>>
+<body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?><?php echo $isDarkMode ? ' dark-mode' : ''; ?>" data-panel="agent" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>" data-sidebar-first="<?php echo $collapseSidebarMenu ? '1' : '0'; ?>"<?php if ($userActiveTab !== ''): ?> data-user-active-tab="<?php echo $userActiveTab; ?>"<?php endif; ?>>
     <?php $showOverlay = !empty($_SESSION['show_agent_loading_overlay']); ?>
     <?php if ($showOverlay): ?>
         <style>
@@ -648,7 +628,9 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     </div>
                     <?php unset($_SESSION['flash_msg']); ?>
                 <?php endif; ?>
-                <?php echo $content; ?>
+                <div id="scpMainContent">
+                    <?php echo $content; ?>
+                </div>
             </div>
         </main>
     </div>
@@ -744,8 +726,9 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         <a id="customPopLink" href="#" class="n-btn">Ver solicitud</a>
     </div>
 
-    <script src="js/vendor/bootstrap.bundle.min.js" defer></script>
-    <script src="js/scp.js" defer></script>
+    <script src="js/vendor/bootstrap.bundle.min.js"></script>
+    <script src="js/scp.js"></script>
+    <script src="js/spa-nav.js?v=<?php echo (int)@filemtime(__DIR__ . '/../js/spa-nav.js'); ?>"></script>
     <script>
         // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador
         window.scpNotificationAudio = new Audio('../../publico/audio/notification.mp3');
@@ -903,28 +886,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             });
         });
     </script>
-    <?php if (isset($currentRoute) && $currentRoute === 'profile'): ?>
-    <script src="js/profile.js"></script>
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
-    <script src="js/users.js"></script>
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
-    <script src="js/vendor/chart.umd.min.js"></script>
-    <script src="js/dashboard.js?v=<?php echo (int)@filemtime(__DIR__ . '/../js/dashboard.js'); ?>"></script>
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
-    <script src="js/vendor/jquery-3.6.0.min.js" defer></script>
-    <script src="js/vendor/summernote-lite.min.js" defer></script>
-    <script src="js/vendor/summernote-es-ES.min.js" defer></script>
-    <script src="js/tickets.js" defer></script>
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'tasks'): ?>
-    <script src="js/tasks.js"></script>
-    <?php endif; ?>
-    <?php if (isset($currentRoute) && $currentRoute === 'orgs'): ?>
-    <script src="js/orgs.js"></script>
-    <?php endif; ?>
+    <?php require __DIR__ . '/../partials/route-scripts.inc.php'; ?>
     <?php
     $maxLoadedId = 0;
     if (isset($notifItems) && is_array($notifItems) && !empty($notifItems)) {

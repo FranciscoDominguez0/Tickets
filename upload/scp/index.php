@@ -75,6 +75,9 @@ if (file_exists($moduleFile)) {
 }
 $content = ob_get_clean();
 
+// Navegación AJAX (SPA): devuelve solo el contenido y assets de la ruta
+require __DIR__ . '/partials/ajax-response.inc.php';
+
 // Renderizar layout principal (header + sidebar + shell)
 require __DIR__ . '/layout/layout.php';
 ?>

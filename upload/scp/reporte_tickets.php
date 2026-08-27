@@ -727,4 +727,8 @@ body.dark-mode .rpt-card-body .rpt-card-subject {
 
 <?php
 $content = ob_get_clean();
+
+// Navegación AJAX (SPA): solo contenido, sin layout
+require __DIR__ . '/partials/ajax-response.inc.php';
+
 require __DIR__ . '/layout/layout.php';

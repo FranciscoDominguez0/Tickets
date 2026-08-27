@@ -26,5 +26,8 @@ ob_start();
 require __DIR__ . '/modules/mapa-view.inc.php';
 $content = ob_get_clean();
 
+// Navegación AJAX (SPA): solo contenido, sin layout
+require __DIR__ . '/partials/ajax-response.inc.php';
+
 // Renderizar con el layout estándar
 require __DIR__ . '/layout/layout.php';
