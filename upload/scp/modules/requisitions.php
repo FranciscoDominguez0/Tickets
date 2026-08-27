@@ -462,6 +462,120 @@ body.dark-mode .badge.bg-secondary-subtle {
         background: transparent !important;
     }
 }
+
+/* Correcciones para el selector de ticket en modo oscuro */
+body.dark-mode #selected_ticket_container .bg-white {
+    background-color: #000000 !important;
+    border-color: #2e2e2e !important;
+    box-shadow: none !important;
+}
+body.dark-mode #selected_ticket_container .text-dark {
+    color: #e5e5e5 !important;
+}
+
+/* Modal de selección de ticket en modo oscuro */
+body.dark-mode #ticketSelectionModal .modal-header.bg-light,
+body.dark-mode #ticketSelectionModal .modal-footer.bg-light {
+    background-color: #000000 !important;
+    border-color: #111111 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode #ticketSelectionModal .modal-body .sticky-top.bg-white {
+    background-color: #000000 !important;
+    border-color: #111111 !important;
+}
+body.dark-mode #tickets-search-input {
+    background-color: #1f1f1f !important;
+    color: #e5e5e5 !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode #ticketSelectionModal .input-group-text.bg-light {
+    background-color: #1f1f1f !important;
+    color: #888888 !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode #tickets-list .list-group-item {
+    background-color: #000000 !important;
+    border-color: #111111 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode #tickets-list .list-group-item:hover {
+    background-color: #181818 !important;
+}
+body.dark-mode #tickets-list .text-dark {
+    color: #e5e5e5 !important;
+}
+body.dark-mode #ticketSelectionModal .pagination .page-link {
+    background-color: #000000 !important;
+    border-color: #2e2e2e !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode #ticketSelectionModal .pagination .page-item.active .page-link {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+/* Ajustes de botones de selección para adaptarlos a la paleta carmesí */
+#ticketSelectionModal .btn-primary,
+#ticketSelectionModal .btn-outline-primary {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+#ticketSelectionModal .btn-primary:hover,
+#ticketSelectionModal .btn-outline-primary:hover {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+body.dark-mode #ticketSelectionModal .btn-primary,
+body.dark-mode #ticketSelectionModal .btn-outline-primary {
+    background-color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+body.dark-mode #ticketSelectionModal .btn-primary:hover,
+body.dark-mode #ticketSelectionModal .btn-outline-primary:hover {
+    background-color: #b91c1c !important;
+    border-color: #b91c1c !important;
+}
+
+/* El botón de Quitar ticket seleccionado */
+#selected_ticket_container .btn-outline-danger {
+    color: #b91c1c !important;
+    border-color: #b91c1c !important;
+}
+#selected_ticket_container .btn-outline-danger:hover {
+    background-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+body.dark-mode #selected_ticket_container .btn-outline-danger {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+body.dark-mode #selected_ticket_container .btn-outline-danger:hover {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+/* El botón grande de Buscar Ticket Abierto */
+#btn_open_modal.btn-outline-primary {
+    color: #b91c1c !important;
+    border-color: #b91c1c !important;
+}
+#btn_open_modal.btn-outline-primary:hover {
+    background-color: #b91c1c !important;
+    color: #ffffff !important;
+}
+body.dark-mode #btn_open_modal.btn-outline-primary {
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+    background-color: #000000 !important;
+}
+body.dark-mode #btn_open_modal.btn-outline-primary:hover {
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
 </style>
 
 
