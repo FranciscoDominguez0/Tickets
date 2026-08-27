@@ -275,6 +275,193 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     color: #ef4444;
     font-size: 1rem;
 }
+
+/* Dark Mode Enhancements for Requisitions */
+body.dark-mode {
+    background-color: #000000 !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .main-shell,
+body.dark-mode .container-main,
+body.dark-mode #content {
+    background-color: #000000 !important;
+}
+body.dark-mode .card,
+body.dark-mode .list-group-item,
+body.dark-mode .table-responsive,
+body.dark-mode .table {
+    background-color: #000000 !important;
+    color: #e4e4e7 !important;
+    border-color: #111111 !important;
+}
+body.dark-mode .card-header,
+body.dark-mode .bg-light,
+body.dark-mode .table-light,
+body.dark-mode .list-group-item.bg-light {
+    background-color: #000000 !important;
+    color: #888888 !important;
+    border-color: #111111 !important;
+}
+body.dark-mode .text-dark,
+body.dark-mode .fw-bold.text-dark {
+    color: #e4e4e7 !important;
+}
+body.dark-mode .text-muted {
+    color: #888888 !important;
+}
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: #000000 !important;
+    color: #e5e5e5 !important;
+    border-color: #2e2e2e !important;
+}
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+    background: #1f1f1f !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .input-group-text.bg-white {
+    background-color: #000000 !important;
+    border-color: #2e2e2e !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode .ticket-row {
+    background: #000000 !important;
+    border-bottom: 1px solid #1f1f1f !important;
+}
+body.dark-mode .ticket-row:hover>td {
+    background: #181818 !important;
+}
+body.dark-mode .ticket-row a.ticket-title {
+    color: #ef4444 !important;
+    text-decoration: none !important;
+}
+body.dark-mode .ticket-row a.ticket-title:hover {
+    color: #ef4444 !important;
+    text-decoration: none !important;
+}
+body.dark-mode .ticket-row span[style*="color: #334155"],
+body.dark-mode span.text-dark,
+body.dark-mode .fw-bold.fs-6.fs-md-5.text-dark {
+    color: #e2e8f0 !important;
+}
+body.dark-mode div[style*="background: #f1f5f9"] {
+    background: #181818 !important;
+    color: #888888 !important;
+}
+body.dark-mode span[style*="background: #fffbeb"] {
+    background: #78350f !important;
+    color: #fef3c7 !important;
+    border-color: #92400e !important;
+}
+body.dark-mode span[style*="background: #f0fdf4"] {
+    background: #064e3b !important;
+    color: #d1fae5 !important;
+    border-color: #047857 !important;
+}
+body.dark-mode .btn-new[style*="background: #fff"],
+body.dark-mode .btn-new[style*="background:#fff"],
+body.dark-mode button[style*="background: #fff"],
+body.dark-mode button[style*="background:#fff"],
+body.dark-mode button[style*="background: #ffffff"],
+body.dark-mode button[style*="background:#ffffff"] {
+    background: #000000 !important;
+    border-color: #2e2e2e !important;
+    color: #e5e5e5 !important;
+}
+body.dark-mode button[onclick="addProductRow()"] {
+    background-color: #000000 !important;
+    color: #e4e4e7 !important;
+    border-color: #2e2e2e !important;
+}
+.ticket-row a.ticket-title {
+    color: #b91c1c !important;
+    text-decoration: none !important;
+}
+.ticket-row a.ticket-title:hover {
+    color: #ef4444 !important;
+    text-decoration: none !important;
+}
+/* Modales en modo oscuro */
+body.dark-mode .modal-content {
+    background-color: #000000 !important;
+    border-color: #111111 !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+    border-color: #111111 !important;
+}
+body.dark-mode .badge.bg-light {
+    background-color: #000000 !important;
+    color: #888888 !important;
+    border-color: #111111 !important;
+}
+body.dark-mode .badge.bg-secondary-subtle {
+    background-color: #000000 !important;
+    color: #888888 !important;
+    border-color: #111111 !important;
+}
+
+/* Card list layout on mobile for requisitions */
+@media (max-width: 768px) {
+    .tickets-table-wrap {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+    }
+    .tickets-table {
+        background: transparent !important;
+        border: none !important;
+        display: block !important;
+    }
+    .tickets-table thead {
+        display: none !important;
+    }
+    .tickets-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .tickets-table tr.ticket-row {
+        display: block !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 14px !important;
+        padding: 16px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+        margin-bottom: 0 !important;
+        transition: all 0.2s ease !important;
+    }
+    body.dark-mode .tickets-table tr.ticket-row {
+        background: #000000 !important;
+        border-color: #111111 !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+    }
+    .tickets-table tr.ticket-row:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04) !important;
+    }
+    body.dark-mode .tickets-table tr.ticket-row:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6) !important;
+    }
+    .tickets-table tr.ticket-row td {
+        display: none !important;
+    }
+    .tickets-table tr.ticket-row td:first-child {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+}
 </style>
 
 
@@ -395,62 +582,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 while ($row = $res->fetch_assoc()):
                 ?>
-                    <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: background 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='requisitions.php?a=view&id=<?php echo $row['id']; ?>';">
-                        <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-                                <a class="ticket-title" href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #60a5fa; text-decoration: none;">
-                                    <i class="bi bi-hash" style="opacity: 0.5;"></i>REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?>
-                                </a>
-                                <span title="Tipo de Solicitud" style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
-                                    <span style="width:5px; height:5px; border-radius:50%; background:#64748b; flex-shrink:0; display:inline-block;"></span>
-                                    INVENTARIO
-                                </span>
-                                <div class="d-md-none text-muted ms-auto" style="font-size:0.75rem; font-weight:600;">
-                                    <?php echo date('d M, Y', strtotime($row['created_at'])); ?>
-                                </div>
-                            </div>
-                            <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
-                                Solicitud de Materiales
-                            </div>
-                        </td>
-                        
-                        <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
-                                    <i class="bi bi-person-fill"></i>
-                                </div>
-                                <div style="display:flex; flex-direction:column;">
-                                    <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($row['client_name']); ?></span>
-                                </div>
-                            </div>
-                        </td>
-                        
-                        <td class="d-none d-md-table-cell" style="vertical-align: middle;">
-                            <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
-                                <?php if ($row['status'] === 'pending'): ?>
-                                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
-                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> PENDIENTE
-                                    </span>
-                                <?php else: ?>
-                                    <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
-                                        <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> ENTREGADO
-                                    </span>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                        
-                        <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
-                            <div style="display:flex; flex-direction:column; gap:3px;">
-                                <span style="color:#64748b; font-size:0.85rem; display:flex; align-items:center; gap:5px;">
-                                    <i class="bi bi-clock" style="opacity:0.6;"></i> <?php echo date('d/m/Y h:i A', strtotime($row['created_at'])); ?>
-                                </span>
-                            </div>
-                        </td>
-                        
-                        <td style="vertical-align: middle; text-align: right; padding-right: 20px;">
-                            <i class="bi bi-chevron-right" style="color: #cbd5e1; font-size: 1.2rem; font-weight: bold;"></i>
-                        </td>
-                    </tr>
+    <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: background 0.2s;" onclick="if(!event.target.closest('a') && !event.target.closest('button')) window.location='requisitions.php?a=view&id=<?php echo $row['id']; ?>';">
+    <td style="vertical-align: middle; padding: 18px 12px 18px 20px;">
+        <!-- Cabecera en Móvil -->
+        <div class="d-flex d-md-none justify-content-between align-items-center mb-2">
+            <a class="ticket-title" href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #b91c1c; text-decoration: none;">
+                <i class="bi bi-hash" style="opacity: 0.5;"></i>REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?>
+            </a>
+            <div>
+                <?php if ($row['status'] === 'pending'): ?>
+                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">PENDIENTE</span>
+                <?php else: ?>
+                    <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">ENTREGADO</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Cabecera en Escritorio -->
+        <div class="d-none d-md-flex align-items-center gap-2 mb-1">
+            <a class="ticket-title" href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #b91c1c; text-decoration: none;">
+                <i class="bi bi-hash" style="opacity: 0.5;"></i>REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?>
+            </a>
+            <span title="Tipo de Solicitud" style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
+                <span style="width:5px; height:5px; border-radius:50%; background:#64748b; flex-shrink:0; display:inline-block;"></span>
+                INVENTARIO
+            </span>
+        </div>
+
+        <div class="ticket-subject" style="font-weight: 600; color: #1e293b; font-size: 0.95rem; margin-bottom: 4px; line-height: 1.4; display: block; max-width: 55ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: none;">
+            Solicitud de Materiales
+        </div>
+
+        <!-- Detalles Móviles -->
+        <div class="d-md-none text-muted mt-2 d-flex flex-column gap-1" style="font-size: 0.8rem;">
+            <div><i class="bi bi-person me-1"></i> Solicitante: <strong class="text-dark"><?php echo html($row['client_name']); ?></strong></div>
+            <div><i class="bi bi-calendar-event me-1"></i> Fecha: <?php echo date('d M, Y h:i A', strtotime($row['created_at'])); ?></div>
+        </div>
+    </td>
+
+    <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-weight: 700; color: #334155; font-size: 0.9rem;"><?php echo html($row['client_name']); ?></span>
+            </div>
+        </div>
+    </td>
+
+    <td class="d-none d-md-table-cell" style="vertical-align: middle;">
+        <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
+            <?php if ($row['status'] === 'pending'): ?>
+                <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                    <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> PENDIENTE
+                </span>
+            <?php else: ?>
+                <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                    <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> ENTREGADO
+                </span>
+            <?php endif; ?>
+        </div>
+    </td>
+
+    <td class="d-none d-lg-table-cell" style="vertical-align: middle;">
+        <div style="display:flex; flex-direction:column; gap:3px;">
+            <span style="color:#64748b; font-size:0.85rem; display:flex; align-items:center; gap:5px;">
+                <i class="bi bi-clock" style="opacity:0.6;"></i> <?php echo date('d/m/Y h:i A', strtotime($row['created_at'])); ?>
+            </span>
+        </div>
+    </td>
+
+    <td class="d-none d-md-table-cell" style="vertical-align: middle; text-align: right; padding-right: 20px;">
+        <i class="bi bi-chevron-right" style="color: #cbd5e1; font-size: 1.2rem; font-weight: bold;"></i>
+    </td>
+</tr>
                 <?php endwhile; ?>
             </tbody>
         </table>

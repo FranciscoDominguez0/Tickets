@@ -81,6 +81,174 @@ if ($ticketClientSignaturePath !== '') {
 }
 ?>
 
+<style>
+/* Botón Tomar Ticket Personalizado de Marca */
+.btn-claim-ticket-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #ffffff !important;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    text-decoration: none !important;
+    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.btn-claim-ticket-brand:hover {
+    background: linear-gradient(135deg, #f87171 0%, #991b1b 100%);
+    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.38);
+    transform: translateY(-1px);
+}
+
+.btn-claim-ticket-brand:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.2);
+}
+
+body.dark-mode .btn-claim-ticket-brand {
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+body.dark-mode .btn-claim-ticket-brand:hover {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
+/* Botón de ver detalles en requisición */
+.btn-requisition-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1.5px solid #ef4444;
+    color: #ef4444 !important;
+    background: transparent;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+.btn-requisition-view:hover {
+    background: #ef4444;
+    color: #fff !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+body.dark-mode .btn-requisition-view {
+    border-color: #ef4444;
+    color: #ef4444 !important;
+}
+body.dark-mode .btn-requisition-view:hover {
+    background: #ef4444;
+    color: #fff !important;
+}
+
+/* Responsivo para tabla de requisiciones en modo celular */
+@media (max-width: 768px) {
+    .requisitions-table-wrapper {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+    .requisitions-table {
+        background: transparent !important;
+    }
+    .requisitions-table thead {
+        display: none;
+    }
+    .requisitions-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .requisitions-table tr {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+    body.dark-mode .requisitions-table tr {
+        background: #000000;
+        border-color: #333333;
+    }
+    .requisitions-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        border: none !important;
+        padding: 0 !important;
+        text-align: left !important;
+    }
+    /* Estilos por columna en móvil */
+    .requisitions-table td:nth-child(1)::before {
+        content: "ID:";
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+    .requisitions-table td:nth-child(1) {
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    
+    .requisitions-table td:nth-child(2)::before {
+        content: "Solicitante:";
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+    .requisitions-table td:nth-child(2) {
+        font-size: 0.9rem;
+    }
+    
+    .requisitions-table td:nth-child(3)::before {
+        content: "Estado:";
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+    
+    .requisitions-table td:nth-child(4)::before {
+        content: "Fecha:";
+        font-weight: 700;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+    .requisitions-table td:nth-child(4) {
+        font-size: 0.85rem;
+    }
+    
+    .requisitions-table td:nth-child(5) {
+        margin-top: 6px;
+        border-top: 1px solid #f1f5f9 !important;
+        padding-top: 10px !important;
+    }
+    body.dark-mode .requisitions-table td:nth-child(5) {
+        border-top-color: #222 !important;
+    }
+    .requisitions-table td:nth-child(5)::before {
+        content: "";
+    }
+    .requisitions-table td:nth-child(5) .btn-requisition-view {
+        width: 100%;
+        padding: 8px 16px;
+    }
+}
+</style>
+
 <div class="ticket-view-wrap">
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'closed_report' && roleHasPermission('ticket.reports')): ?>
         <style>
@@ -280,12 +448,12 @@ if ($ticketClientSignaturePath !== '') {
                 transition: all 0.2s;
                 line-height: 1;
             }
-            .dz-preview-remove:hover {
-                background: #ef4444;
-                color: #fff;
-                box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
-            }
-        </style>
+.dz-preview-remove:hover {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+</style>
 
         <div id="tv-billing-toast" role="alert" aria-live="assertive">
             <div class="tvb-card">
@@ -413,6 +581,12 @@ if ($ticketClientSignaturePath !== '') {
 
         <div class="ticket-view-actions">
             <a href="<?php echo html($backUrlFinal); ?>" class="btn-icon" title="Volver"><i class="bi bi-arrow-left"></i></a>
+            <?php if (empty($t['staff_id']) && roleHasPermission('ticket.view_all')): ?>
+                <a href="tickets.php?id=<?php echo $tid; ?>&action=claim" class="btn-claim-ticket-brand" id="btn-claim-ticket">
+                    <i class="bi bi-hand-index-thumb"></i>
+                    <span>Tomar Ticket</span>
+                </a>
+            <?php endif; ?>
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle <?php echo ($canTicketEdit || $canTicketClose) ? '' : 'disabled'; ?>" type="button" <?php echo ($canTicketEdit || $canTicketClose) ? 'data-bs-toggle="dropdown"' : 'onclick="showNoPermissionAlert(\'cambiar el estado de este ticket\'); return false;"'; ?> title="<?php echo ($canTicketEdit || $canTicketClose) ? 'Estado' : 'Sin permiso'; ?>" style="<?php echo ($canTicketEdit || $canTicketClose) ? '' : 'pointer-events: auto; cursor: not-allowed;'; ?>">
                     <i class="bi bi-flag"></i>
@@ -520,6 +694,10 @@ if ($ticketClientSignaturePath !== '') {
 
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
 
+            <?php if (roleHasPermission('requisitions.view')): ?>
+                <a href="requisitions.php?a=new&ticket_id=<?php echo $tid; ?>" class="btn-icon" title="Solicitud de Inventario"><i class="bi bi-box-seam"></i></a>
+            <?php endif; ?>
+
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración">
                     <i class="bi bi-gear"></i>
@@ -555,6 +733,13 @@ if ($ticketClientSignaturePath !== '') {
                         <div class="creative-dropdown-icon"><i class="bi bi-share"></i></div>
                         <span>Administrar referidos</span>
                     </a>
+
+                    <?php if (roleHasPermission('requisitions.view')): ?>
+                    <a class="creative-dropdown-item" href="requisitions.php?a=new&ticket_id=<?php echo $tid; ?>">
+                        <div class="creative-dropdown-icon"><i class="bi bi-box-seam"></i></div>
+                        <span>Solicitud de Inventario</span>
+                    </a>
+                    <?php endif; ?>
                     
 
                     
@@ -1354,8 +1539,8 @@ if ($ticketClientSignaturePath !== '') {
                 $stmtReqs->execute();
                 $reqsRes = $stmtReqs->get_result();
                 
-                echo '<div class="table-responsive border rounded-4 shadow-sm bg-body">';
-                echo '<table class="table table-hover align-middle mb-0">';
+                echo '<div class="table-responsive border rounded-4 shadow-sm bg-body requisitions-table-wrapper">';
+                echo '<table class="table table-hover align-middle mb-0 requisitions-table">';
                 echo '<thead class="table-light"><tr><th class="ps-4 py-3 text-uppercase small fw-bold text-muted">ID</th><th class="py-3 text-uppercase small fw-bold text-muted">Solicitante / Cliente</th><th class="py-3 text-uppercase small fw-bold text-muted">Estado</th><th class="py-3 text-uppercase small fw-bold text-muted">Fecha</th><th class="text-end pe-4 py-3 text-uppercase small fw-bold text-muted">Acciones</th></tr></thead><tbody>';
                 while ($rq = $reqsRes->fetch_assoc()) {
                     $statusBadge = ($rq['status'] === 'pending') ? '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2"><i class="bi bi-clock me-1"></i>Pendiente</span>' : '<span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill px-3 py-2"><i class="bi bi-check-all me-2"></i>Entregado</span>';
@@ -1364,7 +1549,7 @@ if ($ticketClientSignaturePath !== '') {
                     echo '<td class="fw-semibold">' . html($rq['client_name']) . '</td>';
                     echo '<td>' . $statusBadge . '</td>';
                     echo '<td class="text-muted small"><i class="bi bi-calendar-event me-2"></i>' . date('d M, Y h:i A', strtotime($rq['created_at'])) . '</td>';
-                    echo '<td class="text-end pe-4"><a href="requisitions.php?a=view&id='.$rq['id'].'" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" target="_blank">Ver Detalles <i class="bi bi-arrow-right-short ms-1"></i></a></td>';
+                    echo '<td class="text-end pe-4"><a href="requisitions.php?a=view&id='.$rq['id'].'" class="btn-requisition-view" target="_blank">Ver Detalles <i class="bi bi-arrow-right-short ms-1"></i></a></td>';
                     echo '</tr>';
                 }
                 echo '</tbody></table></div>';

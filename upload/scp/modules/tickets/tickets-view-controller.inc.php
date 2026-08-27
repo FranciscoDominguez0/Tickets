@@ -930,8 +930,52 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     }
                 }
                 header("Location: tickets.php?id=$tid&msg=$msg");
-                exit;
-            } elseif ($action === 'assign') {
+            exit;
+        } elseif ($action === 'claim') {
+            requireRolePermission('ticket.view_all', 'tickets.php?id=' . $tid);
+            $my_staff_id = (int)$_SESSION['staff_id'];
+            if ($my_staff_id > 0) {
+                $previousStaffId = $ticketView['staff_id'] ?? null;
+                
+                // Obtener el departamento principal del agente que toma el ticket
+                $my_dept_id = 0;
+                $stmtDept = $mysqli->prepare("SELECT dept_id FROM staff WHERE id = ? AND empresa_id = ? LIMIT 1");
+                if ($stmtDept) {
+                    $stmtDept->bind_param('ii', $my_staff_id, $eid);
+                    if ($stmtDept->execute()) {
+                        $resDept = $stmtDept->get_result()->fetch_assoc();
+                        $my_dept_id = (int)($resDept['dept_id'] ?? 0);
+                    }
+                }
+                
+                if ($my_dept_id > 0) {
+                    $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, dept_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                    $stmt->bind_param('iiii', $my_staff_id, $my_dept_id, $tid, $eid);
+                } else {
+                    $stmt = $mysqli->prepare("UPDATE tickets SET staff_id = ?, updated = NOW() WHERE id = ? AND empresa_id = ?");
+                    $stmt->bind_param('iii', $my_staff_id, $tid, $eid);
+                }
+                
+                if ($stmt && $stmt->execute()) {
+                    $msg = 'assigned';
+                    addAuditLog('staff', $my_staff_id, 'ticket_assigned', 'ticket', $tid, 'Ticket tomado/autoasignado por el agente.');
+                    
+                    // Log en tabla logs
+                    addLog('ticket_assigned', 'Ticket tomado por el agente', 'ticket', $tid, 'staff', $my_staff_id);
+                    
+                    // Opcional: Notificación en BD (campanita)
+                    $message = 'Te autoasignaste el ticket ' . (string)($ticketView['ticket_number'] ?? '') . ': ' . (string)($ticketView['subject'] ?? '');
+                    $type = 'ticket_assigned';
+                    $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
+                    if ($stmtN) {
+                        $stmtN->bind_param('issi', $my_staff_id, $message, $type, $tid);
+                        $stmtN->execute();
+                    }
+                }
+            }
+            header("Location: tickets.php?id=$tid&msg=$msg");
+            exit;
+        } elseif ($action === 'assign') {
                 requireRolePermission('ticket.assign', 'tickets.php?id=' . $tid);
                 $staff_id = isset($_GET['staff_id']) ? (int) $_GET['staff_id'] : (isset($_POST['staff_id']) ? (int) $_POST['staff_id'] : null);
                 if ($staff_id !== null) {

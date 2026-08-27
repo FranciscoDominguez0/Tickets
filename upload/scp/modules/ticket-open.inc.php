@@ -365,7 +365,6 @@ body.dark-mode .text-muted {
         <input type="hidden" name="do" value="open">
         <input type="hidden" name="csrf_token" value="<?php echo html($_SESSION['csrf_token'] ?? ''); ?>">
         <input type="hidden" name="user_id" value="<?php echo $selected_uid ? (int)$selected_uid : ''; ?>">
-        <input type="hidden" name="dept_id" id="open_dept_id" value="<?php echo (int)$selected_dept_id; ?>">
         <input type="hidden" name="walkin_default_user_id" id="walkin_default_user_id" value="<?php echo (int)$walkinDefaultUserId; ?>">
 
         <!-- Cliente -->
@@ -429,31 +428,19 @@ body.dark-mode .text-muted {
                     <input type="text" name="subject" class="form-control" placeholder="<?php echo $walkinSelected ? 'Nombre del cliente no recurrente' : 'Describe brevemente el problema'; ?>" required value="<?php echo html($_POST['subject'] ?? ''); ?>">
                     <input type="hidden" name="source" value="web">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Tema:</label>
-                    <select name="topic_id" class="form-select" id="open_topic_id">
-                        <option value="0" <?php echo $selected_topic_id === 0 ? 'selected' : ''; ?>>— General —</option>
-                        <?php if ($open_hasTopics && !empty($open_topics)): ?>
-                            <?php foreach ($open_topics as $tp): ?>
-                                <option value="<?php echo (int)$tp['id']; ?>" data-dept-id="<?php echo (int)($tp['dept_id'] ?? 0); ?>" <?php echo (int)$tp['id'] === $selected_topic_id ? 'selected' : ''; ?>><?php echo html($tp['name']); ?></option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                <div class="col-md-6">
+                    <label class="form-label">Departamento: <span class="required">*</span></label>
+                    <select name="dept_id" class="form-select" id="open_dept_id" required>
+                        <?php foreach ($open_departments as $d): ?>
+                            <option value="<?php echo (int)$d['id']; ?>" <?php echo (int)$d['id'] === $selected_dept_id ? 'selected' : ''; ?>><?php echo html($d['name']); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <label class="form-label">Prioridad:</label>
                     <select name="priority_id" class="form-select">
                         <?php foreach ($open_priorities as $p): ?>
                             <option value="<?php echo (int)$p['id']; ?>" <?php echo (int)$p['id'] === 2 ? 'selected' : ''; ?>><?php echo html($p['name']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Asignar a:</label>
-                    <select name="staff_id" class="form-select" id="open_staff_id" <?php echo $selected_dept_id > 0 ? '' : 'disabled'; ?>>
-                        <option value="0">— Sin asignar —</option>
-                        <?php foreach ($open_staff as $s): ?>
-                            <option value="<?php echo (int)$s['id']; ?>" data-dept-id="<?php echo (int)($s['dept_id'] ?? 0); ?>" <?php echo (int)$s['id'] === $selected_staff_id ? 'selected' : ''; ?>><?php echo html(trim($s['firstname'] . ' ' . $s['lastname'])); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -481,7 +468,8 @@ body.dark-mode .text-muted {
     var deptSel = document.getElementById('open_dept_id');
     var staffSel = document.getElementById('open_staff_id');
     var topicSel = document.getElementById('open_topic_id');
-    if (!deptSel || !staffSel) return;
+
+    if (deptSel && staffSel) {
 
     var syncDeptFromTopic = function () {
       if (!topicSel) return;
@@ -535,6 +523,7 @@ body.dark-mode .text-muted {
 
     syncDeptFromTopic();
     applyStaffFilter();
+    }
 
     // Prevención de doble envío
     var form = document.getElementById('form-open-ticket');
@@ -647,13 +636,21 @@ body.dark-mode .text-muted {
         body.dark-mode #modalUserSearch .list-group-item:hover { background: #000000; }
         body.dark-mode #modalUserSearch .form-control { background: #000; border-color: #333; color: #fff; }
         body.dark-mode #modalUserSearch .input-group-text { background: #0a0a0a !important; border-color: #333; color: #94a3b8; }
+        @media (min-width: 992px) {
+            #modalUserSearch {
+                padding-left: 280px !important;
+            }
+            body.sidebar-collapsed #modalUserSearch {
+                padding-left: 84px !important;
+            }
+        }
       </style>
       <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
         <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-danger"></i>Buscar usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
-        <div class="alert alert-info py-2 mb-3" style="border-radius: 10px; font-size: 0.9rem;">
+        <div class="alert alert-info py-2 mb-3 text-center" style="border-radius: 10px; font-size: 0.9rem;">
             <i class="bi bi-info-circle me-1"></i> Busca usuarios por email, teléfono o nombre.
         </div>
 
@@ -758,7 +755,6 @@ body.dark-mode .text-muted {
             });
         })();
         </script>
-      </div>
       </div>
       <div class="modal-footer" style="border-top: 1px solid #f1f5f9;">
         <button type="button" class="btn btn-secondary" style="border-radius: 10px;" data-bs-dismiss="modal">Cerrar</button>
