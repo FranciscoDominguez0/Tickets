@@ -1433,7 +1433,7 @@ if (!empty($_GET['org'])) {
 // Mostrar solo de tabla organizations
 $search = trim($_GET['q'] ?? '');
 $pageNum = max(1, (int)($_GET['p'] ?? 1));
-$perPage = 20;
+$perPage = 10;
 
 $orgsBaseUrl = (string)toAppAbsoluteUrl('upload/scp/orgs.php');
 
