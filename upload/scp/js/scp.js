@@ -15,51 +15,41 @@
     var SUBNAV_KEY = 'scp_subnav_open_' + (body.getAttribute('data-panel') || 'default');
 
     function getOpenSubnavs() {
-        try {
-            var raw = sessionStorage.getItem(SUBNAV_KEY);
-            var arr = raw ? JSON.parse(raw) : null;
-            return Array.isArray(arr) ? arr : [];
-        } catch (e) { return []; }
+        return [];
     }
 
     function persistOpenSubnavs() {
-        var open = [];
-        document.querySelectorAll('.sidebar-subnav.open').forEach(function (s) {
-            if (s.id) open.push(s.id);
-        });
-        try { sessionStorage.setItem(SUBNAV_KEY, JSON.stringify(open)); } catch (e) {}
-        return open;
+        // Deshabilitado: confiar en backend y spa-nav.js para el estado activo.
+        // Esto evita que sub-menús de otras secciones queden "atrapados" abiertos.
+        return [];
     }
 
-    // Exponer para que spa-nav.js sincronice el estado tras cada navegación
+    // Exponer para que spa-nav.js llame sin error
     window.__scpPersistSubnavState = persistOpenSubnavs;
 
-    // Auto-expande el grupo de la ruta activa y restaura los grupos guardados
-    // (solo panel de agente). En la PRIMERA visita (data-sidebar-first="1")
-    // todo queda cerrado por defecto. Admin/superadmin no se tocan: el servidor
-    // ya renderiza solo la sección activa abierta (acordeón).
+    // Solo restaura el acordeón basado en la ruta activa.
     function restoreOpenSubnavs() {
         if (!isAgentPanel) return;
         var firstVisit = (body.getAttribute('data-sidebar-first') === '1');
-        var open = firstVisit ? [] : getOpenSubnavs();
         var activeLink = sidebar ? sidebar.querySelector('.sidebar-subnav a.sidebar-link.active') : null;
         var activeGroup = activeLink ? activeLink.closest('li.sidebar-group') : null;
+        
         document.querySelectorAll('li.sidebar-group').forEach(function (group) {
             var toggle = group.querySelector(':scope > .sidebar-toggle');
             var subnav = group.querySelector(':scope > .sidebar-subnav');
             if (!toggle || !subnav) return;
             var isActiveGroup = (activeGroup === group);
-            var shouldOpen = (isActiveGroup && !firstVisit) || open.indexOf(subnav.id) !== -1;
-            if (shouldOpen) {
-                subnav.classList.add('open');
-                toggle.classList.add('expanded');
-                toggle.setAttribute('aria-expanded', 'true');
-            }
+            
             if (isActiveGroup && !firstVisit) {
-                toggle.classList.add('active');
+                subnav.classList.add('open');
+                toggle.classList.add('expanded', 'active');
+                toggle.setAttribute('aria-expanded', 'true');
+            } else {
+                subnav.classList.remove('open');
+                toggle.classList.remove('expanded', 'active');
+                toggle.setAttribute('aria-expanded', 'false');
             }
         });
-        persistOpenSubnavs();
     }
 
     function persistSidebarCookie(value) {
