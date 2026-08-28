@@ -286,6 +286,10 @@ body.dark-mode .container-main,
 body.dark-mode #content {
     background-color: #000000 !important;
 }
+body.dark-mode .tickets-pagination-wrap {
+    background-color: #000000 !important;
+    border-color: #111111 !important;
+}
 body.dark-mode .card,
 body.dark-mode .list-group-item,
 body.dark-mode .table-responsive,

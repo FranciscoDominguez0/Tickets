@@ -13,7 +13,7 @@ if (isset($currentRoute) && $currentRoute === 'dashboard'): ?>
 <?php if (isset($currentRoute) && $currentRoute === 'users'): ?>
 <link rel="stylesheet" href="css/users.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/users.css'); ?>">
 <?php endif; ?>
-<?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes', 'cotizaciones'])): ?>
+<?php if (isset($currentRoute) && in_array($currentRoute, ['tickets', 'reportes', 'informes_jefes', 'cotizaciones', 'requisitions'])): ?>
 <link rel="stylesheet" href="css/tickets.css?v=<?php echo (int)@filemtime(__DIR__ . '/../css/tickets.css'); ?>">
 <?php endif; ?>
 <?php if (isset($currentRoute) && $currentRoute === 'tickets'): ?>
