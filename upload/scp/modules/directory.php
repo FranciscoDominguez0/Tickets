@@ -15,79 +15,30 @@ $pageNum = max(1, (int)($_GET['p'] ?? 1));
 $perPage = 20;
 
 $eid = empresaId();
+// departments.empresa_id y staff_departments existen
 
-$deptHasEmpresa = false;
-try {
-    $c = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-    $deptHasEmpresa = ($c && $c->num_rows > 0);
-} catch (Throwable $e) {
-}
-
-// Validar ordenamiento
-$validSorts = ['name', 'email', 'dept', 'role', 'status', 'created', 'last_login'];
-if (!in_array($sort, $validSorts)) {
-    $sort = 'name';
-}
-$validOrders = ['ASC', 'DESC'];
-if (!in_array($order, $validOrders)) {
-    $order = 'ASC';
-}
-
-// Construir query base
-$hasStaffDepartmentsTable = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasStaffDepartmentsTable = false;
-    }
-}
-
-if ($hasStaffDepartmentsTable) {
-    $sql = "
-        SELECT
-            s.id,
-            s.username,
-            s.email,
-            s.firstname,
-            s.lastname,
-            s.role,
-            s.is_active,
-            s.created,
-            s.last_login,
-            COALESCE(dp.name, MIN(d.name)) AS dept_name,
-            COUNT(DISTINCT t.id) as total_tickets,
-            COUNT(DISTINCT CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN t.id END) as open_tickets
-        FROM staff s
-        LEFT JOIN departments dp ON dp.id = s.dept_id
-        LEFT JOIN staff_departments sd ON sd.staff_id = s.id
-        LEFT JOIN departments d ON d.id = sd.dept_id
-        LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
-        WHERE s.empresa_id = ? AND s.role != 'superadmin'
-    ";
-} else {
-    $sql = "
-        SELECT
-            s.id,
-            s.username,
-            s.email,
-            s.firstname,
-            s.lastname,
-            s.role,
-            s.is_active,
-            s.created,
-            s.last_login,
-            d.id as dept_id,
-            d.name as dept_name,
-            COUNT(DISTINCT t.id) as total_tickets,
-            COUNT(DISTINCT CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN t.id END) as open_tickets
-        FROM staff s
-        LEFT JOIN departments d ON s.dept_id = d.id
-        LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
-        WHERE s.empresa_id = ? AND s.role != 'superadmin'
-    ";
-}
+// Construir query usando staff_departments (tabla confirmada)
+$sql = "
+    SELECT
+        s.id,
+        s.username,
+        s.email,
+        s.firstname,
+        s.lastname,
+        s.role,
+        s.is_active,
+        s.created,
+        s.last_login,
+        COALESCE(dp.name, MIN(d.name)) AS dept_name,
+        COUNT(DISTINCT t.id) as total_tickets,
+        COUNT(DISTINCT CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN t.id END) as open_tickets
+    FROM staff s
+    LEFT JOIN departments dp ON dp.id = s.dept_id
+    LEFT JOIN staff_departments sd ON sd.staff_id = s.id
+    LEFT JOIN departments d ON d.id = sd.dept_id
+    LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ?
+    WHERE s.empresa_id = ? AND s.role != 'superadmin'
+";
 
 $params = [];
 $types = 'ii';
@@ -122,15 +73,9 @@ if ($search) {
 
 // Aplicar filtro por departamento
 if ($deptFilter > 0) {
-    if ($hasStaffDepartmentsTable) {
-        $sql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
-        $params[] = $deptFilter;
-        $types .= 'i';
-    } else {
-        $sql .= " AND s.dept_id = ?";
-        $params[] = $deptFilter;
-        $types .= 'i';
-    }
+    $sql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
+    $params[] = $deptFilter;
+    $types .= 'i';
 }
 
 // Conteo total
@@ -157,15 +102,9 @@ if ($search) {
     }
 }
 if ($deptFilter > 0) {
-    if ($hasStaffDepartmentsTable) {
-        $countSql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
-        $countParams[] = $deptFilter;
-        $countTypes .= 'i';
-    } else {
-        $countSql .= " AND s.dept_id = ?";
-        $countParams[] = $deptFilter;
-        $countTypes .= 'i';
-    }
+    $countSql .= " AND EXISTS (SELECT 1 FROM staff_departments sd2 WHERE sd2.staff_id = s.id AND sd2.dept_id = ?)";
+    $countParams[] = $deptFilter;
+    $countTypes .= 'i';
 }
 $totalRows = 0;
 $stmtCount = $mysqli->prepare($countSql);
@@ -179,12 +118,8 @@ $totalPages = $totalRows > 0 ? (int)ceil($totalRows / $perPage) : 1;
 if ($pageNum > $totalPages) $pageNum = $totalPages;
 $offset = ($pageNum - 1) * $perPage;
 
-// Agrupar
-if ($hasStaffDepartmentsTable) {
-    $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login";
-} else {
-    $sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login, d.id, d.name";
-}
+// Agrupar por columnas de staff (staff_departments permite múltiples depts por agente)
+$sql .= " GROUP BY s.id, s.username, s.email, s.firstname, s.lastname, s.role, s.is_active, s.created, s.last_login";
 
 // Ordenamiento
 $sortColumns = [
@@ -197,6 +132,7 @@ $sortColumns = [
     'last_login' => 's.last_login'
 ];
 $orderBy = $sortColumns[$sort] ?? 's.firstname, s.lastname';
+$validSorts = array_keys($sortColumns);
 $sql .= " ORDER BY $orderBy $order";
 
 $sql .= " LIMIT ? OFFSET ?";
@@ -218,15 +154,9 @@ while ($row = $result->fetch_assoc()) {
 }
 
 // Lista de departamentos
-$deptSql = "SELECT id, name FROM departments WHERE is_active = 1";
-$deptTypes = '';
-$deptParams = [];
-if ($deptHasEmpresa) {
-    $deptSql .= " AND empresa_id = ?";
-    $deptTypes = 'i';
-    $deptParams[] = $eid;
-}
-$deptSql .= " ORDER BY name";
+$deptSql = "SELECT id, name FROM departments WHERE is_active = 1 AND empresa_id = ? ORDER BY name";
+$deptTypes = 'i';
+$deptParams = [$eid];
 
 $deptStmt = $mysqli->prepare($deptSql);
 if ($deptStmt && $deptTypes !== '') {

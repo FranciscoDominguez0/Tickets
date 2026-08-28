@@ -26,12 +26,8 @@ if ($staff_id <= 0) {
     }
 }
 
-$has_dark_mode_column  = $profile_staff && array_key_exists('dark_mode', $profile_staff);
-$has_phone_column      = false;
-if ($profile_staff) {
-    $chkPhone = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'phone'");
-    $has_phone_column = ($chkPhone && $chkPhone->num_rows > 0);
-}
+$has_dark_mode_column = $profile_staff && array_key_exists('dark_mode', $profile_staff);
+$has_phone_column = false; // columna 'phone' no existe en staff
 
 // Cargar departamento y rol del agente (solo lectura)
 $profile_dept_name = '';
@@ -47,18 +43,15 @@ if ($profile_staff) {
             $profile_dept_name = (string)($dRow['name'] ?? '');
         }
     }
-    // Buscar nombre amigable del rol desde tabla roles si existe
+    // Buscar nombre amigable del rol desde tabla roles
     $roleRaw = (string)($profile_staff['role'] ?? '');
     $profile_role_name = $roleRaw;
-    $resRole = $mysqli->query("SHOW TABLES LIKE 'roles'");
-    if ($resRole && $resRole->num_rows > 0) {
-        $stmtR = $mysqli->prepare('SELECT name FROM roles WHERE name = ? LIMIT 1');
-        if ($stmtR) {
-            $stmtR->bind_param('s', $roleRaw);
-            $stmtR->execute();
-            $rRow = $stmtR->get_result()->fetch_assoc();
-            if ($rRow) $profile_role_name = (string)($rRow['name'] ?? $roleRaw);
-        }
+    $stmtR = $mysqli->prepare('SELECT name FROM roles WHERE name = ? LIMIT 1');
+    if ($stmtR) {
+        $stmtR->bind_param('s', $roleRaw);
+        $stmtR->execute();
+        $rRow = $stmtR->get_result()->fetch_assoc();
+        if ($rRow) $profile_role_name = (string)($rRow['name'] ?? $roleRaw);
     }
 
     // Estadísticas de tickets para el agente

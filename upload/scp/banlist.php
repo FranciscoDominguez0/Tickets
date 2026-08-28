@@ -15,15 +15,8 @@ $currentRoute = 'emails';
 $emailTab = 'banlist';
 
 $eid = empresaId();
-$banlistHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
-        $banlistHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $banlistHasEmpresaId = false;
-    }
-}
+$banlistHasEmpresaId = true; // banlist.empresa_id confirmado en schema
+
 
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
@@ -34,40 +27,6 @@ if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
 if (!isset($_SESSION[$menuKey])) {
     $_SESSION[$menuKey] = 1;
     $collapseSettingsMenu = true;
-}
-
-$ensureBanlistTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS banlist (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  empresa_id INT NULL,\n"
-        . "  email VARCHAR(255) NULL,\n"
-        . "  domain VARCHAR(255) NULL,\n"
-        . "  notes TEXT NULL,\n"
-        . "  is_active TINYINT(1) NOT NULL DEFAULT 1,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email (email),\n"
-        . "  KEY idx_domain (domain),\n"
-        . "  KEY idx_active (is_active),\n"
-        . "  KEY idx_empresa (empresa_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
-};
-$ensureBanlistTable();
-
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
-        $banlistHasEmpresaId = ($res && $res->num_rows > 0);
-        if (!$banlistHasEmpresaId) {
-            $mysqli->query("ALTER TABLE banlist ADD COLUMN empresa_id INT NULL");
-            $mysqli->query("ALTER TABLE banlist ADD INDEX idx_empresa (empresa_id)");
-            $res = $mysqli->query("SHOW COLUMNS FROM banlist LIKE 'empresa_id'");
-            $banlistHasEmpresaId = ($res && $res->num_rows > 0);
-        }
-    } catch (Throwable $e) {
-    }
 }
 
 $msg = '';

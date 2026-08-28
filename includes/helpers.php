@@ -996,9 +996,9 @@ function getThreadEntryReadStatusMap($mysqli, array $entryIds, int $empresaId): 
 function threadEntryReadReceiptHtml(bool $isRead, bool $iconFirst = true): string
 {
     $icon = $isRead
-        ? '<i class="bi bi-check2-all" style="color:#34b7f1;font-weight:bold;" title="Leído"></i>'
-        : '<i class="bi bi-check2-all" style="color:#9ca3af;" title="Enviado"></i>';
-    $label = 'Enviado';
+        ? '<i class="bi bi-check-all text-primary" style="font-size: 1.1rem; font-weight:bold;" title="Leído"></i>'
+        : '<i class="bi bi-check-all text-secondary" style="font-size: 1.1rem;" title="Enviado"></i>';
+    $label = $isRead ? 'Leído' : 'Enviado';
     if ($iconFirst) {
         return $icon . ' ' . $label;
     }

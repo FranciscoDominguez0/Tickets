@@ -33,7 +33,8 @@ if ($sidNewSince > 0) {
 
 // Cargar seenIds desde BD solo en listado (no en vista individual ni AJAX)
 $sidSeenDb = (int)($_SESSION['staff_id'] ?? 0);
-if ($_isListView && $sidSeenDb > 0 && isset($mysqli) && $mysqli && dbTableExists('staff_ticket_seen')) {
+// staff_ticket_seen confirmada en schema
+if ($_isListView && $sidSeenDb > 0 && isset($mysqli) && $mysqli) {
     $stmtSeenLoad = $mysqli->prepare('SELECT ticket_id FROM staff_ticket_seen WHERE staff_id = ? ORDER BY seen_at DESC LIMIT 500');
     if ($stmtSeenLoad) {
         $stmtSeenLoad->bind_param('i', $sidSeenDb);
@@ -52,8 +53,8 @@ if ($_isListView && $sidSeenDb > 0 && isset($mysqli) && $mysqli && dbTableExists
 
 $eid = empresaId();
 
-// Usar dbTableExists() con caché de sesión (TTL 300s) en lugar de SHOW TABLES directo
-$hasStaffDepartmentsTable = dbTableExists('staff_departments');
+// staff_departments confirmada en schema
+$hasStaffDepartmentsTable = true;
 
 $staffBelongsToDept = function (int $staffId, int $deptId, int $generalDeptId) use ($mysqli, $eid, $hasStaffDepartmentsTable): bool {
     if ($deptId <= 0) return true;
@@ -141,9 +142,9 @@ try {
 }
 */
 
-// Usar dbColumnExists() con caché de sesión en lugar de SHOW COLUMNS directo
-$threadsHasEmpresa = dbColumnExists('threads', 'empresa_id');
-$entriesHasEmpresa = dbColumnExists('thread_entries', 'empresa_id');
+// columnas empresa_id confirmadas en schema
+$threadsHasEmpresa = true;
+$entriesHasEmpresa = true;
 
 // Tabla de tickets vinculados (ya existe en producción)
 $ensureTicketLinksTable = function () {

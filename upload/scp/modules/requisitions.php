@@ -156,6 +156,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $flashError = 'Error al crear la requisición.';
                 }
             }
+        } elseif ($do === 'add_items') {
+            $reqId = (int)($_POST['id'] ?? 0);
+            $products = $_POST['products'] ?? [];
+            $quantities = $_POST['quantities'] ?? [];
+
+            // Verify requisition exists and is pending, and user has access
+            $stmtR = $mysqli->prepare("SELECT agent_id, status FROM requisitions WHERE id = ? AND empresa_id = ?");
+            $stmtR->bind_param('ii', $reqId, $eid);
+            $stmtR->execute();
+            $req = $stmtR->get_result()->fetch_assoc();
+
+            if (!$req || ($req['agent_id'] != $sid && !$canManage)) {
+                $_SESSION['flash_error'] = 'No tienes permisos o la requisición no existe.';
+                header("Location: requisitions.php?a=view&id={$reqId}");
+                exit;
+            }
+            if ($req['status'] !== 'pending' && $req['status'] !== 'delivered') {
+                $_SESSION['flash_error'] = 'Solo se pueden agregar productos a requisiciones pendientes o entregadas.';
+                header("Location: requisitions.php?a=view&id={$reqId}");
+                exit;
+            }
+
+            $added = 0;
+            $stmtItem = $mysqli->prepare("INSERT INTO requisition_items (requisition_id, product_name, quantity) VALUES (?, ?, ?)");
+            for ($i = 0; $i < count($products); $i++) {
+                $pName = trim($products[$i]);
+                $qty = (int)($quantities[$i] ?? 1);
+                if ($pName !== '' && $qty > 0) {
+                    $stmtItem->bind_param('isi', $reqId, $pName, $qty);
+                    $stmtItem->execute();
+                    $added++;
+                }
+            }
+            
+            if ($added > 0) {
+                $_SESSION['flash_msg'] = "Se agregaron $added producto(s) a la requisición.";
+                
+                // Notify admins if added by agent
+                if ($req['agent_id'] == $sid) {
+                    $agentName = 'El agente';
+                    $stmtA = $mysqli->prepare("SELECT firstname, lastname FROM staff WHERE id = ?");
+                    $stmtA->bind_param('i', $sid);
+                    $stmtA->execute();
+                    $resA = $stmtA->get_result()->fetch_assoc();
+                    if ($resA) $agentName = trim($resA['firstname'] . ' ' . $resA['lastname']);
+                    
+                    $msg = $mysqli->real_escape_string("{$agentName} ha agregado más productos a la Requisición #REQ-" . str_pad($reqId, 5, '0', STR_PAD_LEFT) . ".");
+                    $resAdmins = $mysqli->query("SELECT staff_id FROM notification_recipients WHERE empresa_id = $eid");
+                    if ($resAdmins) {
+                        while ($adm = $resAdmins->fetch_assoc()) {
+                            $admId = (int)$adm['staff_id'];
+                            if ($admId !== $sid) {
+                                $mysqli->query("INSERT IGNORE INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES ($eid, $admId, '$msg', 'requisition', $reqId, 0, NOW())");
+                            }
+                        }
+                    }
+                }
+            } else {
+                $_SESSION['flash_error'] = 'No se ingresó ningún producto válido.';
+            }
+            
+            header("Location: requisitions.php?a=view&id={$reqId}");
+            exit;
         } elseif ($do === 'update_usage') {
             if (!$isAdmin) {
                 $_SESSION['flash_error'] = 'Solo un administrador puede editar el uso real de materiales.';
@@ -1184,9 +1247,16 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-header bg-light border-bottom-0 p-4 d-flex justify-content-between align-items-center">
                         <div class="section-title">
-                            <i class="bi bi-box-seam-fill fs-4 me-2"></i> Productos Solicitados y Uso
+                            <i class="bi bi-box-seam-fill fs-4 me-2"></i> Productos
                         </div>
-                        <span class="badge bg-secondary rounded-pill px-3 py-2"><?php echo $items->num_rows; ?> Artículos</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary rounded-pill px-3 py-2"><?php echo $items->num_rows; ?> Artículos</span>
+                            <?php if (($req['status'] === 'pending' || $req['status'] === 'delivered') && ($req['agent_id'] == $sid || $canManage)): ?>
+                                <button type="button" class="btn btn-sm btn-danger fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductsModal">
+                                    <i class="bi bi-plus-lg me-1"></i> Agregar
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <ul class="list-group list-group-flush">
@@ -1228,6 +1298,83 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                     <?php endif; ?>
                 </div>
             </form>
+            
+            <?php if (($req['status'] === 'pending' || $req['status'] === 'delivered') && ($req['agent_id'] == $sid || $canManage)): ?>
+            <!-- Modal para agregar productos -->
+            <div class="modal fade" id="addProductsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-bottom-0 bg-light p-4">
+                            <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle text-danger me-2"></i>Agregar más productos</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form method="post" action="requisitions.php" id="add-products-form">
+                                <?php csrfField(); ?>
+                                <input type="hidden" name="do" value="add_items">
+                                <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
+                                
+                                <div id="add-products-container">
+                                    <div class="row g-2 mb-2 add-product-row align-items-center">
+                                        <div class="col-8 col-md-9">
+                                            <input type="text" name="products[]" class="form-control" placeholder="Nombre del producto o herramienta" required>
+                                        </div>
+                                        <div class="col-3 col-md-2">
+                                            <input type="number" name="quantities[]" class="form-control" value="1" min="1" required>
+                                        </div>
+                                        <div class="col-1 text-end">
+                                            <button type="button" class="btn btn-light text-danger w-100 p-0" style="height: 38px;" onclick="removeAddProductRow(this)" title="Eliminar" disabled><i class="bi bi-x-lg"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-light text-danger fw-bold px-4" onclick="addAnotherProductRow()">
+                                        <i class="bi bi-plus-lg me-1"></i> Otra fila
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer border-top-0 bg-light p-3">
+                            <button type="button" class="btn btn-outline-secondary fw-bold px-4" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-danger fw-bold px-4" onclick="document.getElementById('add-products-form').submit();">Agregar Productos</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                function addAnotherProductRow() {
+                    const container = document.getElementById('add-products-container');
+                    const row = document.createElement('div');
+                    row.className = 'row g-2 mb-2 add-product-row align-items-center';
+                    row.innerHTML = `
+                        <div class="col-8 col-md-9">
+                            <input type="text" name="products[]" class="form-control" placeholder="Nombre del producto o herramienta" required>
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <input type="number" name="quantities[]" class="form-control" value="1" min="1" required>
+                        </div>
+                        <div class="col-1 text-end">
+                            <button type="button" class="btn btn-light text-danger w-100 p-0" style="height: 38px;" onclick="removeAddProductRow(this)" title="Eliminar"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                    updateAddRemoveButtons();
+                }
+                function removeAddProductRow(btn) {
+                    btn.closest('.add-product-row').remove();
+                    updateAddRemoveButtons();
+                }
+                function updateAddRemoveButtons() {
+                    const rows = document.querySelectorAll('.add-product-row');
+                    const btns = document.querySelectorAll('.add-product-row .btn-light.text-danger');
+                    if (rows.length === 1) {
+                        btns[0].disabled = true;
+                    } else {
+                        btns.forEach(b => b.disabled = false);
+                    }
+                }
+            </script>
+            <?php endif; ?>
         </div>
 
         <!-- Right Column -->
@@ -1345,8 +1492,8 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                                                                     <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
                                                                     <input type="hidden" name="signature" id="signature-data">
                                                                     
-                                                                    <div class="border border-2 border-secondary rounded bg-white signature-wrapper shadow-sm" style="height: 280px; position: relative;">
-                                                                        <canvas id="signature-pad" style="width: 100%; height: 100%; cursor: crosshair; touch-action: none; position: absolute; top:0; left:0;"></canvas>
+                                                                    <div class="border border-2 border-secondary rounded signature-wrapper shadow-sm" style="height: 280px; position: relative;">
+                                                                        <canvas id="signature-pad" class="signature-canvas" style="width: 100%; height: 100%; cursor: crosshair; touch-action: none; position: absolute; top:0; left:0;"></canvas>
                                                                     </div>
                                                                 </form>
                                                             </div>
@@ -1357,6 +1504,10 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <style>
+                                                    body.dark-mode .signature-canvas { filter: invert(1); }
+                                                    body.dark-mode .signature-img { filter: invert(1); }
+                                                </style>
                                                 <script>
                                                     const canvas = document.getElementById('signature-pad');
                                                     const ctx = canvas.getContext('2d');
@@ -1370,7 +1521,7 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                                                         ctx.lineCap = 'round';
                                                         ctx.lineJoin = 'round';
                                                         ctx.lineWidth = 3;
-                                                        ctx.strokeStyle = '#0f172a';
+                                                        ctx.strokeStyle = '#000000';
                                                     }
                                                     
                                                     const sigModal = document.getElementById('signatureModal');
@@ -1445,8 +1596,8 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                                         <div class="w-100">
                                             <h6 class="fw-bold mb-0 text-dark">Firma Confirmada</h6>
                                             <p class="small text-muted mb-2"><?php echo date('d M Y, h:i A', strtotime($req['signed_at'])); ?></p>
-                                            <div class="bg-white border rounded-3 p-2 text-center mt-2 shadow-sm">
-                                                <img src="<?php echo html($req['agent_signature']); ?>" alt="Firma del agente" style="max-height: 80px; max-width: 100%;">
+                                            <div class="border rounded-3 p-2 text-center mt-2 shadow-sm signature-display-wrapper">
+                                                <img src="<?php echo html($req['agent_signature']); ?>" alt="Firma del agente" class="signature-img" style="max-height: 80px; max-width: 100%;">
                                             </div>
                                         </div>
                                     <?php endif; ?>

@@ -14,15 +14,7 @@ $staff = getCurrentUser();
 $currentRoute = 'audit';
 
 $eid = empresaId();
-$auditHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM audit_logs LIKE 'empresa_id'");
-        $auditHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $auditHasEmpresaId = false;
-    }
-}
+$auditHasEmpresaId = true; // audit_logs.empresa_id confirmado en schema
 
 $errors = [];
 $msg = '';

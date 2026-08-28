@@ -32,7 +32,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
             $preSelectedUser = $res ? $res->fetch_assoc() : null;
             if (!$preSelectedUser) {
                 $open_uid = 0;
-                $open_errors[] = 'El usuario solicitado no existe o no pertenece a esta empresa.';
+                $open_errors[] = 'El cliente solicitado no existe o no pertenece a esta empresa.';
             }
         }
     }
@@ -163,7 +163,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                             $rowPend = $stmtPend->get_result()->fetch_assoc();
                             $pendCount = (int) ($rowPend['cnt'] ?? 0);
                             if ($pendCount > 0) {
-                                $open_errors[] = 'Este usuario tiene firmas pendientes.';
+                                $open_errors[] = 'Este cliente tiene firmas pendientes.';
                             }
                         }
                     }
@@ -193,11 +193,11 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $stmtUserCheck->execute();
                     $resUserCheck = $stmtUserCheck->get_result();
                     if (!$resUserCheck || $resUserCheck->num_rows === 0) {
-                        $open_errors[] = 'El usuario seleccionado no existe o no pertenece a esta empresa.';
+                        $open_errors[] = 'El cliente seleccionado no existe o no pertenece a esta empresa.';
                     }
                 }
             } else {
-                $open_errors[] = 'Seleccione un usuario.';
+                $open_errors[] = 'Seleccione un cliente.';
             }
             if ($subject === '')
                 $open_errors[] = 'El asunto es obligatorio.';
@@ -227,7 +227,7 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $cntRow = $stmtCnt->get_result()->fetch_assoc();
                     $openCount = (int) ($cntRow['cnt'] ?? 0);
                     if ($openCount >= $maxOpenTicketsSetting) {
-                        $open_errors[] = 'Este usuario alcanzó el máximo de tickets abiertos.';
+                        $open_errors[] = 'Este cliente alcanzó el máximo de tickets abiertos.';
                     }
                 }
             }
@@ -343,7 +343,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                     $ticketNumberFormat = (string) getAppSetting('tickets.ticket_number_format', '######');
                     $ticket_number = $generateTicketNumberFromFormat($ticketNumberFormat);
                 }
-                error_log('[tickets] INSERT tickets via scp/modules/tickets.php open uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' staff_session=' . (string) ($_SESSION['staff_id'] ?? '') . ' user_id=' . (string) $user_id . ' dept_id=' . (string) $dept_id);
                 $hasTopicCol = dbColumnExists('tickets', 'topic_id');
                 $hasWalkinPhoneCol = dbColumnExists('tickets', 'walkin_phone');
                 $hasWalkinAddressCol = dbColumnExists('tickets', 'walkin_address');
@@ -623,13 +622,17 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     if ($open_user_query !== '') {
         $term = '%' . $open_user_query . '%';
         $stmt = $mysqli->prepare(
-            "SELECT id, firstname, lastname, email, phone
-             FROM users
-             WHERE empresa_id = ? AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR phone LIKE ?)
-             ORDER BY firstname, lastname
+            "SELECT u.id, u.firstname, u.lastname, u.email, u.phone
+             FROM users u
+             LEFT JOIN user_organizations uo ON u.id = uo.user_id
+             LEFT JOIN organizations o ON uo.organization_id = o.id
+             WHERE u.empresa_id = ? 
+               AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR u.company LIKE ? OR o.name LIKE ?)
+             GROUP BY u.id
+             ORDER BY u.firstname, u.lastname
              LIMIT 25"
         );
-        $stmt->bind_param('issss', $eid, $term, $term, $term, $term);
+        $stmt->bind_param('issssss', $eid, $term, $term, $term, $term, $term, $term);
         $stmt->execute();
         $open_user_results = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }

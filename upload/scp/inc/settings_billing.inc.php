@@ -3,17 +3,8 @@
 $eid = (int)($_SESSION['empresa_id'] ?? 0);
 if ($eid <= 0) $eid = 1;
 
-$hasEmpresas = false;
-$hasPagos = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $r1 = $mysqli->query("SHOW TABLES LIKE 'empresas'");
-        $hasEmpresas = ($r1 && $r1->num_rows > 0);
-        $r2 = $mysqli->query("SHOW TABLES LIKE 'pagos_empresas'");
-        $hasPagos = ($r2 && $r2->num_rows > 0);
-    } catch (Throwable $e) {
-    }
-}
+$hasEmpresas = true; // tabla empresas confirmada en schema
+$hasPagos = true;    // tabla pagos_empresas confirmada en schema
 
 $empresa = null;
 if ($hasEmpresas && isset($mysqli) && $mysqli) {

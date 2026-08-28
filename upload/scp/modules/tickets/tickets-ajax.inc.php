@@ -23,14 +23,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'user_search') {
     $like = '%' . $q . '%';
     $items = [];
     $stmtU = $mysqli->prepare(
-        "SELECT id, firstname, lastname, email\n"
-        . "FROM users\n"
-        . "WHERE empresa_id = ? AND (firstname LIKE ? OR lastname LIKE ? OR email LIKE ? OR CONCAT(firstname, ' ', lastname) LIKE ?)\n"
-        . "ORDER BY firstname, lastname\n"
+        "SELECT u.id, u.firstname, u.lastname, u.email\n"
+        . "FROM users u\n"
+        . "LEFT JOIN user_organizations uo ON u.id = uo.user_id\n"
+        . "LEFT JOIN organizations o ON uo.organization_id = o.id\n"
+        . "WHERE u.empresa_id = ? AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR CONCAT(u.firstname, ' ', u.lastname) LIKE ? OR u.company LIKE ? OR o.name LIKE ?)\n"
+        . "GROUP BY u.id\n"
+        . "ORDER BY u.firstname, u.lastname\n"
         . "LIMIT 20"
     );
     if ($stmtU) {
-        $stmtU->bind_param('issss', $eid, $like, $like, $like, $like);
+        $stmtU->bind_param('issssss', $eid, $like, $like, $like, $like, $like, $like);
         if ($stmtU->execute()) {
             $res = $stmtU->get_result();
             while ($res && ($u = $res->fetch_assoc())) {

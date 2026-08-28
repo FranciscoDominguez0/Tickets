@@ -36,25 +36,9 @@ if (isset($mysqli) && $mysqli) {
     }
 }
 
-$staffHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $staffHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $staffHasEmpresaId = false;
-    }
-}
+$staffHasEmpresaId = true; // staff.empresa_id confirmado en schema
+$hasNotifications = true;  // tabla notifications confirmada en schema
 
-$hasNotifications = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW TABLES LIKE 'notifications'");
-        $hasNotifications = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasNotifications = false;
-    }
-}
 
 $empresas = [];
 if ($hasEmpresas && isset($mysqli) && $mysqli) {

@@ -19,54 +19,15 @@ $flashError = (string)($_SESSION['flash_error'] ?? '');
 $flashMsg = (string)($_SESSION['flash_msg'] ?? '');
 unset($_SESSION['flash_error'], $_SESSION['flash_msg']);
 
-$deptHasEmpresa = false;
-$emailAccHasEmpresa = false;
-$staffHasEmpresa = false;
-$ticketsHasEmpresa = false;
+// Todas las columnas empresa_id confirmadas en schema: departments, email_accounts, staff, tickets
+// help_topics existe pero no tiene empresa_id — se filtra via JOIN a tickets
+$deptHasEmpresa = true;
+$emailAccHasEmpresa = true;
+$staffHasEmpresa = true;
+$ticketsHasEmpresa = true;
 $helpTopicsHasEmpresa = false;
-if (isset($mysqli) && $mysqli) {
-    $colD = $mysqli->query("SHOW COLUMNS FROM departments LIKE 'empresa_id'");
-    $deptHasEmpresa = ($colD && $colD->num_rows > 0);
 
-    $colE = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
-    $emailAccHasEmpresa = ($colE && $colE->num_rows > 0);
 
-    $colS = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-    $staffHasEmpresa = ($colS && $colS->num_rows > 0);
-
-    $colT = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'empresa_id'");
-    $ticketsHasEmpresa = ($colT && $colT->num_rows > 0);
-
-    $chkHT = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-    if ($chkHT && $chkHT->num_rows > 0) {
-        $colHT = $mysqli->query("SHOW COLUMNS FROM help_topics LIKE 'empresa_id'");
-        $helpTopicsHasEmpresa = ($colHT && $colHT->num_rows > 0);
-    }
-}
-
-$ensureEmailAccountsTable = function () use ($mysqli) {
-    if (!isset($mysqli) || !$mysqli) return false;
-    $sql = "CREATE TABLE IF NOT EXISTS email_accounts (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  email VARCHAR(255) NOT NULL,\n"
-        . "  name VARCHAR(255) NULL,\n"
-        . "  priority VARCHAR(32) NULL,\n"
-        . "  dept_id INT NULL,\n"
-        . "  is_default TINYINT(1) NOT NULL DEFAULT 0,\n"
-        . "  smtp_host VARCHAR(255) NULL,\n"
-        . "  smtp_port INT NULL,\n"
-        . "  smtp_secure VARCHAR(10) NULL,\n"
-        . "  smtp_user VARCHAR(255) NULL,\n"
-        . "  smtp_pass VARCHAR(255) NULL,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email (email),\n"
-        . "  KEY idx_default (is_default),\n"
-        . "  KEY idx_dept (dept_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool)$mysqli->query($sql);
-};
-$ensureEmailAccountsTable();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRF()) {
@@ -216,42 +177,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($action === 'delete') {
-            // Check if staff_departments table exists
-            $hasStaffDepartmentsTableDel = false;
-            if (isset($mysqli) && $mysqli) {
-                try {
-                    $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-                    $hasStaffDepartmentsTableDel = ($rt && $rt->num_rows > 0);
-                } catch (Throwable $e) {
-                    $hasStaffDepartmentsTableDel = false;
-                }
-            }
-            
-            if ($hasStaffDepartmentsTableDel) {
-                // New model: check staff_departments
-                $stmtCntSql = "SELECT COUNT(DISTINCT sd.staff_id) c FROM staff_departments sd";
-                if ($staffHasEmpresa) {
-                    $stmtCntSql .= " JOIN staff s ON s.id = sd.staff_id";
-                }
-                $stmtCntSql .= " WHERE sd.dept_id IN ($placeholders)";
-                if ($staffHasEmpresa) {
-                    $stmtCntSql .= " AND s.empresa_id = ?";
-                }
-            } else {
-                // Legacy model
-                $stmtCntSql = "SELECT COUNT(*) c FROM staff WHERE dept_id IN ($placeholders)";
-                if ($staffHasEmpresa) {
-                    $stmtCntSql .= " AND empresa_id = ?";
-                }
-            }
+            // staff_departments existe: verificar agentes asignados
+            $stmtCntSql = "SELECT COUNT(DISTINCT sd.staff_id) c FROM staff_departments sd JOIN staff s ON s.id = sd.staff_id WHERE sd.dept_id IN ($placeholders) AND s.empresa_id = ?";
+
             $stmtCnt = $mysqli->prepare($stmtCntSql);
             if ($stmtCnt) {
-                if ($staffHasEmpresa) {
-                    $bind = array_merge($ids, [(int)$eid]);
-                    $stmtCnt->bind_param($types . 'i', ...$bind);
-                } else {
-                    $stmtCnt->bind_param($types, ...$ids);
-                }
+                $bind = array_merge($ids, [(int)$eid]);
+                $stmtCnt->bind_param($types . 'i', ...$bind);
                 $stmtCnt->execute();
                 $row = $stmtCnt->get_result()->fetch_assoc();
                 if ((int)($row['c'] ?? 0) > 0) {
@@ -280,28 +212,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // Si existen temas de ayuda asociados a este departamento, bloquear con mensaje claro.
-            $hasTopics = false;
-            $rt = @$mysqli->query("SHOW TABLES LIKE 'help_topics'");
-            if ($rt && $rt->num_rows > 0) $hasTopics = true;
-            if ($hasTopics) {
-                $stmtCntHSql = "SELECT COUNT(*) c FROM help_topics WHERE dept_id IN ($placeholders)";
-                if ($helpTopicsHasEmpresa) $stmtCntHSql .= " AND empresa_id = ?";
-                $stmtCntH = $mysqli->prepare($stmtCntHSql);
-                if ($stmtCntH) {
-                    if ($helpTopicsHasEmpresa) {
-                        $bind = array_merge($ids, [(int)$eid]);
-                        $stmtCntH->bind_param($types . 'i', ...$bind);
-                    } else {
-                        $stmtCntH->bind_param($types, ...$ids);
-                    }
-                    $stmtCntH->execute();
-                    $row = $stmtCntH->get_result()->fetch_assoc();
-                    if ((int)($row['c'] ?? 0) > 0) {
-                        $_SESSION['flash_error'] = 'No se puede eliminar este departamento porque tiene temas (help topics) asociados. Reasigna esos temas a otro departamento antes de eliminar.';
-                        header('Location: departments.php');
-                        exit;
-                    }
+            // help_topics existe: verificar temas asociados
+            $stmtCntHSql = "SELECT COUNT(*) c FROM help_topics WHERE dept_id IN ($placeholders)";
+            $stmtCntH = $mysqli->prepare($stmtCntHSql);
+            if ($stmtCntH) {
+                $stmtCntH->bind_param($types, ...$ids);
+                $stmtCntH->execute();
+                $row = $stmtCntH->get_result()->fetch_assoc();
+                if ((int)($row['c'] ?? 0) > 0) {
+                    $_SESSION['flash_error'] = 'No se puede eliminar este departamento porque tiene temas (help topics) asociados. Reasigna esos temas a otro departamento antes de eliminar.';
+                    header('Location: departments.php');
+                    exit;
                 }
             }
 
@@ -370,29 +291,9 @@ $sql .= "        GROUP BY dept_id
     LEFT JOIN email_accounts ea ON ea.id = eam.email_id
 ";
 
-// Check if staff_departments table exists for proper JOIN
-$hasStaffDepartmentsTableDept = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-        $hasStaffDepartmentsTableDept = ($rt && $rt->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasStaffDepartmentsTableDept = false;
-    }
-}
-
-if ($hasStaffDepartmentsTableDept) {
-    $sql .= "    LEFT JOIN staff_departments sd ON sd.dept_id = d.id\n";
-    $sql .= "    LEFT JOIN staff s ON s.id = sd.staff_id";
-    if ($staffHasEmpresa) {
-        $sql .= " AND s.empresa_id = " . (int)$eid;
-    }
-} else {
-    $sql .= "    LEFT JOIN staff s ON s.dept_id = d.id";
-    if ($staffHasEmpresa) {
-        $sql .= " AND s.empresa_id = " . (int)$eid;
-    }
-}
+// staff_departments existe: usar JOIN
+$sql .= "    LEFT JOIN staff_departments sd ON sd.dept_id = d.id\n";
+$sql .= "    LEFT JOIN staff s ON s.id = sd.staff_id AND s.empresa_id = " . (int)$eid . "\n";
 $sql .= "
     LEFT JOIN tickets t ON t.dept_id = d.id";
 if ($ticketsHasEmpresa) {

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once '../../config.php';
 require_once '../../includes/helpers.php';
 require_once '../../includes/Auth.php';
@@ -16,16 +16,7 @@ $currentRoute = 'emails';
 $emailTab = 'test';
 
 $eid = empresaId();
-$emailAccountsHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM email_accounts LIKE 'empresa_id'");
-        $emailAccountsHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $emailAccountsHasEmpresaId = false;
-    }
-}
-
+$emailAccountsHasEmpresaId = true; // email_accounts.empresa_id confirmado en schema
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);
 if ((string)($_SESSION['sidebar_panel_mode'] ?? '') !== 'admin') {
@@ -37,45 +28,22 @@ if (!isset($_SESSION[$menuKey])) {
     $collapseSettingsMenu = true;
 }
 
-// Asegurar tabla de cuentas
-if (isset($mysqli) && $mysqli) {
-    $mysqli->query("CREATE TABLE IF NOT EXISTS email_accounts (\n"
-        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
-        . "  email VARCHAR(255) NOT NULL,\n"
-        . "  name VARCHAR(255) NULL,\n"
-        . "  priority VARCHAR(32) NULL,\n"
-        . "  dept_id INT NULL,\n"
-        . "  is_default TINYINT(1) NOT NULL DEFAULT 0,\n"
-        . "  smtp_host VARCHAR(255) NULL,\n"
-        . "  smtp_port INT NULL,\n"
-        . "  smtp_secure VARCHAR(10) NULL,\n"
-        . "  smtp_user VARCHAR(255) NULL,\n"
-        . "  smtp_pass VARCHAR(255) NULL,\n"
-        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
-        . "  updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
-        . "  KEY idx_email (email),\n"
-        . "  KEY idx_default (is_default),\n"
-        . "  KEY idx_dept (dept_id)\n"
-        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-}
-
 $msg = '';
 $error = '';
 
 $accounts = [];
 $defaultAccount = null;
 if (isset($mysqli) && $mysqli) {
-    $sqlAcc = 'SELECT * FROM email_accounts';
-    if ($emailAccountsHasEmpresaId) {
-        $sqlAcc .= ' WHERE empresa_id = ' . (int)$eid;
-    }
-    $sqlAcc .= ' ORDER BY is_default DESC, id ASC';
-    $res = $mysqli->query($sqlAcc);
-    if ($res) {
-        while ($row = $res->fetch_assoc()) {
-            $accounts[] = $row;
-            if ((int)($row['is_default'] ?? 0) === 1 && !$defaultAccount) {
-                $defaultAccount = $row;
+    $stmtAcc = $mysqli->prepare('SELECT * FROM email_accounts WHERE empresa_id = ? ORDER BY is_default DESC, id ASC');
+    if ($stmtAcc) {
+        $stmtAcc->bind_param('i', $eid);
+        if ($stmtAcc->execute()) {
+            $res = $stmtAcc->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $accounts[] = $row;
+                if ((int)($row['is_default'] ?? 0) === 1 && !$defaultAccount) {
+                    $defaultAccount = $row;
+                }
             }
         }
     }

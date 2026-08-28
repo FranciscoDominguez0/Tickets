@@ -1627,7 +1627,6 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 } else {
                     requireRolePermission('ticket.reply', 'tickets.php?id=' . $tid);
                 }
-                error_log('[tickets] reply POST scp/modules/tickets.php uri=' . ($_SERVER['REQUEST_URI'] ?? '') . ' tid=' . (string)$tid . ' staff_session=' . (string)($_SESSION['staff_id'] ?? '') . ' internal=' . ($is_internal ? '1' : '0'));
                 $new_status_id = isset($_POST['status_id']) && is_numeric($_POST['status_id']) ? (int) $_POST['status_id'] : (int) $ticketView['status_id'];
                 $signature_mode = trim($_POST['signature'] ?? 'none');
                 $hasAttachments = !empty($_FILES['attachments']['name'][0]);
@@ -1983,7 +1982,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             $entryReadMap = getThreadEntryReadStatusMap(
                 $mysqli,
                 array_map(static fn($e) => (int)($e['id'] ?? 0), $ticketView['thread_entries']),
-                $eid
+                (int)$ticketView['empresa_id']
             );
         }
 

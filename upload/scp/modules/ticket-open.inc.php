@@ -371,7 +371,7 @@ body.dark-mode .text-muted {
         <div class="open-section">
             <div class="section-title"><i class="bi bi-person"></i> Cliente</div>
             <div class="mb-0">
-                <label class="form-label">Usuario solicitante <span class="required">*</span></label>
+                <label class="form-label">Cliente solicitante <span class="required">*</span></label>
                 <div class="user-select-card">
                     <div class="user-avatar" id="open_user_avatar"><?php echo $walkinSelected ? 'ND' : html($initials); ?></div>
                     <div class="user-info" id="open_user_display">
@@ -383,7 +383,7 @@ body.dark-mode .text-muted {
                                 <div class="user-email"><?php echo html($userEmail); ?></div>
                             <?php endif; ?>
                         <?php else: ?>
-                            <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un usuario</div>
+                            <div class="user-name" style="color:#94a3b8; font-weight:500;">Seleccione un cliente</div>
                         <?php endif; ?>
                     </div>
                     <div class="d-flex flex-wrap gap-2 mt-2">
@@ -391,7 +391,7 @@ body.dark-mode .text-muted {
                             <i class="bi bi-search text-danger"></i> Buscar Cliente
                         </button>
                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalQuickCreateClient" style="border-radius: 10px; font-weight: 600;">
-                            <i class="bi bi-person-plus-fill"></i> Crear Usuario
+                            <i class="bi bi-person-plus-fill"></i> Crear Cliente
                         </button>
                     </div>
                 </div>
@@ -646,12 +646,12 @@ body.dark-mode .text-muted {
         }
       </style>
       <div class="modal-header" style="border-bottom: 1px solid #f1f5f9;">
-        <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-danger"></i>Buscar usuario</h5>
+        <h5 class="modal-title" id="modalUserSearchLabel" style="font-weight: 700; color: #0f172a;"><i class="bi bi-search me-2 text-danger"></i>Buscar cliente</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
         <div class="alert alert-info py-2 mb-3 text-center" style="border-radius: 10px; font-size: 0.9rem;">
-            <i class="bi bi-info-circle me-1"></i> Busca usuarios por email, teléfono o nombre.
+            <i class="bi bi-info-circle me-1"></i> Busca clientes por email, teléfono, nombre o empresa.
         </div>
 
         <form method="get" action="tickets.php" class="mb-3" id="openUserSearchForm" onsubmit="event.preventDefault();">
@@ -665,7 +665,7 @@ body.dark-mode .text-muted {
         <div id="user_search_results_container">
             <!-- Los resultados se cargarán aquí dinámicamente -->
             <?php if ($open_user_query !== '' && empty($open_user_results)): ?>
-            <div class="text-muted text-center py-3"><i class="bi bi-inbox" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No se encontraron usuarios.</div>
+            <div class="text-muted text-center py-3"><i class="bi bi-inbox" style="font-size: 1.5rem; opacity: 0.5;"></i><br>No se encontraron clientes.</div>
             <?php endif; ?>
 
             <?php if (!empty($open_user_results)): ?>
@@ -725,7 +725,7 @@ body.dark-mode .text-muted {
                     .then(r => r.json())
                     .then(data => {
                         if (!data.ok || !data.items || data.items.length === 0) {
-                            container.innerHTML = '<div class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i><br><div class="mt-2" style="font-weight: 500;">No se encontraron usuarios que coincidan con "'+q.replace(/</g, "&lt;").replace(/>/g, "&gt;")+'".</div></div>';
+                            container.innerHTML = '<div class="text-muted text-center py-4"><i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i><br><div class="mt-2" style="font-weight: 500;">No se encontraron clientes que coincidan con "'+q.replace(/</g, "&lt;").replace(/>/g, "&gt;")+'".</div></div>';
                             return;
                         }
 
@@ -749,7 +749,7 @@ body.dark-mode .text-muted {
                         container.innerHTML = html;
                     })
                     .catch(err => {
-                        container.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error al buscar usuarios.</div>';
+                        container.innerHTML = '<div class="text-danger text-center py-3"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error al buscar clientes.</div>';
                     });
                 }, 400); // 400ms debounce
             });
@@ -768,7 +768,7 @@ body.dark-mode .text-muted {
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="border: none; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
       <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
-        <h5 class="modal-title" id="modalQuickCreateClientLabel" style="font-weight: 700; font-size: 1.15rem;"><i class="bi bi-person-plus-fill text-danger me-2"></i>Crear Usuario</h5>
+        <h5 class="modal-title" id="modalQuickCreateClientLabel" style="font-weight: 700; font-size: 1.15rem;"><i class="bi bi-person-plus-fill text-danger me-2"></i>Crear Cliente</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" style="padding: 24px;">

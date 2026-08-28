@@ -170,49 +170,11 @@ if ($type === 'agent') {
     exit;
 }
 
-$topicsTable = null;
-$topicsNameColumn = null;
-$topicsIdColumn = null;
-$topicsKeyColumn = null;
-
-$t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-if ($t && $t->num_rows > 0) {
-    $topicsTable = 'help_topics';
-    $topicsIdColumn = 'id';
-    $topicsNameColumn = 'name';
-}
-if (!$topicsTable) {
-    $t = $mysqli->query("SHOW TABLES LIKE 'helptopics'");
-    if ($t && $t->num_rows > 0) {
-        $topicsTable = 'helptopics';
-        $topicsIdColumn = 'id';
-        $topicsNameColumn = 'name';
-    }
-}
-if ($topicsTable) {
-    $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-    if ($c && $c->num_rows > 0) {
-        $topicsKeyColumn = 'topic_id';
-    }
-    if (!$topicsKeyColumn) {
-        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'help_topic_id'");
-        if ($c && $c->num_rows > 0) {
-            $topicsKeyColumn = 'help_topic_id';
-        }
-    }
-    if (!$topicsKeyColumn) {
-        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'helptopic_id'");
-        if ($c && $c->num_rows > 0) {
-            $topicsKeyColumn = 'helptopic_id';
-        }
-    }
-}
-
-if (!$topicsTable || !$topicsKeyColumn) {
-    http_response_code(400);
-    echo 'No hay soporte de Temas en la base de datos.';
-    exit;
-}
+// help_topics y tickets.topic_id confirmados en schema
+$topicsTable = 'help_topics';
+$topicsNameColumn = 'name';
+$topicsIdColumn = 'id';
+$topicsKeyColumn = 'topic_id';
 
 $sql = "SELECT 
   ht.$topicsNameColumn AS tema,

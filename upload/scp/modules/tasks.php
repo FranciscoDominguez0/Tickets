@@ -36,16 +36,11 @@ $eid = empresaId();
 $task = null;
 $errors = [];
 $success = false;
-$tasksHasDept = false;
+$tasksHasDept = true; // columna dept_id existe en tasks
 
 if (isset($_SESSION['task_success_flash']) && is_string($_SESSION['task_success_flash']) && $_SESSION['task_success_flash'] !== '') {
     $success = (string)$_SESSION['task_success_flash'];
     unset($_SESSION['task_success_flash']);
-}
-
-$chk = $mysqli->query("SHOW COLUMNS FROM tasks LIKE 'dept_id'");
-if ($chk && $chk->num_rows > 0) {
-    $tasksHasDept = true;
 }
 
 $departments = [];
@@ -61,30 +56,14 @@ if ($stmtDept) {
 }
 
 $agentsByDept = [];
-// Check if staff_departments table exists
-$hasStaffDepartmentsTable = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-        $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-    } catch (Throwable $e) {
-        $hasStaffDepartmentsTable = false;
-    }
-}
-
-if ($hasStaffDepartmentsTable) {
-    // New model: staff can belong to multiple departments
-    $stmtAgents = $mysqli->prepare(
-        "SELECT DISTINCT s.id, CONCAT(s.firstname, ' ', s.lastname) AS name, sd.dept_id, s.firstname, s.lastname
-         FROM staff s 
-         JOIN staff_departments sd ON sd.staff_id = s.id 
-         WHERE s.empresa_id = ? AND s.is_active = 1 AND s.role = 'agent' 
-         ORDER BY s.firstname, s.lastname"
-    );
-} else {
-    // Legacy model
-    $stmtAgents = $mysqli->prepare("SELECT id, CONCAT(firstname, ' ', lastname) AS name, dept_id FROM staff WHERE empresa_id = ? AND is_active = 1 AND role = 'agent' ORDER BY firstname, lastname");
-}
+// staff_departments existe: staff puede pertenecer a múltiples departamentos
+$stmtAgents = $mysqli->prepare(
+    "SELECT DISTINCT s.id, CONCAT(s.firstname, ' ', s.lastname) AS name, sd.dept_id, s.firstname, s.lastname
+     FROM staff s
+     JOIN staff_departments sd ON sd.staff_id = s.id
+     WHERE s.empresa_id = ? AND s.is_active = 1 AND s.role = 'agent'
+     ORDER BY s.firstname, s.lastname"
+);
 
 if ($stmtAgents) {
     $stmtAgents->bind_param('i', $eid);

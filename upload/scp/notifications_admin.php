@@ -15,36 +15,12 @@ $currentRoute = 'notifications_admin';
 
 $eid = empresaId();
 
-// Asegurar tabla de destinatarios
-if (isset($mysqli) && $mysqli) {
-    ensureNotificationRecipientsTable();
-}
-
-// Detectar si staff tiene empresa_id (necesario para filtrar candidatos)
-$staffHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM staff LIKE 'empresa_id'");
-        $staffHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $staffHasEmpresaId = false;
-    }
-}
-
 // Candidatos de destinatarios (staff activos con email válido, filtrados por empresa)
 $notificationCandidates = [];
 if (isset($mysqli) && $mysqli) {
-    $sqlCandidates = "SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1";
-    if ($staffHasEmpresaId) {
-        $sqlCandidates .= ' AND empresa_id = ?';
-    }
-    $sqlCandidates .= ' ORDER BY firstname ASC, lastname ASC, email ASC';
-
-    $stmtC = $mysqli->prepare($sqlCandidates);
+    $stmtC = $mysqli->prepare("SELECT id, firstname, lastname, email FROM staff WHERE is_active = 1 AND empresa_id = ? ORDER BY firstname ASC, lastname ASC, email ASC");
     if ($stmtC) {
-        if ($staffHasEmpresaId) {
-            $stmtC->bind_param('i', $eid);
-        }
+        $stmtC->bind_param('i', $eid);
         if ($stmtC->execute()) {
             $rsC = $stmtC->get_result();
             while ($rsC && ($r = $rsC->fetch_assoc())) {
@@ -71,7 +47,7 @@ if (isset($mysqli) && $mysqli && ensureNotificationRecipientsTable()) {
         }
     }
 }
-// $staffHasEmpresaId ya se detectó arriba
+$staffHasEmpresaId = dbColumnExists('staff', 'empresa_id');
 
 $collapseSettingsMenu = false;
 $menuKey = 'admin_sidebar_menu_seen_' . (int)($_SESSION['staff_id'] ?? 0);

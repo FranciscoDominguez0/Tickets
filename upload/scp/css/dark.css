@@ -18,6 +18,10 @@ body.dark-mode {
     color: #e5e5e5 !important;
 }
 
+body.dark-mode .signature-canvas { filter: invert(1); }
+body.dark-mode .signature-img { filter: invert(1); }
+body.dark-mode .signature-display-wrapper { border-color: #262626 !important; background: #0a0a0a !important; }
+
 /* sidebar: sin cambios en modo oscuro (queda igual) */
 
 /* === MAIN SHELL / CONTAINER === */

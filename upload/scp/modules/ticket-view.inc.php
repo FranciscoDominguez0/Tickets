@@ -654,22 +654,10 @@ body.dark-mode .btn-requisition-view:hover {
                     $empresaId = function_exists('empresaId') ? (int)empresaId() : (int)($_SESSION['empresa_id'] ?? 0);
                     $st = null;
 
-                    $hasStaffDepartmentsTable = false;
-                    if (isset($mysqli) && $mysqli) {
-                        try {
-                            $rt = $mysqli->query("SHOW TABLES LIKE 'staff_departments'");
-                            $hasStaffDepartmentsTable = ($rt && $rt->num_rows > 0);
-                        } catch (Throwable $e) {}
-                    }
-
+                    // staff_departments confirmado en schema
                     if ($tdept > 0) {
-                        if ($hasStaffDepartmentsTable) {
-                            $stmtSt = $mysqli->prepare("SELECT DISTINCT s.id, s.firstname, s.lastname FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? ORDER BY s.firstname, s.lastname");
-                            if ($stmtSt) { $stmtSt->bind_param('ii', $empresaId, $tdept); $stmtSt->execute(); $st = $stmtSt->get_result(); }
-                        } else {
-                            $stmtSt = $mysqli->prepare("SELECT id, firstname, lastname FROM staff WHERE empresa_id = ? AND is_active = 1 AND (dept_id = ? OR dept_id = ?) ORDER BY firstname, lastname");
-                            if ($stmtSt) { $stmtSt->bind_param('iii', $empresaId, $tdept, $gd); $stmtSt->execute(); $st = $stmtSt->get_result(); }
-                        }
+                        $stmtSt = $mysqli->prepare("SELECT DISTINCT s.id, s.firstname, s.lastname FROM staff s JOIN staff_departments sd ON sd.staff_id = s.id WHERE s.empresa_id = ? AND s.is_active = 1 AND sd.dept_id = ? ORDER BY s.firstname, s.lastname");
+                        if ($stmtSt) { $stmtSt->bind_param('ii', $empresaId, $tdept); $stmtSt->execute(); $st = $stmtSt->get_result(); }
                     } else {
                         $stmtSt = $mysqli->prepare("SELECT id, firstname, lastname FROM staff WHERE empresa_id = ? AND is_active = 1 ORDER BY firstname, lastname");
                         if ($stmtSt) { $stmtSt->bind_param('i', $empresaId); $stmtSt->execute(); $st = $stmtSt->get_result(); }
@@ -3110,7 +3098,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.beginPath();
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = '#111827';
+        ctx.strokeStyle = '#000000';
         ctx.lineWidth = 2.4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';

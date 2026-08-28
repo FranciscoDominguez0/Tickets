@@ -22,16 +22,7 @@ $action = $_GET['action'] ?? '';
 // Estados activos en los que se debe trackear al agente (En camino = 2, En proceso = 3)
 $statusIdsTrack = [2, 3];
 
-// Asegurar tabla staff_locations con UNIQUE KEY
-$mysqli->query("CREATE TABLE IF NOT EXISTS staff_locations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    staff_id INT NOT NULL,
-    lat DECIMAL(10, 8) NOT NULL,
-    lng DECIMAL(11, 8) NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_staff (staff_id),
-    KEY idx_updated (updated_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+// staff_locations confirmada en schema
 
 if ($action === 'update') {
     $lat = (float)($_POST['lat'] ?? 0);

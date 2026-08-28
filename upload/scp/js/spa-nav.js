@@ -17,7 +17,42 @@
     var lastAssetsHtml = '';
     var sidebar = document.querySelector('.sidebar');
 
-    // Estilos ya presentes en la página (carga completa inicial)
+    // Barra de progreso de navegación
+    var navLoader = null;
+    function showNavLoader() {
+        if (navLoader) return;
+        navLoader = document.createElement('div');
+        navLoader.id = 'scp-nav-loader';
+        navLoader.style.cssText = [
+            'position:fixed',
+            'top:0',
+            'left:0',
+            'width:0%',
+            'height:3px',
+            'background:linear-gradient(90deg,#ef4444,#f87171)',
+            'z-index:9999',
+            'transition:width .3s ease',
+            'border-radius:0 2px 2px 0',
+            'box-shadow:0 0 8px rgba(239,68,68,.6)'
+        ].join(';');
+        document.body.appendChild(navLoader);
+        // Animar a 70% rapidamente, la barra llega al 100% cuando termina
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                if (navLoader) navLoader.style.width = '70%';
+            });
+        });
+    }
+    function hideNavLoader() {
+        if (!navLoader) return;
+        navLoader.style.transition = 'width .15s ease, opacity .2s ease .1s';
+        navLoader.style.width = '100%';
+        navLoader.style.opacity = '0';
+        var el = navLoader;
+        navLoader = null;
+        setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }
+
     document.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
         loadedStyles[resolveUrl(l.getAttribute('href'))] = true;
     });
@@ -232,6 +267,7 @@
     function navigate(url, fromPop) {
         if (navInFlight) return;
         navInFlight = true;
+        showNavLoader();
 
         fetch(url, {
             headers: {
@@ -250,11 +286,12 @@
             if (!data || !data.ok) throw new Error('bad-response');
             lastAssetsHtml = data.assets || '';
             // Inyectar los estilos de la ruta ANTES del contenido: el HTML nuevo
-            // se muestra solo cuando su CSS ya está aplicado (sin flash feo).
+            // se muestra solo cuando su CSS ya esté aplicado (sin flash feo).
+            // Timeout reducido a 800ms: CSS locales cargan en <100ms en red local.
             var pendingStyles = injectStyles(lastAssetsHtml);
-            mainContent.style.transition = 'opacity .15s ease';
-            mainContent.style.opacity = '0.45';
-            return waitForStyles(pendingStyles, 2000).then(function () {
+            mainContent.style.transition = 'opacity .12s ease';
+            mainContent.style.opacity = '0.35';
+            return waitForStyles(pendingStyles, 800).then(function () {
                 mainContent.innerHTML = data.html || '';
                 mainContent.style.opacity = '';
                 return loadExternalScripts().then(function () {
@@ -263,6 +300,7 @@
             });
         })
         .then(function () {
+            hideNavLoader();
             setActiveSidebar(url);
             if (!fromPop) {
                 try { history.pushState({ scpUrl: url }, '', url); } catch (e) {}
@@ -278,6 +316,7 @@
             navInFlight = false;
         })
         .catch(function () {
+            hideNavLoader();
             mainContent.style.opacity = '';
             navInFlight = false;
             // Fallback seguro: navegación completa (mismo comportamiento de siempre)

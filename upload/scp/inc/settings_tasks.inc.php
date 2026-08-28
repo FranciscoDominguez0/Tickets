@@ -20,35 +20,21 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $eid = empresaId();
-$sequencesHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM sequences LIKE 'empresa_id'");
-        $sequencesHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $sequencesHasEmpresaId = false;
-    }
-}
-
+// sequences y sequences.empresa_id confirmados en schema
 $sequences = [];
-$hasSequences = false;
 if (isset($mysqli) && $mysqli) {
-    $chkSeq = $mysqli->query("SHOW TABLES LIKE 'sequences'");
-    $hasSequences = $chkSeq && $chkSeq->num_rows > 0;
-    if ($hasSequences) {
-        $sqlSeq = 'SELECT id, name, next, increment, padding FROM sequences';
-        if ($sequencesHasEmpresaId) {
-            $sqlSeq .= ' WHERE empresa_id = ' . (int)$eid;
-        }
-        $sqlSeq .= ' ORDER BY id';
-        $res = $mysqli->query($sqlSeq);
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
+    $res = $mysqli->prepare('SELECT id, name, next, increment, padding FROM sequences WHERE empresa_id = ? ORDER BY id');
+    if ($res) {
+        $res->bind_param('i', $eid);
+        if ($res->execute()) {
+            $r = $res->get_result();
+            while ($row = $r->fetch_assoc()) {
                 $sequences[] = $row;
             }
         }
     }
 }
+$hasSequences = !empty($sequences);
 
 if ($_POST) {
     if (!validateCSRF()) {

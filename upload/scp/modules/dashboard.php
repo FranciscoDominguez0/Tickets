@@ -142,36 +142,23 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
         $topicsKeyColumn = null;
         $topicsNameColumn = null;
         $topicsIdColumn = null;
-        $t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-        if ($t && $t->num_rows > 0) {
+        // Usar dbTableExists / dbColumnExists con caché de sesión (300s)
+        if (dbTableExists('help_topics')) {
             $topicsTable = 'help_topics';
             $topicsIdColumn = 'id';
             $topicsNameColumn = 'name';
-        }
-        if (!$topicsTable) {
-            $t = $mysqli->query("SHOW TABLES LIKE 'helptopics'");
-            if ($t && $t->num_rows > 0) {
-                $topicsTable = 'helptopics';
-                $topicsIdColumn = 'id';
-                $topicsNameColumn = 'name';
-            }
+        } elseif (dbTableExists('helptopics')) {
+            $topicsTable = 'helptopics';
+            $topicsIdColumn = 'id';
+            $topicsNameColumn = 'name';
         }
         if ($topicsTable) {
-            $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-            if ($c && $c->num_rows > 0) {
+            if (dbColumnExists('tickets', 'topic_id')) {
                 $topicsKeyColumn = 'topic_id';
-            }
-            if (!$topicsKeyColumn) {
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'help_topic_id'");
-                if ($c && $c->num_rows > 0) {
-                    $topicsKeyColumn = 'help_topic_id';
-                }
-            }
-            if (!$topicsKeyColumn) {
-                $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'helptopic_id'");
-                if ($c && $c->num_rows > 0) {
-                    $topicsKeyColumn = 'helptopic_id';
-                }
+            } elseif (dbColumnExists('tickets', 'help_topic_id')) {
+                $topicsKeyColumn = 'help_topic_id';
+            } elseif (dbColumnExists('tickets', 'helptopic_id')) {
+                $topicsKeyColumn = 'helptopic_id';
             }
         }
 
@@ -277,9 +264,7 @@ $sqlCreated .= "
     ORDER BY DATE(created)
 ";
 $stmt = $mysqli->prepare($sqlCreated);
-if (!$stmt) {
-    error_log("Error preparing created query: " . $mysqli->error);
-} else {
+if ($stmt) {
     if (!$canViewAll) {
         $stmt->bind_param('issi', $eid, $start, $end, $currentStaffId);
     } else {
@@ -291,9 +276,9 @@ if (!$stmt) {
     while ($row = $createdResult->fetch_assoc()) {
         $createdByDay[$row['day']] = (int) $row['total'];
     }
+} else {
+    $createdByDay = [];
 }
-// Debug: verificar datos obtenidos
-error_log("Created tickets by day: " . print_r($createdByDay, true));
 
 // Tickets cerrados por día
 $statusCerradoId = null;
@@ -319,9 +304,7 @@ $sqlClosed .= "
     ORDER BY DATE(closed)
 ";
 $stmt = $mysqli->prepare($sqlClosed);
-if (!$stmt) {
-    error_log("Error preparing closed query: " . $mysqli->error);
-} else {
+if ($stmt) {
     if (!$canViewAll) {
         $stmt->bind_param('issii', $eid, $start, $end, $statusCerradoId, $currentStaffId);
     } else {
@@ -333,8 +316,8 @@ if (!$stmt) {
     while ($row = $closedResult->fetch_assoc()) {
         $closedByDay[$row['day']] = (int) $row['total'];
     }
-    // Debug: verificar datos obtenidos
-    error_log("Closed tickets by day: " . print_r($closedByDay, true));
+} else {
+    $closedByDay = [];
 }
 
 // Tickets "deleted" - Simulamos con tickets que fueron cerrados y luego "eliminados"
@@ -357,10 +340,7 @@ if ($statusCerradoId) {
         ORDER BY DATE(closed)
     ";
     $stmt = $mysqli->prepare($sqlDeleted);
-    if (!$stmt) {
-        error_log("Error preparing deleted query: " . $mysqli->error);
-        $deletedByDay = [];
-    } else {
+    if ($stmt) {
         if (!$canViewAll) {
             $stmt->bind_param('issii', $eid, $start, $end, $statusCerradoId, $currentStaffId);
         } else {
@@ -372,8 +352,8 @@ if ($statusCerradoId) {
         while ($row = $deletedResult->fetch_assoc()) {
             $deletedByDay[$row['day']] = (int) $row['total'];
         }
-        // Debug: verificar datos obtenidos
-        error_log("Deleted tickets by day: " . print_r($deletedByDay, true));
+    } else {
+        $deletedByDay = [];
     }
 } else {
     $deletedByDay = [];
@@ -433,31 +413,31 @@ $events = ['created', 'closed', 'deleted'];
 // ESTADÍSTICAS POR DEPARTAMENTO
 // ============================================================================
 
+// Guard: si no se encontró el status "Cerrado", usar 0 para evitar SQL inválido
+$statusCerradoId = (int)($statusCerradoId ?? 0);
+
+// Subconsulta precalculada para tiempo_respuesta: evita N+1 correlacionadas
+$firstReplySubquery = "(SELECT te.created FROM threads th JOIN thread_entries te ON te.thread_id = th.id WHERE th.ticket_id = t.id AND te.staff_id IS NOT NULL AND te.is_internal = 0 ORDER BY te.created ASC LIMIT 1)";
+
 $sqlStats = "
     SELECT 
         d.id,
         d.name as departamento,
         COUNT(t.id) as total_tickets,
-        SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) as abierto,
+        SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) as abierto,
         SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) as asignado,
-        SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) 
-            AND t.closed IS NOT NULL 
-            AND t.closed < NOW() 
+        SUM(CASE WHEN t.status_id != {$statusCerradoId}
+            AND t.closed IS NULL
             AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) as atrasado,
-        SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) as cerrado,
+        SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) as cerrado,
         0 as reabierto,
-        SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) 
+        SUM(CASE WHEN t.status_id = {$statusCerradoId}
             AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) as borrado,
-        AVG(CASE WHEN t.closed IS NOT NULL 
-            THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) 
+        AVG(CASE WHEN t.closed IS NOT NULL
+            THEN TIMESTAMPDIFF(HOUR, t.created, t.closed)
             ELSE NULL END) as tiempo_servicio,
-        AVG(CASE WHEN t.staff_id IS NOT NULL 
-            THEN TIMESTAMPDIFF(HOUR, t.created, 
-                (SELECT MIN(created) FROM thread_entries WHERE thread_id = 
-                    (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) 
-                    AND staff_id IS NOT NULL 
-                    AND is_internal = 0 
-                    LIMIT 1))
+        AVG(CASE WHEN t.staff_id IS NOT NULL
+            THEN TIMESTAMPDIFF(HOUR, t.created, {$firstReplySubquery})
             ELSE NULL END) as tiempo_respuesta
     FROM departments d
     LEFT JOIN tickets t ON d.id = t.dept_id 
@@ -496,36 +476,23 @@ $topicsKeyColumn = null;
 $topicsNameColumn = null;
 $topicsIdColumn = null;
 
-$t = $mysqli->query("SHOW TABLES LIKE 'help_topics'");
-if ($t && $t->num_rows > 0) {
+// Usar dbTableExists / dbColumnExists: tienen caché de sesión (300s), evitan SHOW TABLES en cada petición
+if (dbTableExists('help_topics')) {
     $topicsTable = 'help_topics';
     $topicsIdColumn = 'id';
     $topicsNameColumn = 'name';
-}
-if (!$topicsTable) {
-    $t = $mysqli->query("SHOW TABLES LIKE 'helptopics'");
-    if ($t && $t->num_rows > 0) {
-        $topicsTable = 'helptopics';
-        $topicsIdColumn = 'id';
-        $topicsNameColumn = 'name';
-    }
+} elseif (dbTableExists('helptopics')) {
+    $topicsTable = 'helptopics';
+    $topicsIdColumn = 'id';
+    $topicsNameColumn = 'name';
 }
 if ($topicsTable) {
-    $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'topic_id'");
-    if ($c && $c->num_rows > 0) {
+    if (dbColumnExists('tickets', 'topic_id')) {
         $topicsKeyColumn = 'topic_id';
-    }
-    if (!$topicsKeyColumn) {
-        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'help_topic_id'");
-        if ($c && $c->num_rows > 0) {
-            $topicsKeyColumn = 'help_topic_id';
-        }
-    }
-    if (!$topicsKeyColumn) {
-        $c = $mysqli->query("SHOW COLUMNS FROM tickets LIKE 'helptopic_id'");
-        if ($c && $c->num_rows > 0) {
-            $topicsKeyColumn = 'helptopic_id';
-        }
+    } elseif (dbColumnExists('tickets', 'help_topic_id')) {
+        $topicsKeyColumn = 'help_topic_id';
+    } elseif (dbColumnExists('tickets', 'helptopic_id')) {
+        $topicsKeyColumn = 'helptopic_id';
     }
 }
 
@@ -534,14 +501,14 @@ if ($topicsTable && $topicsKeyColumn) {
     $sqlTopics = "SELECT 
       ht.$topicsNameColumn AS tema,
       COUNT(t.id) AS total_tickets,
-      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+      SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) AS abierto,
       SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
-      SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
-      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+      SUM(CASE WHEN t.status_id != {$statusCerradoId} AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+      SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) AS cerrado,
       0 AS reabierto,
-      SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+      SUM(CASE WHEN t.status_id = {$statusCerradoId} AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
       AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
-      AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+      AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, {$firstReplySubquery}) ELSE NULL END) AS tiempo_respuesta
     FROM $topicsTable ht
     LEFT JOIN tickets t ON t.$topicsKeyColumn = ht.$topicsIdColumn AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
 ";
@@ -569,14 +536,14 @@ $sqlAgents = "SELECT
   s.id,
   CONCAT(TRIM(s.firstname), ' ', TRIM(s.lastname)) AS agente,
   COUNT(t.id) AS total_tickets,
-  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Abierto' LIMIT 1) THEN 1 ELSE 0 END) AS abierto,
+  SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) AS abierto,
   SUM(CASE WHEN t.staff_id IS NOT NULL THEN 1 ELSE 0 END) AS asignado,
-  SUM(CASE WHEN t.status_id != (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
-  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) THEN 1 ELSE 0 END) AS cerrado,
+  SUM(CASE WHEN t.status_id != {$statusCerradoId} AND t.closed IS NULL AND t.updated < DATE_ADD(NOW(), INTERVAL -1 DAY) THEN 1 ELSE 0 END) AS atrasado,
+  SUM(CASE WHEN t.status_id = {$statusCerradoId} THEN 1 ELSE 0 END) AS cerrado,
   0 AS reabierto,
-  SUM(CASE WHEN t.status_id = (SELECT id FROM ticket_status WHERE name = 'Cerrado' LIMIT 1) AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
+  SUM(CASE WHEN t.status_id = {$statusCerradoId} AND TIMESTAMPDIFF(HOUR, t.closed, t.updated) <= 1 THEN 1 ELSE 0 END) AS borrado,
   AVG(CASE WHEN t.closed IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, t.closed) ELSE NULL END) AS tiempo_servicio,
-  AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, (SELECT MIN(created) FROM thread_entries WHERE thread_id = (SELECT id FROM threads WHERE ticket_id = t.id LIMIT 1) AND staff_id IS NOT NULL AND is_internal = 0 LIMIT 1)) ELSE NULL END) AS tiempo_respuesta
+  AVG(CASE WHEN t.staff_id IS NOT NULL THEN TIMESTAMPDIFF(HOUR, t.created, {$firstReplySubquery}) ELSE NULL END) AS tiempo_respuesta
 FROM staff s
 LEFT JOIN tickets t ON t.staff_id = s.id AND t.empresa_id = ? AND t.created BETWEEN ? AND ?
 WHERE s.is_active = 1 AND s.empresa_id = ?

@@ -14,15 +14,7 @@ $staff = getCurrentUser();
 $currentRoute = 'logs';
 
 $eid = empresaId();
-$logsHasEmpresaId = false;
-if (isset($mysqli) && $mysqli) {
-    try {
-        $res = $mysqli->query("SHOW COLUMNS FROM logs LIKE 'empresa_id'");
-        $logsHasEmpresaId = ($res && $res->num_rows > 0);
-    } catch (Throwable $e) {
-        $logsHasEmpresaId = false;
-    }
-}
+$logsHasEmpresaId = true; // logs.empresa_id confirmado en schema
 
 $errors = [];
 $msg = '';
