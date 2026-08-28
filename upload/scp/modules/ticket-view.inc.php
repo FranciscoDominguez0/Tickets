@@ -2177,9 +2177,9 @@ body.dark-mode .btn-requisition-view:hover {
     }
 }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" async defer></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     var staffHasSignature = <?php echo !empty($staff_has_signature) ? 'true' : 'false'; ?>;
     var staffSignatureText = <?php echo json_encode((string)($staff_signature ?? '')); ?>;
 
@@ -3178,7 +3178,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+})();
 </script>
 
 <!-- Modal Confirmar Facturación -->

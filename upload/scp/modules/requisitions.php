@@ -772,9 +772,9 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
             </a>
             <div>
                 <?php if ($row['status'] === 'pending'): ?>
-                    <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">PENDIENTE</span>
+                    <span class="req-status-pending" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">PENDIENTE</span>
                 <?php else: ?>
-                    <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">ENTREGADO</span>
+                    <span class="req-status-delivered" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 3px 8px; font-weight: 700; border-radius: 5px; font-size: 0.7rem; text-transform: uppercase;">ENTREGADO</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -784,8 +784,8 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
             <a class="ticket-title" href="requisitions.php?a=view&id=<?php echo $row['id']; ?>" style="font-weight: 800; font-size: 1.05rem; color: #b91c1c; text-decoration: none;">
                 <i class="bi bi-hash" style="opacity: 0.5;"></i>REQ-<?php echo str_pad($row['id'], 5, '0', STR_PAD_LEFT); ?>
             </a>
-            <span title="Tipo de Solicitud" style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
-                <span style="width:5px; height:5px; border-radius:50%; background:#64748b; flex-shrink:0; display:inline-block;"></span>
+            <span title="Tipo de Solicitud" class="req-type-badge" style="display:inline-flex; align-items:center; gap:4px; background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:5px; padding:1px 7px; font-size:0.68rem; font-weight:800; letter-spacing:0.04em; line-height:1.6; text-transform:uppercase; white-space:nowrap;">
+                <span class="req-type-badge-dot" style="width:5px; height:5px; border-radius:50%; background:#64748b; flex-shrink:0; display:inline-block;"></span>
                 INVENTARIO
             </span>
         </div>
@@ -815,11 +815,11 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
     <td class="d-none d-md-table-cell" style="vertical-align: middle;">
         <div style="display:flex; flex-direction:column; gap:6px; align-items: flex-start;">
             <?php if ($row['status'] === 'pending'): ?>
-                <span style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                <span class="req-status-pending" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
                     <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> PENDIENTE
                 </span>
             <?php else: ?>
-                <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
+                <span class="req-status-delivered" style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; padding: 5px 10px; font-weight: 700; letter-spacing: 0.03em; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase;">
                     <i class="bi bi-record-circle-fill" style="font-size: 0.6rem; margin-right: 4px; vertical-align: middle;"></i> ENTREGADO
                 </span>
             <?php endif; ?>

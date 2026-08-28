@@ -312,7 +312,11 @@
                 var toggleBtn = document.getElementById('scpSidebarToggle');
                 if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
             }
-            window.scrollTo(0, 0);
+            if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            } else {
+                window.scrollTo(0, 0);
+            }
             navInFlight = false;
         })
         .catch(function () {

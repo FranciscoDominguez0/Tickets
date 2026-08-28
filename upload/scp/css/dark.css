@@ -3692,3 +3692,25 @@ body.dark-mode .badge-private {
     color: #fcd34d !important;
     border: 1px solid rgba(251, 191, 36, 0.4) !important;
 }
+/* === BADGE INVENTARIO === */
+body.dark-mode .req-type-badge {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148, 163, 184, 0.3) !important;
+}
+body.dark-mode .req-type-badge-dot {
+    background: #94a3b8 !important;
+}
+
+
+body.dark-mode .req-status-pending {
+    background-color: rgba(217, 119, 6, 0.15) !important;
+    color: #fcd34d !important;
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+body.dark-mode .req-status-delivered {
+    background-color: rgba(22, 163, 74, 0.15) !important;
+    color: #86efac !important;
+    border-color: rgba(74, 222, 128, 0.3) !important;
+}
+
