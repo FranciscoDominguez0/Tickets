@@ -409,27 +409,27 @@ body.dark-mode .badge.bg-secondary-subtle {
 
 /* Card list layout on mobile for requisitions */
 @media (max-width: 768px) {
-    .tickets-table-wrap {
+    .requisitions-table-wrap {
         border: none !important;
         box-shadow: none !important;
         background: transparent !important;
         padding: 0 !important;
     }
-    .tickets-table {
+    .requisitions-table {
         background: transparent !important;
         border: none !important;
         display: block !important;
     }
-    .tickets-table thead {
+    .requisitions-table thead {
         display: none !important;
     }
-    .tickets-table tbody {
+    .requisitions-table tbody {
         display: flex !important;
         flex-direction: column !important;
         gap: 12px !important;
         width: 100% !important;
     }
-    .tickets-table tr.ticket-row {
+    .requisitions-table tr.ticket-row {
         display: block !important;
         background: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
@@ -439,22 +439,22 @@ body.dark-mode .badge.bg-secondary-subtle {
         margin-bottom: 0 !important;
         transition: all 0.2s ease !important;
     }
-    body.dark-mode .tickets-table tr.ticket-row {
+    body.dark-mode .requisitions-table tr.ticket-row {
         background: #000000 !important;
         border-color: #111111 !important;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
     }
-    .tickets-table tr.ticket-row:hover {
+    .requisitions-table tr.ticket-row:hover {
         transform: translateY(-1px);
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04) !important;
     }
-    body.dark-mode .tickets-table tr.ticket-row:hover {
+    body.dark-mode .requisitions-table tr.ticket-row:hover {
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6) !important;
     }
-    .tickets-table tr.ticket-row td {
+    .requisitions-table tr.ticket-row td {
         display: none !important;
     }
-    .tickets-table tr.ticket-row td:first-child {
+    .requisitions-table tr.ticket-row td:first-child {
         display: block !important;
         width: 100% !important;
         padding: 0 !important;
@@ -669,8 +669,8 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
         </div>
     </div>
 
-    <div class="tickets-table-wrap">
-        <table class="table table-hover tickets-table mb-0">
+    <div class="requisitions-table-wrap">
+        <table class="table table-hover requisitions-table mb-0">
             <thead class="table-light" style="border-bottom: 2px solid #e2e8f0; background-color: #f8fafc;">
                 <tr>
                     <th style="font-weight: 700; color: #475569; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 20px;">Requisición</th>
