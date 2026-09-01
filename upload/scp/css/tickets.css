@@ -2147,13 +2147,31 @@ tr.ticket-row.is-selected td {
     }
 
     .tickets-filters {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         gap: 8px;
+    }
+
+    .tickets-filters > .dropdown, 
+    .tickets-filters > .form-select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tickets-filters > .dropdown > .btn {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tickets-filters #ticketDateRange {
+        width: 100%;
     }
 
     .tickets-filters .form-select {
         min-width: unset;
-        width: 100%;
+        width: auto;
     }
 
     .tickets-search {

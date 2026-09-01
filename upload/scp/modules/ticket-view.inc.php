@@ -682,9 +682,6 @@ body.dark-mode .btn-requisition-view:hover {
 
             <button class="btn-icon" title="Imprimir" type="button" data-action="print"><i class="bi bi-printer"></i></button>
 
-            <?php if (roleHasPermission('requisitions.view')): ?>
-                <a href="requisitions.php?a=new&ticket_id=<?php echo $tid; ?>" class="btn-icon" title="Solicitud de Inventario"><i class="bi bi-box-seam"></i></a>
-            <?php endif; ?>
 
             <div class="dropdown d-inline-block">
                 <button class="btn-icon dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Configuración">
