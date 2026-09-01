@@ -2657,6 +2657,8 @@ tr.ticket-row.is-selected td {
     .ticket-view-entry .entry-body {
         font-size: 0.86rem;
         line-height: 1.4;
+        max-height: 250px;
+        overflow-y: auto;
     }
     .ticket-view-entry .entry-footer {
         display: flex;

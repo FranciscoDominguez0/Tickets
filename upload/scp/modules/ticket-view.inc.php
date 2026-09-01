@@ -1506,7 +1506,7 @@ body.dark-mode .btn-requisition-view:hover {
     <ul class="ticket-view-tabs" role="tablist">
         <li><a class="tab active" href="#thread"><i class="bi bi-chat-left-text"></i> Hilo del Ticket (<?php echo $countPublic; ?>)</a></li>
         <?php if ($countRequisitions > 0 || roleHasPermission('requisitions.view')): ?>
-        <li><a class="tab" href="#requisitions"><i class="bi bi-box-seam"></i> Solicitudes de Inventario (<?php echo $countRequisitions; ?>)</a></li>
+        <li><a class="tab" href="#requisitions"><i class="bi bi-box-seam"></i> Inventario (<?php echo $countRequisitions; ?>)</a></li>
         <?php endif; ?>
     </ul>
 
@@ -2004,10 +2004,7 @@ body.dark-mode .btn-requisition-view:hover {
     </div>
 </div>
 
-<link href="../css/vendor/summernote-lite.min.css" rel="stylesheet">
-<script src="../js/vendor/jquery-3.6.0.min.js"></script>
-<script src="../js/vendor/summernote-lite.min.js"></script>
-<script src="../js/vendor/summernote-es-ES.min.js"></script>
+<!-- Summernote y jQuery se cargan globalmente en route-scripts/route-css -->
 <div class="modal fade" id="vigitecImageInsertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -2179,7 +2176,7 @@ body.dark-mode .btn-requisition-view:hover {
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" async defer></script>
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     var staffHasSignature = <?php echo !empty($staff_has_signature) ? 'true' : 'false'; ?>;
     var staffSignatureText = <?php echo json_encode((string)($staff_signature ?? '')); ?>;
 
@@ -2435,7 +2432,7 @@ body.dark-mode .btn-requisition-view:hover {
             }).render();
         };
 
-        var isMobile = window.innerWidth <= 768;
+        var isMobile = window.matchMedia('(max-width: 991px)').matches;
         var toolbarConfig = isMobile ? [
             ['font', ['bold', 'italic', 'underline', 'clear']],
             ['insert', ['link', 'myImage']],
@@ -3558,5 +3555,5 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         initReplyLock();
     }
-})();
+});
 </script>
