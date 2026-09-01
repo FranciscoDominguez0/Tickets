@@ -2769,9 +2769,10 @@ body.dark-mode .btn-requisition-view:hover {
     var modalChoiceEl = document.getElementById('modalCloseChoiceScp');
     var modalNoSigEl = document.getElementById('modalCloseNoSignatureScp');
     var modalWithSigEl = document.getElementById('modalCloseWithSignatureScp');
-    var modalChoice = (modalChoiceEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalChoiceEl) : null;
-    var modalNoSig = (modalNoSigEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalNoSigEl) : null;
-    var modalWithSig = (modalWithSigEl && window.bootstrap) ? bootstrap.Modal.getOrCreateInstance(modalWithSigEl) : null;
+
+    function getBsModal(el) {
+        return (el && typeof bootstrap !== 'undefined') ? bootstrap.Modal.getOrCreateInstance(el) : null;
+    }
 
     var closeStatusLabel = document.getElementById('closeChoiceStatusLabelScp');
     var btnWithSig = document.getElementById('btnCloseWithSignatureScp');
@@ -2835,7 +2836,8 @@ body.dark-mode .btn-requisition-view:hover {
                 e.preventDefault();
                 closingStatusId = parseInt(this.getAttribute('data-close-status-id') || '0', 10);
                 closingStatusName = String(this.getAttribute('data-close-status-name') || '');
-                if (!closingStatusId || !modalChoice) return;
+                var mChoice = getBsModal(modalChoiceEl);
+                if (!closingStatusId || !mChoice) return;
                 
                 if (closingStatusName.toLowerCase().indexOf('resuelto') !== -1 || closingStatusName.toLowerCase().indexOf('resolved') !== -1) {
                     window.location.href = 'tickets.php?id=' + ticketId + '&action=status&status_id=' + closingStatusId;
@@ -2849,7 +2851,7 @@ body.dark-mode .btn-requisition-view:hover {
                 }
                 var msgYes = document.getElementById('closeMessageWithSigScp');
                 if (msgYes) msgYes.value = '';
-                modalChoice.show();
+                mChoice.show();
             });
         });
     }
@@ -3000,14 +3002,18 @@ body.dark-mode .btn-requisition-view:hover {
     if (btnWithSig) {
 
         btnWithSig.addEventListener('click', function () {
-            if (modalChoice) modalChoice.hide();
-            if (modalWithSig) modalWithSig.show();
+            var mChoice = getBsModal(modalChoiceEl);
+            var mWithSig = getBsModal(modalWithSigEl);
+            if (mChoice) mChoice.hide();
+            if (mWithSig) mWithSig.show();
         });
     }
     if (btnWithoutSig) {
         btnWithoutSig.addEventListener('click', function () {
-            if (modalChoice) modalChoice.hide();
-            if (modalNoSig) modalNoSig.show();
+            var mChoice = getBsModal(modalChoiceEl);
+            var mNoSig = getBsModal(modalNoSigEl);
+            if (mChoice) mChoice.hide();
+            if (mNoSig) mNoSig.show();
         });
     }
     if (btnConfirmNoSig) {
@@ -3046,7 +3052,8 @@ body.dark-mode .btn-requisition-view:hover {
             }
             closingStatusId = parseInt(preferredClose.getAttribute('data-close-status-id') || '0', 10);
             closingStatusName = String(preferredClose.getAttribute('data-close-status-name') || '');
-            if (!closingStatusId || !modalChoice) {
+            var mChoice = getBsModal(modalChoiceEl);
+            if (!closingStatusId || !mChoice) {
                 alert('No se pudo iniciar el cierre del ticket.');
                 return;
             }
@@ -3063,7 +3070,7 @@ body.dark-mode .btn-requisition-view:hover {
             }
             var msgYes = document.getElementById('closeMessageWithSigScp');
             if (msgYes) msgYes.value = '';
-            modalChoice.show();
+            mChoice.show();
         });
     }
 
