@@ -1284,14 +1284,9 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                     </button>
                 <?php endif; ?>
                 <?php if (roleHasPermission('requisitions.delete')): ?>
-                    <form method="post" action="requisitions.php" class="m-0 d-inline-block" onsubmit="return confirm('¿Está seguro de eliminar permanentemente esta requisición y todos sus productos?');">
-                        <?php csrfField(); ?>
-                        <input type="hidden" name="do" value="delete">
-                        <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
-                        <button type="submit" class="btn-new" style="background: #ef4444; border: 1px solid #dc2626; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </button>
-                    </form>
+                    <button type="button" class="btn-new" data-bs-toggle="modal" data-bs-target="#deleteRequisitionModal" style="background: #ef4444; border: 1px solid #dc2626; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
@@ -1716,6 +1711,31 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                         <i class="bi bi-info-circle text-danger fs-4 mt-1"></i>
                         <p class="small text-muted mb-0">Una vez firmada la recepción, los activos se asignarán automáticamente al centro de costos del solicitante.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Eliminación -->
+    <div class="modal fade" id="deleteRequisitionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 bg-light">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Eliminar Requisición</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="fs-5 mb-0">¿Está seguro de eliminar permanentemente esta requisición y todos sus productos?</p>
+                    <p class="text-muted mt-2 small">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer border-top-0 d-flex bg-light">
+                    <form method="post" action="requisitions.php" class="w-100 d-flex gap-2 m-0">
+                        <?php csrfField(); ?>
+                        <input type="hidden" name="do" value="delete">
+                        <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
+                        <button type="button" class="btn btn-outline-secondary fw-bold flex-fill" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger fw-bold flex-fill">Sí, Eliminar</button>
+                    </form>
                 </div>
             </div>
         </div>

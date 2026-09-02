@@ -707,7 +707,14 @@ while ($row = $res->fetch_assoc()) {
         <!-- Rango en badge de calendario premium -->
         <span class="stats-range"><i class="bi bi-calendar3"></i> <?php
             $meses = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril', 'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto', 'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'];
-            echo strtr($startDate->format('j \d\e F, Y'), $meses); ?> - <?php echo strtr($endDate->format('j \d\e F, Y'), $meses); ?></span>
+            $startStr = strtr($startDate->format('j \d\e F, Y'), $meses);
+            $endStr = strtr($endDate->format('j \d\e F, Y'), $meses);
+            if ($startStr === $endStr) {
+                echo $startStr;
+            } else {
+                echo $startStr . ' - ' . $endStr;
+            }
+        ?></span>
     </div>
 </div>
 

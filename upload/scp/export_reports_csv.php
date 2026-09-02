@@ -101,7 +101,6 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
     $stmt->execute();
     $res = $stmt->get_result();
 
-    $rows = [];
     while ($row = $res->fetch_assoc()) { 
         $isWalkinReport = (!empty($row['walkin_phone']) || !empty($row['walkin_address']));
         if ($isWalkinReport) {
@@ -110,9 +109,8 @@ function fetchReportData($mysqli, $eid, $statusIdClosed, $month, $search) {
             $cName = trim(($row['user_first'] ?? '') . ' ' . ($row['user_last'] ?? ''));
             $row['client_name'] = $cName !== '' ? $cName : ($row['user_email'] ?? 'Usuario Web');
         }
-        $rows[] = $row; 
+        yield $row; 
     }
-    return $rows;
 }
 
 function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
@@ -157,9 +155,7 @@ function fetchReportItems($mysqli, $eid, $statusIdClosed, $month, $search) {
     $stmt->execute();
     $res = $stmt->get_result();
 
-    $rows = [];
-    while ($row = $res->fetch_assoc()) { $rows[] = $row; }
-    return $rows;
+    while ($row = $res->fetch_assoc()) { yield $row; }
 }
 
 function getSpanishMonthName($month) {
@@ -271,14 +267,20 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $currentRow = $startRow;
     $totalAmount = 0.0;
 
+    $stats = [];
     foreach ($rows as $row) {
         $price = (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', (string)$row['final_price']));
         $totalAmount += $price;
 
+        $d = $row['department'];
+        if (!isset($stats[$d])) $stats[$d] = ['count'=>0, 'total'=>0.0];
+        $stats[$d]['count']++;
+        $stats[$d]['total'] += $price;
+
         $ws->getRowDimension($currentRow)->setRowHeight(40);
         $ws->setCellValue("A$currentRow", " " . $row['ticket_number']);
         $ws->setCellValue("B$currentRow", mb_strtoupper((string)$row['client_name'], 'UTF-8'));
-        $ws->setCellValue("C$currentRow", $row['department']);
+        $ws->setCellValue("C$currentRow", $d);
         $ws->setCellValue("D$currentRow", mb_strtoupper((string)$row['staff_name'], 'UTF-8'));
         $ws->setCellValue("E$currentRow", date('d/m/Y H:i', strtotime((string)$row['closed'])));
         $ws->setCellValue("F$currentRow", $price);
@@ -317,7 +319,7 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     $ws->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(1, 5);
 
     // Segunda Hoja: Análisis por Área
-    setupAnalysisSheet($spreadsheet, $rows, $monthName, $c);
+    setupAnalysisSheet($spreadsheet, $stats, $monthName, $c);
 
     // Tercera Hoja: Detalle por Item
     setupDetailSheet($spreadsheet, $itemRows, $monthName, $c);
@@ -340,7 +342,7 @@ function generatePremiumExcel($rows, $itemRows, $monthKey, $monthName) {
     exit;
 }
 
-function setupAnalysisSheet($spreadsheet, $rows, $monthName, $c) {
+function setupAnalysisSheet($spreadsheet, $stats, $monthName, $c) {
     $ws = $spreadsheet->createSheet();
     $ws->setTitle('Análisis por Área');
     $ws->setShowGridlines(false);
@@ -366,15 +368,6 @@ function setupAnalysisSheet($spreadsheet, $rows, $monthName, $c) {
         'fill' => ['fillType'=>Fill::FILL_SOLID,'startColor'=>['argb'=>'FF'.$c['secondary']]],
         'alignment' => ['horizontal'=>Alignment::HORIZONTAL_CENTER],
     ]);
-
-    $stats = [];
-    foreach ($rows as $r) {
-        $d = $r['department'];
-        $p = (float)preg_replace('/[^0-9.]/', '', str_replace(',', '.', (string)$r['final_price']));
-        if (!isset($stats[$d])) $stats[$d] = ['count'=>0, 'total'=>0.0];
-        $stats[$d]['count']++;
-        $stats[$d]['total'] += $p;
-    }
 
     $rowNum = 4;
     foreach ($stats as $name => $val) {
