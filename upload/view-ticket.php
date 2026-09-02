@@ -683,6 +683,54 @@ function humanSize($bytes) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+        window.HIDE_URLS = <?php echo defined('HIDE_URLS') && HIDE_URLS ? 'true' : 'false'; ?>;
+        
+        var originalPushState = history.pushState;
+        var originalReplaceState = history.replaceState;
+        
+        function getMaskedUrl(url) {
+            if (!window.HIDE_URLS || !url) return url;
+            try {
+                var a = document.createElement('a');
+                a.href = url;
+                var pathParts = a.pathname.split('/');
+                pathParts[pathParts.length - 1] = 'tickets.php';
+                return pathParts.join('/') + '#';
+            } catch(e) { return url; }
+        }
+        
+        history.pushState = function(state, title, url) {
+            return originalPushState.call(history, state, title, getMaskedUrl(url));
+        };
+        
+        history.replaceState = function(state, title, url) {
+            return originalReplaceState.call(history, state, title, getMaskedUrl(url));
+        };
+
+        if (window.HIDE_URLS) {
+            var currentActualUrl = window.location.pathname + window.location.search;
+            var genericPage = 'tickets.php';
+            var isGeneric = window.location.pathname.indexOf(genericPage) !== -1 && !window.location.search;
+            
+            var savedUrl = null;
+            try { savedUrl = sessionStorage.getItem('clientCurrentUrl'); } catch(e) {}
+            
+            if (isGeneric && savedUrl && savedUrl !== currentActualUrl) {
+                var isReload = false;
+                if (window.performance && window.performance.navigation) {
+                    isReload = window.performance.navigation.type === 1;
+                }
+                if (isReload) {
+                    window.location.replace(savedUrl);
+                }
+            } else {
+                try { sessionStorage.setItem('clientCurrentUrl', currentActualUrl); } catch(e) {}
+            }
+            
+            try { originalReplaceState.call(history, { scpUrl: currentActualUrl }, '', getMaskedUrl(window.location.href)); } catch (e) {}
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo html($t['ticket_number']); ?> - <?php echo APP_NAME; ?></title>

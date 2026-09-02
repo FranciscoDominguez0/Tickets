@@ -1,7 +1,7 @@
-Ôªø<?php
+<?php
 /**
  * PERFIL USUARIO
- * Editar informaci√≥n del usuario
+ * Editar informaciÛn del usuario
  */
 
 require_once '../config.php';
@@ -49,7 +49,7 @@ if (!$userData) {
 
 if ($_POST) {
     if (!validateCSRF()) {
-        $error = 'Token de seguridad inv√°lido';
+        $error = 'Token de seguridad inv·lido';
     } else {
         $firstname = trim($_POST['firstname'] ?? '');
         $lastname = trim($_POST['lastname'] ?? '');
@@ -85,6 +85,54 @@ if ($_POST) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+        window.HIDE_URLS = <?php echo defined('HIDE_URLS') && HIDE_URLS ? 'true' : 'false'; ?>;
+        
+        var originalPushState = history.pushState;
+        var originalReplaceState = history.replaceState;
+        
+        function getMaskedUrl(url) {
+            if (!window.HIDE_URLS || !url) return url;
+            try {
+                var a = document.createElement('a');
+                a.href = url;
+                var pathParts = a.pathname.split('/');
+                pathParts[pathParts.length - 1] = 'tickets.php';
+                return pathParts.join('/') + '#';
+            } catch(e) { return url; }
+        }
+        
+        history.pushState = function(state, title, url) {
+            return originalPushState.call(history, state, title, getMaskedUrl(url));
+        };
+        
+        history.replaceState = function(state, title, url) {
+            return originalReplaceState.call(history, state, title, getMaskedUrl(url));
+        };
+
+        if (window.HIDE_URLS) {
+            var currentActualUrl = window.location.pathname + window.location.search;
+            var genericPage = 'tickets.php';
+            var isGeneric = window.location.pathname.indexOf(genericPage) !== -1 && !window.location.search;
+            
+            var savedUrl = null;
+            try { savedUrl = sessionStorage.getItem('clientCurrentUrl'); } catch(e) {}
+            
+            if (isGeneric && savedUrl && savedUrl !== currentActualUrl) {
+                var isReload = false;
+                if (window.performance && window.performance.navigation) {
+                    isReload = window.performance.navigation.type === 1;
+                }
+                if (isReload) {
+                    window.location.replace(savedUrl);
+                }
+            } else {
+                try { sessionStorage.setItem('clientCurrentUrl', currentActualUrl); } catch(e) {}
+            }
+            
+            try { originalReplaceState.call(history, { scpUrl: currentActualUrl }, '', getMaskedUrl(window.location.href)); } catch (e) {}
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Perfil - <?php echo APP_NAME; ?></title>
@@ -460,13 +508,13 @@ if ($_POST) {
                         </div>
                         <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
                             <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
-                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div>
-                                <div style="color:#64748b;">Cuando el equipo responda, te aparecer√° aqu√≠.</div>
+                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div>
+                                <div style="color:#64748b;">Cuando el equipo responda, te aparecer· aquÌ.</div>
                             </div>
                         </div>
                         <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
                             <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
-                                <i class="bi bi-check-all"></i> Marcar todas como le√≠das
+                                <i class="bi bi-check-all"></i> Marcar todas como leÌdas
                             </button>
                         </div>
                     </div>
@@ -533,7 +581,7 @@ if ($_POST) {
                         </li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
-                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesi√≥n
+                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesiÛn
                             </a>
                         </li>
                     </ul>
@@ -591,7 +639,7 @@ if ($_POST) {
                         </div>
 
                         <div class="mb-2">
-                            <label for="address" class="form-label">Direcci√≥n</label>
+                            <label for="address" class="form-label">DirecciÛn</label>
                             <input type="text" class="form-control" id="address" name="address" value="<?php echo html($userData['address'] ?? ''); ?>">
                         </div>
 
@@ -601,7 +649,7 @@ if ($_POST) {
                                 <input type="text" class="form-control" id="company" name="company" value="<?php echo html($userData['company'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
-                                <label for="phone" class="form-label">Tel√©fono</label>
+                                <label for="phone" class="form-label">TelÈfono</label>
                                 <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo html($userData['phone'] ?? ''); ?>">
                             </div>
                         </div>
@@ -670,8 +718,8 @@ if ($_POST) {
                     if (!items || !items.length) {
                         list.innerHTML = ''
                             + '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">'
-                            +   '<div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div>'
-                            +   '<div style="color:#64748b;">Cuando el equipo responda, te aparecer√° aqu√≠.</div>'
+                            +   '<div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div>'
+                            +   '<div style="color:#64748b;">Cuando el equipo responda, te aparecer· aquÌ.</div>'
                             + '</div>';
                         return;
                     }
@@ -737,7 +785,7 @@ if ($_POST) {
                 } catch (e) {}
             });
 
-            // Bot√≥n "Marcar todas como le√≠das"
+            // BotÛn "Marcar todas como leÌdas"
             (function(){
                 var markAllBtn = document.getElementById('notifMarkAllRead');
                 if (!markAllBtn) return;
@@ -752,7 +800,7 @@ if ($_POST) {
                                 renderBell([]);
                                 var list = document.getElementById('notifBellList');
                                 if (list) {
-                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como le√≠das.</div></div>';
+                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leÌdas.</div></div>';
                                 }
                             }
                         })

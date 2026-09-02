@@ -1,4 +1,4 @@
-ï»¿<?php
+<?php
 require_once '../config.php';
 require_once '../includes/helpers.php';
 
@@ -116,9 +116,57 @@ function formatFileSizeHuman(int $bytes): string
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>
+        window.HIDE_URLS = <?php echo defined('HIDE_URLS') && HIDE_URLS ? 'true' : 'false'; ?>;
+        
+        var originalPushState = history.pushState;
+        var originalReplaceState = history.replaceState;
+        
+        function getMaskedUrl(url) {
+            if (!window.HIDE_URLS || !url) return url;
+            try {
+                var a = document.createElement('a');
+                a.href = url;
+                var pathParts = a.pathname.split('/');
+                pathParts[pathParts.length - 1] = 'tickets.php';
+                return pathParts.join('/') + '#';
+            } catch(e) { return url; }
+        }
+        
+        history.pushState = function(state, title, url) {
+            return originalPushState.call(history, state, title, getMaskedUrl(url));
+        };
+        
+        history.replaceState = function(state, title, url) {
+            return originalReplaceState.call(history, state, title, getMaskedUrl(url));
+        };
+
+        if (window.HIDE_URLS) {
+            var currentActualUrl = window.location.pathname + window.location.search;
+            var genericPage = 'tickets.php';
+            var isGeneric = window.location.pathname.indexOf(genericPage) !== -1 && !window.location.search;
+            
+            var savedUrl = null;
+            try { savedUrl = sessionStorage.getItem('clientCurrentUrl'); } catch(e) {}
+            
+            if (isGeneric && savedUrl && savedUrl !== currentActualUrl) {
+                var isReload = false;
+                if (window.performance && window.performance.navigation) {
+                    isReload = window.performance.navigation.type === 1;
+                }
+                if (isReload) {
+                    window.location.replace(savedUrl);
+                }
+            } else {
+                try { sessionStorage.setItem('clientCurrentUrl', currentActualUrl); } catch(e) {}
+            }
+            
+            try { originalReplaceState.call(history, { scpUrl: currentActualUrl }, '', getMaskedUrl(window.location.href)); } catch (e) {}
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo html((string) ($report['subject'] ?? 'Informe')); ?> â€” <?php echo html(APP_NAME); ?></title>
+    <title><?php echo html((string) ($report['subject'] ?? 'Informe')); ?> — <?php echo html(APP_NAME); ?></title>
     <link href="scp/css/vendor/bootstrap-5.3.0.min.css" rel="stylesheet">
     <link href="scp/css/vendor/bootstrap-icons-1.11.1.css" rel="stylesheet">
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int) @filemtime(__DIR__ . '/css/client_dark.css'); ?>">
@@ -146,7 +194,7 @@ function formatFileSizeHuman(int $bytes): string
     <div class="panel">
         <h2 class="h4 mb-2"><?php echo html((string) ($report['subject'] ?? '')); ?></h2>
         <div class="meta mb-4">
-            <div><strong>OrganizaciÃ³n:</strong> <?php echo html((string) ($report['org_name'] ?? '')); ?></div>
+            <div><strong>Organización:</strong> <?php echo html((string) ($report['org_name'] ?? '')); ?></div>
             <?php if ($targetName !== ''): ?>
             <div><strong>Usuario referencia:</strong> <?php echo html($targetName); ?><?php if (!empty($report['target_email'])): ?> (<?php echo html((string) $report['target_email']); ?>)<?php endif; ?></div>
             <?php endif; ?>

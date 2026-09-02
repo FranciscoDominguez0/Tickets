@@ -302,8 +302,13 @@
         .then(function () {
             hideNavLoader();
             setActiveSidebar(url);
+            try { sessionStorage.setItem('scpCurrentUrl', url); } catch(e) {}
             if (!fromPop) {
-                try { history.pushState({ scpUrl: url }, '', url); } catch (e) {}
+                var displayUrl = url;
+                if (window.HIDE_URLS) {
+                    displayUrl = url.split('?')[0] + '#';
+                }
+                try { history.pushState({ scpUrl: url }, '', displayUrl); } catch (e) {}
             }
             // Cerrar el sidebar móvil tras navegar (solo si estaba abierto)
             var wasMobileOpen = document.body.classList.contains('sidebar-mobile-open');

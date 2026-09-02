@@ -21,6 +21,9 @@ define('TIMEZONE', 'America/Bogota');
 // APP_DEBUG: true = stack trace en pantalla (solo desarrollo) | false = página amigable + log
 define('APP_DEBUG', false);
 
+// HIDE_URLS: true = oculta los parámetros de la URL usando un hash (#), false = URLs normales
+define('HIDE_URLS', true);
+
 // ── Notificaciones de error: email del admin para alertas de errores críticos
 define('ERROR_NOTIFY_EMAIL', 'dominguezf225@gmail.com');
 
