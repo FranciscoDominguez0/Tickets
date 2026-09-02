@@ -22,7 +22,7 @@ define('TIMEZONE', 'America/Bogota');
 define('APP_DEBUG', false);
 
 // HIDE_URLS: true = oculta los parámetros de la URL usando un hash (#), false = URLs normales
-define('HIDE_URLS', true);
+define('HIDE_URLS', false);
 
 // ── Notificaciones de error: email del admin para alertas de errores críticos
 define('ERROR_NOTIFY_EMAIL', 'dominguezf225@gmail.com');

@@ -287,11 +287,11 @@
             lastAssetsHtml = data.assets || '';
             // Inyectar los estilos de la ruta ANTES del contenido: el HTML nuevo
             // se muestra solo cuando su CSS ya esté aplicado (sin flash feo).
-            // Timeout reducido a 800ms: CSS locales cargan en <100ms en red local.
+            // Timeout reducido de 800ms a 50ms para evitar retrasos artificiales
             var pendingStyles = injectStyles(lastAssetsHtml);
-            mainContent.style.transition = 'opacity .12s ease';
-            mainContent.style.opacity = '0.35';
-            return waitForStyles(pendingStyles, 800).then(function () {
+            mainContent.style.transition = 'opacity .10s ease';
+            mainContent.style.opacity = '0.4';
+            return waitForStyles(pendingStyles, 50).then(function () {
                 mainContent.innerHTML = data.html || '';
                 mainContent.style.opacity = '';
                 return loadExternalScripts().then(function () {
