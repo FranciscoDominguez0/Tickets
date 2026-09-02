@@ -24,8 +24,7 @@ if (!$canViewReports) {
 $currentRoute = 'reportes';
 $eid = empresaId();
 
-// Usar dbTableExists() con caché de sesión en lugar de SHOW TABLES directo
-$hasReportsTable = dbTableExists('ticket_reports');
+$hasReportsTable = true;
 
 // Find "cerrado/closed" status ID dynamically
 $statusIdClosed = 0;
@@ -87,7 +86,7 @@ if ($statusIdClosed > 0) {
         ? " AND (t.ticket_number LIKE ? OR d.name LIKE ? OR CONCAT(u.firstname,' ',u.lastname) LIKE ? OR u.email LIKE ?)"
         : '';
 
-    $hasTicketApprovals = function_exists('dbTableExists') ? dbTableExists('ticket_approvals') : false;
+    $hasTicketApprovals = true;
     $rejectFilter = $hasTicketApprovals ? " AND NOT EXISTS (SELECT 1 FROM ticket_approvals ta WHERE ta.ticket_id = t.id AND ta.status = 'rechazado')" : '';
 
     // Filtrado estricto por mes (solo el mes seleccionado o todos)
@@ -176,7 +175,7 @@ if ($statusIdClosed > 0) {
 
 $seenIds = [];
 $sid = (int)($_SESSION['staff_id'] ?? 0);
-if ($sid > 0 && dbTableExists('staff_reports_seen')) {
+if ($sid > 0 && true) {
     $stmtSeen = $mysqli->prepare('SELECT ticket_id FROM staff_reports_seen WHERE staff_id = ?');
     if ($stmtSeen) {
         $stmtSeen->bind_param('i', $sid);

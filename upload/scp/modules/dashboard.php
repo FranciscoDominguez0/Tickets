@@ -138,29 +138,10 @@ if (isset($_GET['action']) && (string)$_GET['action'] === 'export_csv') {
     }
 
     if ($type === 'topics') {
-        $topicsTable = null;
-        $topicsKeyColumn = null;
-        $topicsNameColumn = null;
-        $topicsIdColumn = null;
-        // Usar dbTableExists / dbColumnExists con caché de sesión (300s)
-        if (dbTableExists('help_topics')) {
-            $topicsTable = 'help_topics';
-            $topicsIdColumn = 'id';
-            $topicsNameColumn = 'name';
-        } elseif (dbTableExists('helptopics')) {
-            $topicsTable = 'helptopics';
-            $topicsIdColumn = 'id';
-            $topicsNameColumn = 'name';
-        }
-        if ($topicsTable) {
-            if (dbColumnExists('tickets', 'topic_id')) {
-                $topicsKeyColumn = 'topic_id';
-            } elseif (dbColumnExists('tickets', 'help_topic_id')) {
-                $topicsKeyColumn = 'help_topic_id';
-            } elseif (dbColumnExists('tickets', 'helptopic_id')) {
-                $topicsKeyColumn = 'helptopic_id';
-            }
-        }
+        $topicsTable = 'help_topics';
+        $topicsIdColumn = 'id';
+        $topicsNameColumn = 'name';
+        $topicsKeyColumn = 'topic_id';
 
         fputcsv($out, ['Tema', 'Abierto', 'Asignado', 'Atrasado', 'Cerrado', 'Reabierto', 'Borrado', 'Tiempo de Servicio (h)', 'Tiempo de Respuesta (h)'], ',', '"', '\\');
         if ($topicsTable && $topicsKeyColumn) {
@@ -471,30 +452,10 @@ $topicStats = [];
 $topicStatsAvailable = false;
 $agentStats = [];
 
-$topicsTable = null;
-$topicsKeyColumn = null;
-$topicsNameColumn = null;
-$topicsIdColumn = null;
-
-// Usar dbTableExists / dbColumnExists: tienen caché de sesión (300s), evitan SHOW TABLES en cada petición
-if (dbTableExists('help_topics')) {
-    $topicsTable = 'help_topics';
-    $topicsIdColumn = 'id';
-    $topicsNameColumn = 'name';
-} elseif (dbTableExists('helptopics')) {
-    $topicsTable = 'helptopics';
-    $topicsIdColumn = 'id';
-    $topicsNameColumn = 'name';
-}
-if ($topicsTable) {
-    if (dbColumnExists('tickets', 'topic_id')) {
-        $topicsKeyColumn = 'topic_id';
-    } elseif (dbColumnExists('tickets', 'help_topic_id')) {
-        $topicsKeyColumn = 'help_topic_id';
-    } elseif (dbColumnExists('tickets', 'helptopic_id')) {
-        $topicsKeyColumn = 'helptopic_id';
-    }
-}
+$topicsTable = 'help_topics';
+$topicsIdColumn = 'id';
+$topicsNameColumn = 'name';
+$topicsKeyColumn = 'topic_id';
 
 if ($topicsTable && $topicsKeyColumn) {
     $topicStatsAvailable = true;

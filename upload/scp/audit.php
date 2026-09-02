@@ -120,26 +120,26 @@ $params = [];
 $types = '';
 
 if ($auditHasEmpresaId) {
-    $where[] = 'empresa_id = ?';
+    $where[] = 'audit_logs.empresa_id = ?';
     $params[] = (int)$eid;
     $types .= 'i';
 }
 
 if ($q !== '') {
-    $where[] = '(action LIKE ? OR entity_type LIKE ? OR description LIKE ? OR ip_address LIKE ?)';
+    $where[] = '(audit_logs.action LIKE ? OR audit_logs.entity_type LIKE ? OR audit_logs.description LIKE ? OR audit_logs.ip_address LIKE ?)';
     $like = '%' . $q . '%';
     $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
     $types .= 'ssss';
 }
 if ($level !== '' && in_array($level, ['Error', 'Warning', 'Info'], true)) {
-    $where[] = "(CASE WHEN (LOWER(action) LIKE '%error%' OR LOWER(description) LIKE '%error%') THEN 'Error' WHEN (LOWER(action) LIKE '%warn%' OR LOWER(description) LIKE '%warn%') THEN 'Warning' ELSE 'Info' END) = ?";
+    $where[] = "(CASE WHEN (LOWER(audit_logs.action) LIKE '%error%' OR LOWER(audit_logs.description) LIKE '%error%') THEN 'Error' WHEN (LOWER(audit_logs.action) LIKE '%warn%' OR LOWER(audit_logs.description) LIKE '%warn%') THEN 'Warning' ELSE 'Info' END) = ?";
     $params[] = $level;
     $types .= 's';
 }
 if ($date_from !== '') {
     $ts = strtotime($date_from . ' 00:00:00');
     if ($ts) {
-        $where[] = 'created_at >= ?';
+        $where[] = 'audit_logs.created_at >= ?';
         $params[] = date('Y-m-d H:i:s', $ts);
         $types .= 's';
     }
@@ -147,7 +147,7 @@ if ($date_from !== '') {
 if ($date_to !== '') {
     $ts = strtotime($date_to . ' 23:59:59');
     if ($ts) {
-        $where[] = 'created_at <= ?';
+        $where[] = 'audit_logs.created_at <= ?';
         $params[] = date('Y-m-d H:i:s', $ts);
         $types .= 's';
     }
@@ -167,42 +167,19 @@ if ($stmtC) {
     $total = (int)($stmtC->get_result()->fetch_assoc()['c'] ?? 0);
 }
 
-// Helper to get actor name
-$namesCache = [];
-function getActorName($type, $id, $mysqli) {
-    global $namesCache;
-    if (!$id || !$type) return 'Sistema';
-    $key = $type . '_' . $id;
-    if (isset($namesCache[$key])) return $namesCache[$key];
-    
-    $name = '';
-    if ($type === 'staff') {
-        $r = $mysqli->query("SELECT firstname, lastname FROM staff WHERE id = " . (int)$id);
-        if ($r && $r->num_rows > 0) {
-            $row = $r->fetch_assoc();
-            $name = trim($row['firstname'] . ' ' . $row['lastname']);
-        } else {
-            $r = $mysqli->query("SELECT firstname, lastname FROM super_admins WHERE id = " . (int)$id);
-            if ($r && $r->num_rows > 0) {
-                $row = $r->fetch_assoc();
-                $name = trim($row['firstname'] . ' ' . $row['lastname']);
-            }
-        }
-    } elseif ($type === 'cliente') {
-        $r = $mysqli->query("SELECT firstname, lastname FROM users WHERE id = " . (int)$id);
-        if ($r && $r->num_rows > 0) {
-            $row = $r->fetch_assoc();
-            $name = trim($row['firstname'] . ' ' . $row['lastname']);
-        }
-    }
-    
-    $namesCache[$key] = $name ?: 'Desconocido (ID '.$id.')';
-    return $namesCache[$key];
-}
-
 // Data
 $rows = [];
-$sql = "SELECT id, action, entity_type as object_type, entity_id as object_id, actor_type as user_type, actor_id as user_id, description as details, ip_address, created_at as created FROM audit_logs $whereSql ORDER BY created_at DESC LIMIT ? OFFSET ?";
+$sql = "SELECT audit_logs.id, audit_logs.action, audit_logs.entity_type as object_type, audit_logs.entity_id as object_id, 
+        audit_logs.actor_type as user_type, audit_logs.actor_id as user_id, audit_logs.description as details, 
+        audit_logs.ip_address, audit_logs.created_at as created,
+        s.firstname as staff_fname, s.lastname as staff_lname,
+        sa.firstname as sa_fname, sa.lastname as sa_lname,
+        u.firstname as user_fname, u.lastname as user_lname
+        FROM audit_logs 
+        LEFT JOIN staff s ON audit_logs.actor_type = 'staff' AND audit_logs.actor_id = s.id
+        LEFT JOIN super_admins sa ON audit_logs.actor_type = 'staff' AND audit_logs.actor_id = sa.id
+        LEFT JOIN users u ON audit_logs.actor_type = 'cliente' AND audit_logs.actor_id = u.id
+        $whereSql ORDER BY audit_logs.created_at DESC LIMIT ? OFFSET ?";
 $stmt = $mysqli->prepare($sql);
 if ($stmt) {
     $bindParams = $params;
@@ -386,7 +363,23 @@ ob_start();
                             elseif (strpos($lower, 'warn') !== false) $lvl = 'Warning';
                             else $lvl = 'Info';
                             
-                            $actorName = getActorName($r['user_type'], $r['user_id'], $mysqli);
+                            $actorName = 'Sistema';
+                            if ($r['user_type'] === 'staff') {
+                                if (!empty($r['staff_fname'])) {
+                                    $actorName = trim($r['staff_fname'] . ' ' . $r['staff_lname']);
+                                } elseif (!empty($r['sa_fname'])) {
+                                    $actorName = trim($r['sa_fname'] . ' ' . $r['sa_lname']);
+                                } else {
+                                    $actorName = 'Desconocido (ID ' . $r['user_id'] . ')';
+                                }
+                            } elseif ($r['user_type'] === 'cliente') {
+                                if (!empty($r['user_fname'])) {
+                                    $actorName = trim($r['user_fname'] . ' ' . $r['user_lname']);
+                                } else {
+                                    $actorName = 'Desconocido (ID ' . $r['user_id'] . ')';
+                                }
+                            }
+                            
                             $actorType = $r['user_type'] === 'staff' ? 'Agente/Admin' : ($r['user_type'] === 'cliente' ? 'Cliente' : ($r['user_type'] ?: 'Sistema'));
                             $fullActor = $actorName !== 'Sistema' ? $actorName . ' (' . $actorType . ')' : 'Sistema';
                             

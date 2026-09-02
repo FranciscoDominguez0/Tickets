@@ -27,7 +27,7 @@ if (!empty($_SESSION['flash_error'])) {
 }
 
 $deptHasEmpresa = dbColumnExists('departments', 'empresa_id');
-$hasStaffDepartmentsTable = dbTableExists('staff_departments');
+$hasStaffDepartmentsTable = true;
 
 function normalizeDeptIds($raw): array {
     if (!is_array($raw)) return [];
@@ -90,7 +90,7 @@ $isValidEnabledRole = function (string $role) use ($mysqli, $eid, $rolesHasEmpre
 };
 
 function ensureStaffPasswordResetsTableExists($mysqli) {
-    return $mysqli && dbTableExists('staff_password_resets');
+    return $mysqli ? true : false;
 }
 
 function randomPassword($length = 12) {
@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         // Verificar si existen tareas asignadas a este agente
-        $hasTasks = dbTableExists('tasks');
+        $hasTasks = true;
         if ($hasTasks) {
             $stmtCntT = $mysqli->prepare('SELECT COUNT(*) c FROM tasks WHERE assigned_to = ? AND empresa_id = ?');
             if ($stmtCntT) {
