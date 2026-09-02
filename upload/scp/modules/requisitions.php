@@ -296,6 +296,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
             }
+        } elseif ($do === 'delete' && roleHasPermission('requisitions.delete')) {
+            $reqId = (int)$_POST['id'];
+            $mysqli->begin_transaction();
+            try {
+                $mysqli->query("DELETE FROM requisition_items WHERE requisition_id = $reqId");
+                $mysqli->query("DELETE FROM notifications WHERE type = 'requisition' AND related_id = $reqId");
+                $stmtDel = $mysqli->prepare("DELETE FROM requisitions WHERE id = ? AND empresa_id = ?");
+                $stmtDel->bind_param('ii', $reqId, $eid);
+                $stmtDel->execute();
+                $mysqli->commit();
+                $_SESSION['flash_msg'] = 'Requisición eliminada correctamente.';
+                header("Location: requisitions.php");
+                exit;
+            } catch (Exception $e) {
+                $mysqli->rollback();
+                $_SESSION['flash_error'] = 'Error al eliminar la requisición.';
+                header("Location: requisitions.php?a=view&id={$reqId}");
+                exit;
+            }
         }
     }
 }
@@ -667,12 +686,34 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
 <?php if ($action === 'list'): ?>
     <?php
         $search = trim($_GET['q'] ?? '');
+        $defaultDateFrom = date('Y-m-01');
+        $defaultDateTo = date('Y-m-t');
+        $dateFrom = $_GET['date_from'] ?? $defaultDateFrom;
+        $dateTo = $_GET['date_to'] ?? $defaultDateTo;
+
         $page = max(1, (int)($_GET['p'] ?? 1));
         $perPage = 15;
 
         $where = ["empresa_id = ?"];
         $params = [$eid];
         $types = "i";
+
+        $dateConds = [];
+        if ($dateFrom) {
+            $dateConds[] = "DATE(created_at) >= ?";
+            $params[] = $dateFrom;
+            $types .= "s";
+        }
+        if ($dateTo) {
+            $dateConds[] = "DATE(created_at) <= ?";
+            $params[] = $dateTo;
+            $types .= "s";
+        }
+        
+        if (!empty($dateConds)) {
+            $dateWhere = implode(" AND ", $dateConds);
+            $where[] = "(status = 'pending' OR ($dateWhere))";
+        }
 
         if (!$canManage) {
             $where[] = "agent_id = ?";
@@ -718,10 +759,50 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
     <div class="tickets-panel">
         <div class="tickets-toolbar">
             <div class="tickets-filters">
-                <!-- Espacio para futuros filtros (como fecha, estado, etc.) -->
-                <?php if ($search !== ''): ?>
-                    <a href="requisitions.php" class="btn btn-sm btn-outline-secondary fw-bold px-3">Limpiar Búsqueda</a>
-                <?php endif; ?>
+                <div id="ticketDateRange"
+                    style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:4px 8px; height:32px;">
+                    <i class="bi bi-calendar3" style="color:#64748b; font-size:0.8rem; flex-shrink:0;"></i>
+                    <input type="date" id="dateFromInput" value="<?php echo html($dateFrom); ?>" title="Desde"
+                        style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                    <span style="color:#cbd5e1; font-size:0.75rem; flex-shrink:0;">→</span>
+                    <input type="date" id="dateToInput" value="<?php echo html($dateTo); ?>" title="Hasta"
+                        style="border:none; background:transparent; font-size:0.82rem; color:#334155; outline:none; width:110px; padding:0;">
+                    <button type="button" id="applyDateRange"
+                        style="display:inline-flex; align-items:center; gap:3px; background:#ef4444; color:#fff; border:none; border-radius:6px; padding:2px 10px; font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">
+                        <i class="bi bi-check-lg"></i> Aplicar
+                    </button>
+                    <?php if ($dateFrom !== $defaultDateFrom || $dateTo !== $defaultDateTo || $search !== ''): ?>
+                        <a href="requisitions.php"
+                            title="Limpiar filtros"
+                            style="color:#94a3b8; font-size:0.9rem; flex-shrink:0; line-height:1;">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                    <?php endif; ?>
+                </div>
+                <script>
+                    (function () {
+                        var btn = document.getElementById('applyDateRange');
+                        if (!btn) return;
+                        btn.addEventListener('click', function () {
+                            var from = document.getElementById('dateFromInput').value;
+                            var to = document.getElementById('dateToInput').value;
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('p');
+                            if (from) url.searchParams.set('date_from', from); else url.searchParams.delete('date_from');
+                            if (to) url.searchParams.set('date_to', to); else url.searchParams.delete('date_to');
+                            window.location.href = url.toString();
+                        });
+                        ['dateFromInput', 'dateToInput'].forEach(function (id) {
+                            var el = document.getElementById(id);
+                            if (el) el.addEventListener('keydown', function (e) {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    btn.click();
+                                }
+                            });
+                        });
+                    })();
+                </script>
             </div>
             <div class="tickets-search">
                 <form method="get" action="requisitions.php" class="m-0">
@@ -845,7 +926,12 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
 
     <?php if ($totalPages > 1): ?>
     <div class="tickets-pagination-wrap bg-white border-top py-3 px-4">
-        <?php echo renderModernPagination($page, $totalPages, '&q=' . urlencode($search), 'p'); ?>
+        <?php 
+        $extraParams = '&q=' . urlencode($search);
+        if (isset($_GET['date_from'])) $extraParams .= '&date_from=' . urlencode($_GET['date_from']);
+        if (isset($_GET['date_to'])) $extraParams .= '&date_to=' . urlencode($_GET['date_to']);
+        echo renderModernPagination($page, $totalPages, $extraParams, 'p'); 
+        ?>
     </div>
     <?php endif; ?>
     </div>
@@ -1196,6 +1282,16 @@ body.dark-mode #btn_open_modal.btn-outline-primary:hover {
                     <button type="button" class="btn-new" data-bs-toggle="modal" data-bs-target="#signatureModal" style="background: #fff; border: none; color: #dc2626; padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
                         <i class="bi bi-pen"></i> Firmar Recepción
                     </button>
+                <?php endif; ?>
+                <?php if (roleHasPermission('requisitions.delete')): ?>
+                    <form method="post" action="requisitions.php" class="m-0 d-inline-block" onsubmit="return confirm('¿Está seguro de eliminar permanentemente esta requisición y todos sus productos?');">
+                        <?php csrfField(); ?>
+                        <input type="hidden" name="do" value="delete">
+                        <input type="hidden" name="id" value="<?php echo $req['id']; ?>">
+                        <button type="submit" class="btn-new" style="background: #ef4444; border: 1px solid #dc2626; color: #fff; padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </form>
                 <?php endif; ?>
             </div>
         </div>

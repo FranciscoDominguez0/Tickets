@@ -138,6 +138,7 @@ $permissionGroups = [
     'Requisiciones e Inventario' => [
         'requisitions.view' => ['title' => 'Acceder a Requisiciones', 'desc' => 'Habilidad para ver y solicitar requisiciones de inventario.'],
         'requisitions.manage' => ['title' => 'Entregar Requisiciones', 'desc' => 'Habilidad para marcar requisiciones como entregadas.'],
+        'requisitions.delete' => ['title' => 'Eliminar Requisiciones', 'desc' => 'Habilidad para eliminar requisiciones de inventario.'],
     ],
 ];
 

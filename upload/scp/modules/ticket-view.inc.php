@@ -3179,7 +3179,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-})();
+});
 </script>
 
 <!-- Modal Confirmar Facturación -->
@@ -3552,5 +3552,5 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         initReplyLock();
     }
-});
+})();
 </script>
