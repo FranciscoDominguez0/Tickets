@@ -1534,7 +1534,7 @@ body.dark-mode .btn-requisition-view:hover {
                     echo '<td class="fw-semibold">' . html($rq['client_name']) . '</td>';
                     echo '<td>' . $statusBadge . '</td>';
                     echo '<td class="text-muted small"><i class="bi bi-calendar-event me-2"></i>' . date('d M, Y h:i A', strtotime($rq['created_at'])) . '</td>';
-                    echo '<td class="text-end pe-4"><a href="requisitions.php?a=view&id='.$rq['id'].'" class="btn-requisition-view" target="_blank">Ver Detalles <i class="bi bi-arrow-right-short ms-1"></i></a></td>';
+                    echo '<td class="text-end pe-4"><a href="requisitions.php?a=view&id='.$rq['id'].'" class="btn-requisition-view">Ver Detalles <i class="bi bi-arrow-right-short ms-1"></i></a></td>';
                     echo '</tr>';
                 }
                 echo '</tbody></table></div>';

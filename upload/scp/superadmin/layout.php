@@ -72,7 +72,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b91c1c">
-    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
+    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.php">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>SuperAdmin - <?php echo htmlspecialchars(APP_NAME); ?></title>

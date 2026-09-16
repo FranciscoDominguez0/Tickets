@@ -358,7 +358,7 @@
                                     $backRel = $rel . ($reqQueryStr !== '' ? ('?' . $reqQueryStr) : '');
                                 }
                             }
-                            $ticketHref = 'tickets.php?id=' . (int) $t['id'] . '&back=' . urlencode($backRel);
+                            $ticketHref = 'tickets.php?id=' . (int) $t['id'];
                             ?>
                             <tr class="ticket-row" style="background: #fff; cursor: pointer; transition: all 0.2s;"
                                 data-ticket-id="<?php echo (int) $t['id']; ?>"

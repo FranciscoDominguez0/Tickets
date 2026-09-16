@@ -352,7 +352,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                         <?php foreach ($userTickets as $t): ?>
                             <?php
                                 $ticketId = (int)($t['id'] ?? 0);
-                                $ticketHref = 'tickets.php?id=' . $ticketId . '&back=' . urlencode('users.php?id=' . (int)$uid . '&t=tickets');
+                                $ticketHref = 'tickets.php?id=' . $ticketId;
                                 $ticketNum = (string)($t['ticket_number'] ?? '');
                                 $ticketSub = (string)($t['subject'] ?? '');
                                 $ticketStatus = (string)($t['status_name'] ?? '—');
@@ -811,7 +811,7 @@ if ($mobileInitials === '') $mobileInitials = 'U';
                     <tbody>
                         <?php foreach ($userTickets as $t): ?>
                             <?php
-                                $ticketHref = 'tickets.php?id=' . (int)$t['id'] . '&back=' . urlencode($backRel);
+                                $ticketHref = 'tickets.php?id=' . (int)$t['id'];
                                 $tStatusColor = $t['status_color'] ?: '#64748b';
                             ?>
                             <tr class="uvt-row" onclick="window.location.href='<?php echo html($ticketHref); ?>'" style="cursor:pointer;">
