@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * VER TICKETS (USUARIO)
  * Lista de tickets del usuario
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_type']) && $_P
                 if ($stmt) {
                     $stmt->bind_param('iiss', $eid, $orgId, $title, $description);
                     $stmt->execute();
-                    $_SESSION['flash_msg'] = 'Cotización solicitada exitosamente.';
+                    $_SESSION['flash_msg'] = 'CotizaciÃ³n solicitada exitosamente.';
                 }
             }
         }
@@ -176,7 +176,7 @@ if (isset($_GET['action']) && in_array((string)$_GET['action'], ['user_notifs_co
             echo json_encode(['ok' => false, 'error' => 'Method not allowed']);
             exit;
         }
-        // Marcar todas como leídas
+        // Marcar todas como leÃ­das
         $stmtU = $mysqli->prepare('UPDATE user_notifications SET is_read = 1, read_at = NOW() WHERE empresa_id = ? AND user_id = ? AND is_read = 0');
         if ($stmtU) {
             $stmtU->bind_param('ii', $eidAjax, $uidAjax);
@@ -515,7 +515,7 @@ if (!empty($_SESSION['new_ticket_id'])) {
 }
 
 if (isset($_GET['msg']) && $_GET['msg'] === 'signed') {
-    $flashMsg = 'Ticket firmado y cerrado correctamente. ¡Gracias!';
+    $flashMsg = 'Ticket firmado y cerrado correctamente. Â¡Gracias!';
 }
 
 $filter = $_GET['filter'] ?? 'open';
@@ -614,7 +614,7 @@ if ($canOrgTicketsView) {
             }
         }
 
-        // Buscar la organización que realmente tiene tickets pendientes de aprobación
+        // Buscar la organizaciÃ³n que realmente tiene tickets pendientes de aprobaciÃ³n
         if ($pendingApprovalCount > 0 && organizationMembershipEnabled($mysqli)) {
             $sqlFirstOrg = "SELECT uo1.organization_id FROM tickets t
                 INNER JOIN users u ON t.user_id = u.id AND u.empresa_id = t.empresa_id
@@ -680,7 +680,7 @@ if ($canOrgTicketsView) {
     }
 }
 
-// Paginación fija: 10 tickets por página (mejor rendimiento)
+// PaginaciÃ³n fija: 10 tickets por pÃ¡gina (mejor rendimiento)
 $perPage = 10;
 $tickets = [];
 $countOpen = 0;
@@ -691,7 +691,7 @@ $page = isset($_GET['p']) && is_numeric($_GET['p']) ? max(1, (int)$_GET['p']) : 
 $offset = ($page - 1) * $perPage;
 
 if ($isOrgExplorer) {
-    // El explorador por organización usa su propia vista (partials/client-org-tickets.inc.php)
+    // El explorador por organizaciÃ³n usa su propia vista (partials/client-org-tickets.inc.php)
 } else {
 $where = 't.user_id = ? AND t.empresa_id = ?';
 if ($filter === 'open') {
@@ -739,7 +739,7 @@ while ($row = $result->fetch_assoc()) {
     $tickets[] = $row;
 }
 
-// Total real para paginación
+// Total real para paginaciÃ³n
 $totalFiltered = 0;
 $sqlCount = 'SELECT COUNT(*) c FROM tickets t WHERE ' . $where;
 if ($q !== '') $sqlCount .= ' AND (t.ticket_number LIKE ? OR t.subject LIKE ?)';
@@ -821,12 +821,12 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b91c1c">
-    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.php">
+    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
     <title>Mis Tickets - <?php echo APP_NAME; ?></title>
     <?php
     echo renderOpenGraphTags([
         'title'       => 'Portal de Tickets de Soporte',
-        'description' => 'Consulta el estado de tus tickets, historial de solicitudes y soporte técnico en ' . APP_NAME . '.',
+        'description' => 'Consulta el estado de tus tickets, historial de solicitudes y soporte tÃ©cnico en ' . APP_NAME . '.',
     ]);
     ?>
     <link rel="icon" type="image/x-icon" href="<?php echo html(rtrim(defined('APP_URL') ? APP_URL : '', '/')); ?>/publico/img/favicon.ico">
@@ -1231,7 +1231,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         }
         .notif-item + .notif-item { margin-top: 10px; }
 
-        /* ── Pagination ── */
+        /* â”€â”€ Pagination â”€â”€ */
         .pagination-bar {
             display: flex; align-items: center; justify-content: space-between;
             gap: 12px; flex-wrap: wrap;
@@ -1274,7 +1274,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             .pagination-bar { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px 16px; }
         }
 
-        /* ── Limit selector ── */
+        /* â”€â”€ Limit selector â”€â”€ */
         .panel-head {
             padding: 12px 18px;
             display: flex;
@@ -1462,13 +1462,13 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         </div>
                         <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
                             <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
-                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div>
-                                <div style="color:#64748b;">Cuando el equipo responda, te aparecerá aquí.</div>
+                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÃ­a</div>
+                                <div style="color:#64748b;">Cuando el equipo responda, te aparecerÃ¡ aquÃ­.</div>
                             </div>
                         </div>
                         <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
                             <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
-                                <i class="bi bi-check-all"></i> Marcar todas como leídas
+                                <i class="bi bi-check-all"></i> Marcar todas como leÃ­das
                             </button>
                         </div>
                     </div>
@@ -1536,7 +1536,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         </li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
-                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesión
+                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesiÃ³n
                             </a>
                         </li>
                     </ul>
@@ -1619,7 +1619,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <i class="bi bi-shield-lock-fill"></i>
                         </div>
                         <div>
-                            <strong>Revisión Ejecutiva:</strong> Tienes <?php echo $pendingApprovalCount; ?> pendiente(s)
+                            <strong>RevisiÃ³n Ejecutiva:</strong> Tienes <?php echo $pendingApprovalCount; ?> pendiente(s)
                         </div>
                         <i class="bi bi-arrow-right" style="margin-left: 4px; font-size: 1.1rem; color: #b91c1c;"></i>
                     </a>
@@ -1664,7 +1664,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <div class="d-flex gap-2 flex-wrap">
                             <?php if (!empty($canOrgTicketsView)): ?>
                             <a href="tickets.php?view=org" class="btn-org-ghost">
-                                <i class="bi bi-diagram-3"></i> Por organización
+                                <i class="bi bi-diagram-3"></i> Por organizaciÃ³n
                             </a>
                             <a href="tickets.php?view=org<?php echo $targetQuotesParam ?? (!empty($orgIds) ? '&amp;org_id=' . $orgIds[0] : ''); ?>&amp;list=quotes" class="btn-org-ghost position-relative">
                                 <i class="bi bi-file-earmark-text"></i> Cotizaciones
@@ -1746,7 +1746,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     <div class="panel-head">
                         <div>
                             <span style="font-size:.78rem;font-weight:600;color:#94a3b8;">
-                                <i class="bi bi-layout-three-columns me-1"></i> Mostrando 10 por página
+                                <i class="bi bi-layout-three-columns me-1"></i> Mostrando 10 por pÃ¡gina
                             </span>
                         </div>
                         <form method="get" class="search">
@@ -1754,7 +1754,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                             <input type="hidden" name="p" value="1">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                <input type="text" class="form-control" name="q" value="<?php echo html($q); ?>" placeholder="Buscar por número o asunto…">
+                                <input type="text" class="form-control" name="q" value="<?php echo html($q); ?>" placeholder="Buscar por nÃºmero o asuntoâ€¦">
                                 <button class="btn btn-primary" type="submit">Buscar</button>
                             </div>
                         </form>
@@ -1816,7 +1816,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                                     $apprText = 'Pendiente';
                                                     $apprBg = '#f1f5f9'; $apprTextCol = '#475569'; $apprBorder = '#cbd5e1';
                                                 } elseif ($apprStatus === 'cotizacion') {
-                                                    $apprText = 'Cotización';
+                                                    $apprText = 'CotizaciÃ³n';
                                                     $apprBg = '#ccfbf1'; $apprTextCol = '#0f766e'; $apprBorder = '#99f6e4';
                                                 } elseif ($apprStatus === 'aprobado') {
                                                     $apprText = 'Aprobada';
@@ -1827,7 +1827,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                                 }
                                             ?>
                                             <span class="badge-soft" style="background: <?php echo $apprBg; ?>; color: <?php echo $apprTextCol; ?>; border-color: <?php echo $apprBorder; ?>;">
-                                                Revisión: <?php echo html($apprText); ?>
+                                                RevisiÃ³n: <?php echo html($apprText); ?>
                                             </span>
                                         <?php else: ?>
                                             <span class="badge-soft" style="<?php echo html($priorityBadgeStyle); ?>">
@@ -1855,12 +1855,12 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                         <div class="pagination-bar">
                             <?php
                                 $baseUrl = 'tickets.php?filter=' . urlencode($filter) . ($q !== '' ? '&q=' . urlencode($q) : '');
-                                $showWindow = 2; // páginas a cada lado de la actual
+                                $showWindow = 2; // pÃ¡ginas a cada lado de la actual
                             ?>
                             <div class="pagination-info">
                                 Mostrando <?php echo ((int)$totalFiltered > 0) ? ((int)$offset + 1) : 0; ?>-<?php echo min((int)$offset + (int)count($tickets), (int)$totalFiltered); ?> de <?php echo (int)$totalFiltered; ?> tickets
                             </div>
-                            <nav class="pagination-nav" aria-label="Paginación de tickets">
+                            <nav class="pagination-nav" aria-label="PaginaciÃ³n de tickets">
                                 <!-- Anterior -->
                                 <?php if ($page > 1): ?>
                                     <a href="<?php echo $baseUrl . '&p=' . ($page - 1); ?>" class="pg-btn pg-arrow" title="Anterior">
@@ -1870,10 +1870,10 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                     <span class="pg-btn pg-arrow pg-disabled"><i class="bi bi-chevron-left"></i></span>
                                 <?php endif; ?>
 
-                                <!-- Páginas -->
+                                <!-- PÃ¡ginas -->
                                 <?php for ($p = 1; $p <= $totalPages; $p++):
                                     $far = ($p > 1 + $showWindow && $p < $page - $showWindow) || ($p < $totalPages - $showWindow && $p > $page + $showWindow);
-                                    if ($far) { if ($p === 2 || $p === $totalPages - 1) { echo '<span class="pg-dots">…</span>'; } continue; }
+                                    if ($far) { if ($p === 2 || $p === $totalPages - 1) { echo '<span class="pg-dots">â€¦</span>'; } continue; }
                                 ?>
                                     <?php if ($p === $page): ?>
                                         <span class="pg-btn pg-current"><?php echo $p; ?></span>
@@ -1910,7 +1910,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
         <div id="sigWarningToast" class="toast align-items-center text-bg-warning border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
-                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> Acción bloqueada</div>
+                    <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill"></i> AcciÃ³n bloqueada</div>
                     <div style="font-size: .88rem; line-height: 1.3;">
                         Tienes <strong><?php echo (int)$pendingSignCount; ?></strong> firma(s) pendiente(s). 
                         Debes firmar tus tickets cerrados antes de abrir uno nuevo.
@@ -1929,7 +1929,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
             <div class="d-flex">
                 <div class="toast-body">
                     <div class="fw-bold">Nueva respuesta en tu ticket</div>
-                    <div id="staffReplyToastText" style="font-size:.9rem">Tienes una nueva actualización del equipo.</div>
+                    <div id="staffReplyToastText" style="font-size:.9rem">Tienes una nueva actualizaciÃ³n del equipo.</div>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
@@ -1957,7 +1957,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                     if (!s) return '';
                     var m = s.match(/ticket\s*(#?\d+)/i);
                     if (m && m[1]) {
-                        return 'Respuesta nueva · Ticket #' + String(m[1]).replace('#','');
+                        return 'Respuesta nueva Â· Ticket #' + String(m[1]).replace('#','');
                     }
                     return s;
                 } catch (e) {
@@ -2073,7 +2073,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 if (lastId <= 0 || lastId <= seenId) return;
                                 try { localStorage.setItem('tickets_last_notif_id', String(lastId)); } catch (e) {}
                                 var msg = formatNotifMessage(last.message || '');
-                                if (!msg) msg = 'Respuesta nueva · Revisa tu ticket';
+                                if (!msg) msg = 'Respuesta nueva Â· Revisa tu ticket';
                                 showToast(msg);
                                 tryBrowserNotify('Nueva respuesta', msg, last.ticket_id ? ('view-ticket.php?id=' + String(last.ticket_id)) : 'tickets.php');
                             });
@@ -2097,7 +2097,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 } catch (e) {}
             });
 
-            // Botón "Marcar todas como leídas"
+            // BotÃ³n "Marcar todas como leÃ­das"
             (function(){
                 var markAllBtn = document.getElementById('notifMarkAllRead');
                 if (!markAllBtn) return;
@@ -2114,7 +2114,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                                 // Mostrar mensaje
                                 var list = document.getElementById('notifBellList');
                                 if (list) {
-                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al día</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leídas.</div></div>';
+                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÃ­a</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leÃ­das.</div></div>';
                                 }
                             }
                         })
@@ -2122,7 +2122,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
                 });
             })();
 
-            // Función global para mostrar el aviso de firma
+            // FunciÃ³n global para mostrar el aviso de firma
             window.showSigToast = function() {
                 try {
                     var toastEl = document.getElementById('sigWarningToast');

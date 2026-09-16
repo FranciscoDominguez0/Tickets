@@ -6,9 +6,7 @@ require_once '../../includes/Auth.php';
 // Polling de notificaciones para el agente logueado
 header('Content-Type: application/json; charset=UTF-8');
 
-try {
-    requireLogin('agente');
-} catch (Exception $e) {
+if (empty($_SESSION['staff_id'])) {
     echo json_encode(['ok' => false, 'error' => 'No session']);
     exit;
 }

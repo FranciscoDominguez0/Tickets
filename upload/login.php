@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 /**
  * LOGIN CLIENTE
- * Formulario de autenticación para usuarios
+ * Formulario de autenticaciÃ³n para usuarios
  * 
  * SQL: SELECT id, email, firstname, lastname, password FROM users WHERE email = ? AND status = "active"
  */
@@ -22,10 +22,10 @@ if ($helpdeskStatus === 'offline' || (string)($_GET['msg'] ?? '') === 'offline')
 
 $loginMsg = (string)($_GET['msg'] ?? '');
 if ($loginMsg === 'timeout') {
-    $_SESSION['flash_error'] = 'Tu sesión expiró por inactividad. Inicia sesión nuevamente.';
+    $_SESSION['flash_error'] = 'Tu sesiÃ³n expirÃ³ por inactividad. Inicia sesiÃ³n nuevamente.';
 }
 
-// Si ya está logueado, redirigir
+// Si ya estÃ¡ logueado, redirigir
 if (isset($_SESSION['user_id'])) {
     header('Location: tickets.php');
     exit;
@@ -56,7 +56,7 @@ if ($_POST) {
     }
 
         if (empty($email) || empty($password)) {
-            $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
+            $_SESSION['flash_error'] = 'Email y contraseÃ±a son requeridos';
             $_SESSION['flash_email'] = $prefillEmail;
             header('Location: login.php');
             exit;
@@ -77,7 +77,7 @@ if ($_POST) {
             exit;
         }
 
-        $_SESSION['flash_error'] = (string)(Auth::$lastError ?: 'Email o contraseña incorrectos');
+        $_SESSION['flash_error'] = (string)(Auth::$lastError ?: 'Email o contraseÃ±a incorrectos');
         $_SESSION['flash_email'] = $prefillEmail;
         header('Location: login.php');
         exit;
@@ -137,14 +137,14 @@ if ($_POST) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b91c1c">
-    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.php">
+    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>Login - <?php echo APP_NAME; ?></title>
     <?php
     echo renderOpenGraphTags([
         'title'       => 'Acceso a Clientes - ' . APP_NAME,
-        'description' => 'Inicia sesión en tu cuenta para gestionar y consultar tus tickets de soporte técnico.',
+        'description' => 'Inicia sesiÃ³n en tu cuenta para gestionar y consultar tus tickets de soporte tÃ©cnico.',
     ]);
     ?>
     <?php $loginCssV = (int)(@filemtime(__DIR__ . '/../publico/css/login.css') ?: 1); ?>
@@ -186,7 +186,7 @@ if ($isPortalDarkModeEnabled) {
             </div>
         </div>
 
-        <!-- NAVEGACIÓN -->
+        <!-- NAVEGACIÃ“N -->
         <div class="support-nav">
             <button class="nav-item active">Centro de soporte</button>
         </div>
@@ -194,7 +194,7 @@ if ($isPortalDarkModeEnabled) {
         <!-- CONTENIDO PRINCIPAL -->
         <div class="support-content">
             <div class="welcome-section">
-                <h2 class="welcome-title">Iniciar sesión en <?php echo APP_NAME; ?></h2>
+                <h2 class="welcome-title">Iniciar sesiÃ³n en <?php echo APP_NAME; ?></h2>
                 <p class="welcome-text">Para servirle mejor, recomendamos a nuestros clientes registrarse para una cuenta.</p>
             </div>
 
@@ -203,7 +203,7 @@ if ($isPortalDarkModeEnabled) {
                 <!-- COLUMNA IZQUIERDA - FORMULARIO -->
                 <div class="login-panel-left">
                     <div class="login-form-header">
-                        <h2 class="login-form-title">Inicia sesión</h2>
+                        <h2 class="login-form-title">Inicia sesiÃ³n</h2>
                         <p class="login-form-subtitle">Accede a tu cuenta para gestionar tus solicitudes.</p>
                     </div>
                     <form method="post" class="login-form">
@@ -221,26 +221,26 @@ if ($isPortalDarkModeEnabled) {
 
                         <!-- Email -->
                         <div class="form-group">
-                            <label for="email">Correo electrónico</label>
+                            <label for="email">Correo electrÃ³nico</label>
                             <input 
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                placeholder="Correo electrónico"
+                                placeholder="Correo electrÃ³nico"
                                 value="<?php echo htmlspecialchars($prefillEmail); ?>"
                                 required
                             >
                         </div>
 
-                        <!-- Contraseña -->
+                        <!-- ContraseÃ±a -->
                         <div class="form-group">
-                            <label for="password">Contraseña</label>
+                            <label for="password">ContraseÃ±a</label>
                             <div style="position: relative;">
                                 <input 
                                     type="password" 
                                     id="password" 
                                     name="password" 
-                                    placeholder="Contraseña"
+                                    placeholder="ContraseÃ±a"
                                     required
                                     style="padding-right: 40px; width: 100%; box-sizing: border-box;"
                                 >
@@ -254,22 +254,22 @@ if ($isPortalDarkModeEnabled) {
                         </div>
 
                         <div class="login-forgot">
-                            <a href="forgot.php" class="register-link">Olvidé mi contraseña</a>
+                            <a href="forgot.php" class="register-link">OlvidÃ© mi contraseÃ±a</a>
                         </div>
 
                         <!-- CSRF Token -->
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                        <!-- Botón Login -->
-                        <button type="submit" class="btn-login">Inicia Sesión</button>
+                        <!-- BotÃ³n Login -->
+                        <button type="submit" class="btn-login">Inicia SesiÃ³n</button>
 
                         <div class="login-side-links">
                             <p class="register-text">
-                                ¿Sin cuenta?
+                                Â¿Sin cuenta?
                                 <a href="registrar.php" class="register-link">Crear cuenta</a>
                             </p>
                             <p class="agent-text">
-                                ¿Eres agente?
+                                Â¿Eres agente?
                                 <a href="scp/login.php" class="agent-link">Entrar</a>
                             </p>
                         </div>
@@ -286,8 +286,8 @@ if ($isPortalDarkModeEnabled) {
                         </span>
                     </div>
                     <div class="login-welcome">
-                        <h2 class="login-welcome-title">Hola, <span>¡bienvenido!</span></h2>
-                        <p class="login-welcome-text">Inicia sesión para crear y dar seguimiento a tus solicitudes. Estamos aquí para ayudarte.</p>
+                        <h2 class="login-welcome-title">Hola, <span>Â¡bienvenido!</span></h2>
+                        <p class="login-welcome-text">Inicia sesiÃ³n para crear y dar seguimiento a tus solicitudes. Estamos aquÃ­ para ayudarte.</p>
                     </div>
                     <div class="lock-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -343,7 +343,7 @@ if ($isPortalDarkModeEnabled) {
                 }, 4500);
             } catch (e4) {}
         })();
-        // Mostrar/Ocultar contraseña
+        // Mostrar/Ocultar contraseÃ±a
         var toggleUserBtn = document.getElementById('togglePasswordUser');
         var pwdUserInput = document.getElementById('password');
         if(toggleUserBtn && pwdUserInput) {

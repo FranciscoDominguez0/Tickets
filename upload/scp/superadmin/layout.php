@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once '../../../config.php';
 require_once '../../../includes/helpers.php';
 
@@ -72,7 +72,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b91c1c">
-    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.php">
+    <link rel="manifest" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/upload/manifest.json">
     <link rel="icon" type="image/x-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
     <link rel="apple-touch-icon" href="<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/pwa/apple-touch-icon-180x180.png">
     <title>SuperAdmin - <?php echo htmlspecialchars(APP_NAME); ?></title>
@@ -85,7 +85,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
     <div class="container-fluid">
         <div class="d-flex align-items-center gap-2">
             <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
-            <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
+            <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menÃº lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
                 <i class="bi bi-list"></i>
             </button>
         </div>
@@ -102,7 +102,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                     <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?> superadmin-theme-toggle-icon"></i>
                 </button>
             </form>
-            <a href="../logout.php" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
+            <a href="../logout.php" class="btn btn-outline-light btn-sm">Cerrar SesiÃ³n</a>
         </div>
     </div>
 </nav>
@@ -202,7 +202,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                                 <path d="M4 10H20" stroke="<?php echo $currentRoute === 'pagos' ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round"/>
                             </svg>
                         </span>
-                        Facturación
+                        FacturaciÃ³n
                     </a>
                 </li>
                 <li>
@@ -210,7 +210,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                     <?php $expandConfig = ($configGroupActive && $allowExpandedGroups); ?>
                     <button type="button" class="sidebar-toggle <?php echo $expandConfig ? 'active expanded' : ''; ?>" data-subnav="superadmin-config-subnav" aria-controls="superadmin-config-subnav" aria-expanded="<?php echo $expandConfig ? 'true' : 'false'; ?>">
                         <span class="icon"><i class="bi bi-gear"></i></span>
-                        Configuración
+                        ConfiguraciÃ³n
                         <span class="arrow" aria-hidden="true">
                             <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7 5L12 10L7 15" stroke="<?php echo $expandConfig ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -221,7 +221,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
                         <li>
                             <a href="configuracion.php" class="sidebar-link <?php echo $currentRoute === 'configuracion' ? 'active' : ''; ?>">
                                 <span class="icon"><i class="bi bi-gear"></i></span>
-                                Configuración
+                                ConfiguraciÃ³n
                             </a>
                         </li>
                         <li>
@@ -236,7 +236,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Configuración</div>
+            <div class="sidebar-section-title">ConfiguraciÃ³n</div>
             <ul class="sidebar-nav">
                 <li>
                     <a href="../logout.php" class="sidebar-link">

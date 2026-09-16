@@ -51,6 +51,10 @@ ErrorDocument 503 /upload/error.php
     <FilesMatch "\.(css|js|png|jpg|jpeg|webp|gif|svg|ico|woff2|woff|ttf)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
+    <Files "sw.js">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+        Header set Pragma "no-cache"
+    </Files>
     # PHP pages: sin caché
     <FilesMatch "\.php$">
         Header set Cache-Control "no-store, no-cache, must-revalidate"

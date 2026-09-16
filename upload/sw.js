@@ -1,4 +1,4 @@
-const CACHE = 'tickets-v1';
+const CACHE = 'tickets-v2';
 const OFFLINE = 'publico/pwa-offline.html';
 
 self.addEventListener('install', e => {
