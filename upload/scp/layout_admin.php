@@ -1,6 +1,6 @@
-﻿<?php
+?<?php
 // Layout para panel administrador
-// Similar al layout de agentes pero con sidebar de administraciÃ³n
+// Similar al layout de agentes pero con sidebar de administración
 
 $notifCount = 0;
 $notifItems = [];
@@ -181,7 +181,7 @@ $allowExpandedGroups = (!$sidebarDefaultCollapsed && !$collapseSidebarMenu);
     </style>
 </head>
 <?php
-// Leer preferencia de modo oscuro desde sesiÃ³n
+// Leer preferencia de modo oscuro desde sesión
 $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 ?>
 <body class="scp-panel<?php echo $sidebarDefaultCollapsed ? ' sidebar-collapsed' : ''; ?><?php echo $isDarkMode ? ' dark-mode' : ''; ?>" data-sidebar-default="<?php echo $sidebarDefaultCollapsed ? 'collapsed' : 'expanded'; ?>">
@@ -189,7 +189,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <nav class="navbar navbar-dark scp-admin-navbar" style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1001; height: 60px;">
         <div class="container-fluid">
             <div class="d-flex align-items-center gap-2">
-                <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menÃº lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
+                <button class="btn scp-menu-toggle" id="scpSidebarToggle" type="button" aria-label="Alternar menú lateral" aria-expanded="<?php echo $sidebarDefaultCollapsed ? 'false' : 'true'; ?>">
                     <i class="bi bi-list"></i>
                 </button>
                 <span class="navbar-brand scp-brand-title">Sistema de Tickets</span>
@@ -249,7 +249,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                                     <i class="bi <?php echo html($icon); ?>"></i>
                                                 </div>
                                                 <div class="scp-notif-body">
-                                                    <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'NotificaciÃ³n')); ?></div>
+                                                    <div class="scp-notif-msg"><?php echo html((string)($n['message'] ?? 'Notificación')); ?></div>
                                                     <div class="scp-notif-time"><?php echo html(formatDate($n['created_at'] ?? null)); ?></div>
                                                 </div>
                                             </a>
@@ -260,7 +260,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         </li>
                         <li class="scp-notif-footer">
                             <button type="button" class="scp-notif-btn-all" id="scpMarkAllRead" <?php echo empty($notifItems) ? 'disabled' : ''; ?>>
-                                <i class="bi bi-check-all"></i> Marcar todas como leÃ­das
+                                <i class="bi bi-check-all"></i> Marcar todas como leídas
                             </button>
                         </li>
                     </ul>
@@ -305,7 +305,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 
     <!-- LAYOUT ADMINISTRADOR -->
     <div class="layout">
-        <!-- SIDEBAR ADMINISTRACIÃ“N -->
+        <!-- SIDEBAR ADMINISTRACIÓN -->
         <aside class="sidebar">
             <div class="sidebar-logo">
                 <div class="sidebar-brand-logo">
@@ -323,7 +323,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         <?php $expandSettings = ($isSettingsRoute && $allowExpandedGroups); ?>
                         <button type="button" class="sidebar-toggle <?php echo $expandSettings ? 'active expanded' : ''; ?>" data-subnav="settings-subnav" aria-controls="settings-subnav" aria-expanded="<?php echo $expandSettings ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-gear"></i></span>
-                            ConfiguraciÃ³n
+                            Configuración
                             <span class="arrow">
                                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M7 5L12 10L7 15" stroke="<?php echo $expandSettings ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -340,7 +340,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             <li>
                                 <a href="settings.php?t=billing" class="sidebar-link <?php echo ($isSettingsRoute && $settingsTab === 'billing') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-receipt"></i></span>
-                                    FacturaciÃ³n
+                                    Facturación
                                 </a>
                             </li>
                             <li>
@@ -392,7 +392,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             <li>
                                 <a href="audit.php" class="sidebar-link <?php echo ($currentRoute === 'audit') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-shield-check"></i></span>
-                                    AuditorÃ­a
+                                    Auditoría
                                 </a>
                             </li>
                         </ul>
@@ -423,7 +423,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         ?>
                         <button type="button" class="sidebar-toggle <?php echo $expandEmail ? 'active expanded' : ''; ?>" data-subnav="emails-subnav" aria-controls="emails-subnav" aria-expanded="<?php echo $expandEmail ? 'true' : 'false'; ?>">
                             <span class="icon"><i class="bi bi-envelope"></i></span>
-                            Correos ElectrÃ³nicos
+                            Correos Electrónicos
                             <span class="arrow">
                                 <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M7 5L12 10L7 15" stroke="<?php echo $expandEmail ? '#ffffff' : '#9ca3af'; ?>" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -447,7 +447,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                             <li>
                                 <a href="emailtest.php" class="sidebar-link <?php echo ($isEmailRoute && $emailTab === 'test') ? 'active' : ''; ?>">
                                     <span class="icon"><i class="bi bi-activity"></i></span>
-                                    DiagnÃ³stico
+                                    Diagnóstico
                                 </a>
                             </li>
                         </ul>
@@ -500,7 +500,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         <main class="main-shell">
             <div class="container-main">
                 <?php if ((int)($_SESSION['read_only'] ?? 0) === 1): ?>
-                    <?php $roMsg = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. ComunÃ­quese con Vigitec PanamÃ¡.'); ?>
+                    <?php $roMsg = (string)($_SESSION['read_only_reason'] ?? 'Pago vencido. Comuníquese con Vigitec Panamá.'); ?>
                     <div class="alert alert-warning" role="alert" data-alert-static="1">
                         <i class="bi bi-exclamation-triangle me-2"></i><strong>Modo lectura:</strong> <?php echo html($roMsg); ?>
                     </div>
@@ -588,7 +588,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 
     <div id="customPopNotif" class="scp-custom-notif info">
         <div class="n-header">
-            <span class="n-title"><i id="customPopIcon" class="bi bi-info-circle-fill"></i> <span id="customPopTitleText">ActualizaciÃ³n</span></span>
+            <span class="n-title"><i id="customPopIcon" class="bi bi-info-circle-fill"></i> <span id="customPopTitleText">Actualización</span></span>
             <button class="n-close" onclick="document.getElementById('customPopNotif').classList.remove('active')">&times;</button>
         </div>
         <div id="customPopMsg" class="n-msg"></div>
@@ -602,11 +602,11 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
     <script src="js/vendor/bootstrap.bundle.min.js"></script>
     <script src="js/scp.js"></script>
     <script>
-        // Inicializar objeto de audio global para evadir polÃ­ticas de Autoplay del navegador
+        // Inicializar objeto de audio global para evadir políticas de Autoplay del navegador
         window.scpNotificationAudio = new Audio('../../publico/audio/notification.mp3');
         window.scpNotificationAudio.volume = 0.4;
 
-        // Desbloquear el audio en la primera interacciÃ³n (click, keydown o touch)
+        // Desbloquear el audio en la primera interacción (click, keydown o touch)
         (function() {
             var unlock = function() {
                 if (window.scpNotificationAudio) {
@@ -630,7 +630,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             document.addEventListener('touchstart', unlock);
         })();
 
-        // BotÃ³n "Marcar todas como leÃ­das" en notificaciones
+        // Botón "Marcar todas como leídas" en notificaciones
         (function(){
             var btn = document.getElementById('scpMarkAllRead');
             if (!btn) return;
@@ -644,16 +644,16 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 var badge = document.querySelector('.scp-notif-btn .badge');
                 if (badge) badge.remove();
                 
-                // Cambiar badge del botÃ³n campana
+                // Cambiar badge del botón campana
                 var bellBtn = document.querySelector('.scp-notif-btn');
                 if (bellBtn) bellBtn.classList.remove('has-new');
                 
-                // Vaciar lista y mostrar mensaje vacÃ­o
+                // Vaciar lista y mostrar mensaje vacío
                 var menu = btn.closest('.scp-notif-menu');
                 var items = menu ? menu.querySelectorAll('li:not(:first-child):not(.scp-notif-footer)') : [];
                 items.forEach(function(item){ item.remove(); });
                 
-                // Agregar mensaje vacÃ­o
+                // Agregar mensaje vacío
                 var emptyLi = document.createElement('li');
                 emptyLi.innerHTML = '<div class="scp-notif-empty">No tienes notificaciones nuevas.</div>';
                 if (menu) {
@@ -669,11 +669,11 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 var sub = menu ? menu.querySelector('.scp-notif-sub') : null;
                 if (sub) sub.textContent = 'Sin nuevas';
                 
-                // Desactivar botÃ³n
+                // Desactivar botón
                 btn.disabled = true;
-                btn.innerHTML = '<i class="bi bi-check-lg"></i> Â¡Listo!';
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> ¡Listo!';
                 
-                // Enviar peticiÃ³n en segundo plano (sin recargar)
+                // Enviar petición en segundo plano (sin recargar)
                 var url = window.location.pathname.replace(/\/[^\/]*$/, '') + '/notifications_mark_all_read.php';
                 fetch(url, {
                     method: 'POST',
@@ -742,7 +742,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             }
 
             document.querySelectorAll('form[action="staff.php"] input[name="do"][value="send_reset"]').forEach(function (input) {
-                hookForm(input.closest('form'), 'Enviando correo...', 'Se estÃ¡ enviando el reseteo de contraseÃ±a');
+                hookForm(input.closest('form'), 'Enviando correo...', 'Se está enviando el reseteo de contraseña');
             });
 
             var createDo = document.querySelector('#agentCreateModal form[action="staff.php"] input[name="do"][value="create"]');
@@ -848,7 +848,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 var msgText = (n.message || '').toLowerCase();
                 var icon = 'bi-info-circle-fill';
                 var accent = 'info';
-                var title = 'NotificaciÃ³n';
+                var title = 'Notificación';
 
                 if (msgText.includes('cerrado') || msgText.includes('resuelto') || msgText.includes('completado')) {
                     icon = 'bi-check-circle-fill'; title = 'Completado'; accent = 'success';
@@ -862,7 +862,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     icon = 'bi-chat-dots-fill'; title = 'Nuevo Mensaje'; accent = 'info';
                 }
 
-                if (msgEl) msgEl.textContent = n.message || 'Nueva notificaciÃ³n';
+                if (msgEl) msgEl.textContent = n.message || 'Nueva notificación';
                 if (linkEl) linkEl.href = 'notification_read.php?id=' + n.id;
                 if (iconEl) iconEl.className = 'bi ' + icon;
                 if (titleTextEl) titleTextEl.textContent = title;
@@ -871,7 +871,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 window.setTimeout(function() { popEl.classList.remove('active'); }, 12000);
 
                 if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("Tickets - " + (n.message || "Nueva notificaciÃ³n"), {
+                    new Notification("Tickets - " + (n.message || "Nueva notificación"), {
                         icon: '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico'
                     });
                 }
@@ -882,7 +882,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
             function playNotificationSound() {
                 try {
                     if (window.scpNotificationAudio) {
-                        // Detener cualquier reproducciÃ³n en curso
+                        // Detener cualquier reproducción en curso
                         window.scpNotificationAudio.pause();
                         window.scpNotificationAudio.currentTime = 0;
                         window.scpNotificationAudio.play().catch(function(e){

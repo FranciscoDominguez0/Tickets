@@ -1,7 +1,7 @@
-﻿<?php
+?<?php
 /**
  * LOGIN AGENTE
- * Formulario de autenticaciÃ³n para agentes/staff
+ * Formulario de autenticación para agentes/staff
  * 
  * SQL: SELECT id, username, email, firstname, lastname, password FROM staff WHERE username = ? AND is_active = 1
  */
@@ -14,7 +14,7 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Si ya estÃ¡ logueado, redirigir
+// Si ya está logueado, redirigir
 if (isset($_SESSION['staff_id'])) {
     if ((string)($_SESSION['staff_role'] ?? '') === 'superadmin') {
         header('Location: superadmin/index.php');
@@ -29,9 +29,9 @@ $success = '';
 
 $loginMsg = (string)($_GET['msg'] ?? '');
 if ($loginMsg === 'timeout') {
-    $error = 'Tu sesiÃ³n expirÃ³ por inactividad';
+    $error = 'Tu sesión expiró por inactividad';
 } elseif ($loginMsg === 'ip') {
-    $error = 'Tu sesiÃ³n se cerrÃ³ por cambio de IP. Inicia sesiÃ³n nuevamente.';
+    $error = 'Tu sesión se cerró por cambio de IP. Inicia sesión nuevamente.';
 }
 
 if (!empty($_SESSION['flash_error'])) {
@@ -52,13 +52,13 @@ if (!empty($_SESSION['flash_username'])) {
 if ($_POST) {
         // Validar CSRF
         if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
-            $error = 'Token de seguridad invÃ¡lido';
+            $error = 'Token de seguridad inválido';
         } else {
             $username = trim($_POST['username'] ?? '');
             $password = $_POST['password'] ?? '';
 
             if (empty($username) || empty($password)) {
-                $error = 'Usuario y contraseÃ±a son requeridos';
+                $error = 'Usuario y contraseña son requeridos';
             } else {
                 $staff = Auth::loginStaff($username, $password);
                 if ($staff) {
@@ -77,7 +77,7 @@ if ($_POST) {
                     echo '</body></html>';
                     exit;
                 } else {
-                    $error = (string)(Auth::$lastError ?: 'Usuario o contraseÃ±a incorrectos');
+                    $error = (string)(Auth::$lastError ?: 'Usuario o contraseña incorrectos');
                 }
             }
         }
@@ -96,7 +96,7 @@ if ($_POST) {
     <?php
     echo renderOpenGraphTags([
         'title'       => 'Acceso a Panel de Agentes',
-        'description' => 'Plataforma de atenciÃ³n, gestiÃ³n de incidencias y tickets para el equipo de soporte tÃ©cnico.',
+        'description' => 'Plataforma de atención, gestión de incidencias y tickets para el equipo de soporte técnico.',
     ]);
     ?>
     <link rel="stylesheet" href="../../publico/css/agent-login.css">
@@ -150,7 +150,7 @@ if ($_POST) {
             --accent-glow-soft: rgba(239, 68, 68, 0.12);
         }
         
-        /* â”€â”€ Modern Premium Base Styling â”€â”€ */
+        /* ── Modern Premium Base Styling ── */
         body.agent-login {
             background-color: #000000 !important;
             display: flex !important;
@@ -182,7 +182,7 @@ if ($_POST) {
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
         }
 
-        /* â”€â”€ Dynamic Intelligent Accent Theme Mapping â”€â”€ */
+        /* ── Dynamic Intelligent Accent Theme Mapping ── */
         .agent-login-panel {
             background: rgba(9, 9, 11, 0.45) !important;
             backdrop-filter: blur(20px) saturate(140%) !important;
@@ -332,14 +332,14 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                     </svg>
                 </div>
 
-                <!-- ContraseÃ±a -->
+                <!-- Contraseña -->
                 <div class="agent-form-group">
-                    <label for="password">ContraseÃ±a</label>
+                    <label for="password">Contraseña</label>
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
-                        placeholder="ContraseÃ±a"
+                        placeholder="Contraseña"
                         required
                         style="padding-right: 30px;"
                     >
@@ -354,8 +354,8 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                 <!-- CSRF Token -->
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                <!-- BotÃ³n Login -->
-                <button type="submit" class="agent-btn-login">Inicia sesiÃ³n</button>
+                <!-- Botón Login -->
+                <button type="submit" class="agent-btn-login">Inicia sesión</button>
             </form>
         </div>
     </div>
@@ -378,7 +378,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
             }
         });
 
-        // â”€â”€ Extractor Inteligente de Colores de Fondo â”€â”€
+        // ── Extractor Inteligente de Colores de Fondo ──
         (function() {
             var bgUrl = <?php echo json_encode($loginBgRaw !== '' ? toAppAbsoluteUrl($loginBgRaw) : toAppAbsoluteUrl('publico/img/agent-background.webp')); ?>;
             
@@ -395,7 +395,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                     try {
                         data = ctx.getImageData(0, 0, 16, 16).data;
                     } catch(e) {
-                        console.log("CORS o error en lectura de pÃ­xeles. Usando rojo por defecto.");
+                        console.log("CORS o error en lectura de píxeles. Usando rojo por defecto.");
                         applyColor({r: 239, g: 68, b: 68});
                         return;
                     }
@@ -408,7 +408,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                         var g = data[i+1];
                         var b = data[i+2];
                         var a = data[i+3];
-                        if (a < 220) continue; // ignorar pÃ­xeles transparentes
+                        if (a < 220) continue; // ignorar píxeles transparentes
                         
                         var max = Math.max(r, g, b);
                         var min = Math.min(r, g, b);
@@ -459,7 +459,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                 var g = color.g;
                 var b = color.b;
                 
-                // Si el color es excesivamente oscuro, aclararlo un poco para que destaque en el botÃ³n
+                // Si el color es excesivamente oscuro, aclararlo un poco para que destaque en el botón
                 var brightness = (r * 299 + g * 587 + b * 114) / 1000;
                 if (brightness < 80) {
                     r = Math.min(255, r + 40);
@@ -471,7 +471,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                 root.style.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
                 root.style.setProperty('--accent-color', 'rgb(' + r + ', ' + g + ', ' + b + ')');
                 
-                // Generar variante hover mÃ¡s oscura o clara segÃºn brillo
+                // Generar variante hover más oscura o clara según brillo
                 var hoverFactor = brightness > 150 ? 0.82 : 1.18;
                 var hr = Math.min(255, Math.max(0, Math.round(r * hoverFactor)));
                 var hg = Math.min(255, Math.max(0, Math.round(g * hoverFactor)));
@@ -484,7 +484,7 @@ $bodyStyle = $loginBg !== '' ? ('background-image:url(' . html($loginBg) . ');')
                 document.body.style.opacity = '1';
             }
             
-            // Ocultar transiciÃ³n inicial mientras se realiza la extracciÃ³n rÃ¡pida
+            // Ocultar transición inicial mientras se realiza la extracción rápida
             document.body.style.opacity = '0.01';
             document.body.style.transition = 'opacity 0.35s ease';
             
