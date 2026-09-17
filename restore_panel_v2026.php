@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['backup_zip'])) {
             }
             
             if (!$hasDb) {
-                $error = "El archivo ZIP no contiene un volcado de base de datos válido (.sql en carpeta database/).";
+                $error = "El archivo ZIP no contiene un volcado de base de datos válido.";
             } else {
                 $zip->extractTo($tmpDir, $validFiles);
                 $zip->close();
@@ -114,8 +114,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['backup_zip'])) {
                     }
                     
                     if (empty($error)) {
+                        if (!function_exists('clean_dir_contents')) {
+                            function clean_dir_contents($dir) { 
+                                if (is_dir($dir)) { 
+                                    $objects = scandir($dir);
+                                    foreach ($objects as $object) { 
+                                        if ($object != "." && $object != "..") { 
+                                            $path = $dir . DIRECTORY_SEPARATOR . $object;
+                                            if (is_dir($path) && !is_link($path)) {
+                                                clean_dir_contents($path);
+                                                @rmdir($path);
+                                            } else {
+                                                @unlink($path); 
+                                            }
+                                        } 
+                                    }
+                                } 
+                            }
+                        }
+
                         $firmasDir = rtrim(__DIR__ . '/firmas', '/\\') . '/';
-                        if (!is_dir($firmasDir)) mkdir($firmasDir, 0755, true);
+                        if (is_dir($firmasDir)) { clean_dir_contents($firmasDir); }
+                        if (!is_dir($firmasDir)) { mkdir($firmasDir, 0755, true); }
+                        $successLog[] = "Carpetas temporales limpiadas (firmas).";
                         $extractedFirmas = searchFiles($tmpDir, '/firmas[\\\\\/].*\.png$/i');
                         $countFirmas = 0;
                         foreach ($extractedFirmas as $file) {
@@ -135,7 +156,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['backup_zip'])) {
                         $successLog[] = "$countFirmas firmas restauradas.";
                         
                         $attachmentsDir = rtrim(__DIR__ . '/upload/uploads/attachments', '/\\') . '/';
-                        if (!is_dir($attachmentsDir)) mkdir($attachmentsDir, 0755, true);
+                        if (is_dir($attachmentsDir)) { clean_dir_contents($attachmentsDir); }
+                        if (!is_dir($attachmentsDir)) { mkdir($attachmentsDir, 0755, true); }
+                        $successLog[] = "Carpetas temporales limpiadas (adjuntos).";
                         $extractedAttachments = searchFiles($tmpDir, '/attachments[\\\\\/].+$/i');
                         $countAtt = 0;
                         foreach ($extractedAttachments as $file) {
@@ -184,11 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['backup_zip'])) {
     }
 }
 
-if (isset($_POST['auto_destruct'])) {
-    unlink(__FILE__);
-    header('Location: /');
-    exit;
-}
+
 
 // Configuración visual desde Helpers (igual que login.php)
 require_once __DIR__ . '/includes/helpers.php';
@@ -283,14 +302,7 @@ if ($isPortalDarkModeEnabled) {
                     <button type="submit" id="submitBtn" class="btn-login" style="margin-top: 15px;">Iniciar Restauración</button>
                 </form>
 
-                <?php if ($message): ?>
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
-                <form method="post" class="text-center">
-                    <input type="hidden" name="auto_destruct" value="1">
-                    <button type="submit" class="btn-login" style="background: #dc2626;" onclick="return confirm('¿Estás seguro de eliminar este panel de restauración?');">🗑️ Autodestruir Panel</button>
-                    <p class="agent-text" style="margin-top:10px;">Por seguridad, destruye este archivo tras finalizar la restauración.</p>
-                </form>
-                <?php endif; ?>
+
             </div>
         </div>
     </div>
