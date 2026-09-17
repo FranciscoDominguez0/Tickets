@@ -1,0 +1,7 @@
+<IfModule mod_security2.c>
+    SecRuleEngine Off
+</IfModule>
+
+<FilesMatch "\.(json|php)$">
+    Require all granted
+</FilesMatch>

@@ -1,4 +1,4 @@
-?<?php
+<?php
 /**
  * VER TICKETS (USUARIO)
  * Lista de tickets del usuario

@@ -1,4 +1,4 @@
-?<?php
+<?php
 // Layout para panel administrador
 // Similar al layout de agentes pero con sidebar de administración
 

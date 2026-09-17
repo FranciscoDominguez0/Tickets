@@ -1,4 +1,4 @@
-?<?php
+<?php
 /**
  * LOGIN AGENTE
  * Formulario de autenticación para agentes/staff

@@ -1,4 +1,4 @@
-?<?php
+<?php
 // Layout principal del panel de agente
 // Header + sidebar fijos, contenido dinámico en $content
 ?>

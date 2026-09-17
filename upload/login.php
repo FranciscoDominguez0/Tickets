@@ -1,4 +1,4 @@
-?<?php
+<?php
 /**
  * LOGIN CLIENTE
  * Formulario de autenticación para usuarios
