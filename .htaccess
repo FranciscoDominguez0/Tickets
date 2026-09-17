@@ -1,3 +1,17 @@
+# ── Seguridad y Restricción de Acceso ──────────────────────────────────────────
+Options -Indexes
+
+# Bloquear acceso a archivos sensibles
+<FilesMatch "^(\.env|\.git|\.htaccess|\.htpasswd|\.log|\.md)$|^(config\.php|docker-compose\.yml|Dockerfile)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso a directorios internos
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(includes|vendor|scripts|storage) - [F,L]
+</IfModule>
+
 # ── Páginas de error personalizadas ──────────────────────────────────────────
 # ErrorDocument sin query strings — Apache pasa el código real en REDIRECT_STATUS.
 # La detección de PATH_INFO la maneja config.php directamente en PHP.

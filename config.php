@@ -8,10 +8,10 @@ if (!function_exists('mysqli_connect')) {
 }
 
 // ── Base de datos
-define('DB_HOST', 'localhost');
+define('DB_HOST', 'db');
 define('DB_PORT', '3306');
-define('DB_USER', 'root');
-define('DB_PASS', '12345678');
+define('DB_USER', 'AdminV');
+define('DB_PASS', 'Panama2626.');
 define('DB_NAME', 'tickets_db');
 
 // ── Aplicación

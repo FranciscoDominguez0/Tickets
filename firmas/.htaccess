@@ -1,4 +1,14 @@
 Options -Indexes
-<FilesMatch "\.png$">
+
+# Denegar acceso por defecto a todos los archivos
+Require all denied
+
+# Bloquear específicamente la ejecución de scripts
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|pl|py|jsp|asp|htm|shtml|sh|cgi)$">
+    Require all denied
+</FilesMatch>
+
+# Permitir solo acceso a PNGs
+<FilesMatch "\.(png|PNG)$">
     Require all granted
 </FilesMatch>
