@@ -7,12 +7,39 @@ if (!function_exists('mysqli_connect')) {
     die('Error: PHP mysqli extension is required.');
 }
 
+// ── Soporte para .env local
+$envFile = __DIR__ . '/.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (strpos($line, '#') === 0 || strpos($line, '=') === false) continue;
+        list($name, $value) = explode('=', $line, 2);
+        $name = trim($name);
+        $value = trim(trim($value), '"\'');
+        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
+            putenv(sprintf('%s=%s', $name, $value));
+            $_ENV[$name] = $value;
+            $_SERVER[$name] = $value;
+        }
+    }
+}
+
+function get_env($key, $default = null) {
+    $val = getenv($key);
+    if ($val !== false) return $val;
+    if (isset($_ENV[$key])) return $_ENV[$key];
+    if (isset($_SERVER[$key])) return $_SERVER[$key];
+    return $default;
+}
+
 // ── Base de datos
-define('DB_HOST', 'db');
-define('DB_PORT', '3306');
-define('DB_USER', 'AdminV');
-define('DB_PASS', 'Panama2626.');
-define('DB_NAME', 'tickets_db');
+$isDocker = file_exists('/.dockerenv');
+define('DB_HOST', get_env('DB_HOST', $isDocker ? 'db' : 'localhost'));
+define('DB_PORT', get_env('DB_PORT', '3306'));
+define('DB_USER', get_env('DB_USER', $isDocker ? 'AdminV' : 'root'));
+define('DB_PASS', get_env('DB_PASS', $isDocker ? 'Panama2626.' : '12345678'));
+define('DB_NAME', get_env('DB_NAME', 'tickets_db'));
 
 // ── Aplicación
 define('APP_NAME', 'Sistema de Tickets');
