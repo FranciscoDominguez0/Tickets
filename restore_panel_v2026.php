@@ -12,6 +12,7 @@ if (!isset($_GET['token']) || $_GET['token'] !== $SECRET_TOKEN) {
     die("<h1>403 Forbidden</h1>");
 }
 
+define('SKIP_DB_CONNECTION', true);
 require_once __DIR__ . '/config.php';
 
 $message = '';
@@ -70,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['backup_zip'])) {
                     return $files;
                 }
                 
-                if (!isset($mysqli) || $mysqli->connect_error) {
-                    $error = "Error conectando a la base de datos.";
+                $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
+                if ($mysqli->connect_error) {
+                    $error = "Error conectando al servidor MySQL: " . $mysqli->connect_error;
                 } else {
                     $sqlFiles = searchFiles($tmpDir, '/\.sql$/i');
                     if (!empty($sqlFiles)) {
@@ -211,6 +213,33 @@ if ($isPortalDarkModeEnabled) {
     <title>Panel de Restauración - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
     <link rel="stylesheet" href="publico/css/login.css?v=<?php echo (int)@filemtime(__DIR__ . '/publico/css/login.css'); ?>">
+    <style>
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            backdrop-filter: blur(4px);
+        }
+        .loader-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body style="<?php echo $bodyStyle; ?>" class="<?php echo $isDarkMode ? 'dark-mode' : ''; ?>">
     <link rel="stylesheet" href="upload/css/client_dark.css?v=<?php echo (int)@filemtime(__DIR__ . '/upload/css/client_dark.css'); ?>">
@@ -238,7 +267,7 @@ if ($isPortalDarkModeEnabled) {
                 <div class="login-form-header text-center" style="margin-bottom: 25px;">
                     <h2 class="login-form-title">Importar Backup</h2>
                 </div>
-                <form method="post" enctype="multipart/form-data" class="login-form">
+                <form id="restoreForm" method="post" enctype="multipart/form-data" class="login-form">
                     <?php if ($error): ?>
                         <div class="alert alert-danger" style="background:#7f1d1d; color:#fecaca; border:1px solid #991b1b; padding:15px; border-radius:6px; margin-bottom:20px;"><?php echo $error; ?></div>
                     <?php endif; ?>
@@ -251,7 +280,7 @@ if ($isPortalDarkModeEnabled) {
                         <input type="file" id="backup_zip" name="backup_zip" accept=".zip" required style="width:100%; padding: 12px; background: rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: inherit;">
                     </div>
 
-                    <button type="submit" class="btn-login" style="margin-top: 15px;">Iniciar Restauración</button>
+                    <button type="submit" id="submitBtn" class="btn-login" style="margin-top: 15px;">Iniciar Restauración</button>
                 </form>
 
                 <?php if ($message): ?>
@@ -265,5 +294,17 @@ if ($isPortalDarkModeEnabled) {
             </div>
         </div>
     </div>
+
+    <div class="loader-overlay" id="loadingOverlay">
+        <div class="loader-spinner"></div>
+        <h3 style="font-weight: 500; font-size: 1.2rem; font-family: inherit;">Procesando y restaurando datos...</h3>
+        <p style="color: #94a3b8; margin-top: 10px; font-size: 0.95rem;">Por favor, no cierres ni actualices esta página.</p>
+    </div>
+
+    <script>
+        document.getElementById('restoreForm').addEventListener('submit', function() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        });
+    </script>
 </body>
 </html>

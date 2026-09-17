@@ -136,14 +136,16 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 // ── Base de datos
-try {
-    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
-    if ($mysqli->connect_error) {
-        throw new RuntimeException('Database connection failed: ' . $mysqli->connect_error, 503);
+if (!defined('SKIP_DB_CONNECTION') || !SKIP_DB_CONNECTION) {
+    try {
+        $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+        if ($mysqli->connect_error) {
+            throw new RuntimeException('Database connection failed: ' . $mysqli->connect_error, 503);
+        }
+        $mysqli->set_charset('utf8mb4');
+    } catch (Exception $e) {
+        ErrorHandler::handleException($e);
     }
-    $mysqli->set_charset('utf8mb4');
-} catch (Exception $e) {
-    ErrorHandler::handleException($e);
 }
 
 // ── Autoloader (includes/)
