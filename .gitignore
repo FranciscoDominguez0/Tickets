@@ -12,7 +12,7 @@ Thumbs.db
 .idea/
 
 # PHP / composer
-vendor/
+/vendor/
 composer.lock
 
 # Uploads (user-generated)
