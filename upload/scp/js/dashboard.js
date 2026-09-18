@@ -1,9 +1,14 @@
 // Gráfica de actividad de tickets con múltiples líneas (created, closed, deleted)
 (function () {
+    if (window._dashboardJsLoaded) {
+        return;
+    }
+    window._dashboardJsLoaded = true;
+
     console.log('dashboard.js cargado');
 
     // Leer datos desde JSON embebido (evita JS inline en PHP)
-    (function initDashboardData() {
+    function initDashboardData() {
         var el = document.getElementById('dashboard-data');
         if (!el) return;
         try {
@@ -16,7 +21,8 @@
         } catch (e) {
             console.warn('No se pudo parsear dashboard-data', e);
         }
-    })();
+    }
+    initDashboardData();
 
     // Export CSV
     document.addEventListener('click', function (e) {
@@ -45,17 +51,21 @@
         window.location.href = 'dashboard.php?' + qs.toString();
     });
     
+    let currentChart = null;
+
     // Esperar a que el DOM esté completamente cargado
     function initChart() {
         const ctx = document.getElementById('ticketsActivityChart');
         if (!ctx) {
             console.error('Canvas element not found: ticketsActivityChart');
-            // Reintentar después de un breve delay
-            setTimeout(initChart, 100);
+            // Ya no reintentamos ciegamente, porque puede que no estemos en la página de dashboard.
             return;
         }
         
         console.log('Canvas encontrado:', ctx);
+
+        // Actualizar los datos desde el HTML inyectado
+        initDashboardData();
 
         // Obtener datos (formato nuevo o antiguo)
         let labels, createdData, closedData, deletedData;
@@ -74,25 +84,22 @@
             deletedData = window.dashboardDeleted || [];
         }
         
-        console.log('Chart Data:', { labels, createdData, closedData, deletedData });
-        
         // Verificar que hay datos
         if (!labels || labels.length === 0) {
-            console.warn('No hay datos para mostrar en la gráfica');
             ctx.parentElement.innerHTML = '<p class="text-muted text-center p-4">No hay datos disponibles para el período seleccionado.</p>';
             return;
         }
         
         // Verificar que Chart.js esté disponible
         if (typeof Chart === 'undefined') {
-            console.error('Chart.js no está cargado');
             ctx.parentElement.innerHTML = '<p class="text-danger text-center p-4">Error: Chart.js no está cargado correctamente.</p>';
             return;
         }
 
-        console.log('Creando gráfica...');
-
-        var isShortRange = Array.isArray(labels) && labels.length <= 2;
+        // Destruir gráfica anterior si existe
+        if (currentChart) {
+            currentChart.destroy();
+        }
 
         function makeGradient(canvasCtx, area, color) {
             var g = canvasCtx.createLinearGradient(0, area.top, 0, area.bottom);
@@ -102,8 +109,10 @@
             return g;
         }
 
+        var isShortRange = Array.isArray(labels) && labels.length <= 2;
+
         // Crear la gráfica con Chart.js
-        const chart = new Chart(ctx, {
+        currentChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
@@ -176,83 +185,36 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: {
-                    duration: 650,
-                    easing: 'easeOutQuart'
-                },
+                animation: { duration: 650, easing: 'easeOutQuart' },
                 plugins: {
-                    legend: {
-                        display: false,
-                    },
+                    legend: { display: false },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                        padding: 12,
-                        cornerRadius: 10,
-                        caretSize: 6,
-                        displayColors: true,
-                        boxPadding: 6,
-                        titleFont: {
-                            size: 12
-                        },
-                        bodyFont: {
-                            size: 11
-                        }
+                        mode: 'index', intersect: false, backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        padding: 12, cornerRadius: 10, caretSize: 6, displayColors: true, boxPadding: 6,
+                        titleFont: { size: 12 }, bodyFont: { size: 11 }
                     }
                 },
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                elements: {
-                    line: {
-                        borderJoinStyle: 'round'
-                    }
-                },
+                interaction: { mode: 'index', intersect: false },
+                elements: { line: { borderJoinStyle: 'round' } },
                 scales: {
                     x: {
-                        grid: {
-                            display: true,
-                            color: 'rgba(148, 163, 184, 0.25)'
-                        },
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 10,
-                            maxRotation: 45,
-                            minRotation: 0,
-                            font: {
-                                size: 10
-                            },
-                            color: '#64748b'
-                        }
+                        grid: { display: true, color: 'rgba(148, 163, 184, 0.25)' },
+                        ticks: { autoSkip: true, maxTicksLimit: 10, maxRotation: 45, minRotation: 0, font: { size: 10 }, color: '#64748b' }
                     },
                     y: {
-                        beginAtZero: true,
-                        precision: 0,
-                        ticks: {
-                            stepSize: 1,
-                            font: {
-                                size: 10
-                            },
-                            color: '#64748b'
-                        },
-                        grid: {
-                            color: 'rgba(148, 163, 184, 0.25)'
-                        }
+                        beginAtZero: true, precision: 0,
+                        ticks: { stepSize: 1, font: { size: 10 }, color: '#64748b' },
+                        grid: { color: 'rgba(148, 163, 184, 0.25)' }
                     }
                 }
             }
         });
-
-        console.log('Gráfica creada exitosamente');
-
-        // Crear leyenda personalizada (similar a osTicket)
+        
         const legendContainer = document.getElementById('line-chart-legend');
         if (legendContainer) {
-            legendContainer.innerHTML = ''; // Limpiar contenido anterior
+            legendContainer.innerHTML = '';
             legendContainer.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 18px; padding: 0 10px;';
-            const datasets = chart.data.datasets;
+            const datasets = currentChart.data.datasets;
             datasets.forEach((dataset, index) => {
                 const legendItem = document.createElement('div');
                 legendItem.className = 'chart-legend-chip';
@@ -268,11 +230,10 @@
                 legendItem.appendChild(colorBox);
                 legendItem.appendChild(label);
                 
-                // Toggle al hacer clic
                 legendItem.addEventListener('click', function() {
-                    const meta = chart.getDatasetMeta(index);
+                    const meta = currentChart.getDatasetMeta(index);
                     meta.hidden = !meta.hidden;
-                    chart.update();
+                    currentChart.update();
                     
                     if (meta.hidden) {
                         legendItem.style.opacity = '0.4';
@@ -288,11 +249,15 @@
         }
     }
     
-    // Inicializar cuando el DOM esté listo
+    // Escuchar eventos de navegación SPA
+    window.addEventListener('spaContentUpdated', function() {
+        // Le damos 50ms para que el DOM se asiente
+        setTimeout(initChart, 50);
+    });
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initChart);
     } else {
-        // Si ya está cargado, esperar un poco para que los scripts se ejecuten
-        setTimeout(initChart, 100);
+        setTimeout(initChart, 50);
     }
 })();

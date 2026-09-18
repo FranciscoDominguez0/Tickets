@@ -281,19 +281,13 @@ $sql = "SELECT t.id, t.ticket_number, t.subject, t.dept_id, t.created, t.updated
                s.firstname AS staff_first, s.lastname AS staff_last,
                tr.billing_status,
                (CASE WHEN tr.id IS NOT NULL THEN 1 ELSE 0 END) AS has_report,
-               ta.status AS approval_status
+               (SELECT status FROM ticket_approvals WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS approval_status
         FROM tickets t
         JOIN users u ON t.user_id = u.id
         LEFT JOIN staff s ON t.staff_id = s.id
         JOIN ticket_status ts ON t.status_id = ts.id
         JOIN priorities p ON t.priority_id = p.id
         LEFT JOIN ticket_reports tr ON tr.ticket_id = t.id
-        LEFT JOIN (
-            SELECT ta1.ticket_id, ta1.status
-            FROM ticket_approvals ta1
-            INNER JOIN (SELECT ticket_id, MAX(id) AS max_id FROM ticket_approvals GROUP BY ticket_id) ta_max
-                ON ta1.ticket_id = ta_max.ticket_id AND ta1.id = ta_max.max_id
-        ) ta ON ta.ticket_id = t.id
         $whereSql
         ORDER BY t.updated DESC
         LIMIT ?, ?";

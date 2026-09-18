@@ -137,8 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       var imagesHtml = '';
                       e.attachments.forEach(function(att) {
                         if (att.is_image && att.url) {
-                          if (!isDesktop()) {
-                            // On mobile, show a beautiful click-to-load placeholder
+                            // On all devices, show a beautiful click-to-load placeholder to save bandwidth
                             var sizeStr = '';
                             if (att.size) {
                               var sizeBytes = parseInt(att.size, 10) || 0;
@@ -163,9 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
                               + '<button type="button" class="btn btn-sm btn-primary btn-load-preview-img" style="border-radius:8px; padding:4px 12px; font-size:0.78rem; font-weight:700; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; background:#2563eb; color:#fff; border:none; box-shadow:0 2px 4px rgba(37,99,235,0.15);"><i class="bi bi-eye-fill"></i> Ver</button>'
                               + '</div>'
                               + '</div>';
-                          } else {
-                            imagesHtml += '<img src="' + escapeHtml(att.url) + '" style="max-width:100%; max-height:160px; border-radius:8px; border:1px solid #e2e8f0; margin-right:8px; margin-top:10px; object-fit:contain; background:#f8fafc;" alt="adjunto">';
-                          }
                         }
                       });
                       if (imagesHtml) {

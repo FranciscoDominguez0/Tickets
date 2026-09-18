@@ -433,10 +433,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateMarkers(locations) {
-        document.getElementById('active-agents-count').textContent = locations.length;
+        var countEl = document.getElementById('active-agents-count');
+        if (!countEl) return;
+        
+        countEl.textContent = locations.length;
         
         var alertEl = document.getElementById('no-agents-alert');
         var sidebarList = document.getElementById('agent-list');
+        if (!sidebarList) return;
         
         if (locations.length === 0) {
             if (alertEl) alertEl.classList.remove('d-none');
@@ -548,7 +552,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Polling cada 15 segundos (reduce carga en BD)
     fetchLocations();
-    setInterval(fetchLocations, 15000);
+    var mapInterval = setInterval(function() {
+        if (!document.getElementById('mapContainerOuter')) {
+            clearInterval(mapInterval);
+            return;
+        }
+        fetchLocations();
+    }, 15000);
 
     // Botón Actualizar
     document.getElementById('refresh-map').addEventListener('click', function() {

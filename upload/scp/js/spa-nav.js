@@ -17,40 +17,60 @@
     var lastAssetsHtml = '';
     var sidebar = document.querySelector('.sidebar');
 
-    // Barra de progreso de navegación
-    var navLoader = null;
-    function showNavLoader() {
-        if (navLoader) return;
-        navLoader = document.createElement('div');
-        navLoader.id = 'scp-nav-loader';
-        navLoader.style.cssText = [
-            'position:fixed',
-            'top:0',
-            'left:0',
-            'width:0%',
-            'height:3px',
-            'background:linear-gradient(90deg,#ef4444,#f87171)',
-            'z-index:9999',
-            'transition:width .3s ease',
-            'border-radius:0 2px 2px 0',
-            'box-shadow:0 0 8px rgba(239,68,68,.6)'
-        ].join(';');
-        document.body.appendChild(navLoader);
-        // Animar a 70% rapidamente, la barra llega al 100% cuando termina
-        requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-                if (navLoader) navLoader.style.width = '70%';
-            });
-        });
-    }
-    function hideNavLoader() {
-        if (!navLoader) return;
-        navLoader.style.transition = 'width .15s ease, opacity .2s ease .1s';
-        navLoader.style.width = '100%';
-        navLoader.style.opacity = '0';
-        var el = navLoader;
-        navLoader = null;
-        setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 350);
+    function getGenericSkeleton() {
+        var isDark = document.body.classList.contains('dark-mode');
+        var bg = isDark ? '#1e1111' : '#ffffff';
+        var border = isDark ? '#2e1c1c' : '#e5e7eb';
+        var shimmer = isDark ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%)' : 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)';
+        var baseColor = isDark ? '#2a1a1a' : '#f1f5f9';
+
+        var skeletonHTML = '<div class="scp-skeleton-wrapper" style="padding: 24px; animation: scp-fade-in 0.3s ease;">';
+        // Animaciones CSS inyectadas
+        skeletonHTML += '<style>'
+            + '@keyframes scp-fade-in { from { opacity: 0; } to { opacity: 1; } }'
+            + '@keyframes scp-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }'
+            + '.scp-skeleton-box { position: relative; overflow: hidden; background-color: ' + baseColor + '; border-radius: 8px; }'
+            + '.scp-skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateX(-100%); background-image: ' + shimmer + '; animation: scp-shimmer 1.5s infinite; }'
+            + '</style>';
+
+        // Header Skeleton
+        skeletonHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 24px;">'
+            + '<div class="scp-skeleton-box" style="width: 250px; height: 32px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 120px; height: 32px;"></div>'
+            + '</div>';
+
+        // Filters Skeleton
+        skeletonHTML += '<div style="display: flex; gap: 12px; margin-bottom: 24px;">'
+            + '<div class="scp-skeleton-box" style="width: 100px; height: 28px; border-radius: 99px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 80px; height: 28px; border-radius: 99px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 90px; height: 28px; border-radius: 99px;"></div>'
+            + '</div>';
+
+        // Table Skeleton
+        skeletonHTML += '<div style="background: ' + bg + '; border: 1px solid ' + border + '; border-radius: 12px; overflow: hidden;">';
+        
+        // Table Header
+        skeletonHTML += '<div style="display: flex; padding: 16px 24px; border-bottom: 1px solid ' + border + '; gap: 16px;">'
+            + '<div class="scp-skeleton-box" style="width: 60px; height: 20px;"></div>'
+            + '<div class="scp-skeleton-box" style="flex: 1; height: 20px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 150px; height: 20px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 100px; height: 20px;"></div>'
+            + '<div class="scp-skeleton-box" style="width: 120px; height: 20px;"></div>'
+            + '</div>';
+
+        // Table Rows
+        for (var i = 0; i < 5; i++) {
+            skeletonHTML += '<div style="display: flex; padding: 20px 24px; border-bottom: 1px solid ' + border + '; gap: 16px; align-items: center;">'
+                + '<div class="scp-skeleton-box" style="width: 60px; height: 24px;"></div>'
+                + '<div style="flex: 1;"><div class="scp-skeleton-box" style="width: 80%; height: 20px; margin-bottom: 8px;"></div><div class="scp-skeleton-box" style="width: 40%; height: 16px;"></div></div>'
+                + '<div class="scp-skeleton-box" style="width: 150px; height: 32px; border-radius: 99px;"></div>'
+                + '<div class="scp-skeleton-box" style="width: 100px; height: 24px;"></div>'
+                + '<div style="width: 120px; display: flex; align-items: center; gap: 8px;"><div class="scp-skeleton-box" style="width: 32px; height: 32px; border-radius: 50%;"></div><div class="scp-skeleton-box" style="flex: 1; height: 20px;"></div></div>'
+                + '</div>';
+        }
+
+        skeletonHTML += '</div></div>';
+        return skeletonHTML;
     }
 
     document.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
@@ -264,12 +284,18 @@
         });
     }
 
+    function delay(ms) {
+        return new Promise(function(resolve) { setTimeout(resolve, ms); });
+    }
+
     function navigate(url, fromPop) {
         if (navInFlight) return;
         navInFlight = true;
-        showNavLoader();
 
-        fetch(url, {
+        var startTime = Date.now();
+
+        // 1. Iniciar petición
+        var fetchPromise = fetch(url, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-SCP-AJAX': '1',
@@ -281,26 +307,47 @@
             var ct = (r.headers.get('content-type') || '').toLowerCase();
             if (ct.indexOf('application/json') === -1) throw new Error('not-json');
             return r.json();
-        })
-        .then(function (data) {
+        });
+
+        // No añadimos delays artificiales ni animaciones de fade para mantener máxima velocidad
+
+        // 2. Temporizador de 150ms para mostrar el skeleton solo si la red demora
+        var skeletonTimeout = setTimeout(function() {
+            if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            } else {
+                window.scrollTo(0, 0);
+            }
+            mainContent.innerHTML = getGenericSkeleton();
+        }, 150);
+
+        fetchPromise.then(function(data) {
             if (!data || !data.ok) throw new Error('bad-response');
-            lastAssetsHtml = data.assets || '';
-            // Inyectar los estilos de la ruta ANTES del contenido: el HTML nuevo
-            // se muestra solo cuando su CSS ya esté aplicado (sin flash feo).
-            // Timeout reducido de 800ms a 50ms para evitar retrasos artificiales
+            
+            // Cancelar el skeleton si la petición fue rápida
+            clearTimeout(skeletonTimeout);
+            
+            // Inyectar nuevo contenido inmediatamente
+            var lastAssetsHtml = data.assets || '';
             var pendingStyles = injectStyles(lastAssetsHtml);
-            mainContent.style.transition = 'opacity .10s ease';
-            mainContent.style.opacity = '0.4';
+            
             return waitForStyles(pendingStyles, 50).then(function () {
                 mainContent.innerHTML = data.html || '';
-                mainContent.style.opacity = '';
+                if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                } else {
+                    window.scrollTo(0, 0);
+                }
+                
                 return loadExternalScripts().then(function () {
                     runInlineScripts(mainContent);
+                    
+                    // Notificar a scripts globales (como dashboard.js) que el contenido cambió
+                    window.dispatchEvent(new Event('spaContentUpdated'));
                 });
             });
         })
         .then(function () {
-            hideNavLoader();
             setActiveSidebar(url);
             try { sessionStorage.setItem('scpCurrentUrl', url); } catch(e) {}
             if (!fromPop) {
@@ -310,25 +357,18 @@
                 }
                 try { history.pushState({ scpUrl: url }, '', displayUrl); } catch (e) {}
             }
-            // Cerrar el sidebar móvil tras navegar (solo si estaba abierto)
             var wasMobileOpen = document.body.classList.contains('sidebar-mobile-open');
             document.body.classList.remove('sidebar-mobile-open');
             if (wasMobileOpen) {
                 var toggleBtn = document.getElementById('scpSidebarToggle');
                 if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
             }
-            if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
-                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-            } else {
-                window.scrollTo(0, 0);
-            }
             navInFlight = false;
         })
-        .catch(function () {
-            hideNavLoader();
+        .catch(function (e) {
+            mainContent.style.transition = '';
             mainContent.style.opacity = '';
             navInFlight = false;
-            // Fallback seguro: navegación completa (mismo comportamiento de siempre)
             window.location.href = url;
         });
     }

@@ -120,6 +120,10 @@ body.dark-mode tr.ticket-row:hover>td {
     background: #181818 !important;
 }
 
+body.dark-mode tr.ticket-row.is-selected td {
+    background: #1e1111 !important;
+}
+
 /* Ticket número y asunto */
 body.dark-mode .ticket-title {
     color: #60a5fa !important;
