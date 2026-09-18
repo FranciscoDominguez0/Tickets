@@ -190,7 +190,15 @@ class Auth
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
 
-        if (!$user || !self::verify($password, $user['password'])) {
+        $isValid = false;
+        if ($user) {
+            $isValid = self::verify($password, $user['password']);
+        } else {
+            // Mitigación de ataque de tiempo (User Enumeration)
+            self::verify($password, '$2y$10$abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV1234');
+        }
+
+        if (!$isValid) {
             if (isset($mysqli) && $mysqli && $email !== '') {
                 $stmtU = $mysqli->prepare('INSERT INTO user_login_attempts (email, ip, attempts, locked_until, updated) VALUES (?, ?, 1, NULL, NOW()) ON DUPLICATE KEY UPDATE attempts = attempts + 1, updated = NOW()');
                 if ($stmtU) {
@@ -319,17 +327,12 @@ class Auth
                 if ($rowL && !empty($rowL['locked_until'])) {
                     $remainingSec = (int) ($rowL['remaining_sec'] ?? 0);
 
-                    // Si ya expiró el bloqueo, limpiar y reactivar si fue un lock automático
+                    // Si ya expiró el bloqueo, limpiar
                     if ($remainingSec <= 0) {
                         $stmtClear = $mysqli->prepare('DELETE FROM staff_login_attempts WHERE username = ? AND ip = ?');
                         if ($stmtClear) {
                             $stmtClear->bind_param('ss', $username, $ip);
                             $stmtClear->execute();
-                        }
-                        $stmtReact = $mysqli->prepare('UPDATE staff SET is_active = 1 WHERE username = ? AND is_active = 0');
-                        if ($stmtReact) {
-                            $stmtReact->bind_param('s', $username);
-                            $stmtReact->execute();
                         }
                         $rowL = null;
                         $remainingSec = 0;
@@ -369,7 +372,15 @@ class Auth
         }
 
         if ($superAdmin) {
-            if (!self::verify($password, $superAdmin['password'])) {
+            $isValidSuper = self::verify($password, $superAdmin['password']);
+        } else {
+            // Mitigación de ataque de tiempo
+            self::verify($password, '$2y$10$abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV1234');
+            $isValidSuper = false;
+        }
+
+        if ($superAdmin) {
+            if (!$isValidSuper) {
                 if (isset($mysqli) && $mysqli) {
                     $stmtU = $mysqli->prepare('INSERT INTO staff_login_attempts (username, ip, attempts, locked_until, updated) VALUES (?, ?, 1, NULL, NOW()) ON DUPLICATE KEY UPDATE attempts = attempts + 1, updated = NOW()');
                     if ($stmtU) {
@@ -390,16 +401,10 @@ class Auth
                                 $stmtLock->execute();
                             }
 
-                            $stmtDeact = $mysqli->prepare('UPDATE super_admins SET is_active = 0 WHERE username = ?');
-                            if ($stmtDeact) {
-                                $stmtDeact->bind_param('s', $username);
-                                $stmtDeact->execute();
-                            }
-
                             if (function_exists('addLog')) {
                                 addLog(
                                     'superadmin_login_lockout',
-                                    'Cuenta de superadmin bloqueada por intentos fallidos para ' . (string) $username,
+                                    'Cuenta de superadmin bloqueada temporalmente por intentos fallidos para ' . (string) $username,
                                     'auth',
                                     null,
                                     'staff',
@@ -476,7 +481,15 @@ class Auth
         $result = $stmt->get_result();
         $staff = $result->fetch_assoc();
 
-        if (!$staff || !self::verify($password, $staff['password'])) {
+        $isValidStaff = false;
+        if ($staff) {
+            $isValidStaff = self::verify($password, $staff['password']);
+        } else {
+            // Mitigación de ataque de tiempo
+            self::verify($password, '$2y$10$abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV1234');
+        }
+
+        if (!$isValidStaff) {
             if (isset($mysqli) && $mysqli) {
                 $stmtU = $mysqli->prepare('INSERT INTO staff_login_attempts (username, ip, attempts, locked_until, updated) VALUES (?, ?, 1, NULL, NOW()) ON DUPLICATE KEY UPDATE attempts = attempts + 1, updated = NOW()');
                 if ($stmtU) {
@@ -497,17 +510,10 @@ class Auth
                             $stmtLock->execute();
                         }
 
-                        // Reflejar bloqueo en staff
-                        $stmtDeact = $mysqli->prepare('UPDATE staff SET is_active = 0 WHERE username = ?');
-                        if ($stmtDeact) {
-                            $stmtDeact->bind_param('s', $username);
-                            $stmtDeact->execute();
-                        }
-
                         if (function_exists('addLog')) {
                             addLog(
                                 'staff_login_lockout',
-                                'Cuenta bloqueada por intentos fallidos para ' . (string) $username,
+                                'Cuenta bloqueada temporalmente por intentos fallidos para ' . (string) $username,
                                 'auth',
                                 null,
                                 'staff',

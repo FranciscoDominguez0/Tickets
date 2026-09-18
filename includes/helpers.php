@@ -7,18 +7,10 @@
  * Obtiene la IP real del usuario (soporta proxys)
  */
 function getUserIpAddress() {
-    $ipKeys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
-    foreach ($ipKeys as $key) {
-        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-            $ips = explode(',', (string)$_SERVER[$key]);
-            foreach ($ips as $ip) {
-                $ip = trim($ip);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
-        }
-    }
+    // Para mitigar IP Spoofing, usar siempre REMOTE_ADDR.
+    // Solo confiar en HTTP_X_FORWARDED_FOR si estás detrás de un proxy/WAF de confianza
+    // (como Cloudflare) y el servidor web (Nginx/Apache) no está reemplazando REMOTE_ADDR automáticamente.
+    // Lo ideal es que el proxy inverso modifique REMOTE_ADDR y la aplicación PHP lea REMOTE_ADDR.
     return (string)($_SERVER['REMOTE_ADDR'] ?? '');
 }
 

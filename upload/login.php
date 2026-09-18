@@ -55,12 +55,19 @@ if ($_POST) {
         exit;
     }
 
-        if (empty($email) || empty($password)) {
-            $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
-            $_SESSION['flash_email'] = $prefillEmail;
-            header('Location: login.php');
-            exit;
-        }
+    if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
+        $_SESSION['flash_error'] = 'Token de seguridad inválido';
+        $_SESSION['flash_email'] = $prefillEmail;
+        header('Location: login.php');
+        exit;
+    }
+
+    if (empty($email) || empty($password)) {
+        $_SESSION['flash_error'] = 'Email y contraseña son requeridos';
+        $_SESSION['flash_email'] = $prefillEmail;
+        header('Location: login.php');
+        exit;
+    }
 
         $user = Auth::loginUser($email, $password);
         if ($user) {
