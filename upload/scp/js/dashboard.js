@@ -57,12 +57,10 @@
     function initChart() {
         const ctx = document.getElementById('ticketsActivityChart');
         if (!ctx) {
-            console.error('Canvas element not found: ticketsActivityChart');
-            // Ya no reintentamos ciegamente, porque puede que no estemos en la página de dashboard.
+            // No hacemos log de error porque esto se ejecuta en cada navegación SPA (spaContentUpdated)
+            // y es normal que el canvas no exista si no estamos en el dashboard.
             return;
         }
-        
-        console.log('Canvas encontrado:', ctx);
 
         // Actualizar los datos desde el HTML inyectado
         initDashboardData();
