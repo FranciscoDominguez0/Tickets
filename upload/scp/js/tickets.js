@@ -1,5 +1,5 @@
 // Inicialización del editor y adjuntos en la vista de ticket
-document.addEventListener('DOMContentLoaded', function() {
+function initTicketsJS() {
   // Listado de tickets: búsqueda + acciones masivas (reemplaza <script> inline)
   (function () {
     var panel = document.querySelector('.tickets-panel[data-filter-key]') || document.querySelector('.tickets-panel') || document.body;
@@ -239,6 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!target || !target.closest) return;
         var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
         if (!a) return;
+
+        if (ev.relatedTarget && a.contains(ev.relatedTarget)) return;
+
         var tid = (a.getAttribute('data-ticket-id') || '').toString();
         if (!tid) return;
 
@@ -256,6 +259,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!target || !target.closest) return;
         var a = target.closest('.ticket-preview-trigger[data-ticket-id]');
         if (!a) return;
+
+        if (ev.relatedTarget && a.contains(ev.relatedTarget)) return;
+
         cancelSchedule();
         delayHide();
       });
@@ -349,21 +355,26 @@ document.addEventListener('DOMContentLoaded', function() {
       });
 
       // Cerrar solo si se hace click fuera del popup
-      document.addEventListener('mousedown', function (e) {
+      if (window._ticketsPreviewMousedown) {
+        document.removeEventListener('mousedown', window._ticketsPreviewMousedown, true);
+      }
+      window._ticketsPreviewMousedown = function (e) {
         try {
-          if (pop.classList.contains('d-none')) return;
+          var currentPop = document.getElementById('ticketHoverPreview');
+          if (!currentPop || currentPop.classList.contains('d-none')) return;
           var t = e && e.target ? e.target : null;
           if (!t) return;
 
           // Si el click fue dentro del popup, no cerrar
-          if (pop.contains && pop.contains(t)) return;
+          if (currentPop.contains && currentPop.contains(t)) return;
 
           // Si el click fue en un trigger del ticket, no cerrar (el hover/carga lo manejará)
           if (t.closest && t.closest('.ticket-preview-trigger[data-ticket-id]')) return;
 
           closePopup();
         } catch (err) {}
-      }, true);
+      };
+      document.addEventListener('mousedown', window._ticketsPreviewMousedown, true);
 
       // ── Gesto móvil: deslizar hacia la izquierda sobre la fila abre la preview ──
       (function initMobileSwipePreview() {
@@ -546,16 +557,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { passive: true });
 
         // — Cerrar tocando fuera del popup —
-        document.addEventListener('touchstart', function (ev) {
+        if (window._ticketsPreviewTouchstart) {
+          document.removeEventListener('touchstart', window._ticketsPreviewTouchstart, { passive: true });
+        }
+        window._ticketsPreviewTouchstart = function (ev) {
           try {
-            if (!mobilePreviewActive || pop.classList.contains('d-none')) return;
+            var currentPop = document.getElementById('ticketHoverPreview');
+            if (!mobilePreviewActive || !currentPop || currentPop.classList.contains('d-none')) return;
             if (!ev.touches || ev.touches.length !== 1) return;
             var el = document.elementFromPoint(ev.touches[0].clientX, ev.touches[0].clientY);
-            if (!el || pop.contains(el)) return;
+            if (!el || (currentPop.contains && currentPop.contains(el))) return;
             closePopup();
             resetPopupStyles();
           } catch (err) {}
-        }, { passive: true });
+        };
+        document.addEventListener('touchstart', window._ticketsPreviewTouchstart, { passive: true });
 
         // — Cerrar con botón X (touch) —
         if (closeEl) {
@@ -1055,5 +1071,13 @@ document.addEventListener('DOMContentLoaded', function() {
       ]
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initTicketsJS);
+} else {
+  initTicketsJS();
+}
+
+window.addEventListener('spaContentUpdated', initTicketsJS);
 

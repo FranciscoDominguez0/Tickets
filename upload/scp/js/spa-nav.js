@@ -12,6 +12,17 @@
     var mainContent = document.getElementById('scpMainContent');
     if (!mainContent || !window.fetch) return;
 
+    var globalSeenScripts = {};
+    // Pre-populate deduplication list with scripts that are already in the DOM on initial load
+    document.querySelectorAll('script[src]').forEach(function (s) {
+        var src = s.getAttribute('src');
+        if (!src) return;
+        var a = document.createElement('a');
+        a.href = src;
+        var baseSrc = a.href.split('?')[0];
+        if (baseSrc) globalSeenScripts[baseSrc] = true;
+    });
+
     var navInFlight = false;
     var loadedStyles = {};
     var lastAssetsHtml = '';
@@ -195,7 +206,6 @@
             });
         });
     }
-
     function loadExternalScripts() {
         // Scripts externos del contenido y de los assets de la ruta
         var list = [];
@@ -211,15 +221,12 @@
         });
 
         var chain = Promise.resolve();
-        var seen = {};
         list.forEach(function (src) {
-            // Sin dedup entre navegaciones: cada vez que se vuelve a una ruta, sus
-            // scripts se re-ejecutan para inicializar el contenido nuevo (p. ej.
-            // dashboard.js debe volver a dibujar la gráfica en el canvas nuevo).
-            // El navegador sirve el archivo desde caché; solo se evita duplicar
-            // el MISMO src dentro de una misma navegación.
-            if (!src || seen[src]) return;
-            seen[src] = true;
+            // Dedup GLOBAL: Evitamos re-ejecutar scripts como jQuery o Chart.js.
+            // Para lógica por página, los scripts deben escuchar el evento 'spaContentUpdated'.
+            var baseSrc = src ? src.split('?')[0] : '';
+            if (!baseSrc || globalSeenScripts[baseSrc]) return;
+            globalSeenScripts[baseSrc] = true;
             chain = chain.then(function () {
                 return new Promise(function (resolve) {
                     // Mismo shim que para los inline: si el script registra
@@ -328,7 +335,7 @@
             clearTimeout(skeletonTimeout);
             
             // Inyectar nuevo contenido inmediatamente
-            var lastAssetsHtml = data.assets || '';
+            lastAssetsHtml = data.assets || '';
             var pendingStyles = injectStyles(lastAssetsHtml);
             
             return waitForStyles(pendingStyles, 50).then(function () {
