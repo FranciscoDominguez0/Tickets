@@ -28,60 +28,30 @@
     var lastAssetsHtml = '';
     var sidebar = document.querySelector('.sidebar');
 
-    function getGenericSkeleton() {
-        var isDark = document.body.classList.contains('dark-mode');
-        var bg = isDark ? '#1e1111' : '#ffffff';
-        var border = isDark ? '#2e1c1c' : '#e5e7eb';
-        var shimmer = isDark ? 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%)' : 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)';
-        var baseColor = isDark ? '#2a1a1a' : '#f1f5f9';
-
-        var skeletonHTML = '<div class="scp-skeleton-wrapper" style="padding: 24px; animation: scp-fade-in 0.3s ease;">';
-        // Animaciones CSS inyectadas
-        skeletonHTML += '<style>'
-            + '@keyframes scp-fade-in { from { opacity: 0; } to { opacity: 1; } }'
-            + '@keyframes scp-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }'
-            + '.scp-skeleton-box { position: relative; overflow: hidden; background-color: ' + baseColor + '; border-radius: 8px; }'
-            + '.scp-skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateX(-100%); background-image: ' + shimmer + '; animation: scp-shimmer 1.5s infinite; }'
-            + '</style>';
-
-        // Header Skeleton
-        skeletonHTML += '<div style="display: flex; justify-content: space-between; margin-bottom: 24px;">'
-            + '<div class="scp-skeleton-box" style="width: 250px; height: 32px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 120px; height: 32px;"></div>'
-            + '</div>';
-
-        // Filters Skeleton
-        skeletonHTML += '<div style="display: flex; gap: 12px; margin-bottom: 24px;">'
-            + '<div class="scp-skeleton-box" style="width: 100px; height: 28px; border-radius: 99px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 80px; height: 28px; border-radius: 99px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 90px; height: 28px; border-radius: 99px;"></div>'
-            + '</div>';
-
-        // Table Skeleton
-        skeletonHTML += '<div style="background: ' + bg + '; border: 1px solid ' + border + '; border-radius: 12px; overflow: hidden;">';
-        
-        // Table Header
-        skeletonHTML += '<div style="display: flex; padding: 16px 24px; border-bottom: 1px solid ' + border + '; gap: 16px;">'
-            + '<div class="scp-skeleton-box" style="width: 60px; height: 20px;"></div>'
-            + '<div class="scp-skeleton-box" style="flex: 1; height: 20px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 150px; height: 20px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 100px; height: 20px;"></div>'
-            + '<div class="scp-skeleton-box" style="width: 120px; height: 20px;"></div>'
-            + '</div>';
-
-        // Table Rows
-        for (var i = 0; i < 5; i++) {
-            skeletonHTML += '<div style="display: flex; padding: 20px 24px; border-bottom: 1px solid ' + border + '; gap: 16px; align-items: center;">'
-                + '<div class="scp-skeleton-box" style="width: 60px; height: 24px;"></div>'
-                + '<div style="flex: 1;"><div class="scp-skeleton-box" style="width: 80%; height: 20px; margin-bottom: 8px;"></div><div class="scp-skeleton-box" style="width: 40%; height: 16px;"></div></div>'
-                + '<div class="scp-skeleton-box" style="width: 150px; height: 32px; border-radius: 99px;"></div>'
-                + '<div class="scp-skeleton-box" style="width: 100px; height: 24px;"></div>'
-                + '<div style="width: 120px; display: flex; align-items: center; gap: 8px;"><div class="scp-skeleton-box" style="width: 32px; height: 32px; border-radius: 50%;"></div><div class="scp-skeleton-box" style="flex: 1; height: 20px;"></div></div>'
-                + '</div>';
+    var progressBar;
+    function startProgress() {
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'scp-spa-progress';
+            // Estilos para una barra azul suave en la parte superior
+            progressBar.style.cssText = 'position:fixed; top:0; left:0; height:3px; background:#3b82f6; z-index:99999; transition: width 0.3s ease, opacity 0.3s ease; width:0%; opacity:1; pointer-events:none;';
+            document.body.appendChild(progressBar);
         }
-
-        skeletonHTML += '</div></div>';
-        return skeletonHTML;
+        progressBar.style.opacity = '1';
+        progressBar.style.width = '15%';
+        // Simular avance
+        setTimeout(function() { if (navInFlight) progressBar.style.width = '40%'; }, 150);
+        setTimeout(function() { if (navInFlight) progressBar.style.width = '70%'; }, 400);
+    }
+    
+    function completeProgress() {
+        if (progressBar) {
+            progressBar.style.width = '100%';
+            setTimeout(function() {
+                progressBar.style.opacity = '0';
+                setTimeout(function() { progressBar.style.width = '0%'; }, 300);
+            }, 300);
+        }
     }
 
     document.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
@@ -300,6 +270,8 @@
         navInFlight = true;
 
         var startTime = Date.now();
+        
+        startProgress();
 
         // 1. Iniciar petición
         var fetchPromise = fetch(url, {
@@ -318,27 +290,19 @@
 
         // No añadimos delays artificiales ni animaciones de fade para mantener máxima velocidad
 
-        // 2. Temporizador de 150ms para mostrar el skeleton solo si la red demora
-        var skeletonTimeout = setTimeout(function() {
-            if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
-                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-            } else {
-                window.scrollTo(0, 0);
-            }
-            mainContent.innerHTML = getGenericSkeleton();
-        }, 150);
-
+        // 2. Transición suave sin skeleton
+        // Se elimina el skeleton porque destruía el DOM prematuramente y causaba bugs con popovers
+        
         fetchPromise.then(function(data) {
             if (!data || !data.ok) throw new Error('bad-response');
             
-            // Cancelar el skeleton si la petición fue rápida
-            clearTimeout(skeletonTimeout);
+            completeProgress();
             
             // Inyectar nuevo contenido inmediatamente
             lastAssetsHtml = data.assets || '';
             var pendingStyles = injectStyles(lastAssetsHtml);
             
-            return waitForStyles(pendingStyles, 50).then(function () {
+            return waitForStyles(pendingStyles, 2000).then(function () {
                 mainContent.innerHTML = data.html || '';
                 if (typeof window.scrollTo === 'function' && 'scrollBehavior' in document.documentElement.style) {
                     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -373,6 +337,7 @@
             navInFlight = false;
         })
         .catch(function (e) {
+            completeProgress();
             mainContent.style.transition = '';
             mainContent.style.opacity = '';
             navInFlight = false;
