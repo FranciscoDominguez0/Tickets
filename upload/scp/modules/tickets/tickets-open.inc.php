@@ -38,61 +38,13 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
     }
 
     $open_departments = [];
-    $my_staff_id = (int)($_SESSION['staff_id'] ?? 0);
-    if ($my_staff_id > 0) {
-        $hasStaffDept = dbTableExists('staff_departments');
-        if ($hasStaffDept) {
-            $stmtMyDept = $mysqli->prepare("
-                SELECT DISTINCT d.id, d.name 
-                FROM departments d 
-                JOIN staff_departments sd ON sd.dept_id = d.id 
-                WHERE sd.staff_id = ? AND d.empresa_id = ? AND d.is_active = 1 
-                ORDER BY d.name
-            ");
-            if ($stmtMyDept) {
-                $stmtMyDept->bind_param('ii', $my_staff_id, $eid);
-                if ($stmtMyDept->execute()) {
-                    $r = $stmtMyDept->get_result();
-                    while ($r && ($row = $r->fetch_assoc())) {
-                        $open_departments[] = $row;
-                    }
-                }
-            }
-        }
-        
-        $main_dept_id = (int)($staff['dept_id'] ?? 0);
-        if ($main_dept_id > 0) {
-            $found = false;
-            foreach ($open_departments as $md) {
-                if ((int)$md['id'] === $main_dept_id) {
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                $stmtMainDept = $mysqli->prepare("SELECT id, name FROM departments WHERE id = ? AND empresa_id = ? AND is_active = 1 LIMIT 1");
-                if ($stmtMainDept) {
-                    $stmtMainDept->bind_param('ii', $main_dept_id, $eid);
-                    if ($stmtMainDept->execute()) {
-                        $mdRow = $stmtMainDept->get_result()->fetch_assoc();
-                        if ($mdRow) {
-                            $open_departments[] = $mdRow;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    if (empty($open_departments)) {
-        $stmtOpenDept = $mysqli->prepare("SELECT id, name FROM departments WHERE empresa_id = ? AND is_active = 1 ORDER BY name");
-        if ($stmtOpenDept) {
-            $stmtOpenDept->bind_param('i', $eid);
-            if ($stmtOpenDept->execute()) {
-                $r = $stmtOpenDept->get_result();
-                while ($r && ($row = $r->fetch_assoc())) {
-                    $open_departments[] = $row;
-                }
+    $stmtOpenDept = $mysqli->prepare("SELECT id, name FROM departments WHERE empresa_id = ? AND is_active = 1 ORDER BY name");
+    if ($stmtOpenDept) {
+        $stmtOpenDept->bind_param('i', $eid);
+        if ($stmtOpenDept->execute()) {
+            $r = $stmtOpenDept->get_result();
+            while ($r && ($row = $r->fetch_assoc())) {
+                $open_departments[] = $row;
             }
         }
     }
