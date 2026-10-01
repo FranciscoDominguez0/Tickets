@@ -258,6 +258,7 @@ $allowExpandedGroups = !$sidebarDefaultCollapsed;
 
     <main class="main-shell">
         <div class="container-main">
+            <?php require_once __DIR__ . '/../../../includes/global_toast.php'; ?>
             <?php echo $content; ?>
         </div>
     </main>

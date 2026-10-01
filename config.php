@@ -34,15 +34,14 @@ function get_env($key, $default = null) {
 }
 
 // ── Base de datos
-$isDocker = file_exists('/.dockerenv');
-define('DB_HOST', get_env('DB_HOST', $isDocker ? 'db' : 'localhost'));
+define('DB_HOST', get_env('DB_HOST', '127.0.0.1'));
 define('DB_PORT', get_env('DB_PORT', '3306'));
-define('DB_USER', get_env('DB_USER', $isDocker ? 'AdminV' : 'root'));
-define('DB_PASS', get_env('DB_PASS', $isDocker ? 'Panama2626.' : '12345678'));
-define('DB_NAME', get_env('DB_NAME', 'tickets_db'));
+define('DB_USER', get_env('DB_USER', ''));
+define('DB_PASS', get_env('DB_PASS', ''));
+define('DB_NAME', get_env('DB_NAME', ''));
 
 // ── Aplicación
-define('APP_NAME', 'Sistema de Tickets');
+define('APP_NAME', get_env('APP_NAME', 'Sistema de Tickets'));
 define('TIMEZONE', 'America/Bogota');
 
 // APP_DEBUG: true = stack trace en pantalla (solo desarrollo) | false = página amigable + log
@@ -52,20 +51,20 @@ define('APP_DEBUG', false);
 define('HIDE_URLS', false);
 
 // ── Notificaciones de error: email del admin para alertas de errores críticos
-define('ERROR_NOTIFY_EMAIL', 'dominguezf225@gmail.com');
+define('ERROR_NOTIFY_EMAIL', get_env('ERROR_NOTIFY_EMAIL', ''));
 
 // ── SMTP de emergencia (usado cuando la DB está caída)
 // Gmail: crea una contraseña de aplicación en https://myaccount.google.com/apppasswords
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_SECURE', 'tls');
-define('SMTP_USER', 'dominguezf225@gmail.com');
-define('SMTP_PASS', 'kovmwxklrjdriliz');          // ← contraseña de aplicación de Gmail
-define('MAIL_FROM', 'dominguezf225@gmail.com');
-define('MAIL_FROM_NAME', APP_NAME);
+define('SMTP_HOST', get_env('SMTP_HOST', ''));
+define('SMTP_PORT', (int) get_env('SMTP_PORT', 587));
+define('SMTP_SECURE', get_env('SMTP_SECURE', 'tls'));
+define('SMTP_USER', get_env('SMTP_USER', ''));
+define('SMTP_PASS', get_env('SMTP_PASS', ''));
+define('MAIL_FROM', get_env('MAIL_FROM', ''));
+define('MAIL_FROM_NAME', get_env('MAIL_FROM_NAME', APP_NAME));
 
 // ── Seguridad
-define('SECRET_KEY', 'cambia-esto-en-produccion-con-algo-largo-y-aleatorio-2025');
+define('SECRET_KEY', get_env('SECRET_KEY', ''));
 define('CSRF_TIMEOUT', 3600);
 define('SESSION_LIFETIME', 86400);
 
@@ -138,7 +137,8 @@ if (!isset($_SESSION['csrf_token'])) {
 // ── Base de datos
 if (!defined('SKIP_DB_CONNECTION') || !SKIP_DB_CONNECTION) {
     try {
-        $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+        // El prefijo 'p:' habilita conexiones persistentes (Connection Pooling en PHP)
+        $mysqli = new mysqli('p:' . DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
         if ($mysqli->connect_error) {
             throw new RuntimeException('Database connection failed: ' . $mysqli->connect_error, 503);
         }

@@ -626,7 +626,7 @@ ob_start();
                 <div class="text-muted small mt-2">
                     Seleccionados: <strong><span id="deleteDeptsCount">0</span></strong>
                 </div>
-                <div class="alert alert-warning border-0 rounded-3 mt-3 d-flex gap-2 align-items-start" style="font-size: 0.85rem;">
+                <div class="alert alert-warning border-0 rounded-3 mt-3 d-flex gap-2 align-items-start" style="font-size: 0.85rem;" data-alert-static="1">
                     <i class="bi bi-exclamation-triangle-fill fs-5 mt-0.5"></i>
                     <div>Solo se eliminarán aquellos departamentos que no tengan agentes ni tickets asignados actualmente en el sistema.</div>
                 </div>

@@ -662,20 +662,7 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                         <i class="bi bi-exclamation-triangle me-2"></i><strong>Modo lectura:</strong> <?php echo html($roMsg); ?>
                     </div>
                 <?php endif; ?>
-                <?php if (!empty($_SESSION['flash_error'])): ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle me-2"></i><?php echo html((string)$_SESSION['flash_error']); ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <?php unset($_SESSION['flash_error']); ?>
-                <?php endif; ?>
-                <?php if (!empty($_SESSION['flash_msg'])): ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="bi bi-check-circle me-2"></i><?php echo html((string)$_SESSION['flash_msg']); ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                    <?php unset($_SESSION['flash_msg']); ?>
-                <?php endif; ?>
+                <?php require_once __DIR__ . '/../../../includes/global_toast.php'; ?>
                 <div id="scpMainContent">
                     <?php echo $content; ?>
                 </div>
@@ -807,47 +794,10 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
         })();
 
         window.showNoPermissionAlert = function(action) {
-            var modalEl = document.getElementById('bulkInfoModal');
-            var textEl = document.getElementById('bulkInfoText');
-            if (modalEl && textEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                textEl.textContent = 'No tienes permisos para ' + action + '.';
-                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
+            if (typeof showGlobalToast === 'function') {
+                showGlobalToast('No tienes permisos para ' + action + '.', 'error');
             } else {
-                var dynModalEl = document.getElementById('dynamicNoPermModal');
-                if (!dynModalEl) {
-                    dynModalEl = document.createElement('div');
-                    dynModalEl.id = 'dynamicNoPermModal';
-                    dynModalEl.className = 'modal fade';
-                    dynModalEl.tabIndex = -1;
-                    dynModalEl.setAttribute('aria-hidden', 'true');
-                    dynModalEl.innerHTML = 
-                        '<div class="modal-dialog modal-dialog-centered">' +
-                        '  <div class="modal-content" style="border-radius:16px; border:none; box-shadow:0 20px 40px rgba(0,0,0,0.3);">' +
-                        '    <div class="modal-header" style="border-bottom:1px solid #f1f5f9;">' +
-                        '      <h5 class="modal-title" style="font-weight:700; color:#0f172a;"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Acción denegada</h5>' +
-                        '      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
-                        '    </div>' +
-                        '    <div class="modal-body" style="padding:24px; color:#334155; font-size:0.95rem;">' +
-                        '      <span id="dynamicNoPermText"></span>' +
-                        '    </div>' +
-                        '    <div class="modal-footer" style="border-top:none;">' +
-                        '      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius:10px; font-weight:600;">Cerrar</button>' +
-                        '    </div>' +
-                        '  </div>' +
-                        '</div>';
-                    document.body.appendChild(dynModalEl);
-                }
-                var dynTextEl = document.getElementById('dynamicNoPermText');
-                if (dynTextEl) {
-                    dynTextEl.textContent = 'No tienes permisos para ' + action + '. Contacta al administrador para solicitar este permiso.';
-                }
-                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
-                    var modal = bootstrap.Modal.getOrCreateInstance(dynModalEl);
-                    modal.show();
-                } else {
-                    alert('No tienes permisos para ' + action + '.');
-                }
+                alert('No tienes permisos para ' + action + '.');
             }
         };
 

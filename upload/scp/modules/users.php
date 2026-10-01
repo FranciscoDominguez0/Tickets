@@ -1252,7 +1252,7 @@ $statusBadges = [
     <?php endif; ?>
     <?php if (isset($_GET['added']) && $_GET['added'] === '1'): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Usuario añadido correctamente. El usuario puede iniciar sesión de inmediato (no requiere confirmación por correo).
+            Usuario añadido correctamente.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     <?php endif; ?>

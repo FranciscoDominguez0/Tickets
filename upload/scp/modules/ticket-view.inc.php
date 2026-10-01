@@ -1591,15 +1591,24 @@ body.dark-mode .btn-requisition-view:hover {
             </div>
         </div>
         <?php
-        $msg = $_GET['msg'] ?? '';
+        $msg_code = $_GET['msg'] ?? '';
         $msgText = ['reply_sent' => 'Respuesta publicada correctamente.', 'created' => 'Ticket creado correctamente.', 'updated' => 'Estado actualizado.', 'assigned' => 'Asignación actualizada.', 'marked' => 'Marcado como contestado.', 'owner' => 'Propietario cambiado.', 'transferred' => 'Ticket transferido correctamente.', 'blocked' => 'Email bloqueado.', 'linked' => 'Ticket vinculado.', 'unlinked' => 'Vinculación eliminada.', 'collab_added' => 'Colaborador añadido.', 'collab_removed' => 'Colaborador quitado.', 'merged' => 'Tickets unidos correctamente.', 'approval_requested' => 'Solicitud de aprobación enviada al jefe. El ticket quedó en Pendiente aprobación.', 'quote_sent' => 'Cotización enviada exitosamente al Jefe de la Organización.'];
         $msgErrorText = ['approval_already_pending' => 'Este ticket ya tiene una solicitud de aprobación pendiente.', 'approval_no_manager' => 'No se encontró un jefe de organización para este ticket.', 'approval_no_email' => 'El jefe de la organización no tiene un correo válido.', 'approval_email_failed' => 'No se pudo enviar el correo de aprobación al jefe.', 'approval_error' => 'No se pudo procesar la solicitud de aprobación.', 'quote_error' => 'Error al enviar la cotización. Asegúrate de adjuntar un archivo PDF válido.'];
-        if ($msg && isset($msgText[$msg])): ?>
-            <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg]); ?>
+        
+        // Asignar el mensaje traducido a $msg o $error para que global_toast.php lo atrape
+        if ($msg_code && isset($msgText[$msg_code])) {
+            $msg = $msgText[$msg_code];
+        } elseif ($msg_code && isset($msgErrorText[$msg_code])) {
+            $error = $msgErrorText[$msg_code];
+        }
+        
+        // Aún mostramos los divs por si el JS los ocupa, el JS evitará duplicados.
+        if (!empty($msg) && isset($msgText[$msg_code])): ?>
+            <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg_code]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        <?php elseif ($msg && isset($msgErrorText[$msg])): ?>
-            <div class="alert alert-danger alert-dismissible fade show"><?php echo html($msgErrorText[$msg]); ?>
+        <?php elseif (!empty($error) && isset($msgErrorText[$msg_code])): ?>
+            <div class="alert alert-danger alert-dismissible fade show"><?php echo html($msgErrorText[$msg_code]); ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>

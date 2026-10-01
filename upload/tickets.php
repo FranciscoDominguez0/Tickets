@@ -1682,30 +1682,7 @@ if ($r = $stmtC->get_result()->fetch_assoc()) {
 
 
 
-                <?php if ($flashMsg !== ''): ?>
-                    <div class="alert alert-success" role="alert" id="tickets-flash-success"><?php echo html($flashMsg); ?></div>
-                    <script>
-                        (function(){
-                            try {
-                                var el = document.getElementById('tickets-flash-success');
-                                if (!el) return;
-                                window.setTimeout(function(){
-                                    try {
-                                        el.style.transition = 'opacity 220ms ease, max-height 260ms ease, margin 260ms ease, padding 260ms ease';
-                                        el.style.opacity = '0';
-                                        el.style.maxHeight = '0';
-                                        el.style.margin = '0';
-                                        el.style.paddingTop = '0';
-                                        el.style.paddingBottom = '0';
-                                        window.setTimeout(function(){
-                                            if (el && el.parentNode) el.parentNode.removeChild(el);
-                                        }, 320);
-                                    } catch (e) {}
-                                }, 3500);
-                            } catch (e) {}
-                        })();
-                    </script>
-                <?php endif; ?>
+                <?php require_once __DIR__ . '/../includes/global_toast.php'; ?>
 
 
 

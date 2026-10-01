@@ -2585,7 +2585,11 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName)
 
     // Obtener destinatarios configurados
     $recipients = [];
-    $stmtR = $mysqli->prepare("SELECT staff_id FROM notification_recipients WHERE empresa_id = ?");
+    $stmtR = null;
+    if (ensureNotificationRecipientsTable()) {
+        // Hacemos INNER JOIN con staff para evitar errores de clave foránea si el staff fue eliminado
+        $stmtR = $mysqli->prepare("SELECT nr.staff_id FROM notification_recipients nr INNER JOIN staff s ON nr.staff_id = s.id WHERE nr.empresa_id = ?");
+    }
     if ($stmtR) {
         $stmtR->bind_param('i', $eid);
         if ($stmtR->execute()) {
@@ -2605,28 +2609,30 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName)
     $recipients = array_unique($recipients);
 
     // Insertar notificaciones
-    $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
-    if ($stmtN) {
-        foreach ($recipients as $sid) {
-            $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
-            $stmtN->execute();
+    if (dbTableExists('notifications')) {
+        $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
+        if ($stmtN) {
+            foreach ($recipients as $sid) {
+                $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
+                $stmtN->execute();
+            }
         }
     }
 }
 
 function ensureEmailQueueTable()
 {
-    return true;
+    return dbTableExists('email_queue');
 }
 
 function ensureEmailLogsTable()
 {
-    return true;
+    return dbTableExists('email_logs');
 }
 
 function ensureNotificationRecipientsTable()
 {
-    return true;
+    return dbTableExists('notification_recipients');
 }
 
 function parseEmailList($rawEmails)

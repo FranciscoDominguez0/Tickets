@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($resA) $agentName = trim($resA['firstname'] . ' ' . $resA['lastname']);
                     
                     $msg = $mysqli->real_escape_string("El agente {$agentName} ha enviado una nueva Solicitud de Inventario (ID #REQ-" . str_pad($reqId, 5, '0', STR_PAD_LEFT) . ").");
-                    $resAdmins = $mysqli->query("SELECT staff_id FROM notification_recipients WHERE empresa_id = $eid");
+                    $resAdmins = $mysqli->query("SELECT nr.staff_id FROM notification_recipients nr INNER JOIN staff s ON nr.staff_id = s.id WHERE nr.empresa_id = $eid");
                     if ($resAdmins) {
                         while ($adm = $resAdmins->fetch_assoc()) {
                             $admId = (int)$adm['staff_id'];
@@ -203,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($resA) $agentName = trim($resA['firstname'] . ' ' . $resA['lastname']);
                     
                     $msg = $mysqli->real_escape_string("{$agentName} ha agregado más productos a la Requisición #REQ-" . str_pad($reqId, 5, '0', STR_PAD_LEFT) . ".");
-                    $resAdmins = $mysqli->query("SELECT staff_id FROM notification_recipients WHERE empresa_id = $eid");
+                    $resAdmins = $mysqli->query("SELECT nr.staff_id FROM notification_recipients nr INNER JOIN staff s ON nr.staff_id = s.id WHERE nr.empresa_id = $eid");
                     if ($resAdmins) {
                         while ($adm = $resAdmins->fetch_assoc()) {
                             $admId = (int)$adm['staff_id'];
@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mysqli->query("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES ($eid, $agentIdToNotify, '$msg', 'requisition', $reqId, 0, NOW())");
             }
 
-            $_SESSION['flash_msg'] = 'Requisición marcada como entregada. El agente ahora debe firmar para finalizar el proceso.';
+            $_SESSION['flash_msg'] = 'Requisición marcada como entregada.';
             header("Location: requisitions.php?a=view&id={$reqId}");
             exit;
         } elseif ($do === 'sign') {
@@ -269,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtUpd->bind_param('siii', $signature, $reqId, $sid, $eid);
                 $stmtUpd->execute();
                 if ($stmtUpd->affected_rows > 0) {
-                    $_SESSION['flash_msg'] = 'Firma guardada correctamente. Requisición completada.';
+                    $_SESSION['flash_msg'] = 'Firma guardada correctamente.';
                     
                     $agentName = 'Un agente';
                     $stmtA = $mysqli->prepare("SELECT firstname, lastname FROM staff WHERE id = ?");
@@ -279,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($resA) $agentName = trim($resA['firstname'] . ' ' . $resA['lastname']);
                     
                     $msg = $mysqli->real_escape_string("El agente {$agentName} ha firmado la recepción de la Requisición #REQ-" . str_pad($reqId, 5, '0', STR_PAD_LEFT) . ".");
-                    $resAdmins = $mysqli->query("SELECT staff_id FROM notification_recipients WHERE empresa_id = $eid");
+                    $resAdmins = $mysqli->query("SELECT nr.staff_id FROM notification_recipients nr INNER JOIN staff s ON nr.staff_id = s.id WHERE nr.empresa_id = $eid");
                     if ($resAdmins) {
                         while ($adm = $resAdmins->fetch_assoc()) {
                             $admId = (int)$adm['staff_id'];
