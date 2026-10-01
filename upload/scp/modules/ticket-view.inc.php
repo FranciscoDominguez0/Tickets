@@ -1602,16 +1602,9 @@ body.dark-mode .btn-requisition-view:hover {
             $error = $msgErrorText[$msg_code];
         }
         
-        // Aún mostramos los divs por si el JS los ocupa, el JS evitará duplicados.
-        if (!empty($msg) && isset($msgText[$msg_code])): ?>
-            <div class="alert alert-success alert-dismissible fade show"><?php echo html($msgText[$msg_code]); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php elseif (!empty($error) && isset($msgErrorText[$msg_code])): ?>
-            <div class="alert alert-danger alert-dismissible fade show"><?php echo html($msgErrorText[$msg_code]); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+        // Las notificaciones serán mostradas por global_toast.php
+        // de forma nativa interceptando $msg o $error.
+        ?>
 
         <script>
           (function () {

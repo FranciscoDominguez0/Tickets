@@ -23,10 +23,10 @@ if ($mobileInitials === '') $mobileInitials = 'U';
 
 <div class="user-view-wrap">
     <?php 
-    $msg = $_GET['msg'] ?? '';
+    $msgCode = $_GET['msg'] ?? '';
     $alertMsg = '';
-    if ($msg) {
-        switch($msg) {
+    if ($msgCode) {
+        switch($msgCode) {
             case 'reset_sent': $alertMsg = 'Se envió el correo de restablecer contraseña.'; break;
             case 'status_updated': $alertMsg = 'Estado de usuario actualizado correctamente.'; break;
             case 'user_updated':
@@ -41,16 +41,21 @@ if ($mobileInitials === '') $mobileInitials = 'U';
             case 'org_boss_conflict': $alertMsg = 'Error: La organización ya tiene otro encargado asignado.'; break;
             case 'org_assign_conflict': $alertMsg = 'Error: Esta organización ya tiene un encargado.'; break;
         }
+        
+        $msg = '';
+        $error = '';
+        $isError = strpos($msgCode, 'error') !== false || strpos($msgCode, 'conflict') !== false;
+        if ($isError) {
+            $error = $alertMsg;
+        } else {
+            $msg = $alertMsg;
+        }
     }
     if ($alertMsg): 
-        $isError = strpos($msg, 'error') !== false || strpos($msg, 'conflict') !== false;
         $alertClass = $isError ? 'alert-danger' : 'alert-success';
         $alertIcon = $isError ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill';
+        // Las notificaciones serán mostradas por global_toast.php
     ?>
-        <div class="alert <?php echo $alertClass; ?> alert-dismissible fade show mx-3 mt-3" role="alert" style="border-radius: 12px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <i class="bi <?php echo $alertIcon; ?> me-2"></i> <?php echo html($alertMsg); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-        </div>
         <script>
             (function(){
                 try {
