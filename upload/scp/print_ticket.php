@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../includes/Auth.php';
@@ -132,20 +132,20 @@ if (defined('TICKET_PDF_RENDER')) {
         }
         
         $logoAbsPath = $projectRoot . '/' . ltrim($logoRel, '/');
-        if (is_file($logoAbsPath)) {
+        if (is_readable($logoAbsPath)) {
             $ext = strtolower(pathinfo($logoAbsPath, PATHINFO_EXTENSION));
             if ($ext === 'webp' && !function_exists('imagecreatefromwebp')) {
                 $logoAbsPath = $projectRoot . '/publico/img/vigitec-logo.png';
                 $ext = 'png';
             }
-            if (is_file($logoAbsPath)) {
-                $imageData = file_get_contents($logoAbsPath);
+            if (is_readable($logoAbsPath)) {
+                $imageData = @file_get_contents($logoAbsPath);
                 $skipImage = false;
                 if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
                     $im = @imagecreatefromwebp($logoAbsPath);
                     if ($im !== false) {
                         ob_start();
-                        imagepng($im);
+                        @imagepng($im);
                         $imageData = (string)ob_get_clean();
                         unset($im);
                         $ext = 'png';
@@ -155,7 +155,7 @@ if (defined('TICKET_PDF_RENDER')) {
                 } elseif ($ext === 'jpg') {
                     $ext = 'jpeg';
                 }
-                if (!$skipImage && $ext !== 'webp') {
+                if (!$skipImage && $ext !== 'webp' && $imageData !== false) {
                     $base64 = base64_encode($imageData);
                     $logoUrl = 'data:image/' . $ext . ';base64,' . $base64;
                 }
@@ -165,7 +165,7 @@ if (defined('TICKET_PDF_RENDER')) {
         if ($ticketClientSignaturePath !== '') {
             $sigPath = ltrim(str_replace('\\', '/', $ticketClientSignaturePath), '/');
             $sigAbsPath = $projectRoot . '/' . ltrim($sigPath, '/');
-            if ($sigPath !== '' && is_file($sigAbsPath)) {
+            if ($sigPath !== '' && is_readable($sigAbsPath)) {
                 $ext = strtolower(pathinfo($sigAbsPath, PATHINFO_EXTENSION));
                 $skipImage = false;
                 if ($ext === 'webp' && !function_exists('imagecreatefromwebp')) {
@@ -173,12 +173,12 @@ if (defined('TICKET_PDF_RENDER')) {
                 }
                 
                 if (!$skipImage) {
-                    $imageData = file_get_contents($sigAbsPath);
+                    $imageData = @file_get_contents($sigAbsPath);
                     if ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
                         $im = @imagecreatefromwebp($sigAbsPath);
                         if ($im !== false) {
                             ob_start();
-                            imagepng($im);
+                            @imagepng($im);
                             $imageData = (string)ob_get_clean();
                             unset($im);
                             $ext = 'png';
@@ -188,7 +188,7 @@ if (defined('TICKET_PDF_RENDER')) {
                     } elseif ($ext === 'jpg') {
                         $ext = 'jpeg';
                     }
-                    if (!$skipImage && $ext !== 'webp') {
+                    if (!$skipImage && $ext !== 'webp' && $imageData !== false) {
                         $base64 = base64_encode($imageData);
                         $ticketClientSignatureUrl = 'data:image/' . $ext . ';base64,' . $base64;
                     }

@@ -13,7 +13,7 @@ class Database {
 
     private function __construct() {
         $this->connection = new mysqli(
-            DB_HOST,
+            'p:' . DB_HOST,
             DB_USER,
             DB_PASS,
             DB_NAME,
@@ -49,12 +49,23 @@ class Database {
      */
     public function query($sql, $params = []) {
         $stmt = $this->connection->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Error en la preparación de la consulta: " . $this->connection->error);
+        }
+        
         if (!empty($params)) {
             $types = $this->getParamTypes($params);
             $stmt->bind_param($types, ...$params);
         }
-        $stmt->execute();
-        return $stmt->get_result();
+        
+        if (!$stmt->execute()) {
+            throw new Exception("Error en la ejecución de la consulta: " . $stmt->error);
+        }
+        
+        $result = $stmt->get_result();
+        $stmt->close();
+        
+        return $result;
     }
 
     /**
