@@ -1,53 +1,53 @@
 services:
-
   web:
     build: .
     container_name: php_app
     restart: always
     env_file:
       - .env
-
-    ports:
-      - "9080:80"
-
+    # Se eliminó "ports", ahora Nginx PM enrutará el tráfico internamente
     depends_on:
       - db
-
     volumes:
-      # Adjuntos y PDFs de tickets
       - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments
-      # Firmas digitales
       - ./firmas:/var/www/html/sistema-tickets/firmas
+    networks:
+      - internal_net # Para conectarse con la base de datos
+      - npm_network # Para conectarse con Nginx Proxy Manager
 
   db:
     image: mysql:8.0
     container_name: mysql_app
     restart: always
-
     env_file:
       - .env
-
     ports:
-      - "127.0.0.1:13306:3306"
-
+      - "127.0.0.1:13306:3306" # Excelente práctica: solo accesible localmente
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - internal_net
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin_app
     restart: always
-
     ports:
-      - "127.0.0.1:9081:80"
-
+      - "127.0.0.1:9081:80" # Excelente práctica: solo accesible localmente
     environment:
       PMA_HOST: db
       PMA_USER: root
       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
     depends_on:
       - db
+    networks:
+      - internal_net
 
 volumes:
   db_data:
+
+networks:
+  internal_net: # Red privada para que tu app, BD y phpMyAdmin se comuniquen entre sí
+  npm_network:
+    external: true
+    # Red externa que creamos antes para Nginx PM
