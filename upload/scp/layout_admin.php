@@ -882,8 +882,57 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 document.addEventListener('click', function() { Notification.requestPermission(); }, { once: true });
             }
 
+            // SSE (Server-Sent Events) para notificaciones en tiempo real
+            var evtSource = null;
+            function initNotificationSSE() {
+                if (!window.EventSource) {
+                    console.warn('EventSource no soportado en este navegador. Usando fallback de polling.');
+                    window.setInterval(pollNotificationsFallback, 15000);
+                    return;
+                }
+
+                if (evtSource) {
+                    try { evtSource.close(); } catch(e) {}
+                }
+
+                var sseUrl = 'notifications_sse.php?last_id=' + lastNotifId;
+                evtSource = new EventSource(sseUrl);
+
+                evtSource.onmessage = function(e) {
+                    try {
+                        var data = JSON.parse(e.data);
+                        if (!data.ok) return;
+
+                        if (data.notifications && data.notifications.length > 0) {
+                            var firstShown = false;
+                            data.notifications.forEach(function(n) {
+                                if (!firstShown) {
+                                    showNotificationToast(n);
+                                    firstShown = true;
+                                }
+                                addNotificationToDropdown(n);
+                                if (n.id > lastNotifId) lastNotifId = n.id;
+                            });
+                            playNotificationSound();
+                        }
+
+                        updateBellBadge(data.total_unread);
+                        if (data.last_id && data.last_id > lastNotifId) {
+                            lastNotifId = data.last_id;
+                        }
+                    } catch (err) {
+                        console.error('Error procesando evento SSE:', err);
+                    }
+                };
+
+                evtSource.onerror = function() {
+                    // El navegador reconecta automáticamente según la directiva retry
+                };
+            }
+
+            // Fallback de polling en caso de navegadores antiguos sin EventSource
             var _pollRunning = false;
-            function pollNotifications() {
+            function pollNotificationsFallback() {
                 if (_pollRunning) return;
                 _pollRunning = true;
                 var url = 'notifications_poll.php?last_id=' + lastNotifId + '&_t=' + Date.now();
@@ -899,7 +948,6 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 addNotificationToDropdown(n);
                                 if (n.id > lastNotifId) lastNotifId = n.id;
                             });
-                            // Reproducir sonido UNA sola vez por ciclo de polling
                             playNotificationSound();
                         }
                         updateBellBadge(data.total_unread);
@@ -908,7 +956,13 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                   .finally(function(){ _pollRunning = false; });
             }
 
-            setInterval(pollNotifications, pollInterval);
+            window.addEventListener('beforeunload', function() {
+                if (evtSource) {
+                    try { evtSource.close(); } catch(e) {}
+                }
+            });
+
+            initNotificationSSE();
         });
     </script>
     <?php $swPath = rtrim((string)parse_url(defined('APP_URL') ? APP_URL : '', PHP_URL_PATH), '/') . '/upload/sw.js'; ?>

@@ -550,15 +550,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Polling cada 15 segundos (reduce carga en BD)
-    fetchLocations();
-    var mapInterval = setInterval(function() {
-        if (!document.getElementById('mapContainerOuter')) {
-            clearInterval(mapInterval);
+    // SSE (Server-Sent Events) en tiempo real para el mapa
+    var evtSourceMap = null;
+    function initMapSSE() {
+        if (!window.EventSource) {
+            console.warn('EventSource no soportado, usando fallback a polling.');
+            fetchLocations();
+            var mapInterval = setInterval(function() {
+                if (!document.getElementById('mapContainerOuter')) {
+                    clearInterval(mapInterval);
+                    return;
+                }
+                fetchLocations();
+            }, 15000);
             return;
         }
-        fetchLocations();
-    }, 15000);
+
+        if (evtSourceMap) {
+            try { evtSourceMap.close(); } catch(e) {}
+        }
+
+        evtSourceMap = new EventSource('mapa_sse.php');
+
+        evtSourceMap.onmessage = function(e) {
+            try {
+                var data = JSON.parse(e.data);
+                if (data.ok && Array.isArray(data.locations)) {
+                    updateMarkers(data.locations);
+                }
+            } catch(err) {
+                console.error('Error parseando datos SSE de mapa:', err);
+            }
+        };
+
+        evtSourceMap.onerror = function() {
+            // El navegador reconectará automáticamente
+        };
+    }
+
+    initMapSSE();
+
+    window.addEventListener('beforeunload', function() {
+        if (evtSourceMap) {
+            try { evtSourceMap.close(); } catch(e) {}
+        }
+    });
+
+    // Cerrar conexión SSE si el usuario cambia de sección mediante navegación SPA
+    window.addEventListener('spaContentUpdated', function() {
+        if (!document.getElementById('mapContainerOuter')) {
+            if (evtSourceMap) {
+                try { evtSourceMap.close(); } catch(e) {}
+                evtSourceMap = null;
+            }
+        }
+    });
 
     // Botón Actualizar
     document.getElementById('refresh-map').addEventListener('click', function() {

@@ -963,13 +963,37 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     // Log en tabla logs
                     addLog('ticket_assigned', 'Ticket tomado por el agente', 'ticket', $tid, 'staff', $my_staff_id);
                     
-                    // Opcional: Notificación en BD (campanita)
-                    $message = 'Te autoasignaste el ticket ' . (string)($ticketView['ticket_number'] ?? '') . ': ' . (string)($ticketView['subject'] ?? '');
+                    // Notificar a los DEMÁS agentes (excluyendo al que lo tomó)
+                    $claimerName = trim(($staff['firstname'] ?? '') . ' ' . ($staff['lastname'] ?? ''));
+                    if ($claimerName === '') {
+                        $claimerName = 'Un agente';
+                    }
+                    $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
+                    $subj = (string)($ticketView['subject'] ?? '');
+                    $message = $claimerName . ' tomó el ticket ' . $ticketNo . ': ' . $subj;
                     $type = 'ticket_assigned';
-                    $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
-                    if ($stmtN) {
-                        $stmtN->bind_param('issi', $my_staff_id, $message, $type, $tid);
-                        $stmtN->execute();
+
+                    $stmtOther = $mysqli->prepare("SELECT id FROM staff WHERE empresa_id = ? AND is_active = 1 AND id != ?");
+                    if ($stmtOther) {
+                        $stmtOther->bind_param('ii', $eid, $my_staff_id);
+                        if ($stmtOther->execute()) {
+                            $resOther = $stmtOther->get_result();
+                            $otherStaff = [];
+                            while ($rO = $resOther->fetch_assoc()) {
+                                $otherStaff[] = (int)$rO['id'];
+                            }
+                            if (!empty($otherStaff)) {
+                                $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
+                                if ($stmtN) {
+                                    foreach ($otherStaff as $targetId) {
+                                        $stmtN->bind_param('iissi', $eid, $targetId, $message, $type, $tid);
+                                        $stmtN->execute();
+                                    }
+                                    $stmtN->close();
+                                }
+                            }
+                        }
+                        $stmtOther->close();
                     }
                 }
             }
@@ -1004,12 +1028,46 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                     // Notificación en BD (solo si se asignó a alguien y cambió)
                     if ($ok && $val !== null && (string)$previousStaffId !== (string)$val) {
                         $ticketNo = (string)($ticketView['ticket_number'] ?? ('#' . $tid));
-                        $message = 'Se te asignó el ticket ' . $ticketNo . ': ' . (string)($ticketView['subject'] ?? '');
+                        $subj = (string)($ticketView['subject'] ?? '');
                         $type = 'ticket_assigned';
-                        $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
-                        if ($stmtN) {
-                            $stmtN->bind_param('issi', $val, $message, $type, $tid);
-                            $stmtN->execute();
+                        $myStaffId = (int)($_SESSION['staff_id'] ?? 0);
+
+                        if ($val === $myStaffId) {
+                            // Se lo autoasignó él mismo: no notificarle a él, notificar a los demás agentes
+                            $assignerName = trim(($staff['firstname'] ?? '') . ' ' . ($staff['lastname'] ?? '')) ?: 'Un agente';
+                            $messageOther = $assignerName . ' se autoasignó el ticket ' . $ticketNo . ': ' . $subj;
+
+                            $stmtOther = $mysqli->prepare("SELECT id FROM staff WHERE empresa_id = ? AND is_active = 1 AND id != ?");
+                            if ($stmtOther) {
+                                $stmtOther->bind_param('ii', $eid, $myStaffId);
+                                if ($stmtOther->execute()) {
+                                    $resOther = $stmtOther->get_result();
+                                    $otherStaff = [];
+                                    while ($rO = $resOther->fetch_assoc()) {
+                                        $otherStaff[] = (int)$rO['id'];
+                                    }
+                                    if (!empty($otherStaff)) {
+                                        $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
+                                        if ($stmtN) {
+                                            foreach ($otherStaff as $targetId) {
+                                                $stmtN->bind_param('iissi', $eid, $targetId, $messageOther, $type, $tid);
+                                                $stmtN->execute();
+                                            }
+                                            $stmtN->close();
+                                        }
+                                    }
+                                }
+                                $stmtOther->close();
+                            }
+                        } else {
+                            // Se asignó a otro agente: notificar a ese agente asignado
+                            $message = 'Se te asignó el ticket ' . $ticketNo . ': ' . $subj;
+                            $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
+                            if ($stmtN) {
+                                $stmtN->bind_param('iissi', $eid, $val, $message, $type, $tid);
+                                $stmtN->execute();
+                                $stmtN->close();
+                            }
                         }
                     }
 

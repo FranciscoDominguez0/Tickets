@@ -9,6 +9,7 @@ services:
     depends_on:
       - db
     volumes:
+      - .:/var/www/html/sistema-tickets
       - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments
       - ./firmas:/var/www/html/sistema-tickets/firmas
     networks:

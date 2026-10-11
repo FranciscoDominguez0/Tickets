@@ -374,15 +374,18 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                             } else {
                                 addLog('ticket_assigned', 'Asignación inicial en creación de ticket' . (($forceNotifyDeptDefault ?? false) ? ' (dept default)' : ''), 'ticket', $new_tid, 'staff', $val);
 
-                                // Notificación en BD
-                                $message = 'Se te asignó el ticket ' . (string) $ticket_number . ': ' . (string) $subject;
-                                $type = 'ticket_assigned';
-                                $stmtN = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())');
-                                if ($stmtN) {
-                                    $stmtN->bind_param('issi', $val, $message, $type, $new_tid);
-                                    $stmtN->execute();
-                                } else {
-                                    addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
+                                // Notificación en BD (solo si no es quien creó el ticket)
+                                $currentAgentId = (int)($_SESSION['staff_id'] ?? 0);
+                                if ($val !== $currentAgentId) {
+                                    $message = 'Se te asignó el ticket ' . (string) $ticket_number . ': ' . (string) $subject;
+                                    $type = 'ticket_assigned';
+                                    $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
+                                    if ($stmtN) {
+                                        $stmtN->bind_param('iissi', $eid, $val, $message, $type, $new_tid);
+                                        $stmtN->execute();
+                                    } else {
+                                        addLog('ticket_assign_notification_failed', 'No se pudo preparar INSERT notifications', 'ticket', $new_tid, 'staff', $val);
+                                    }
                                 }
 
                                 // Correo al agente usando el mismo formato que la asignación manual

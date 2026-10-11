@@ -67,14 +67,15 @@ RUN echo "ServerTokens Prod" >> /etc/apache2/apache2.conf && \
 
 
 # =========================
-# LIMITE CONEXIONES
+# LIMITE CONEXIONES (MPM PREFORK)
 # =========================
 RUN echo "<IfModule mpm_prefork_module>" >> /etc/apache2/apache2.conf && \
-    echo "    StartServers 2" >> /etc/apache2/apache2.conf && \
-    echo "    MinSpareServers 2" >> /etc/apache2/apache2.conf && \
-    echo "    MaxSpareServers 5" >> /etc/apache2/apache2.conf && \
-    echo "    MaxRequestWorkers 10" >> /etc/apache2/apache2.conf && \
-    echo "    MaxConnectionsPerChild 0" >> /etc/apache2/apache2.conf && \
+    echo "    ServerLimit 80" >> /etc/apache2/apache2.conf && \
+    echo "    StartServers 5" >> /etc/apache2/apache2.conf && \
+    echo "    MinSpareServers 5" >> /etc/apache2/apache2.conf && \
+    echo "    MaxSpareServers 15" >> /etc/apache2/apache2.conf && \
+    echo "    MaxRequestWorkers 80" >> /etc/apache2/apache2.conf && \
+    echo "    MaxConnectionsPerChild 2000" >> /etc/apache2/apache2.conf && \
     echo "</IfModule>" >> /etc/apache2/apache2.conf
 
 # =========================
