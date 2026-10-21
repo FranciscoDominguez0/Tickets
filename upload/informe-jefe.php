@@ -166,7 +166,7 @@ function formatFileSizeHuman(int $bytes): string
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo html((string) ($report['subject'] ?? 'Informe')); ?> — <?php echo html(APP_NAME); ?></title>
+    <title><?php echo html((string) ($report['subject'] ?? 'Informe')); ?> â€” <?php echo html(APP_NAME); ?></title>
     <link href="scp/css/vendor/bootstrap-5.3.0.min.css" rel="stylesheet">
     <link href="scp/css/vendor/bootstrap-icons-1.11.1.css" rel="stylesheet">
     <link rel="stylesheet" href="css/client_dark.css?v=<?php echo (int) @filemtime(__DIR__ . '/css/client_dark.css'); ?>">
@@ -194,7 +194,7 @@ function formatFileSizeHuman(int $bytes): string
     <div class="panel">
         <h2 class="h4 mb-2"><?php echo html((string) ($report['subject'] ?? '')); ?></h2>
         <div class="meta mb-4">
-            <div><strong>Organización:</strong> <?php echo html((string) ($report['org_name'] ?? '')); ?></div>
+            <div><strong>OrganizaciÃ³n:</strong> <?php echo html((string) ($report['org_name'] ?? '')); ?></div>
             <?php if ($targetName !== ''): ?>
             <div><strong>Usuario referencia:</strong> <?php echo html($targetName); ?><?php if (!empty($report['target_email'])): ?> (<?php echo html((string) $report['target_email']); ?>)<?php endif; ?></div>
             <?php endif; ?>

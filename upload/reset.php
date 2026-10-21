@@ -18,7 +18,7 @@ $success = '';
 $token = trim($_GET['token'] ?? '');
 
 if ($token === '' || !preg_match('/^[a-f0-9]{64}$/', $token)) {
-    $error = 'Enlace inválido o incompleto.';
+    $error = 'Enlace invÃ¡lido o incompleto.';
 }
 
 $tokenHash = $token !== '' ? hash('sha256', $token) : '';
@@ -40,7 +40,7 @@ if ($error === '') {
     }
 
     if (!$resetRow) {
-        $error = 'Este enlace no es válido o ya fue utilizado.';
+        $error = 'Este enlace no es vÃ¡lido o ya fue utilizado.';
     } elseif (!empty($resetRow['used_at'])) {
         $error = 'Este enlace ya fue utilizado.';
     } elseif (strtotime($resetRow['expires_at']) < time()) {
@@ -50,17 +50,17 @@ if ($error === '') {
 
 if ($_POST && $error === '') {
     if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {
-        $error = 'Token de seguridad inválido.';
+        $error = 'Token de seguridad invÃ¡lido.';
     } else {
         $p1 = (string) ($_POST['password'] ?? '');
         $p2 = (string) ($_POST['password2'] ?? '');
 
         if ($p1 === '' || $p2 === '') {
-            $error = 'Debe ingresar la nueva contraseña.';
+            $error = 'Debe ingresar la nueva contraseÃ±a.';
         } elseif (strlen($p1) < 8) {
-            $error = 'La contraseña debe tener al menos 8 caracteres.';
+            $error = 'La contraseÃ±a debe tener al menos 8 caracteres.';
         } elseif ($p1 !== $p2) {
-            $error = 'Las contraseñas no coinciden.';
+            $error = 'Las contraseÃ±as no coinciden.';
         } else {
             $uid = (int) $resetRow['user_id'];
             $hash = Auth::hash($p1);
@@ -86,7 +86,7 @@ if ($_POST && $error === '') {
             }
 
             $_SESSION['login_failed_attempts'] = 0;
-            $_SESSION['flash_success'] = 'Contraseña actualizada. Ya puedes iniciar sesión.';
+            $_SESSION['flash_success'] = 'ContraseÃ±a actualizada. Ya puedes iniciar sesiÃ³n.';
             $_SESSION['flash_email'] = (string) ($resetRow['email'] ?? '');
             header('Location: login.php');
             exit;
@@ -150,7 +150,7 @@ if ($_POST && $error === '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon"
         href="<?php echo (defined('APP_URL') ? rtrim((string) APP_URL, '/') : ''); ?>/publico/img/favicon.ico">
-    <title>Restablecer contraseña - <?php echo APP_NAME; ?></title>
+    <title>Restablecer contraseÃ±a - <?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="scp/css/vendor/bootstrap-icons-1.11.1.css">
     <link rel="stylesheet"
         href="../publico/css/login.css?v=<?php echo (int) (@filemtime(__DIR__ . '/../publico/css/login.css') ?: time()); ?>">
@@ -189,7 +189,7 @@ if ($isPortalDarkModeEnabled) {
                         <i class="bi <?php echo $isDarkMode ? 'bi-sun' : 'bi-moon-stars'; ?>" style="font-size:16px;"></i>
                     </button>
                 <?php endif; ?>
-                <a href="login.php" class="header-login-link">Inicia Sesión</a>
+                <a href="login.php" class="header-login-link">Inicia SesiÃ³n</a>
             </div>
         </div>
 
@@ -199,15 +199,15 @@ if ($isPortalDarkModeEnabled) {
 
         <div class="support-content">
             <div class="welcome-section">
-                <h2 class="welcome-title">Restablecer contraseña</h2>
-                <p class="welcome-text">Define una nueva contraseña para tu cuenta.</p>
+                <h2 class="welcome-title">Restablecer contraseÃ±a</h2>
+                <p class="welcome-text">Define una nueva contraseÃ±a para tu cuenta.</p>
             </div>
 
             <div class="login-panel login-panel-split">
                 <div class="login-panel-left">
                     <div class="login-form-header">
-                        <h2 class="login-form-title">Nueva contraseña</h2>
-                        <p class="login-form-subtitle">Define una nueva contraseña para tu cuenta.</p>
+                        <h2 class="login-form-title">Nueva contraseÃ±a</h2>
+                        <p class="login-form-subtitle">Define una nueva contraseÃ±a para tu cuenta.</p>
                     </div>
                     <form method="post" class="login-form">
                         <?php if ($error): ?>
@@ -225,9 +225,9 @@ if ($isPortalDarkModeEnabled) {
                             </div>
 
                             <div class="form-group">
-                                <label for="password">Nueva contraseña</label>
+                                <label for="password">Nueva contraseÃ±a</label>
                                 <div style="position: relative;">
-                                    <input type="password" id="password" name="password" placeholder="Nueva contraseña"
+                                    <input type="password" id="password" name="password" placeholder="Nueva contraseÃ±a"
                                         required style="padding-right: 40px; width: 100%; box-sizing: border-box;">
                                     <button type="button" id="togglePasswordBtn1" tabindex="-1"
                                         style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
@@ -242,10 +242,10 @@ if ($isPortalDarkModeEnabled) {
                             </div>
 
                             <div class="form-group">
-                                <label for="password2">Confirmar contraseña</label>
+                                <label for="password2">Confirmar contraseÃ±a</label>
                                 <div style="position: relative;">
                                     <input type="password" id="password2" name="password2"
-                                        placeholder="Confirmar contraseña" required
+                                        placeholder="Confirmar contraseÃ±a" required
                                         style="padding-right: 40px; width: 100%; box-sizing: border-box;">
                                     <button type="button" id="togglePasswordBtn2" tabindex="-1"
                                         style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #64748b; padding: 0; display: flex; align-items: center; justify-content: center;">
@@ -262,7 +262,7 @@ if ($isPortalDarkModeEnabled) {
                             <input type="hidden" name="csrf_token"
                                 value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                            <button type="submit" class="btn-login">Guardar contraseña</button>
+                            <button type="submit" class="btn-login">Guardar contraseÃ±a</button>
                         <?php endif; ?>
                     </form>
                 </div>
@@ -277,7 +277,7 @@ if ($isPortalDarkModeEnabled) {
                     </div>
                     <div class="login-welcome">
                         <h2 class="login-welcome-title">Establece <span>tu clave</span></h2>
-                        <p class="login-welcome-text">Ingresa tu nueva contraseña para volver a acceder de forma segura.
+                        <p class="login-welcome-text">Ingresa tu nueva contraseÃ±a para volver a acceder de forma segura.
                         </p>
                     </div>
                 </div>
@@ -311,7 +311,7 @@ if ($isPortalDarkModeEnabled) {
             });
         }
 
-        // Mostrar/Ocultar contraseña
+        // Mostrar/Ocultar contraseÃ±a
         function setupTogglePassword(btnId, inputId) {
             var btn = document.getElementById(btnId);
             var input = document.getElementById(inputId);

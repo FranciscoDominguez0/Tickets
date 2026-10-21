@@ -1,7 +1,7 @@
 <?php
 /**
  * PERFIL USUARIO
- * Editar informaciÛn del usuario
+ * Editar informaci√≥n del usuario
  */
 
 require_once '../config.php';
@@ -49,7 +49,7 @@ if (!$userData) {
 
 if ($_POST) {
     if (!validateCSRF()) {
-        $error = 'Token de seguridad inv·lido';
+        $error = 'Token de seguridad inv√°lido';
     } else {
         $firstname = trim($_POST['firstname'] ?? '');
         $lastname = trim($_POST['lastname'] ?? '');
@@ -508,13 +508,13 @@ if ($_POST) {
                         </div>
                         <div id="notifBellList" class="p-3" style="flex: 1; overflow-y: auto; min-height: 0;">
                             <div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">
-                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div>
-                                <div style="color:#64748b;">Cuando el equipo responda, te aparecer· aquÌ.</div>
+                                <div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div>
+                                <div style="color:#64748b;">Cuando el equipo responda, te aparecer√° aqu√≠.</div>
                             </div>
                         </div>
                         <div class="p-2 border-top" style="background:#f8f9fa; flex-shrink: 0;">
                             <button id="notifMarkAllRead" class="btn btn-sm btn-outline-secondary w-100" type="button" style="font-size:.85rem;">
-                                <i class="bi bi-check-all"></i> Marcar todas como leÌdas
+                                <i class="bi bi-check-all"></i> Marcar todas como le√≠das
                             </button>
                         </div>
                     </div>
@@ -581,7 +581,7 @@ if ($_POST) {
                         </li>
                         <li>
                             <a class="dropdown-item d-flex align-items-center gap-3 profile-dd-item profile-dd-danger" href="logout.php">
-                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesiÛn
+                                <div class="profile-dd-icon profile-dd-icon-danger"><i class="bi bi-box-arrow-right"></i></div> Cerrar sesi√≥n
                             </a>
                         </li>
                     </ul>
@@ -639,7 +639,7 @@ if ($_POST) {
                         </div>
 
                         <div class="mb-2">
-                            <label for="address" class="form-label">DirecciÛn</label>
+                            <label for="address" class="form-label">Direcci√≥n</label>
                             <input type="text" class="form-control" id="address" name="address" value="<?php echo html($userData['address'] ?? ''); ?>">
                         </div>
 
@@ -649,7 +649,7 @@ if ($_POST) {
                                 <input type="text" class="form-control" id="company" name="company" value="<?php echo html($userData['company'] ?? ''); ?>">
                             </div>
                             <div class="col-md-6">
-                                <label for="phone" class="form-label">TelÈfono</label>
+                                <label for="phone" class="form-label">Tel√©fono</label>
                                 <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo html($userData['phone'] ?? ''); ?>">
                             </div>
                         </div>
@@ -718,8 +718,8 @@ if ($_POST) {
                     if (!items || !items.length) {
                         list.innerHTML = ''
                             + '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem">'
-                            +   '<div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div>'
-                            +   '<div style="color:#64748b;">Cuando el equipo responda, te aparecer· aquÌ.</div>'
+                            +   '<div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div>'
+                            +   '<div style="color:#64748b;">Cuando el equipo responda, te aparecer√° aqu√≠.</div>'
                             + '</div>';
                         return;
                     }
@@ -785,7 +785,7 @@ if ($_POST) {
                 } catch (e) {}
             });
 
-            // BotÛn "Marcar todas como leÌdas"
+            // Bot√≥n "Marcar todas como le√≠das"
             (function(){
                 var markAllBtn = document.getElementById('notifMarkAllRead');
                 if (!markAllBtn) return;
@@ -800,7 +800,7 @@ if ($_POST) {
                                 renderBell([]);
                                 var list = document.getElementById('notifBellList');
                                 if (list) {
-                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al dÌa</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como leÌdas.</div></div>';
+                                    list.innerHTML = '<div class="notif-empty text-center text-muted py-3" style="font-size:.92rem"><div class="mb-1" style="font-weight:900;color:#0f172a;">Todo al d√≠a</div><div style="color:#64748b;">Todas las notificaciones fueron marcadas como le√≠das.</div></div>';
                                 }
                             }
                         })
