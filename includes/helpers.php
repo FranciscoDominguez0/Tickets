@@ -2826,6 +2826,19 @@ function addEmailLog($status, $errorMessage = '', array $meta = [])
 
 function triggerEmailQueueWorkerAsync($limit = 30)
 {
+    // En Linux / Docker: disparar el worker inmediatamente en segundo plano vía CLI
+    // Es instantáneo (0ms), no depende de peticiones de red externas, cURL, DNS ni SSL
+    $workerScript = __DIR__ . '/../upload/process_mail_queue.php';
+    if (file_exists($workerScript) && function_exists('exec')) {
+        if (DIRECTORY_SEPARATOR === '/') {
+            @exec('php ' . escapeshellarg($workerScript) . ' > /dev/null 2>&1 &');
+            return true;
+        } else {
+            @pclose(@popen('start /B php ' . escapeshellarg($workerScript), 'r'));
+            return true;
+        }
+    }
+
     $limit = (int) $limit;
     if ($limit < 1)
         $limit = 1;
