@@ -2866,6 +2866,12 @@ function triggerEmailQueueWorkerAsync($limit = 30)
         $baseDir = preg_replace('#/(upload|agente)(/.*)?$#i', '', $baseDir);
     }
     $workerPath = $baseDir . '/upload/process_mail_queue.php';
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $docRootNorm = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT']) ?: $_SERVER['DOCUMENT_ROOT']);
+        if (substr(rtrim($docRootNorm, '/'), -15) === 'sistema-tickets') {
+            $workerPath = '/upload/process_mail_queue.php';
+        }
+    }
     $eid = function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1);
     if ($eid <= 0)
         $eid = 1;
