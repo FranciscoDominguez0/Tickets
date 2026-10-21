@@ -1,9 +1,9 @@
 <?php
-require_once '../config.php';
+require_once __DIR__ . '/../config.php';
 // Cerrar sesión INMEDIATAMENTE para no bloquear al usuario que disparó el worker
 if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
-require_once '../includes/helpers.php';
-require_once '../includes/Mailer.php';
+require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../includes/Mailer.php';
 
 ignore_user_abort(true);
 @set_time_limit(0);
