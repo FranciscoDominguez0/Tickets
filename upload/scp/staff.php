@@ -2,6 +2,7 @@
 require_once '../../config.php';
 require_once '../../includes/helpers.php';
 require_once '../../includes/Auth.php';
+require_once '../../includes/Mailer.php';
 
 if (!isset($_SESSION['staff_id'])) {
     header('Location: login.php');
