@@ -6,12 +6,13 @@
 /**
  * Obtiene la IP real del usuario (soporta proxys)
  */
-function getUserIpAddress() {
+function getUserIpAddress()
+{
     // Para mitigar IP Spoofing, usar siempre REMOTE_ADDR.
     // Solo confiar en HTTP_X_FORWARDED_FOR si estás detrás de un proxy/WAF de confianza
     // (como Cloudflare) y el servidor web (Nginx/Apache) no está reemplazando REMOTE_ADDR automáticamente.
     // Lo ideal es que el proxy inverso modifique REMOTE_ADDR y la aplicación PHP lea REMOTE_ADDR.
-    return (string)($_SERVER['REMOTE_ADDR'] ?? '');
+    return (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 }
 
 // Proteger página (requiere login)
@@ -1476,7 +1477,7 @@ function countPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     $monthSql = ticketMonthFilterSqlClause($monthFilter);
     $monthTypes = $monthSql !== '' ? 'ss' : '';
     $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
-    
+
     $searchSql = '';
     $searchTypes = '';
     $searchParams = [];
@@ -1547,7 +1548,7 @@ function fetchPortalOrganizationTickets($mysqli, int $empresaId, int $organizati
     $monthSql = ticketMonthFilterSqlClause($monthFilter);
     $monthTypes = $monthSql !== '' ? 'ss' : '';
     $monthParams = $monthSql !== '' ? [$monthFilter['start'], $monthFilter['end']] : [];
-    
+
     $searchSql = '';
     $searchTypes = '';
     $searchParams = [];
@@ -1888,7 +1889,7 @@ function sanitizeRichText($inputHtml)
         $url = trim((string) $url);
         if ($url === '')
             return false;
-            
+
         // Permitir rutas relativas/absolutas locales (sin protocolo)
         if (!preg_match('~^[a-z]+:~i', $url)) {
             return true;
@@ -1970,7 +1971,7 @@ function sanitizeRichText($inputHtml)
                     }
                 } elseif ($tag === 'img') {
                     $src = $child->getAttribute('src');
-                    
+
                     // Asegurar que las imágenes subidas usen siempre la ruta relativa del sistema actual
                     // para evitar 404 si se subió en localhost y se visualiza en una IP de red local
                     if ($src !== '' && strpos($src, '/upload/uploads/inline-images/') !== false) {
@@ -1983,7 +1984,7 @@ function sanitizeRichText($inputHtml)
                         $src = 'https:' . trim($src);
                         $child->setAttribute('src', $src);
                     }
-                    
+
                     if ($src === '' || !$isSafeImgSrc($src)) {
                         $node->removeChild($child);
                         continue;
@@ -2435,14 +2436,14 @@ function getCompanyLogoUrl($fallbackRelativePath = '')
 function renderOpenGraphTags(array $options = []): string
 {
     $appName = defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets';
-    $title = trim((string)($options['title'] ?? ''));
+    $title = trim((string) ($options['title'] ?? ''));
     if ($title === '') {
         $title = $appName;
     } elseif (!str_contains($title, $appName)) {
         $title = $title . ' — ' . $appName;
     }
 
-    $description = trim((string)($options['description'] ?? ''));
+    $description = trim((string) ($options['description'] ?? ''));
     if ($description === '') {
         $description = 'Portal de soporte técnico, gestión de tickets y atención de incidencias en línea.';
     }
@@ -2452,36 +2453,36 @@ function renderOpenGraphTags(array $options = []): string
         $description = substr($description, 0, 197) . '...';
     }
 
-    $siteName = trim((string)($options['site_name'] ?? $appName));
-    $type     = trim((string)($options['type'] ?? 'website'));
+    $siteName = trim((string) ($options['site_name'] ?? $appName));
+    $type = trim((string) ($options['type'] ?? 'website'));
 
     // URL de imagen (WhatsApp requiere URL absoluta http/https y tamaño adecuado)
-    $image = trim((string)($options['image'] ?? ''));
+    $image = trim((string) ($options['image'] ?? ''));
     if ($image === '') {
         $image = 'publico/img/og-preview.png';
     }
     $imageUrl = toAppAbsoluteUrl($image);
 
     // URL canónica actual
-    $currentUrl = trim((string)($options['url'] ?? ''));
+    $currentUrl = trim((string) ($options['url'] ?? ''));
     if ($currentUrl === '') {
         $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || ((string)($_SERVER['SERVER_PORT'] ?? '') === '443')
-            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string)$_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+            || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
         $scheme = $isSecure ? 'https' : 'http';
-        $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
-        $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
         $currentUrl = $scheme . '://' . $host . $uri;
     }
 
     $escTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
-    $escDesc  = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
-    $escSite  = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
-    $escType  = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
-    $escUrl   = htmlspecialchars($currentUrl, ENT_QUOTES, 'UTF-8');
-    $escImg   = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
+    $escDesc = htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+    $escSite = htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8');
+    $escType = htmlspecialchars($type, ENT_QUOTES, 'UTF-8');
+    $escUrl = htmlspecialchars($currentUrl, ENT_QUOTES, 'UTF-8');
+    $escImg = htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8');
 
-    $html  = "\n";
+    $html = "\n";
     $html .= '    <!-- Open Graph / WhatsApp / Facebook -->' . "\n";
     $html .= '    <meta name="description" content="' . $escDesc . '">' . "\n";
     $html .= '    <meta property="og:type" content="' . $escType . '">' . "\n";
@@ -2542,16 +2543,19 @@ function addLog($action, $details = null, $object_type = null, $object_id = null
 /**
  * Registra un evento de auditoría de negocio
  */
-function addAuditLog($actor_type, $actor_id, $action, $entity_type, $entity_id, $description) {
+function addAuditLog($actor_type, $actor_id, $action, $entity_type, $entity_id, $description)
+{
     global $mysqli;
-    if (!isset($mysqli) || !$mysqli) return false;
+    if (!isset($mysqli) || !$mysqli)
+        return false;
 
     $eid = function_exists('empresaId') ? empresaId() : 1;
     $ip = getUserIpAddress();
-    
+
     $stmt = $mysqli->prepare('INSERT INTO audit_logs (empresa_id, actor_type, actor_id, action, entity_type, entity_id, description, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
-    if (!$stmt) return false;
-    
+    if (!$stmt)
+        return false;
+
     $stmt->bind_param('isisssss', $eid, $actor_type, $actor_id, $action, $entity_type, $entity_id, $description, $ip);
     return $stmt->execute();
 }
@@ -2717,18 +2721,18 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
             if (!is_array($att))
                 continue;
             $item = [
-                'filename'    => (string)($att['filename'] ?? 'adjunto'),
-                'contentType' => (string)($att['contentType'] ?? 'application/octet-stream'),
+                'filename' => (string) ($att['filename'] ?? 'adjunto'),
+                'contentType' => (string) ($att['contentType'] ?? 'application/octet-stream'),
             ];
 
             $rawContent = isset($att['content']) ? $att['content'] : null;
 
             if ($rawContent !== null && $rawContent !== '') {
-                if (strlen((string)$rawContent) > $maxInlineBytes) {
+                if (strlen((string) $rawContent) > $maxInlineBytes) {
                     // Contenido demasiado grande para guardar en base64 en la BD.
                     // Volcamos a un fichero temporal y guardamos sólo la ruta.
-                    $fileSizeKb = round(strlen((string)$rawContent) / 1024, 1);
-                    $limitKb    = round($maxInlineBytes / 1024, 1);
+                    $fileSizeKb = round(strlen((string) $rawContent) / 1024, 1);
+                    $limitKb = round($maxInlineBytes / 1024, 1);
                     error_log(
                         '[mail_queue] ADVERTENCIA: Adjunto "' . ($att['filename'] ?? 'adjunto') . '" '
                         . '(' . $fileSizeKb . ' KB) supera el límite recomendado para almacenar inline '
@@ -2739,7 +2743,7 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
                         if (!is_dir($tmpDir)) {
                             mkdir($tmpDir, 0700, true);
                         }
-                        $safeFilename = preg_replace('/[^A-Za-z0-9_.\-]/', '_', (string)($att['filename'] ?? 'adjunto'));
+                        $safeFilename = preg_replace('/[^A-Za-z0-9_.\-]/', '_', (string) ($att['filename'] ?? 'adjunto'));
                         $tmpFile = $tmpDir . '/' . bin2hex(random_bytes(12)) . '_' . $safeFilename;
                         if (file_put_contents($tmpFile, $rawContent) !== false) {
                             $item['file_path'] = $tmpFile;
@@ -2747,16 +2751,16 @@ function enqueueEmailJob($to, $subject, $bodyHtml, $bodyText = '', array $meta =
                         } else {
                             // Si no se pudo escribir, caer al método base64 (puede fallar igualmente)
                             error_log('[mail_queue] ERROR: No se pudo escribir fichero temporal para adjunto. Intentando base64 (riesgo de truncar BD).');
-                            $item['content_b64'] = base64_encode((string)$rawContent);
+                            $item['content_b64'] = base64_encode((string) $rawContent);
                         }
                     } catch (Throwable $e) {
                         error_log('[mail_queue] ERROR inesperado al guardar adjunto temporal: ' . $e->getMessage());
                         // Último recurso: base64 (puede seguir fallando en BD, pero no peor que antes)
-                        $item['content_b64'] = base64_encode((string)$rawContent);
+                        $item['content_b64'] = base64_encode((string) $rawContent);
                     }
                 } else {
                     // Adjunto pequeño: guardar inline en base64 (comportamiento original)
-                    $item['content_b64'] = base64_encode((string)$rawContent);
+                    $item['content_b64'] = base64_encode((string) $rawContent);
                 }
             }
             $serializable[] = $item;
@@ -2826,15 +2830,16 @@ function addEmailLog($status, $errorMessage = '', array $meta = [])
 
 function triggerEmailQueueWorkerAsync($limit = 30)
 {
-    // En Linux / Docker: disparar el worker inmediatamente en segundo plano vía CLI
+    // Disparar worker inmediatamente en segundo plano vía CLI
     // Es instantáneo (0ms), no depende de peticiones de red externas, cURL, DNS ni SSL
     $workerScript = __DIR__ . '/../upload/process_mail_queue.php';
     if (file_exists($workerScript) && function_exists('exec')) {
+        $phpBin = defined('PHP_BINARY') && PHP_BINARY ? PHP_BINARY : 'php';
         if (DIRECTORY_SEPARATOR === '/') {
-            @exec('php ' . escapeshellarg($workerScript) . ' > /dev/null 2>&1 &');
+            @exec(escapeshellcmd($phpBin) . ' ' . escapeshellarg($workerScript) . ' > /dev/null 2>&1 &');
             return true;
         } else {
-            @pclose(@popen('start /B php ' . escapeshellarg($workerScript), 'r'));
+            @pclose(@popen('start /B ' . escapeshellcmd($phpBin) . ' ' . escapeshellarg($workerScript), 'r'));
             return true;
         }
     }
@@ -2866,12 +2871,6 @@ function triggerEmailQueueWorkerAsync($limit = 30)
         $baseDir = preg_replace('#/(upload|agente)(/.*)?$#i', '', $baseDir);
     }
     $workerPath = $baseDir . '/upload/process_mail_queue.php';
-    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-        $docRootNorm = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT']) ?: $_SERVER['DOCUMENT_ROOT']);
-        if (substr(rtrim($docRootNorm, '/'), -15) === 'sistema-tickets') {
-            $workerPath = '/upload/process_mail_queue.php';
-        }
-    }
     $eid = function_exists('empresaId') ? (int) empresaId() : (int) ($_SESSION['empresa_id'] ?? 1);
     if ($eid <= 0)
         $eid = 1;
@@ -3220,11 +3219,11 @@ function requireRolePermission($permKey, $redirectUrl = null)
 
     if (class_exists('ErrorHandler')) {
         ErrorHandler::logError($errorCode, [
-            'type'    => 'HTTP403',
-            'errno'   => 403,
+            'type' => 'HTTP403',
+            'errno' => 403,
             'message' => 'Permiso denegado: ' . $permKey,
-            'file'    => $_SERVER['SCRIPT_NAME'] ?? '',
-            'line'    => 0,
+            'file' => $_SERVER['SCRIPT_NAME'] ?? '',
+            'line' => 0,
         ]);
         ErrorHandler::renderErrorPage(403, $errorCode);
     } else {
@@ -3854,14 +3853,14 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
     if ($ticketId <= 0 || $empresaId <= 0 || !isset($mysqli) || !$mysqli) {
         return;
     }
-    
+
     // Verificar si existe la tabla de organizaciones
     $hasOrgs = dbTableExists('organizations');
     if (!$hasOrgs) {
         return;
     }
     $hasUserOrgs = dbTableExists('user_organizations');
-    
+
     // Obtener detalles del ticket
     $stmtT = $mysqli->prepare(
         "SELECT t.ticket_number, t.subject, t.user_id, t.dept_id, d.name AS dept_name, 
@@ -3882,10 +3881,10 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
     if (!$ticket) {
         return;
     }
-    
+
     $ticketNumber = $ticket['ticket_number'];
     $subject = $ticket['subject'];
-    $userId = (int)$ticket['user_id'];
+    $userId = (int) $ticket['user_id'];
     $deptName = $ticket['dept_name'] ?? 'Soporte';
     $userFirstname = $ticket['user_firstname'] ?? '';
     $userLastname = $ticket['user_lastname'] ?? '';
@@ -3894,11 +3893,11 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
     if ($userFullname === '') {
         $userFullname = 'Cliente';
     }
-    
+
     if ($userId <= 0) {
         return;
     }
-    
+
     // Obtener descripción del ticket (primer mensaje del hilo)
     $bodyHtmlText = '';
     $bodyEmailText = '';
@@ -3916,15 +3915,15 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
             $teRow = $stmtTe->get_result()->fetch_assoc();
             if ($teRow && !empty($teRow['body'])) {
                 $bodyHtmlText = $teRow['body'];
-                $bodyEmailText = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags((string)$bodyHtmlText), ENT_QUOTES, 'UTF-8')));
+                $bodyEmailText = trim(str_replace("\xC2\xA0", ' ', html_entity_decode(strip_tags((string) $bodyHtmlText), ENT_QUOTES, 'UTF-8')));
             }
         }
     }
-    
+
     // Obtener encargados de la organización (org_tickets_view = 1) a los que pertenece el usuario
     // Excluir al propio creador del ticket ($userId) para evitar auto-notificaciones.
     $managers = [];
-    
+
     if ($hasUserOrgs) {
         $sql = "SELECT DISTINCT 
                     u_manager.id AS manager_id,
@@ -3981,37 +3980,37 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
             $stmtM->bind_param('iii', $userId, $empresaId, $userId);
         }
     }
-    
+
     if ($stmtM && $stmtM->execute()) {
         $res = $stmtM->get_result();
         while ($row = $res->fetch_assoc()) {
             $managers[] = $row;
         }
     }
-    
+
     if (empty($managers)) {
         return;
     }
-    
+
     // Encolar/Enviar correo a cada encargado de la organización
-    $viewUrl = rtrim((string)(defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?from=org&id=' . (int)$ticketId;
+    $viewUrl = rtrim((string) (defined('APP_URL') ? APP_URL : ''), '/') . '/upload/view-ticket.php?from=org&id=' . (int) $ticketId;
     $appName = defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets';
-    
+
     $mailSentCount = 0;
     foreach ($managers as $mgr) {
-        $mgrEmail = strtolower(trim((string)($mgr['manager_email'] ?? '')));
+        $mgrEmail = strtolower(trim((string) ($mgr['manager_email'] ?? '')));
         if ($mgrEmail === '' || !filter_var($mgrEmail, FILTER_VALIDATE_EMAIL)) {
             continue;
         }
-        
+
         $orgName = $mgr['organization_name'] ?? 'Organización';
         $mgrName = trim(($mgr['manager_firstname'] ?? '') . ' ' . ($mgr['manager_lastname'] ?? ''));
         if ($mgrName === '') {
             $mgrName = 'Encargado';
         }
-        
+
         $emailSubject = '[Nuevo ticket] Org: ' . $orgName . ' - Usuario: ' . $userFullname;
-        
+
         $bodyHtml = '
             <div style="font-family: Segoe UI, sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #334155;">
                 <h2 style="color: #1e3a5f; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Nuevo ticket de tu organización</h2>
@@ -4024,18 +4023,18 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
                     <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Usuario:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($userFullname) . '</td></tr>
                     <tr><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0; width: 120px;"><strong>Departamento:</strong></td><td style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' . htmlspecialchars($deptName) . '</td></tr>
                 </table>';
-                
+
         if ($bodyEmailText !== '') {
             $bodyHtml .= '
                 <p><strong>Descripción:</strong></p>
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin: 12px 0; font-style: italic;">' . nl2br(htmlspecialchars($bodyEmailText)) . '</div>';
         }
-        
+
         $bodyHtml .= '
                 <p style="margin-top: 20px;"><a href="' . htmlspecialchars($viewUrl) . '" style="display: inline-block; background: #2563eb; color: white; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold;">Ver ticket en el Portal</a></p>
                 <p style="color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 24px;">' . htmlspecialchars($appName) . '</p>
             </div>';
-            
+
         $bodyText = "Nuevo ticket de tu organización\n\n"
             . "Se ha creado un nuevo ticket para la organización: " . $orgName . "\n"
             . "Usuario: " . $userFullname . "\n"
@@ -4045,7 +4044,7 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
             . ($bodyEmailText !== '' ? "Descripción:\n" . $bodyEmailText . "\n\n" : "")
             . "Ver ticket: " . $viewUrl . "\n\n"
             . $appName;
-            
+
         if (function_exists('enqueueEmailJob')) {
             if (enqueueEmailJob($mgrEmail, $emailSubject, $bodyHtml, $bodyText, ['empresa_id' => $empresaId, 'context_type' => 'org_manager_notify', 'context_id' => $ticketId])) {
                 $mailSentCount++;
@@ -4055,10 +4054,10 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
             $mailSentCount++;
         }
     }
-    
+
     if ($mailSentCount > 0 && function_exists('triggerEmailQueueWorkerAsync')) {
         triggerEmailQueueWorkerAsync(40);
     }
-    
+
     addLog('org_manager_notify_summary', 'Se notificó a ' . $mailSentCount . ' encargados de organización para el ticket ' . $ticketNumber, 'ticket', $ticketId, 'staff', 0);
 }

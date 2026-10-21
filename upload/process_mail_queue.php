@@ -24,11 +24,18 @@ if (!empty($_REQUEST['async'])) {
 }
 
 // --- Lock de concurrencia: solo un worker a la vez ---
-$lockFile = sys_get_temp_dir() . '/mail_queue_worker.lock';
+$lockDir = __DIR__ . '/../storage';
+if (!is_dir($lockDir)) {
+    @mkdir($lockDir, 0777, true);
+}
+$lockFile = is_dir($lockDir) && is_writable($lockDir)
+    ? $lockDir . '/mail_queue_worker.lock'
+    : sys_get_temp_dir() . '/mail_queue_worker_' . (function_exists('posix_getuid') ? posix_getuid() : '0') . '.lock';
+
 $lockFp = @fopen($lockFile, 'c');
-if (!$lockFp || !flock($lockFp, LOCK_EX | LOCK_NB)) {
+if ($lockFp && !flock($lockFp, LOCK_EX | LOCK_NB)) {
     // Otro worker ya está corriendo, salir sin error
-    if ($lockFp) fclose($lockFp);
+    fclose($lockFp);
     if (!headers_sent()) {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['ok' => true, 'skipped' => 'another_worker_running'], JSON_UNESCAPED_UNICODE);
