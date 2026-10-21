@@ -557,6 +557,27 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 margin: 0;
             }
 
+            /* Modo oscuro para overlay de carga */
+            body.dark-mode #staff-loading-overlay {
+                background: rgba(0, 0, 0, 0.75);
+            }
+            body.dark-mode #staff-loading-overlay .staff-loading-card {
+                background: #18181b !important;
+                color: #f4f4f5 !important;
+                border: 1px solid #27272a;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            }
+            body.dark-mode #staff-loading-overlay .staff-spinner {
+                border-color: #27272a;
+                border-top-color: #3b82f6;
+            }
+            body.dark-mode #staff-loading-overlay .staff-loading-title {
+                color: #f4f4f5 !important;
+            }
+            body.dark-mode #staff-loading-overlay .staff-loading-sub {
+                color: #a1a1aa !important;
+            }
+
             @keyframes staffSpin {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }

@@ -386,6 +386,104 @@ if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
     color: #64748b !important;
     border: 1px solid #e2e8f0 !important;
 }
+
+/* ── Modo Oscuro para Modales de Usuarios ── */
+body.dark-mode .user-premium-modal .modal-content {
+    background: #000000 !important;
+    border: 1px solid #27272a !important;
+    color: #f4f4f5 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+}
+body.dark-mode .user-premium-modal .modal-header {
+    background: #09090b !important;
+    border-bottom: 1px solid #27272a !important;
+}
+body.dark-mode .user-premium-modal .modal-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode .user-premium-modal .modal-body {
+    background: #000000 !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .user-premium-modal .form-label {
+    color: #a1a1aa !important;
+}
+body.dark-mode .user-premium-modal .form-control {
+    background-color: #09090b !important;
+    border-color: #27272a !important;
+    color: #f4f4f5 !important;
+}
+body.dark-mode .user-premium-modal .form-control:focus {
+    background-color: #09090b !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2) !important;
+}
+body.dark-mode .user-premium-modal .modal-footer {
+    background: #09090b !important;
+    border-top: 1px solid #27272a !important;
+}
+body.dark-mode .user-premium-modal .btn-secondary {
+    background: #18181b !important;
+    color: #e4e4e7 !important;
+    border-color: #27272a !important;
+}
+body.dark-mode .user-premium-modal .btn-secondary:hover {
+    background: #27272a !important;
+    color: #ffffff !important;
+}
+body.dark-mode .user-premium-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+body.dark-mode #modalImportUsers .modal-content {
+    background: #000000 !important;
+    border: 1px solid #27272a !important;
+    color: #f4f4f5 !important;
+}
+body.dark-mode #modalImportUsers .modal-header,
+body.dark-mode #modalImportUsers .modal-footer {
+    background: #09090b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode #modalImportUsers .modal-body {
+    background: #000000 !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode #modalImportUsers .nav-tabs {
+    border-bottom-color: #27272a !important;
+}
+body.dark-mode #modalImportUsers .nav-tabs .nav-link {
+    color: #a1a1aa !important;
+}
+body.dark-mode #modalImportUsers .nav-tabs .nav-link.active {
+    background: #000000 !important;
+    color: #f4f4f5 !important;
+    border-color: #27272a #27272a #000000 !important;
+}
+body.dark-mode #modalImportUsers .table {
+    color: #e4e4e7 !important;
+    border-color: #27272a !important;
+}
+body.dark-mode #modalImportUsers .table th,
+body.dark-mode #modalImportUsers .table td {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode #modalImportUsers .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+body.dark-mode #modalImportUsers .btn-outline-secondary {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode #modalImportUsers .btn-secondary {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
 </style>
 <?php
 

@@ -1028,6 +1028,111 @@ body.dark-mode .advanced-filters-panel select {
     border-color: #27272a !important;
     color: #cbd5e1 !important;
 }
+
+/* Modo Oscuro para Modales de Agentes (Crear, Editar, Eliminar) */
+body.dark-mode #agentCreateModal .modal-content,
+body.dark-mode #agentEditModal .modal-content,
+body.dark-mode #agentDeleteModal .modal-content {
+    background: #000000 !important;
+    border: 1px solid #27272a !important;
+    color: #f4f4f5 !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8) !important;
+}
+body.dark-mode #agentCreateModal .modal-header,
+body.dark-mode #agentEditModal .modal-header,
+body.dark-mode #agentDeleteModal .modal-header,
+body.dark-mode #agentCreateModal .modal-footer,
+body.dark-mode #agentEditModal .modal-footer,
+body.dark-mode #agentDeleteModal .modal-footer {
+    background: #09090b !important;
+    border-color: #27272a !important;
+}
+body.dark-mode #agentCreateModal .modal-body,
+body.dark-mode #agentEditModal .modal-body,
+body.dark-mode #agentDeleteModal .modal-body {
+    background: #000000 !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode #agentCreateModal .modal-title,
+body.dark-mode #agentEditModal .modal-title,
+body.dark-mode #agentDeleteModal .modal-title {
+    color: #f4f4f5 !important;
+}
+body.dark-mode #agentCreateModal .form-label,
+body.dark-mode #agentEditModal .form-label {
+    color: #cbd5e1 !important;
+}
+body.dark-mode #agentCreateModal .form-control,
+body.dark-mode #agentEditModal .form-control,
+body.dark-mode #agentCreateModal .form-select,
+body.dark-mode #agentEditModal .form-select {
+    background-color: #09090b !important;
+    border: 1px solid #27272a !important;
+    color: #f4f4f5 !important;
+}
+body.dark-mode #agentCreateModal .form-control:focus,
+body.dark-mode #agentEditModal .form-control:focus,
+body.dark-mode #agentCreateModal .form-select:focus,
+body.dark-mode #agentEditModal .form-select:focus {
+    background-color: #09090b !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+body.dark-mode #agentCreateModal .form-check-label,
+body.dark-mode #agentEditModal .form-check-label {
+    color: #e4e4e7 !important;
+}
+body.dark-mode #agentCreateModal .form-text,
+body.dark-mode #agentEditModal .form-text {
+    color: #71717a !important;
+}
+body.dark-mode .dept-toggle-btn {
+    background: #09090b !important;
+    border-color: #27272a !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .dept-toggle-btn:hover {
+    background: #18181b !important;
+    color: #ffffff !important;
+    border-color: #3f3f46 !important;
+}
+body.dark-mode .dept-select-all,
+body.dark-mode .dept-clear-all {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode .dept-select-all:hover,
+body.dark-mode .dept-clear-all:hover {
+    background: #27272a !important;
+    color: #ffffff !important;
+}
+body.dark-mode .dept-checkbox-list {
+    background: #09090b !important;
+    border: 1px solid #27272a !important;
+}
+body.dark-mode .dept-placeholder {
+    color: #71717a !important;
+}
+body.dark-mode #agentCreateModal .btn-secondary,
+body.dark-mode #agentEditModal .btn-secondary,
+body.dark-mode #agentDeleteModal .btn-secondary {
+    background: #18181b !important;
+    border-color: #27272a !important;
+    color: #e4e4e7 !important;
+}
+body.dark-mode #agentCreateModal .btn-secondary:hover,
+body.dark-mode #agentEditModal .btn-secondary:hover,
+body.dark-mode #agentDeleteModal .btn-secondary:hover {
+    background: #27272a !important;
+    color: #ffffff !important;
+}
+body.dark-mode #agentCreateModal .btn-close,
+body.dark-mode #agentEditModal .btn-close,
+body.dark-mode #agentDeleteModal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
 </style>
 
 <div class="settings-hero">
