@@ -41,17 +41,20 @@ if ($_POST) {
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $error = 'Ingrese un correo válido';
         } else {
-            $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, status FROM users WHERE email = ? LIMIT 1");
+            // Buscar en tabla users (clientes)
+            $stmt = $mysqli->prepare("SELECT id, email, firstname, lastname, empresa_id, status FROM users WHERE email = ? LIMIT 1");
             if ($stmt) {
                 $stmt->bind_param('s', $email);
                 $stmt->execute();
                 $u = $stmt->get_result()->fetch_assoc();
 
                 if ($u) {
+                    $uid = (int) $u['id'];
+                    $targetEmpresaId = isset($u['empresa_id']) && is_numeric($u['empresa_id']) && (int)$u['empresa_id'] > 0 ? (int)$u['empresa_id'] : 1;
+
                     // Invalidar tokens pendientes anteriores (dejar un solo enlace activo)
                     $stmtInv = $mysqli->prepare("UPDATE password_resets SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL");
                     if ($stmtInv) {
-                        $uid = (int) $u['id'];
                         $stmtInv->bind_param('i', $uid);
                         $stmtInv->execute();
                     }
@@ -62,7 +65,6 @@ if ($_POST) {
 
                     $stmtIns = $mysqli->prepare("INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)");
                     if ($stmtIns) {
-                        $uid = (int) $u['id'];
                         $stmtIns->bind_param('iss', $uid, $tokenHash, $expiresAt);
                         $stmtIns->execute();
                     }
@@ -111,15 +113,22 @@ if ($_POST) {
                         "Enlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n\n" .
                         "Si no solicitaste este cambio, puedes ignorar este correo.";
 
+                    $mailEnqueued = false;
                     if (function_exists('enqueueEmailJob')) {
-                        $uidQueue = (int)$u['id'];
-                        $currentEmpresaId = function_exists('empresaId') ? empresaId() : 1;
-                        enqueueEmailJob($u['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $currentEmpresaId, 'context_type' => 'forgot_reset', 'context_id' => $uidQueue]);
-                        if (function_exists('triggerEmailQueueWorkerAsync')) {
+                        $mailEnqueued = enqueueEmailJob($u['email'], $subject, $bodyHtml, $bodyText, [
+                            'empresa_id' => $targetEmpresaId,
+                            'context_type' => 'forgot_reset',
+                            'context_id' => $uid
+                        ]);
+                        if ($mailEnqueued && function_exists('triggerEmailQueueWorkerAsync')) {
                             triggerEmailQueueWorkerAsync();
                         }
-                    } else {
-                        Mailer::send($u['email'], $subject, $bodyHtml, $bodyText);
+                    }
+
+                    if (!$mailEnqueued) {
+                        if (class_exists('Mailer')) {
+                            Mailer::sendWithEmpresa($u['email'], $subject, $bodyHtml, $bodyText, $targetEmpresaId);
+                        }
                     }
                 }
             }

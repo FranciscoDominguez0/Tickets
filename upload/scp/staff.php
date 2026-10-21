@@ -90,7 +90,25 @@ $isValidEnabledRole = function (string $role) use ($mysqli, $eid, $rolesHasEmpre
 };
 
 function ensureStaffPasswordResetsTableExists($mysqli) {
-    return $mysqli ? true : false;
+    if (!$mysqli) return false;
+    $mysqli->query(
+        "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
+        . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
+        . "  empresa_id INT NOT NULL DEFAULT 1,\n"
+        . "  staff_id INT NOT NULL,\n"
+        . "  token_hash CHAR(64) NOT NULL,\n"
+        . "  expires_at DATETIME NOT NULL,\n"
+        . "  used_at DATETIME NULL,\n"
+        . "  created DATETIME DEFAULT CURRENT_TIMESTAMP,\n"
+        . "  KEY idx_staff_id (staff_id),\n"
+        . "  KEY idx_token_hash (token_hash),\n"
+        . "  KEY idx_expires (expires_at)\n"
+        . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+    if (!dbColumnExists('staff_password_resets', 'empresa_id')) {
+        @$mysqli->query("ALTER TABLE staff_password_resets ADD COLUMN empresa_id INT NOT NULL DEFAULT 1 AFTER id");
+    }
+    return true;
 }
 
 function randomPassword($length = 12) {
@@ -271,48 +289,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tokenHash = hash('sha256', $token);
                 $expiresAt = date('Y-m-d H:i:s', time() + 3600);
 
-                $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (staff_id, token_hash, expires_at) VALUES (?, ?, ?)');
-                if ($stmtR) {
-                    $stmtR->bind_param('iss', $newId, $tokenHash, $expiresAt);
-                    $stmtR->execute();
+                $hasEmpresaCol = dbColumnExists('staff_password_resets', 'empresa_id');
+                if ($hasEmpresaCol) {
+                    $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (empresa_id, staff_id, token_hash, expires_at) VALUES (?, ?, ?, ?)');
+                    if ($stmtR) {
+                        $stmtR->bind_param('iiss', $eid, $newId, $tokenHash, $expiresAt);
+                        $stmtR->execute();
+                    }
+                } else {
+                    $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (staff_id, token_hash, expires_at) VALUES (?, ?, ?)');
+                    if ($stmtR) {
+                        $stmtR->bind_param('iss', $newId, $tokenHash, $expiresAt);
+                        $stmtR->execute();
+                    }
+                }
 
-                    $resetUrl = rtrim(APP_URL, '/') . '/upload/reset_staff.php?token=' . urlencode($token);
-                    $name = trim($firstname . ' ' . $lastname);
-                    if ($name === '') $name = $email;
-                    $subject = 'Restablecer contraseña (Agente) - ' . APP_NAME;
+                $resetUrl = rtrim(APP_URL, '/') . '/upload/reset_staff.php?token=' . urlencode($token);
+                $name = trim($firstname . ' ' . $lastname);
+                if ($name === '') $name = $email;
+                $subject = 'Restablecer contraseña (Agente) - ' . APP_NAME;
 
-                    $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-                    $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
-                    $bodyHtml = ''
-                        . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
-                        . '  <div style="max-width:640px; margin:0 auto;">'
-                        . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
-                        . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-                        . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Configurar contraseña</div>'
-                        . '    </div>'
-                        . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
-                        . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
-                        . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Un administrador te envió un enlace para configurar tu contraseña de acceso como agente.</p>'
-                        . '      <p style="margin:14px 0 12px 0;">'
-                        . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Configurar contraseña</a>'
-                        . '      </p>'
-                        . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
-                        . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
-                        . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
-                        . '    </div>'
-                        . '    <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:10px;">&copy; ' . date('Y') . ' ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-                        . '  </div>'
-                        . '</div>';
+                $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+                $bodyHtml = ''
+                    . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
+                    . '  <div style="max-width:640px; margin:0 auto;">'
+                    . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
+                    . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
+                    . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Configurar contraseña</div>'
+                    . '    </div>'
+                    . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
+                    . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
+                    . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Un administrador te envió un enlace para configurar tu contraseña de acceso como agente.</p>'
+                    . '      <p style="margin:14px 0 12px 0;">'
+                    . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Configurar contraseña</a>'
+                    . '      </p>'
+                    . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
+                    . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
+                    . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
+                    . '    </div>'
+                    . '    <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:10px;">&copy; ' . date('Y') . ' ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
+                    . '  </div>'
+                    . '</div>';
 
-                    $bodyText = "Hola $name\n\nUn administrador te envió un enlace para configurar tu contraseña de agente.\n\nEnlace (vence en 1 hora):\n$resetUrl\n";
+                $bodyText = "Hola $name\n\nUn administrador te envió un enlace para configurar tu contraseña de agente.\n\nEnlace (vence en 1 hora):\n$resetUrl\n";
 
-                    if (function_exists('enqueueEmailJob')) {
-                        enqueueEmailJob($email, $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_create', 'context_id' => $newId]);
-                        if (function_exists('triggerEmailQueueWorkerAsync')) {
-                            triggerEmailQueueWorkerAsync();
-                        }
-                    } else {
-                        Mailer::send($email, $subject, $bodyHtml, $bodyText);
+                $mailSent = false;
+                if (class_exists('Mailer')) {
+                    $mailSent = (bool)Mailer::sendWithEmpresa($email, $subject, $bodyHtml, $bodyText, $eid);
+                }
+                if (!$mailSent && function_exists('enqueueEmailJob')) {
+                    $mailSent = enqueueEmailJob($email, $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_create', 'context_id' => $newId]);
+                    if ($mailSent && function_exists('triggerEmailQueueWorkerAsync')) {
+                        triggerEmailQueueWorkerAsync();
                     }
                 }
             }
@@ -436,15 +465,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        $stmtInv = $mysqli->prepare("UPDATE staff_password_resets SET used_at = NOW() WHERE staff_id = ? AND used_at IS NULL");
+        if ($stmtInv) {
+            $stmtInv->bind_param('i', $id);
+            $stmtInv->execute();
+        }
+
         $token = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $token);
         $expiresAt = date('Y-m-d H:i:s', time() + 3600);
 
-        $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (staff_id, token_hash, expires_at) VALUES (?, ?, ?)');
-        if ($stmtR) {
-            $sid = (int)$s['id'];
-            $stmtR->bind_param('iss', $sid, $tokenHash, $expiresAt);
-            $stmtR->execute();
+        $hasEmpresaCol = dbColumnExists('staff_password_resets', 'empresa_id');
+        if ($hasEmpresaCol) {
+            $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (empresa_id, staff_id, token_hash, expires_at) VALUES (?, ?, ?, ?)');
+            if ($stmtR) {
+                $sid = (int)$s['id'];
+                $stmtR->bind_param('iiss', $eid, $sid, $tokenHash, $expiresAt);
+                $stmtR->execute();
+            }
+        } else {
+            $stmtR = $mysqli->prepare('INSERT INTO staff_password_resets (staff_id, token_hash, expires_at) VALUES (?, ?, ?)');
+            if ($stmtR) {
+                $sid = (int)$s['id'];
+                $stmtR->bind_param('iss', $sid, $tokenHash, $expiresAt);
+                $stmtR->execute();
+            }
         }
 
         $resetUrl = rtrim(APP_URL, '/') . '/upload/reset_staff.php?token=' . urlencode($token);
@@ -476,13 +521,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             . '</div>';
 
         $bodyText = "Hola $name\n\nEnlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n";
-        if (function_exists('enqueueEmailJob')) {
-            enqueueEmailJob((string)$s['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_reset', 'context_id' => $id]);
-            if (function_exists('triggerEmailQueueWorkerAsync')) {
+        $mailSent = false;
+        if (class_exists('Mailer')) {
+            $mailSent = (bool)Mailer::sendWithEmpresa((string)$s['email'], $subject, $bodyHtml, $bodyText, $eid);
+        }
+        if (!$mailSent && function_exists('enqueueEmailJob')) {
+            $mailSent = enqueueEmailJob((string)$s['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_reset', 'context_id' => $id]);
+            if ($mailSent && function_exists('triggerEmailQueueWorkerAsync')) {
                 triggerEmailQueueWorkerAsync();
             }
-        } else {
-            Mailer::send((string)$s['email'], $subject, $bodyHtml, $bodyText);
         }
 
         $_SESSION['flash_msg'] = 'Correo de reseteo enviado.';
