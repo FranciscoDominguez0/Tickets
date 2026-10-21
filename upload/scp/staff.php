@@ -335,12 +335,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bodyText = "Hola $name\n\nUn administrador te envió un enlace para configurar tu contraseña de agente.\n\nEnlace (vence en 1 hora):\n$resetUrl\n";
 
                 $mailSent = false;
+                $sendError = '';
                 if (class_exists('Mailer')) {
                     $mailSent = (bool)Mailer::sendWithEmpresa($email, $subject, $bodyHtml, $bodyText, $eid);
+                    if (!$mailSent) {
+                        $sendError = (string)(Mailer::$lastError ?? '');
+                        error_log('[staff_create_error] Falló envío directo a ' . $email . ': ' . $sendError);
+                    }
                 }
+                $enqueued = false;
                 if (!$mailSent && function_exists('enqueueEmailJob')) {
-                    $mailSent = enqueueEmailJob($email, $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_create', 'context_id' => $newId]);
-                    if ($mailSent && function_exists('triggerEmailQueueWorkerAsync')) {
+                    $enqueued = enqueueEmailJob($email, $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_create', 'context_id' => $newId]);
+                    if ($enqueued && function_exists('triggerEmailQueueWorkerAsync')) {
                         triggerEmailQueueWorkerAsync();
                     }
                 }
@@ -522,17 +528,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $bodyText = "Hola $name\n\nEnlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n";
         $mailSent = false;
+        $sendError = '';
         if (class_exists('Mailer')) {
             $mailSent = (bool)Mailer::sendWithEmpresa((string)$s['email'], $subject, $bodyHtml, $bodyText, $eid);
+            if (!$mailSent) {
+                $sendError = (string)(Mailer::$lastError ?? '');
+                error_log('[staff_reset_error] Falló envío directo a ' . (string)$s['email'] . ': ' . $sendError);
+            }
         }
+        $enqueued = false;
         if (!$mailSent && function_exists('enqueueEmailJob')) {
-            $mailSent = enqueueEmailJob((string)$s['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_reset', 'context_id' => $id]);
-            if ($mailSent && function_exists('triggerEmailQueueWorkerAsync')) {
+            $enqueued = enqueueEmailJob((string)$s['email'], $subject, $bodyHtml, $bodyText, ['empresa_id' => $eid, 'context_type' => 'staff_reset', 'context_id' => $id]);
+            if ($enqueued && function_exists('triggerEmailQueueWorkerAsync')) {
                 triggerEmailQueueWorkerAsync();
             }
         }
 
-        $_SESSION['flash_msg'] = 'Correo de reseteo enviado.';
+        if ($mailSent) {
+            $_SESSION['flash_msg'] = 'Correo de reseteo enviado exitosamente a ' . htmlspecialchars((string)$s['email']);
+        } elseif ($enqueued) {
+            $_SESSION['flash_msg'] = 'Correo encolado para envío.' . ($sendError !== '' ? ' (Aviso SMTP: ' . htmlspecialchars($sendError) . ')' : '');
+        } else {
+            $_SESSION['flash_error'] = 'No se pudo enviar el correo.' . ($sendError !== '' ? ' Motivo: ' . htmlspecialchars($sendError) : '');
+        }
         header('Location: staff.php');
         exit;
     }
