@@ -119,15 +119,19 @@ if (!empty($_SERVER['PATH_INFO']) && php_sapi_name() !== 'cli') {
 
 // ── Sesión
 if (session_status() === PHP_SESSION_NONE) {
-    session_set_cookie_params([
-        'lifetime' => SESSION_LIFETIME,
-        'path' => '/',
-        'domain' => '',
-        'secure' => $isSecure,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    session_start();
+    if (!headers_sent()) {
+        session_set_cookie_params([
+            'lifetime' => SESSION_LIFETIME,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        session_start();
+    } else {
+        @session_start();
+    }
 }
 
 if (!isset($_SESSION['csrf_token'])) {

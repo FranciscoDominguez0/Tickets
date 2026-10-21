@@ -70,6 +70,14 @@ class Logger
 
         // FILE_APPEND + LOCK_EX para evitar race conditions
         @file_put_contents($path, $line, FILE_APPEND | LOCK_EX);
+
+        // También registrar en error_log de PHP/Apache para visibilidad directa en Docker logs
+        $code = (string)($data['error_code'] ?? 'APP');
+        $msg  = (string)($data['message'] ?? 'Unknown error');
+        $type = (string)($data['type'] ?? 'Error');
+        $file = (string)($data['file'] ?? '');
+        $loc  = $file !== '' ? " in {$file}:" . ($data['line'] ?? '0') : '';
+        @error_log("[{$code}] {$type}: {$msg}{$loc}");
     }
 
     /**

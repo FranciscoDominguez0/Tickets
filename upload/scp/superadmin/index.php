@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * estadisticas.php  —  /scp/superadmin/estadisticas.php
  *
