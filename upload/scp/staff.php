@@ -92,8 +92,9 @@ $isValidEnabledRole = function (string $role) use ($mysqli, $eid, $rolesHasEmpre
 
 function ensureStaffPasswordResetsTableExists($mysqli) {
     if (!$mysqli) return false;
-    $mysqli->query(
-        "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
+    if (!dbTableExists('staff_password_resets')) {
+        $mysqli->query(
+            "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
         . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
         . "  staff_id INT NOT NULL,\n"
@@ -105,9 +106,10 @@ function ensureStaffPasswordResetsTableExists($mysqli) {
         . "  KEY idx_token_hash (token_hash),\n"
         . "  KEY idx_expires (expires_at)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-    if (!dbColumnExists('staff_password_resets', 'empresa_id')) {
-        @$mysqli->query("ALTER TABLE staff_password_resets ADD COLUMN empresa_id INT NOT NULL DEFAULT 1 AFTER id");
+        );
+        if (!dbColumnExists('staff_password_resets', 'empresa_id')) {
+            @$mysqli->query("ALTER TABLE staff_password_resets ADD COLUMN empresa_id INT NOT NULL DEFAULT 1 AFTER id");
+        }
     }
     return true;
 }

@@ -759,6 +759,14 @@ function dbTableExists($tableName, $ttlSeconds = 300)
         'ticket_links' => true,
         'email_logs' => true,
         'notification_recipients' => true,
+        'password_resets' => true,
+        'staff_password_resets' => true,
+        'user_login_attempts' => true,
+        'staff_login_attempts' => true,
+        'org_boss_reports' => true,
+        'org_boss_report_attachments' => true,
+        'org_boss_report_reads' => true,
+        'user_notes' => true,
     ];
     $lowerTable = strtolower($tableName);
     if (isset($knownTables[$lowerTable])) {
@@ -825,6 +833,7 @@ function dbColumnExists($tableName, $columnName, $ttlSeconds = 300)
         'users:phone' => true,
         'users:status' => true,
         'users:created' => true,
+        'users:dark_mode' => true,
         'app_settings:empresa_id' => true,
         'logs:empresa_id' => true,
         'role_permissions:empresa_id' => true,
@@ -3430,6 +3439,16 @@ function ensureOrgBossReportsTable()
     if (!isset($mysqli) || !$mysqli) {
         return false;
     }
+    static $checked = false;
+    if ($checked) {
+        return true;
+    }
+    $tsKey = 'org_boss_schema_checked_ts';
+    $lastTs = (int)($_SESSION[$tsKey] ?? 0);
+    if ($lastTs > 0 && (time() - $lastTs) < 86400) {
+        $checked = true;
+        return true;
+    }
     $sql = "CREATE TABLE IF NOT EXISTS org_boss_reports (\n"
         . "  id BIGINT PRIMARY KEY AUTO_INCREMENT,\n"
         . "  empresa_id INT NOT NULL DEFAULT 1,\n"
@@ -3448,6 +3467,8 @@ function ensureOrgBossReportsTable()
     if (!$mysqli->query($sql)) {
         return false;
     }
+    $_SESSION[$tsKey] = time();
+    $checked = true;
     return true;
 }
 
@@ -3456,6 +3477,16 @@ function ensureOrgBossReportAttachmentsTable()
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) {
         return false;
+    }
+    static $checked = false;
+    if ($checked) {
+        return true;
+    }
+    $tsKey = 'org_boss_att_schema_checked_ts';
+    $lastTs = (int)($_SESSION[$tsKey] ?? 0);
+    if ($lastTs > 0 && (time() - $lastTs) < 86400) {
+        $checked = true;
+        return true;
     }
     ensureOrgBossReportsTable();
     $sql = "CREATE TABLE IF NOT EXISTS org_boss_report_attachments (\n"
@@ -3472,7 +3503,12 @@ function ensureOrgBossReportAttachmentsTable()
         . "  KEY idx_obra_report (report_id),\n"
         . "  KEY idx_obra_empresa (empresa_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool) $mysqli->query($sql);
+    $ok = (bool) $mysqli->query($sql);
+    if ($ok) {
+        $_SESSION[$tsKey] = time();
+        $checked = true;
+    }
+    return $ok;
 }
 
 function ensureOrgBossReportReadsTable()
@@ -3480,6 +3516,16 @@ function ensureOrgBossReportReadsTable()
     global $mysqli;
     if (!isset($mysqli) || !$mysqli) {
         return false;
+    }
+    static $checked = false;
+    if ($checked) {
+        return true;
+    }
+    $tsKey = 'org_boss_reads_schema_checked_ts';
+    $lastTs = (int)($_SESSION[$tsKey] ?? 0);
+    if ($lastTs > 0 && (time() - $lastTs) < 86400) {
+        $checked = true;
+        return true;
     }
     ensureOrgBossReportsTable();
     $sql = "CREATE TABLE IF NOT EXISTS org_boss_report_reads (\n"
@@ -3490,7 +3536,12 @@ function ensureOrgBossReportReadsTable()
         . "  UNIQUE KEY uq_obr_read (report_id, user_id),\n"
         . "  KEY idx_obrr_user (user_id)\n"
         . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
-    return (bool) $mysqli->query($sql);
+    $ok = (bool) $mysqli->query($sql);
+    if ($ok) {
+        $_SESSION[$tsKey] = time();
+        $checked = true;
+    }
+    return $ok;
 }
 
 function orgBossReportsStorageDir()

@@ -18,8 +18,9 @@ $success = '';
 $email = '';
 
 // Tabla de tokens (si no existe)
-$mysqli->query(
-    "CREATE TABLE IF NOT EXISTS password_resets (\n"
+if (!dbTableExists('password_resets')) {
+    $mysqli->query(
+        "CREATE TABLE IF NOT EXISTS password_resets (\n"
     . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
     . "  user_id INT NOT NULL,\n"
     . "  token_hash CHAR(64) NOT NULL,\n"
@@ -31,7 +32,8 @@ $mysqli->query(
     . "  KEY idx_expires (expires_at),\n"
     . "  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE\n"
     . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-);
+    );
+}
 
 if ($_POST) {
     if (!Auth::validateCSRF($_POST['csrf_token'] ?? '')) {

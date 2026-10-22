@@ -113,6 +113,9 @@ class Auth
         $ensureAttemptsTable = function () use ($mysqli) {
             if (!isset($mysqli) || !$mysqli)
                 return false;
+            if (function_exists('dbTableExists') && dbTableExists('user_login_attempts')) {
+                return true;
+            }
             static $done = null;
             if ($done !== null)
                 return (bool) $done;
@@ -288,6 +291,9 @@ class Auth
         $ensureAttemptsTable = function () use ($mysqli) {
             if (!isset($mysqli) || !$mysqli)
                 return false;
+            if (function_exists('dbTableExists') && dbTableExists('user_login_attempts')) {
+                return true;
+            }
             static $done = null;
             if ($done !== null)
                 return (bool) $done;

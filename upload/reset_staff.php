@@ -19,8 +19,9 @@ $linkInvalid = false;
 
 global $mysqli;
 
-$mysqli->query(
-    "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
+if (!dbTableExists('staff_password_resets')) {
+    $mysqli->query(
+        "CREATE TABLE IF NOT EXISTS staff_password_resets (\n"
     . "  id INT PRIMARY KEY AUTO_INCREMENT,\n"
     . "  staff_id INT NOT NULL,\n"
     . "  token_hash CHAR(64) NOT NULL,\n"
@@ -32,7 +33,8 @@ $mysqli->query(
     . "  KEY idx_expires (expires_at),\n"
     . "  FOREIGN KEY (staff_id) REFERENCES staff(id) ON DELETE CASCADE\n"
     . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-);
+    );
+}
 
 if ($token === '' || !preg_match('/^[a-f0-9]{64}$/', $token)) {
     $error = 'Enlace inválido o incompleto.';

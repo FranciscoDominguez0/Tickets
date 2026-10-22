@@ -126,9 +126,8 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
             u.status,
             u.created,
             u.updated,
-            COUNT(t.id) AS ticket_count
+            (SELECT COUNT(*) FROM tickets t WHERE t.user_id = u.id AND t.empresa_id = ?) AS ticket_count
         FROM users u
-        LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
         WHERE u.empresa_id = ?
     ";
 
@@ -143,10 +142,6 @@ if (isset($_GET['a']) && $_GET['a'] === 'export') {
         $exportTypes .= 'ssss';
     }
 
-    $exportSql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
-    if ($usersHasPhone) {
-        $exportSql .= ", u.phone";
-    }
     $exportSql .= " ORDER BY $orderByExport $order";
 
     $stmtX = $mysqli->prepare($exportSql);
@@ -256,20 +251,16 @@ if (isset($_GET['a']) && $_GET['a'] === 'export_selected') {
             u.status,
             u.created,
             u.updated,
-            COUNT(t.id) AS ticket_count
+            (SELECT COUNT(*) FROM tickets t WHERE t.user_id = u.id AND t.empresa_id = ?) AS ticket_count
         FROM users u
-        LEFT JOIN tickets t ON t.user_id = u.id
-        WHERE u.id IN ($placeholders)
-        GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
-    if ($usersHasPhone) {
-        $exportSql .= ", u.phone";
-    }
-    $exportSql .= " ORDER BY $orderByExport $order";
+        WHERE u.empresa_id = ? AND u.id IN ($placeholders)
+        ORDER BY $orderByExport $order";
 
     $stmtX = $mysqli->prepare($exportSql);
     if ($stmtX) {
-        $types = str_repeat('i', count($ids));
-        $stmtX->bind_param($types, ...$ids);
+        $types = 'ii' . str_repeat('i', count($ids));
+        $params = array_merge([$eid, $eid], $ids);
+        $stmtX->bind_param($types, ...$params);
         $stmtX->execute();
         $resX = $stmtX->get_result();
     } else {
@@ -510,7 +501,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             return [$firstname, $lastname];
         };
 
-        $createUser = function ($email, $name, $phone, $address = '') use ($mysqli, $usersHasPhone, $makePassword, $parseName, $eid, &$imported, &$skipped, &$failed) {
+        $stmtC = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND email = ? LIMIT 1');
+        if ($usersHasPhone) {
+            $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        } else {
+            $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        }
+
+        $createUser = function ($email, $name, $phone, $address = '') use (
+            $mysqli, $eid, $usersHasPhone, $parseName, $makePassword, $stmtC, $stmtI,
+            &$imported, &$skipped, &$failed
+        ) {
             $email = trim((string)$email);
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                 $failed++;
@@ -526,42 +527,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 $lastname = '';
             }
 
-            $stmtC = $mysqli->prepare('SELECT id FROM users WHERE empresa_id = ? AND email = ? LIMIT 1');
-            if (!$stmtC) {
-                $failed++;
-                return;
-            }
-            $stmtC->bind_param('is', $eid, $email);
-            $stmtC->execute();
-            if ($stmtC->get_result()->fetch_assoc()) {
-                $skipped++;
-                return;
+            if ($stmtC) {
+                $stmtC->bind_param('is', $eid, $email);
+                $stmtC->execute();
+                if ($stmtC->get_result()->fetch_assoc()) {
+                    $skipped++;
+                    return;
+                }
             }
 
             $passwordPlain = $makePassword();
             $hash = password_hash($passwordPlain, PASSWORD_BCRYPT);
             $status = 'active';
 
-            if ($usersHasPhone) {
-                $phoneVal = trim((string)$phone);
-                $phoneVal = $phoneVal !== '' ? $phoneVal : null;
-                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, phone, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-                if (!$stmtI) {
-                    $failed++;
-                    return;
+            if ($stmtI) {
+                if ($usersHasPhone) {
+                    $phoneVal = trim((string)$phone);
+                    $phoneVal = $phoneVal !== '' ? $phoneVal : null;
+                    $stmtI->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $phoneVal, $status);
+                } else {
+                    $stmtI->bind_param('issssss', $eid, $email, $address, $hash, $firstname, $lastname, $status);
                 }
-                $stmtI->bind_param('isssssss', $eid, $email, $address, $hash, $firstname, $lastname, $phoneVal, $status);
-            } else {
-                $stmtI = $mysqli->prepare('INSERT INTO users (empresa_id, email, address, password, firstname, lastname, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
-                if (!$stmtI) {
+                if ($stmtI->execute()) {
+                    $imported++;
+                } else {
                     $failed++;
-                    return;
                 }
-                $stmtI->bind_param('issssss', $eid, $email, $address, $hash, $firstname, $lastname, $status);
-            }
-
-            if ($stmtI->execute()) {
-                $imported++;
             } else {
                 $failed++;
             }
@@ -636,6 +627,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
             $failed++;
         }
 
+        if ($stmtC) $stmtC->close();
+        if ($stmtI) $stmtI->close();
+
         $_SESSION['users_import_flash'] = [
             'imported' => $imported,
             'skipped' => $skipped,
@@ -705,10 +699,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         
         // Obtener detalles del usuario antes de eliminar
         $delInfoStr = "ID: " . $del_id;
-        $qDel = $mysqli->query("SELECT firstname, lastname, email FROM users WHERE id = $del_id AND empresa_id = $eid");
-        if ($qDel && $qDel->num_rows > 0) {
-            $rdel = $qDel->fetch_assoc();
-            $delInfoStr = trim($rdel['firstname'] . ' ' . $rdel['lastname']) . ' (' . $rdel['email'] . ') - ID: ' . $del_id;
+        $stmtDelQ = $mysqli->prepare("SELECT firstname, lastname, email FROM users WHERE id = ? AND empresa_id = ? LIMIT 1");
+        if ($stmtDelQ) {
+            $stmtDelQ->bind_param('ii', $del_id, $eid);
+            $stmtDelQ->execute();
+            $resDelQ = $stmtDelQ->get_result();
+            if ($resDelQ && $resDelQ->num_rows > 0) {
+                $rdel = $resDelQ->fetch_assoc();
+                $delInfoStr = trim($rdel['firstname'] . ' ' . $rdel['lastname']) . ' (' . $rdel['email'] . ') - ID: ' . $del_id;
+            }
         }
         
         $stmt = $mysqli->prepare("DELETE FROM users WHERE id = ? AND empresa_id = ?");
@@ -1269,22 +1268,18 @@ $sql = "
         u.created,
         u.updated,
         u.org_tickets_view,
-        COUNT(t.id) AS ticket_count
+        (SELECT COUNT(*) FROM tickets t WHERE t.user_id = u.id AND t.empresa_id = ?) AS ticket_count
     FROM users u
-    LEFT JOIN tickets t ON t.user_id = u.id AND t.empresa_id = ?
     WHERE u.empresa_id = ?
 ";
-$params = [];
+$params = [$eid, $eid];
 $types = 'ii';
-$params[] = $eid;
-$params[] = $eid;
 if ($search !== '') {
     $term = '%' . $search . '%';
     $sql .= " AND (u.firstname LIKE ? OR u.lastname LIKE ? OR u.email LIKE ? OR u.company LIKE ?)";
     array_push($params, $term, $term, $term, $term);
     $types .= 'ssss';
 }
-$sql .= " GROUP BY u.id, u.email, u.firstname, u.lastname, u.company, u.status, u.created, u.updated";
 $sql .= " ORDER BY $orderBy $order LIMIT ? OFFSET ?";
 $params[] = $perPage;
 $params[] = $offset;

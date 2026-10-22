@@ -22,11 +22,14 @@ if (!isset($_SESSION['client_dark_mode'])) {
     if (isset($mysqli) && $mysqli && !empty($_SESSION['user_id'])) {
         $uidT = (int)$_SESSION['user_id'];
         try {
-            $colRes = $mysqli->query("SHOW COLUMNS FROM users LIKE 'dark_mode'");
-            if ($colRes && $colRes->num_rows > 0) {
-                $rs = $mysqli->query("SELECT dark_mode FROM users WHERE id = $uidT");
-                if ($rs && $r = $rs->fetch_assoc()) {
-                    $_SESSION['client_dark_mode'] = (int)$r['dark_mode'];
+            if (dbColumnExists('users', 'dark_mode')) {
+                $stmtD = $mysqli->prepare("SELECT dark_mode FROM users WHERE id = ? LIMIT 1");
+                if ($stmtD) {
+                    $stmtD->bind_param('i', $uidT);
+                    $stmtD->execute();
+                    if ($r = $stmtD->get_result()->fetch_assoc()) {
+                        $_SESSION['client_dark_mode'] = (int)($r['dark_mode'] ?? 0);
+                    }
                 }
             }
         } catch (Throwable $e) {}
