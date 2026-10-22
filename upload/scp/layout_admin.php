@@ -920,7 +920,12 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                     return;
                 }
                 var appBaseUrl = '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>';
-                var fullTargetUrl = targetUrl.indexOf('http') === 0 ? targetUrl : (appBaseUrl + '/scp/' + targetUrl.replace(/^\//, ''));
+                var scpBase = appBaseUrl;
+                if (scpBase.indexOf('/upload') === -1) {
+                    scpBase += '/upload';
+                }
+                var cleanTarget = targetUrl.replace(/^\//, '');
+                var fullTargetUrl = targetUrl.indexOf('http') === 0 ? targetUrl : (scpBase + '/scp/' + cleanTarget);
                 var options = {
                     body: message || 'Nueva notificación',
                     icon: appBaseUrl + '/publico/img/pwa/icon-192.png',
