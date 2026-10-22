@@ -320,13 +320,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array
 
 
                 
+                if ($newStatus === 'cotizacion') {
+                    $_SESSION['flash_msg'] = 'Cotización solicitada correctamente.';
+                } elseif ($newStatus === 'aprobado') {
+                    $_SESSION['flash_msg'] = 'Solicitud de ticket aprobada correctamente.';
+                } else {
+                    $_SESSION['flash_msg'] = 'Solicitud de ticket rechazada correctamente.';
+                }
+
                 $redirectParams = $_GET;
                 $redirectParams['id'] = $tid;
                 $redirectParams['from'] = 'org';
-                $redirectParams['msg'] = 'approved';
+                unset($redirectParams['msg']);
                 header('Location: view-ticket.php?' . http_build_query($redirectParams));
                 exit;
             }
+        } else {
+            $_SESSION['flash_error'] = 'Token de seguridad inválido o expirado.';
+            $redirectParams = $_GET;
+            $redirectParams['id'] = $tid;
+            $redirectParams['from'] = 'org';
+            unset($redirectParams['msg']);
+            header('Location: view-ticket.php?' . http_build_query($redirectParams));
+            exit;
         }
     }
 }
@@ -502,7 +518,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
                 // No enviar notificaciones por correo cuando el usuario responde
                 // El sistema ya registra la respuesta sin necesidad de enviar correos
 
-                $_SESSION['reply_success'] = true;
+                $_SESSION['reply_success'] = 'Mensaje enviado correctamente.';
                 $redirectParams = $_GET;
                 $redirectParams['id'] = (int)$tid;
                 header('Location: view-ticket.php?' . http_build_query($redirectParams));
@@ -528,9 +544,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
 
 
 
-$reply_success = false;
+$reply_success = '';
 if (!empty($_SESSION['reply_success'])) {
-    $reply_success = true;
+    $reply_success = is_string($_SESSION['reply_success']) ? $_SESSION['reply_success'] : 'Mensaje enviado correctamente.';
     unset($_SESSION['reply_success']);
 }
 
@@ -2135,26 +2151,14 @@ function humanSize($bytes) {
 <div class="container-main">
     <div class="center-wrap">
         <div class="panel-soft">
-            <?php if (($_GET['msg'] ?? '') === 'approved'): ?>
-                <style>
-                    #flash-msg-approved {
-                        border-radius: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;
-                    }
-                    #flash-msg-approved i { color: #16a34a; }
-                    body.dark-mode #flash-msg-approved {
-                        background: rgba(22, 101, 52, 0.15); border-color: rgba(22, 101, 52, 0.4); color: #86efac;
-                    }
-                    body.dark-mode #flash-msg-approved i { color: #4ade80; }
-                </style>
-                <div class="alert d-flex align-items-center mb-4" role="alert" id="flash-msg-approved">
-                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-                    <div>
-                        <strong style="display: block; font-size: 1.05rem; font-weight: 800; margin-bottom: 2px;">¡Acción completada!</strong> 
-                        <span style="font-size: 0.95rem;">La respuesta de revisión ejecutiva se ha procesado correctamente.</span>
-                    </div>
-                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-                </div>
-                 <script>
+            <?php
+            if (($_GET['msg'] ?? '') === 'approved' && empty($msg) && empty($_SESSION['flash_msg'])) {
+                $msg = '¡Acción completada! La revisión ejecutiva se ha procesado correctamente.';
+            }
+            ?>
+            <?php require_once __DIR__ . '/../includes/global_toast.php'; ?>
+            <?php if (isset($_GET['msg'])): ?>
+                <script>
                     (function(){
                         if (window.history.replaceState) {
                             var url = new URL(window.location.href);
@@ -2163,14 +2167,6 @@ function humanSize($bytes) {
                                 window.history.replaceState({}, document.title, url.pathname + url.search);
                             }
                         }
-                        setTimeout(function(){
-                            var el = document.getElementById('flash-msg-approved');
-                            if(el) {
-                                el.style.transition = 'opacity 0.4s ease';
-                                el.style.opacity = '0';
-                                setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 400);
-                            }
-                        }, 5000);
                     })();
                 </script>
             <?php endif; ?>
@@ -2597,46 +2593,7 @@ function humanSize($bytes) {
                 <?php else: ?>
                 <h5 class="mb-3">Escriba una respuesta</h5>
 
-                <?php if ($reply_error !== ''): ?>
-                    <div class="alert alert-danger mb-3" id="reply-error-alert"><?php echo html($reply_error); ?></div>
-                    <script>
-                        (function () {
-                            try {
-                                var el = document.getElementById('reply-error-alert');
-                                if (!el) return;
-                                setTimeout(function () {
-                                    try {
-                                        var rect = el.getBoundingClientRect();
-                                        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-                                        var top = Math.max(0, Math.floor(y + rect.top - 120));
-                                        try { window.scrollTo({ top: top, behavior: 'smooth' }); }
-                                        catch (e2) { window.scrollTo(0, top); }
-                                    } catch (e3) {}
-                                }, 60);
-                            } catch (e1) {}
-                        })();
-                    </script>
-                <?php endif; ?>
-                <?php if (!empty($reply_success)): ?>
-                    <div class="alert alert-success mb-3" id="reply-success-alert">Mensaje enviado correctamente.</div>
-                    <script>
-                        (function () {
-                            try {
-                                var el = document.getElementById('reply-success-alert');
-                                if (!el) return;
-                                setTimeout(function () {
-                                    try {
-                                        var rect = el.getBoundingClientRect();
-                                        var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-                                        var top = Math.max(0, Math.floor(y + rect.top - 120));
-                                        try { window.scrollTo({ top: top, behavior: 'smooth' }); }
-                                        catch (e2) { window.scrollTo(0, top); }
-                                    } catch (e3) {}
-                                }, 60);
-                            } catch (e1) {}
-                        })();
-                    </script>
-                <?php endif; ?>
+                <?php // Notificaciones de respuesta gestionadas por global_toast.php ?>
 
                 <?php if (!empty($t['closed'])): ?>
                     <div class="ticket-closed-banner" role="status" aria-label="Ticket cerrado">
@@ -3010,19 +2967,7 @@ function humanSize($bytes) {
             if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
         } catch (e) {}
 
-        try {
-            var ok = document.getElementById('reply-success-alert');
-            if (ok) {
-                setTimeout(function () {
-                    try {
-                        ok.style.transition = 'opacity .25s ease, transform .25s ease';
-                        ok.style.opacity = '0';
-                        ok.style.transform = 'translateY(-2px)';
-                        setTimeout(function () { try { ok.remove(); } catch (e2) { ok.parentNode && ok.parentNode.removeChild(ok); } }, 260);
-                    } catch (e3) {}
-                }, 2600);
-            }
-        } catch (e4) {}
+
     })();
 </script>
 

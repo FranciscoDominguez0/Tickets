@@ -1001,26 +1001,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['do']) && $_POST['do']
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
 
-        $bodyHtml = ''
-            . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
-            . '  <div style="max-width:640px; margin:0 auto;">'
-            . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
-            . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-            . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>'
-            . '    </div>'
-            . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
-            . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
-            . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>'
-            . '      <p style="margin:14px 0 12px 0;">'
-            . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>'
-            . '      </p>'
-            . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
-            . '      <div style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">Si no solicitaste este cambio, puedes ignorar este correo. Tu contraseña no se modificará.</div>'
-            . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
-            . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
-            . '    </div>'
-            . '  </div>'
-            . '</div>';
+        $bodyHtml = buildPasswordResetEmailHtml([
+            'name'      => $name,
+            'reset_url' => $resetUrl,
+            'title'     => 'Restablecer contraseña',
+            'subtitle'  => 'Centro de Soporte',
+            'message'   => 'Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar y definir una nueva contraseña, haz clic en el siguiente botón:',
+            'btn_text'  => 'Restablecer contraseña',
+            'app_name'  => APP_NAME,
+        ]);
 
         $bodyText = "Hola $name,\n\n" .
             "Recibimos una solicitud para restablecer la contraseña de tu cuenta.\n\n" .
@@ -1330,96 +1319,72 @@ $statusBadges = [
 ?>
 
 <div class="users-directory">
-    <?php /* Los errores de add_errors se muestran dentro del modal (ver #modalAddUser) */ ?>
-    <?php if ($importFlash && isset($_GET['msg']) && $_GET['msg'] === 'import_done'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Importación completada. Importados: <?php echo (int)($importFlash['imported'] ?? 0); ?>.
-            Omitidos: <?php echo (int)($importFlash['skipped'] ?? 0); ?>.
-            Errores: <?php echo (int)($importFlash['failed'] ?? 0); ?>.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    <?php
+    $usersMsgCode = $_GET['msg'] ?? '';
+    $usersAdded = $_GET['added'] ?? '';
+    $alertMsg = '';
+    $isError = false;
+    $isWarning = false;
+
+    if ($importFlash && $usersMsgCode === 'import_done') {
+        $alertMsg = 'Importación completada. Importados: ' . (int)($importFlash['imported'] ?? 0) . '. Omitidos: ' . (int)($importFlash['skipped'] ?? 0) . '. Errores: ' . (int)($importFlash['failed'] ?? 0) . '.';
+    } elseif ($usersAdded === '1') {
+        $alertMsg = 'Usuario añadido correctamente.';
+    } elseif ($usersMsgCode) {
+        switch ($usersMsgCode) {
+            case 'user_deleted':
+                $alertMsg = 'Usuario eliminado correctamente.';
+                break;
+            case 'org_assigned':
+                $alertMsg = 'Organización asignada correctamente.';
+                break;
+            case 'org_removed':
+                $alertMsg = 'Organización removida correctamente.';
+                break;
+            case 'export_no_selection':
+                $alertMsg = 'Debes seleccionar al menos un usuario para exportar.';
+                $isWarning = true;
+                break;
+            case 'org_bulk_no_selection':
+                $alertMsg = 'Debes seleccionar al menos un usuario para cambiar la organización.';
+                $isWarning = true;
+                break;
+            case 'org_bulk_assigned':
+                $cnt = (isset($_GET['count']) && is_numeric($_GET['count'])) ? ' Se actualizaron ' . (int)$_GET['count'] . ' usuarios.' : '';
+                $alertMsg = 'Organización asignada correctamente.' . $cnt;
+                break;
+            case 'org_bulk_error':
+                $alertMsg = 'No se pudo cambiar la organización.';
+                $isError = true;
+                break;
+        }
+    }
+
+    if ($alertMsg !== '') {
+        if ($isError) {
+            $error = $alertMsg;
+        } elseif ($isWarning) {
+            $warn = $alertMsg;
+        } else {
+            $msg = $alertMsg;
+        }
+        // Las notificaciones serán mostradas por global_toast.php
+        ?>
         <script>
         (function(){
             try {
                 var url = new URL(window.location.href);
                 url.searchParams.delete('msg');
-                history.replaceState(null, '', url.toString());
-            } catch (e) {}
-        })();
-        </script>
-    <?php endif; ?>
-    <?php if (isset($_GET['added']) && $_GET['added'] === '1'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Usuario añadido correctamente.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'user_deleted'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Usuario eliminado correctamente.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_assigned'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Organización asignada correctamente.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_removed'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Organización removida correctamente.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'export_no_selection'): ?>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            Debes seleccionar al menos un usuario para exportar.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_no_selection'): ?>
-        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            Debes seleccionar al menos un usuario para cambiar la organización.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_assigned'): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Organización asignada correctamente.
-            <?php if (isset($_GET['count']) && is_numeric($_GET['count'])): ?>
-                Se actualizaron <?php echo (int)$_GET['count']; ?> usuarios.
-            <?php endif; ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <script>
-        (function(){
-            try {
-                var url = new URL(window.location.href);
-                url.searchParams.delete('msg');
+                url.searchParams.delete('added');
                 url.searchParams.delete('count');
                 history.replaceState(null, '', url.toString());
             } catch (e) {}
         })();
         </script>
-    <?php endif; ?>
-    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'org_bulk_error'): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            No se pudo cambiar la organización.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <script>
-        (function(){
-            try {
-                var url = new URL(window.location.href);
-                url.searchParams.delete('msg');
-                history.replaceState(null, '', url.toString());
-            } catch (e) {}
-        })();
-        </script>
-    <?php endif; ?>
+        <?php
+    }
+    ?>
 
-    <!-- Búsqueda -->
     <div class="search-card">
         <form method="GET" action="users.php" class="search-form">
             <?php if ($currentSort !== 'name' || $currentOrder !== 'ASC'): ?>

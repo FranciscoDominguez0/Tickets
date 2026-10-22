@@ -607,14 +607,10 @@ if ($_POST) {
                     </div>
                 </div>
 
+                <?php require_once __DIR__ . '/../includes/global_toast.php'; ?>
                 <div class="content-card">
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger"><?php echo html($error); ?></div>
-                    <?php endif; ?>
+                    <?php // Notificaciones mostradas por global_toast.php ?>
 
-                    <?php if ($success): ?>
-                        <div class="alert alert-success"><?php echo html($success); ?></div>
-                    <?php endif; ?>
 
                     <div class="section-title">
                         <h5><i class="bi bi-pencil-square"></i> Datos de contacto</h5>
@@ -668,24 +664,7 @@ if ($_POST) {
         </div>
     </div>
 
-    <script>
-        (function () {
-            var success = document.getElementById('profileSuccess');
-            var form = document.getElementById('profileForm');
-            if (!success) return;
-
-            var hide = function () {
-                try { success.style.display = 'none'; } catch (e) {}
-            };
-
-            setTimeout(hide, 3500);
-
-            if (form) {
-                form.addEventListener('input', hide, true);
-                form.addEventListener('change', hide, true);
-            }
-        })();
-    </script>
+    
     <footer style="text-align: center; padding: 20px 0; background-color: #f8f9fa; border-top: 1px solid #dee2e6; margin-top: 40px; color: #6c757d; font-size: 12px;">
         <p style="margin: 0;">
             Derechos de autor &copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars(getAppSetting('company.name', 'Vigitec Panama')); ?> - Sistema de Tickets - Todos los derechos reservados.

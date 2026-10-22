@@ -827,16 +827,7 @@ $stCol = $stInfo['color'];
 <div class="container-main">
     <div class="center-wrap">
         <div class="panel-soft">
-            <?php if (!empty($_SESSION['flash_msg'])): ?>
-                <div class="alert alert-success d-flex align-items-center mb-4 auto-dismiss-alert" role="alert">
-                    <i class="bi bi-check-circle-fill fs-4 me-3"></i>
-                    <div><?php echo html($_SESSION['flash_msg']); unset($_SESSION['flash_msg']); ?></div>
-                </div>
-            <?php endif; ?>
-            
-            <?php if ($reply_error): ?>
-                <div class="alert alert-danger mb-4 auto-dismiss-alert"><?php echo html($reply_error); ?></div>
-            <?php endif; ?>
+            <?php require_once __DIR__ . '/../includes/global_toast.php'; ?>
             <div class="client-ticket-hero">
                 <div class="client-ticket-hero__ticket-card">
                     <div class="client-ticket-hero__ticket-accent" aria-hidden="true"></div>
@@ -1088,22 +1079,6 @@ $stCol = $stInfo['color'];
 </div>
 
 <script src="scp/js/vendor/bootstrap-5.3.0.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const alerts = document.querySelectorAll('.auto-dismiss-alert');
-        alerts.forEach(alert => {
-            // Ocultar mensaje después de 5 segundos (5000 ms)
-            setTimeout(() => {
-                alert.style.transition = 'opacity 0.5s ease, margin 0.5s ease, padding 0.5s ease, height 0.5s ease';
-                alert.style.opacity = '0';
-                alert.style.margin = '0';
-                alert.style.padding = '0';
-                alert.style.height = '0';
-                alert.style.overflow = 'hidden';
-                setTimeout(() => alert.remove(), 500);
-            }, 5000);
-        });
-    });
-</script>
+
 </body>
 </html>

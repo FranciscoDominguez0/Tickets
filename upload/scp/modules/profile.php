@@ -188,4 +188,6 @@ if ($profile_staff && $_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['a
 }// Asegurar que profile_errors sea array (puede tener claves firstname, lastname, email)
 if (!is_array($profile_errors)) {
     $profile_errors = $profile_errors ? (array) $profile_errors : [];
-}require __DIR__ . '/profile-view.inc.php';
+}if (!empty($profile_success)) { $msg = $profile_success; }
+if (!empty($profile_errors) && isset($profile_errors[0])) { $error = $profile_errors[0]; }
+require __DIR__ . '/profile-view.inc.php';

@@ -799,7 +799,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                     $stmtIns->bind_param('ii', $tid, $staffId);
                                     $stmtIns->execute();
                                 }
-                                addLog('approval_requested', 'Solicitud de aprobación enviada al jefe de la organización (' . $bossEmail . ')', 'ticket', $tid, 'staff', $staffId);
+                                addLog('approval_requested', 'Solicitud de aprobación enviada al encargado de la organización (' . $bossEmail . ')', 'ticket', $tid, 'staff', $staffId);
                                 $msg = 'approval_requested';
                             } else {
                                 $msg = 'approval_email_failed';

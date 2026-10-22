@@ -11,12 +11,18 @@ unset($_SESSION['flash_msg']);
 unset($_SESSION['flash_warning']);
 
 // Mapear variables viejas a flash si las definen scripts locales
-global $flashMsg, $flashError, $reply_error, $reply_success, $msg, $error, $warn;
+global $flashMsg, $flashError, $reply_error, $reply_success, $msg, $error, $warn, $success, $profile_success;
 if (isset($flashMsg) && $flashMsg !== '' && $toastMsg === '') {
     $toastMsg = $flashMsg;
 }
 if (isset($msg) && $msg !== '' && $toastMsg === '') {
     $toastMsg = $msg;
+}
+if (isset($success) && $success !== '' && $toastMsg === '') {
+    $toastMsg = $success;
+}
+if (isset($profile_success) && $profile_success !== '' && $toastMsg === '') {
+    $toastMsg = $profile_success;
 }
 if (isset($flashError) && $flashError !== '' && $toastError === '') {
     $toastError = $flashError;
@@ -31,7 +37,7 @@ if (isset($warn) && $warn !== '' && $toastWarning === '') {
     $toastWarning = $warn;
 }
 if (!empty($reply_success) && $toastMsg === '') {
-    $toastMsg = is_string($reply_success) ? $reply_success : 'Operación exitosa.';
+    $toastMsg = is_string($reply_success) ? $reply_success : 'Mensaje enviado correctamente.';
 }
 ?>
 <style>
@@ -241,10 +247,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let text = clone.textContent.trim();
         
         if (text) {
-            // Evitar duplicados (ej: PHP ya generó un Toast con este texto y además interceptamos el div antiguo)
+            // Evitar duplicados (ej: PHP ya generó un Toast de este tipo o con texto similar)
             let isDuplicate = false;
+            if (document.querySelectorAll(`.global-toast-${type}`).length > 0) {
+                isDuplicate = true;
+            }
             document.querySelectorAll('.global-toast-content').forEach(et => {
-                if (et.textContent.trim() === text) {
+                const existing = et.textContent.trim().toLowerCase();
+                const incoming = text.toLowerCase();
+                if (existing === incoming || existing.includes(incoming) || incoming.includes(existing)) {
                     isDuplicate = true;
                 }
             });

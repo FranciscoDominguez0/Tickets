@@ -13,20 +13,8 @@ $initials = strtoupper(substr($p['firstname'], 0, 1) . substr($p['lastname'], 0,
 ?>
 <div class="profile-page">
     <h1 class="profile-title"><i class="bi bi-person-gear"></i> Mi Perfil</h1>
+    <?php // Las notificaciones serán mostradas por global_toast.php ?>
 
-    <?php if ($profile_success): ?>
-        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
-            <i class="bi bi-check-circle-fill me-2 text-success"></i><?php echo html($profile_success); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($profile_errors) && isset($profile_errors[0])): ?>
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 10px;">
-            <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i><?php echo html($profile_errors[0]); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
-        </div>
-    <?php endif; ?>
 
     <!-- SECCIÓN DE AVATAR (Iniciales circulares compactas, como al inicio) -->
     <div class="profile-avatar-section">

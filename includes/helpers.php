@@ -4061,3 +4061,146 @@ function notifyOrgManagersOfNewTicket($mysqli, int $ticketId, int $empresaId): v
 
     addLog('org_manager_notify_summary', 'Se notificó a ' . $mailSentCount . ' encargados de organización para el ticket ' . $ticketNumber, 'ticket', $ticketId, 'staff', 0);
 }
+
+/**
+ * Construye el cuerpo HTML para correos de restablecimiento o configuración de contraseña
+ * utilizando la identidad visual en rojo y negro (#09090b / #dc2626).
+ *
+ * @param array $options [
+ *   'name'       => string,
+ *   'reset_url'  => string,
+ *   'title'      => string,
+ *   'subtitle'   => string,
+ *   'message'    => string,
+ *   'btn_text'   => string,
+ *   'app_name'   => string,
+ * ]
+ * @return string
+ */
+function buildPasswordResetEmailHtml(array $options): string
+{
+    $name = trim((string)($options['name'] ?? ''));
+    if ($name === '') $name = 'Usuario';
+    $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
+    $resetUrl = (string)($options['reset_url'] ?? '#');
+    $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
+
+    $title = (string)($options['title'] ?? 'Restablecer contraseña');
+    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+
+    $appName = (string)($options['app_name'] ?? (defined('APP_NAME') ? APP_NAME : 'Sistema de Tickets'));
+    $safeAppName = htmlspecialchars($appName, ENT_QUOTES, 'UTF-8');
+
+    $subtitle = (string)($options['subtitle'] ?? $safeAppName);
+    $safeSubtitle = htmlspecialchars($subtitle, ENT_QUOTES, 'UTF-8');
+
+    $message = (string)($options['message'] ?? 'Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para continuar y definir una nueva contraseña, haz clic en el siguiente botón:');
+    $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+
+    $btnText = (string)($options['btn_text'] ?? 'Restablecer contraseña');
+    $safeBtnText = htmlspecialchars($btnText, ENT_QUOTES, 'UTF-8');
+
+    $year = date('Y');
+
+    return '<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>' . $safeTitle . '</title>
+</head>
+<body style="margin:0; padding:0; background-color:#0e0e11; font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; color:#1f2937;">
+  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#0e0e11; padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:580px; width:100%;">
+          
+          <!-- CABECERA ROJO Y NEGRO -->
+          <tr>
+            <td style="background-color:#09090b; border-radius:18px 18px 0 0; padding:28px 32px 24px 32px; border:1px solid #27272a; border-bottom:none; border-top:4px solid #dc2626;">
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="display:inline-block; font-size:11px; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; color:#ef4444; background:rgba(220,38,38,0.12); border:1px solid rgba(239,68,68,0.28); padding:4px 10px; border-radius:6px;">' . $safeSubtitle . '</span>
+                    <h1 style="margin:12px 0 0 0; font-size:24px; font-weight:800; color:#ffffff; letter-spacing:-0.02em; line-height:1.25;">' . $safeTitle . '</h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CUERPO PRINCIPAL -->
+          <tr>
+            <td style="background-color:#ffffff; border-radius:0 0 18px 18px; padding:32px; border:1px solid #e4e4e7; border-top:none; box-shadow:0 18px 40px rgba(0,0,0,0.35);">
+              
+              <p style="margin:0 0 14px 0; font-size:16px; font-weight:700; color:#09090b;">
+                Hola ' . $safeName . ',
+              </p>
+
+              <p style="margin:0 0 24px 0; font-size:14px; line-height:1.6; color:#4b5563;">
+                ' . $safeMessage . '
+              </p>
+
+              <!-- BOTON CTA EN ROJO Y NEGRO -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:0 0 26px 0;">
+                <tr>
+                  <td align="center" style="border-radius:10px; background-color:#dc2626;">
+                    <a href="' . $safeUrl . '" target="_blank" style="display:inline-block; padding:13px 28px; font-size:14px; font-weight:800; color:#ffffff; text-decoration:none; border-radius:10px; background:linear-gradient(135deg,#b91c1c 0%,#dc2626 50%,#ef4444 100%); border:1px solid rgba(255,255,255,0.15); box-shadow:0 6px 18px rgba(220,38,38,0.35); letter-spacing:0.02em;">
+                      ' . $safeBtnText . ' &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- AVISO DE SEGURIDAD -->
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0 0 22px 0; background-color:#fef2f2; border:1px solid #fee2e2; border-left:4px solid #dc2626; border-radius:8px;">
+                <tr>
+                  <td style="padding:14px 16px;">
+                    <p style="margin:0 0 6px 0; font-size:12px; font-weight:700; color:#991b1b;">
+                      &bull; Este enlace vence en 1 hora por razones de seguridad.
+                    </p>
+                    <p style="margin:0; font-size:12px; line-height:1.5; color:#7f1d1d;">
+                      Si no solicitaste este cambio, puedes ignorar este correo de forma segura. Tu contraseña continuará siendo la misma.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ENLACE DIRECTO DE RESPALDO -->
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="border-top:1px solid #f4f4f5; padding-top:18px;">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 6px 0; font-size:11px; font-weight:600; color:#6b7280;">
+                      ¿El botón no funciona? Copia y pega este enlace en tu navegador:
+                    </p>
+                    <p style="margin:0; font-size:11px; line-height:1.5; word-break:break-all; font-family:Consolas,Monaco,\'Courier New\',monospace; color:#dc2626; background:#f9fafb; padding:8px 10px; border-radius:6px; border:1px solid #e5e7eb;">
+                      ' . $safeUrl . '
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- PIE DE PAGINA -->
+          <tr>
+            <td style="padding:22px 16px 0 16px; text-align:center;">
+              <p style="margin:0 0 6px 0; font-size:12px; font-weight:700; color:#71717a;">
+                ' . $safeAppName . '
+              </p>
+              <p style="margin:0; font-size:11px; color:#52525b; line-height:1.5;">
+                &copy; ' . $year . ' ' . $safeAppName . '. Todos los derechos reservados.<br>
+                Este es un mensaje automático del sistema de seguridad. Por favor no respondas a este correo.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>';
+}

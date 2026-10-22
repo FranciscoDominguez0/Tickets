@@ -312,26 +312,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
                 $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
-                $bodyHtml = ''
-                    . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
-                    . '  <div style="max-width:640px; margin:0 auto;">'
-                    . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
-                    . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-                    . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Configurar contraseña</div>'
-                    . '    </div>'
-                    . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
-                    . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
-                    . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Un administrador te envió un enlace para configurar tu contraseña de acceso como agente.</p>'
-                    . '      <p style="margin:14px 0 12px 0;">'
-                    . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Configurar contraseña</a>'
-                    . '      </p>'
-                    . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
-                    . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
-                    . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
-                    . '    </div>'
-                    . '    <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:10px;">&copy; ' . date('Y') . ' ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-                    . '  </div>'
-                    . '</div>';
+                $bodyHtml = buildPasswordResetEmailHtml([
+                    'name'      => $name,
+                    'reset_url' => $resetUrl,
+                    'title'     => 'Configurar contraseña',
+                    'subtitle'  => 'Acceso de Agente',
+                    'message'   => 'Un administrador te envió este enlace para configurar tu contraseña de acceso como agente al panel de soporte.',
+                    'btn_text'  => 'Configurar contraseña',
+                    'app_name'  => APP_NAME,
+                ]);
 
                 $bodyText = "Hola $name\n\nUn administrador te envió un enlace para configurar tu contraseña de agente.\n\nEnlace (vence en 1 hora):\n$resetUrl\n";
 
@@ -506,26 +495,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeUrl = htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8');
-        $bodyHtml = ''
-            . '<div style="font-family:Segoe UI, Tahoma, Arial, sans-serif; background:#f1f5f9; padding:24px;">'
-            . '  <div style="max-width:640px; margin:0 auto;">'
-            . '    <div style="background:linear-gradient(135deg,#0f172a,#1d4ed8); color:#ffffff; border-radius:16px; padding:18px 20px;">'
-            . '      <div style="font-size:14px; font-weight:800; letter-spacing:.02em; opacity:.95;">' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-            . '      <div style="font-size:22px; font-weight:900; margin-top:4px;">Restablecer contraseña</div>'
-            . '    </div>'
-            . '    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:18px 20px; margin-top:12px;">'
-            . '      <p style="margin:0 0 10px 0; color:#0f172a; font-size:14px;">Hola <strong>' . $safeName . '</strong>,</p>'
-            . '      <p style="margin:0 0 10px 0; color:#334155; font-size:14px; line-height:1.5;">Recibimos una solicitud para restablecer tu contraseña de agente. Para continuar, haz clic en el siguiente botón:</p>'
-            . '      <p style="margin:14px 0 12px 0;">'
-            . '        <a href="' . $safeUrl . '" style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:11px 16px; border-radius:12px; font-weight:800;">Restablecer contraseña</a>'
-            . '      </p>'
-            . '      <div style="margin:0 0 10px 0; color:#64748b; font-size:12px; line-height:1.5;">Este enlace vence en <strong>1 hora</strong> por seguridad.</div>'
-            . '      <hr style="border:0; border-top:1px solid #e2e8f0; margin:14px 0;">'
-            . '      <div style="color:#94a3b8; font-size:11px; line-height:1.5;">Si el botón no funciona, copia y pega este enlace:<br><span style="word-break:break-all;">' . $safeUrl . '</span></div>'
-            . '    </div>'
-            . '    <div style="text-align:center; color:#94a3b8; font-size:11px; margin-top:10px;">&copy; ' . date('Y') . ' ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</div>'
-            . '  </div>'
-            . '</div>';
+        $bodyHtml = buildPasswordResetEmailHtml([
+            'name'      => $name,
+            'reset_url' => $resetUrl,
+            'title'     => 'Restablecer contraseña',
+            'subtitle'  => 'Panel de Agentes',
+            'message'   => 'Recibimos una solicitud para restablecer tu contraseña de acceso como agente. Para continuar y definir tu nueva clave, haz clic en el siguiente botón:',
+            'btn_text'  => 'Restablecer contraseña',
+            'app_name'  => APP_NAME,
+        ]);
 
         $bodyText = "Hola $name\n\nEnlace para restablecer contraseña (vence en 1 hora):\n$resetUrl\n";
         $mailSent = false;
