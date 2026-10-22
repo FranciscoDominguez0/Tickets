@@ -10,8 +10,8 @@
   "theme_color": "#b91c1c",
   "categories": ["business", "productivity"],
   "icons": [
-    { "src": "../publico/img/pwa/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "../publico/img/pwa/icon-512x512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "../publico/img/pwa/icon-512x512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "../publico/img/pwa/icon-192x192.png?v=3", "sizes": "192x192", "type": "image/png" },
+    { "src": "../publico/img/pwa/icon-512x512.png?v=3", "sizes": "512x512", "type": "image/png" },
+    { "src": "../publico/img/pwa/icon-512x512-maskable.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
