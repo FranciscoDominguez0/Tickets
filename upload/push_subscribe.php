@@ -15,6 +15,11 @@ if (!isset($_SESSION['user_id'])) {
 $userId = (int) $_SESSION['user_id'];
 $empresaId = (int) empresaId();
 
+// Asegurar que la tabla exista
+if (function_exists('ensurePushSubscriptionsTable')) {
+    ensurePushSubscriptionsTable();
+}
+
 // Manejar GET: Retorna la clave pública VAPID
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $publicKey = defined('VAPID_PUBLIC_KEY') ? VAPID_PUBLIC_KEY : '';
@@ -46,48 +51,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    if ($action === 'unsubscribe') {
-        $stmtDel = $mysqli->prepare("DELETE FROM push_subscriptions WHERE endpoint = ? AND user_type = 'user' AND user_id = ?");
-        if ($stmtDel) {
-            $stmtDel->bind_param('si', $endpoint, $userId);
-            $stmtDel->execute();
+    try {
+        if ($action === 'unsubscribe') {
+            $stmtDel = $mysqli->prepare("DELETE FROM push_subscriptions WHERE endpoint = ? AND user_type = 'user' AND user_id = ?");
+            if ($stmtDel) {
+                $stmtDel->bind_param('si', $endpoint, $userId);
+                $stmtDel->execute();
+            }
+            echo json_encode(['ok' => true, 'unsubscribed' => true]);
+            exit;
         }
-        echo json_encode(['ok' => true, 'unsubscribed' => true]);
+
+        // Suscribir
+        $keys = $sub['keys'] ?? [];
+        $p256dh = trim((string)($keys['p256dh'] ?? ''));
+        $auth = trim((string)($keys['auth'] ?? ''));
+        $encoding = trim((string)($data['contentEncoding'] ?? 'aes128gcm'));
+        $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 250);
+
+        if ($p256dh === '' || $auth === '') {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Claves p256dh y auth requeridas']);
+            exit;
+        }
+
+        $stmtIns = $mysqli->prepare(
+            "INSERT INTO push_subscriptions (empresa_id, user_type, user_id, endpoint, public_key, auth_token, content_encoding, user_agent, created_at, updated_at) " .
+            "VALUES (?, 'user', ?, ?, ?, ?, ?, ?, NOW(), NOW()) " .
+            "ON DUPLICATE KEY UPDATE " .
+            "empresa_id = VALUES(empresa_id), user_id = VALUES(user_id), public_key = VALUES(public_key), " .
+            "auth_token = VALUES(auth_token), content_encoding = VALUES(content_encoding), user_agent = VALUES(user_agent), updated_at = NOW()"
+        );
+
+        if (!$stmtIns) {
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'Error de base de datos']);
+            exit;
+        }
+
+        $stmtIns->bind_param('iisssss', $empresaId, $userId, $endpoint, $p256dh, $auth, $encoding, $ua);
+        $ok = $stmtIns->execute();
+
+        echo json_encode(['ok' => (bool)$ok]);
         exit;
-    }
-
-    // Suscribir
-    $keys = $sub['keys'] ?? [];
-    $p256dh = trim((string)($keys['p256dh'] ?? ''));
-    $auth = trim((string)($keys['auth'] ?? ''));
-    $encoding = trim((string)($data['contentEncoding'] ?? 'aes128gcm'));
-    $ua = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 250);
-
-    if ($p256dh === '' || $auth === '') {
-        http_response_code(400);
-        echo json_encode(['ok' => false, 'error' => 'Claves p256dh y auth requeridas']);
-        exit;
-    }
-
-    $stmtIns = $mysqli->prepare(
-        "INSERT INTO push_subscriptions (empresa_id, user_type, user_id, endpoint, public_key, auth_token, content_encoding, user_agent, created_at, updated_at) " .
-        "VALUES (?, 'user', ?, ?, ?, ?, ?, ?, NOW(), NOW()) " .
-        "ON DUPLICATE KEY UPDATE " .
-        "empresa_id = VALUES(empresa_id), user_id = VALUES(user_id), public_key = VALUES(public_key), " .
-        "auth_token = VALUES(auth_token), content_encoding = VALUES(content_encoding), user_agent = VALUES(user_agent), updated_at = NOW()"
-    );
-
-    if (!$stmtIns) {
+    } catch (\Throwable $e) {
+        if (class_exists('\\Logger') && method_exists('\\Logger', 'error')) {
+            \Logger::error('Error en push_subscribe: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
         http_response_code(500);
-        echo json_encode(['ok' => false, 'error' => 'Error de base de datos']);
+        echo json_encode(['ok' => false, 'error' => 'Error al guardar suscripción: ' . $e->getMessage()]);
         exit;
     }
-
-    $stmtIns->bind_param('iisssss', $empresaId, $userId, $endpoint, $p256dh, $auth, $encoding, $ua);
-    $ok = $stmtIns->execute();
-
-    echo json_encode(['ok' => (bool)$ok]);
-    exit;
 }
 
 http_response_code(405);

@@ -58,6 +58,14 @@ class WebPushStrategy implements NotificationStrategyInterface
             return false;
         }
 
+        if (function_exists('ensurePushSubscriptionsTable')) {
+            ensurePushSubscriptionsTable();
+        }
+
+        if (function_exists('dbTableExists') && !dbTableExists('push_subscriptions')) {
+            return false;
+        }
+
         try {
             // 1. Obtener todas las suscripciones push activas para este usuario
             $stmt = $this->db->prepare(

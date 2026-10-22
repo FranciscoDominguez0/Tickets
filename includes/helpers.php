@@ -2656,17 +2656,22 @@ function ensurePushSubscriptionsTable()
         empresa_id INT NOT NULL DEFAULT 1,
         user_type ENUM('staff', 'user') NOT NULL DEFAULT 'staff',
         user_id INT NOT NULL,
-        endpoint VARCHAR(767) NOT NULL,
+        endpoint VARCHAR(500) NOT NULL,
         public_key VARCHAR(255) NOT NULL,
         auth_token VARCHAR(255) NOT NULL,
         content_encoding VARCHAR(32) DEFAULT 'aes128gcm',
         user_agent VARCHAR(255) DEFAULT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uniq_endpoint (endpoint),
+        UNIQUE KEY uniq_endpoint (endpoint(255)),
         INDEX idx_user_lookup (empresa_id, user_type, user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
     $ok = (bool) $mysqli->query($sql);
+    if ($ok) {
+        if (isset($_SESSION['_dbmeta_cache']['tbl:push_subscriptions'])) {
+            unset($_SESSION['_dbmeta_cache']['tbl:push_subscriptions']);
+        }
+    }
     $checked = $ok;
     return $ok;
 }
@@ -2721,6 +2726,7 @@ function sendAppNotification(array $options, ?array $strategies = null): array
             return [];
         }
 
+        ensurePushSubscriptionsTable();
         $manager = \Notifications\NotificationManager::getInstance($mysqli);
         $basePayload = new \Notifications\NotificationPayload(
             $eid,
