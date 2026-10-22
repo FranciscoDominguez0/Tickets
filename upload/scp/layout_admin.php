@@ -211,6 +211,12 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 <div class="scp-notif-sub"><?php echo $notifCount > 0 ? ((int)$notifCount . ' nueva(s)') : 'Sin nuevas'; ?></div>
                             </div>
                         </li>
+                        <li id="scpPushBannerLi" style="display:none;">
+                            <div class="px-3 py-2 border-bottom bg-light bg-opacity-10 d-flex align-items-center justify-content-between" style="font-size:0.8rem;">
+                                <span><i class="bi bi-phone me-1 text-primary"></i> Notificaciones al celular</span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="scpEnablePushBtn" style="font-size:0.75rem;">Activar</button>
+                            </div>
+                        </li>
                         <li class="scp-notif-items-scroll">
                             <ul class="list-unstyled mb-0" id="scpNotifItemsContainer">
                                 <?php if (empty($notifItems)): ?>
@@ -877,11 +883,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 popEl.className = 'scp-custom-notif ' + accent + ' active';
                 window.setTimeout(function() { popEl.classList.remove('active'); }, 12000);
 
-                if ("Notification" in window && Notification.permission === "granted") {
-                    new Notification("Tickets - " + (n.message || "Nueva notificación"), {
-                        icon: '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>/publico/img/favicon.ico'
-                    });
-                }
+                // Notificación nativa (celular / escritorio)
+                triggerNativePhoneNotification(title, n.message || "Nueva notificación", 'notification_read.php?id=' + n.id);
 
             }
 
@@ -899,8 +902,139 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                 } catch(e) {}
             }
 
-            if ("Notification" in window && Notification.permission === "default") {
-                document.addEventListener('click', function() { Notification.requestPermission(); }, { once: true });
+            // Conversión Base64 URL safe a Uint8Array para VAPID
+            function urlBase64ToUint8Array(base64String) {
+                var padding = '='.repeat((4 - base64String.length % 4) % 4);
+                var base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+                var rawData = window.atob(base64);
+                var outputArray = new Uint8Array(rawData.length);
+                for (var i = 0; i < rawData.length; ++i) {
+                    outputArray[i] = rawData.charCodeAt(i);
+                }
+                return outputArray;
+            }
+
+            // Disparador de notificación nativa compatible con celulares (Android Chrome / iOS PWA / Escritorio)
+            function triggerNativePhoneNotification(title, message, targetUrl) {
+                if (!("Notification" in window) || Notification.permission !== "granted") {
+                    return;
+                }
+                var appBaseUrl = '<?php echo (defined('APP_URL') ? rtrim((string)APP_URL, '/') : ''); ?>';
+                var fullTargetUrl = targetUrl.indexOf('http') === 0 ? targetUrl : (appBaseUrl + '/scp/' + targetUrl.replace(/^\//, ''));
+                var options = {
+                    body: message || 'Nueva notificación',
+                    icon: appBaseUrl + '/publico/img/pwa/icon-192.png',
+                    badge: appBaseUrl + '/publico/img/pwa/icon-192.png',
+                    vibrate: [200, 100, 200],
+                    data: { url: fullTargetUrl }
+                };
+
+                // En Android Chrome ES OBLIGATORIO usar ServiceWorkerRegistration.showNotification
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(function(reg) {
+                        return reg.showNotification("Tickets - " + title, options);
+                    }).catch(function() {
+                        try {
+                            var nDesk = new Notification("Tickets - " + title, options);
+                            nDesk.onclick = function() { window.focus(); window.location.href = fullTargetUrl; };
+                        } catch(e) {}
+                    });
+                } else {
+                    try {
+                        var nDesk = new Notification("Tickets - " + title, options);
+                        nDesk.onclick = function() { window.focus(); window.location.href = fullTargetUrl; };
+                    } catch(e) {}
+                }
+            }
+
+            // Configurar suscripción Web Push en el celular o PC
+            function setupWebPushSubscription() {
+                if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                    return;
+                }
+                if (Notification.permission !== 'granted') {
+                    return;
+                }
+
+                navigator.serviceWorker.ready.then(function(reg) {
+                    return fetch('push_subscribe.php')
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data || !data.vapid_public_key) return;
+                            var convertedKey = urlBase64ToUint8Array(data.vapid_public_key);
+
+                            return reg.pushManager.getSubscription().then(function(existingSub) {
+                                if (existingSub) {
+                                    return sendSubscriptionToServer(existingSub);
+                                }
+                                return reg.pushManager.subscribe({
+                                    userVisibleOnly: true,
+                                    applicationServerKey: convertedKey
+                                }).then(function(newSub) {
+                                    return sendSubscriptionToServer(newSub);
+                                });
+                            });
+                        });
+                }).catch(function(err) {
+                    console.log('Error al configurar Web Push:', err);
+                });
+            }
+
+            function sendSubscriptionToServer(subscription) {
+                var subJson = subscription.toJSON();
+                return fetch('push_subscribe.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'subscribe',
+                        subscription: subJson
+                    })
+                });
+            }
+
+            // Gestionar banner y permisos de notificación
+            var pushBanner = document.getElementById('scpPushBannerLi');
+            var pushBtn = document.getElementById('scpEnablePushBtn');
+
+            function updatePushBannerState() {
+                if (!("Notification" in window)) return;
+                if (Notification.permission === 'default' && pushBanner) {
+                    pushBanner.style.display = 'block';
+                } else if (pushBanner) {
+                    pushBanner.style.display = 'none';
+                }
+            }
+            updatePushBannerState();
+
+            if (pushBtn) {
+                pushBtn.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    if (!("Notification" in window)) return;
+                    Notification.requestPermission().then(function(perm) {
+                        if (perm === 'granted') {
+                            pushBtn.textContent = '✓ Activadas';
+                            pushBtn.disabled = true;
+                            setupWebPushSubscription();
+                            setTimeout(function() { if (pushBanner) pushBanner.style.display = 'none'; }, 2000);
+                        } else {
+                            if (pushBanner) pushBanner.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
+            // Si ya tiene permiso concedido, sincronizar Web Push en segundo plano
+            if ("Notification" in window && Notification.permission === "granted") {
+                setupWebPushSubscription();
+            } else if ("Notification" in window && Notification.permission === "default") {
+                document.addEventListener('click', function() {
+                    Notification.requestPermission().then(function(perm) {
+                        updatePushBannerState();
+                        if (perm === "granted") {
+                            setupWebPushSubscription();
+                        }
+                    });
+                }, { once: true });
             }
 
             // SSE (Server-Sent Events) para notificaciones en tiempo real

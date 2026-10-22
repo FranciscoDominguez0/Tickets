@@ -1,4 +1,4 @@
-const CACHE = 'tickets-v3';
+const CACHE = 'tickets-v4';
 const OFFLINE = 'publico/pwa-offline.html';
 
 self.addEventListener('install', e => {
@@ -14,6 +14,71 @@ self.addEventListener('activate', e => {
       keys.filter(k => k !== CACHE && k.startsWith('tickets-'))
         .map(k => caches.delete(k))
     )).then(() => self.clients.claim())
+  );
+});
+
+// ── Web Push Event: Despierta el celular cuando llega una notificación push
+self.addEventListener('push', e => {
+  let data = {
+    title: 'Sistema de Tickets',
+    body: 'Tienes una nueva notificación.',
+    icon: 'publico/img/pwa/icon-192.png',
+    badge: 'publico/img/pwa/icon-192.png',
+    url: 'scp/tickets.php'
+  };
+
+  if (e.data) {
+    try {
+      const parsed = e.data.json();
+      data = Object.assign(data, parsed);
+    } catch (err) {
+      data.body = e.data.text() || data.body;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: data.badge,
+    vibrate: [200, 100, 200],
+    tag: 'ticket-notif-' + (data.related_id || Date.now()),
+    renotify: true,
+    data: {
+      url: data.url
+    }
+  };
+
+  e.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// ── Notification Click: Al pulsar la notificación en el celular, enfoca o abre la app
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+
+  const urlToOpen = (e.notification.data && e.notification.data.url)
+    ? e.notification.data.url
+    : 'scp/tickets.php';
+
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      // Si ya hay una pestaña o PWA abierta, enfocarla y navegar
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if ('focus' in client) {
+          return client.focus().then(() => {
+            if ('navigate' in client && urlToOpen) {
+              return client.navigate(urlToOpen);
+            }
+          });
+        }
+      }
+      // Si está cerrada, abrir una nueva ventana con la URL
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
 });
 
@@ -64,3 +129,4 @@ async function networkFirst(req) {
     );
   }
 }
+

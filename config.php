@@ -68,6 +68,11 @@ define('SECRET_KEY', get_env('SECRET_KEY', ''));
 define('CSRF_TIMEOUT', 3600);
 define('SESSION_LIFETIME', 86400);
 
+// ── Web Push (PWA Notificaciones)
+define('VAPID_PUBLIC_KEY', get_env('VAPID_PUBLIC_KEY', 'BLm6QC8t7FWn4vSIj7oj6VLlUzxE1t7JoP_QVA4DaSIW6X7KUc7xTbcalGFgQ0a_SZ8pzR1EOifcfC8ZJFqy6-w'));
+define('VAPID_PRIVATE_KEY', get_env('VAPID_PRIVATE_KEY', 'BZpeLM9ff93nq7JEZyKkE9srYn2ANJ-lprrSpuzynac'));
+define('VAPID_SUBJECT', get_env('VAPID_SUBJECT', 'mailto:dominguezf225@gmail.com'));
+
 // ── Detección HTTPS (directo o detrás de Nginx Proxy Manager)
 $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443')
@@ -152,9 +157,15 @@ if (!defined('SKIP_DB_CONNECTION') || !SKIP_DB_CONNECTION) {
     }
 }
 
+// ── Composer autoloader
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
 // ── Autoloader (includes/)
 spl_autoload_register(function ($class) {
-    $file = __DIR__ . '/includes/' . $class . '.php';
+    $classPath = str_replace('\\', '/', $class);
+    $file = __DIR__ . '/includes/' . $classPath . '.php';
     if (file_exists($file)) {
         require_once $file;
     }

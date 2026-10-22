@@ -983,14 +983,16 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                 $otherStaff[] = (int)$rO['id'];
                             }
                             if (!empty($otherStaff)) {
-                                $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
-                                if ($stmtN) {
-                                    foreach ($otherStaff as $targetId) {
-                                        $stmtN->bind_param('iissi', $eid, $targetId, $message, $type, $tid);
-                                        $stmtN->execute();
-                                    }
-                                    $stmtN->close();
-                                }
+                                sendAppNotification([
+                                    'empresa_id'     => $eid,
+                                    'recipient_type' => 'staff',
+                                    'recipient_id'   => $otherStaff,
+                                    'title'          => 'Ticket Actualizado',
+                                    'message'        => $message,
+                                    'type'           => $type,
+                                    'related_id'     => $tid,
+                                    'url'            => 'scp/tickets.php?id=' . $tid,
+                                ]);
                             }
                         }
                         $stmtOther->close();
@@ -1047,14 +1049,16 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                                         $otherStaff[] = (int)$rO['id'];
                                     }
                                     if (!empty($otherStaff)) {
-                                        $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
-                                        if ($stmtN) {
-                                            foreach ($otherStaff as $targetId) {
-                                                $stmtN->bind_param('iissi', $eid, $targetId, $messageOther, $type, $tid);
-                                                $stmtN->execute();
-                                            }
-                                            $stmtN->close();
-                                        }
+                                        sendAppNotification([
+                                            'empresa_id'     => $eid,
+                                            'recipient_type' => 'staff',
+                                            'recipient_id'   => $otherStaff,
+                                            'title'          => 'Ticket Asignado',
+                                            'message'        => $messageOther,
+                                            'type'           => $type,
+                                            'related_id'     => $tid,
+                                            'url'            => 'scp/tickets.php?id=' . $tid,
+                                        ]);
                                     }
                                 }
                                 $stmtOther->close();
@@ -1062,12 +1066,16 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                         } else {
                             // Se asignó a otro agente: notificar a ese agente asignado
                             $message = 'Se te asignó el ticket ' . $ticketNo . ': ' . $subj;
-                            $stmtN = $mysqli->prepare('INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())');
-                            if ($stmtN) {
-                                $stmtN->bind_param('iissi', $eid, $val, $message, $type, $tid);
-                                $stmtN->execute();
-                                $stmtN->close();
-                            }
+                            sendAppNotification([
+                                'empresa_id'     => $eid,
+                                'recipient_type' => 'staff',
+                                'recipient_id'   => $val,
+                                'title'          => 'Nuevo Ticket Asignado',
+                                'message'        => $message,
+                                'type'           => $type,
+                                'related_id'     => $tid,
+                                'url'            => 'scp/tickets.php?id=' . $tid,
+                            ]);
                         }
                     }
 

@@ -727,16 +727,19 @@ if ($_POST) {
                         }
                     }
 
-                    // Insertar notificación de campanita
+                    // Notificación (Campana + Web Push móvil)
                     if (!empty($recipientStaffIds)) {
                         $msgCampana = 'Nuevo ticket #' . $ticket_number . ': ' . $subject;
-                        $stmtCampana = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, "ticket_created", ?, 0, NOW())');
-                        if ($stmtCampana) {
-                            foreach (array_keys($recipientStaffIds) as $sid) {
-                                $stmtCampana->bind_param('isi', $sid, $msgCampana, $ticket_id);
-                                $stmtCampana->execute();
-                            }
-                        }
+                        sendAppNotification([
+                            'empresa_id'     => $eid,
+                            'recipient_type' => 'staff',
+                            'recipient_id'   => array_keys($recipientStaffIds),
+                            'title'          => 'Nuevo Ticket',
+                            'message'        => $msgCampana,
+                            'type'           => 'ticket_created',
+                            'related_id'     => $ticket_id,
+                            'url'            => 'scp/tickets.php?id=' . $ticket_id,
+                        ]);
                     }
 
                     $recipientCount = count($recipientEmails);

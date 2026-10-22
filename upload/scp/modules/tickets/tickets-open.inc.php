@@ -473,16 +473,19 @@ if (isset($_GET['a']) && $_GET['a'] === 'open' && isset($_SESSION['staff_id'])) 
                                 }
                             }
 
-                            // 1. Notificación en BD (campanita)
+                            // 1. Notificación (Campana + Web Push móvil)
                             if (!empty($recipientStaffIds)) {
                                 $msgCampana = "Nuevo ticket sin asignar #" . $ticket_number . ": " . $subject;
-                                $stmtCampana = $mysqli->prepare('INSERT INTO notifications (staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, "ticket_created", ?, 0, NOW())');
-                                if ($stmtCampana) {
-                                    foreach (array_keys($recipientStaffIds) as $sid) {
-                                        $stmtCampana->bind_param('isi', $sid, $msgCampana, $new_tid);
-                                        $stmtCampana->execute();
-                                    }
-                                }
+                                sendAppNotification([
+                                    'empresa_id'     => $eid,
+                                    'recipient_type' => 'staff',
+                                    'recipient_id'   => array_keys($recipientStaffIds),
+                                    'title'          => 'Nuevo Ticket',
+                                    'message'        => $msgCampana,
+                                    'type'           => 'ticket_created',
+                                    'related_id'     => $new_tid,
+                                    'url'            => 'scp/tickets.php?id=' . $new_tid,
+                                ]);
                             }
 
                             // 2. Correo de notificación

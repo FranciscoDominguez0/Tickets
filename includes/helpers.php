@@ -2621,15 +2621,129 @@ function notifyStatusChangeToAdminRecipients($tid, $statusName)
     // Evitar duplicados en la misma ejecución
     $recipients = array_unique($recipients);
 
-    // Insertar notificaciones
-    if (dbTableExists('notifications')) {
-        $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
-        if ($stmtN) {
-            foreach ($recipients as $sid) {
-                $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
-                $stmtN->execute();
+    // Enviar notificación mediante estrategias (Database + Web Push móvil)
+    sendAppNotification([
+        'empresa_id'     => $eid,
+        'recipient_type' => 'staff',
+        'recipient_id'   => $recipients,
+        'title'          => 'Ticket #' . $tNo,
+        'message'        => $message,
+        'type'           => $type,
+        'related_id'     => $tid,
+        'url'            => 'scp/tickets.php?id=' . $tid,
+    ]);
+}
+
+/**
+ * Asegura la existencia de la tabla push_subscriptions
+ */
+function ensurePushSubscriptionsTable()
+{
+    global $mysqli;
+    if (!isset($mysqli) || !$mysqli) {
+        return false;
+    }
+    static $checked = false;
+    if ($checked) {
+        return true;
+    }
+    if (dbTableExists('push_subscriptions')) {
+        $checked = true;
+        return true;
+    }
+    $sql = "CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        empresa_id INT NOT NULL DEFAULT 1,
+        user_type ENUM('staff', 'user') NOT NULL DEFAULT 'staff',
+        user_id INT NOT NULL,
+        endpoint VARCHAR(767) NOT NULL,
+        public_key VARCHAR(255) NOT NULL,
+        auth_token VARCHAR(255) NOT NULL,
+        content_encoding VARCHAR(32) DEFAULT 'aes128gcm',
+        user_agent VARCHAR(255) DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_endpoint (endpoint),
+        INDEX idx_user_lookup (empresa_id, user_type, user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+    $ok = (bool) $mysqli->query($sql);
+    $checked = $ok;
+    return $ok;
+}
+
+/**
+ * Despacha una notificación mediante el patrón Strategy (Database / Campana, Web Push celular, etc.)
+ *
+ * @param array $options [
+ *   'empresa_id'     => int,
+ *   'recipient_type' => 'staff'|'user',
+ *   'recipient_id'   => int|int[],
+ *   'title'          => string,
+ *   'message'        => string,
+ *   'type'           => string,
+ *   'related_id'     => int,
+ *   'url'            => string
+ * ]
+ * @param array|null $strategies Estrategias específicas a ejecutar o null para todas las registradas
+ * @return array
+ */
+function sendAppNotification(array $options, ?array $strategies = null): array
+{
+    global $mysqli;
+    $eid = (int) ($options['empresa_id'] ?? (function_exists('empresaId') ? empresaId() : 1));
+    $recType = ($options['recipient_type'] ?? 'staff') === 'user' ? 'user' : 'staff';
+    $title = (string) ($options['title'] ?? 'Notificación');
+    $message = (string) ($options['message'] ?? '');
+    $type = (string) ($options['type'] ?? 'general');
+    $relId = (int) ($options['related_id'] ?? 0);
+    $url = (string) ($options['url'] ?? '');
+
+    $recipients = $options['recipient_id'] ?? [];
+    if (!is_array($recipients)) {
+        $recipients = [(int) $recipients];
+    }
+    $recipients = array_unique(array_filter(array_map('intval', $recipients)));
+    if (empty($recipients) || trim($message) === '') {
+        return [];
+    }
+
+    try {
+        if (!class_exists('\\Notifications\\NotificationManager')) {
+            if (dbTableExists('notifications') && $recType === 'staff') {
+                $stmt = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
+                if ($stmt) {
+                    foreach ($recipients as $sid) {
+                        $stmt->bind_param('iissi', $eid, $sid, $message, $type, $relId);
+                        $stmt->execute();
+                    }
+                }
             }
+            return [];
         }
+
+        $manager = \Notifications\NotificationManager::getInstance($mysqli);
+        $basePayload = new \Notifications\NotificationPayload(
+            $eid,
+            $recType,
+            0,
+            $title,
+            $message,
+            $type,
+            $relId,
+            $url
+        );
+
+        return $manager->sendToMultiple($recipients, $basePayload, $strategies);
+    } catch (\Throwable $e) {
+        if (class_exists('\\Logger') && method_exists('\\Logger', 'error')) {
+            \Logger::error('Error en sendAppNotification: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        } else {
+            @error_log('Error en sendAppNotification: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        }
+        return [];
     }
 }
 
@@ -3420,16 +3534,18 @@ function notifyApprovalToAdminRecipients($tid, $statusName)
         }
     }
 
-    // 1. Notificación de campana
+    // 1. Notificación (Campana + Web Push al celular)
     if (!empty($recipientsIds)) {
-        $recipientsIds = array_unique($recipientsIds);
-        $stmtN = $mysqli->prepare("INSERT INTO notifications (empresa_id, staff_id, message, type, related_id, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())");
-        if ($stmtN) {
-            foreach ($recipientsIds as $sid) {
-                $stmtN->bind_param('iissi', $eid, $sid, $message, $type, $tid);
-                $stmtN->execute();
-            }
-        }
+        sendAppNotification([
+            'empresa_id'     => $eid,
+            'recipient_type' => 'staff',
+            'recipient_id'   => $recipientsIds,
+            'title'          => 'Ticket #' . $tNo,
+            'message'        => $message,
+            'type'           => $type,
+            'related_id'     => $tid,
+            'url'            => 'scp/tickets.php?id=' . $tid,
+        ]);
     }
 }
 

@@ -81,6 +81,66 @@ class Logger
     }
 
     /**
+     * Registra un error en el log.
+     *
+     * @param string $message Mensaje de error
+     * @param array<string,mixed> $context Datos adicionales de contexto
+     */
+    public static function error(string $message, array $context = []): void
+    {
+        self::write(array_merge([
+            'type'       => 'Error',
+            'error_code' => 'ERROR',
+            'message'    => $message,
+        ], $context));
+    }
+
+    /**
+     * Registra una advertencia en el log.
+     *
+     * @param string $message Mensaje de advertencia
+     * @param array<string,mixed> $context Datos adicionales de contexto
+     */
+    public static function warning(string $message, array $context = []): void
+    {
+        self::write(array_merge([
+            'type'       => 'Warning',
+            'error_code' => 'WARN',
+            'message'    => $message,
+        ], $context));
+    }
+
+    /**
+     * Registra un mensaje informativo en el log.
+     *
+     * @param string $message Mensaje informativo
+     * @param array<string,mixed> $context Datos adicionales de contexto
+     */
+    public static function info(string $message, array $context = []): void
+    {
+        self::write(array_merge([
+            'type'       => 'Info',
+            'error_code' => 'INFO',
+            'message'    => $message,
+        ], $context));
+    }
+
+    /**
+     * Registra un mensaje de depuración en el log.
+     *
+     * @param string $message Mensaje de debug
+     * @param array<string,mixed> $context Datos adicionales de contexto
+     */
+    public static function debug(string $message, array $context = []): void
+    {
+        self::write(array_merge([
+            'type'       => 'Debug',
+            'error_code' => 'DEBUG',
+            'message'    => $message,
+        ], $context));
+    }
+
+    /**
      * Retorna la ruta absoluta del archivo de log del día actual.
      */
     public static function getLogPath(): string
