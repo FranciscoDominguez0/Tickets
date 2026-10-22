@@ -84,25 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         if (!$stmtIns) {
-            http_response_code(500);
-            echo json_encode(['ok' => false, 'error' => 'Error de base de datos']);
+            echo json_encode(['ok' => false]);
             exit;
         }
 
         $stmtIns->bind_param('iisssss', $empresaId, $staffId, $endpoint, $p256dh, $auth, $encoding, $ua);
-        $ok = $stmtIns->execute();
+        $ok = @$stmtIns->execute();
 
         echo json_encode(['ok' => (bool)$ok]);
         exit;
     } catch (\Throwable $e) {
-        if (class_exists('\\Logger') && method_exists('\\Logger', 'error')) {
-            \Logger::error('Error en push_subscribe: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-        }
-        http_response_code(500);
-        echo json_encode(['ok' => false, 'error' => 'Error al guardar suscripción: ' . $e->getMessage()]);
+        // Falla silenciosa: si no se pudo guardar la suscripción, no registrar error ni romper la app
+        echo json_encode(['ok' => false]);
         exit;
     }
 }

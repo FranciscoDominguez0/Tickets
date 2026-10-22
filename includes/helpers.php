@@ -2741,14 +2741,7 @@ function sendAppNotification(array $options, ?array $strategies = null): array
 
         return $manager->sendToMultiple($recipients, $basePayload, $strategies);
     } catch (\Throwable $e) {
-        if (class_exists('\\Logger') && method_exists('\\Logger', 'error')) {
-            \Logger::error('Error en sendAppNotification: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-        } else {
-            @error_log('Error en sendAppNotification: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        }
+        // Falla silenciosa: si falla el envío de notificación, no interrumpir la app ni registrar errores
         return [];
     }
 }

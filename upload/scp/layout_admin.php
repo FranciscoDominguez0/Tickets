@@ -958,7 +958,8 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
 
                 navigator.serviceWorker.ready.then(function(reg) {
                     return fetch('push_subscribe.php')
-                        .then(function(r) { return r.json(); })
+                        .then(function(r) { return (r && r.ok) ? r.json() : null; })
+                        .catch(function() { return null; })
                         .then(function(data) {
                             if (!data || !data.vapid_public_key) return;
                             var convertedKey = urlBase64ToUint8Array(data.vapid_public_key);
@@ -975,21 +976,21 @@ $isDarkMode = (string)($_SESSION['scp_dark_mode'] ?? '0') === '1';
                                 });
                             });
                         });
-                }).catch(function(err) {
-                    console.log('Error al configurar Web Push:', err);
-                });
+                }).catch(function() {});
             }
 
             function sendSubscriptionToServer(subscription) {
-                var subJson = subscription.toJSON();
-                return fetch('push_subscribe.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'subscribe',
-                        subscription: subJson
-                    })
-                });
+                try {
+                    var subJson = subscription.toJSON();
+                    return fetch('push_subscribe.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'subscribe',
+                            subscription: subJson
+                        })
+                    }).catch(function() {});
+                } catch(e) {}
             }
 
             // Gestionar banner y permisos de notificación

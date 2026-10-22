@@ -1,4 +1,4 @@
-const CACHE = 'tickets-v4';
+const CACHE = 'tickets-v5';
 const OFFLINE = 'publico/pwa-offline.html';
 
 self.addEventListener('install', e => {
@@ -57,26 +57,41 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
 
-  const urlToOpen = (e.notification.data && e.notification.data.url)
-    ? e.notification.data.url
-    : 'scp/tickets.php';
+  let targetUrl = '/upload/scp/index.php';
+  if (e.notification.data && e.notification.data.url) {
+    targetUrl = e.notification.data.url;
+  }
+
+  // Asegurar que siempre sea una URL absoluta (obligatorio por especificación W3C para clients.openWindow)
+  try {
+    targetUrl = new URL(targetUrl, self.location.origin).href;
+  } catch (err) {
+    targetUrl = self.location.origin + '/upload/scp/index.php';
+  }
 
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Si ya hay una pestaña o PWA abierta, enfocarla y navegar
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
-        if ('focus' in client) {
-          return client.focus().then(() => {
-            if ('navigate' in client && urlToOpen) {
-              return client.navigate(urlToOpen);
-            }
-          });
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async clientList => {
+      // 1. Si ya hay una pestaña con la URL exacta, enfocarla
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
         }
       }
-      // Si está cerrada, abrir una nueva ventana con la URL
+
+      // 2. Si hay una pestaña abierta de la misma app/origen, enfocarla y navegarla al ticket
+      for (const client of clientList) {
+        if ('focus' in client && client.url.startsWith(self.location.origin)) {
+          await client.focus();
+          if ('navigate' in client) {
+            return client.navigate(targetUrl);
+          }
+          break;
+        }
+      }
+
+      // 3. Si la app o navegador estaban cerrados, abrir ventana con la URL del ticket
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(targetUrl);
       }
     })
   );

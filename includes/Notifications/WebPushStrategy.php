@@ -102,16 +102,30 @@ class WebPushStrategy implements NotificationStrategyInterface
             $targetUrl = $payload->url;
             if (empty($targetUrl)) {
                 if ($payload->recipientType === 'staff') {
-                    $targetUrl = $payload->relatedId > 0
-                        ? $appUrl . '/scp/tickets.php?id=' . $payload->relatedId
-                        : $appUrl . '/scp/index.php';
+                    $path = $payload->relatedId > 0
+                        ? 'scp/tickets.php?id=' . $payload->relatedId
+                        : 'scp/index.php';
                 } else {
-                    $targetUrl = $payload->relatedId > 0
-                        ? $appUrl . '/tickets.php?id=' . $payload->relatedId
-                        : $appUrl . '/tickets.php';
+                    $path = $payload->relatedId > 0
+                        ? 'tickets.php?id=' . $payload->relatedId
+                        : 'tickets.php';
                 }
-            } elseif (!preg_match('/^https?:\/\//i', $targetUrl)) {
-                $targetUrl = $appUrl . '/' . ltrim($targetUrl, '/');
+                $targetUrl = $path;
+            }
+
+            if (!preg_match('/^https?:\/\//i', $targetUrl)) {
+                $cleanUrl = ltrim($targetUrl, '/');
+                $baseAppUrl = rtrim($appUrl, '/');
+                if (str_ends_with($baseAppUrl, '/upload')) {
+                    if (stripos($cleanUrl, 'upload/') === 0) {
+                        $cleanUrl = substr($cleanUrl, 7);
+                    }
+                } else {
+                    if (stripos($cleanUrl, 'upload/') !== 0) {
+                        $cleanUrl = 'upload/' . $cleanUrl;
+                    }
+                }
+                $targetUrl = $baseAppUrl . '/' . $cleanUrl;
             }
 
             $pushData = [
@@ -170,14 +184,7 @@ class WebPushStrategy implements NotificationStrategyInterface
 
             return true;
         } catch (Throwable $e) {
-            if (class_exists('\\Logger') && method_exists('\\Logger', 'error')) {
-                \Logger::error('Error en WebPushStrategy: ' . $e->getMessage(), [
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ]);
-            } else {
-                @error_log('Error en WebPushStrategy: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            }
+            // Falla silenciosa: no interrumpir ejecución ni llenar archivos de logs
             return false;
         }
     }
