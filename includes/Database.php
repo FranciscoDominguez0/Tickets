@@ -13,7 +13,7 @@ class Database {
 
     private function __construct() {
         $this->connection = new mysqli(
-            'p:' . DB_HOST,
+            DB_HOST,
             DB_USER,
             DB_PASS,
             DB_NAME,

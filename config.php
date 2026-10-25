@@ -146,8 +146,7 @@ if (!isset($_SESSION['csrf_token'])) {
 // ── Base de datos
 if (!defined('SKIP_DB_CONNECTION') || !SKIP_DB_CONNECTION) {
     try {
-        // El prefijo 'p:' habilita conexiones persistentes (Connection Pooling en PHP)
-        $mysqli = new mysqli('p:' . DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+        $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
         if ($mysqli->connect_error) {
             throw new RuntimeException('Database connection failed: ' . $mysqli->connect_error, 503);
         }
