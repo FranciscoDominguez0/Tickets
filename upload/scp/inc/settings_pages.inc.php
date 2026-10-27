@@ -28,6 +28,7 @@ if ($_POST) {
         $error = 'Token de seguridad inválido';
     } else {
         $prevLogo = (string)getAppSetting('company.logo', '');
+        $prevBg = (string)getAppSetting('login.background', '');
         $uploadsAbsLocal = $uploadsAbs;
         $deleteOld = function ($rel) use ($uploadsAbsLocal) {
             $rel = (string)$rel;
