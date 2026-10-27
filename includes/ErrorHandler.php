@@ -223,9 +223,11 @@ class ErrorHandler
      * - No genera errores recursivos: desactiva handlers temporalmente.
      *
      * La dirección de destino se lee de (en orden de prioridad):
-     *   1. Constante ERROR_NOTIFY_EMAIL definida en config.php
-     *   2. Setting de base de datos 'system.error_notify_email'
-     *   3. Setting 'mail.admin_email'
+     *   1. Variable ERROR_NOTIFY_EMAIL de .env (o get_env / entorno)
+     *   2. Constante ERROR_NOTIFY_EMAIL definida en config.php
+     *   3. Lectura directa del archivo .env si aún no estuviera cargado
+     *   4. Setting de base de datos 'system.error_notify_email'
+     *   5. Setting 'mail.admin_email'
      *
      * @param array<string,mixed> $entry Datos del error ya loguados
      */
@@ -239,9 +241,40 @@ class ErrorHandler
         }
         $sent[$code] = true;
 
-        // Obtener email de destino
+        // Obtener email de destino: siempre prioriza .env (ERROR_NOTIFY_EMAIL)
         $to = '';
-        if (defined('ERROR_NOTIFY_EMAIL') && filter_var(ERROR_NOTIFY_EMAIL, FILTER_VALIDATE_EMAIL)) {
+
+        // 1. Obtener desde función get_env(), getenv() o $_ENV
+        $envEmail = '';
+        if (function_exists('get_env')) {
+            $envEmail = (string)get_env('ERROR_NOTIFY_EMAIL', '');
+        }
+        if ($envEmail === '') {
+            $envEmail = (string)(getenv('ERROR_NOTIFY_EMAIL') ?: ($_ENV['ERROR_NOTIFY_EMAIL'] ?? ($_SERVER['ERROR_NOTIFY_EMAIL'] ?? '')));
+        }
+
+        // 2. Si no se obtuvo de variables de entorno, intentar leer directamente del archivo .env
+        if ($envEmail === '') {
+            $envFile = dirname(__DIR__) . '/.env';
+            if (file_exists($envFile) && is_readable($envFile)) {
+                $lines = @file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                if (is_array($lines)) {
+                    foreach ($lines as $line) {
+                        $line = trim($line);
+                        if (str_starts_with($line, '#') || !str_contains($line, '=')) continue;
+                        [$k, $v] = explode('=', $line, 2);
+                        if (trim($k) === 'ERROR_NOTIFY_EMAIL') {
+                            $envEmail = trim(trim($v), '"\'');
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($envEmail !== '' && filter_var($envEmail, FILTER_VALIDATE_EMAIL)) {
+            $to = $envEmail;
+        } elseif (defined('ERROR_NOTIFY_EMAIL') && filter_var(ERROR_NOTIFY_EMAIL, FILTER_VALIDATE_EMAIL)) {
             $to = ERROR_NOTIFY_EMAIL;
         } elseif (function_exists('getAppSetting')) {
             $v = (string)getAppSetting('system.error_notify_email', '');
@@ -328,6 +361,7 @@ class ErrorHandler
 HTML;
 
         // ── Estrategia de envío ───────────────────────────────────────────────
+        // Intento 0: Resend API (funciona sin DB y sin puertos SMTP)
         // Intento A: Mailer con SMTP de la DB (cuenta configurada en el panel SCP)
         // Intento B: Mailer con constantes SMTP de config.php (funciona sin DB)
         // Intento C: mail() nativo PHP (último recurso — requiere sendmail en php.ini)
@@ -337,6 +371,18 @@ HTML;
 
         if (!class_exists('Mailer')) {
             @require_once __DIR__ . '/Mailer.php';
+        }
+
+        // ── Intento 0: Resend API (vía HTTPS REST, no requiere DB ni SMTP) ─────
+        if (!$emailSent && class_exists('Mailer')) {
+            $resendKey = Mailer::getResendApiKey();
+            if ($resendKey !== '') {
+                try {
+                    $emailSent = Mailer::send($to, $subject, $html);
+                } catch (\Throwable) {
+                    $emailSent = false;
+                }
+            }
         }
 
         $dbAlive = isset($GLOBALS['mysqli']) && $GLOBALS['mysqli'] instanceof \mysqli;

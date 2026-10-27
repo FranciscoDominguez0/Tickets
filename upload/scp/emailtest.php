@@ -50,7 +50,8 @@ if (isset($mysqli) && $mysqli) {
 }
 
 $selectedFromId = isset($_POST['from_id']) && is_numeric($_POST['from_id']) ? (int)$_POST['from_id'] : 0;
-$toVal = (string)($_POST['to'] ?? '');
+$defaultToEmail = defined('ERROR_NOTIFY_EMAIL') && ERROR_NOTIFY_EMAIL !== '' ? ERROR_NOTIFY_EMAIL : (function_exists('get_env') ? (string)get_env('ERROR_NOTIFY_EMAIL', '') : '');
+$toVal = isset($_POST['to']) ? (string)$_POST['to'] : $defaultToEmail;
 $subjectVal = (string)($_POST['subject'] ?? 'Prueba');
 $bodyVal = (string)($_POST['body'] ?? '');
 
@@ -254,6 +255,15 @@ ob_start();
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle me-2"></i><?php echo html($msg); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if (class_exists('Mailer') && Mailer::getResendApiKey() !== ''): ?>
+    <div class="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-3" style="font-size:0.9rem;">
+        <i class="bi bi-send-check text-primary fs-5"></i>
+        <div>
+            <strong>Resend API activo:</strong> Los correos se enviarán mediante la API REST de Resend desde <code><?php echo html(Mailer::getResendFrom()); ?></code> (sin requerir puertos SMTP).
+        </div>
     </div>
 <?php endif; ?>
 

@@ -312,6 +312,34 @@ class Mailer {
         $bodyTextFinal = $bodyText !== null ? (string)$bodyText : strip_tags((string)$bodyHtml);
         $bodyHtmlFinal = (string)$bodyHtml;
 
+        // ── Envío prioritario vía Resend API (HTTP REST) ─────────────────────
+        // Evita problemas de puertos SMTP bloqueados, OpenSSL de socket y configuración compleja.
+        $resendApiKey = self::getResendApiKey($options);
+        if ($resendApiKey !== '') {
+            $resendFrom = self::getResendFrom($options);
+            // Si el from configurado es vacío, o de webmail público (gmail/hotmail/etc.),
+            // se usa onboarding@resend.dev para que Resend no lo rechace por dominio no verificado.
+            $fromForResend = $resendFrom;
+            if (!empty($options['from'])
+                && strpos((string)$options['from'], '@') !== false
+                && !preg_match('/@(gmail|hotmail|yahoo|outlook|live|icloud)\./i', (string)$options['from'])
+            ) {
+                $fromForResend = (string)$options['from'];
+            }
+            $replyTo = (!empty($options['from']) && filter_var($options['from'], FILTER_VALIDATE_EMAIL)) ? (string)$options['from'] : null;
+
+            $okResend = self::sendViaResend($to, (string)$subjectRaw, $bodyHtmlFinal, $bodyTextFinal, $fromForResend, $fromName, $attachments, $resendApiKey, $replyTo);
+            if ($okResend) {
+                return true;
+            }
+
+            // Si falló Resend y no hay host SMTP de respaldo, terminar con el error de Resend
+            $smtpHostCheck = (string)($options['smtp']['host'] ?? (defined('SMTP_HOST') ? SMTP_HOST : ''));
+            if ($smtpHostCheck === '') {
+                return false;
+            }
+        }
+
         if (!empty($attachments)) {
             $mixed = '----=_Mixed_' . md5(uniqid('', true));
             $headerLines[] = 'Content-Type: multipart/mixed; boundary="' . $mixed . '"';
@@ -575,5 +603,165 @@ class Mailer {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Obtiene la clave de API de Resend desde opciones, constantes o .env.
+     */
+    public static function getResendApiKey(array $options = []): string {
+        if (!empty($options['resend_api_key'])) {
+            return trim((string)$options['resend_api_key']);
+        }
+        if (defined('RESEND_API_KEY') && trim((string)RESEND_API_KEY) !== '') {
+            return trim((string)RESEND_API_KEY);
+        }
+        if (function_exists('get_env')) {
+            $k = (string)get_env('RESEND_API_KEY', '');
+            if ($k !== '') return trim($k);
+        }
+        $k = getenv('RESEND_API_KEY') ?: ($_ENV['RESEND_API_KEY'] ?? ($_SERVER['RESEND_API_KEY'] ?? ''));
+        return trim((string)$k);
+    }
+
+    /**
+     * Obtiene el remitente de Resend (por defecto onboarding@resend.dev).
+     */
+    public static function getResendFrom(array $options = []): string {
+        if (!empty($options['resend_from'])) {
+            return trim((string)$options['resend_from']);
+        }
+        if (defined('RESEND_FROM') && trim((string)RESEND_FROM) !== '') {
+            return trim((string)RESEND_FROM);
+        }
+        if (function_exists('get_env')) {
+            $f = (string)get_env('RESEND_FROM', '');
+            if ($f !== '') return trim($f);
+        }
+        return 'onboarding@resend.dev';
+    }
+
+    /**
+     * Envía correo mediante la API REST de Resend (https://api.resend.com/emails).
+     *
+     * @param string $to
+     * @param string $subject
+     * @param string $bodyHtml
+     * @param string $bodyText
+     * @param string $fromEmail
+     * @param string $fromName
+     * @param array $attachments
+     * @param string $apiKey
+     * @param string|null $replyTo
+     * @return bool
+     */
+    public static function sendViaResend($to, $subject, $bodyHtml, $bodyText, $fromEmail, $fromName, array $attachments, $apiKey, $replyTo = null): bool {
+        $fromEmail = trim((string)$fromEmail);
+        if ($fromEmail === '' || strpos($fromEmail, '@') === false) {
+            $fromEmail = 'onboarding@resend.dev';
+        }
+
+        $formattedFrom = $fromName ? ($fromName . ' <' . $fromEmail . '>') : $fromEmail;
+
+        $payload = [
+            'from'    => $formattedFrom,
+            'to'      => [$to],
+            'subject' => (string)$subject,
+        ];
+
+        if ($replyTo && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
+            $payload['reply_to'] = $replyTo;
+        }
+
+        if ($bodyHtml !== null && $bodyHtml !== '') {
+            $payload['html'] = (string)$bodyHtml;
+        }
+        if ($bodyText !== null && $bodyText !== '') {
+            $payload['text'] = (string)$bodyText;
+        } elseif (empty($payload['html'])) {
+            $payload['text'] = '';
+        }
+
+        if (!empty($attachments)) {
+            $resendAtts = [];
+            foreach ($attachments as $att) {
+                if (!is_array($att)) continue;
+                $fn = (string)($att['filename'] ?? 'attachment');
+                $rawContent = $att['content'] ?? '';
+                if ($rawContent === '' || !is_string($rawContent)) continue;
+                $resendAtts[] = [
+                    'filename' => $fn,
+                    'content'  => base64_encode($rawContent),
+                ];
+            }
+            if (!empty($resendAtts)) {
+                $payload['attachments'] = $resendAtts;
+            }
+        }
+
+        $jsonPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if (extension_loaded('curl')) {
+            $ch = curl_init('https://api.resend.com/emails');
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => $jsonPayload,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . trim($apiKey),
+                    'Content-Type: application/json',
+                    'User-Agent: SistemaTickets/1.0',
+                ],
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($response === false) {
+                self::$lastError = 'Error cURL con Resend API: ' . $curlError;
+                return false;
+            }
+        } else {
+            $opts = [
+                'http' => [
+                    'method'        => 'POST',
+                    'header'        => "Authorization: Bearer " . trim($apiKey) . "\r\n" .
+                                       "Content-Type: application/json\r\n" .
+                                       "User-Agent: SistemaTickets/1.0\r\n",
+                    'content'       => $jsonPayload,
+                    'timeout'       => 15,
+                    'ignore_errors' => true,
+                ],
+                'ssl' => [
+                    'verify_peer' => true,
+                ],
+            ];
+            $context = stream_context_create($opts);
+            $response = @file_get_contents('https://api.resend.com/emails', false, $context);
+            $httpCode = 0;
+            if (isset($http_response_header)) {
+                foreach ($http_response_header as $hdr) {
+                    if (preg_match('#HTTP/\S+\s+(\d+)#i', $hdr, $m)) {
+                        $httpCode = (int)$m[1];
+                        break;
+                    }
+                }
+            }
+            if ($response === false) {
+                self::$lastError = 'Error de conexión HTTP con Resend API';
+                return false;
+            }
+        }
+
+        $data = json_decode((string)$response, true);
+        if ($httpCode >= 200 && $httpCode < 300) {
+            return true;
+        }
+
+        $msg = is_array($data) ? ($data['message'] ?? ($data['error'] ?? 'HTTP ' . $httpCode)) : ('HTTP ' . $httpCode . ' ' . substr((string)$response, 0, 150));
+        self::$lastError = 'Resend API (' . $httpCode . '): ' . $msg;
+        return false;
     }
 }

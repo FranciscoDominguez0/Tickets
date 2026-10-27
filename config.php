@@ -17,21 +17,20 @@ if (file_exists($envFile)) {
         list($name, $value) = explode('=', $line, 2);
         $name = trim($name);
         $value = trim(trim($value), '"\'');
-        if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
-            putenv(sprintf('%s=%s', $name, $value));
-            $_ENV[$name] = $value;
-            $_SERVER[$name] = $value;
-        }
+        putenv(sprintf('%s=%s', $name, $value));
+        $_ENV[$name] = $value;
+        $_SERVER[$name] = $value;
     }
 }
 
 function get_env($key, $default = null) {
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') return $_ENV[$key];
     $val = getenv($key);
-    if ($val !== false) return $val;
-    if (isset($_ENV[$key])) return $_ENV[$key];
-    if (isset($_SERVER[$key])) return $_SERVER[$key];
+    if ($val !== false && $val !== '') return $val;
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return $_SERVER[$key];
     return $default;
 }
+
 
 // ── Base de datos
 define('DB_HOST', get_env('DB_HOST', '127.0.0.1'));
@@ -52,6 +51,10 @@ define('HIDE_URLS', false);
 
 // ── Notificaciones de error: email del admin para alertas de errores críticos
 define('ERROR_NOTIFY_EMAIL', get_env('ERROR_NOTIFY_EMAIL', ''));
+
+// ── Resend API (envío vía HTTP REST sin necesidad de puertos SMTP)
+define('RESEND_API_KEY', get_env('RESEND_API_KEY', ''));
+define('RESEND_FROM', get_env('RESEND_FROM', 'onboarding@resend.dev'));
 
 // ── SMTP de emergencia (usado cuando la DB está caída)
 // Gmail: crea una contraseña de aplicación en https://myaccount.google.com/apppasswords
