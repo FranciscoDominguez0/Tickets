@@ -2,7 +2,7 @@
 Options -Indexes
 
 # Bloquear acceso a archivos sensibles y de configuración
-<FilesMatch "^(\.env.*|\.git.*|\.htaccess|\.htpasswd|\.user\.ini|\.dockerignore|\.gitignore|\.log|\.md)$|^(config\.php|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|composer\.(json|lock)|restore_panel_v2026\.php)$">
+<FilesMatch "^(\.env.*|\.git.*|\.htaccess|\.htpasswd|\.user\.ini|\.dockerignore|\.gitignore|\.log|\.md)$|^(config\.php|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|composer\.(json|lock))$">
     Require all denied
 </FilesMatch>
 

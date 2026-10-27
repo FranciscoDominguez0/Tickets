@@ -13,18 +13,10 @@ require_once __DIR__ . '/includes/Auth.php';
 $secretToken = (string)get_env('RESTORE_PANEL_TOKEN', '');
 $providedToken = (string)($_GET['token'] ?? '');
 
-// Requiere token configurado en .env (no vacío ni por defecto) y sesión de superadmin
+// El panel solo es accesible si RESTORE_PANEL_TOKEN está configurado en .env y coincide exactamente
 if ($secretToken === '' || !hash_equals($secretToken, $providedToken)) {
     header('HTTP/1.1 403 Forbidden');
-    die("<h1>403 Forbidden</h1><p>Acceso denegado.</p>");
-}
-
-if (php_sapi_name() !== 'cli') {
-    requireLogin('agente');
-    if (($_SESSION['staff_role'] ?? '') !== 'superadmin') {
-        header('HTTP/1.1 403 Forbidden');
-        die("<h1>403 Forbidden</h1><p>Se requieren permisos de superadmin.</p>");
-    }
+    die("<h1>403 Forbidden</h1><p>Acceso denegado. Para usar el panel de restauración define <code>RESTORE_PANEL_TOKEN</code> en tu archivo <code>.env</code> y accede con <code>?token=TU_TOKEN</code>.</p>");
 }
 
 $message = '';
