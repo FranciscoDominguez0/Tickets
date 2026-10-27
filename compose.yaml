@@ -5,6 +5,8 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      - TZ=America/Panama
     # Se eliminó "ports", ahora Nginx PM enrutará el tráfico internamente
     depends_on:
       - db
@@ -12,6 +14,8 @@ services:
       - .:/var/www/html/sistema-tickets
       - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments
       - ./firmas:/var/www/html/sistema-tickets/firmas
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal_net # Para conectarse con la base de datos
       - npm_network # Para conectarse con Nginx Proxy Manager
@@ -20,12 +24,17 @@ services:
     image: mysql:8.0
     container_name: mysql_app
     restart: always
+    command: --default-time-zone='-05:00'
+    environment:
+      - TZ=America/Panama
     env_file:
       - .env
     ports:
       - "127.0.0.1:13306:3306" # Excelente práctica: solo accesible localmente
     volumes:
       - db_data:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       - internal_net
 
