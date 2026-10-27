@@ -1,6 +1,10 @@
 <?php
 
-$uploadsAbs = realpath(__DIR__ . '/../../../publico') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'settings';
+$publicoBase = realpath(__DIR__ . '/../../../publico');
+if ($publicoBase === false || $publicoBase === '') {
+    $publicoBase = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'publico';
+}
+$uploadsAbs = rtrim($publicoBase, '/\\') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'settings';
 $uploadsPublicPrefix = '../publico/uploads/settings';
 
 $activeTab = (string)($_GET['tab'] ?? 'basic');
@@ -24,8 +28,7 @@ if ($_POST) {
         $error = 'Token de seguridad inválido';
     } else {
         $prevLogo = (string)getAppSetting('company.logo', '');
-        $prevBg = (string)getAppSetting('login.background', '');
-        $uploadsAbsLocal = realpath(__DIR__ . '/../../../publico') . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'settings';
+        $uploadsAbsLocal = $uploadsAbs;
         $deleteOld = function ($rel) use ($uploadsAbsLocal) {
             $rel = (string)$rel;
             if ($rel === '') return;
