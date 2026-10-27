@@ -2,13 +2,14 @@
 Options -Indexes
 
 # Bloquear acceso a archivos sensibles y de configuración
-<FilesMatch "^(\.env.*|\.git.*|\.htaccess|\.htpasswd|\.user\.ini|\.dockerignore|\.gitignore|\.log|\.md)$|^(config\.php|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|composer\.(json|lock))$">
+<FilesMatch "(^\..*|config\.php|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|composer\.(json|lock)|\.ya?ml|\.log|\.md|\.ini)$">
     Require all denied
 </FilesMatch>
 
-# Bloquear acceso a directorios internos
+# Bloquear acceso a directorios internos y archivos por mod_rewrite
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^(\.env|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|config\.php|composer\.(json|lock)|.*\.ya?ml|.*\.md|.*\.log) - [F,L]
     RewriteRule ^(includes|vendor|scripts|storage) - [F,L]
 </IfModule>
 
