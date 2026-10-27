@@ -5,15 +5,27 @@
  * Uso: /restore_panel_v2026.php?token=TICKETAdmin2026!
  */
 
-$SECRET_TOKEN = 'TICKETAdmin2026!';
-
-if (!isset($_GET['token']) || $_GET['token'] !== $SECRET_TOKEN) {
-    header('HTTP/1.1 403 Forbidden');
-    die("<h1>403 Forbidden</h1>");
-}
-
 define('SKIP_DB_CONNECTION', true);
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/Auth.php';
+
+$secretToken = (string)get_env('RESTORE_PANEL_TOKEN', '');
+$providedToken = (string)($_GET['token'] ?? '');
+
+// Requiere token configurado en .env (no vacío ni por defecto) y sesión de superadmin
+if ($secretToken === '' || !hash_equals($secretToken, $providedToken)) {
+    header('HTTP/1.1 403 Forbidden');
+    die("<h1>403 Forbidden</h1><p>Acceso denegado.</p>");
+}
+
+if (php_sapi_name() !== 'cli') {
+    requireLogin('agente');
+    if (($_SESSION['staff_role'] ?? '') !== 'superadmin') {
+        header('HTTP/1.1 403 Forbidden');
+        die("<h1>403 Forbidden</h1><p>Se requieren permisos de superadmin.</p>");
+    }
+}
 
 $message = '';
 $error = '';

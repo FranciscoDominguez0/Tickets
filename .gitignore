@@ -4,6 +4,7 @@
 # Local env files
 .env
 .env.*
+!.env.example
 
 # OS / IDE
 Thumbs.db
@@ -16,11 +17,9 @@ Thumbs.db
 composer.lock
 
 # Uploads (user-generated)
-publico/uploads/
-upload/uploads/
-
-# Allow security hardening files inside ignored uploads
+publico/uploads/*
 !publico/uploads/**/.htaccess
+upload/uploads/*
 !upload/uploads/**/.htaccess
 
 # Logs / cache

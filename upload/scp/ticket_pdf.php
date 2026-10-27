@@ -7,8 +7,9 @@ $tid = isset($_GET['id']) && is_numeric($_GET['id']) ? (int) $_GET['id'] : 0;
 $t   = $_GET['t'] ?? '';
 
 $valid_token_bypass = false;
-if ($tid > 0 && $t !== '') {
-    $expected_token = hash_hmac('sha256', (string)$tid, defined('SECRET_KEY') ? SECRET_KEY : 'default-secret');
+$secretKey = (string)(defined('SECRET_KEY') ? SECRET_KEY : '');
+if ($tid > 0 && $t !== '' && $secretKey !== '' && $secretKey !== 'default-secret') {
+    $expected_token = hash_hmac('sha256', (string)$tid, $secretKey);
     if (hash_equals($expected_token, $t)) {
         $valid_token_bypass = true;
     }

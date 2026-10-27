@@ -1,0 +1,27 @@
+# ============================================================================
+# UPLOADS DIRECTORY - BLOCK PHP EXECUTION
+# ============================================================================
+
+# Prevent directory listing
+Options -Indexes
+
+# Block ALL executable scripts in uploads (case-insensitive)
+<FilesMatch "(?i)\.(php|phtml|phar|php[0-9]|phps|pht|inc|cgi|pl|py|sh|bash)$">
+    Require all denied
+</FilesMatch>
+
+# Disable PHP engine if mod_php is loaded
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Only allow image and document files
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|pdf|doc|docx|xls|xlsx|zip|rar|txt|csv)$">
+    Require all granted
+</FilesMatch>

@@ -1,8 +1,8 @@
 # ── Seguridad y Restricción de Acceso ──────────────────────────────────────────
 Options -Indexes
 
-# Bloquear acceso a archivos sensibles
-<FilesMatch "^(\.env|\.git|\.htaccess|\.htpasswd|\.log|\.md)$|^(config\.php|docker-compose\.yml|Dockerfile)$">
+# Bloquear acceso a archivos sensibles y de configuración
+<FilesMatch "^(\.env.*|\.git.*|\.htaccess|\.htpasswd|\.user\.ini|\.dockerignore|\.gitignore|\.log|\.md)$|^(config\.php|compose\.ya?ml|docker-compose\.ya?ml|Dockerfile|composer\.(json|lock)|restore_panel_v2026\.php)$">
     Require all denied
 </FilesMatch>
 
