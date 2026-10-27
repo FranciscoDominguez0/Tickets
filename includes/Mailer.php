@@ -312,31 +312,35 @@ class Mailer {
         $bodyTextFinal = $bodyText !== null ? (string)$bodyText : strip_tags((string)$bodyHtml);
         $bodyHtmlFinal = (string)$bodyHtml;
 
-        // ── Envío prioritario vía Resend API (HTTP REST) ─────────────────────
-        // Evita problemas de puertos SMTP bloqueados, OpenSSL de socket y configuración compleja.
-        $resendApiKey = self::getResendApiKey($options);
-        if ($resendApiKey !== '') {
-            $resendFrom = self::getResendFrom($options);
-            // Si el from configurado es vacío, o de webmail público (gmail/hotmail/etc.),
-            // se usa onboarding@resend.dev para que Resend no lo rechace por dominio no verificado.
-            $fromForResend = $resendFrom;
-            if (!empty($options['from'])
-                && strpos((string)$options['from'], '@') !== false
-                && !preg_match('/@(gmail|hotmail|yahoo|outlook|live|icloud)\./i', (string)$options['from'])
-            ) {
-                $fromForResend = (string)$options['from'];
-            }
-            $replyTo = (!empty($options['from']) && filter_var($options['from'], FILTER_VALIDATE_EMAIL)) ? (string)$options['from'] : null;
+        // ── Envío vía Resend API (HTTP REST) ─────────────────────────────────
+        // EXCLUSIVO para alertas de errores y fallos internos del sistema.
+        // Los correos normales (tickets, respuestas a clientes, etc.) usan la configuración de la BD.
+        $useResend = !empty($options['use_resend']) || !empty($options['is_system_error']);
+        if ($useResend) {
+            $resendApiKey = self::getResendApiKey($options);
+            if ($resendApiKey !== '') {
+                $resendFrom = self::getResendFrom($options);
+                // Si el from configurado es vacío, o de webmail público (gmail/hotmail/etc.),
+                // se usa onboarding@resend.dev para que Resend no lo rechace por dominio no verificado.
+                $fromForResend = $resendFrom;
+                if (!empty($options['from'])
+                    && strpos((string)$options['from'], '@') !== false
+                    && !preg_match('/@(gmail|hotmail|yahoo|outlook|live|icloud)\./i', (string)$options['from'])
+                ) {
+                    $fromForResend = (string)$options['from'];
+                }
+                $replyTo = (!empty($options['from']) && filter_var($options['from'], FILTER_VALIDATE_EMAIL)) ? (string)$options['from'] : null;
 
-            $okResend = self::sendViaResend($to, (string)$subjectRaw, $bodyHtmlFinal, $bodyTextFinal, $fromForResend, $fromName, $attachments, $resendApiKey, $replyTo);
-            if ($okResend) {
-                return true;
-            }
+                $okResend = self::sendViaResend($to, (string)$subjectRaw, $bodyHtmlFinal, $bodyTextFinal, $fromForResend, $fromName, $attachments, $resendApiKey, $replyTo);
+                if ($okResend) {
+                    return true;
+                }
 
-            // Si falló Resend y no hay host SMTP de respaldo, terminar con el error de Resend
-            $smtpHostCheck = (string)($options['smtp']['host'] ?? (defined('SMTP_HOST') ? SMTP_HOST : ''));
-            if ($smtpHostCheck === '') {
-                return false;
+                // Si falló Resend y no hay host SMTP de respaldo, terminar con el error de Resend
+                $smtpHostCheck = (string)($options['smtp']['host'] ?? (defined('SMTP_HOST') ? SMTP_HOST : ''));
+                if ($smtpHostCheck === '') {
+                    return false;
+                }
             }
         }
 
@@ -763,5 +767,21 @@ class Mailer {
         $msg = is_array($data) ? ($data['message'] ?? ($data['error'] ?? 'HTTP ' . $httpCode)) : ('HTTP ' . $httpCode . ' ' . substr((string)$response, 0, 150));
         self::$lastError = 'Resend API (' . $httpCode . '): ' . $msg;
         return false;
+    }
+
+    /**
+     * Envía un correo de alerta de error o fallo interno del sistema usando Resend API.
+     * Exclusivo para notificaciones críticas a administradores.
+     *
+     * @param string $to
+     * @param string $subject
+     * @param string $bodyHtml
+     * @param string|null $bodyText
+     * @param array $extraOptions
+     * @return bool
+     */
+    public static function sendSystemErrorAlert($to, $subject, $bodyHtml, $bodyText = null, array $extraOptions = []): bool {
+        $extraOptions['use_resend'] = true;
+        return self::sendWithOptions($to, $subject, $bodyHtml, $bodyText, $extraOptions);
     }
 }

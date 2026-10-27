@@ -373,12 +373,12 @@ HTML;
             @require_once __DIR__ . '/Mailer.php';
         }
 
-        // ── Intento 0: Resend API (vía HTTPS REST, no requiere DB ni SMTP) ─────
+        // ── Intento 0: Resend API (vía HTTPS REST, exclusivo errores y fallos) ─────
         if (!$emailSent && class_exists('Mailer')) {
             $resendKey = Mailer::getResendApiKey();
             if ($resendKey !== '') {
                 try {
-                    $emailSent = Mailer::send($to, $subject, $html);
+                    $emailSent = Mailer::sendSystemErrorAlert($to, $subject, $html);
                 } catch (\Throwable) {
                     $emailSent = false;
                 }
