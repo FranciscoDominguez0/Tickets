@@ -1,3 +1,4 @@
+
 services:
   # ==========================================
   # TICKETS - APACHE + PHP
@@ -7,9 +8,11 @@ services:
     container_name: php_app
     restart: always
 
+    # SEGURIDAD: impedir nuevos privilegios
     security_opt:
       - no-new-privileges:true
 
+    # SEGURIDAD: eliminar capacidades innecesarias
     cap_drop:
       - NET_RAW
       - MKNOD
@@ -26,20 +29,36 @@ services:
       - db
 
     volumes:
-      # Código del sistema Tickets
-      - .:/var/www/html/sistema-tickets
+      # ======================================
+      # CÓDIGO FUENTE - SOLO LECTURA
+      # ======================================
+      - .:/var/www/html/sistema-tickets:ro
 
-      # Archivos adjuntos
-      - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments
+      # ======================================
+      # DIRECTORIOS CON ESCRITURA PERMITIDA
+      # ======================================
 
-      # Firmas
-      - ./firmas:/var/www/html/sistema-tickets/firmas
+      # Archivos adjuntos de tickets
+      - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments:rw
 
-      # Zona horaria del servidor
+      # Logos e imágenes públicas
+      - ./publico/uploads:/var/www/html/sistema-tickets/publico/uploads:rw
+
+      # Firmas de usuarios
+      - ./firmas:/var/www/html/sistema-tickets/firmas:rw
+
+      # Registros del sistema
+      - ./storage/logs:/var/www/html/sistema-tickets/storage/logs:rw
+
+      # ======================================
+      # ZONA HORARIA
+      # ======================================
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
-      # SEGURIDAD: reglas Apache protegidas contra escritura
+      # ======================================
+      # SEGURIDAD DE APACHE
+      # ======================================
       - /etc/vigitec/apache/tickets-security.conf:/etc/apache2/conf-enabled/zz-tickets-security.conf:ro
 
     networks:
@@ -62,7 +81,7 @@ services:
     env_file:
       - .env
 
-    # Acceso exclusivamente desde localhost
+    # Solo accesible desde localhost del servidor
     ports:
       - "127.0.0.1:13306:3306"
 
@@ -82,7 +101,7 @@ services:
     container_name: phpmyadmin_app
     restart: always
 
-    # Acceso exclusivamente desde localhost
+    # Solo accesible desde localhost del servidor
     ports:
       - "127.0.0.1:9081:80"
 
