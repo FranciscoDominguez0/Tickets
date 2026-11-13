@@ -1,63 +1,106 @@
 services:
+  # ==========================================
+  # TICKETS - APACHE + PHP
+  # ==========================================
   web:
     build: .
     container_name: php_app
     restart: always
+
     env_file:
       - .env
+
     environment:
       - TZ=America/Panama
-    # Se eliminó "ports", ahora Nginx PM enrutará el tráfico internamente
+
+    # Nginx Proxy Manager enruta el tráfico internamente
     depends_on:
       - db
+
     volumes:
+      # Código del sistema Tickets
       - .:/var/www/html/sistema-tickets
+
+      # Archivos adjuntos
       - ./upload/uploads/attachments:/var/www/html/sistema-tickets/upload/uploads/attachments
+
+      # Firmas
       - ./firmas:/var/www/html/sistema-tickets/firmas
+
+      # Zona horaria del servidor
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-    networks:
-      - internal_net # Para conectarse con la base de datos
-      - npm_network # Para conectarse con Nginx Proxy Manager
 
+      # SEGURIDAD: reglas Apache protegidas contra escritura
+      - /etc/vigitec/apache/tickets-security.conf:/etc/apache2/conf-enabled/zz-tickets-security.conf:ro
+
+    networks:
+      - internal_net
+      - npm_network
+
+  # ==========================================
+  # MYSQL - BASE DE DATOS DE TICKETS
+  # ==========================================
   db:
     image: mysql:8.0
     container_name: mysql_app
     restart: always
+
     command: --default-time-zone='-05:00'
+
     environment:
       - TZ=America/Panama
+
     env_file:
       - .env
+
+    # Acceso exclusivamente desde localhost
     ports:
-      - "127.0.0.1:13306:3306" # Excelente práctica: solo accesible localmente
+      - "127.0.0.1:13306:3306"
+
     volumes:
       - db_data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+
     networks:
       - internal_net
 
+  # ==========================================
+  # PHPMYADMIN
+  # ==========================================
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin_app
     restart: always
+
+    # Acceso exclusivamente desde localhost
     ports:
-      - "127.0.0.1:9081:80" # Excelente práctica: solo accesible localmente
+      - "127.0.0.1:9081:80"
+
     environment:
       PMA_HOST: db
       PMA_USER: root
       PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
     depends_on:
       - db
+
     networks:
       - internal_net
 
+# ==========================================
+# VOLÚMENES PERSISTENTES
+# ==========================================
 volumes:
   db_data:
 
+# ==========================================
+# REDES
+# ==========================================
 networks:
-  internal_net: # Red privada para que tu app, BD y phpMyAdmin se comuniquen entre sí
+  internal_net:
+
+  # Red externa de Nginx Proxy Manager
   npm_network:
     external: true
-    # Red externa que creamos antes para Nginx PM
